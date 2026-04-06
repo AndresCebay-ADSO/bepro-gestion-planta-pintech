@@ -144,14 +144,14 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Features::registration(), // Deshabilitado: solo admin crea usuarios
         Features::resetPasswords(),
         Features::emailVerification(),
-        Features::twoFactorAuthentication([
-            'confirm' => true,
-            'confirmPassword' => true,
-            // 'window' => 0
-        ]),
+        // Features::twoFactorAuthentication([
+        //     'confirm' => true,
+        //     'confirmPassword' => true,
+        //     // 'window' => 0
+        // ]),
     ],
 
 ];

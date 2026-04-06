@@ -70,6 +70,19 @@ alerts (relacionada con raw_materials y products)
 
 ---
 
+### 3.0 product_categories
+**Descripción:** Categorías de productos para mayor flexibilidad que usar ENUM.
+
+| Campo | Tipo | Restricciones | Descripción |
+|-------|------|---------------|-------------||
+| id | BIGINT | PK, AI, NN | Identificador único de la categoría |
+| name | VARCHAR(100) | NN, UQ | Nombre de la categoría (Industrial, Automotriz, Arquitectónico) |
+| description | TEXT | NULL | Descripción detallada de la categoría |
+| created_at | TIMESTAMP | NN, DEFAULT now() | Fecha de creación |
+| updated_at | TIMESTAMP | NN, DEFAULT now() | Fecha de actualización |
+
+---
+
 ### 3.1 users
 **Descripción:** Almacena los usuarios del sistema con sus credenciales y estado.
 
@@ -163,7 +176,7 @@ alerts (relacionada con raw_materials y products)
 | production_order_id | BIGINT | FK, NULL | Orden de producción asociada (si aplica) |
 | type | ENUM('entrada','salida') | NN | Tipo de movimiento |
 | quantity | DECIMAL(12,4) | NN | Cantidad del movimiento |
-| unit_price | DECIMAL(12,4) | NN | Precio unitario al momento del movimiento |
+| cost_price | DECIMAL(12,4) | NN | Precio de costo unitario al momento del movimiento |
 | movement_date | DATE | NN | Fecha del movimiento |
 | notes | TEXT | NULL | Observaciones adicionales |
 | created_by | BIGINT | FK, NN | Usuario que registró el movimiento |
@@ -186,7 +199,7 @@ alerts (relacionada con raw_materials y products)
 | id | BIGINT | PK, AI, NN | Identificador único del producto |
 | code | VARCHAR(50) | NN, UQ | Código de referencia del producto |
 | name | VARCHAR(150) | NN | Nombre del producto (ej: Poliuretano Blanco) |
-| category | ENUM('industrial','automotriz','arquitectonico') | NN | Categoría del producto |
+| category_id | BIGINT | FK, NN | Categoría del producto (referencia a product_categories) |
 | unit_of_measure | VARCHAR(20) | NN | Unidad de medida del producto (lt, kg, galón) |
 | current_cost | DECIMAL(12,4) | NULL | Costo de producción actual calculado |
 | profit_margin | DECIMAL(5,2) | NULL | Margen de ganancia en porcentaje |
@@ -197,6 +210,7 @@ alerts (relacionada con raw_materials y products)
 | updated_at | TIMESTAMP | NN, DEFAULT now() | Fecha de actualización |
 
 **Relaciones:**
+- Pertenece a una categoría (`product_categories`)
 - Un producto tiene una formulación activa (`formulas`)
 - Un producto tiene historial de costos (`production_costs`)
 - Un producto tiene historial de precios (`price_list`)
@@ -332,11 +346,12 @@ alerts (relacionada con raw_materials y products)
 | profit_margin | DECIMAL(5,2) | NN | Margen de ganancia aplicado (%) |
 | update_type | ENUM('manual','automatico') | NN | Tipo de actualización |
 | variation_percentage | DECIMAL(8,4) | NULL | Variación porcentual respecto al precio anterior |
-| is_current | BOOLEAN | NN, DEFAULT true | Indica si es el precio vigente |
+| valid_from | DATE | NN | Fecha desde la cual es vigente este precio |
+| valid_to | DATE | NULL | Fecha hasta la cual es vigente (NULL si está vigente) |
 | created_by | BIGINT | FK, NULL | Usuario que fijó el precio (NULL si fue automático) |
 | created_at | TIMESTAMP | NN, DEFAULT now() | Fecha de creación |
 
-**Restricción:** Solo puede existir un registro con `is_current = true` por producto.
+**Restricción:** Solo puede existir un registro con `valid_to = NULL` por producto en un momento dado.
 
 ---
 
@@ -350,7 +365,9 @@ alerts (relacionada con raw_materials y products)
 | product_id | BIGINT | FK, NN | Producto a fabricar |
 | formula_id | BIGINT | FK, NN | Formulación a usar en la producción |
 | warehouse_id | BIGINT | FK, NN | Bodega donde se almacenará el producto terminado |
-| quantity | DECIMAL(12,4) | NN | Cantidad a producir |
+| quantity | DECIMAL(12,4) | NN | Cantidad planificada a producir |
+| actual_quantity | DECIMAL(12,4) | NULL | Cantidad realmente producida |
+| yield_percentage | DECIMAL(5,2) | NULL | Porcentaje de rendimiento (actual_quantity/quantity * 100) |
 | status | ENUM('pendiente','en_proceso','finalizada','cancelada') | NN, DEFAULT 'pendiente' | Estado actual de la orden |
 | planned_date | DATE | NN | Fecha planificada de producción |
 | completion_date | DATE | NULL | Fecha real de finalización |
@@ -367,7 +384,27 @@ alerts (relacionada con raw_materials y products)
 
 ---
 
-### 3.15 alerts
+### 3.15 production_order_details
+**Descripción:** Detalle de lotes de materia prima consumidos en cada orden de producción. Permite trazabilidad completa PEPS.
+
+| Campo | Tipo | Restricciones | Descripción |
+|-------|------|---------------|-------------||
+| id | BIGINT | PK, AI, NN | Identificador único del detalle |
+| production_order_id | BIGINT | FK, NN | Referencia a la orden de producción |
+| batch_id | BIGINT | FK, NN | Lote específico de materia prima consumido |
+| raw_material_id | BIGINT | FK, NN | Materia prima consumida |
+| quantity | DECIMAL(12,4) | NN | Cantidad consumida del lote |
+| unit_cost | DECIMAL(12,4) | NN | Costo unitario del lote al momento del consumo |
+| total_cost | DECIMAL(12,4) | NN | Cantidad * unit_cost |
+| created_at | TIMESTAMP | NN, DEFAULT now() | Fecha de creación |
+
+**Relaciones:**
+- Pertenece a una orden de producción (`production_orders`)
+- Referencia un lote específico (`inventory_batches`)
+
+---
+
+### 3.16 alerts
 **Descripción:** Registro de alertas generadas automáticamente por el sistema.
 
 | Campo | Tipo | Restricciones | Descripción |
@@ -381,6 +418,7 @@ alerts (relacionada con raw_materials y products)
 | is_resolved | BOOLEAN | NN, DEFAULT false | Estado de la alerta |
 | resolved_by | BIGINT | FK, NULL | Usuario que resolvió la alerta |
 | resolved_at | TIMESTAMP | NULL | Fecha y hora de resolución |
+| updated_by | BIGINT | FK, NULL | Usuario que realizó cambios en la alerta |
 | created_at | TIMESTAMP | NN, DEFAULT now() | Fecha de creación |
 | updated_at | TIMESTAMP | NN, DEFAULT now() | Fecha de actualización |
 
@@ -391,7 +429,7 @@ alerts (relacionada con raw_materials y products)
 
 ---
 
-### 3.16 qr_codes
+### 3.17 qr_codes
 **Descripción:** Códigos QR generados por producto para enlazar documentación técnica en los envases.
 
 | Campo | Tipo | Restricciones | Descripción |
@@ -411,7 +449,7 @@ alerts (relacionada con raw_materials y products)
 
 ---
 
-### 3.17 qr_documents
+### 3.18 qr_documents
 **Descripción:** Documentos técnicos asociados a cada código QR. Soporta múltiples versiones por tipo de documento.
 
 | Campo | Tipo | Restricciones | Descripción |
@@ -435,6 +473,7 @@ alerts (relacionada con raw_materials y products)
 
 | # | Tabla | Descripción | Registros estimados |
 |---|-------|-------------|---------------------|
+| 0 | product_categories | Categorías de productos | 3-5 |
 | 1 | users | Usuarios del sistema | ~10 |
 | 2 | roles | Roles del sistema | 3 |
 | 3 | raw_materials | Catálogo de materias primas | ~50-100 |
@@ -446,12 +485,13 @@ alerts (relacionada con raw_materials y products)
 | 9 | finished_inventory_movements | Movimientos de PT | ~1000+ |
 | 10 | formulas | Formulaciones de productos | ~100+ |
 | 11 | formula_details | Detalle de ingredientes por fórmula | ~1000+ |
-| 12 | production_costs | Historial de costos | ~500+ |
-| 13 | price_list | Historial de precios | ~500+ |
-| 14 | production_orders | Órdenes de producción | ~200+ |
-| 15 | alerts | Alertas del sistema | ~100+ |
-| 16 | qr_codes | Códigos QR por producto | ~50-100 |
-| 17 | qr_documents | Documentos técnicos | ~300+ |
+| 12 | production_orders | Órdenes de producción | ~200+ |
+| 13 | production_order_details | Lotes consumidos por orden | ~1000+ |
+| 14 | production_costs | Historial de costos | ~500+ |
+| 15 | price_list | Historial de precios | ~500+ |
+| 16 | alerts | Alertas del sistema | ~100+ |
+| 17 | qr_codes | Códigos QR por producto | ~50-100 |
+| 18 | qr_documents | Documentos técnicos | ~300+ |
 
 ---
 
@@ -459,13 +499,15 @@ alerts (relacionada con raw_materials y products)
 
 | Tabla | Campo(s) | Tipo | Justificación |
 |-------|----------|------|---------------|
+| products | category_id | FK INDEX | Filtrar productos por categoría |
 | inventory_batches | (raw_material_id, entry_date) | INDEX | Consultas PEPS ordenadas por fecha |
 | inventory_batches | remaining_quantity | INDEX | Filtrar lotes con stock disponible |
 | inventory_batches | expiry_date | INDEX | Alertas de vencimiento |
 | inventory_movements | (raw_material_id, movement_date) | INDEX | Curvas de consumo por período |
 | finished_inventory | (product_id, warehouse_id) | UNIQUE INDEX | Garantizar unicidad por producto/bodega |
+| production_orders | status | INDEX | Consultas de órdenes por estado |
 | production_costs | (product_id, calculated_at) | INDEX | Historial de costos por producto |
-| price_list | (product_id, is_current) | INDEX | Precio vigente por producto |
+| price_list | (product_id, valid_to) | INDEX | Precio vigente por producto |
 | alerts | (is_resolved, type) | INDEX | Consulta de alertas activas por tipo |
 
 ---

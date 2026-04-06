@@ -31,11 +31,75 @@ disponibilidad de producto terminado para el área comercial.
 | **Asistente de Producción** | Acceso operativo de planta |
 | **Comercial** | Consulta de disponibilidad de producto (solo lectura) |
 
-## 🚀 Tecnología
+## � Control de Acceso y Roles
+
+El sistema implementa **Spatie Laravel Permission v7.2.2** para gestión centralizada de roles y permisos:
+
+- **Tablas de control:** `roles`, `permissions`, `model_has_roles`, `model_has_permissions`, `role_has_permissions`
+- **Modelo User:** Configurado con trait `HasRoles` para acceso a métodos como `hasRole()`, `assignRole()`, `can()`
+- **Middleware:** `role` para proteger rutas según rol (ej: `Route::middleware('role:admin')`)
+
+**Instalación ya completada:**
+✅ Librería Spatie instalada (`composer require spatie/laravel-permission`)
+✅ Configuración publicada (`config/permission.php`)
+✅ Migraciones ejecutadas (tablas de roles/permisos creadas)
+✅ Modelo User actualizado con `HasRoles` trait
+✅ 3 roles creados: Admin, Producción, Comercial
+✅ 3 usuarios Pintech preseeded con roles asignados
+✅ Middleware CheckRole implementado
+✅ Protección de rutas por rol funcional
+
+## 🔐 Control de Acceso y Protección de Rutas
+
+El sistema implementa protección de rutas en `routes/web.php` usando el middleware `role`:
+
+### Sintaxis de protección:
+
+```php
+// Una sola rol requerido
+Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+    // Solo accesible por admin
+});
+
+// Múltiples roles permitidos (OR)
+Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
+    // Accesible por admin O producción
+});
+```
+
+### Rutas actuales estructura:
+
+| Ruta Grupo | Roles | Descripción |
+|---|---|---|
+| `/dashboard` | Todos autenticados | Dashboard general |
+| `/admin/*` | `admin` | Administración del sistema |
+| `/production/*` | `produccion` | Gestión de planta |
+| `/availability/*` | `comercial` | Consulta de disponibilidad |
+| `/costs/*` | `admin,produccion` | Históricos de costos/precios |
+
+### Verificar rol en Controller:
+
+```php
+// Directamente en métodos
+if (auth()->user()->hasRole('admin')) {
+    // Hacer algo solo para admin
+}
+
+// En request validation
+$this->authorize('admin'); // Falla si no es admin
+
+// En blade template
+@role('admin')
+    <p>Solo visible para admin</p>
+@endrole
+```
+
+## �🚀 Tecnología
 
 - **Backend:** Laravel 12 + PHP 8.2+
 - **Frontend:** React 18 + Inertia.js + Tailwind CSS v4
 - **Database:** PostgreSQL 16
+- **Auth & Roles:** Spatie Laravel Permission v7.2.2
 - **Real-time:** Laravel Echo + Reverb (WebSockets para alertas)
 - **Testing:** Pest PHP
 - **Code Style:** Laravel Pint (PSR-12)
@@ -54,7 +118,7 @@ disponibilidad de producto terminado para el área comercial.
 
 ### 1. Clonar el repositorio
 ```bash
-git clone <repository-url>
+git clone https://github.com/AndresCebay-ADSO/bepro-gestion-planta-pintech.git
 cd bepro-gestion-planta-pintech
 ```
 
@@ -81,7 +145,7 @@ DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_DATABASE=pintech_erp
 DB_USERNAME=postgres
-DB_PASSWORD=tu_password
+DB_PASSWORD=
 ```
 
 ### 5. Configurar base de datos PostgreSQL (macOS con Homebrew)
@@ -199,14 +263,36 @@ php artisan reverb:start
 └── storage/              # Logs, caché, uploads
 ```
 
-## 🔐 Autenticación
+## 🔐 Autenticación y Gestión de Usuarios
 
-El proyecto incluye autenticación completa con Laravel Fortify:
-- ✅ Registro de usuarios
-- ✅ Login/Logout
-- ✅ Recuperación de contraseña
-- ✅ Autenticación de dos factores (2FA)
+### Sistema de Login
+El proyecto implementa autenticación segura con Laravel Fortify:
+- ✅ Login con Email + Contraseña
+- ✅ Recuperación de contraseña (vía email)
 - ✅ Verificación de email
+- ❌ Registro público (deshabilitado - solo admin crea usuarios)
+- ❌ Autenticación de dos factores (deshabilitada - para simplicidad en ERP interno)
+
+### Gestión de Usuarios (Admin only)
+El admin puede crear, editar y eliminar usuarios en `/users`:
+
+**Rutas disponibles:**
+- `GET /users` — Listado de usuarios (filtrable por nombre/email)
+- `GET /users/create` — Formulario para crear usuario
+- `POST /users` — Guardar nuevo usuario con rol asignado
+- `GET /users/{id}/edit` — Formulario para editar
+- `PUT /users/{id}` — Actualizar usuario
+- `DELETE /users/{id}` — Eliminar usuario
+
+**Formulario de Creación:**
+```
+Nombre Completo: (requerido)
+Email: (requerido, único)
+Contraseña: (mínimo 8 caracteres)
+Rol: (admin | produccion | comercial)
+```
+
+**Nota:** Los usuarios pueden cambiar su contraseña usando "Olvidé mi contraseña" en el login.
 
 ## 💾 Base de Datos (PostgreSQL)
 
@@ -224,6 +310,106 @@ El proyecto incluye autenticación completa con Laravel Fortify:
 - `formulations` - Formulaciones/recetas
 - `production_orders` - Órdenes de producción
 - `warehouses` - Bodegas
+
+## 🎨 Dashboards por Rol
+
+El sistema implementa tres dashboards distintos, cada uno optimizado para su rol:
+
+### 📘 Admin Dashboard (`/admin`)
+**Componente:** `resources/js/pages/Admin/Dashboard.tsx`
+**Controlador:** `app/Http/Controllers/AdminController.php`
+
+Features:
+- ✅ Acceso total al sistema
+- ✅ Estadísticas globales (usuarios, productos, bodegas)
+- ✅ Panel de permisos administrativos
+- ✅ Rutas accesibles: `/admin/*`, `/costs/*`
+- 🎨 Tema: Azul profesional
+
+### 🔧 Production Dashboard (`/production`)
+**Componente:** `resources/js/pages/Production/Dashboard.tsx`
+**Controlador:** `app/Http/Controllers/ProductionController.php`
+
+Features:
+- ✅ Gestión de órdenes de producción
+- ✅ Seguimiento de inventario (método PEPS)
+- ✅ Visualización de formulaciones
+- ✅ Estadísticas de producción (órdenes pendientes, activas, completadas)
+- ✅ Rutas accesibles: `/production/*`, `/costs/*`
+- 🎨 Tema: Naranja industrial
+
+### 💰 Commercial Dashboard (`/availability`)
+**Componente:** `resources/js/pages/Comercial/Dashboard.tsx`
+**Controlador:** `app/Http/Controllers/ComercialController.php`
+
+Features:
+- ✅ Consulta de disponibilidad (solo lectura)
+- ✅ Visualización de lista de precios
+- ✅ Generación de cotizaciones
+- ✅ Estadísticas comerciales (productos, cotizaciones, pedidos)
+- ✅ Rutas accesibles: `/availability/*` solo
+- 🎨 Tema: Verde de crecimiento
+
+## ✅ Pruebas de Acceso por Rol
+
+Para verificar que la protección de rutas funciona correctamente:
+
+### En Tinker (REPL):
+```bash
+php artisan tinker
+
+# Ver roles de un usuario
+$user = User::find(1);
+$user->getRoleNames(); // Retorna ['admin']
+
+# Verificar rol
+$user->hasRole('admin'); // true
+$user->hasRole('produccion'); // false
+
+# Login como usuario
+auth()->loginUsingId(2); // Usuario de producción
+auth()->user()->getRoleNames(); // ['produccion']
+```
+
+### En Tests:
+```php
+// Crear usuario con rol
+$user = User::factory()->create()->assignRole('admin');
+
+// Test con role middleware
+$this->actingAs($user)
+    ->get('/admin')
+    ->assertSuccessful();
+
+// Test sin permisos
+$commercialUser = User::factory()->create()->assignRole('comercial');
+$this->actingAs($commercialUser)
+    ->get('/admin')
+    ->assertStatus(403);
+```
+
+### Login Manual & Demo Dashboards:
+Usa las credenciales preseeded para acceder a dashboards específicos por rol:
+
+| Usuario | Email | Contraseña | URL |
+|---------|-------|-----------|-----|
+| **Admin** | `pintech.sistemas@gmail.com` | `Pintech_2026` | `/admin` |
+| **Producción** | `pintech.auxiliar@gmail.com` | `Pintech_2026` | `/production` |
+| **Comercial** | `pintech.comercial@gmail.com` | `Pintech_2026` | `/availability` |
+
+**Verificación de Acceso por Rol:**
+1. Inicia sesión con cada usuario
+2. Verás un dashboard distintivo:
+   - **Admin:** Azul - Permisos de administración total
+   - **Producción:** Naranja - Permisos operativos de planta
+   - **Comercial:** Verde - Permisos de solo lectura
+3. Intenta acceder a URLs no autorizadas (ej: admin accede a `/production`) → Verás 403 Unauthorized
+
+**Rutas Protegidas:**
+- `/admin` → Solo rol `admin`
+- `/production` → Solo rol `produccion`
+- `/availability` → Solo rol `comercial`
+- `/costs` → Roles `admin` y `produccion` (compartido)
 
 ## 🔧 Testing
 
@@ -297,7 +483,95 @@ La documentación del proyecto se encuentra en la carpeta `docs/`:
 **Andrés Stiven Cebay Ceballos**  
 Practicante ADSO — 2026
 
-## 📜 Licencia
+## � Dependencias Instaladas
+
+Seguimiento de librerías externas instaladas y su propósito:
+
+| Librería | Versión | Fecha Instalación | Propósito |
+|----------|---------|-------------------|-----------|
+| **Spatie Laravel Permission** | ^7.2.2 | 06/04/2026 | Gestión centralizada de roles y permisos |
+
+**Notas de instalación:**
+- Spatie Laravel Permission: Se publicaron archivos de configuración en `config/permission.php`. Migraciones propias creadas automáticamente. Modelo `User` actualizado con trait `HasRoles`.
+
+### Seeders de Datos Base
+
+Se han creado seeders automáticos para datos maestros iniciales:
+
+| Seeder | Datos | Creado |
+|--------|-------|--------|
+| `UnitsOfMeasureSeeder` | 11 unidades estándar (kg, lt, gal, ml, u, m³, g, mg, lb, gal_imp, bbl) | ✅ |
+| `RolePermissionSeeder` | 3 roles base (admin, produccion, comercial) | ✅ |
+| `UserSeeder` | 3 usuarios Pintech con roles asignados | ✅ |
+
+**Usuarios preseeded:**
+
+| Email | Nombre | Rol | Contraseña | Uso |
+|-------|--------|-----|-----------|-----|
+| `pintech.sistemas@gmail.com` | Admin Sistemas | **Admin** | `Pintech_2026` | Acceso total sistema |
+| `pintech.auxiliar@gmail.com` | Auxiliar Producción | **Producción** | `Pintech_2026` | Gestión planta |
+| `pintech.comercial@gmail.com` | Gerente Comercial | **Comercial** | `Pintech_2026` | Consulta de inventario |
+
+**Roles definidos:**
+- **admin**: Acceso total al sistema (configuración, usuarios, auditoría)
+- **produccion**: Acceso operativo de planta (órdenes, inventario MP)
+- **comercial**: Solo lectura de disponibilidad de producto (reportes)
+
+**Ejecutar seeders:**
+```bash
+# Todos
+php artisan db:seed
+
+# O específicos:
+php artisan db:seed --class=UnitsOfMeasureSeeder
+php artisan db:seed --class=RolePermissionSeeder
+php artisan db:seed --class=UserSeeder
+```
+
+---
+
+## 📊 Migraciones de Base de Datos
+
+### Estado actual: ✅ TODAS EJECUTADAS (06/04/2026)
+
+**18 tablas de negocio creadas** según MER (Modelo Entidad-Relación):
+
+| # | Tabla | Descripción | Creada |
+|---|-------|-------------|--------|
+| 0 | `units_of_measure` | Unidades estándar (kg, lt, gal, ml, etc.) | ✅ |
+| 1 | `product_categories` | Categorías de productos (Industrial, Automotriz, Arquitectónico) | ✅ |
+| 2 | `warehouses` | Bodegas (Neiva, Cali) | ✅ |
+| 3 | `raw_materials` | Catálogo de materias primas | ✅ |
+| 4 | `inventory_batches` | Lotes de MP (método PEPS) | ✅ |
+| 5 | `inventory_movements` | Movimientos entrada/salida de MP | ✅ |
+| 6 | `products` | Catálogo de productos terminados | ✅ |
+| 7 | `finished_inventory` | Stock PT por producto × bodega | ✅ |
+| 8 | `finished_inventory_movements` | Movimientos entrada/salida PT | ✅ |
+| 9 | `formulas` | Formulaciones activas e históricas | ✅ |
+| 10 | `formula_details` | Ingredientes por formulación | ✅ |
+| 11 | `production_orders` | Órdenes de producción (OP) | ✅ |
+| 12 | `production_order_details` | Consumo de lotes por OP | ✅ |
+| 13 | `production_costs` | Historial de costos calculados | ✅ |
+| 14 | `price_list` | Historial de precios vigentes | ✅ |
+| 15 | `qr_codes` | Códigos QR por producto | ✅ |
+| 16 | `qr_documents` | Documentos técnicos por QR | ✅ |
+| 17 | `alerts` | Alertas automáticas del sistema | ✅ |
+
+**Además (creadas por frameworks):**
+- Tablas Spatie: `roles`, `permissions`, `model_has_roles`, `model_has_permissions`, `role_has_permissions`
+- Tabla Laravel: `users`
+
+### Características implementadas:
+✅ **PEPS:** Trazabilidad completa lote × orden de producción  
+✅ **Historial:** Costos y precios con campos `valid_from`/`valid_to`  
+✅ **Auditoría:** Campos `created_by`, `updated_by` en operaciones críticas  
+✅ **Índices:** Optimizados para consultas de PEPS, alertas, búsquedas  
+✅ **Restricciones:** FK con `onDelete` apropiados, unicidad enforcement  
+✅ **Unidades:** Tabla centralizada con conversiones de peso/volumen (kg, lt, gal, ml, etc.)  
+
+---
+
+## �📜 Licencia
 
 Propietario — Pintech Colombia S.A.S
 

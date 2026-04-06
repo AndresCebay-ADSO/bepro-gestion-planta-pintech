@@ -13,6 +13,10 @@ createInertiaApp({
         switch (true) {
             case name === 'welcome':
                 return null;
+            // Login y recuperación tienen UI propia (split)
+            case name === 'auth/login':
+            case name === 'auth/forgot-password':
+                return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
