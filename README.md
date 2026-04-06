@@ -44,11 +44,55 @@ El sistema implementa **Spatie Laravel Permission v7.2.2** para gestión central
 ✅ Configuración publicada (`config/permission.php`)
 ✅ Migraciones ejecutadas (tablas de roles/permisos creadas)
 ✅ Modelo User actualizado con `HasRoles` trait
+✅ 3 roles creados: Admin, Producción, Comercial
+✅ 3 usuarios Pintech preseeded con roles asignados
+✅ Middleware CheckRole implementado
+✅ Protección de rutas por rol funcional
 
-**Próximos pasos:**
-- Crear roles: Admin, Producción, Comercial
-- Crear usuario admin inicial
-- Definir permisos por operación (ver, crear, editar, eliminar)
+## 🔐 Control de Acceso y Protección de Rutas
+
+El sistema implementa protección de rutas en `routes/web.php` usando el middleware `role`:
+
+### Sintaxis de protección:
+
+```php
+// Una sola rol requerido
+Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+    // Solo accesible por admin
+});
+
+// Múltiples roles permitidos (OR)
+Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
+    // Accesible por admin O producción
+});
+```
+
+### Rutas actuales estructura:
+
+| Ruta Grupo | Roles | Descripción |
+|---|---|---|
+| `/dashboard` | Todos autenticados | Dashboard general |
+| `/admin/*` | `admin` | Administración del sistema |
+| `/production/*` | `produccion` | Gestión de planta |
+| `/availability/*` | `comercial` | Consulta de disponibilidad |
+| `/costs/*` | `admin,produccion` | Históricos de costos/precios |
+
+### Verificar rol en Controller:
+
+```php
+// Directamente en métodos
+if (auth()->user()->hasRole('admin')) {
+    // Hacer algo solo para admin
+}
+
+// En request validation
+$this->authorize('admin'); // Falla si no es admin
+
+// En blade template
+@role('admin')
+    <p>Solo visible para admin</p>
+@endrole
+```
 
 ## �🚀 Tecnología
 
@@ -244,6 +288,52 @@ El proyecto incluye autenticación completa con Laravel Fortify:
 - `formulations` - Formulaciones/recetas
 - `production_orders` - Órdenes de producción
 - `warehouses` - Bodegas
+
+## ✅ Pruebas de Acceso por Rol
+
+Para verificar que la protección de rutas funciona correctamente:
+
+### En Tinker (REPL):
+```bash
+php artisan tinker
+
+# Ver roles de un usuario
+$user = User::find(1);
+$user->getRoleNames(); // Retorna ['admin']
+
+# Verificar rol
+$user->hasRole('admin'); // true
+$user->hasRole('produccion'); // false
+
+# Login como usuario
+auth()->loginUsingId(2); // Usuario de producción
+auth()->user()->getRoleNames(); // ['produccion']
+```
+
+### En Tests:
+```php
+// Crear usuario con rol
+$user = User::factory()->create()->assignRole('admin');
+
+// Test con role middleware
+$this->actingAs($user)
+    ->get('/admin')
+    ->assertSuccessful();
+
+// Test sin permisos
+$commercialUser = User::factory()->create()->assignRole('comercial');
+$this->actingAs($commercialUser)
+    ->get('/admin')
+    ->assertStatus(403);
+```
+
+### Login Manual:
+Usa las credenciales preseeded:
+- **Admin:** `pintech.sistemas@gmail.com` // `Pintech_2026`
+- **Producción:** `pintech.auxiliar@gmail.com` // `Pintech_2026`
+- **Comercial:** `pintech.comercial@gmail.com` // `Pintech_2026`
+
+Luego intenta acceder a diferentes rutas y verifica el comportamiento de redirección (403).
 
 ## 🔧 Testing
 
