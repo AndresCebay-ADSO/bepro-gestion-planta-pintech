@@ -7,7 +7,7 @@ use App\Http\Controllers\ComercialController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::redirect('/', '/login')->name('home');
 
 // Rutas autenticadas (todos los roles)
 Route::middleware(['auth', 'verified'])->group(function () {

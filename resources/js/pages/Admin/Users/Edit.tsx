@@ -1,5 +1,6 @@
 import { FC, FormEvent, useState } from 'react';
 import { router, Link } from '@inertiajs/react';
+import { route } from 'ziggy-js';
 
 interface User {
   id: number;
@@ -42,7 +43,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
 
     router.put(route('users.update', user.id), formData, {
       onError: (pageErrors) => {
-        setErrors(pageErrors);
+        setErrors(pageErrors as unknown as Record<string, string[]>);
         setLoading(false);
       },
       onSuccess: () => {

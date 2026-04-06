@@ -1,5 +1,6 @@
 import { FC, useState } from 'react';
 import { usePage, Link } from '@inertiajs/react';
+import { route } from 'ziggy-js';
 
 interface User {
   id: number;
@@ -19,7 +20,7 @@ interface Props {
 }
 
 const UsersIndex: FC<Props> = ({ users }) => {
-  const { flash } = usePage().props;
+  const { flash } = usePage<{ flash?: { message?: string; error?: string } }>().props;
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredUsers = users.data.filter(user =>

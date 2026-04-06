@@ -1,5 +1,6 @@
 import { FC, FormEvent, useState } from 'react';
 import { router, Link } from '@inertiajs/react';
+import { route } from 'ziggy-js';
 
 interface Role {
   id: number;
@@ -36,7 +37,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 
     router.post(route('users.store'), formData, {
       onError: (pageErrors) => {
-        setErrors(pageErrors);
+        setErrors(pageErrors as unknown as Record<string, string[]>);
         setLoading(false);
       },
       onSuccess: () => {
