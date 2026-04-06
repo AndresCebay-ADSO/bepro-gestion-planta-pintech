@@ -18,10 +18,10 @@ class DatabaseSeeder extends Seeder
             UnitsOfMeasureSeeder::class,
         ]);
 
-        // Seeders de datos de aplicación
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Seeders de roles y usuarios
+        $this->call([
+            RolePermissionSeeder::class,
+            UserSeeder::class,
         ]);
     }
 }

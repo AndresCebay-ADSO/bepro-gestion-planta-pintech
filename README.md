@@ -335,12 +335,31 @@ Se han creado seeders automáticos para datos maestros iniciales:
 | Seeder | Datos | Creado |
 |--------|-------|--------|
 | `UnitsOfMeasureSeeder` | 11 unidades estándar (kg, lt, gal, ml, u, m³, g, mg, lb, gal_imp, bbl) | ✅ |
+| `RolePermissionSeeder` | 3 roles base (admin, produccion, comercial) | ✅ |
+| `UserSeeder` | 3 usuarios Pintech con roles asignados | ✅ |
+
+**Usuarios preseeded:**
+
+| Email | Nombre | Rol | Contraseña | Uso |
+|-------|--------|-----|-----------|-----|
+| `pintech.sistemas@gmail.com` | Admin Sistemas | **Admin** | `Pintech_2026` | Acceso total sistema |
+| `pintech.auxiliar@gmail.com` | Auxiliar Producción | **Producción** | `Pintech_2026` | Gestión planta |
+| `pintech.comercial@gmail.com` | Gerente Comercial | **Comercial** | `Pintech_2026` | Consulta de inventario |
+
+**Roles definidos:**
+- **admin**: Acceso total al sistema (configuración, usuarios, auditoría)
+- **produccion**: Acceso operativo de planta (órdenes, inventario MP)
+- **comercial**: Solo lectura de disponibilidad de producto (reportes)
 
 **Ejecutar seeders:**
 ```bash
+# Todos
 php artisan db:seed
-# O específico:
+
+# O específicos:
 php artisan db:seed --class=UnitsOfMeasureSeeder
+php artisan db:seed --class=RolePermissionSeeder
+php artisan db:seed --class=UserSeeder
 ```
 
 ---
