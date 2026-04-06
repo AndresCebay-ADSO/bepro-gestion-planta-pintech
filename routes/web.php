@@ -5,6 +5,7 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ComercialController;
+use App\Http\Controllers\DashboardController;
 
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -12,7 +13,7 @@ Route::inertia('/', 'welcome', [
 
 // Rutas autenticadas (todos los roles)
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'redirect'])->name('dashboard');
 });
 
 // ============ RUTAS PROTEGIDAS POR ROL ============
