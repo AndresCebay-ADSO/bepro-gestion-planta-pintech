@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ProductionController;
+use App\Http\Controllers\ComercialController;
 
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -16,14 +19,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Solo ADMIN: Acceso a configuración, usuarios, auditoría
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
-    // Aquí irían rutas de administración
-    // Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
+    Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
     // Route::resource('users', UserController::class);
+    // Route::resource('roles', RoleController::class);
+    // Route::resource('permissions', PermissionController::class);
 });
 
 // PRODUCCIÓN: Acceso a inventario, órdenes, formulaciones
 Route::middleware(['auth', 'verified', 'role:produccion'])->group(function () {
-    // Aquí irían rutas de producción
+    Route::get('/production', [ProductionController::class, 'index'])->name('production.index');
     // Route::resource('production-orders', ProductionOrderController::class);
     // Route::resource('formulas', FormulaController::class);
     // Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
@@ -31,14 +35,13 @@ Route::middleware(['auth', 'verified', 'role:produccion'])->group(function () {
 
 // COMERCIAL: Consulta de disponibilidad (solo lectura)
 Route::middleware(['auth', 'verified', 'role:comercial'])->group(function () {
-    // Aquí irían rutas comerciales (solo lectura)
-    // Route::get('/availability', [AvailabilityController::class, 'index'])->name('availability.index');
+    Route::get('/availability', [ComercialController::class, 'index'])->name('availability.index');
     // Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+    // Route::get('/quotes', [QuoteController::class, 'index'])->name('quotes.index');
 });
 
 // ADMIN + PRODUCCIÓN: Acceso a costos y precios
 Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
-    // Aquí irían rutas compartidas entre admin y producción
     // Route::resource('production-costs', ProductionCostController::class);
     // Route::resource('price-list', PriceListController::class);
 });
