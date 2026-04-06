@@ -31,11 +31,31 @@ disponibilidad de producto terminado para el área comercial.
 | **Asistente de Producción** | Acceso operativo de planta |
 | **Comercial** | Consulta de disponibilidad de producto (solo lectura) |
 
-## 🚀 Tecnología
+## � Control de Acceso y Roles
+
+El sistema implementa **Spatie Laravel Permission v7.2.2** para gestión centralizada de roles y permisos:
+
+- **Tablas de control:** `roles`, `permissions`, `model_has_roles`, `model_has_permissions`, `role_has_permissions`
+- **Modelo User:** Configurado con trait `HasRoles` para acceso a métodos como `hasRole()`, `assignRole()`, `can()`
+- **Middleware:** `role` para proteger rutas según rol (ej: `Route::middleware('role:admin')`)
+
+**Instalación ya completada:**
+✅ Librería Spatie instalada (`composer require spatie/laravel-permission`)
+✅ Configuración publicada (`config/permission.php`)
+✅ Migraciones ejecutadas (tablas de roles/permisos creadas)
+✅ Modelo User actualizado con `HasRoles` trait
+
+**Próximos pasos:**
+- Crear roles: Admin, Producción, Comercial
+- Crear usuario admin inicial
+- Definir permisos por operación (ver, crear, editar, eliminar)
+
+## �🚀 Tecnología
 
 - **Backend:** Laravel 12 + PHP 8.2+
 - **Frontend:** React 18 + Inertia.js + Tailwind CSS v4
 - **Database:** PostgreSQL 16
+- **Auth & Roles:** Spatie Laravel Permission v7.2.2
 - **Real-time:** Laravel Echo + Reverb (WebSockets para alertas)
 - **Testing:** Pest PHP
 - **Code Style:** Laravel Pint (PSR-12)
@@ -54,7 +74,7 @@ disponibilidad de producto terminado para el área comercial.
 
 ### 1. Clonar el repositorio
 ```bash
-git clone <repository-url>
+git clone https://github.com/AndresCebay-ADSO/bepro-gestion-planta-pintech.git
 cd bepro-gestion-planta-pintech
 ```
 
@@ -81,7 +101,7 @@ DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_DATABASE=pintech_erp
 DB_USERNAME=postgres
-DB_PASSWORD=tu_password
+DB_PASSWORD=
 ```
 
 ### 5. Configurar base de datos PostgreSQL (macOS con Homebrew)
@@ -297,7 +317,76 @@ La documentación del proyecto se encuentra en la carpeta `docs/`:
 **Andrés Stiven Cebay Ceballos**  
 Practicante ADSO — 2026
 
-## 📜 Licencia
+## � Dependencias Instaladas
+
+Seguimiento de librerías externas instaladas y su propósito:
+
+| Librería | Versión | Fecha Instalación | Propósito |
+|----------|---------|-------------------|-----------|
+| **Spatie Laravel Permission** | ^7.2.2 | 06/04/2026 | Gestión centralizada de roles y permisos |
+
+**Notas de instalación:**
+- Spatie Laravel Permission: Se publicaron archivos de configuración en `config/permission.php`. Migraciones propias creadas automáticamente. Modelo `User` actualizado con trait `HasRoles`.
+
+### Seeders de Datos Base
+
+Se han creado seeders automáticos para datos maestros iniciales:
+
+| Seeder | Datos | Creado |
+|--------|-------|--------|
+| `UnitsOfMeasureSeeder` | 11 unidades estándar (kg, lt, gal, ml, u, m³, g, mg, lb, gal_imp, bbl) | ✅ |
+
+**Ejecutar seeders:**
+```bash
+php artisan db:seed
+# O específico:
+php artisan db:seed --class=UnitsOfMeasureSeeder
+```
+
+---
+
+## 📊 Migraciones de Base de Datos
+
+### Estado actual: ✅ TODAS EJECUTADAS (06/04/2026)
+
+**18 tablas de negocio creadas** según MER (Modelo Entidad-Relación):
+
+| # | Tabla | Descripción | Creada |
+|---|-------|-------------|--------|
+| 0 | `units_of_measure` | Unidades estándar (kg, lt, gal, ml, etc.) | ✅ |
+| 1 | `product_categories` | Categorías de productos (Industrial, Automotriz, Arquitectónico) | ✅ |
+| 2 | `warehouses` | Bodegas (Neiva, Cali) | ✅ |
+| 3 | `raw_materials` | Catálogo de materias primas | ✅ |
+| 4 | `inventory_batches` | Lotes de MP (método PEPS) | ✅ |
+| 5 | `inventory_movements` | Movimientos entrada/salida de MP | ✅ |
+| 6 | `products` | Catálogo de productos terminados | ✅ |
+| 7 | `finished_inventory` | Stock PT por producto × bodega | ✅ |
+| 8 | `finished_inventory_movements` | Movimientos entrada/salida PT | ✅ |
+| 9 | `formulas` | Formulaciones activas e históricas | ✅ |
+| 10 | `formula_details` | Ingredientes por formulación | ✅ |
+| 11 | `production_orders` | Órdenes de producción (OP) | ✅ |
+| 12 | `production_order_details` | Consumo de lotes por OP | ✅ |
+| 13 | `production_costs` | Historial de costos calculados | ✅ |
+| 14 | `price_list` | Historial de precios vigentes | ✅ |
+| 15 | `qr_codes` | Códigos QR por producto | ✅ |
+| 16 | `qr_documents` | Documentos técnicos por QR | ✅ |
+| 17 | `alerts` | Alertas automáticas del sistema | ✅ |
+
+**Además (creadas por frameworks):**
+- Tablas Spatie: `roles`, `permissions`, `model_has_roles`, `model_has_permissions`, `role_has_permissions`
+- Tabla Laravel: `users`
+
+### Características implementadas:
+✅ **PEPS:** Trazabilidad completa lote × orden de producción  
+✅ **Historial:** Costos y precios con campos `valid_from`/`valid_to`  
+✅ **Auditoría:** Campos `created_by`, `updated_by` en operaciones críticas  
+✅ **Índices:** Optimizados para consultas de PEPS, alertas, búsquedas  
+✅ **Restricciones:** FK con `onDelete` apropiados, unicidad enforcement  
+✅ **Unidades:** Tabla centralizada con conversiones de peso/volumen (kg, lt, gal, ml, etc.)  
+
+---
+
+## �📜 Licencia
 
 Propietario — Pintech Colombia S.A.S
 

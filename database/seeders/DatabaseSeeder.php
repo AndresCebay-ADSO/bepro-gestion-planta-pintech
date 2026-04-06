@@ -13,8 +13,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Seeders de datos maestros (sin dependencias)
+        $this->call([
+            UnitsOfMeasureSeeder::class,
+        ]);
 
+        // Seeders de datos de aplicación
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
