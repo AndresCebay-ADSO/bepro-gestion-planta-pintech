@@ -5,6 +5,7 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ComercialController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
 
 Route::inertia('/', 'welcome', [
@@ -21,7 +22,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Solo ADMIN: Acceso a configuración, usuarios, auditoría
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
-    // Route::resource('users', UserController::class);
+    Route::resource('users', UserController::class);
     // Route::resource('roles', RoleController::class);
     // Route::resource('permissions', PermissionController::class);
 });
