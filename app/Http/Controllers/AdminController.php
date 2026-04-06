@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Inertia\Inertia;
 
 class AdminController extends Controller
@@ -15,7 +16,7 @@ class AdminController extends Controller
             'role' => auth()->user()->getRoleNames()->first(),
             'userName' => auth()->user()->name,
             'stats' => [
-                'totalUsers' => \App\Models\User::count(),
+                'totalUsers' => User::count(),
                 'totalProducts' => 0, // Se llenará con datos reales
                 'totalWarehouses' => 0,
             ],
