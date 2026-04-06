@@ -1,16 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ComercialController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
 
-Route::inertia('/', 'welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
+Route::inertia('/', 'welcome')->name('home');
 
 // Rutas autenticadas (todos los roles)
 Route::middleware(['auth', 'verified'])->group(function () {
