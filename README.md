@@ -289,6 +289,45 @@ El proyecto incluye autenticación completa con Laravel Fortify:
 - `production_orders` - Órdenes de producción
 - `warehouses` - Bodegas
 
+## 🎨 Dashboards por Rol
+
+El sistema implementa tres dashboards distintos, cada uno optimizado para su rol:
+
+### 📘 Admin Dashboard (`/admin`)
+**Componente:** `resources/js/pages/Admin/Dashboard.tsx`
+**Controlador:** `app/Http/Controllers/AdminController.php`
+
+Features:
+- ✅ Acceso total al sistema
+- ✅ Estadísticas globales (usuarios, productos, bodegas)
+- ✅ Panel de permisos administrativos
+- ✅ Rutas accesibles: `/admin/*`, `/costs/*`
+- 🎨 Tema: Azul profesional
+
+### 🔧 Production Dashboard (`/production`)
+**Componente:** `resources/js/pages/Production/Dashboard.tsx`
+**Controlador:** `app/Http/Controllers/ProductionController.php`
+
+Features:
+- ✅ Gestión de órdenes de producción
+- ✅ Seguimiento de inventario (método PEPS)
+- ✅ Visualización de formulaciones
+- ✅ Estadísticas de producción (órdenes pendientes, activas, completadas)
+- ✅ Rutas accesibles: `/production/*`, `/costs/*`
+- 🎨 Tema: Naranja industrial
+
+### 💰 Commercial Dashboard (`/availability`)
+**Componente:** `resources/js/pages/Comercial/Dashboard.tsx`
+**Controlador:** `app/Http/Controllers/ComercialController.php`
+
+Features:
+- ✅ Consulta de disponibilidad (solo lectura)
+- ✅ Visualización de lista de precios
+- ✅ Generación de cotizaciones
+- ✅ Estadísticas comerciales (productos, cotizaciones, pedidos)
+- ✅ Rutas accesibles: `/availability/*` solo
+- 🎨 Tema: Verde de crecimiento
+
 ## ✅ Pruebas de Acceso por Rol
 
 Para verificar que la protección de rutas funciona correctamente:
@@ -327,13 +366,28 @@ $this->actingAs($commercialUser)
     ->assertStatus(403);
 ```
 
-### Login Manual:
-Usa las credenciales preseeded:
-- **Admin:** `pintech.sistemas@gmail.com` // `Pintech_2026`
-- **Producción:** `pintech.auxiliar@gmail.com` // `Pintech_2026`
-- **Comercial:** `pintech.comercial@gmail.com` // `Pintech_2026`
+### Login Manual & Demo Dashboards:
+Usa las credenciales preseeded para acceder a dashboards específicos por rol:
 
-Luego intenta acceder a diferentes rutas y verifica el comportamiento de redirección (403).
+| Usuario | Email | Contraseña | URL |
+|---------|-------|-----------|-----|
+| **Admin** | `pintech.sistemas@gmail.com` | `Pintech_2026` | `/admin` |
+| **Producción** | `pintech.auxiliar@gmail.com` | `Pintech_2026` | `/production` |
+| **Comercial** | `pintech.comercial@gmail.com` | `Pintech_2026` | `/availability` |
+
+**Verificación de Acceso por Rol:**
+1. Inicia sesión con cada usuario
+2. Verás un dashboard distintivo:
+   - **Admin:** Azul - Permisos de administración total
+   - **Producción:** Naranja - Permisos operativos de planta
+   - **Comercial:** Verde - Permisos de solo lectura
+3. Intenta acceder a URLs no autorizadas (ej: admin accede a `/production`) → Verás 403 Unauthorized
+
+**Rutas Protegidas:**
+- `/admin` → Solo rol `admin`
+- `/production` → Solo rol `produccion`
+- `/availability` → Solo rol `comercial`
+- `/costs` → Roles `admin` y `produccion` (compartido)
 
 ## 🔧 Testing
 
