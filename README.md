@@ -263,14 +263,36 @@ php artisan reverb:start
 └── storage/              # Logs, caché, uploads
 ```
 
-## 🔐 Autenticación
+## 🔐 Autenticación y Gestión de Usuarios
 
-El proyecto incluye autenticación completa con Laravel Fortify:
-- ✅ Registro de usuarios
-- ✅ Login/Logout
-- ✅ Recuperación de contraseña
-- ✅ Autenticación de dos factores (2FA)
+### Sistema de Login
+El proyecto implementa autenticación segura con Laravel Fortify:
+- ✅ Login con Email + Contraseña
+- ✅ Recuperación de contraseña (vía email)
 - ✅ Verificación de email
+- ❌ Registro público (deshabilitado - solo admin crea usuarios)
+- ❌ Autenticación de dos factores (deshabilitada - para simplicidad en ERP interno)
+
+### Gestión de Usuarios (Admin only)
+El admin puede crear, editar y eliminar usuarios en `/users`:
+
+**Rutas disponibles:**
+- `GET /users` — Listado de usuarios (filtrable por nombre/email)
+- `GET /users/create` — Formulario para crear usuario
+- `POST /users` — Guardar nuevo usuario con rol asignado
+- `GET /users/{id}/edit` — Formulario para editar
+- `PUT /users/{id}` — Actualizar usuario
+- `DELETE /users/{id}` — Eliminar usuario
+
+**Formulario de Creación:**
+```
+Nombre Completo: (requerido)
+Email: (requerido, único)
+Contraseña: (mínimo 8 caracteres)
+Rol: (admin | produccion | comercial)
+```
+
+**Nota:** Los usuarios pueden cambiar su contraseña usando "Olvidé mi contraseña" en el login.
 
 ## 💾 Base de Datos (PostgreSQL)
 
