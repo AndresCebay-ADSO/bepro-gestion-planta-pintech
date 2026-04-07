@@ -1,605 +1,177 @@
-# F3A8 Pintech Colombia S.A.S — Sistema de Gestión de Planta
+# Pintech OS - Sistema de Gestion de Planta
 
-Sistema web de gestión de planta desarrollado para **Pintech Colombia S.A.S**, 
-empresa dedicada a la fabricación y comercialización de pinturas industriales, 
-automotrices y arquitectónicas con sedes en Neiva (Huila) y Cali (Valle del Cauca).
+ERP web para **Pintech Colombia S.A.S** (pinturas industriales, automotrices y arquitectonicas), orientado a operacion de planta, trazabilidad e integracion entre Produccion, Administracion y Comercial.
 
-## F4CB Descripción
+## Estado actual
 
-El sistema busca centralizar y automatizar los procesos de la planta de producción,
-brindando visibilidad en tiempo real sobre inventarios, costos, precios y 
-disponibilidad de producto terminado para el área comercial.
+- Backend en Laravel 12 + PHP 8.2+
+- Frontend en React 18 + Inertia + TypeScript + Tailwind v4
+- Base de datos PostgreSQL 16
+- Autenticacion con Laravel Fortify
+- Roles/permisos con Spatie Permission
+- Recuperacion de contrasena por correo con branding Pintech
+- Tema claro/oscuro y layouts auth personalizados
 
-## F680 Módulos del Sistema
+## Stack tecnico
 
-- ✅ Autenticación y gestión de usuarios
-- 🔧 Inventario de materia prima (método PEPS)
-- 🔧 Producto terminado por bodega
-- 🔧 Cálculo de costos por formulación
-- 🔧 Actualización automática de precios
-- 🔧 Alertas de stock, vencimientos y variaciones de costo
-- 🔧 Gestión de formulaciones
-- 🔧 Órdenes de producción
-- 🔧 Generación de códigos QR por envase
-- 🔧 Reportes y analytics
+- Backend: `laravel/framework` 13.x
+- Frontend: React 18, Inertia.js, Vite
+- UI: Tailwind CSS v4 + componentes UI locales
+- DB: PostgreSQL 16
+- Auth: Laravel Fortify
+- Roles: Spatie Laravel Permission
+- Testing: Pest
+- Queue: database (para procesos asinc)
+- Cache: database
 
-## 👥 Roles del Sistema
+## Roles del sistema
 
-| Rol | Nivel de Acceso |
-|-----|-----------------|
-| **Administrador** | Acceso total al sistema |
-| **Asistente de Producción** | Acceso operativo de planta |
-| **Comercial** | Consulta de disponibilidad de producto (solo lectura) |
+- `admin`: acceso total (usuarios, configuracion, costos, reportes)
+- `produccion`: operacion de planta (inventarios, formulas, ordenes)
+- `comercial`: consulta de disponibilidad y precios (solo lectura operativa)
 
-## � Control de Acceso y Roles
+## Funcionalidades principales
 
-El sistema implementa **Spatie Laravel Permission v7.2.2** para gestión centralizada de roles y permisos:
+- Gestion de materias primas y lotes (enfoque PEPS/FIFO)
+- Movimientos de inventario de MP y PT
+- Productos, categorias y unidades de medida
+- Formulas y detalle de formulacion
+- Ordenes de produccion y consumo por lote
+- Historial de costos y lista de precios
+- Alertas operativas
+- Codigos QR y documentos asociados
+- Control de acceso por rol
 
-- **Tablas de control:** `roles`, `permissions`, `model_has_roles`, `model_has_permissions`, `role_has_permissions`
-- **Modelo User:** Configurado con trait `HasRoles` para acceso a métodos como `hasRole()`, `assignRole()`, `can()`
-- **Middleware:** `role` para proteger rutas según rol (ej: `Route::middleware('role:admin')`)
+## Autenticacion y correo
 
-**Instalación ya completada:**
-✅ Librería Spatie instalada (`composer require spatie/laravel-permission`)
-✅ Configuración publicada (`config/permission.php`)
-✅ Migraciones ejecutadas (tablas de roles/permisos creadas)
-✅ Modelo User actualizado con `HasRoles` trait
-✅ 3 roles creados: Admin, Producción, Comercial
-✅ 3 usuarios Pintech preseeded con roles asignados
-✅ Middleware CheckRole implementado
-✅ Protección de rutas por rol funcional
+- Login con email/contrasena
+- Recuperacion de contrasena por email
+- Registro publico deshabilitado (creacion de usuarios por admin)
+- 2FA deshabilitado actualmente
+- Notificacion de reset personalizada:
+  - `app/Notifications/ResetPasswordNotification.php`
+  - Firma personalizada: `Saludos, Equipo de Pintech`
 
-## 🔐 Control de Acceso y Protección de Rutas
+### SMTP (desarrollo actual)
 
-El sistema implementa protección de rutas en `routes/web.php` usando el middleware `role`:
+Configuracion ejemplo usada:
 
-### Sintaxis de protección:
-
-```php
-// Una sola rol requerido
-Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
-    // Solo accesible por admin
-});
-
-// Múltiples roles permitidos (OR)
-Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
-    // Accesible por admin O producción
-});
+```env
+MAIL_MAILER=smtp
+MAIL_SCHEME=smtps
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=465
+MAIL_USERNAME=pintech.sistemas@gmail.com
+MAIL_PASSWORD=<app_password_sin_espacios>
+MAIL_FROM_ADDRESS="pintech.sistemas@gmail.com"
+MAIL_FROM_NAME="Pintech OS"
 ```
 
-### Rutas actuales estructura:
+> Nota: en tests, `phpunit.xml` ya define `MAIL_MAILER=array` para evitar dependencias SMTP externas.
 
-| Ruta Grupo | Roles | Descripción |
-|---|---|---|
-| `/dashboard` | Todos autenticados | Dashboard general |
-| `/admin/*` | `admin` | Administración del sistema |
-| `/production/*` | `produccion` | Gestión de planta |
-| `/availability/*` | `comercial` | Consulta de disponibilidad |
-| `/costs/*` | `admin,produccion` | Históricos de costos/precios |
-
-### Verificar rol en Controller:
-
-```php
-// Directamente en métodos
-if (auth()->user()->hasRole('admin')) {
-    // Hacer algo solo para admin
-}
-
-// En request validation
-$this->authorize('admin'); // Falla si no es admin
-
-// En blade template
-@role('admin')
-    <p>Solo visible para admin</p>
-@endrole
-```
-
-## �🚀 Tecnología
-
-- **Backend:** Laravel 12 + PHP 8.2+
-- **Frontend:** React 18 + Inertia.js + Tailwind CSS v4
-- **Database:** PostgreSQL 16
-- **Auth & Roles:** Spatie Laravel Permission v7.2.2
-- **Real-time:** Laravel Echo + Reverb (WebSockets para alertas)
-- **Testing:** Pest PHP
-- **Code Style:** Laravel Pint (PSR-12)
-- **Queue:** Database driver
-- **Cache:** Database store
-
-## ✅ Requisitos
+## Requisitos
 
 - PHP 8.2+
 - Composer 2.x
 - Node.js 18+
 - PostgreSQL 16
-- npm o pnpm
 
-## 📦 Instalación
+## Instalacion
 
-### 1. Clonar el repositorio
 ```bash
 git clone https://github.com/AndresCebay-ADSO/bepro-gestion-planta-pintech.git
 cd bepro-gestion-planta-pintech
-```
-
-### 2. Instalar dependencias PHP
-```bash
 composer install
-```
-
-### 3. Instalar dependencias Node
-```bash
 npm install
-```
-
-### 4. Configurar variables de entorno
-```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
-Edita `.env` y configura PostgreSQL:
-```env
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=pintech_erp
-DB_USERNAME=postgres
-DB_PASSWORD=
-```
+Configura `.env` (DB, mail, app) y luego:
 
-### 5. Configurar base de datos PostgreSQL (macOS con Homebrew)
 ```bash
-# Iniciar PostgreSQL
-brew services start postgresql@16
-
-# Crear base de datos
-psql -U postgres -c "CREATE DATABASE pintech_erp;"
-
-# Ejecutar migraciones
-php artisan migrate
-
-# Opcional: Seeders de prueba
-php artisan db:seed
+php artisan migrate:fresh --seed
 ```
 
-### 6. Construir assets frontend
-```bash
-npm run build
-```
+## Desarrollo local
 
-## 💻 Desarrollo
+### Opcion recomendada
 
-### Iniciar todos los servicios (recomendado)
 ```bash
 composer dev
 ```
-Esto inicia simultáneamente:
-- Laravel server (http://127.0.0.1:8000)
-- Queue worker para procesos en segundo plano
-- Vite dev server con HMR (Hot Module Replacement)
 
-### Servicios individuales
+### Opcion manual
+
 ```bash
-# Terminal 1: Laravel server
+# Terminal 1
 php artisan serve
 
-# Terminal 2: Queue worker
-php artisan queue:listen --tries=1
+# Terminal 2
+php artisan queue:work
 
-# Terminal 3: Vite dev server
+# Terminal 3
 npm run dev
+```
 
-# Terminal 4: WebSocket server (para alertas en tiempo real)
+Si usas Reverb:
+
+```bash
 php artisan reverb:start
 ```
 
-## 📋 Scripts Disponibles
+## Scripts utiles
 
-### Frontend
-| Comando | Descripción |
-|---------|-------------|
-| `npm run dev` | Inicia Vite en modo desarrollo con HMR |
-| `npm run build` | Construye assets para producción |
-| `npm run build:ssr` | Construye con soporte SSR |
-| `npm run lint` | Ejecuta ESLint y arregla errores |
-| `npm run lint:check` | Verifica errores sin arreglar |
-| `npm run format` | Formatea código con Prettier |
-| `npm run format:check` | Verifica formato |
-| `npm run types:check` | Verifica tipos TypeScript |
-
-### Backend
-| Comando | Descripción |
-|---------|-------------|
-| `composer dev` | Inicia todos los servicios de desarrollo |
-| `php artisan migrate` | Ejecuta migraciones |
-| `php artisan migrate:fresh --seed` | Resetea DB y ejecuta seeders |
-| `php artisan db:seed` | Ejecuta seeders |
-| `php artisan tinker` | Consola interactiva de Laravel |
-| `php artisan pail` | Monitoreo de logs en tiempo real |
-| `php artisan reverb:start` | Servidor WebSocket para alertas |
-| `./vendor/bin/pest` | Ejecuta pruebas con Pest |
-| `./vendor/bin/pint` | Verifica estilo de código PHP |
-| `./vendor/bin/pint --fix` | Corrige estilo de código PHP |
-
-## 🌐 Acceso al Sistema
-
-- **App:** http://127.0.0.1:8000
-- **Vite Dev Server:** http://localhost:5173
-- **Laravel Telescope:** http://127.0.0.1:8000/telescope (debugging)
-
-## 📁 Estructura del Proyecto
-
-```
-├── app/
-│   ├── Actions/          # Acciones reutilizables (Fortify)
-│   ├── Events/           # Eventos para WebSockets
-│   ├── Http/
-│   │   ├── Controllers/  # Controladores con Inertia
-│   │   ├── Middleware/   # Middleware personalizado
-│   │   └── Requests/     # Form Request validation
-│   ├── Models/           # Modelos Eloquent + Factories
-│   └── Services/         # Lógica de negocio (PEPS, cálculos)
-├── config/               # Configuración de la aplicación
-├── database/
-│   ├── factories/        # Factories para testing
-│   ├── migrations/       # Migraciones PostgreSQL
-│   └── seeders/          # Seeders de datos iniciales
-├── docs/                 # Documentación del proyecto
-├── resources/
-│   ├── css/              # Tailwind CSS v4
-│   └── js/
-│       ├── Components/   # Componentes React reutilizables
-│       ├── Layouts/        # Layouts compartidos
-│       ├── Pages/          # Páginas Inertia (una por ruta)
-│       ├── Hooks/          # Custom React hooks
-│       └── types/          # Definiciones TypeScript
-├── routes/
-│   ├── web.php           # Rutas web con Inertia
-│   └── console.php       # Comandos artisan
-├── tests/
-│   ├── Feature/          # Tests de endpoints Inertia
-│   └── Unit/             # Tests de lógica (PEPS, costos)
-└── storage/              # Logs, caché, uploads
-```
-
-## 🔐 Autenticación y Gestión de Usuarios
-
-### Sistema de Login
-El proyecto implementa autenticación segura con Laravel Fortify:
-- ✅ Login con Email + Contraseña
-- ✅ Recuperación de contraseña (vía email)
-- ✅ Verificación de email
-- ❌ Registro público (deshabilitado - solo admin crea usuarios)
-- ❌ Autenticación de dos factores (deshabilitada - para simplicidad en ERP interno)
-
-### Gestión de Usuarios (Admin only)
-El admin puede crear, editar y eliminar usuarios en `/users`:
-
-**Rutas disponibles:**
-- `GET /users` — Listado de usuarios (filtrable por nombre/email)
-- `GET /users/create` — Formulario para crear usuario
-- `POST /users` — Guardar nuevo usuario con rol asignado
-- `GET /users/{id}/edit` — Formulario para editar
-- `PUT /users/{id}` — Actualizar usuario
-- `DELETE /users/{id}` — Eliminar usuario
-
-**Formulario de Creación:**
-```
-Nombre Completo: (requerido)
-Email: (requerido, único)
-Contraseña: (mínimo 8 caracteres)
-Rol: (admin | produccion | comercial)
-```
-
-**Nota:** Los usuarios pueden cambiar su contraseña usando "Olvidé mi contraseña" en el login.
-
-## 💾 Base de Datos (PostgreSQL)
-
-### Características principales:
-- **PEPS (FIFO):** Método Primero en Entrar, Primero en Salir para inventario
-- **Window Functions:** Para cálculos de stock y costos
-- **JSONB:** Para campos flexibles (atributos de productos)
-- **Full-text search:** Para búsquedas rápidas
-
-### Tablas principales:
-- `users` - Usuarios con roles
-- `raw_materials` - Materias primas
-- `inventory_batches` - Lotes de inventario (PEPS)
-- `finished_products` - Productos terminados
-- `formulations` - Formulaciones/recetas
-- `production_orders` - Órdenes de producción
-- `warehouses` - Bodegas
-
-## 🎨 Dashboards por Rol
-
-El sistema implementa tres dashboards distintos, cada uno optimizado para su rol:
-
-### 📘 Admin Dashboard (`/admin`)
-**Componente:** `resources/js/pages/Admin/Dashboard.tsx`
-**Controlador:** `app/Http/Controllers/AdminController.php`
-
-Features:
-- ✅ Acceso total al sistema
-- ✅ Estadísticas globales (usuarios, productos, bodegas)
-- ✅ Panel de permisos administrativos
-- ✅ Rutas accesibles: `/admin/*`, `/costs/*`
-- 🎨 Tema: Azul profesional
-
-### 🔧 Production Dashboard (`/production`)
-**Componente:** `resources/js/pages/Production/Dashboard.tsx`
-**Controlador:** `app/Http/Controllers/ProductionController.php`
-
-Features:
-- ✅ Gestión de órdenes de producción
-- ✅ Seguimiento de inventario (método PEPS)
-- ✅ Visualización de formulaciones
-- ✅ Estadísticas de producción (órdenes pendientes, activas, completadas)
-- ✅ Rutas accesibles: `/production/*`, `/costs/*`
-- 🎨 Tema: Naranja industrial
-
-### 💰 Commercial Dashboard (`/availability`)
-**Componente:** `resources/js/pages/Comercial/Dashboard.tsx`
-**Controlador:** `app/Http/Controllers/ComercialController.php`
-
-Features:
-- ✅ Consulta de disponibilidad (solo lectura)
-- ✅ Visualización de lista de precios
-- ✅ Generación de cotizaciones
-- ✅ Estadísticas comerciales (productos, cotizaciones, pedidos)
-- ✅ Rutas accesibles: `/availability/*` solo
-- 🎨 Tema: Verde de crecimiento
-
-## ✅ Pruebas de Acceso por Rol
-
-Para verificar que la protección de rutas funciona correctamente:
-
-### En Tinker (REPL):
 ```bash
-php artisan tinker
-
-# Ver roles de un usuario
-$user = User::find(1);
-$user->getRoleNames(); // Retorna ['admin']
-
-# Verificar rol
-$user->hasRole('admin'); // true
-$user->hasRole('produccion'); // false
-
-# Login como usuario
-auth()->loginUsingId(2); // Usuario de producción
-auth()->user()->getRoleNames(); // ['produccion']
+npm run dev
+npm run build
+npm run types:check
+./vendor/bin/pest
+./vendor/bin/pint
+php artisan optimize:clear
 ```
 
-### En Tests:
-```php
-// Crear usuario con rol
-$user = User::factory()->create()->assignRole('admin');
+## Testing
 
-// Test con role middleware
-$this->actingAs($user)
-    ->get('/admin')
-    ->assertSuccessful();
+- Framework: Pest
+- Config de test en `phpunit.xml`:
+  - `DB_CONNECTION=sqlite` (`:memory:`)
+  - `MAIL_MAILER=array`
+  - `QUEUE_CONNECTION=sync`
 
-// Test sin permisos
-$commercialUser = User::factory()->create()->assignRole('comercial');
-$this->actingAs($commercialUser)
-    ->get('/admin')
-    ->assertStatus(403);
-```
+Ejemplos:
 
-### Login Manual & Demo Dashboards:
-Usa las credenciales preseeded para acceder a dashboards específicos por rol:
-
-| Usuario | Email | Contraseña | URL |
-|---------|-------|-----------|-----|
-| **Admin** | `pintech.sistemas@gmail.com` | `Pintech_2026` | `/admin` |
-| **Producción** | `pintech.auxiliar@gmail.com` | `Pintech_2026` | `/production` |
-| **Comercial** | `pintech.comercial@gmail.com` | `Pintech_2026` | `/availability` |
-
-**Verificación de Acceso por Rol:**
-1. Inicia sesión con cada usuario
-2. Verás un dashboard distintivo:
-   - **Admin:** Azul - Permisos de administración total
-   - **Producción:** Naranja - Permisos operativos de planta
-   - **Comercial:** Verde - Permisos de solo lectura
-3. Intenta acceder a URLs no autorizadas (ej: admin accede a `/production`) → Verás 403 Unauthorized
-
-**Rutas Protegidas:**
-- `/admin` → Solo rol `admin`
-- `/production` → Solo rol `produccion`
-- `/availability` → Solo rol `comercial`
-- `/costs` → Roles `admin` y `produccion` (compartido)
-
-## 🔧 Testing
-
-Ejecutar todas las pruebas:
 ```bash
 ./vendor/bin/pest
+./vendor/bin/pest tests/Feature/Auth/PasswordResetTest.php
 ```
 
-Pruebas específicas:
-```bash
-./vendor/bin/pest tests/Feature
-./vendor/bin/pest tests/Unit
-./vendor/bin/pest --filter=InventoryTest
-```
+## Base de datos
 
-Configuración: `phpunit.xml` usa PostgreSQL para tests precisos con window functions.
+El esquema consolidado actual se documenta en:
 
-## 📤 Git Workflow
+- `docs/MER.md`
 
-### Branches
-- `main` - Código en producción, siempre estable
-- `develop` - Branch de integración
-- `feature/PT-XXX-descripcion` - Features (ej: `feature/PT-PP-01-inventario`)
+Incluye tablas de negocio y tablas de soporte (cache, jobs, auth, permisos).
 
-### Commits (Conventional Commits)
-```
-feat: nueva funcionalidad
-fix: corrección de bug
-docs: documentación
-style: formato de código
-refactor: reestructuración
-```
+## Documentacion
 
-## 🚀 Deployment
+Carpeta `docs/`:
 
-### Preparar para producción
-```bash
-composer install --no-dev --optimize-autoloader
-npm run build
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-```
+- `MER.md` - Modelo entidad relacion / diccionario de datos actualizado
+- `ESPECIFICACION.md`
+- `PLAN_DESARROLLO.md`
+- `SISTEMA_TEMAS_UI.md`
+- `RESUMEN_CAMBIOS_PINTECH_OS.md`
+- `STANDARDS.md`
 
-### Variables de entorno producción
-```env
-APP_ENV=production
-APP_DEBUG=false
-APP_KEY=<generado>
-DB_CONNECTION=pgsql
-QUEUE_CONNECTION=database
-CACHE_STORE=database
-REVERB_APP_ID=<tu-app-id>
-REVERB_APP_KEY=<tu-key>
-REVERB_APP_SECRET=<tu-secret>
-```
+## Credenciales demo (seed)
 
-## 📚 Documentación
+- Admin: `pintech.sistemas@gmail.com`
+- Produccion: `pintech.auxiliar@gmail.com`
+- Comercial: `pintech.comercial@gmail.com`
+- Password demo: `Pintech_2026`
 
-La documentación del proyecto se encuentra en la carpeta `docs/`:
+## Autor
 
-- `PT-PP-01.md` — Planteamiento del Problema
-- `PT-ERS-01.md` — Especificación de Requerimientos
-- `PT-ECU-01.md` — Especificación de Casos de Uso
-- `JUSTIFICACION.md` — Justificación tecnológica
-- `STANDARDS.md` — Estándares de desarrollo
-- `CLAUDE.md` — Guía para Claude Code
-
-## 👨‍💻 Desarrollador
-
-**Andrés Stiven Cebay Ceballos**  
-Practicante ADSO — 2026
-
-## � Dependencias Instaladas
-
-Seguimiento de librerías externas instaladas y su propósito:
-
-| Librería | Versión | Fecha Instalación | Propósito |
-|----------|---------|-------------------|-----------|
-| **Spatie Laravel Permission** | ^7.2.2 | 06/04/2026 | Gestión centralizada de roles y permisos |
-
-**Notas de instalación:**
-- Spatie Laravel Permission: Se publicaron archivos de configuración en `config/permission.php`. Migraciones propias creadas automáticamente. Modelo `User` actualizado con trait `HasRoles`.
-
-### Seeders de Datos Base
-
-Se han creado seeders automáticos para datos maestros iniciales:
-
-| Seeder | Datos | Creado |
-|--------|-------|--------|
-| `UnitsOfMeasureSeeder` | 11 unidades estándar (kg, lt, gal, ml, u, m³, g, mg, lb, gal_imp, bbl) | ✅ |
-| `RolePermissionSeeder` | 3 roles base (admin, produccion, comercial) | ✅ |
-| `UserSeeder` | 3 usuarios Pintech con roles asignados | ✅ |
-
-**Usuarios preseeded:**
-
-| Email | Nombre | Rol | Contraseña | Uso |
-|-------|--------|-----|-----------|-----|
-| `pintech.sistemas@gmail.com` | Admin Sistemas | **Admin** | `Pintech_2026` | Acceso total sistema |
-| `pintech.auxiliar@gmail.com` | Auxiliar Producción | **Producción** | `Pintech_2026` | Gestión planta |
-| `pintech.comercial@gmail.com` | Gerente Comercial | **Comercial** | `Pintech_2026` | Consulta de inventario |
-
-**Roles definidos:**
-- **admin**: Acceso total al sistema (configuración, usuarios, auditoría)
-- **produccion**: Acceso operativo de planta (órdenes, inventario MP)
-- **comercial**: Solo lectura de disponibilidad de producto (reportes)
-
-**Ejecutar seeders:**
-```bash
-# Todos
-php artisan db:seed
-
-# O específicos:
-php artisan db:seed --class=UnitsOfMeasureSeeder
-php artisan db:seed --class=RolePermissionSeeder
-php artisan db:seed --class=UserSeeder
-```
-
----
-
-## 📊 Migraciones de Base de Datos
-
-### Estado actual: ✅ TODAS EJECUTADAS (06/04/2026)
-
-**18 tablas de negocio creadas** según MER (Modelo Entidad-Relación):
-
-| # | Tabla | Descripción | Creada |
-|---|-------|-------------|--------|
-| 0 | `units_of_measure` | Unidades estándar (kg, lt, gal, ml, etc.) | ✅ |
-| 1 | `product_categories` | Categorías de productos (Industrial, Automotriz, Arquitectónico) | ✅ |
-| 2 | `warehouses` | Bodegas (Neiva, Cali) | ✅ |
-| 3 | `raw_materials` | Catálogo de materias primas | ✅ |
-| 4 | `inventory_batches` | Lotes de MP (método PEPS) | ✅ |
-| 5 | `inventory_movements` | Movimientos entrada/salida de MP | ✅ |
-| 6 | `products` | Catálogo de productos terminados | ✅ |
-| 7 | `finished_inventory` | Stock PT por producto × bodega | ✅ |
-| 8 | `finished_inventory_movements` | Movimientos entrada/salida PT | ✅ |
-| 9 | `formulas` | Formulaciones activas e históricas | ✅ |
-| 10 | `formula_details` | Ingredientes por formulación | ✅ |
-| 11 | `production_orders` | Órdenes de producción (OP) | ✅ |
-| 12 | `production_order_details` | Consumo de lotes por OP | ✅ |
-| 13 | `production_costs` | Historial de costos calculados | ✅ |
-| 14 | `price_list` | Historial de precios vigentes | ✅ |
-| 15 | `qr_codes` | Códigos QR por producto | ✅ |
-| 16 | `qr_documents` | Documentos técnicos por QR | ✅ |
-| 17 | `alerts` | Alertas automáticas del sistema | ✅ |
-
-**Además (creadas por frameworks):**
-- Tablas Spatie: `roles`, `permissions`, `model_has_roles`, `model_has_permissions`, `role_has_permissions`
-- Tabla Laravel: `users`
-
-### Características implementadas:
-✅ **PEPS:** Trazabilidad completa lote × orden de producción  
-✅ **Historial:** Costos y precios con campos `valid_from`/`valid_to`  
-✅ **Auditoría:** Campos `created_by`, `updated_by` en operaciones críticas  
-✅ **Índices:** Optimizados para consultas de PEPS, alertas, búsquedas  
-✅ **Restricciones:** FK con `onDelete` apropiados, unicidad enforcement  
-✅ **Unidades:** Tabla centralizada con conversiones de peso/volumen (kg, lt, gal, ml, etc.)  
-
----
-
-## �📜 Licencia
-
-Propietario — Pintech Colombia S.A.S
-
-## 🛠️ Herramientas de Desarrollo
-
-- **Laravel Telescope:** Debugging en `/telescope`
-- **Laravel Pail:** Logs en tiempo real (`php artisan pail`)
-- **React DevTools:** Extensión del navegador
-- **Laravel Reverb:** WebSocket para alertas en tiempo real
-
-## 🔍 Notas Importantes
-
-### PEPS (Método FIFO)
-Las consultas de inventario usan PostgreSQL window functions:
-```php
-InventoryBatch::where('raw_material_id', $id)
-    ->where('remaining_quantity', '>', 0)
-    ->orderBy('entry_date')
-    ->orderBy('created_at')
-    ->first();
-```
-
-### Inertia.js Data Flow
-Los datos fluyen del Controller al componente React automáticamente:
-```php
-// Controller
-return Inertia::render('Inventory/Index', ['materials' => $materials]);
-
-// React
-export default function Index({ materials }) { ... }
-```
+Andres Stiven Cebay Ceballos (ADSO) - 2026
