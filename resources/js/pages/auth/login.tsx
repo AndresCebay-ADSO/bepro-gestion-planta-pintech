@@ -20,8 +20,8 @@ export default function Login({ status, canResetPassword }: Props) {
         <>
             <Head title="Iniciar sesión — Pintech" />
 
-            <div className="flex min-h-svh w-full items-center justify-center bg-slate-100 p-4 text-slate-900 dark:bg-slate-100">
-                <div className="flex w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xl shadow-slate-200/60 dark:border-slate-200/90 dark:bg-white dark:shadow-slate-300/50">
+            <div className="flex min-h-svh w-full items-center justify-center bg-background p-4 text-foreground">
+                <div className="flex w-full max-w-4xl overflow-hidden rounded-2xl border border-border bg-card shadow-xl shadow-slate-900/10 dark:shadow-slate-950/30">
                     {/* ── Panel izquierdo ── */}
                     <div
                         className="relative hidden w-1/2 flex-col justify-between overflow-hidden p-10 md:flex"
@@ -36,7 +36,7 @@ export default function Login({ status, canResetPassword }: Props) {
 
                         {/* Badge superior */}
                         <div className="relative z-10">
-                            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 px-3 py-1 text-xs font-semibold tracking-widest text-white/60 uppercase">
+                            <span className="text-primary-foreground/75 inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 px-3 py-1 text-xs font-semibold tracking-widest uppercase">
                                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
                                 Sistema de Planta
                             </span>
@@ -44,12 +44,12 @@ export default function Login({ status, canResetPassword }: Props) {
 
                         {/* Frase central */}
                         <div className="relative z-10 space-y-4">
-                            <h1 className="text-3xl leading-snug font-bold text-white">
+                            <h1 className="text-primary-foreground text-3xl leading-snug font-bold">
                                 Precisión en cada gota.
                                 <br />
                                 Control en cada lote.
                             </h1>
-                            <p className="max-w-xs text-sm leading-relaxed text-white/60">
+                            <p className="text-primary-foreground/70 max-w-xs text-sm leading-relaxed">
                                 Accede al ecosistema PINTECH para monitoreo en
                                 tiempo real de inventarios, formulaciones y
                                 producción de pinturas.
@@ -62,7 +62,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                 <p className="text-2xl font-bold text-emerald-400">
                                     99.9%
                                 </p>
-                                <p className="text-xs tracking-widest text-white/50 uppercase">
+                                <p className="text-primary-foreground/60 text-xs tracking-widest uppercase">
                                     Disponibilidad
                                 </p>
                             </div>
@@ -70,37 +70,41 @@ export default function Login({ status, canResetPassword }: Props) {
                     </div>
 
                     {/* ── Panel derecho ── */}
-                    <div className="flex w-full flex-col justify-center bg-white px-10 py-12 md:w-1/2 dark:bg-white">
+                    <div className="flex w-full flex-col justify-center bg-card px-10 py-12 md:w-1/2">
                         {/* Logo y título */}
                         <div className="mb-8">
                             <div className="mb-6 flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0d2a6e]">
-                                    <img
-                                        src="/images/logo-pintech.png"
-                                        alt="Pintech logo"
-                                        className="h-5 w-5 object-contain"
-                                        onError={(e) => {
-                                            (
-                                                e.target as HTMLImageElement
-                                            ).style.display = 'none';
-                                        }}
-                                    />
+                                <img
+                                    src="/images/logo-pintech.png"
+                                    alt="Pintech logo"
+                                    className="h-9 w-auto shrink-0 object-contain"
+                                    draggable={false}
+                                    onError={(e) => {
+                                        (
+                                            e.target as HTMLImageElement
+                                        ).style.display = 'none';
+                                    }}
+                                />
+                                <div className="grid leading-tight">
+                                    <span className="text-[11px] tracking-[0.22em] text-muted-foreground uppercase">
+                                        Pintech OS
+                                    </span>
+                                    <span className="text-sm font-semibold text-foreground">
+                                        Industrial Control
+                                    </span>
                                 </div>
-                                <span className="text-lg font-bold tracking-wide text-[#0d2a6e] uppercase">
-                                    Pintech
-                                </span>
                             </div>
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-900">
+                            <h2 className="text-xl font-semibold text-foreground">
                                 Portal de Operaciones
                             </h2>
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-500">
+                            <p className="text-muted-foreground mt-1 text-sm">
                                 Ingresa a tu cuenta autorizada de planta.
                             </p>
                         </div>
 
                         {/* Mensaje de estado */}
                         {status && (
-                            <div className="mb-4 rounded-lg bg-emerald-50 px-4 py-2 text-center text-sm font-medium text-emerald-600">
+                            <div className="text-primary mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-center text-sm font-medium">
                                 {status}
                             </div>
                         )}
@@ -117,12 +121,12 @@ export default function Login({ status, canResetPassword }: Props) {
                                     <div className="grid gap-1.5">
                                         <Label
                                             htmlFor="email"
-                                            className="text-xs font-semibold tracking-widest text-gray-500 uppercase dark:text-gray-500"
+                                            className="text-muted-foreground text-xs font-semibold tracking-widest uppercase"
                                         >
                                             Correo electrónico
                                         </Label>
                                         <div className="relative">
-                                            <span className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400">
+                                            <span className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2">
                                                 <svg
                                                     xmlns="http://www.w3.org/2000/svg"
                                                     className="h-4 w-4"
@@ -144,7 +148,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                                 tabIndex={1}
                                                 autoComplete="email"
                                                 placeholder="gerente.planta@pintech.com"
-                                                className="rounded-lg border-slate-200 bg-white pl-9 text-sm text-slate-900 selection:bg-sky-200 selection:text-slate-900 placeholder:text-slate-400 focus:border-[#0d2a6e] focus:ring-[#0d2a6e]/20 dark:border-slate-200 dark:bg-white dark:text-slate-900 dark:selection:bg-sky-200 dark:selection:text-slate-900 dark:placeholder:text-slate-400"
+                                                className="rounded-lg border-input bg-background pl-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
                                             />
                                         </div>
                                         <InputError message={errors.email} />
@@ -155,14 +159,14 @@ export default function Login({ status, canResetPassword }: Props) {
                                         <div className="flex items-center justify-between">
                                             <Label
                                                 htmlFor="password"
-                                                className="text-xs font-semibold tracking-widest text-gray-500 uppercase dark:text-gray-500"
+                                                className="text-muted-foreground text-xs font-semibold tracking-widest uppercase"
                                             >
                                                 Contraseña
                                             </Label>
                                             {canResetPassword && (
                                                 <a
                                                     href={request.url()}
-                                                    className="text-xs text-[#0d2a6e] hover:underline"
+                                                    className="text-primary text-xs hover:underline"
                                                     tabIndex={5}
                                                 >
                                                     ¿Olvidaste tu contraseña?
@@ -176,7 +180,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                             tabIndex={2}
                                             autoComplete="current-password"
                                             placeholder="••••••••••••"
-                                            className="rounded-lg border-slate-200 bg-white text-sm text-slate-900 selection:bg-sky-200 selection:text-slate-900 placeholder:text-slate-400 focus:border-[#0d2a6e] focus:ring-[#0d2a6e]/20 dark:border-slate-200 dark:bg-white dark:text-slate-900 dark:selection:bg-sky-200 dark:selection:text-slate-900 dark:placeholder:text-slate-400"
+                                            className="rounded-lg border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
                                         />
                                         <InputError message={errors.password} />
                                     </div>
@@ -187,11 +191,11 @@ export default function Login({ status, canResetPassword }: Props) {
                                             id="remember"
                                             name="remember"
                                             tabIndex={3}
-                                            className="cursor-pointer border-gray-300 data-[state=checked]:border-[#0d2a6e] data-[state=checked]:bg-white"
+                                            className="cursor-pointer border-input data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                                         />
                                         <Label
                                             htmlFor="remember"
-                                            className="cursor-pointer text-sm text-gray-500 dark:text-gray-600"
+                                            className="text-muted-foreground cursor-pointer text-sm"
                                         >
                                             Recordar sesión
                                         </Label>
@@ -203,7 +207,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                         tabIndex={4}
                                         disabled={processing}
                                         data-test="login-button"
-                                        className="mt-1 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#0d2a6e] py-2.5 font-semibold text-white transition-all duration-200 hover:bg-[#0a2060]"
+                                        className="bg-primary text-primary-foreground hover:bg-primary/90 mt-1 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg py-2.5 font-semibold transition-all duration-200"
                                     >
                                         {processing ? (
                                             <Spinner />
@@ -228,7 +232,7 @@ export default function Login({ status, canResetPassword }: Props) {
                         </Form>
 
                         {/* Footer */}
-                        <div className="mt-8 flex items-center justify-between text-xs text-gray-500 dark:text-gray-500">
+                        <div className="text-muted-foreground mt-8 flex items-center justify-between text-xs">
                             <span className="flex items-center gap-1.5">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"

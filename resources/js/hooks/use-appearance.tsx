@@ -11,6 +11,7 @@ export type UseAppearanceReturn = {
 
 const listeners = new Set<() => void>();
 let currentAppearance: Appearance = 'system';
+let initialized = false;
 
 const prefersDark = (): boolean => {
     if (typeof window === 'undefined') {
@@ -47,9 +48,11 @@ const applyTheme = (appearance: Appearance): void => {
     }
 
     const isDark = isDarkMode(appearance);
+    const resolvedAppearance: ResolvedAppearance = isDark ? 'dark' : 'light';
 
     document.documentElement.classList.toggle('dark', isDark);
-    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+    document.documentElement.dataset.theme = resolvedAppearance;
+    document.documentElement.style.colorScheme = resolvedAppearance;
 };
 
 const subscribe = (callback: () => void) => {
@@ -75,6 +78,10 @@ export function initializeTheme(): void {
         return;
     }
 
+    if (initialized) {
+        return;
+    }
+
     if (!localStorage.getItem('appearance')) {
         localStorage.setItem('appearance', 'system');
         setCookie('appearance', 'system');
@@ -85,6 +92,7 @@ export function initializeTheme(): void {
 
     // Set up system theme change listener
     mediaQuery()?.addEventListener('change', handleSystemThemeChange);
+    initialized = true;
 }
 
 export function useAppearance(): UseAppearanceReturn {
