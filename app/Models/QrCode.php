@@ -8,24 +8,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Formula extends Model
+class QrCode extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'formulas';
+    protected $table = 'qr_codes';
 
     protected $fillable = [
         'product_id',
-        'version',
+        'token',
+        'url',
         'is_active',
-        'notes',
         'created_by',
     ];
 
     protected function casts(): array
     {
         return [
-            'version' => 'integer',
             'is_active' => 'boolean',
         ];
     }
@@ -40,18 +39,8 @@ class Formula extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function details(): HasMany
+    public function documents(): HasMany
     {
-        return $this->hasMany(FormulaDetail::class, 'formula_id');
-    }
-
-    public function productionOrders(): HasMany
-    {
-        return $this->hasMany(ProductionOrder::class, 'formula_id');
-    }
-
-    public function productionCosts(): HasMany
-    {
-        return $this->hasMany(ProductionCost::class, 'formula_id');
+        return $this->hasMany(QrDocument::class, 'qr_code_id');
     }
 }
