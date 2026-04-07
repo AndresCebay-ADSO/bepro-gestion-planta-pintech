@@ -1,7 +1,15 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
+import {
+    Bell,
+    BookOpen,
+    Folder,
+    LayoutGrid,
+    Menu,
+    Search,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
+import AppearanceTabs from '@/components/appearance-tabs';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -210,6 +218,18 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 ))}
                             </div>
                         </div>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="relative h-9 w-9 cursor-pointer"
+                            aria-label="Notificaciones"
+                        >
+                            <Bell className="!size-5 opacity-80" />
+                            <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
+                                3
+                            </span>
+                        </Button>
+                        <AppearanceTabs compact />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button

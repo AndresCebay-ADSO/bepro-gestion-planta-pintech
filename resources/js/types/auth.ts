@@ -1,8 +1,18 @@
+export type UserRole = 'admin' | 'produccion' | 'comercial';
+
+export type UserRoleRecord = {
+    name: UserRole | string;
+    [key: string]: unknown;
+};
+
 export type User = {
     id: number;
     name: string;
     email: string;
     avatar?: string;
+    role?: UserRole | string;
+    roles?: UserRoleRecord[] | string[];
+    role_names?: string[];
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
     created_at: string;
@@ -11,7 +21,7 @@ export type User = {
 };
 
 export type Auth = {
-    user: User;
+    user: User | null;
 };
 
 export type TwoFactorSetupData = {
