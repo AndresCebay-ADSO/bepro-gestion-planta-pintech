@@ -138,8 +138,10 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                         type="submit"
                                         tabIndex={2}
                                         disabled={processing}
+                                        aria-disabled={processing}
+                                        aria-busy={processing}
                                         data-test="email-password-reset-link-button"
-                                        className="bg-primary text-primary-foreground hover:bg-primary/90 mt-1 flex w-full items-center justify-center gap-2 rounded-lg py-2.5 font-semibold transition-all duration-200"
+                                        className="bg-primary text-primary-foreground hover:bg-primary/90 mt-1 flex w-full items-center justify-center gap-2 rounded-lg py-2.5 font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-70"
                                     >
                                         {processing ? (
                                             <Spinner />
