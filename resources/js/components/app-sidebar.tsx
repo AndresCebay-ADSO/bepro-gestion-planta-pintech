@@ -14,11 +14,9 @@ import {
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
     SidebarContent,
-    SidebarFooter,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
@@ -232,11 +230,7 @@ export function AppSidebar() {
     const filteredGroups = buildSidebarGroups(userRoles);
 
     return (
-        <Sidebar
-            collapsible="icon"
-            variant="inset"
-            className="[&_[data-sidebar=sidebar]]:bg-slate-950 [&_[data-sidebar=sidebar]]:text-slate-100 [&_[data-sidebar=sidebar]]:shadow-none"
-        >
+        <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
@@ -252,10 +246,6 @@ export function AppSidebar() {
             <SidebarContent>
                 <NavMain groups={filteredGroups} />
             </SidebarContent>
-
-            <SidebarFooter>
-                <NavUser />
-            </SidebarFooter>
         </Sidebar>
     );
 }

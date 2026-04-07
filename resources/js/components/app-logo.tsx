@@ -1,21 +1,19 @@
 export default function AppLogo() {
     return (
-        <>
-            <div className="flex size-10 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/10">
-                <img
-                    src="/images/logo-pintech.png"
-                    alt="Pintech logo"
-                    className="size-6 object-contain"
-                />
-            </div>
-            <div className="ml-1.5 grid flex-1 text-left leading-tight">
+        <div className="flex min-w-0 items-center gap-3">
+            <img
+                src="/images/logo-pintech.png"
+                alt="Pintech logo"
+                className="h-20 w-20 shrink-0 object-contain"
+            />
+            <div className="grid min-w-0 flex-1 text-left leading-tight">
                 <span className="truncate text-[11px] tracking-[0.22em] text-sidebar-foreground/55 uppercase">
-                    Pintech OS
+                    PINTECH OS
                 </span>
-                <span className="truncate text-sm font-semibold text-sidebar-foreground">
+                <span className="truncate text-sm font-bold text-sidebar-foreground">
                     Industrial Control
                 </span>
             </div>
-        </>
+        </div>
     );
 }

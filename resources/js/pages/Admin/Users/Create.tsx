@@ -51,20 +51,20 @@ const UsersCreate: FC<Props> = ({ roles }) => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 px-4 py-8">
+        <div className="bg-background text-foreground min-h-screen px-4 py-8">
             <div className="mx-auto max-w-2xl">
                 {/* Header */}
                 <div className="mb-8">
                     <Link
                         href={route('users.index')}
-                        className="mb-4 inline-block text-blue-600 hover:text-blue-800"
+                        className="text-primary hover:text-primary/80 mb-4 inline-block"
                     >
                         ← Volver a Usuarios
                     </Link>
-                    <h1 className="mb-2 text-4xl font-bold text-gray-900">
+                    <h1 className="mb-2 text-4xl font-bold text-foreground">
                         ➕ Crear Nuevo Usuario
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground">
                         Agrega un nuevo usuario al sistema
                     </p>
                 </div>
@@ -72,11 +72,11 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                 {/* Form */}
                 <form
                     onSubmit={handleSubmit}
-                    className="space-y-6 rounded-lg bg-white p-8 shadow"
+                    className="space-y-6 rounded-lg border border-border bg-card p-8 shadow-sm"
                 >
                     {/* Name */}
                     <div>
-                        <label className="mb-2 block text-sm font-semibold text-gray-900">
+                        <label className="text-foreground mb-2 block text-sm font-semibold">
                             Nombre Completo
                         </label>
                         <input
@@ -85,10 +85,10 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                             value={formData.name}
                             onChange={handleChange}
                             placeholder="Ej: Juan Pérez"
-                            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
                         />
                         {errors.name && (
-                            <p className="mt-1 text-sm text-red-600">
+                            <p className="text-destructive mt-1 text-sm">
                                 {errors.name[0]}
                             </p>
                         )}
@@ -96,7 +96,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 
                     {/* Email */}
                     <div>
-                        <label className="mb-2 block text-sm font-semibold text-gray-900">
+                        <label className="text-foreground mb-2 block text-sm font-semibold">
                             Email
                         </label>
                         <input
@@ -105,10 +105,10 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                             value={formData.email}
                             onChange={handleChange}
                             placeholder="juan@pintech.com"
-                            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
                         />
                         {errors.email && (
-                            <p className="mt-1 text-sm text-red-600">
+                            <p className="text-destructive mt-1 text-sm">
                                 {errors.email[0]}
                             </p>
                         )}
@@ -116,14 +116,14 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 
                     {/* Role */}
                     <div>
-                        <label className="mb-2 block text-sm font-semibold text-gray-900">
+                        <label className="text-foreground mb-2 block text-sm font-semibold">
                             Rol
                         </label>
                         <select
                             name="role"
                             value={formData.role}
                             onChange={handleChange}
-                            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="border-input bg-background text-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
                         >
                             {roles.map((role) => (
                                 <option key={role.id} value={role.name}>
@@ -133,7 +133,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                             ))}
                         </select>
                         {errors.role && (
-                            <p className="mt-1 text-sm text-red-600">
+                            <p className="text-destructive mt-1 text-sm">
                                 {errors.role[0]}
                             </p>
                         )}
@@ -141,7 +141,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 
                     {/* Password */}
                     <div>
-                        <label className="mb-2 block text-sm font-semibold text-gray-900">
+                        <label className="text-foreground mb-2 block text-sm font-semibold">
                             Contraseña
                         </label>
                         <input
@@ -150,10 +150,10 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                             value={formData.password}
                             onChange={handleChange}
                             placeholder="Mínimo 8 caracteres"
-                            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
                         />
                         {errors.password && (
-                            <p className="mt-1 text-sm text-red-600">
+                            <p className="text-destructive mt-1 text-sm">
                                 {errors.password[0]}
                             </p>
                         )}
@@ -161,7 +161,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 
                     {/* Password Confirmation */}
                     <div>
-                        <label className="mb-2 block text-sm font-semibold text-gray-900">
+                        <label className="text-foreground mb-2 block text-sm font-semibold">
                             Confirmar Contraseña
                         </label>
                         <input
@@ -170,10 +170,10 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                             value={formData.password_confirmation}
                             onChange={handleChange}
                             placeholder="Repite la contraseña"
-                            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
                         />
                         {errors.password_confirmation && (
-                            <p className="mt-1 text-sm text-red-600">
+                            <p className="text-destructive mt-1 text-sm">
                                 {errors.password_confirmation[0]}
                             </p>
                         )}
@@ -184,13 +184,13 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
+                            className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1 rounded-lg px-6 py-2 font-semibold transition disabled:opacity-50"
                         >
                             {loading ? 'Creando...' : 'Crear Usuario'}
                         </button>
                         <Link
                             href={route('users.index')}
-                            className="flex-1 rounded-lg bg-gray-300 px-6 py-2 text-center font-semibold text-gray-800 transition hover:bg-gray-400"
+                            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 flex-1 rounded-lg px-6 py-2 text-center font-semibold transition"
                         >
                             Cancelar
                         </Link>

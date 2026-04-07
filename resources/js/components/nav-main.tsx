@@ -41,7 +41,7 @@ export function NavMain({ groups = [] }: { groups: NavGroup[] }) {
                                             }}
                                             className={cn(
                                                 isDisabled &&
-                                                    'cursor-not-allowed text-sidebar-foreground/45 hover:bg-transparent hover:text-sidebar-foreground/45',
+                                                    'cursor-not-allowed text-sidebar-foreground/50 hover:bg-transparent hover:text-sidebar-foreground/50',
                                             )}
                                         >
                                             {isDisabled ? (
@@ -61,7 +61,7 @@ export function NavMain({ groups = [] }: { groups: NavGroup[] }) {
                                             )}
                                         </SidebarMenuButton>
                                         {item.badge !== undefined && (
-                                            <SidebarMenuBadge className="rounded-md bg-amber-400/20 px-1.5 text-[11px] font-semibold text-amber-200">
+                                            <SidebarMenuBadge className="rounded-md bg-sidebar-primary/20 px-1.5 text-[11px] font-semibold text-sidebar-primary">
                                                 {item.badge}
                                             </SidebarMenuBadge>
                                         )}
