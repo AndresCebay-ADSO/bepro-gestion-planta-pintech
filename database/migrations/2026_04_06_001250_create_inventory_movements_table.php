@@ -11,21 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('finished_inventory_movements', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('product_id')->constrained('products')->onDelete('restrict');
-            $table->foreignId('warehouse_id')->constrained('warehouses')->onDelete('restrict');
-            $table->foreignId('production_order_id')->nullable();
+        Schema::create('inventory_movements', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->foreignId('raw_material_id')->constrained('raw_materials')->onDelete('restrict');
+            $table->foreignId('batch_id')->nullable()->constrained('inventory_batches')->onDelete('restrict');
+            $table->foreignId('production_order_id')->nullable()->constrained('production_orders')->nullOnDelete();
             $table->enum('type', ['entrada', 'salida']);
             $table->decimal('quantity', 12, 4);
+            $table->decimal('cost_price', 12, 4);
             $table->date('movement_date');
             $table->text('notes')->nullable();
             $table->foreignId('created_by')->constrained('users')->onDelete('restrict');
             $table->timestamps();
 
-            $table->index('product_id');
+            $table->index(['raw_material_id', 'movement_date']);
             $table->index('type');
-            $table->index('movement_date');
         });
     }
 
@@ -34,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('finished_inventory_movements');
+        Schema::dropIfExists('inventory_movements');
     }
 };

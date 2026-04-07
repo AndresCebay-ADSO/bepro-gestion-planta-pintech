@@ -48,7 +48,7 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Producto Terminado',
-                href: dashboard(),
+                href: '/production/finished-goods',
                 icon: Factory,
                 allowedRoles: ['admin', 'produccion', 'comercial'],
             },
@@ -88,7 +88,7 @@ const navigationGroups: NavGroup[] = [
                 title: 'Lista de Precios',
                 href: '/prices',
                 icon: WalletCards,
-                allowedRoles: ['admin', 'produccion', 'comercial'],
+                allowedRoles: ['admin', 'comercial'],
                 disabled: true,
                 disabledLabel: 'Módulo en desarrollo',
             },

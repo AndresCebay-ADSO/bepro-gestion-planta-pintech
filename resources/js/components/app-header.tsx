@@ -9,8 +9,8 @@ import {
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
-import AppearanceTabs from '@/components/appearance-tabs';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import ThemeToggleButton from '@/components/theme-toggle-button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -228,7 +228,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 3
                             </span>
                         </Button>
-                        <AppearanceTabs compact />
+                        <ThemeToggleButton />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button

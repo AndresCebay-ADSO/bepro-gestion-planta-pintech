@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('units_of_measure', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements('id');
             $table->string('code', 20)->unique(); // kg, lt, gal, ml, unidad
             $table->string('name', 100); // Kilogramo, Litro, Galón, Mililitro, Unidad
             $table->string('symbol', 10); // kg, L, gal, mL, u
@@ -21,6 +21,7 @@ return new class extends Migration
             $table->decimal('to_liter_conversion', 10, 4)->nullable(); // Para conversiones de volumen
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index('code');
             $table->index('is_active');
