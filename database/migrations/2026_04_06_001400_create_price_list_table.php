@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('price_list', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements('id');
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->decimal('price', 12, 4);
             $table->decimal('cost_at_time', 12, 4);
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->date('valid_from');
             $table->date('valid_to')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestamps();
 
             $table->index(['product_id', 'valid_to']);
             $table->index('valid_from');

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('qr_documents', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements('id');
             $table->foreignId('qr_code_id')->constrained('qr_codes')->onDelete('cascade');
             $table->enum('document_type', ['ficha_tecnica', 'ficha_seguridad', 'certificado_calidad']);
             $table->string('file_name', 255);
@@ -21,6 +21,7 @@ return new class extends Migration
             $table->boolean('is_current')->default(true);
             $table->foreignId('uploaded_by')->constrained('users')->onDelete('restrict');
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['qr_code_id', 'document_type']);
             $table->index('is_current');

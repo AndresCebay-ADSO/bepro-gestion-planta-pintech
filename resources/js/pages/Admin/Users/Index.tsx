@@ -33,22 +33,22 @@ const UsersIndex: FC<Props> = ({ users }) => {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 px-4 py-8">
+        <div className="bg-background text-foreground min-h-screen px-4 py-8">
             <div className="mx-auto max-w-6xl">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="mb-2 text-4xl font-bold text-gray-900">
+                    <h1 className="mb-2 text-4xl font-bold text-foreground">
                         👥 Gestión de Usuarios
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground">
                         Administra los usuarios del sistema
                     </p>
                 </div>
 
                 {/* Success Message */}
                 {flash?.message && (
-                    <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
-                        <p className="text-green-800">{flash.message}</p>
+                    <div className="mb-6 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
+                        <p className="text-emerald-700 dark:text-emerald-300">{flash.message}</p>
                     </div>
                 )}
 
@@ -59,34 +59,34 @@ const UsersIndex: FC<Props> = ({ users }) => {
                         placeholder="Buscar por nombre o email..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring/40 flex-1 rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
                     />
                     <Link
                         href={route('users.create')}
-                        className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-2 font-semibold transition"
                     >
                         + Crear Usuario
                     </Link>
                 </div>
 
                 {/* Users Table */}
-                <div className="overflow-hidden rounded-lg bg-white shadow">
+                <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
                     <table className="w-full">
-                        <thead className="border-b border-gray-200 bg-gray-100">
+                        <thead className="border-b border-border bg-muted/60">
                             <tr>
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                                <th className="text-foreground px-6 py-3 text-left text-sm font-semibold">
                                     Nombre
                                 </th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                                <th className="text-foreground px-6 py-3 text-left text-sm font-semibold">
                                     Email
                                 </th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                                <th className="text-foreground px-6 py-3 text-left text-sm font-semibold">
                                     Rol
                                 </th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                                <th className="text-foreground px-6 py-3 text-left text-sm font-semibold">
                                     Creado
                                 </th>
-                                <th className="px-6 py-3 text-center text-sm font-semibold text-gray-900">
+                                <th className="text-foreground px-6 py-3 text-center text-sm font-semibold">
                                     Acciones
                                 </th>
                             </tr>
@@ -96,21 +96,21 @@ const UsersIndex: FC<Props> = ({ users }) => {
                                 filteredUsers.map((user) => (
                                     <tr
                                         key={user.id}
-                                        className="border-b border-gray-200 hover:bg-gray-50"
+                                        className="border-b border-border hover:bg-muted/35"
                                     >
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                                        <td className="text-foreground px-6 py-4 text-sm font-medium">
                                             {user.name}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">
+                                        <td className="text-muted-foreground px-6 py-4 text-sm">
                                             {user.email}
                                         </td>
                                         <td className="px-6 py-4 text-sm">
-                                            <span className="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
+                                            <span className="bg-primary/12 text-primary inline-block rounded-full px-3 py-1 text-xs font-semibold">
                                                 {user.roles[0]?.name ||
                                                     'Sin rol'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">
+                                        <td className="text-muted-foreground px-6 py-4 text-sm">
                                             {new Date(
                                                 user.created_at,
                                             ).toLocaleDateString('es-ES')}
@@ -121,7 +121,7 @@ const UsersIndex: FC<Props> = ({ users }) => {
                                                     'users.edit',
                                                     user.id,
                                                 )}
-                                                className="rounded bg-yellow-100 px-3 py-1 text-sm text-yellow-800 transition hover:bg-yellow-200"
+                                                className="text-primary rounded bg-primary/15 px-3 py-1 text-sm transition hover:bg-primary/25"
                                             >
                                                 Editar
                                             </Link>
@@ -132,7 +132,7 @@ const UsersIndex: FC<Props> = ({ users }) => {
                                                 )}
                                                 method="delete"
                                                 as="button"
-                                                className="rounded bg-red-100 px-3 py-1 text-sm text-red-800 transition hover:bg-red-200"
+                                                className="text-destructive rounded bg-destructive/15 px-3 py-1 text-sm transition hover:bg-destructive/25"
                                                 onClick={() =>
                                                     confirm(
                                                         '¿Estás seguro de que deseas eliminar este usuario?',
@@ -148,7 +148,7 @@ const UsersIndex: FC<Props> = ({ users }) => {
                                 <tr>
                                     <td
                                         colSpan={5}
-                                        className="px-6 py-8 text-center text-gray-500"
+                                        className="text-muted-foreground px-6 py-8 text-center"
                                     >
                                         No hay usuarios disponibles
                                     </td>

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('inventory_batches', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements('id');
             $table->foreignId('raw_material_id')->constrained('raw_materials')->onDelete('restrict');
             $table->decimal('initial_quantity', 12, 4);
             $table->decimal('remaining_quantity', 12, 4);

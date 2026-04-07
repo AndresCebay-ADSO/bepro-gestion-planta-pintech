@@ -12,15 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('raw_materials', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements('id');
             $table->string('name', 150)->unique();
-            $table->string('unit_of_measure', 20);
+            $table->foreignId('unit_of_measure_id')->constrained('units_of_measure')->restrictOnDelete();
             $table->decimal('current_price', 12, 4);
             $table->decimal('previous_price', 12, 4)->nullable();
             $table->decimal('minimum_stock', 12, 4)->default(0);
             $table->integer('alert_days_before_expiry')->default(30);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index('is_active');
             $table->index('name');

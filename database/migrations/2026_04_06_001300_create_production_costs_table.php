@@ -12,13 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('production_costs', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements('id');
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->foreignId('formula_id')->constrained('formulas')->onDelete('restrict');
             $table->decimal('cost', 12, 4);
             $table->decimal('variation_percentage', 8, 4)->nullable();
             $table->timestamp('calculated_at')->useCurrent();
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestamps();
 
             $table->index(['product_id', 'calculated_at']);
             $table->index('calculated_at');

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('alerts', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements('id');
             $table->enum('type', ['stock_bajo', 'vencimiento_proximo', 'variacion_precio']);
             $table->foreignId('raw_material_id')->nullable()->constrained('raw_materials')->onDelete('cascade');
             $table->foreignId('batch_id')->nullable()->constrained('inventory_batches')->onDelete('cascade');
