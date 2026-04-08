@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('qr_documents', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->id();
             $table->foreignId('qr_code_id')->constrained('qr_codes')->onDelete('cascade');
             $table->enum('document_type', ['ficha_tecnica', 'ficha_seguridad', 'certificado_calidad']);
             $table->string('file_name', 255);

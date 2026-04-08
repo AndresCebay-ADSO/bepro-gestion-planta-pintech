@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('price_list', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->id();
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->decimal('price', 12, 4);
             $table->decimal('cost_at_time', 12, 4);

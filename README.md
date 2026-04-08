@@ -90,7 +90,9 @@ php artisan key:generate
 Configura `.env` (DB, mail, app) y luego:
 
 ```bash
-php artisan migrate:fresh --seed
+php artisan migrate
+# (Opcional) Para datos de prueba:
+php artisan db:seed
 ```
 
 ## Desarrollo local

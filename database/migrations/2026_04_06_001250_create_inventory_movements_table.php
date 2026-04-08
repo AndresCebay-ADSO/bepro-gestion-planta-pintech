@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('inventory_movements', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->id();
             $table->foreignId('raw_material_id')->constrained('raw_materials')->onDelete('restrict');
             $table->foreignId('batch_id')->nullable()->constrained('inventory_batches')->onDelete('restrict');
             $table->foreignId('production_order_id')->nullable()->constrained('production_orders')->nullOnDelete();
