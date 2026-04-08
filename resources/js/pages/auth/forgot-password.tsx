@@ -95,7 +95,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             </div>
                         )}
 
-                        <Form {...email.form()} className="flex flex-col gap-5">
+                        <Form action={email.url()} method="post" className="flex flex-col gap-5">
                             {({ processing, errors }) => (
                                 <>
                                     <div className="grid gap-1.5">

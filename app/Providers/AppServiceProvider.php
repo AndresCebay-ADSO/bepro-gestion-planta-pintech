@@ -4,8 +4,12 @@ namespace App\Providers;
 
 use App\Models\Formula;
 use App\Models\PriceList;
+use App\Models\RawMaterial;
+use App\Models\Warehouse;
 use App\Policies\FormulaPolicy;
 use App\Policies\PriceListPolicy;
+use App\Policies\RawMaterialPolicy;
+use App\Policies\WarehousePolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -40,6 +44,8 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Formula::class, FormulaPolicy::class);
         Gate::policy(PriceList::class, PriceListPolicy::class);
+        Gate::policy(RawMaterial::class, RawMaterialPolicy::class);
+        Gate::policy(Warehouse::class, WarehousePolicy::class);
 
         DB::prohibitDestructiveCommands(
             app()->isProduction(),
