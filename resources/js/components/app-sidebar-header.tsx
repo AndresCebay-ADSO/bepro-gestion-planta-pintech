@@ -11,6 +11,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import ThemeToggleButton from '@/components/theme-toggle-button';
+import WarehouseSelector from '@/components/warehouse-selector';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -121,6 +122,7 @@ export function AppSidebarHeader({
                     className={`${isApplicationMenuOpen ? 'flex' : 'hidden'} w-full items-center justify-between gap-4 px-5 py-4 shadow-sm lg:flex lg:w-auto lg:justify-end lg:px-0 lg:py-4 lg:shadow-none`}
                 >
                     <div className="flex items-center gap-2">
+                        <WarehouseSelector />
                         <ThemeToggleButton />
 
                         <DropdownMenu>

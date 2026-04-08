@@ -18,7 +18,8 @@ export default function ResetPassword({ token, email }: Props) {
             <Head title="Restablecer contraseña — Pintech" />
 
             <Form
-                {...update.form()}
+                action={update.url()}
+                method="post"
                 transform={(data) => ({ ...data, token, email })}
                 resetOnSuccess={['password', 'password_confirmation']}
             >

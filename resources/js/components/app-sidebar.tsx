@@ -39,12 +39,15 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Materias Primas',
-                href: '/production/raw-materials',
+                href: '/raw-materials',
                 icon: Boxes,
                 allowedRoles: ['admin', 'produccion'],
-                unauthorizedBehavior: 'disable',
-                disabled: true,
-                disabledLabel: 'Módulo en desarrollo',
+            },
+            {
+                title: 'Bodegas',
+                href: '/warehouses',
+                icon: Warehouse,
+                allowedRoles: ['admin', 'produccion', 'comercial'],
             },
             {
                 title: 'Producto Terminado',
