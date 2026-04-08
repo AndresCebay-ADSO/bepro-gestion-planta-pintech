@@ -16,7 +16,7 @@ type InventoryBatch = {
 type Props = {
     rawMaterial: {
         id: number;
-        name: string;
+        code: string;
         current_price: string;
         previous_price: string | null;
         minimum_stock: string;
@@ -37,17 +37,17 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
             return;
         }
 
-        router.delete(route('raw-materials.destroy', rawMaterial.id));
+        router.delete(route('raw-materials.destroy', rawMaterial.code));
     };
 
     return (
         <>
-            <Head title={`Materia Prima ${rawMaterial.name}`} />
+            <Head title={`Materia Prima ${rawMaterial.code}`} />
 
             <div className="space-y-6 p-6">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold text-foreground">{rawMaterial.name}</h1>
+                        <h1 className="text-2xl font-semibold text-foreground">{rawMaterial.code}</h1>
                         <p className="text-sm text-muted-foreground">Detalle de materia prima y lotes asociados.</p>
                     </div>
 
@@ -57,7 +57,7 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                         </Button>
                         {can.update && (
                             <Button asChild>
-                                <Link href={route('raw-materials.edit', rawMaterial.id)}>Editar</Link>
+                                <Link href={route('raw-materials.edit', rawMaterial.code)}>Editar</Link>
                             </Button>
                         )}
                         {can.delete && (
@@ -69,6 +69,10 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                 </div>
 
                 <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-2">
+                    <div>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Código interno</p>
+                        <p className="text-sm text-foreground">{rawMaterial.code}</p>
+                    </div>
                     <div>
                         <p className="text-xs uppercase tracking-wide text-muted-foreground">Unidad</p>
                         <p className="text-sm text-foreground">{rawMaterial.unit_of_measure ? `${rawMaterial.unit_of_measure.name} (${rawMaterial.unit_of_measure.symbol})` : '-'}</p>

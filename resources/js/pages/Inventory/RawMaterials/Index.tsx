@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 
 type RawMaterialRow = {
     id: number;
-    name: string;
+    code: string;
     current_price: string;
     previous_price: string | null;
     minimum_stock: string;
@@ -58,12 +58,12 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
         );
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = (code: string) => {
         if (!window.confirm('¿Estás seguro de eliminar esta materia prima?')) {
             return;
         }
 
-        router.delete(route('raw-materials.destroy', id), {
+        router.delete(route('raw-materials.destroy', code), {
             preserveScroll: true,
         });
     };
@@ -101,7 +101,7 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                     <Input
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
-                        placeholder="Buscar por nombre..."
+                        placeholder="Buscar por código..."
                         className="sm:max-w-sm"
                     />
                     <Button type="submit" variant="outline">
@@ -113,7 +113,7 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                     <table className="w-full text-sm">
                         <thead className="border-b border-border bg-muted/40">
                             <tr>
-                                <th className="p-3 text-left font-medium text-foreground">Nombre</th>
+                                <th className="p-3 text-left font-medium text-foreground">Código</th>
                                 <th className="p-3 text-left font-medium text-foreground">Unidad</th>
                                 <th className="p-3 text-left font-medium text-foreground">Precio Actual</th>
                                 <th className="p-3 text-left font-medium text-foreground">Stock Mínimo</th>
@@ -124,7 +124,7 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                         <tbody>
                             {rawMaterials.data.map((item) => (
                                 <tr key={item.id} className="border-b border-border/60 last:border-0">
-                                    <td className="p-3 text-foreground">{item.name}</td>
+                                    <td className="p-3 font-medium text-foreground">{item.code}</td>
                                     <td className="p-3 text-muted-foreground">
                                         {item.unit_of_measure ? `${item.unit_of_measure.name} (${item.unit_of_measure.symbol})` : '-'}
                                     </td>
@@ -143,16 +143,16 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                                         <div className="flex justify-end gap-2">
                                             {item.can.view && (
                                                 <Button asChild variant="outline" size="sm">
-                                                    <Link href={route('raw-materials.show', item.id)}>Ver</Link>
+                                                    <Link href={route('raw-materials.show', item.code)}>Ver</Link>
                                                 </Button>
                                             )}
                                             {item.can.update && (
                                                 <Button asChild variant="outline" size="sm">
-                                                    <Link href={route('raw-materials.edit', item.id)}>Editar</Link>
+                                                    <Link href={route('raw-materials.edit', item.code)}>Editar</Link>
                                                 </Button>
                                             )}
                                             {item.can.delete && (
-                                                <Button type="button" variant="destructive" size="sm" onClick={() => handleDelete(item.id)}>
+                                                <Button type="button" variant="destructive" size="sm" onClick={() => handleDelete(item.code)}>
                                                     Eliminar
                                                 </Button>
                                             )}

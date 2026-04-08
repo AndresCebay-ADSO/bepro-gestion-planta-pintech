@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('raw_materials', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 150)->unique();
+            $table->string('code', 50)->unique();
             $table->foreignId('unit_of_measure_id')->constrained('units_of_measure')->restrictOnDelete();
             $table->decimal('current_price', 12, 4);
             $table->decimal('previous_price', 12, 4)->nullable();
@@ -24,7 +24,6 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index('is_active');
-            $table->index('name');
         });
     }
 

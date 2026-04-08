@@ -18,13 +18,12 @@ class UpdateRawMaterialRequest extends FormRequest
         $rawMaterialId = is_object($rawMaterial) ? $rawMaterial->id : $rawMaterial;
 
         return [
-            'name' => [
+            'code' => [
                 'bail',
                 'required',
                 'string',
-                'min:3',
-                'max:150',
-                Rule::unique('raw_materials', 'name')->ignore($rawMaterialId),
+                'max:50',
+                Rule::unique('raw_materials', 'code')->ignore($rawMaterialId),
             ],
             'unit_of_measure_id' => [
                 'bail',

@@ -24,7 +24,7 @@ describe('Raw Material Destroy', function () {
         ]);
 
         $this->rawMaterial = RawMaterial::create([
-            'name' => 'Materia Prima Test',
+            'code' => 'MP001',
             'unit_of_measure_id' => $this->unit->id,
             'current_price' => 100.00,
             'minimum_stock' => 10,

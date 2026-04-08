@@ -87,7 +87,7 @@ B. Intento de eliminar administrador principal: el sistema bloquea la acción y 
 | **PRECONDICIONES:** | El administrador ha iniciado sesión. La materia prima no existe previamente en el sistema. |
 | **FLUJO 		NORMAL:** | 1. El administrador accede al módulo de inventario de materia prima. 
 2. Selecciona "Registrar materia prima". 
-3. Ingresa nombre, unidad de medida, precio actual, stock inicial y fecha de vencimiento. 
+3. Ingresa código, unidad de medida, precio actual, stock inicial y fecha de vencimiento. 
 4. El sistema valida los datos. 
 5. Guarda el registro y muestra confirmación. |
 | **FLUJOS 		ALTERNOS** | A. Materia prima duplicada: el sistema muestra error "La materia prima ya existe" y no permite continuar. 
@@ -102,7 +102,7 @@ B. Campos incompletos: el sistema resalta los campos obligatorios faltantes. |
 | **PRECONDICIONES:** | El usuario ha iniciado sesión con rol habilitado. Existen materias primas registradas. |
 | **FLUJO 		NORMAL:** | 1. El usuario accede al módulo de inventario de materia prima. 
 2. El sistema muestra la lista de materias primas. 
-3. El usuario puede buscar por nombre o categoría. 
+3. El usuario puede buscar por código o categoría. 
 4. El sistema filtra y muestra los resultados con su información completa. |
 | **FLUJOS 		ALTERNOS** | A. Sin resultados: el sistema muestra "No se encontraron materias primas con los criterios ingresados". |
 | **POSTCONDICIÓN** | No hay cambios en los datos. |

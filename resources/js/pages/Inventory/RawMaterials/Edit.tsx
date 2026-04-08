@@ -15,7 +15,7 @@ type UnitOption = {
 
 type RawMaterial = {
     id: number;
-    name: string;
+    code: string;
     unit_of_measure_id: number;
     current_price: string;
     previous_price: string | null;
@@ -30,7 +30,7 @@ type Props = {
 };
 
 type RawMaterialForm = {
-    name: string;
+    code: string;
     unit_of_measure_id: string;
     current_price: string;
     previous_price: string;
@@ -41,7 +41,7 @@ type RawMaterialForm = {
 
 export default function RawMaterialsEdit({ rawMaterial, units }: Props) {
     const form = useForm<RawMaterialForm>({
-        name: rawMaterial.name,
+        code: rawMaterial.code,
         unit_of_measure_id: String(rawMaterial.unit_of_measure_id),
         current_price: String(rawMaterial.current_price),
         previous_price: rawMaterial.previous_price ? String(rawMaterial.previous_price) : '',
@@ -57,17 +57,17 @@ export default function RawMaterialsEdit({ rawMaterial, units }: Props) {
             previous_price: data.previous_price === '' ? null : data.previous_price,
         }));
 
-        form.put(route('raw-materials.update', rawMaterial.id));
+        form.put(route('raw-materials.update', rawMaterial.code));
     };
 
     return (
         <>
-            <Head title={`Editar ${rawMaterial.name}`} />
+            <Head title={`Editar ${rawMaterial.code}`} />
 
             <div className="mx-auto max-w-3xl space-y-6 p-6">
                 <div className="space-y-1">
                     <h1 className="text-2xl font-semibold text-foreground">Editar Materia Prima</h1>
-                    <p className="text-sm text-muted-foreground">Actualiza la información de {rawMaterial.name}.</p>
+                    <p className="text-sm text-muted-foreground">Actualiza la información de {rawMaterial.code}.</p>
                 </div>
 
                 <div className="rounded-lg border border-border bg-card p-6">
@@ -79,9 +79,9 @@ export default function RawMaterialsEdit({ rawMaterial, units }: Props) {
                         className="grid gap-5"
                     >
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Nombre</Label>
-                            <Input id="name" value={form.data.name} onChange={(event) => form.setData('name', event.target.value)} maxLength={150} />
-                            <InputError message={form.errors.name} />
+                            <Label htmlFor="code">Código interno</Label>
+                            <Input id="code" value={form.data.code} onChange={(event) => form.setData('code', event.target.value)} maxLength={50} />
+                            <InputError message={form.errors.code} />
                         </div>
 
                         <div className="grid gap-2">

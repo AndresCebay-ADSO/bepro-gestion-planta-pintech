@@ -26,7 +26,7 @@ describe('Raw Material Store Validation', function () {
         $this->admin->assignRole('admin');
 
         $this->validData = [
-            'name' => 'Materia Prima Test',
+            'code' => 'MP001',
             'unit_of_measure_id' => $this->unit->id,
             'current_price' => 100.00,
             'previous_price' => null,
@@ -36,26 +36,26 @@ describe('Raw Material Store Validation', function () {
         ];
     });
 
-    it('requires name', function () {
+    it('requires code', function () {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
                 ...$this->validData,
-                'name' => '',
+                'code' => '',
             ]);
 
-        $response->assertSessionHasErrors('name');
+        $response->assertSessionHasErrors('code');
     });
 
-    it('requires name to be unique', function () {
+    it('requires code to be unique', function () {
         RawMaterial::create($this->validData);
 
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
                 ...$this->validData,
-                'name' => 'Materia Prima Test',
+                'code' => 'MP001',
             ]);
 
-        $response->assertSessionHasErrors('name');
+        $response->assertSessionHasErrors('code');
     });
 
     it('requires unit_of_measure_id to exist', function () {
@@ -97,7 +97,7 @@ describe('Raw Material Store Validation', function () {
 
         $response->assertRedirect();
         $this->assertDatabaseHas('raw_materials', [
-            'name' => 'Materia Prima Test',
+            'code' => 'MP001',
             'current_price' => 123.4567,
         ]);
     });

@@ -7,7 +7,7 @@ type Props = {
             type: 'entrada' | 'salida';
             quantity: string;
             movement_date: string;
-            raw_material?: { name: string } | null;
+            raw_material?: { code: string } | null;
         }>;
     };
     can: { create: boolean };
@@ -33,7 +33,7 @@ export default function InventoryMovementsIndex({ movements, can }: Props) {
                             <tr>
                                 <th className="p-3 text-left">Fecha</th>
                                 <th className="p-3 text-left">Tipo</th>
-                                <th className="p-3 text-left">Materia prima</th>
+                                <th className="p-3 text-left">Código materia prima</th>
                                 <th className="p-3 text-left">Cantidad</th>
                             </tr>
                         </thead>
@@ -42,7 +42,7 @@ export default function InventoryMovementsIndex({ movements, can }: Props) {
                                 <tr key={movement.id} className="border-b border-border/50">
                                     <td className="p-3">{movement.movement_date}</td>
                                     <td className="p-3">{movement.type}</td>
-                                    <td className="p-3">{movement.raw_material?.name ?? '-'}</td>
+                                    <td className="p-3">{movement.raw_material?.code ?? '-'}</td>
                                     <td className="p-3">{movement.quantity}</td>
                                 </tr>
                             ))}

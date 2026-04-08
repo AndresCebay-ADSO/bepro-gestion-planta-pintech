@@ -87,6 +87,7 @@ Y NO veo opciones de administración
 - [ ] Modelo `RawMaterial` con relaciones
 - [ ] Controller `RawMaterialController` (API para Inertia)
 - [ ] Vistas React: Listar, Crear, Editar, Eliminar materias primas
+- [ ] Identificación de materia prima por código interno único (no por nombre)
 - [ ] Validaciones de formularios (Form Requests)
 - [ ] Implementar búsqueda y filtros básicos
 - [ ] Paginación de resultados
