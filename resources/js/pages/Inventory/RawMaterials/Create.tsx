@@ -18,7 +18,7 @@ type Props = {
 };
 
 type RawMaterialForm = {
-    name: string;
+    code: string;
     unit_of_measure_id: string;
     current_price: string;
     previous_price: string;
@@ -29,7 +29,7 @@ type RawMaterialForm = {
 
 export default function RawMaterialsCreate({ units }: Props) {
     const form = useForm<RawMaterialForm>({
-        name: '',
+        code: '',
         unit_of_measure_id: '',
         current_price: '',
         previous_price: '',
@@ -67,9 +67,9 @@ export default function RawMaterialsCreate({ units }: Props) {
                         className="grid gap-5"
                     >
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Nombre</Label>
-                            <Input id="name" value={form.data.name} onChange={(event) => form.setData('name', event.target.value)} maxLength={150} />
-                            <InputError message={form.errors.name} />
+                            <Label htmlFor="code">Código interno</Label>
+                            <Input id="code" value={form.data.code} onChange={(event) => form.setData('code', event.target.value)} maxLength={50} />
+                            <InputError message={form.errors.code} />
                         </div>
 
                         <div className="grid gap-2">

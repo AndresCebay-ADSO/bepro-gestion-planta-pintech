@@ -15,7 +15,7 @@ class StoreRawMaterialRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['bail', 'required', 'string', 'min:3', 'max:150', Rule::unique('raw_materials', 'name')],
+            'code' => ['bail', 'required', 'string', 'max:50', Rule::unique('raw_materials', 'code')],
             'unit_of_measure_id' => [
                 'bail',
                 'required',

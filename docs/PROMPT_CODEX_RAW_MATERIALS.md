@@ -9,7 +9,7 @@ Implementar CRUD completo de Materias Primas (Raw Materials) siguiendo los patro
 ## Modelo Existente (app/Models/RawMaterial.php)
 ```php
 // Tabla: raw_materials
-// Campos fillable: name, unit_of_measure_id, current_price, previous_price, minimum_stock, alert_days_before_expiry, is_active
+// Campos fillable: code, unit_of_measure_id, current_price, previous_price, minimum_stock, alert_days_before_expiry, is_active
 // Relaciones: unitOfMeasure(), inventoryBatches(), formulaDetails()
 // Usa SoftDeletes y casts para decimales
 ```
@@ -23,7 +23,7 @@ Implementar CRUD completo de Materias Primas (Raw Materials) siguiendo los patro
 
 ### 2. Crear Form Requests (app/Http/Requests/RawMaterials/)
 StoreRawMaterialRequest:
-- name: required, string, max:150, unique:raw_materials
+- code: required, string, max:50, unique:raw_materials
 - unit_of_measure_id: required, exists:units_of_measure,id
 - current_price: required, numeric, min:0, max:99999999.9999
 - previous_price: nullable, numeric, min:0
@@ -37,7 +37,7 @@ UpdateRawMaterialRequest: mismas reglas excepto unique que debe ignorar el regis
 Namespace: App\Http\Controllers\Inventory
 
 Metodos:
-- index(): Listar con paginacion, eager load unitOfMeasure, busqueda por nombre
+- index(): Listar con paginacion, eager load unitOfMeasure, busqueda por codigo
 - create(): Retornar unidades de medida activas
 - store(): Crear y redirigir a index con mensaje success
 - show(): Cargar relaciones unitOfMeasure e inventoryBatches
@@ -55,13 +55,13 @@ Route::resource('raw-materials', Inventory\RawMaterialController::class);
 Basar en resources/js/pages/Products/ pero simplificar:
 
 Index.tsx:
-- Tabla con columnas: Nombre, Unidad, Precio Actual, Stock Minimo, Estado
+- Tabla con columnas: Código, Unidad, Precio Actual, Stock Minimo, Estado
 - Boton "Nueva Materia Prima" (solo admin)
 - Acciones: Ver, Editar, Eliminar (con confirmacion)
-- Busqueda por nombre
+- Busqueda por codigo
 
 Create.tsx:
-- Formulario con campos: name, unit_of_measure_id (select), current_price, previous_price, minimum_stock, alert_days_before_expiry, is_active (checkbox)
+- Formulario con campos: code, unit_of_measure_id (select), current_price, previous_price, minimum_stock, alert_days_before_expiry, is_active (checkbox)
 - Validaciones del frontend
 - Boton guardar y cancelar
 

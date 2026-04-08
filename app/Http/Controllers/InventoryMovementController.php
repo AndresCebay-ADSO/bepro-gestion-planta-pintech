@@ -24,7 +24,7 @@ class InventoryMovementController extends Controller
 
         $movements = InventoryMovement::query()
             ->with([
-                'rawMaterial:id,name',
+                'rawMaterial:id,code',
                 'batch:id,lot_number,raw_material_id',
                 'productionOrder:id,order_number',
                 'createdBy:id,name',
@@ -47,7 +47,7 @@ class InventoryMovementController extends Controller
         $this->authorize('create', InventoryMovement::class);
 
         return Inertia::render('Inventory/Movements/Create', [
-            'rawMaterials' => RawMaterial::query()->select('id', 'name')->where('is_active', true)->orderBy('name')->get(),
+            'rawMaterials' => RawMaterial::query()->select('id', 'code')->where('is_active', true)->orderBy('code')->get(),
             'batches' => InventoryBatch::query()->select('id', 'raw_material_id', 'lot_number', 'remaining_quantity')->orderByDesc('id')->get(),
             'productionOrders' => ProductionOrder::query()->select('id', 'order_number', 'status')->orderByDesc('id')->get(),
         ]);
@@ -68,7 +68,7 @@ class InventoryMovementController extends Controller
 
         return Inertia::render('Inventory/Movements/Show', [
             'movement' => $inventoryMovement->load([
-                'rawMaterial:id,name',
+                'rawMaterial:id,code',
                 'batch:id,lot_number,remaining_quantity',
                 'productionOrder:id,order_number',
                 'createdBy:id,name',
@@ -86,7 +86,7 @@ class InventoryMovementController extends Controller
 
         return Inertia::render('Inventory/Movements/Edit', [
             'movement' => $inventoryMovement,
-            'rawMaterials' => RawMaterial::query()->select('id', 'name')->where('is_active', true)->orderBy('name')->get(),
+            'rawMaterials' => RawMaterial::query()->select('id', 'code')->where('is_active', true)->orderBy('code')->get(),
             'batches' => InventoryBatch::query()->select('id', 'raw_material_id', 'lot_number', 'remaining_quantity')->orderByDesc('id')->get(),
             'productionOrders' => ProductionOrder::query()->select('id', 'order_number', 'status')->orderByDesc('id')->get(),
         ]);

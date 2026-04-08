@@ -65,7 +65,7 @@ describe('Raw Material Authorization', function () {
     describe('show', function () {
         beforeEach(function () {
             $this->rawMaterial = RawMaterial::create([
-                'name' => 'Materia Prima Test',
+                'code' => 'MP001',
                 'unit_of_measure_id' => $this->unit->id,
                 'current_price' => 100.00,
                 'minimum_stock' => 10,
@@ -144,7 +144,7 @@ describe('Raw Material Authorization', function () {
 
             $response = $this->actingAs($admin)
                 ->post(route('raw-materials.store'), [
-                    'name' => 'Nueva Materia',
+                    'code' => 'MP002',
                     'unit_of_measure_id' => $this->unit->id,
                     'current_price' => 150.00,
                     'minimum_stock' => 20,
@@ -153,7 +153,7 @@ describe('Raw Material Authorization', function () {
                 ]);
 
             $response->assertRedirect(route('raw-materials.index'));
-            $this->assertDatabaseHas('raw_materials', ['name' => 'Nueva Materia']);
+            $this->assertDatabaseHas('raw_materials', ['code' => 'MP002']);
         });
 
         it('forbids produccion to create raw material', function () {
@@ -162,7 +162,7 @@ describe('Raw Material Authorization', function () {
 
             $response = $this->actingAs($user)
                 ->post(route('raw-materials.store'), [
-                    'name' => 'Intento de Materia',
+                    'code' => 'MP003',
                     'unit_of_measure_id' => $this->unit->id,
                     'current_price' => 150.00,
                 ]);

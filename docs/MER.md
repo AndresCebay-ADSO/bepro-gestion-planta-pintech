@@ -48,7 +48,7 @@ Bodegas de producto terminado.
 Materias primas.
 
 - `id` BIGINT PK
-- `name` VARCHAR(150) UNIQUE
+- `code` VARCHAR(50) UNIQUE
 - `unit_of_measure_id` BIGINT FK -> `units_of_measure.id`
 - `current_price` DECIMAL(12,4)
 - `previous_price` DECIMAL(12,4) NULL
@@ -57,6 +57,8 @@ Materias primas.
 - `is_active` BOOLEAN DEFAULT true
 - `created_at`, `updated_at`
 - `deleted_at`
+
+Nota: La materia prima se identifica por un codigo interno unico (ej: AC4).
 
 ### 2.5 inventory_batches
 Lotes de inventario de materia prima.
@@ -294,4 +296,3 @@ Alertas del sistema.
 - Se eliminaron migraciones obsoletas de 2FA y columnas agregadas posteriormente.
 - La notificacion de reset de password esta personalizada en `App\\Notifications\\ResetPasswordNotification`.
 - Locale de aplicacion en espanol (`APP_LOCALE=es`), con archivos de traduccion `lang/es/*`.
-

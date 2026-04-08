@@ -6,7 +6,7 @@ type Props = {
         type: string;
         quantity: string;
         movement_date: string;
-        raw_material?: { name: string } | null;
+        raw_material?: { code: string } | null;
     };
 };
 

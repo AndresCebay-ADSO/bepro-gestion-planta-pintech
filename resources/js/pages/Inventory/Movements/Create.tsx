@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 
 type Props = {
-    rawMaterials: Array<{ id: number; name: string }>;
+    rawMaterials: Array<{ id: number; code: string }>;
     batches: Array<{ id: number }>;
     productionOrders: Array<{ id: number; order_number: string }>;
 };

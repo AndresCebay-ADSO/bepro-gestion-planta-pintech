@@ -24,14 +24,14 @@ class RawMaterialController extends Controller
 
         $rawMaterials = RawMaterial::query()
             ->with(['unitOfMeasure:id,name,symbol'])
-            ->when($search !== '', fn ($query) => $query->where('name', 'ILIKE', "%{$search}%"))
+            ->when($search !== '', fn ($query) => $query->where('code', 'ILIKE', "%{$search}%"))
             ->latest('id')
             ->paginate(15)
             ->withQueryString()
             ->through(function (RawMaterial $rawMaterial) use ($user): array {
                 return [
                     'id' => $rawMaterial->id,
-                    'name' => $rawMaterial->name,
+                    'code' => $rawMaterial->code,
                     'current_price' => $rawMaterial->current_price,
                     'previous_price' => $rawMaterial->previous_price,
                     'minimum_stock' => $rawMaterial->minimum_stock,

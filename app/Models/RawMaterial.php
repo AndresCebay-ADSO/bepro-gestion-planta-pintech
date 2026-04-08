@@ -15,7 +15,7 @@ class RawMaterial extends Model
     protected $table = 'raw_materials';
 
     protected $fillable = [
-        'name',
+        'code',
         'unit_of_measure_id',
         'current_price',
         'previous_price',
@@ -63,5 +63,10 @@ class RawMaterial extends Model
     public function alerts(): HasMany
     {
         return $this->hasMany(Alert::class, 'raw_material_id');
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'code';
     }
 }
