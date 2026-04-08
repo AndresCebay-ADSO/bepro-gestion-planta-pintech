@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('raw_materials', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->id();
             $table->string('name', 150)->unique();
             $table->foreignId('unit_of_measure_id')->constrained('units_of_measure')->restrictOnDelete();
             $table->decimal('current_price', 12, 4);

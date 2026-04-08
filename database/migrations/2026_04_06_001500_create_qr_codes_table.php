@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('qr_codes', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->id();
             $table->foreignId('product_id')->unique()->constrained('products')->onDelete('cascade');
             $table->string('token', 100)->unique();
             $table->string('url', 500);

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('formulas', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->id();
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->integer('version')->default(1);
             $table->boolean('is_active')->default(true);

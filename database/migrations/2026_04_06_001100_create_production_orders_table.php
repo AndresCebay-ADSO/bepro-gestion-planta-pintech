@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('production_orders', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->id();
             $table->string('order_number', 20)->unique();
             $table->foreignId('product_id')->constrained('products')->onDelete('restrict');
             $table->foreignId('formula_id')->constrained('formulas')->onDelete('restrict');

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('finished_inventory', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->id();
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->foreignId('warehouse_id')->constrained('warehouses')->onDelete('cascade');
             $table->decimal('quantity', 12, 4)->default(0);
