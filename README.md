@@ -4,8 +4,8 @@ ERP web para **Pintech Colombia S.A.S** (pinturas industriales, automotrices y a
 
 ## Estado actual
 
-- Backend en Laravel 12 + PHP 8.2+
-- Frontend en React 18 + Inertia + TypeScript + Tailwind v4
+- Backend en Laravel 13 + PHP 8.3+
+- Frontend en React 19.2 + Inertia + TypeScript + Tailwind v4
 - Base de datos PostgreSQL 16
 - Autenticacion con Laravel Fortify
 - Roles/permisos con Spatie Permission
@@ -15,7 +15,7 @@ ERP web para **Pintech Colombia S.A.S** (pinturas industriales, automotrices y a
 ## Stack tecnico
 
 - Backend: `laravel/framework` 13.x
-- Frontend: React 18, Inertia.js, Vite
+- Frontend: React 19.2, Inertia.js, Vite
 - UI: Tailwind CSS v4 + componentes UI locales
 - DB: PostgreSQL 16
 - Auth: Laravel Fortify
@@ -71,7 +71,7 @@ MAIL_FROM_NAME="Pintech OS"
 
 ## Requisitos
 
-- PHP 8.2+
+- PHP 8.3+
 - Composer 2.x
 - Node.js 18+
 - PostgreSQL 16
@@ -164,13 +164,6 @@ Carpeta `docs/`:
 - `SISTEMA_TEMAS_UI.md`
 - `RESUMEN_CAMBIOS_PINTECH_OS.md`
 - `STANDARDS.md`
-
-## Credenciales demo (seed)
-
-- Admin: `pintech.sistemas@gmail.com`
-- Produccion: `pintech.auxiliar@gmail.com`
-- Comercial: `pintech.comercial@gmail.com`
-- Password demo: `Pintech_2026`
 
 ## Autor
 
