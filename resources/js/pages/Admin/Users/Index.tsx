@@ -53,7 +53,7 @@ interface Props {
 }
 
 const UsersIndex: FC<Props> = ({ users, recentActivities }) => {
-    const { flash } = usePage<{
+    usePage<{
         flash?: { message?: string; error?: string };
     }>().props;
 
