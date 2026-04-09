@@ -1,7 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { route } from 'ziggy-js';
+
 import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
 
 import { FormattedNumber } from '@/components/formatted-number';
