@@ -102,6 +102,21 @@ describe('Raw Material Store Validation', function () {
         ]);
     });
 
+    it('accepts billion-scale current_price values', function () {
+        $response = $this->actingAs($this->admin)
+            ->post(route('raw-materials.store'), [
+                ...$this->validData,
+                'code' => 'MP002',
+                'current_price' => '1000000000.1234',
+            ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('raw_materials', [
+            'code' => 'MP002',
+            'current_price' => '1000000000.1234',
+        ]);
+    });
+
     it('requires minimum_stock to be non-negative', function () {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
