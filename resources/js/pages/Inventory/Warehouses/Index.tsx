@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { FormEvent, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
 import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,7 +43,7 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
     const flash = usePage<{ flash?: { success?: string; error?: string } }>().props.flash;
 
     const paginationLinks = useMemo(
-        () => warehouses.links.filter((link) => link.label !== '&laquo; Previous' && link.label !== 'Next &raquo;'),
+        () => warehouses.links.filter((link) => !link.label.includes('Previous') && !link.label.includes('Next') && !link.label.includes('previous') && !link.label.includes('next')),
         [warehouses.links],
     );
 

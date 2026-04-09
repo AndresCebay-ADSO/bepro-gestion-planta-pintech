@@ -27,7 +27,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
         role: user.roles[0]?.name || 'produccion',
     });
 
-    const [errors, setErrors] = useState<Record<string, string[]>>({});
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
 
     const handleChange = (
@@ -37,7 +37,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
         setFormData((prev) => ({ ...prev, [name]: value }));
 
         if (errors[name]) {
-            setErrors((prev) => ({ ...prev, [name]: [] }));
+            setErrors((prev) => ({ ...prev, [name]: '' }));
         }
     };
 
@@ -47,7 +47,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
 
         router.put(route('users.update', user.id), formData, {
             onError: (pageErrors) => {
-                setErrors(pageErrors as unknown as Record<string, string[]>);
+                setErrors(pageErrors as unknown as Record<string, string>);
                 setLoading(false);
             },
             onSuccess: () => {
@@ -94,7 +94,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                         />
                         {errors.name && (
                             <p className="text-destructive mt-1 text-sm">
-                                {errors.name[0]}
+                                {errors.name}
                             </p>
                         )}
                     </div>
@@ -113,7 +113,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                         />
                         {errors.email && (
                             <p className="text-destructive mt-1 text-sm">
-                                {errors.email[0]}
+                                {errors.email}
                             </p>
                         )}
                     </div>
@@ -138,7 +138,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                         </select>
                         {errors.role && (
                             <p className="text-destructive mt-1 text-sm">
-                                {errors.role[0]}
+                                {errors.role}
                             </p>
                         )}
                     </div>

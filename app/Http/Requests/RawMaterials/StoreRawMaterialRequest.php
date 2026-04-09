@@ -7,6 +7,8 @@ use Illuminate\Validation\Rule;
 
 class StoreRawMaterialRequest extends FormRequest
 {
+    private const MAX_PRICE = '99999999999999.9999';
+
     public function authorize(): bool
     {
         return $this->user()?->hasRole('admin') ?? false;
@@ -28,8 +30,8 @@ class StoreRawMaterialRequest extends FormRequest
                 'integer',
                 Rule::exists('units_of_measure', 'id')->whereNull('deleted_at'),
             ],
-            'current_price' => ['bail', 'required', 'numeric', 'min:0', 'max:99999999.9999', 'decimal:0,4'],
-            'previous_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.9999', 'decimal:0,4'],
+            'current_price' => ['bail', 'required', 'numeric', 'min:0', 'max:'.self::MAX_PRICE, 'decimal:0,4'],
+            'previous_price' => ['nullable', 'numeric', 'min:0', 'max:'.self::MAX_PRICE, 'decimal:0,4'],
             'minimum_stock' => ['bail', 'required', 'numeric', 'min:0', 'decimal:0,4'],
             'alert_days_before_expiry' => ['bail', 'required', 'integer', 'min:1'],
             'is_active' => ['sometimes', 'boolean'],

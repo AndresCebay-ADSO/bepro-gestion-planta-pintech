@@ -1,5 +1,6 @@
 import { router, Link } from '@inertiajs/react';
 import type { FC, FormEvent } from 'react';
+import PasswordInput from '@/components/password-input';
 import { useState } from 'react';
 import { route } from 'ziggy-js';
 
@@ -21,7 +22,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
         role: 'produccion',
     });
 
-    const [errors, setErrors] = useState<Record<string, string[]>>({});
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
 
     const handleChange = (
@@ -31,7 +32,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
         setFormData((prev) => ({ ...prev, [name]: value }));
 
         if (errors[name]) {
-            setErrors((prev) => ({ ...prev, [name]: [] }));
+            setErrors((prev) => ({ ...prev, [name]: '' }));
         }
     };
 
@@ -41,7 +42,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 
         router.post(route('users.store'), formData, {
             onError: (pageErrors) => {
-                setErrors(pageErrors as unknown as Record<string, string[]>);
+                setErrors(pageErrors as unknown as Record<string, string>);
                 setLoading(false);
             },
             onSuccess: () => {
@@ -89,7 +90,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         />
                         {errors.name && (
                             <p className="text-destructive mt-1 text-sm">
-                                {errors.name[0]}
+                                {errors.name}
                             </p>
                         )}
                     </div>
@@ -109,7 +110,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         />
                         {errors.email && (
                             <p className="text-destructive mt-1 text-sm">
-                                {errors.email[0]}
+                                {errors.email}
                             </p>
                         )}
                     </div>
@@ -134,7 +135,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         </select>
                         {errors.role && (
                             <p className="text-destructive mt-1 text-sm">
-                                {errors.role[0]}
+                                {errors.role}
                             </p>
                         )}
                     </div>
@@ -144,8 +145,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         <label className="text-foreground mb-2 block text-sm font-semibold">
                             Contraseña
                         </label>
-                        <input
-                            type="password"
+                        <PasswordInput
                             name="password"
                             value={formData.password}
                             onChange={handleChange}
@@ -154,7 +154,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         />
                         {errors.password && (
                             <p className="text-destructive mt-1 text-sm">
-                                {errors.password[0]}
+                                {errors.password}
                             </p>
                         )}
                     </div>
@@ -164,8 +164,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         <label className="text-foreground mb-2 block text-sm font-semibold">
                             Confirmar Contraseña
                         </label>
-                        <input
-                            type="password"
+                        <PasswordInput
                             name="password_confirmation"
                             value={formData.password_confirmation}
                             onChange={handleChange}
@@ -174,7 +173,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         />
                         {errors.password_confirmation && (
                             <p className="text-destructive mt-1 text-sm">
-                                {errors.password_confirmation[0]}
+                                {errors.password_confirmation}
                             </p>
                         )}
                     </div>
