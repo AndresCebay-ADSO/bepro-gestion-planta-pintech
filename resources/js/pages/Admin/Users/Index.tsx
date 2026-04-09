@@ -1,7 +1,4 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -14,6 +11,10 @@ import {
 } from 'lucide-react';
 import type { FC } from 'react';
 import { useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import {
     create as usersCreate,
@@ -53,10 +54,6 @@ interface Props {
 }
 
 const UsersIndex: FC<Props> = ({ users, recentActivities }) => {
-    usePage<{
-        flash?: { message?: string; error?: string };
-    }>().props;
-
     const [searchTerm, setSearchTerm] = useState('');
 
     const getInitials = (name: string) => {

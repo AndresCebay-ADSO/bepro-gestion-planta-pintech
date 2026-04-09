@@ -1,7 +1,8 @@
 import { Head, router } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useState, FormEvent, useEffect } from 'react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 import AuditLogController from '@/actions/App/Http/Controllers/Admin/AuditLogController';
 
 import { Button } from '@/components/ui/button';
@@ -66,7 +67,9 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
     const [dateTo, setDateTo] = useState(filters.date_to ?? '');
 
     const handleFilter = (e?: FormEvent) => {
-        if (e) e.preventDefault();
+        if (e) {
+            e.preventDefault();
+        }
 
         router.get(
             AuditLogController.index.url(),
@@ -113,10 +116,13 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
     };
 
     const formatProperties = (properties: Record<string, any>) => {
-        if (!properties || Object.keys(properties).length === 0) return '-';
+        if (!properties || Object.keys(properties).length === 0) {
+            return '-';
+        }
         
         // Truncar para no romper UI
         const jsonStr = JSON.stringify(properties);
+
         if (jsonStr.length > 50) {
             return (
                 <div className="relative group cursor-help">
@@ -127,6 +133,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                 </div>
             );
         }
+
         return jsonStr;
     };
 

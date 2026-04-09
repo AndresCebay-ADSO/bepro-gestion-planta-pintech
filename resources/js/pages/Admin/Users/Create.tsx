@@ -1,8 +1,9 @@
 import { router, Link } from '@inertiajs/react';
 import type { FC, FormEvent } from 'react';
-import PasswordInput from '@/components/password-input';
 import { useState } from 'react';
 import { route } from 'ziggy-js';
+
+import PasswordInput from '@/components/password-input';
 
 interface Role {
     id: number;

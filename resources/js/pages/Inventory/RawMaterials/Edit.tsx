@@ -36,7 +36,10 @@ type RawMaterialFormData = {
 };
 
 const trimZeroes = (val: string | null | undefined): string => {
-    if (!val) return '';
+    if (!val) {
+        return '';
+    }
+
     return val.includes('.') ? val.replace(/0+$/, '').replace(/\.$/, '') : val;
 };
 
