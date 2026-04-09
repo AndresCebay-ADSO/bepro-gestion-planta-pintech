@@ -35,13 +35,18 @@ type RawMaterialFormData = {
     is_active: boolean;
 };
 
+const trimZeroes = (val: string | null | undefined): string => {
+    if (!val) return '';
+    return val.includes('.') ? val.replace(/0+$/, '').replace(/\.$/, '') : val;
+};
+
 export default function RawMaterialsEdit({ rawMaterial, units }: Props) {
     const form = useForm<RawMaterialFormData>({
         code: rawMaterial.code,
         unit_of_measure_id: String(rawMaterial.unit_of_measure_id),
-        current_price: String(Number(rawMaterial.current_price)),
-        previous_price: rawMaterial.previous_price ? String(Number(rawMaterial.previous_price)) : '',
-        minimum_stock: String(Number(rawMaterial.minimum_stock)),
+        current_price: trimZeroes(rawMaterial.current_price),
+        previous_price: trimZeroes(rawMaterial.previous_price),
+        minimum_stock: trimZeroes(rawMaterial.minimum_stock),
         alert_days_before_expiry: String(rawMaterial.alert_days_before_expiry),
         is_active: rawMaterial.is_active,
     });

@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { route } from 'ziggy-js';
+import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
 
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
@@ -77,7 +78,7 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
         event.preventDefault();
 
         router.get(
-            route('raw-materials.index'),
+            RawMaterialController.index.url(),
             { search },
             {
                 preserveState: true,
@@ -95,7 +96,7 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
             return;
         }
 
-        router.delete(route('raw-materials.destroy', code), {
+        router.delete(RawMaterialController.destroy.url(code), {
             preserveScroll: true,
         });
     };
@@ -119,7 +120,7 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
 
                     {can.create && (
                         <Button asChild>
-                            <Link href={route('raw-materials.create')}>
+                            <Link href={RawMaterialController.create.url()}>
                                 Nueva Materia Prima
                             </Link>
                         </Button>
@@ -223,8 +224,7 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                                                     size="sm"
                                                 >
                                                     <Link
-                                                        href={route(
-                                                            'raw-materials.show',
+                                                        href={RawMaterialController.show.url(
                                                             item.code
                                                         )}
                                                     >
@@ -240,8 +240,7 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                                                     size="sm"
                                                 >
                                                     <Link
-                                                        href={route(
-                                                            'raw-materials.edit',
+                                                        href={RawMaterialController.edit.url(
                                                             item.code
                                                         )}
                                                     >

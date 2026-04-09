@@ -164,7 +164,7 @@ export function RawMaterialForm({
                     {form.data.current_price && (
                         <p className="min-w-0 break-all text-xs text-muted-foreground">
                             <FormattedNumber
-                                value={form.data.current_price}
+                                value={form.data.current_price.replace(/\.$/, '')}
                                 currency
                             />
                         </p>
@@ -190,7 +190,7 @@ export function RawMaterialForm({
                     {form.data.previous_price && (
                         <p className="min-w-0 break-all text-xs text-muted-foreground italic">
                             <FormattedNumber
-                                value={form.data.previous_price}
+                                value={form.data.previous_price.replace(/\.$/, '')}
                                 currency
                             />
                         </p>
@@ -217,7 +217,7 @@ export function RawMaterialForm({
                     {form.data.minimum_stock && (
                         <p className="min-w-0 break-all text-xs text-muted-foreground">
                             <FormattedNumber
-                                value={form.data.minimum_stock}
+                                value={form.data.minimum_stock.replace(/\.$/, '')}
                             />
                         </p>
                     )}

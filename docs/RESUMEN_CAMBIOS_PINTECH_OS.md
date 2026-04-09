@@ -113,3 +113,21 @@ Se implementó notificación personalizada para controlar la salutation exacta.
 - Procesar correos en cola (si `QUEUE_CONNECTION=database`):
   - `php artisan queue:work`
 
+
+---
+
+## 8) Correcciones de UI y Experiencia de Usuario (Inventory & Admin)
+
+### Mejora en campos decimales del Inventario
+- `resources/js/Pages/Inventory/RawMaterials/Edit.tsx`:
+  - Se eliminaron los ceros decimales muertos visualmente innecesarios al editar el *stock mínimo* y los *precios*, usando transformaciones exactas (`String(Number(value))`) antes de popular el formulario, para evitar ver campos con `,0000` si existen valores cerrados.
+
+### Corrección de traducción en Paginación
+- `resources/js/Pages/Inventory/RawMaterials/Index.tsx`
+- `resources/js/Pages/Inventory/Warehouses/Index.tsx`
+  - Se actualizó el filtro de las ligas de la paginación de Inertia, capturando específicamente `pagination.previous` y `pagination.next` para ocultar los botones de "anterior/siguiente" que aparecían cuando faltaba la traducción al español en backend, dejando limpia la botonera numérica central.
+
+### Correcciones en Formularios de Administración de Usuarios
+- `resources/js/Pages/Admin/Users/Create.tsx` y `Edit.tsx`:
+  - **Botón Vislumbrar Contraseña:** Se instaló e implementó el componente `<PasswordInput>` (creado con lucide-react y radix ui) en la creación de usuarios para permitir visualizar las contraseñas escritas (Contraseña y Confirmación).
+  - **Corrección Bug de Mensajes de Validación**: Se corrigió el error donde Inertia escupía un objeto con llave string `Record<string, string>`, pero el cliente TypeScript lo trataba como arreglo devolviendo el índice cero `{errors.name[0]}`, lo que causaba que el sistema solo renderizara la primera letra del error.

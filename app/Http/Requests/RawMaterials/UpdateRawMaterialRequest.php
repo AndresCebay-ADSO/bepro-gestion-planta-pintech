@@ -7,7 +7,7 @@ use Illuminate\Validation\Rule;
 
 class UpdateRawMaterialRequest extends FormRequest
 {
-    private const MAX_PRICE = 99999999999999.9999;
+    private const MAX_PRICE = '99999999999999.9999';
 
     public function authorize(): bool
     {
