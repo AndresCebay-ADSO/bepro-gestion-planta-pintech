@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Listeners\LogFailedLoginAttempt;
 use App\Models\Formula;
 use App\Models\PriceList;
 use App\Models\RawMaterial;
@@ -11,8 +12,10 @@ use App\Policies\PriceListPolicy;
 use App\Policies\RawMaterialPolicy;
 use App\Policies\WarehousePolicy;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -33,6 +36,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        Event::listen(Failed::class, LogFailedLoginAttempt::class);
     }
 
     /**

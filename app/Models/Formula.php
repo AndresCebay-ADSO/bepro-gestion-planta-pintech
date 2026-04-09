@@ -7,10 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Models\Concerns\LogsActivity as ConcernsLogsActivity;
+use Spatie\Activitylog\Support\LogOptions as SupportLogOptions;
 
 class Formula extends Model
 {
-    use HasFactory, SoftDeletes;
+    use ConcernsLogsActivity, HasFactory, SoftDeletes;
+
+    public function getActivitylogOptions(): SupportLogOptions
+    {
+        return SupportLogOptions::defaults()
+            ->logOnly(['product_id', 'version', 'is_active', 'notes'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
 
     protected $table = 'formulas';
 

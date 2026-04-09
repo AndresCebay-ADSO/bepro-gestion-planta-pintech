@@ -8,6 +8,7 @@ import {
     LayoutGrid,
     QrCode,
     Settings,
+    ShieldCheck,
     Users,
     WalletCards,
     Warehouse,
@@ -23,6 +24,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as auditLogsIndex } from '@/routes/audit-logs';
 import { index as usersIndex } from '@/routes/users';
 import type { User, UserRole } from '@/types/auth';
 import type { NavGroup } from '@/types/navigation';
@@ -137,6 +139,13 @@ const navigationGroups: NavGroup[] = [
                 title: 'Usuarios',
                 href: usersIndex(),
                 icon: Users,
+                allowedRoles: ['admin'],
+                unauthorizedBehavior: 'hide',
+            },
+            {
+                title: 'Auditoría',
+                href: auditLogsIndex(),
+                icon: ShieldCheck,
                 allowedRoles: ['admin'],
                 unauthorizedBehavior: 'hide',
             },

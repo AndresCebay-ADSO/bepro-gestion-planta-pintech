@@ -84,12 +84,25 @@ class UserController extends Controller
             'role' => 'required|exists:roles,name',
         ]);
 
+        $oldRole = $user->roles->first()?->name ?? 'none';
+
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
         ]);
 
         $user->syncRoles([$validated['role']]);
+
+        if ($oldRole !== $validated['role']) {
+            activity('security')
+                ->performedOn($user)
+                ->event('role_changed')
+                ->withProperties([
+                    'old_role' => $oldRole,
+                    'new_role' => $validated['role'],
+                ])
+                ->log("Rol de usuario modificado de {$oldRole} a ".$validated['role']);
+        }
 
         return redirect()->route('users.index')->with('message', 'Usuario actualizado exitosamente.');
     }

@@ -1,10 +1,11 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ComercialController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\Inventory\RawMaterialController;
+use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Solo ADMIN: Acceso a configuración, usuarios, auditoría
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
+    Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::resource('users', UserController::class);
     Route::resource('raw-materials', RawMaterialController::class)->except(['index', 'show']);
     Route::resource('warehouses', WarehouseController::class)->except(['index', 'show']);

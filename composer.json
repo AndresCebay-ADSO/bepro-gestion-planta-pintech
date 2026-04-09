@@ -15,6 +15,7 @@
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
+        "spatie/laravel-activitylog": "^5.0",
         "spatie/laravel-permission": "^7.2",
         "tightenco/ziggy": "^2.6"
     },
