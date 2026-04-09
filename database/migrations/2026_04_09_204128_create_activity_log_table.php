@@ -17,6 +17,7 @@ return new class extends Migration
             $table->nullableMorphs('causer', 'causer');
             $table->json('attribute_changes')->nullable();
             $table->json('properties')->nullable();
+            $table->uuid('batch_uuid')->nullable()->after('properties');
             $table->timestamps();
 
             // Explicit indices recommended for performance
