@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -13,14 +14,21 @@ class UserController extends Controller
     /**
      * Mostrar lista de usuarios.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('roles')->paginate(15);
-        $roles = Role::all();
+        $query = User::with('roles');
+
+        $users = $query->paginate(15)->withQueryString();
+
+        // Obtener últimas actividades
+        $activities = Activity::with('causer')
+            ->latest()
+            ->take(5)
+            ->get();
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
-            'roles' => $roles,
+            'recentActivities' => $activities,
         ]);
     }
 
