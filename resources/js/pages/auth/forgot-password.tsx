@@ -23,7 +23,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             backgroundPosition: 'center',
                         }}
                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#0d2a6e]/55 via-[#0d2a6e]/45 to-[#0a2060]/50" />
+                        <div className="absolute inset-0 bg-linear-to-br from-[#0d2a6e]/55 via-[#0d2a6e]/45 to-[#0a2060]/50" />
 
                         <div className="relative z-10">
                             <span className="text-primary-foreground/75 inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 px-3 py-1 text-xs font-semibold tracking-widest uppercase">

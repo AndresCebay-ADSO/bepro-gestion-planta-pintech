@@ -4,6 +4,9 @@ import type { FormEvent } from 'react';
 import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { TableActions } from '@/components/table-actions';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Users } from 'lucide-react';
 
 type WarehouseRow = {
     id: number;
@@ -137,28 +140,31 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                                     </td>
                                     <td className="p-3 text-muted-foreground">{warehouse.users_count}</td>
                                     <td className="p-3 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            {warehouse.can.view && (
-                                                <Button asChild variant="outline" size="sm">
-                                                    <Link href={route('warehouses.show', warehouse.id)}>Ver</Link>
-                                                </Button>
-                                            )}
+                                        <TableActions
+                                            permissions={warehouse.can}
+                                            onView={() => router.get(route('warehouses.show', warehouse.id))}
+                                            onEdit={() => router.get(route('warehouses.edit', warehouse.id))}
+                                            onDelete={() => handleDelete(warehouse.id)}
+                                        >
                                             {warehouse.can.update && (
-                                                <>
-                                                    <Button asChild variant="outline" size="sm">
-                                                        <Link href={route('warehouses.edit', warehouse.id)}>Editar</Link>
-                                                    </Button>
-                                                    <Button asChild variant="outline" size="sm">
-                                                        <Link href={route('warehouses.assign-users.form', warehouse.id)}>Asignar usuarios</Link>
-                                                    </Button>
-                                                </>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="h-8 w-8"
+                                                            asChild
+                                                        >
+                                                            <Link href={route('warehouses.assign-users.form', warehouse.id)}>
+                                                                <Users className="h-4 w-4" />
+                                                                <span className="sr-only">Asignar usuarios</span>
+                                                            </Link>
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Asignar usuarios</TooltipContent>
+                                                </Tooltip>
                                             )}
-                                            {warehouse.can.delete && (
-                                                <Button type="button" variant="destructive" size="sm" onClick={() => handleDelete(warehouse.id)}>
-                                                    Eliminar
-                                                </Button>
-                                            )}
-                                        </div>
+                                        </TableActions>
                                     </td>
                                 </tr>
                             ))}

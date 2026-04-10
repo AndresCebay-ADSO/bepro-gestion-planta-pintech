@@ -3,8 +3,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
     Activity,
-    Edit2,
-    MoreHorizontal,
     Search,
     ShieldAlert,
     UserPlus,
@@ -16,10 +14,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
+import { TableActions } from '@/components/table-actions';
 import {
     create as usersCreate,
     destroy as usersDestroy,
     edit as usersEdit,
+    show as usersShow,
 } from '@/routes/users';
 
 interface User {
@@ -185,25 +185,15 @@ const UsersIndex: FC<Props> = ({ users, recentActivities }) => {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
-                                                    <div className="flex justify-end gap-1">
-                                                        <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600">
-                                                            <Link href={usersEdit(user.id)}>
-                                                                <Edit2 className="h-4 w-4" />
-                                                            </Link>
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 text-slate-400 hover:text-rose-600"
-                                                            onClick={() => {
-                                                                if (confirm('¿Eliminar este usuario definitivamente?')) {
-                                                                    router.delete(usersDestroy(user.id));
-                                                                }
-                                                            }}
-                                                        >
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
+                                                    <TableActions
+                                                        onView={() => router.get(usersShow(user.id))}
+                                                        onEdit={() => router.get(usersEdit(user.id))}
+                                                        onDelete={() => {
+                                                            if (confirm('¿Eliminar este usuario definitivamente?')) {
+                                                                router.delete(usersDestroy(user.id));
+                                                            }
+                                                        }}
+                                                    />
                                                 </td>
                                             </tr>
                                         ))

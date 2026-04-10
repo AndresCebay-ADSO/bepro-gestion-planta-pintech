@@ -5,6 +5,7 @@ import type { FormEvent } from 'react';
 import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
 
 import { FormattedNumber } from '@/components/formatted-number';
+import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -215,53 +216,30 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                                     </td>
 
                                     <td className="p-3 text-right">
-                                        <div className="flex justify-end gap-2">
-
-                                            {item.can.view && (
-                                                <Button
-                                                    asChild
-                                                    variant="outline"
-                                                    size="sm"
-                                                >
-                                                    <Link
-                                                        href={RawMaterialController.show.url(
-                                                            item.code
-                                                        )}
-                                                    >
-                                                        Ver
-                                                    </Link>
-                                                </Button>
-                                            )}
-
-                                            {item.can.update && (
-                                                <Button
-                                                    asChild
-                                                    variant="outline"
-                                                    size="sm"
-                                                >
-                                                    <Link
-                                                        href={RawMaterialController.edit.url(
-                                                            item.code
-                                                        )}
-                                                    >
-                                                        Editar
-                                                    </Link>
-                                                </Button>
-                                            )}
-
-                                            {item.can.delete && (
-                                                <Button
-                                                    type="button"
-                                                    variant="destructive"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        handleDelete(item.code)
-                                                    }
-                                                >
-                                                    Eliminar
-                                                </Button>
-                                            )}
-                                        </div>
+                                        <TableActions
+                                            permissions={{
+                                                view: item.can.view,
+                                                edit: item.can.update,
+                                                delete: item.can.delete,
+                                            }}
+                                            onView={() =>
+                                                router.get(
+                                                    RawMaterialController.show.url(
+                                                        item.code
+                                                    )
+                                                )
+                                            }
+                                            onEdit={() =>
+                                                router.get(
+                                                    RawMaterialController.edit.url(
+                                                        item.code
+                                                    )
+                                                )
+                                            }
+                                            onDelete={() =>
+                                                handleDelete(item.code)
+                                            }
+                                        />
                                     </td>
                                 </tr>
                             ))}

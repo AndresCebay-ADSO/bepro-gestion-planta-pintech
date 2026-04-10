@@ -155,6 +155,10 @@ Key business entities (see `docs/MER.md`):
 - **Git**: Conventional commits (`feat:`, `fix:`, `docs:`, `style:`, `refactor:`).
 - **Branches**: `main` (prod), `develop` (integration), `feature/PT-XXX-desc`.
 - **Naming**: PascalCase classes, camelCase variables/methods, snake_case DB columns.
+- **UI Standards**: Use `TableActions` component for all table row actions. 
+  - Rules: Icons only (lucide-react), Tooltips mandatory, `sr-only` text included.
+  - Colors: View (outline), Edit (warning/amber), Delete (destructive/red).
+  - Order: View, Edit, Delete.
 
 ## Demo Credentials (from seeds)
 
