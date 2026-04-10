@@ -1,6 +1,5 @@
-import { router, Link } from '@inertiajs/react';
+import { useForm, Link } from '@inertiajs/react';
 import type { FC, FormEvent } from 'react';
-import { useState } from 'react';
 import { route } from 'ziggy-js';
 
 import PasswordInput from '@/components/password-input';
@@ -15,40 +14,18 @@ interface Props {
 }
 
 const UsersCreate: FC<Props> = ({ roles }) => {
-    const [formData, setFormData] = useState({
+    const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
         password: '',
         password_confirmation: '',
-        role: 'produccion',
+        role: roles[0]?.name || 'produccion',
     });
 
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [loading, setLoading] = useState(false);
-
-    const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-    ) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-
-        if (errors[name]) {
-            setErrors((prev) => ({ ...prev, [name]: '' }));
-        }
-    };
-
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setLoading(true);
-
-        router.post(route('users.store'), formData, {
-            onError: (pageErrors) => {
-                setErrors(pageErrors as unknown as Record<string, string>);
-                setLoading(false);
-            },
-            onSuccess: () => {
-                setLoading(false);
-            },
+        post(route('users.store'), {
+            onSuccess: () => reset('password', 'password_confirmation'),
         });
     };
 
@@ -61,10 +38,10 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         href={route('users.index')}
                         className="text-primary hover:text-primary/80 mb-4 inline-block"
                     >
-                        ← Volver a Usuarios
+                        ← Volver a Gestión de Usuarios
                     </Link>
                     <h1 className="mb-2 text-4xl font-bold text-foreground">
-                        ➕ Crear Nuevo Usuario
+                        Crear Nuevo Usuario
                     </h1>
                     <p className="text-muted-foreground">
                         Agrega un nuevo usuario al sistema
@@ -84,8 +61,8 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         <input
                             type="text"
                             name="name"
-                            value={formData.name}
-                            onChange={handleChange}
+                            value={data.name}
+                            onChange={(e) => setData('name', e.target.value)}
                             placeholder="Ej: Juan Pérez"
                             className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
                         />
@@ -104,8 +81,8 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         <input
                             type="email"
                             name="email"
-                            value={formData.email}
-                            onChange={handleChange}
+                            value={data.email}
+                            onChange={(e) => setData('email', e.target.value)}
                             placeholder="juan@pintech.com"
                             className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
                         />
@@ -123,8 +100,8 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         </label>
                         <select
                             name="role"
-                            value={formData.role}
-                            onChange={handleChange}
+                            value={data.role}
+                            onChange={(e) => setData('role', e.target.value)}
                             className="border-input bg-background text-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
                         >
                             {roles.map((role) => (
@@ -148,8 +125,8 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         </label>
                         <PasswordInput
                             name="password"
-                            value={formData.password}
-                            onChange={handleChange}
+                            value={data.password}
+                            onChange={(e) => setData('password', e.target.value)}
                             placeholder="Mínimo 8 caracteres"
                             className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
                         />
@@ -167,8 +144,10 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         </label>
                         <PasswordInput
                             name="password_confirmation"
-                            value={formData.password_confirmation}
-                            onChange={handleChange}
+                            value={data.password_confirmation}
+                            onChange={(e) =>
+                                setData('password_confirmation', e.target.value)
+                            }
                             placeholder="Repite la contraseña"
                             className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
                         />
@@ -183,10 +162,10 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                     <div className="flex gap-4 pt-6">
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={processing}
                             className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1 rounded-lg px-6 py-2 font-semibold transition disabled:opacity-50"
                         >
-                            {loading ? 'Creando...' : 'Crear Usuario'}
+                            {processing ? 'Creando...' : 'Crear Usuario'}
                         </button>
                         <Link
                             href={route('users.index')}

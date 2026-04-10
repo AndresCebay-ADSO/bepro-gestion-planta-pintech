@@ -79,3 +79,15 @@ Para asegurar una interfaz limpia, profesional y accesible, las acciones por fil
 
 > [!IMPORTANT]
 > Esta norma aplica **SOLO** a las acciones de fila en tablas. Los botones principales de página (ej. "Crear Nuevo") deben seguir siendo botones con texto para mayor claridad.
+
+---
+
+## 7. Forms (Inertia + React)
+
+- MUST use `useForm` from @inertiajs/react.
+- NEVER use manual `useState` for form data, errors, or loading in Inertia pages.
+- Use `processing` and `errors` from useForm for UI feedback.
+- Initialize `useForm` values directly from props (Avoid useEffect for initialization).
+
+Reason:
+Ensures consistency, reduces boilerplate, and provides native integration with Laravel's validation system.

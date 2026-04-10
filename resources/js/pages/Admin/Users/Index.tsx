@@ -100,8 +100,13 @@ const UsersIndex: FC<Props> = ({ users, recentActivities }) => {
                             Gestiona el acceso, permisos y roles del personal de planta.
                         </p>
                     </div>
+                    <Button asChild className="shrink-0 bg-blue-600 hover:bg-blue-700">
+                        <Link href={usersCreate()}>
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Nuevo Usuario
+                        </Link>
+                    </Button>
                 </div>
-
                 {/* Main Toolbar */}
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="relative w-full max-w-sm">
@@ -114,12 +119,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities }) => {
                             className="w-full rounded-lg border border-slate-200 bg-white py-2 pr-4 pl-10 text-sm ring-blue-500/20 shadow-sm focus:border-blue-300 focus:ring-4 focus:outline-none dark:border-slate-800 dark:bg-background"
                         />
                     </div>
-                    <Button asChild className="shrink-0 bg-blue-600 hover:bg-blue-700">
-                        <Link href={usersCreate()}>
-                            <UserPlus className="mr-2 h-4 w-4" />
-                            Nuevo Usuario
-                        </Link>
-                    </Button>
+
                 </div>
 
                 {/* Main Content Grid */}
@@ -206,7 +206,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities }) => {
                                     )}
                                 </tbody>
                             </table>
-                            
+
                             {/* Pagination Placeholder */}
                             <div className="border-t border-slate-100 bg-slate-50/30 px-4 py-3 dark:border-slate-800 dark:bg-muted/20">
                                 <div className="flex items-center justify-between text-[10px] text-slate-500">
