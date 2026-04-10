@@ -18,6 +18,14 @@ class AuditLogController extends Controller
     {
         $this->authorize('view-audit-logs');
 
+        $request->validate([
+            'search' => 'nullable|string|max:100',
+            'log_name' => 'nullable|string|max:50',
+            'event' => 'nullable|string|max:50',
+            'date_from' => 'nullable|date_format:Y-m-d',
+            'date_to' => 'nullable|date_format:Y-m-d|after_or_equal:date_from',
+        ]);
+
         $query = Activity::with('causer')->latest();
 
         if ($request->filled('search')) {
