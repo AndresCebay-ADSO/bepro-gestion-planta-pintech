@@ -252,10 +252,38 @@ Alertas del sistema.
 ## 3. Entidades de autenticacion, cola, cache y permisos
 
 ### 3.1 Auth base
+Usuarios y tokens de acceso.
+
 - `users`
+    - `id` BIGINT PK
+    - `name` VARCHAR(255)
+    - `email` VARCHAR(255) UNIQUE
+    - `email_verified_at` TIMESTAMP NULL
+    - `password` VARCHAR(255)
+    - `is_active` BOOLEAN DEFAULT true
+    - `last_login_at` TIMESTAMP NULL
+    - `remember_token` VARCHAR(100) NULL
+    - `created_at`, `updated_at`
+
 - `password_reset_tokens`
 
-### 3.2 Cache/locks
+### 3.2 Actividad y Auditoría (Spatie Activity Log)
+Registro histórico de acciones administrativas y de negocio.
+
+- `activity_log`
+    - `id` BIGINT PK
+    - `log_name` VARCHAR(255) NULL (ej: default, auth, role_change)
+    - `description` TEXT (descripcion legible del evento)
+    - `subject_id` BIGINT NULL (ID del modelo afectado)
+    - `subject_type` VARCHAR(255) NULL (Clase del modelo afectado)
+    - `causer_id` BIGINT NULL (ID del usuario que realizo la accion)
+    - `causer_type` VARCHAR(255) NULL
+    - `properties` JSON NULL (datos antiguos vs nuevos)
+    - `batch_uuid` UUID NULL
+    - `event` VARCHAR(255) NULL (created, updated, deleted, failed_login)
+    - `created_at`, `updated_at`
+
+### 3.3 Cache/locks
 - `cache`
 - `cache_locks`
 

@@ -69,9 +69,10 @@ npm run build:ssr
 
 ### Tech Stack
 
-- **Backend**: Laravel 13 (PHP 8.3+), Inertia Laravel, Laravel Fortify (auth), Spatie Permission (roles)
+- **Backend**: Laravel 13 (PHP 8.3+), Inertia Laravel, Laravel Fortify (auth), Spatie Permission (roles), Spatie Activity Log (audit)
 - **Frontend**: React 19, Inertia.js, TypeScript, Tailwind CSS v4, Vite
 - **Database**: PostgreSQL 16 (SQLite for tests)
+- **Log Management**: Auditoría con retención de 180 días. Limpieza automática 03:00 AM.
 - **Testing**: Pest PHP
 
 ### Role-Based Access Control
@@ -131,6 +132,11 @@ Key business entities (see `docs/MER.md`):
 - `production_orders`, `production_order_details` - Manufacturing orders
 - `inventory_movements` - Stock transactions
 - `price_lists`, `production_costs` - Pricing history
+- `activity_log` - Registro de auditoría del sistema (Spatie)
+
+### Key UI Layouts
+
+**User Management Dashboard**: Rediseño con layout 9/3 (9 columnas para tabla, 3 columnas para el widget de "Actividad Reciente"). Muestra últimos 5 eventos de auditoría en tiempo real.
 
 ### Key Patterns
 

@@ -11,7 +11,6 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import ThemeToggleButton from '@/components/theme-toggle-button';
-import WarehouseSelector from '@/components/warehouse-selector';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useSidebar } from '@/components/ui/sidebar';
 import { UserMenuContent } from '@/components/user-menu-content';
+import WarehouseSelector from '@/components/warehouse-selector';
 import { useInitials } from '@/hooks/use-initials';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';

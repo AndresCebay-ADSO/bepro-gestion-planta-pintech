@@ -8,8 +8,8 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-describe('Raw Material Store Validation', function () {
-    beforeEach(function () {
+describe('Raw Material Store Validation', function (): void {
+    beforeEach(function (): void {
         if (Role::count() === 0) {
             Role::create(['name' => 'admin']);
             Role::create(['name' => 'produccion']);
@@ -36,7 +36,7 @@ describe('Raw Material Store Validation', function () {
         ];
     });
 
-    it('requires code', function () {
+    it('requires code', function (): void {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
                 ...$this->validData,
@@ -46,7 +46,7 @@ describe('Raw Material Store Validation', function () {
         $response->assertSessionHasErrors('code');
     });
 
-    it('requires code to be unique', function () {
+    it('requires code to be unique', function (): void {
         RawMaterial::create($this->validData);
 
         $response = $this->actingAs($this->admin)
@@ -58,7 +58,7 @@ describe('Raw Material Store Validation', function () {
         $response->assertSessionHasErrors('code');
     });
 
-    it('requires unit_of_measure_id to exist', function () {
+    it('requires unit_of_measure_id to exist', function (): void {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
                 ...$this->validData,
@@ -68,7 +68,7 @@ describe('Raw Material Store Validation', function () {
         $response->assertSessionHasErrors('unit_of_measure_id');
     });
 
-    it('requires current_price to be positive', function () {
+    it('requires current_price to be positive', function (): void {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
                 ...$this->validData,
@@ -78,7 +78,7 @@ describe('Raw Material Store Validation', function () {
         $response->assertSessionHasErrors('current_price');
     });
 
-    it('requires current_price to be numeric', function () {
+    it('requires current_price to be numeric', function (): void {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
                 ...$this->validData,
@@ -88,7 +88,7 @@ describe('Raw Material Store Validation', function () {
         $response->assertSessionHasErrors('current_price');
     });
 
-    it('accepts valid current_price with decimals', function () {
+    it('accepts valid current_price with decimals', function (): void {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
                 ...$this->validData,
@@ -102,7 +102,22 @@ describe('Raw Material Store Validation', function () {
         ]);
     });
 
-    it('requires minimum_stock to be non-negative', function () {
+    it('accepts billion-scale current_price values', function (): void {
+        $response = $this->actingAs($this->admin)
+            ->post(route('raw-materials.store'), [
+                ...$this->validData,
+                'code' => 'MP002',
+                'current_price' => '1000000000.1234',
+            ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('raw_materials', [
+            'code' => 'MP002',
+            'current_price' => '1000000000.1234',
+        ]);
+    });
+
+    it('requires minimum_stock to be non-negative', function (): void {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
                 ...$this->validData,
@@ -112,7 +127,7 @@ describe('Raw Material Store Validation', function () {
         $response->assertSessionHasErrors('minimum_stock');
     });
 
-    it('requires alert_days_before_expiry to be at least 1', function () {
+    it('requires alert_days_before_expiry to be at least 1', function (): void {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
                 ...$this->validData,
@@ -122,7 +137,7 @@ describe('Raw Material Store Validation', function () {
         $response->assertSessionHasErrors('alert_days_before_expiry');
     });
 
-    it('allows null previous_price', function () {
+    it('allows null previous_price', function (): void {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
                 ...$this->validData,

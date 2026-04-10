@@ -1,11 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { route } from 'ziggy-js';
-import InputError from '@/components/input-error';
+import { RawMaterialForm } from '@/components/raw-materials/raw-material-form';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type UnitOption = {
     id: number;
@@ -29,7 +25,7 @@ type Props = {
     units: UnitOption[];
 };
 
-type RawMaterialForm = {
+type RawMaterialFormData = {
     code: string;
     unit_of_measure_id: string;
     current_price: string;
@@ -39,13 +35,21 @@ type RawMaterialForm = {
     is_active: boolean;
 };
 
+const trimZeroes = (val: string | null | undefined): string => {
+    if (!val) {
+        return '';
+    }
+
+    return val.includes('.') ? val.replace(/0+$/, '').replace(/\.$/, '') : val;
+};
+
 export default function RawMaterialsEdit({ rawMaterial, units }: Props) {
-    const form = useForm<RawMaterialForm>({
+    const form = useForm<RawMaterialFormData>({
         code: rawMaterial.code,
         unit_of_measure_id: String(rawMaterial.unit_of_measure_id),
-        current_price: String(rawMaterial.current_price),
-        previous_price: rawMaterial.previous_price ? String(rawMaterial.previous_price) : '',
-        minimum_stock: String(rawMaterial.minimum_stock),
+        current_price: trimZeroes(rawMaterial.current_price),
+        previous_price: trimZeroes(rawMaterial.previous_price),
+        minimum_stock: trimZeroes(rawMaterial.minimum_stock),
         alert_days_before_expiry: String(rawMaterial.alert_days_before_expiry),
         is_active: rawMaterial.is_active,
     });
@@ -65,88 +69,28 @@ export default function RawMaterialsEdit({ rawMaterial, units }: Props) {
             <Head title={`Editar ${rawMaterial.code}`} />
 
             <div className="mx-auto max-w-3xl space-y-6 p-6">
-                <div className="space-y-1">
-                    <h1 className="text-2xl font-semibold text-foreground">Editar Materia Prima</h1>
-                    <p className="text-sm text-muted-foreground">Actualiza la información de {rawMaterial.code}.</p>
+                <div>
+                    <h1 className="text-2xl font-semibold">Editar Materia Prima</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Actualiza {rawMaterial.code}
+                    </p>
                 </div>
 
-                <div className="rounded-lg border border-border bg-card p-6">
-                    <form
-                        onSubmit={(event) => {
-                            event.preventDefault();
-                            submit();
-                        }}
-                        className="grid gap-5"
-                    >
-                        <div className="grid gap-2">
-                            <Label htmlFor="code">Código interno</Label>
-                            <Input id="code" value={form.data.code} onChange={(event) => form.setData('code', event.target.value)} maxLength={50} />
-                            <InputError message={form.errors.code} />
-                        </div>
+                <div className="rounded-lg border bg-card p-6">
+                    <RawMaterialForm
+                        form={form}
+                        units={units}
+                        onSubmit={submit}
+                        submitLabel="Guardar cambios"
+                    />
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="unit">Unidad de medida</Label>
-                            <Select value={form.data.unit_of_measure_id} onValueChange={(value) => form.setData('unit_of_measure_id', value)}>
-                                <SelectTrigger id="unit" className="w-full">
-                                    <SelectValue placeholder="Seleccionar unidad" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {units.map((unit) => (
-                                        <SelectItem key={unit.id} value={String(unit.id)}>
-                                            {unit.name} ({unit.symbol})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <InputError message={form.errors.unit_of_measure_id} />
-                        </div>
-
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <div className="grid gap-2">
-                                <Label htmlFor="current_price">Precio actual</Label>
-                                <Input id="current_price" type="number" min="0" step="0.0001" value={form.data.current_price} onChange={(event) => form.setData('current_price', event.target.value)} />
-                                <InputError message={form.errors.current_price} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="previous_price">Precio anterior (opcional)</Label>
-                                <Input id="previous_price" type="number" min="0" step="0.0001" value={form.data.previous_price} onChange={(event) => form.setData('previous_price', event.target.value)} />
-                                <InputError message={form.errors.previous_price} />
-                            </div>
-                        </div>
-
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <div className="grid gap-2">
-                                <Label htmlFor="minimum_stock">Stock mínimo</Label>
-                                <Input id="minimum_stock" type="number" min="0" step="0.0001" value={form.data.minimum_stock} onChange={(event) => form.setData('minimum_stock', event.target.value)} />
-                                <InputError message={form.errors.minimum_stock} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="alert_days_before_expiry">Días de alerta por vencimiento</Label>
-                                <Input id="alert_days_before_expiry" type="number" min="1" step="1" value={form.data.alert_days_before_expiry} onChange={(event) => form.setData('alert_days_before_expiry', event.target.value)} />
-                                <InputError message={form.errors.alert_days_before_expiry} />
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 rounded-md border border-border px-3 py-2">
-                            <Checkbox
-                                id="is_active"
-                                checked={form.data.is_active}
-                                onCheckedChange={(checked) => form.setData('is_active', checked === true)}
-                            />
-                            <Label htmlFor="is_active" className="cursor-pointer">Materia prima activa</Label>
-                        </div>
-
-                        <div className="flex flex-col gap-2 pt-2 sm:flex-row">
-                            <Button type="submit" disabled={form.processing}>
-                                {form.processing ? 'Actualizando...' : 'Guardar cambios'}
-                            </Button>
-                            <Button type="button" variant="outline" asChild>
-                                <Link href={route('raw-materials.index')}>Cancelar</Link>
-                            </Button>
-                        </div>
-                    </form>
+                    <div className="pt-4">
+                        <Button variant="outline" asChild>
+                            <Link href={route('raw-materials.index')}>
+                                Cancelar
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
             </div>
         </>
