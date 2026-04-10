@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Inertia\Response;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Role;
 
@@ -14,7 +16,7 @@ class UserController extends Controller
     /**
      * Mostrar lista de usuarios.
      */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $query = User::with('roles');
 
@@ -35,7 +37,7 @@ class UserController extends Controller
     /**
      * Mostrar formulario para crear usuario.
      */
-    public function create()
+    public function create(): Response
     {
         $roles = Role::all();
 
@@ -47,7 +49,7 @@ class UserController extends Controller
     /**
      * Guardar nuevo usuario en la base de datos.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -71,7 +73,7 @@ class UserController extends Controller
     /**
      * Mostrar formulario para editar usuario.
      */
-    public function edit(User $user)
+    public function edit(User $user): Response
     {
         $roles = Role::all();
 
@@ -84,7 +86,7 @@ class UserController extends Controller
     /**
      * Actualizar usuario.
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -118,7 +120,7 @@ class UserController extends Controller
     /**
      * Eliminar usuario.
      */
-    public function destroy(User $user)
+    public function destroy(User $user): RedirectResponse
     {
         $user->delete();
 

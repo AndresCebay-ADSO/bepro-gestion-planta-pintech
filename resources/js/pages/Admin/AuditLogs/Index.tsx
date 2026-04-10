@@ -23,16 +23,16 @@ type Causer = {
 
 type ActivityLog = {
     id: number;
-    log_name: string;
+    logName: string;
     description: string;
     event: string;
-    subject_type: string;
-    subject_id: number;
-    causer_type: string | null;
-    causer_id: number | null;
+    subjectType: string;
+    subjectId: number;
+    causerType: string | null;
+    causerId: number | null;
     causer: Causer | null;
     properties: Record<string, any>;
-    created_at: string;
+    createdAt: string;
 };
 
 type PaginationLink = {
@@ -245,7 +245,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                                     className="border-b border-border/60 last:border-0 hover:bg-muted/30 transition"
                                 >
                                     <td className="p-3 whitespace-nowrap text-muted-foreground text-xs">
-                                        {format(new Date(log.created_at), "dd MMM yyyy, HH:mm", { locale: es })}
+                                        {format(new Date(log.createdAt), "dd MMM yyyy, HH:mm", { locale: es })}
                                     </td>
                                     <td className="p-3">
                                         {log.causer ? (
@@ -259,7 +259,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                                     </td>
                                     <td className="p-3">
                                         <span className="px-2 py-1 rounded bg-secondary text-secondary-foreground text-xs uppercase tracking-wider">
-                                            {log.log_name}
+                                            {log.logName}
                                         </span>
                                     </td>
                                     <td className="p-3 text-center">
