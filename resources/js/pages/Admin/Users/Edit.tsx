@@ -26,7 +26,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
         role: user.roles[0]?.name || 'produccion',
     });
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         put(route('users.update', user.id));
     };
