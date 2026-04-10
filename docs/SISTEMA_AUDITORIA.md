@@ -3,7 +3,7 @@
 Pintech OS utiliza un sistema de auditoría centralizado para garantizar la trazabilidad de las acciones administrativas y operativas críticas.
 
 ## 1. Stack Tecnológico
-- **Librería**: `spatie/laravel-activitylog` (v5+)
+- **Librería**: `spatie/laravel-activitylog` (v4.0+)
 - **Almacenamiento**: Tabla `activity_logs` en base de datos central.
 
 ## 2. Configuración y Mantenimiento
@@ -11,7 +11,7 @@ Pintech OS utiliza un sistema de auditoría centralizado para garantizar la traz
 ### 2.1 Retención de Datos
 Para mantener la salud de la base de datos y evitar el crecimiento infinito (bloat), se ha configurado una política de retención:
 - **Periodo**: 180 días (6 meses).
-- **Configuración**: `activitylog.clean_after_days` en `config/activitylog.php`.
+- **Configuración**: `activitylog.delete_records_older_than_days` en `config/activitylog.php`.
 
 ### 2.2 Limpieza Automática
 Se ha programado una tarea en el Scheduler de Laravel (`routes/console.php`):

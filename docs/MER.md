@@ -44,7 +44,17 @@ Bodegas de producto terminado.
 - `created_at`, `updated_at`
 - `deleted_at`
 
-### 2.4 raw_materials
+### 2.4 warehouse_user
+Tabla pivote para asignación de usuarios a bodegas.
+
+- `id` BIGINT PK
+- `user_id` BIGINT FK -> `users.id`
+- `warehouse_id` BIGINT FK -> `warehouses.id`
+- `is_default` BOOLEAN DEFAULT false
+- `created_at`, `updated_at`
+- Restriccion UNIQUE (`user_id`, `warehouse_id`)
+
+### 2.5 raw_materials
 Materias primas.
 
 - `id` BIGINT PK
@@ -270,7 +280,7 @@ Usuarios y tokens de acceso.
 ### 3.2 Actividad y Auditoría (Spatie Activity Log)
 Registro histórico de acciones administrativas y de negocio.
 
-- `activity_log`
+- `activity_logs`
     - `id` BIGINT PK
     - `log_name` VARCHAR(255) NULL (ej: default, auth, role_change)
     - `description` TEXT (descripcion legible del evento)
@@ -278,7 +288,7 @@ Registro histórico de acciones administrativas y de negocio.
     - `subject_type` VARCHAR(255) NULL (Clase del modelo afectado)
     - `causer_id` BIGINT NULL (ID del usuario que realizo la accion)
     - `causer_type` VARCHAR(255) NULL
-    - `properties` JSON NULL (datos antiguos vs nuevos)
+    - `properties` JSONB NULL (datos antiguos vs nuevos)
     - `batch_uuid` UUID NULL
     - `event` VARCHAR(255) NULL (created, updated, deleted, failed_login)
     - `created_at`, `updated_at`
