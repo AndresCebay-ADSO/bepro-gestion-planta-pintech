@@ -29,23 +29,23 @@ class AuditLogController extends Controller
         $query = Activity::with('causer')->latest();
 
         if ($request->filled('search')) {
-            $search = $request->input('search');
+            $search = strtolower($request->input('search'));
             $query->where(function ($q) use ($search) {
-                $q->where('description', 'like', "%{$search}%")
-                    ->orWhere('event', 'like', "%{$search}%")
-                    ->orWhere('log_name', 'like', "%{$search}%")
+                $q->whereRaw('LOWER(description) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(event) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(log_name) LIKE ?', ["%{$search}%"])
                     ->orWhereHasMorph('causer', [User::class], function ($uq) use ($search) {
-                        $uq->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
+                        $uq->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                            ->orWhereRaw('LOWER(email) LIKE ?', ["%{$search}%"]);
                     });
             });
         }
 
-        if ($request->filled('log_name')) {
+        if ($request->filled('log_name') && $request->input('log_name') !== 'all') {
             $query->where('log_name', $request->input('log_name'));
         }
 
-        if ($request->filled('event')) {
+        if ($request->filled('event') && $request->input('event') !== 'all') {
             $query->where('event', $request->input('event'));
         }
 

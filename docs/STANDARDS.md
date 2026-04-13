@@ -76,6 +76,7 @@ Para asegurar una interfaz limpia, profesional y accesible, las acciones por fil
     * **Edit**: Color **Amber** (`variant="warning"`).
     * **Delete**: Color **Red** (`variant="destructive"`).
 * **Orden de Acciones**: El orden estricto de izquierda a derecha es: 1. Ver, 2. Editar, 3. Eliminar (y acciones adicionales al final).
+* **Text Wrapping**: Para descripciones largas o campos de logs, usar la clase `wrap-break-word` para asegurar que el contenido no rompa el layout de la tabla.
 
 > [!IMPORTANT]
 > Esta norma aplica **SOLO** a las acciones de fila en tablas. Los botones principales de página (ej. "Crear Nuevo") deben seguir siendo botones con texto para mayor claridad.
@@ -91,3 +92,38 @@ Para asegurar una interfaz limpia, profesional y accesible, las acciones por fil
 
 Reason:
 Ensures consistency, reduces boilerplate, and provides native integration with Laravel's validation system.
+---
+
+## 8. Búsqueda y Paginación (Search & Pagination)
+
+Para garantizar consistencia y persistencia en los filtros, todas las listas deben seguir este patrón:
+
+### Backend (Controller)
+1. Capturar el filtro: `$search = $request->input('search');`
+2. Aplicar filtro con SQL portable: `->when($search, fn($q, $s) => $q->whereRaw('LOWER(name) LIKE ?', ["%{$s}%"]))`
+3. Paginación con persistencia: `->paginate(10)->withQueryString()`
+
+### Frontend (React)
+1. Usar `useForm` de Inertia para el estado de búsqueda.
+2. Enviar vía `get()` con `preserveState`:
+```typescript
+form.get(route().url, { 
+    preserveState: true, 
+    replace: true 
+});
+```
+
+---
+
+## 9. Seeders y Datos de Prueba
+
+Los seeders deben ser seguros para ejecución repetida y protegidos contra entornos no deseados.
+
+*   **Idempotencia**: Usar siempre `updateOrCreate()` o `firstOrCreate()` en lugar de `create()`.
+*   **Seguridad**: Si un seeder genera grandes volúmenes de datos (ej. 100 usuarios de prueba), debe estar envuelto en un chequeo de entorno:
+```php
+if (app()->environment('local', 'testing')) {
+    User::factory(100)->create();
+}
+```
+*   **Limpieza**: No usar `truncate()` a menos que sea estrictamente necesario para la lógica del seeder base.

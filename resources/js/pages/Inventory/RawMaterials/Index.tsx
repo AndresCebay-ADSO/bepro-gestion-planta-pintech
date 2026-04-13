@@ -1,5 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, useForm, Link, router, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
 import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
@@ -12,7 +11,7 @@ import Pagination from '@/components/ui/pagination';
 import type { PaginationLink } from '@/types/ui';
 
 /**
- * Tipos
+ * Types
  */
 type RawMaterialRow = {
     id: number;
@@ -45,10 +44,12 @@ type Props = {
 };
 
 /**
- * Componente principal
+ * Main Component
  */
 export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props) {
-    const [search, setSearch] = useState(filters.search ?? '');
+    const { data, setData, get } = useForm({
+        search: filters.search ?? '',
+    });
 
     const flash = usePage<{
         flash?: { success?: string; error?: string };
@@ -56,27 +57,23 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
 
 
     /**
-     * Buscar
+     * Search
      */
     const handleSearch = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        router.get(
-            RawMaterialController.index.url(),
-            { search },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            }
-        );
+        get(RawMaterialController.index.url(), {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
     };
 
     /**
-     * Eliminar
+     * Delete
      */
     const handleDelete = (code: string) => {
-        if (!window.confirm('¿Estás seguro de eliminar esta materia prima?')) {
+        if (!window.confirm('Are you sure you want to delete this raw material?')) {
             return;
         }
 
@@ -95,17 +92,17 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold text-foreground">
-                            Materias Primas
+                            Raw Materials
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Inventario base de materias primas de planta.
+                            Base inventory of plant raw materials.
                         </p>
                     </div>
 
                     {can.create && (
                         <Button asChild>
                             <Link href={RawMaterialController.create.url()}>
-                                Nueva Materia Prima
+                                New Raw Material
                             </Link>
                         </Button>
                     )}
@@ -124,19 +121,19 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                     </div>
                 )}
 
-                {/* Buscador */}
+                {/* Search */}
                 <form
                     onSubmit={handleSearch}
                     className="flex flex-col gap-2 sm:flex-row"
                 >
                     <Input
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Buscar por código..."
+                        value={data.search}
+                        onChange={(e) => setData('search', e.target.value)}
+                        placeholder="Search by code..."
                         className="sm:max-w-sm"
                     />
                     <Button type="submit" variant="outline">
-                        Buscar
+                        Search
                     </Button>
                 </form>
 
@@ -146,12 +143,12 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
 
                         <thead className="border-b border-border bg-muted/40">
                             <tr>
-                                <th className="p-3 text-left font-medium">Código</th>
-                                <th className="p-3 text-left font-medium">Unidad</th>
-                                <th className="p-3 text-right font-medium">Precio</th>
-                                <th className="p-3 text-right font-medium">Stock Mínimo</th>
-                                <th className="p-3 text-center font-medium">Estado</th>
-                                <th className="p-3 text-right font-medium">Acciones</th>
+                                <th className="p-3 text-left font-medium">Code</th>
+                                <th className="p-3 text-left font-medium">Unit</th>
+                                <th className="p-3 text-right font-medium">Price</th>
+                                <th className="p-3 text-right font-medium">Min Stock</th>
+                                <th className="p-3 text-center font-medium">Status</th>
+                                <th className="p-3 text-right font-medium">Actions</th>
                             </tr>
                         </thead>
 
@@ -193,8 +190,8 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                                             }
                                         >
                                             {item.is_active
-                                                ? 'Activa'
-                                                : 'Inactiva'}
+                                                ? 'Active'
+                                                : 'Inactive'}
                                         </span>
                                     </td>
 
@@ -227,14 +224,14 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                                 </tr>
                             ))}
 
-                            {/* Estado vacío */}
+                            {/* Empty State */}
                             {rawMaterials.data.length === 0 && (
                                 <tr>
                                     <td
                                         colSpan={6}
                                         className="p-10 text-center text-sm text-muted-foreground"
                                     >
-                                        No hay materias primas registradas.
+                                        No raw materials registered.
                                     </td>
                                 </tr>
                             )}
