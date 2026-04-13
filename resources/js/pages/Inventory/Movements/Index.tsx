@@ -1,11 +1,14 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import { Search } from 'lucide-react';
-import { useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import {
+    create as inventoryMovementsCreate,
+    index as inventoryMovementsIndex,
+} from '@/routes/inventory-movements';
 import type { PaginationLink } from '@/types/ui';
 
 type Props = {
@@ -26,20 +29,18 @@ type Props = {
 };
 
 export default function InventoryMovementsIndex({ movements, can, filters }: Props) {
-    const [search, setSearch] = useState(filters.search ?? '');
+    const { data, setData, get } = useForm({
+        search: filters.search ?? '',
+    });
 
     const handleSearch = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        router.get(
-            '/inventory-movements',
-            { search },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            }
-        );
+        get(inventoryMovementsIndex().url, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
     };
 
     return (
@@ -53,7 +54,7 @@ export default function InventoryMovementsIndex({ movements, can, filters }: Pro
                     </div>
                     {can.create && (
                         <Button asChild>
-                            <Link href="/inventory-movements/create">Nuevo Movimiento</Link>
+                            <Link href={inventoryMovementsCreate().url}>Nuevo Movimiento</Link>
                         </Button>
                     )}
                 </div>
@@ -63,8 +64,8 @@ export default function InventoryMovementsIndex({ movements, can, filters }: Pro
                         <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                         <Input
                             placeholder="Buscar por código de insumo..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            value={data.search}
+                            onChange={(e) => setData('search', e.target.value)}
                             className="pl-10"
                         />
                     </form>

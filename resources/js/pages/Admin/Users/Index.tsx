@@ -1,4 +1,4 @@
-import { Link, router } from '@inertiajs/react';
+import { useForm, Link, router } from '@inertiajs/react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -7,12 +7,12 @@ import {
     UserPlus,
 } from 'lucide-react';
 import type { FC, FormEvent } from 'react';
-import { useState } from 'react';
 
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import {
@@ -60,21 +60,18 @@ interface Props {
 
 const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
 
-    // ✅ SEARCH STATE DESDE BACKEND
-    const [search, setSearch] = useState(filters.search ?? '');
+    const form = useForm({
+        search: filters.search ?? '',
+    });
 
     const handleSearch = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        router.get(
-            usersIndex(),
-            { search },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            }
-        );
+        form.get(usersIndex().url, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
     };
 
     const getInitials = (name: string) => {
@@ -101,23 +98,21 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
                         </p>
                     </div>
                     <Button asChild className="shrink-0 bg-blue-600 hover:bg-blue-700">
-                        <Link href={usersCreate()}>
+                        <Link href={usersCreate().url}>
                             <UserPlus className="mr-2 h-4 w-4" />
                             Nuevo Usuario
                         </Link>
                     </Button>
                 </div>
 
-                {/* SEARCH */}
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <form onSubmit={handleSearch} className="relative w-full max-w-sm">
                         <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                        <input
-                            type="text"
+                        <Input
                             placeholder="Buscar usuario..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white py-2 pr-4 pl-10 text-sm ring-blue-500/20 shadow-sm focus:border-blue-300 focus:ring-4 focus:outline-none dark:border-slate-800 dark:bg-background"
+                            value={form.data.search}
+                            onChange={(e) => form.setData('search', e.target.value)}
+                            className="pl-10"
                         />
                     </form>
                 </div>
@@ -186,10 +181,10 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
                                                 <td className="px-4 py-3 text-right">
                                                     <TableActions
                                                         actions={{ view: false, edit: true, delete: true }}
-                                                        onEdit={() => router.get(usersEdit(user.id))}
+                                                        onEdit={() => router.get(usersEdit(user.id).url)}
                                                         onDelete={() => {
                                                             if (confirm('¿Eliminar este usuario definitivamente?')) {
-                                                                router.delete(usersDestroy(user.id));
+                                                                router.delete(usersDestroy(user.id).url);
                                                             }
                                                         }}
                                                     />
@@ -239,7 +234,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
                                     </div>
                                 ))}
                                 <Button asChild className="w-full mt-4">
-                                    <Link href={auditLogsIndex()}>
+                                    <Link href={auditLogsIndex().url}>
                                         VER TODOS LOS LOGS
                                     </Link>
                                 </Button>

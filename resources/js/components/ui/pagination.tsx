@@ -12,7 +12,7 @@ interface PaginationProps {
 }
 
 const Pagination: FC<PaginationProps> = ({ links, className }) => {
-    // Si hay 3 links o menos (Anterior, Página 1, Siguiente), no renderizamos nada
+    // Hide component if there are 3 or fewer links (Prev, Page 1, Next)
     if (links.length <= 3) {
         return null;
     }
@@ -28,7 +28,7 @@ const Pagination: FC<PaginationProps> = ({ links, className }) => {
         });
     };
 
-    // Separamos los links especiales (Anterior/Siguiente) de los numéricos
+    // Separate special links (Previous/Next) from numeric indices
     const previousLink = links[0];
     const nextLink = links[links.length - 1];
     const numericLinks = links.slice(1, -1);
@@ -39,20 +39,20 @@ const Pagination: FC<PaginationProps> = ({ links, className }) => {
             aria-label="Pagination"
             className={cn('flex items-center justify-center space-x-1', className)}
         >
-            {/* Botón Anterior */}
+            {/* Previous Button */}
             <Button
                 variant="outline"
                 size="icon"
                 disabled={!previousLink.url}
                 onClick={() => handleVisit(previousLink.url)}
                 className="h-9 w-9"
-                title="Anterior"
+                title="Previous"
             >
                 <ChevronLeft className="h-4 w-4" />
-                <span className="sr-only">Anterior</span>
+                <span className="sr-only">Previous</span>
             </Button>
 
-            {/* Números de Página */}
+            {/* Page Numbers */}
             <div className="flex items-center space-x-1">
                 {numericLinks.map((link, index) => (
                     <Button
@@ -71,17 +71,17 @@ const Pagination: FC<PaginationProps> = ({ links, className }) => {
                 ))}
             </div>
 
-            {/* Botón Siguiente */}
+            {/* Next Button */}
             <Button
                 variant="outline"
                 size="icon"
                 disabled={!nextLink.url}
                 onClick={() => handleVisit(nextLink.url)}
                 className="h-9 w-9"
-                title="Siguiente"
+                title="Next"
             >
                 <ChevronRight className="h-4 w-4" />
-                <span className="sr-only">Siguiente</span>
+                <span className="sr-only">Next</span>
             </Button>
         </nav>
     );
