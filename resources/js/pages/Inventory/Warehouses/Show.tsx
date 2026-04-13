@@ -27,6 +27,7 @@ type Props = {
         name: string;
         city: string;
         address: string | null;
+        type: 'fabrica' | 'bodega';
         is_active: boolean;
         users: UserItem[];
         finished_inventories: FinishedInventoryItem[];
@@ -88,6 +89,12 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                     <div>
                         <p className="text-xs uppercase tracking-wide text-muted-foreground">Estado</p>
                         <p className="text-sm text-foreground">{warehouse.is_active ? 'Activa' : 'Inactiva'}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Tipo</p>
+                        <p className="text-sm text-foreground">
+                            {warehouse.type === 'fabrica' ? 'Fábrica (Producción)' : 'Bodega (Venta / Almacenamiento)'}
+                        </p>
                     </div>
                     <div className="md:col-span-2">
                         <p className="text-xs uppercase tracking-wide text-muted-foreground">Dirección</p>

@@ -13,10 +13,11 @@ class WarehouseSeeder extends Seeder
     public function run(): void
     {
         Warehouse::updateOrCreate(
-            ['name' => 'Planta Neiva'],
+            ['name' => 'Bodega Neiva'],
             [
                 'city' => 'Neiva',
                 'address' => 'Zona Industrial, Neiva',
+                'type' => 'bodega',
                 'is_active' => true,
             ]
         );
@@ -26,6 +27,7 @@ class WarehouseSeeder extends Seeder
             [
                 'city' => 'Cali',
                 'address' => 'Parque Industrial, Cali',
+                'type' => 'fabrica',
                 'is_active' => true,
             ]
         );
@@ -35,6 +37,7 @@ class WarehouseSeeder extends Seeder
             [
                 'city' => 'Neiva',
                 'address' => 'Bodega Satélite, Neiva',
+                'type' => 'bodega',
                 'is_active' => true,
             ]
         );

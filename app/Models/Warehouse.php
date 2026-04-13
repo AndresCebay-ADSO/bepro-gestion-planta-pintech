@@ -18,8 +18,19 @@ class Warehouse extends Model
         'name',
         'city',
         'address',
+        'type',
         'is_active',
     ];
+
+    public function isFactory(): bool
+    {
+        return $this->type === 'fabrica';
+    }
+
+    public function canProduce(): bool
+    {
+        return $this->isFactory();
+    }
 
     protected function casts(): array
     {

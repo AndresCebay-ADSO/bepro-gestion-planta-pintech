@@ -21,6 +21,15 @@ class ProductionOrder extends Model
             ->dontSubmitEmptyLogs();
     }
 
+    protected static function booted(): void
+    {
+        static::saving(static function (ProductionOrder $order): void {
+            if ($order->warehouse && ! $order->warehouse->isFactory()) {
+                throw new \InvalidArgumentException('Solo se pueden asociar órdenes de producción a bodegas tipo Fábrica.');
+            }
+        });
+    }
+
     protected $table = 'production_orders';
 
     protected $fillable = [

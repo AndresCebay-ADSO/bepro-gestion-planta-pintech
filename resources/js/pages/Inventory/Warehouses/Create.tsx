@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type WarehouseForm = {
     name: string;
     city: string;
     address: string;
+    type: 'fabrica' | 'bodega';
     is_active: boolean;
 };
 
@@ -18,6 +20,7 @@ export default function WarehousesCreate() {
         name: '',
         city: '',
         address: '',
+        type: 'bodega',
         is_active: true,
     });
 
@@ -64,6 +67,23 @@ export default function WarehousesCreate() {
                                 maxLength={255}
                             />
                             <InputError message={form.errors.address} />
+                        </div>
+                                                
+                        <div className="grid gap-2">
+                            <Label htmlFor="type">Tipo de Bodega</Label>
+                            <Select
+                                value={form.data.type}
+                                onValueChange={(value: 'fabrica' | 'bodega') => form.setData('type', value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccione el tipo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="fabrica">Fábrica (Producción)</SelectItem>
+                                    <SelectItem value="bodega">Bodega (Venta / Almacenamiento)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError message={form.errors.type} />
                         </div>
 
                         <div className="flex items-center gap-3 rounded-md border border-border px-3 py-2">

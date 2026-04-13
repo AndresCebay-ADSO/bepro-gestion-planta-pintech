@@ -53,6 +53,7 @@ class WarehouseController extends Controller
                     'name' => $warehouse->name,
                     'city' => $warehouse->city,
                     'address' => $warehouse->address,
+                    'type' => $warehouse->type,
                     'is_active' => $warehouse->is_active,
                     'users_count' => $warehouse->users_count,
                     'can' => [

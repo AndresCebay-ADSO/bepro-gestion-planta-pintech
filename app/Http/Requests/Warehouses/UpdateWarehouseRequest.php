@@ -27,6 +27,7 @@ class UpdateWarehouseRequest extends FormRequest
             ],
             'city' => ['bail', 'required', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:255'],
+            'type' => ['required', 'string', 'in:fabrica,bodega'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }

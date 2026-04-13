@@ -80,7 +80,7 @@ class UserSeeder extends Seeder
                 $user->assignRole($randomRole);
             }
 
-            $this->command->info('Created/Updated ' . User::count() . ' users (including demo accounts).');
+            $this->command->info('Created/Updated '.User::count().' users (including demo accounts).');
         }
     }
 }
