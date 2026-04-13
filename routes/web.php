@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ComercialController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FormulaController;
 use App\Http\Controllers\Inventory\RawMaterialController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
@@ -38,7 +39,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 Route::middleware(['auth', 'verified', 'role:produccion'])->group(function () {
     Route::get('/production', [ProductionController::class, 'index'])->name('production.index');
     // Route::resource('production-orders', ProductionOrderController::class);
-    // Route::resource('formulas', FormulaController::class);
     // Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
 });
 
@@ -70,6 +70,12 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
     Route::resource('warehouses', WarehouseController::class)->only(['index']);
     Route::resource('products', ProductController::class);
     Route::resource('inventory-movements', InventoryMovementController::class);
+});
+
+// ADMIN + PRODUCCIÓN: Gestión de fórmulas
+Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
+    Route::resource('formulas', FormulaController::class);
+    Route::post('formulas/{formula}/activate', [FormulaController::class, 'activate'])->name('formulas.activate');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
