@@ -40,4 +40,3 @@ class WarehouseSeeder extends Seeder
         );
     }
 }
-

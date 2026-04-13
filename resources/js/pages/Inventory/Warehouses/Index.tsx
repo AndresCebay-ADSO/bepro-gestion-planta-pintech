@@ -1,10 +1,11 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Users } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import Pagination from '@/components/ui/pagination';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
     index as warehousesIndex,
@@ -15,6 +16,7 @@ import {
 } from '@/routes/warehouses';
 
 import { form as warehousesAssignUsersForm } from '@/routes/warehouses/assign-users';
+import type { PaginationLink } from '@/types/ui';
 
 type WarehouseRow = {
     id: number;
@@ -30,11 +32,6 @@ type WarehouseRow = {
     };
 };
 
-type PaginationLink = {
-    url: string | null;
-    label: string;
-    active: boolean;
-};
 
 type Props = {
     warehouses: {
@@ -53,10 +50,6 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const flash = usePage<{ flash?: { success?: string; error?: string } }>().props.flash;
 
-    const paginationLinks = useMemo(
-        () => warehouses.links.filter((link) => !link.label.includes('Previous') && !link.label.includes('Next') && !link.label.includes('previous') && !link.label.includes('next')),
-        [warehouses.links],
-    );
 
     const handleSearch = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -187,18 +180,8 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                     </table>
                 </div>
 
-                <div className="flex flex-wrap gap-1">
-                    {paginationLinks.map((link, index) => (
-                        <Button
-                            key={`${link.label}-${index}`}
-                            type="button"
-                            size="sm"
-                            variant={link.active ? 'default' : 'outline'}
-                            disabled={!link.url}
-                            onClick={() => link.url && router.visit(link.url, { preserveState: true, preserveScroll: true })}
-                            dangerouslySetInnerHTML={{ __html: link.label }}
-                        />
-                    ))}
+                <div className="flex justify-center">
+                    <Pagination links={warehouses.links} />
                 </div>
             </div>
         </>

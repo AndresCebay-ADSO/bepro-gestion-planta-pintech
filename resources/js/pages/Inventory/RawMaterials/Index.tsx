@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 
 import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
@@ -8,6 +8,8 @@ import { FormattedNumber } from '@/components/formatted-number';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import Pagination from '@/components/ui/pagination';
+import type { PaginationLink } from '@/types/ui';
 
 /**
  * Tipos
@@ -28,11 +30,6 @@ type RawMaterialRow = {
     };
 };
 
-type PaginationLink = {
-    url: string | null;
-    label: string;
-    active: boolean;
-};
 
 type Props = {
     rawMaterials: {
@@ -57,20 +54,6 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
         flash?: { success?: string; error?: string };
     }>().props.flash;
 
-    /**
-     * Limpiar paginación
-     */
-    const paginationLinks = useMemo(
-        () =>
-            rawMaterials.links.filter(
-                (link) =>
-                    !link.label.includes('Previous') &&
-                    !link.label.includes('Next') &&
-                    !link.label.includes('previous') &&
-                    !link.label.includes('next')
-            ),
-        [rawMaterials.links]
-    );
 
     /**
      * Buscar
@@ -260,27 +243,8 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                 </div>
 
                 {/* Paginación */}
-                <div className="flex flex-wrap gap-2">
-                    {paginationLinks.map((link, index) => (
-                        <Button
-                            key={`${link.label}-${index}`}
-                            type="button"
-                            size="sm"
-                            variant={link.active ? 'default' : 'outline'}
-                            disabled={!link.url}
-                            onClick={() => {
-                                if (link.url) {
-                                    router.visit(link.url, {
-                                        preserveScroll: true,
-                                        preserveState: true,
-                                    });
-                                }
-                            }}
-                            dangerouslySetInnerHTML={{
-                                __html: link.label,
-                            }}
-                        />
-                    ))}
+                <div className="flex justify-center mt-4">
+                    <Pagination links={rawMaterials.links} />
                 </div>
             </div>
         </>

@@ -7,6 +7,7 @@ import AuditLogController from '@/actions/App/Http/Controllers/Admin/AuditLogCon
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import Pagination from '@/components/ui/pagination';
 import {
     Select,
     SelectContent,
@@ -14,6 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import type { PaginationLink } from '@/types/ui';
 
 type Causer = {
     id: number;
@@ -35,11 +37,6 @@ type ActivityLog = {
     createdAt: string;
 };
 
-type PaginationLink = {
-    url: string | null;
-    label: string;
-    active: boolean;
-};
 
 type Props = {
     logs: {
@@ -267,7 +264,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                                             {log.event || 'default'}
                                         </span>
                                     </td>
-                                    <td className="p-3 text-foreground break-words max-w-[200px]">
+                                    <td className="p-3 text-foreground wrap-break-word max-w-[200px]">
                                         {log.description}
                                     </td>
                                     <td className="p-3 font-mono text-xs text-muted-foreground max-w-[200px]">
@@ -291,30 +288,9 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                 </div>
 
                 {/* Paginación */}
-                {logs.links.length > 3 && (
-                    <div className="flex flex-wrap gap-2">
-                        {logs.links.filter(l => !l.label.includes('Previous') && !l.label.includes('Next') && !l.label.includes('previous') && !l.label.includes('next')).map((link, index) => (
-                            <Button
-                                key={`${link.label}-${index}`}
-                                type="button"
-                                size="sm"
-                                variant={link.active ? 'default' : 'outline'}
-                                disabled={!link.url}
-                                onClick={() => {
-                                    if (link.url) {
-                                        router.visit(link.url, {
-                                            preserveScroll: true,
-                                            preserveState: true,
-                                        });
-                                    }
-                                }}
-                                dangerouslySetInnerHTML={{
-                                    __html: link.label,
-                                }}
-                            />
-                        ))}
-                    </div>
-                )}
+                <div className="flex justify-center mt-4">
+                    <Pagination links={logs.links} />
+                </div>
             </div>
         </>
     );

@@ -14,3 +14,20 @@ export type AuthLayoutProps = {
     title?: string;
     description?: string;
 };
+
+export type PaginationLink = {
+    url: string | null;
+    label: string;
+    active: boolean;
+};
+
+export type PaginatorMeta = {
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    links: PaginationLink[];
+    path: string;
+    per_page: number;
+    to: number | null;
+    total: number;
+};
