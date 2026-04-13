@@ -24,6 +24,7 @@ class InventoryMovement extends Model
 
     protected $fillable = [
         'raw_material_id',
+        'warehouse_id',
         'batch_id',
         'production_order_id',
         'type',
@@ -46,6 +47,11 @@ class InventoryMovement extends Model
     public function rawMaterial(): BelongsTo
     {
         return $this->belongsTo(RawMaterial::class, 'raw_material_id');
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class, 'warehouse_id');
     }
 
     public function batch(): BelongsTo

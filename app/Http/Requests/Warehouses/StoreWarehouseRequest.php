@@ -18,6 +18,7 @@ class StoreWarehouseRequest extends FormRequest
             'name' => ['bail', 'required', 'string', 'max:100', Rule::unique('warehouses', 'name')->whereNull('deleted_at')],
             'city' => ['bail', 'required', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:255'],
+            'type' => ['required', 'string', 'in:factory,storage'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }

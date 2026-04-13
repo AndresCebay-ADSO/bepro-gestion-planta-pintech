@@ -14,6 +14,7 @@ class InventoryService
         return DB::transaction(function () use ($data, $userId) {
             $movementData = [
                 'raw_material_id' => $data['raw_material_id'],
+                'warehouse_id' => $data['warehouse_id'],
                 'batch_id' => $data['batch_id'] ?? null,
                 'production_order_id' => $data['production_order_id'] ?? null,
                 'type' => $data['type'],
@@ -37,6 +38,7 @@ class InventoryService
 
             $movementData = [
                 'raw_material_id' => $data['raw_material_id'],
+                'warehouse_id' => $data['warehouse_id'],
                 'batch_id' => $data['batch_id'] ?? null,
                 'production_order_id' => $data['production_order_id'] ?? null,
                 'type' => $data['type'],
@@ -64,7 +66,7 @@ class InventoryService
 
     private function applyMovement(string $type, string|float $quantity, int $rawMaterialId, ?int $batchId): void
     {
-        if ($type === 'salida' && $batchId === null) {
+        if ($type === 'exit' && $batchId === null) {
             throw ValidationException::withMessages([
                 'batch_id' => __('Debes seleccionar un lote para registrar una salida.'),
             ]);
@@ -84,7 +86,7 @@ class InventoryService
 
         $quantity = (float) $quantity;
 
-        if ($type === 'entrada') {
+        if ($type === 'entry') {
             $batch->remaining_quantity = (float) $batch->remaining_quantity + $quantity;
             $batch->save();
 
@@ -110,7 +112,7 @@ class InventoryService
         $batch = InventoryBatch::query()->lockForUpdate()->findOrFail($movement->batch_id);
         $quantity = (float) $movement->quantity;
 
-        if ($movement->type === 'entrada') {
+        if ($movement->type === 'entry') {
             if ((float) $batch->remaining_quantity < $quantity) {
                 throw ValidationException::withMessages([
                     'batch_id' => __('No es posible revertir el movimiento porque el lote no tiene stock suficiente.'),

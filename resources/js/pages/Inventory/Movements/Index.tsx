@@ -15,10 +15,11 @@ type Props = {
     movements: {
         data: Array<{
             id: number;
-            type: 'entrada' | 'salida';
+            type: 'entry' | 'exit';
             quantity: string;
             movement_date: string;
             raw_material?: { code: string } | null;
+            warehouse?: { name: string; city: string } | null;
         }>;
         links: PaginationLink[];
     };
@@ -71,28 +72,41 @@ export default function InventoryMovementsIndex({ movements, can, filters }: Pro
                     </form>
                 </div>
 
-                <div className="rounded border border-border bg-card">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border">
-                            <tr>
-                                <th className="p-3 text-left">Fecha</th>
-                                <th className="p-3 text-left">Tipo</th>
-                                <th className="p-3 text-left">Código materia prima</th>
-                                <th className="p-3 text-left">Cantidad</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {movements.data.map((movement) => (
-                                <tr key={movement.id} className="border-b border-border/50">
-                                    <td className="p-3">{movement.movement_date}</td>
-                                    <td className="p-3">{movement.type}</td>
-                                    <td className="p-3">{movement.raw_material?.code ?? '-'}</td>
-                                    <td className="p-3">{movement.quantity}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+        <div className="rounded-xl border border-border bg-card shadow-sm">
+            <table className="w-full text-sm">
+                <thead className="border-b border-border bg-muted/50">
+                    <tr>
+                        <th className="p-4 text-left font-medium">Fecha</th>
+                        <th className="p-4 text-left font-medium">Tipo</th>
+                        <th className="p-4 text-left font-medium">Bodega</th>
+                        <th className="p-4 text-left font-medium">Materia Prima</th>
+                        <th className="p-4 text-right font-medium">Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {movements.data.map((movement) => (
+                        <tr key={movement.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                            <td className="p-4">{movement.movement_date}</td>
+                            <td className="p-4">
+                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                                    movement.type === 'entry' 
+? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
+: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                }`}>
+                                    {movement.type === 'entry' ? 'ENTRADA' : 'SALIDA'}
+                                </span>
+                            </td>
+                            <td className="p-4">
+                                <div className="font-medium text-foreground">{movement.warehouse?.name}</div>
+                                <div className="text-xs text-muted-foreground">{movement.warehouse?.city}</div>
+                            </td>
+                            <td className="p-4 font-mono">{movement.raw_material?.code ?? '-'}</td>
+                            <td className="p-4 text-right font-medium">{movement.quantity}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
                 
                 <div className="flex justify-center mt-4">
                     <Pagination links={movements.links} />

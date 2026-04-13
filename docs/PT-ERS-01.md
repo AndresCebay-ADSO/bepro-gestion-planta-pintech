@@ -65,7 +65,7 @@ Este módulo permitirá registrar, consultar y controlar el inventario de materi
 
 ### 3.2 Gestión de Producto Terminado
 
-Este módulo  permitirá consultar la disponibilidad de producto terminado por bodega en tiempo real, siendo accesible para el área comercial al momento de gestionar una venta.
+Este módulo permitirá consultar la disponibilidad de producto terminado por bodega en tiempo real, siendo accesible para el área comercial al momento de gestionar una venta. Incluye la funcionalidad de **Traslados**, permitiendo mover stock de la fábrica a los puntos de venta de forma trazable.
 
 ### 3.3 Gestión de Costos y Precios
 
@@ -89,7 +89,7 @@ Este módulo permitirá administrar los usuarios del sistema, asignando roles y 
 
 ### 3.8 Gestión de Órdenes de Producción
 
-Este módulo permitirá registrar y gestionar las órdenes de producción de la planta, facilitando el seguimiento del proceso productivo y el control del consumo de materia prima asociado a cada orden. Este módulo será definido en detalle en una etapa posterior del levantamiento de requerimientos junto con el equipo de producción de Pintech Colombia S.A.S.
+Este módulo permitirá registrar y gestionar las órdenes de producción de la planta, facilitando el seguimiento del proceso productivo y el control del consumo de materia prima asociado a cada orden. **Nota**: El sistema restringe el nacimiento de producto exclusivamente a bodegas marcadas como tipo "Fábrica". Este módulo será definido en detalle en una etapa posterior del levantamiento de requerimientos junto con el equipo de producción de Pintech Colombia S.A.S.
 
 ### 3.9 Reportes y Analíticas, Power BI
 
@@ -131,6 +131,8 @@ Este usuario tendrá acceso limitado al sistema, enfocado exclusivamente en la c
 | RF14 - Generar y gestionar códigos QR por envase | Ideal  |
 | RF15 - Generar reportes y analíticas | Ideal |
 | RF16 - Exportar datos para Power BI | Ideal |
+| RF17 - Gestionar tipos de bodega | Esencial |
+| RF18 - Gestionar traslados entre bodegas | Esencial |
 
 **5.1.1 Clasificación de requisitos funcionales**
 
@@ -224,11 +226,17 @@ Este usuario tendrá acceso limitado al sistema, enfocado exclusivamente en la c
 | **Descripción** | El sistema deberá permitir visualizar métricas e indicadores clave del proceso productivo, incluyendo volúmenes de fabricación por periodo, histórico de costos y análisis de consumo de materia prima. Estos reportes servirán como base para la toma de decisiones estratégicas dentro de la organización. RF15.1 - Generar reporte de consumo de materia prima. RF15.2 - Generar reporte de volumen de producción por periodo. RF15.3 - Generar reporte de variación de costos. RF15.4 - Visualizar dashboard de indicadores. |
 | **Prioridad** | Media |
 
-| **ID  del requerimiento** | RF16 |
+| **ID  del requerimiento** | RF17 |
 | --- | --- |
-| **Nombre del requerimiento** | Exportar datos para Power BI |
-| **Descripción** | El sistema deberá permitir exportar la información de ventas, producción y cartera en un formato compatible con Power BI, reduciendo el proceso manual actual de carga y transformación de datos que realiza el equipo de Pintech Colombia S.A.S para alimentar sus reportes analíticos. RF16.1 - Exportar datos de ventas. RF16.2 - Exportar datos de producción. RF16.3 - Exportar datos de cartera. |
-| **Prioridad** | Media |
+| **Nombre del requerimiento** | Gestionar tipos de bodega |
+| **Descripción** | El sistema deberá permitir distinguir entre bodegas de tipo "Fábrica" (donde ocurre la producción) y "Bodega/POS" (donde solo se almacena stock). Esta configuración es fija del sistema: Cali se define como Fábrica y Neiva como Bodega. El usuario no podrá modificar el tipo una vez configurado. |
+| **Prioridad** | Alta |
+
+| **ID  del requerimiento** | RF18 |
+| --- | --- |
+| **Nombre del requerimiento** | Gestionar traslados entre bodegas |
+| **Descripción** | El sistema deberá permitir el traslado de productos terminados desde la fábrica hacia las bodegas de distribución. El proceso constará de dos pasos: envío desde el origen y confirmación de recepción en el destino para garantizar la trazabilidad del stock en tránsito. |
+| **Prioridad** | Alta |
 
 ### 5.2 Requisitos no funcionales
 

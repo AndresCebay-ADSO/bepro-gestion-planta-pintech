@@ -77,6 +77,6 @@ class RawMaterialSeeder extends Seeder
             );
         }
 
-        $this->command->info('Created/Updated ' . RawMaterial::count() . ' raw materials.');
+        $this->command->info('Created/Updated '.RawMaterial::count().' raw materials.');
     }
 }

@@ -25,6 +25,7 @@ class InventoryBatch extends Model
 
     protected $fillable = [
         'raw_material_id',
+        'warehouse_id',
         'initial_quantity',
         'remaining_quantity',
         'unit_price',
@@ -48,6 +49,11 @@ class InventoryBatch extends Model
     public function rawMaterial(): BelongsTo
     {
         return $this->belongsTo(RawMaterial::class, 'raw_material_id');
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class, 'warehouse_id');
     }
 
     public function inventoryMovements(): HasMany

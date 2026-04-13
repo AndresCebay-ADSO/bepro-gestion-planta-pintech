@@ -12,31 +12,28 @@ class WarehouseSeeder extends Seeder
      */
     public function run(): void
     {
-        Warehouse::updateOrCreate(
-            ['name' => 'Planta Neiva'],
+        $warehouses = [
             [
-                'city' => 'Neiva',
-                'address' => 'Zona Industrial, Neiva',
-                'is_active' => true,
-            ]
-        );
-
-        Warehouse::updateOrCreate(
-            ['name' => 'Planta Cali'],
-            [
+                'name' => 'Planta Cali',
                 'city' => 'Cali',
-                'address' => 'Parque Industrial, Cali',
+                'address' => 'Sede Principal Cali',
+                'type' => 'factory',
                 'is_active' => true,
-            ]
-        );
-
-        Warehouse::updateOrCreate(
-            ['name' => 'Depósito Auxiliar'],
+            ],
             [
+                'name' => 'Bodega Neiva',
                 'city' => 'Neiva',
-                'address' => 'Bodega Satélite, Neiva',
+                'address' => 'Sede Neiva',
+                'type' => 'storage',
                 'is_active' => true,
-            ]
-        );
+            ],
+        ];
+
+        foreach ($warehouses as $warehouse) {
+            Warehouse::updateOrCreate(
+                ['name' => $warehouse['name']],
+                $warehouse
+            );
+        }
     }
 }

@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('inventory_batches', function (Blueprint $table) {
             $table->id();
             $table->foreignId('raw_material_id')->constrained('raw_materials')->onDelete('restrict');
+            $table->foreignId('warehouse_id')->constrained('warehouses')->onDelete('restrict');
             $table->decimal('initial_quantity', 12, 4);
             $table->decimal('remaining_quantity', 12, 4);
             $table->decimal('unit_price', 12, 4);
@@ -24,6 +25,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['raw_material_id', 'entry_date']);
+            $table->index('warehouse_id');
             $table->index('remaining_quantity');
             $table->index('expiry_date');
         });

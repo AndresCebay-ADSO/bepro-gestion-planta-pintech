@@ -11,21 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('finished_inventory_movements', function (Blueprint $table) {
+        Schema::create('transfers', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('source_warehouse_id')->constrained('warehouses')->onDelete('restrict');
+            $table->foreignId('destination_warehouse_id')->constrained('warehouses')->onDelete('restrict');
             $table->foreignId('product_id')->constrained('products')->onDelete('restrict');
-            $table->foreignId('warehouse_id')->constrained('warehouses')->onDelete('restrict');
-            $table->foreignId('production_order_id')->nullable()->constrained('production_orders')->nullOnDelete();
-            $table->enum('type', ['entry', 'exit']);
             $table->decimal('quantity', 12, 4);
-            $table->date('movement_date');
+            $table->enum('status', ['pending', 'sent', 'received', 'cancelled'])->default('pending');
             $table->text('notes')->nullable();
             $table->foreignId('created_by')->constrained('users')->onDelete('restrict');
+            $table->timestamp('sent_at')->nullable();
+            $table->timestamp('received_at')->nullable();
             $table->timestamps();
 
+            $table->index(['source_warehouse_id', 'status']);
+            $table->index(['destination_warehouse_id', 'status']);
             $table->index('product_id');
-            $table->index('type');
-            $table->index('movement_date');
         });
     }
 
@@ -34,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('finished_inventory_movements');
+        Schema::dropIfExists('transfers');
     }
 };

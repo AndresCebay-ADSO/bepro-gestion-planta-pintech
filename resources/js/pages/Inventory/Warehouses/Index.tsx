@@ -4,6 +4,7 @@ import type { FormEvent } from 'react';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import Pagination from '@/components/ui/pagination';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -22,6 +23,7 @@ type WarehouseRow = {
     name: string;
     city: string;
     address: string | null;
+    type: 'factory' | 'storage';
     is_active: boolean;
     users_count: number;
     can: {
@@ -120,6 +122,7 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                                 <th className="p-3 text-left font-medium text-foreground">Name</th>
                                 <th className="p-3 text-left font-medium text-foreground">City</th>
                                 <th className="p-3 text-left font-medium text-foreground">Address</th>
+                                <th className="p-3 text-left font-medium text-foreground">Type</th>
                                 <th className="p-3 text-left font-medium text-foreground">Status</th>
                                 <th className="p-3 text-left font-medium text-foreground">Users</th>
                                 <th className="p-3 text-right font-medium text-foreground">Actions</th>
@@ -131,6 +134,11 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                                     <td className="p-3 text-foreground">{warehouse.name}</td>
                                     <td className="p-3 text-muted-foreground">{warehouse.city}</td>
                                     <td className="p-3 text-muted-foreground">{warehouse.address ?? '-'}</td>
+                                    <td className="p-3">
+                                        <Badge variant={warehouse.type === 'factory' ? 'default' : 'secondary'}>
+                                            {warehouse.type === 'factory' ? 'Fábrica' : 'Bodega'}
+                                        </Badge>
+                                    </td>
                                     <td className="p-3">
                                         <span
                                             className={warehouse.is_active

@@ -40,6 +40,7 @@ Bodegas de producto terminado.
 - `name` VARCHAR(100) UNIQUE
 - `city` VARCHAR(100)
 - `address` VARCHAR(255) NULL
+- `type` ENUM('fabrica', 'bodega') DEFAULT 'bodega'
 - `is_active` BOOLEAN DEFAULT true
 - `created_at`, `updated_at`
 - `deleted_at`
@@ -257,6 +258,21 @@ Alertas del sistema.
 - `resolved_by` BIGINT FK NULL -> `users.id`
 - `resolved_at` TIMESTAMP NULL
 - `updated_by` BIGINT FK NULL -> `users.id`
+- `created_at`, `updated_at`
+
+### 2.19 transfers
+Registra el traslado de producto terminado entre bodegas.
+
+- `id` BIGINT PK
+- `source_warehouse_id` BIGINT FK -> `warehouses.id`
+- `destination_warehouse_id` BIGINT FK -> `warehouses.id`
+- `product_id` BIGINT FK -> `products.id`
+- `quantity` DECIMAL(12,4)
+- `status` ENUM('pendiente', 'enviado', 'recibido', 'cancelado') DEFAULT 'pendiente'
+- `notes` TEXT NULL
+- `created_by` BIGINT FK -> `users.id`
+- `sent_at` TIMESTAMP NULL
+- `received_at` TIMESTAMP NULL
 - `created_at`, `updated_at`
 
 ## 3. Entidades de autenticacion, cola, cache y permisos
