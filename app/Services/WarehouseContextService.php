@@ -55,4 +55,3 @@ class WarehouseContextService
         return $available->first();
     }
 }
-

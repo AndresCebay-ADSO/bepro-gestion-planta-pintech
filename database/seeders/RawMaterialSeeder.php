@@ -53,7 +53,7 @@ class RawMaterialSeeder extends Seeder
             $unitType = $units[array_rand($units)];
             $unitId = $unitIds[$unitType];
 
-            $code = 'MP' . str_pad($i + 100, 4, '0', STR_PAD_LEFT); // MP0101..MP0197
+            $code = 'MP'.str_pad($i + 100, 4, '0', STR_PAD_LEFT); // MP0101..MP0197
 
             RawMaterial::create([
                 'code' => $code,
@@ -68,6 +68,6 @@ class RawMaterialSeeder extends Seeder
             ]);
         }
 
-        $this->command->info('Se crearon ' . RawMaterial::count() . ' materias primas (incluye kg y l).');
+        $this->command->info('Se crearon '.RawMaterial::count().' materias primas (incluye kg y l).');
     }
 }

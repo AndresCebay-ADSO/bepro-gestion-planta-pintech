@@ -10,6 +10,7 @@ use App\Models\ProductionOrder;
 use App\Models\RawMaterial;
 use App\Services\InventoryService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,11 +19,11 @@ class InventoryMovementController extends Controller
 {
     public function __construct(private readonly InventoryService $inventoryService) {}
 
-    public function index(\Illuminate\Http\Request $request): Response
+    public function index(Request $request): Response
     {
         $this->authorize('viewAny', InventoryMovement::class);
 
-        $search = $request->input('search');
+        $search = strtolower((string) $request->input('search'));
 
         $movements = InventoryMovement::query()
             ->with([
@@ -33,7 +34,7 @@ class InventoryMovementController extends Controller
             ])
             ->when($search, function ($query, $search) {
                 $query->whereHas('rawMaterial', function ($q) use ($search) {
-                    $q->where('code', 'ILIKE', "%{$search}%");
+                    $q->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"]);
                 });
             })
             ->latest('movement_date')

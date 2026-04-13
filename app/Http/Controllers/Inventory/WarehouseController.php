@@ -24,7 +24,7 @@ class WarehouseController extends Controller
     {
         $this->authorize('viewAny', Warehouse::class);
 
-        $search = trim((string) $request->string('search')->value());
+        $search = strtolower(trim((string) $request->input('search')));
         $user = $request->user();
 
         $query = Warehouse::query()
@@ -38,9 +38,9 @@ class WarehouseController extends Controller
         if ($search !== '') {
             $query->where(function ($searchQuery) use ($search): void {
                 $searchQuery
-                    ->where('name', 'ILIKE', "%{$search}%")
-                    ->orWhere('city', 'ILIKE', "%{$search}%")
-                    ->orWhere('address', 'ILIKE', "%{$search}%");
+                    ->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(city) LIKE ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(address) LIKE ?', ["%{$search}%"]);
             });
         }
 

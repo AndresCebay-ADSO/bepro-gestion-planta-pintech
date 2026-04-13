@@ -29,4 +29,3 @@ class StoreWarehouseRequest extends FormRequest
         ]);
     }
 }
-

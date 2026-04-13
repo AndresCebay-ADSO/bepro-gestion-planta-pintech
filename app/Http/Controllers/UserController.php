@@ -125,7 +125,7 @@ class UserController extends Controller
                     'old_role' => $oldRole,
                     'new_role' => $validated['role'],
                 ])
-                ->log("Rol de usuario modificado de {$oldRole} a " . $validated['role']);
+                ->log("Rol de usuario modificado de {$oldRole} a ".$validated['role']);
         }
 
         return redirect()->route('users.index')->with('message', 'Usuario actualizado exitosamente.');
