@@ -7,7 +7,7 @@ import {
     ShieldAlert,
     UserPlus,
 } from 'lucide-react';
-import type { FC } from 'react';
+import type { FC, FormEvent } from 'react';
 import { useState } from 'react';
 
 import { TableActions } from '@/components/table-actions';
@@ -21,6 +21,7 @@ import {
     create as usersCreate,
     destroy as usersDestroy,
     edit as usersEdit,
+    index as usersIndex,
 } from '@/routes/users';
 
 interface User {
@@ -53,10 +54,29 @@ interface Props {
         links: PaginationLink[];
     };
     recentActivities: ActivityLog[];
+    filters: {
+        search?: string;
+    };
 }
 
-const UsersIndex: FC<Props> = ({ users, recentActivities }) => {
-    const [searchTerm, setSearchTerm] = useState('');
+const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
+
+    // ✅ SEARCH STATE DESDE BACKEND
+    const [search, setSearch] = useState(filters.search ?? '');
+
+    const handleSearch = (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        router.get(
+            usersIndex(),
+            { search },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            }
+        );
+    };
 
     const getInitials = (name: string) => {
         return name
@@ -84,15 +104,11 @@ const UsersIndex: FC<Props> = ({ users, recentActivities }) => {
         }
     };
 
-    const filteredUsers = users.data.filter(
-        (user) =>
-            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-
     return (
         <div className="bg-background min-h-screen p-6">
             <div className="mx-auto max-w-7xl space-y-8">
+
+                {/* HEADER */}
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -109,53 +125,47 @@ const UsersIndex: FC<Props> = ({ users, recentActivities }) => {
                         </Link>
                     </Button>
                 </div>
-                {/* Main Toolbar */}
+
+                {/* SEARCH */}
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="relative w-full max-w-sm">
+                    <form onSubmit={handleSearch} className="relative w-full max-w-sm">
                         <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                         <input
                             type="text"
                             placeholder="Buscar usuario..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
                             className="w-full rounded-lg border border-slate-200 bg-white py-2 pr-4 pl-10 text-sm ring-blue-500/20 shadow-sm focus:border-blue-300 focus:ring-4 focus:outline-none dark:border-slate-800 dark:bg-background"
                         />
-                    </div>
-
+                    </form>
                 </div>
 
-                {/* Main Content Grid */}
+                {/* GRID */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-                    {/* Users Table Column */}
+
+                    {/* TABLE */}
                     <div className="lg:col-span-9">
                         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-card">
                             <table className="w-full">
                                 <thead className="bg-slate-50/50 border-b border-slate-100 dark:bg-muted/50 dark:border-slate-800">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">
-                                            Usuario
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">
-                                            Rol
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">
-                                            Último Acceso
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">
-                                            Estado
-                                        </th>
-                                        <th className="px-4 py-3 text-right text-xs font-bold uppercase text-slate-500">
-                                            Acciones
-                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">Usuario</th>
+                                        <th className="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">Rol</th>
+                                        <th className="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">Último Acceso</th>
+                                        <th className="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">Estado</th>
+                                        <th className="px-4 py-3 text-right text-xs font-bold uppercase text-slate-500">Acciones</th>
                                     </tr>
                                 </thead>
+
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {filteredUsers.length > 0 ? (
-                                        filteredUsers.map((user) => (
+                                    {users.data.length > 0 ? (
+                                        users.data.map((user) => (
                                             <tr key={user.id} className="hover:bg-slate-50/50 transition-colors dark:hover:bg-muted/30">
+
+                                                {/* USER */}
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                                                             {getInitials(user.name)}
                                                         </div>
                                                         <div className="min-w-0">
@@ -168,24 +178,29 @@ const UsersIndex: FC<Props> = ({ users, recentActivities }) => {
                                                         </div>
                                                     </div>
                                                 </td>
+
+                                                {/* ROLE */}
                                                 <td className="px-4 py-3 whitespace-nowrap">
-                                                    <Badge variant="secondary" className="uppercase tracking-wider font-bold bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-900">
+                                                    <Badge variant="secondary" className="uppercase font-bold">
                                                         {user.roles[0]?.name || 'Invitado'}
                                                     </Badge>
                                                 </td>
+
+                                                {/* LAST LOGIN */}
                                                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
                                                     {user.last_login_at
                                                         ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true, locale: es })
                                                         : 'Nunca'}
                                                 </td>
+
+                                                {/* STATUS */}
                                                 <td className="px-4 py-3">
-                                                    <div className="flex items-center gap-2 whitespace-nowrap">
-                                                        <div className={`h-2 w-2 rounded-full ${user.is_active ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-300'}`} />
-                                                        <span className={`text-xs font-bold ${user.is_active ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400'}`}>
-                                                            {user.is_active ? 'Activo' : 'Inactivo'}
-                                                        </span>
-                                                    </div>
+                                                    <span className={`text-xs font-bold ${user.is_active ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                        {user.is_active ? 'Activo' : 'Inactivo'}
+                                                    </span>
                                                 </td>
+
+                                                {/* ACTIONS */}
                                                 <td className="px-4 py-3 text-right">
                                                     <TableActions
                                                         actions={{ view: false, edit: true, delete: true }}
@@ -197,6 +212,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities }) => {
                                                         }}
                                                     />
                                                 </td>
+
                                             </tr>
                                         ))
                                     ) : (
@@ -209,76 +225,46 @@ const UsersIndex: FC<Props> = ({ users, recentActivities }) => {
                                 </tbody>
                             </table>
 
-                            {/* Pagination */}
-                            <div className="border-t border-slate-100 bg-slate-50/30 px-4 py-4 dark:border-slate-800 dark:bg-muted/20">
+                            {/* PAGINATION */}
+                            <div className="border-t border-slate-100 px-4 py-4 dark:border-slate-800">
                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                    <span className="text-xs text-slate-500 font-medium order-2 sm:order-1">
+                                    <span className="text-xs text-slate-500 font-medium">
                                         Mostrando {users.data.length} de {users.total} usuarios
                                     </span>
-                                    <div className="order-1 sm:order-2">
-                                        <Pagination links={users.links} />
-                                    </div>
+                                    <Pagination links={users.links} />
                                 </div>
                             </div>
+
                         </div>
                     </div>
 
-                    {/* Activity Feed Column */}
+                    {/* ACTIVITY */}
                     <div className="lg:col-span-3">
-                        <Card className="border-none bg-[#0a1a32] text-white shadow-xl dark:bg-[#050e1a]">
-                            <CardHeader className="pb-4">
-                                <CardTitle className="flex items-center gap-2 text-xl font-bold">
+                        <Card className="bg-[#0a1a32] text-white">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
                                     <Activity className="h-5 w-5 text-blue-400" />
                                     Registro de Actividad
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="relative space-y-6 before:absolute before:top-2 before:bottom-2 before:left-[11px] before:w-0.5 before:bg-blue-900/50">
-                                    {recentActivities.length > 0 ? (
-                                        recentActivities.map((activity) => (
-                                            <div key={activity.id} className="relative pl-8">
-                                                <div className={`absolute left-0 top-1.5 h-6 w-6 rounded-full border-4 border-[#0a1a32] ${getEventColor(activity.event)} ring-2 ring-white/10`} />
-                                                <div className="space-y-1">
-                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400">
-                                                        {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true, locale: es })}
-                                                    </p>
-                                                    <p className="text-sm font-bold text-slate-100 leading-tight">
-                                                        {activity.description}
-                                                    </p>
-                                                    <p className="text-xs text-slate-500 italic">
-                                                        Por: {activity.causer?.name || 'Sistema'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="py-4 text-center text-sm text-slate-500">
-                                            No hay actividad reciente.
+                            <CardContent>
+                                {recentActivities.map((activity) => (
+                                    <div key={activity.id} className="mb-4">
+                                        <p className="text-xs text-blue-400">
+                                            {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true, locale: es })}
                                         </p>
-                                    )}
-                                </div>
-
-                                <Button asChild className="w-full border-blue-900/50 bg-blue-900/20 text-blue-200 hover:bg-blue-900/40">
+                                        <p className="text-sm font-bold">{activity.description}</p>
+                                    </div>
+                                ))}
+                                <Button asChild className="w-full mt-4">
                                     <Link href={auditLogsIndex()}>
                                         VER TODOS LOS LOGS
                                     </Link>
                                 </Button>
                             </CardContent>
                         </Card>
-
-                        {/* Security Notice / Hint */}
-                        <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/50 p-4 dark:border-blue-900/30 dark:bg-blue-950/10">
-                            <div className="flex gap-3">
-                                <ShieldAlert className="h-5 w-5 text-blue-500" />
-                                <div className="space-y-1">
-                                    <p className="text-xs font-bold text-blue-900 dark:text-blue-300">Auditoría Activa</p>
-                                    <p className="text-[10px] text-blue-600 dark:text-blue-500">
-                                        Todos los movimientos de roles y cambios de estado son monitoreados para cumplimiento de normas de calidad.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
+
                 </div>
             </div>
         </div>
