@@ -15,18 +15,27 @@ use Inertia\Response;
 
 class ProductController extends Controller
 {
-    public function index(): Response
+    public function index(\Illuminate\Http\Request $request): Response
     {
         $this->authorize('viewAny', Product::class);
 
+        $search = $request->input('search');
+
         $products = Product::query()
             ->with(['category:id,name', 'unitOfMeasure:id,name,symbol'])
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'ILIKE', "%{$search}%")
+                    ->orWhere('code', 'ILIKE', "%{$search}%");
+            })
             ->latest('id')
             ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('Products/Index', [
             'products' => $products,
+            'filters' => [
+                'search' => $search,
+            ],
             'can' => [
                 'create' => Gate::allows('create', Product::class),
                 'managePrices' => Gate::allows('create', PriceList::class),

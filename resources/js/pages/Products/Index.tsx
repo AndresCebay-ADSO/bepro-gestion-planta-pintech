@@ -1,4 +1,10 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Search } from 'lucide-react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
 import type { PaginationLink } from '@/types/ui';
 
@@ -17,21 +23,56 @@ type Props = {
         create: boolean;
         managePrices: boolean;
     };
+    filters: {
+        search?: string;
+    };
 };
 
-export default function ProductsIndex({ products, can }: Props) {
+export default function ProductsIndex({ products, can, filters }: Props) {
+    const [search, setSearch] = useState(filters.search ?? '');
+
+    const handleSearch = (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        router.get(
+            '/products',
+            { search },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            }
+        );
+    };
     return (
         <>
             <Head title="Productos" />
 
             <div className="space-y-4 p-6">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-semibold">Productos</h1>
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-semibold text-foreground">Productos</h1>
+                        <p className="text-sm text-muted-foreground">Gestión del catálogo de productos y precios.</p>
+                    </div>
                     {can.create && (
-                        <Link href="/products/create" className="rounded bg-primary px-4 py-2 text-primary-foreground">
-                            Nuevo producto
-                        </Link>
+                        <Button asChild>
+                            <Link href="/products/create">
+                                Nuevo Producto
+                            </Link>
+                        </Button>
                     )}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <form onSubmit={handleSearch} className="relative w-full max-w-sm">
+                        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                        <Input
+                            placeholder="Buscar producto..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="pl-10"
+                        />
+                    </form>
                 </div>
 
                 <div className="rounded border border-border bg-card">

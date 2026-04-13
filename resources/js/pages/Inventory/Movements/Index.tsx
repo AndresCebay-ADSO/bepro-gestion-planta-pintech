@@ -1,4 +1,10 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Search } from 'lucide-react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
 import type { PaginationLink } from '@/types/ui';
 
@@ -14,20 +20,53 @@ type Props = {
         links: PaginationLink[];
     };
     can: { create: boolean };
+    filters: {
+        search?: string;
+    };
 };
 
-export default function InventoryMovementsIndex({ movements, can }: Props) {
+export default function InventoryMovementsIndex({ movements, can, filters }: Props) {
+    const [search, setSearch] = useState(filters.search ?? '');
+
+    const handleSearch = (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        router.get(
+            '/inventory-movements',
+            { search },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            }
+        );
+    };
     return (
         <>
             <Head title="Movimientos de inventario" />
             <div className="space-y-4 p-6">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-semibold">Movimientos de inventario</h1>
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-semibold text-foreground">Movimientos de Inventario</h1>
+                        <p className="text-sm text-muted-foreground">Historial de entradas y salidas de materias primas.</p>
+                    </div>
                     {can.create && (
-                        <Link href="/inventory-movements/create" className="rounded bg-primary px-4 py-2 text-primary-foreground">
-                            Nuevo movimiento
-                        </Link>
+                        <Button asChild>
+                            <Link href="/inventory-movements/create">Nuevo Movimiento</Link>
+                        </Button>
                     )}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <form onSubmit={handleSearch} className="relative w-full max-w-sm">
+                        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                        <Input
+                            placeholder="Buscar por código de insumo..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="pl-10"
+                        />
+                    </form>
                 </div>
 
                 <div className="rounded border border-border bg-card">

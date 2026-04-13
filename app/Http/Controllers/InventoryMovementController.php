@@ -18,9 +18,11 @@ class InventoryMovementController extends Controller
 {
     public function __construct(private readonly InventoryService $inventoryService) {}
 
-    public function index(): Response
+    public function index(\Illuminate\Http\Request $request): Response
     {
         $this->authorize('viewAny', InventoryMovement::class);
+
+        $search = $request->input('search');
 
         $movements = InventoryMovement::query()
             ->with([
@@ -29,6 +31,11 @@ class InventoryMovementController extends Controller
                 'productionOrder:id,order_number',
                 'createdBy:id,name',
             ])
+            ->when($search, function ($query, $search) {
+                $query->whereHas('rawMaterial', function ($q) use ($search) {
+                    $q->where('code', 'ILIKE', "%{$search}%");
+                });
+            })
             ->latest('movement_date')
             ->latest('id')
             ->paginate(20)
@@ -36,6 +43,9 @@ class InventoryMovementController extends Controller
 
         return Inertia::render('Inventory/Movements/Index', [
             'movements' => $movements,
+            'filters' => [
+                'search' => $search,
+            ],
             'can' => [
                 'create' => Gate::allows('create', InventoryMovement::class),
             ],
