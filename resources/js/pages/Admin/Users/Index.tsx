@@ -14,6 +14,8 @@ import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Pagination from '@/components/ui/pagination';
+import type { PaginationLink } from '@/types/ui';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import {
     create as usersCreate,
@@ -48,6 +50,7 @@ interface Props {
         current_page: number;
         last_page: number;
         total: number;
+        links: PaginationLink[];
     };
     recentActivities: ActivityLog[];
 }
@@ -206,13 +209,14 @@ const UsersIndex: FC<Props> = ({ users, recentActivities }) => {
                                 </tbody>
                             </table>
 
-                            {/* Pagination Placeholder */}
-                            <div className="border-t border-slate-100 bg-slate-50/30 px-4 py-3 dark:border-slate-800 dark:bg-muted/20">
-                                <div className="flex items-center justify-between text-[10px] text-slate-500">
-                                    <span>Mostrando {users.data.length} de {users.total}</span>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" size="sm" disabled className="h-7 px-2 rounded-md bg-white text-[10px] dark:bg-background">Anterior</Button>
-                                        <Button variant="outline" size="sm" disabled className="h-7 px-2 rounded-md bg-white text-[10px] dark:bg-background">Siguiente</Button>
+                            {/* Pagination */}
+                            <div className="border-t border-slate-100 bg-slate-50/30 px-4 py-4 dark:border-slate-800 dark:bg-muted/20">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <span className="text-xs text-slate-500 font-medium order-2 sm:order-1">
+                                        Mostrando {users.data.length} de {users.total} usuarios
+                                    </span>
+                                    <div className="order-1 sm:order-2">
+                                        <Pagination links={users.links} />
                                     </div>
                                 </div>
                             </div>

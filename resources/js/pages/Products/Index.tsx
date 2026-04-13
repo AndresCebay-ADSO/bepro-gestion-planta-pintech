@@ -1,4 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
+import Pagination from '@/components/ui/pagination';
+import type { PaginationLink } from '@/types/ui';
 
 type Props = {
     products: {
@@ -9,6 +11,7 @@ type Props = {
             category?: { id: number; name: string } | null;
             unit_of_measure?: { id: number; name: string; symbol: string } | null;
         }>;
+        links: PaginationLink[];
     };
     can: {
         create: boolean;
@@ -50,6 +53,10 @@ export default function ProductsIndex({ products, can }: Props) {
                             ))}
                         </tbody>
                     </table>
+                </div>
+                
+                <div className="flex justify-center mt-4">
+                    <Pagination links={products.links} />
                 </div>
             </div>
         </>

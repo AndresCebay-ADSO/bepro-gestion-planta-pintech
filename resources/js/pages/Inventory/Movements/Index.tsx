@@ -1,4 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
+import Pagination from '@/components/ui/pagination';
+import type { PaginationLink } from '@/types/ui';
 
 type Props = {
     movements: {
@@ -9,6 +11,7 @@ type Props = {
             movement_date: string;
             raw_material?: { code: string } | null;
         }>;
+        links: PaginationLink[];
     };
     can: { create: boolean };
 };
@@ -48,6 +51,10 @@ export default function InventoryMovementsIndex({ movements, can }: Props) {
                             ))}
                         </tbody>
                     </table>
+                </div>
+                
+                <div className="flex justify-center mt-4">
+                    <Pagination links={movements.links} />
                 </div>
             </div>
         </>

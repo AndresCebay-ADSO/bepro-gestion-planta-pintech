@@ -41,7 +41,7 @@ export function TableActions({
                             <Button
                                 variant="outline"
                                 size="icon"
-                                className="size-8 h-8 w-8"
+                                className="size-8 h-8 w-8 cursor-pointer"
                                 onClick={onView}
                                 disabled={loading.view}
                             >
@@ -64,7 +64,7 @@ export function TableActions({
                             <Button
                                 variant="warning"
                                 size="icon"
-                                className="size-8 h-8 w-8"
+                                className="size-8 h-8 w-8 cursor-pointer"
                                 onClick={onEdit}
                                 disabled={loading.edit}
                             >
@@ -87,7 +87,7 @@ export function TableActions({
                             <Button
                                 variant="destructive"
                                 size="icon"
-                                className="size-8 h-8 w-8"
+                                className="size-8 h-8 w-8 cursor-pointer"
                                 onClick={onDelete}
                                 disabled={loading.delete}
                             >

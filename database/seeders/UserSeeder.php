@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
@@ -13,12 +14,11 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Usuario 1: Admin - Sistemas
+        // --- Usuarios fijos (originales) ---
         $admin = User::firstOrCreate(
             ['email' => 'pintech.sistemas@gmail.com'],
             [
                 'name' => 'Admin Sistemas',
-                'email' => 'pintech.sistemas@gmail.com',
                 'password' => Hash::make('Pintech_2026'),
                 'email_verified_at' => now(),
                 'is_active' => true,
@@ -27,12 +27,10 @@ class UserSeeder extends Seeder
         );
         $admin->assignRole('admin');
 
-        // Usuario 2: Asistente de Producción
         $produccion = User::firstOrCreate(
             ['email' => 'pintech.auxiliar@gmail.com'],
             [
                 'name' => 'Auxiliar Producción',
-                'email' => 'pintech.auxiliar@gmail.com',
                 'password' => Hash::make('Pintech_2026'),
                 'email_verified_at' => now(),
                 'is_active' => true,
@@ -41,12 +39,10 @@ class UserSeeder extends Seeder
         );
         $produccion->assignRole('produccion');
 
-        // Usuario 3: Comercial
         $comercial = User::firstOrCreate(
             ['email' => 'pintech.comercial@gmail.com'],
             [
                 'name' => 'Gerente Comercial',
-                'email' => 'pintech.comercial@gmail.com',
                 'password' => Hash::make('Pintech_2026'),
                 'email_verified_at' => now(),
                 'is_active' => false,
@@ -54,5 +50,34 @@ class UserSeeder extends Seeder
             ]
         );
         $comercial->assignRole('comercial');
+
+        // --- Usuarios adicionales para probar paginación (97 más) ---
+        // Lista de roles disponibles (ajusta según tus roles reales)
+        $roles = ['admin', 'produccion', 'comercial', 'supervisor', 'invitado'];
+
+        for ($i = 1; $i <= 97; $i++) {
+            $name = fake()->name();
+            $email = fake()->unique()->safeEmail();
+
+            $user = User::create([
+                'name' => $name,
+                'email' => $email,
+                'password' => Hash::make('password'), // Contraseña genérica
+                'email_verified_at' => now(),
+                'is_active' => (bool) rand(0, 1),
+                'last_login_at' => now()->subDays(rand(0, 30)),
+                'created_at' => now()->subDays(rand(0, 60)),
+                'updated_at' => now(),
+            ]);
+
+            // Asignar un rol aleatorio
+            $randomRole = $roles = ['admin', 'produccion', 'comercial'];
+            $user->assignRole($randomRole);
+        }
+
+        // Opcional: si quieres exactamente 100 usuarios y ya tenías 3,
+        // con 97 llegas a 100. Si tu factory existe y quieres más,
+        // puedes cambiar el límite o usar User::factory(97)->create()
+        // pero necesitarías definir el factory con los roles.
     }
 }
