@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductionOrder;
@@ -11,10 +14,24 @@ use Illuminate\Support\Facades\Hash;
 
 uses(RefreshDatabase::class);
 
-function createDependencies()
+/**
+ * @return array{0: Product, 1: User, 2: Formula}
+ */
+function createDependencies(): array
 {
     $category = ProductCategory::create(['name' => 'Test Category']);
-    $uom = UnitOfMeasure::create(['name' => 'litro', 'abbreviation' => 'L']);
+    $uom = UnitOfMeasure::create([
+        'code' => 'L',
+        'name' => 'litro',
+        'symbol' => 'L',
+    ]);
+
+    $user = User::create([
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'password' => Hash::make('password'),
+    ]);
+
     $product = Product::create([
         'code' => 'TEST-001',
         'name' => 'Test Product',
@@ -25,29 +42,33 @@ function createDependencies()
         'current_price' => 15,
         'price_threshold' => 5,
     ]);
-    $user = User::create([
-        'name' => 'Test User',
-        'email' => 'test@example.com',
-        'password' => Hash::make('password'),
+
+    $formula = Formula::create([
+        'product_id' => $product->id,
+        'version' => 1,
+        'is_active' => true,
+        'created_by' => $user->id,
     ]);
 
-    return [$product, $user];
+    return [$product, $user, $formula];
 }
 
 test('guarda una orden de produccion si la bodega es de tipo fabrica', function () {
-    [$product, $user] = createDependencies();
+    [$product, $user, $formula] = createDependencies();
     $warehouse = Warehouse::create([
         'name' => 'Fábrica Cali',
         'city' => 'Cali',
-        'type' => 'fabrica',
+        'type' => 'factory',
     ]);
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-001',
         'product_id' => $product->id,
+        'formula_id' => $formula->id,
         'warehouse_id' => $warehouse->id,
         'quantity' => 100,
-        'status' => 'pendiente',
+        'status' => 'pending',
+        'planned_date' => now(),
         'created_by' => $user->id,
     ]);
 
@@ -55,19 +76,21 @@ test('guarda una orden de produccion si la bodega es de tipo fabrica', function 
 });
 
 test('lanza excepcion si se intenta guardar una orden de produccion en una bodega tipo bodega', function () {
-    [$product, $user] = createDependencies();
+    [$product, $user, $formula] = createDependencies();
     $warehouse = Warehouse::create([
         'name' => 'Bodega Neiva',
         'city' => 'Neiva',
-        'type' => 'bodega',
+        'type' => 'storage',
     ]);
 
     expect(fn () => ProductionOrder::create([
         'order_number' => 'OP-002',
         'product_id' => $product->id,
+        'formula_id' => $formula->id,
         'warehouse_id' => $warehouse->id,
         'quantity' => 100,
-        'status' => 'pendiente',
+        'status' => 'pending',
+        'planned_date' => now(),
         'created_by' => $user->id,
     ]))->toThrow(InvalidArgumentException::class, 'Solo se pueden asociar órdenes de producción a bodegas tipo Fábrica.');
 });

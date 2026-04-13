@@ -24,7 +24,9 @@ class ProductionOrder extends Model
     protected static function booted(): void
     {
         static::saving(static function (ProductionOrder $order): void {
-            if ($order->warehouse && ! $order->warehouse->isFactory()) {
+            $warehouse = $order->warehouse ?? Warehouse::find($order->warehouse_id);
+
+            if ($warehouse && ! $warehouse->isFactory()) {
                 throw new \InvalidArgumentException('Solo se pueden asociar órdenes de producción a bodegas tipo Fábrica.');
             }
         });

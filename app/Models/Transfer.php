@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,6 +13,30 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class Transfer extends Model
 {
     use HasFactory, LogsActivity;
+
+    protected static function booted(): void
+    {
+        static::saving(static function (Transfer $transfer): void {
+            if ($transfer->source_warehouse_id === $transfer->destination_warehouse_id) {
+                throw new \InvalidArgumentException('La bodega de origen y destino no pueden ser la misma.');
+            }
+
+            if ($transfer->quantity <= 0) {
+                throw new \InvalidArgumentException('La cantidad debe ser mayor a cero.');
+            }
+
+            $source = $transfer->sourceWarehouse ?? Warehouse::find($transfer->source_warehouse_id);
+            $dest = $transfer->destinationWarehouse ?? Warehouse::find($transfer->destination_warehouse_id);
+
+            if ($source && ! $source->isFactory()) {
+                throw new \InvalidArgumentException('Los traslados solo pueden originarse en una Fábrica.');
+            }
+
+            if ($dest && $dest->isFactory()) {
+                throw new \InvalidArgumentException('El destino de un traslado no puede ser una Fábrica.');
+            }
+        });
+    }
 
     protected $fillable = [
         'source_warehouse_id',

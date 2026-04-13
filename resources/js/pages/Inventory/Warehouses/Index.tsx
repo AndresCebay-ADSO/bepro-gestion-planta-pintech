@@ -4,6 +4,7 @@ import type { FormEvent } from 'react';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import Pagination from '@/components/ui/pagination';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -22,7 +23,7 @@ type WarehouseRow = {
     name: string;
     city: string;
     address: string | null;
-    type: 'fabrica' | 'bodega';
+    type: 'factory' | 'storage';
     is_active: boolean;
     users_count: number;
     can: {
@@ -134,13 +135,9 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                                     <td className="p-3 text-muted-foreground">{warehouse.city}</td>
                                     <td className="p-3 text-muted-foreground">{warehouse.address ?? '-'}</td>
                                     <td className="p-3">
-                                        <span
-                                            className={warehouse.type === 'fabrica'
-                                                ? 'rounded-full bg-violet-500/15 px-2 py-1 text-xs font-medium text-violet-600 dark:text-violet-300'
-                                                : 'rounded-full bg-blue-500/15 px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-300'}
-                                        >
-                                            {warehouse.type === 'fabrica' ? 'Factory' : 'Storage'}
-                                        </span>
+                                        <Badge variant={warehouse.type === 'factory' ? 'default' : 'secondary'}>
+                                            {warehouse.type === 'factory' ? 'Fábrica' : 'Bodega'}
+                                        </Badge>
                                     </td>
                                     <td className="p-3">
                                         <span

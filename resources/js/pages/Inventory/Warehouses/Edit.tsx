@@ -13,7 +13,7 @@ type Props = {
         name: string;
         city: string;
         address: string | null;
-        type: 'fabrica' | 'bodega';
+        type: 'factory' | 'storage';
         is_active: boolean;
     };
 };
@@ -22,7 +22,7 @@ type WarehouseForm = {
     name: string;
     city: string;
     address: string;
-    type: 'fabrica' | 'bodega';
+    type: 'factory' | 'storage';
     is_active: boolean;
 };
 
@@ -84,14 +84,14 @@ export default function WarehousesEdit({ warehouse }: Props) {
                             <Label htmlFor="type">Tipo de Bodega</Label>
                             <Select
                                 value={form.data.type}
-                                onValueChange={(value: 'fabrica' | 'bodega') => form.setData('type', value)}
+                                onValueChange={(value: 'factory' | 'storage') => form.setData('type', value)}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Seleccione el tipo" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="fabrica">Fábrica (Producción)</SelectItem>
-                                    <SelectItem value="bodega">Bodega (Venta / Almacenamiento)</SelectItem>
+                                    <SelectItem value="factory">Fábrica</SelectItem>
+                                    <SelectItem value="storage">Bodega / Punto de Venta</SelectItem>
                                 </SelectContent>
                             </Select>
                             <InputError message={form.errors.type} />

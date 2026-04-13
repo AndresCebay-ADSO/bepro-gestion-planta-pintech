@@ -24,7 +24,7 @@ class Warehouse extends Model
 
     public function isFactory(): bool
     {
-        return $this->type === 'fabrica';
+        return $this->type === 'factory';
     }
 
     public function canProduce(): bool

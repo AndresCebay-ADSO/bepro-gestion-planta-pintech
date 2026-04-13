@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('quantity', 12, 4);
             $table->decimal('actual_quantity', 12, 4)->nullable();
             $table->decimal('yield_percentage', 5, 2)->nullable();
-            $table->enum('status', ['pendiente', 'en_proceso', 'finalizada', 'cancelada'])->default('pendiente');
+            $table->enum('status', ['pending', 'in_progress', 'completed', 'cancelled'])->default('pending');
             $table->date('planned_date');
             $table->date('completion_date')->nullable();
             $table->text('notes')->nullable();

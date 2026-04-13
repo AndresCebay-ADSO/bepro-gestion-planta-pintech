@@ -29,6 +29,7 @@ class InventoryMovementController extends Controller
             ->with([
                 'rawMaterial:id,code',
                 'batch:id,lot_number,raw_material_id',
+                'warehouse:id,name,city',
                 'productionOrder:id,order_number',
                 'createdBy:id,name',
             ])
@@ -61,6 +62,7 @@ class InventoryMovementController extends Controller
             'rawMaterials' => RawMaterial::query()->select('id', 'code')->where('is_active', true)->orderBy('code')->get(),
             'batches' => InventoryBatch::query()->select('id', 'raw_material_id', 'lot_number', 'remaining_quantity')->orderByDesc('id')->get(),
             'productionOrders' => ProductionOrder::query()->select('id', 'order_number', 'status')->orderByDesc('id')->get(),
+            'warehouses' => Warehouse::query()->select('id', 'name', 'city', 'type')->get(),
         ]);
     }
 
