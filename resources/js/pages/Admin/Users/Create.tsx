@@ -19,7 +19,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
         email: '',
         password: '',
         password_confirmation: '',
-        role: roles[0]?.name || 'produccion',
+        role: roles.find(r => r.name === 'produccion')?.name || 'produccion',
     });
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {

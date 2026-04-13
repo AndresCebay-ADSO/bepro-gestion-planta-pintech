@@ -23,7 +23,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
     Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
-    Route::resource('users', UserController::class);
+    Route::resource('users', UserController::class)->except(['show']);
     Route::resource('raw-materials', RawMaterialController::class)->except(['index', 'show']);
     Route::resource('warehouses', WarehouseController::class)->except(['index', 'show']);
     Route::get('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsersPage'])->name('warehouses.assign-users.form');

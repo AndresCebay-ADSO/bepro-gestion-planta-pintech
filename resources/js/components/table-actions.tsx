@@ -1,8 +1,8 @@
+import { Eye, Loader2, Pencil, Trash } from "lucide-react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Eye, Loader2, Pencil, Trash } from "lucide-react";
-import React from "react";
 
 interface ActionConfig {
     view?: boolean;

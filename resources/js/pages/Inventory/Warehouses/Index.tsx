@@ -1,12 +1,20 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { route } from 'ziggy-js';
+import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { TableActions } from '@/components/table-actions';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users } from 'lucide-react';
+import {
+    index as warehousesIndex,
+    create as warehousesCreate,
+    show as warehousesShow,
+    edit as warehousesEdit,
+    destroy as warehousesDestroy,
+} from '@/routes/warehouses';
+
+import { form as warehousesAssignUsersForm } from '@/routes/warehouses/assign-users';
 
 type WarehouseRow = {
     id: number;
@@ -54,8 +62,8 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
         event.preventDefault();
 
         router.get(
-            route('warehouses.index'),
-            { search },
+            warehousesIndex({ query: { search } }).url,
+            {},
             { preserveState: true, preserveScroll: true, replace: true },
         );
     };
@@ -65,7 +73,7 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
             return;
         }
 
-        router.delete(route('warehouses.destroy', id), {
+        router.delete(warehousesDestroy(id).url, {
             preserveScroll: true,
         });
     };
@@ -82,7 +90,7 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                     </div>
                     {can.create && (
                         <Button asChild>
-                            <Link href={route('warehouses.create')}>Nueva Bodega</Link>
+                            <Link href={warehousesCreate().url}>Nueva Bodega</Link>
                         </Button>
                     )}
                 </div>
@@ -141,9 +149,9 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                                     <td className="p-3 text-muted-foreground">{warehouse.users_count}</td>
                                     <td className="p-3 text-right">
                                         <TableActions
-                                            permissions={warehouse.can}
-                                            onView={() => router.get(route('warehouses.show', warehouse.id))}
-                                            onEdit={() => router.get(route('warehouses.edit', warehouse.id))}
+                                            permissions={{ view: warehouse.can.view, edit: warehouse.can.update, delete: warehouse.can.delete }}
+                                            onView={() => router.get(warehousesShow(warehouse.id).url)}
+                                            onEdit={() => router.get(warehousesEdit(warehouse.id).url)}
                                             onDelete={() => handleDelete(warehouse.id)}
                                         >
                                             {warehouse.can.update && (
@@ -155,7 +163,7 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                                                             className="h-8 w-8"
                                                             asChild
                                                         >
-                                                            <Link href={route('warehouses.assign-users.form', warehouse.id)}>
+                                                            <Link href={warehousesAssignUsersForm(warehouse.id).url}>
                                                                 <Users className="h-4 w-4" />
                                                                 <span className="sr-only">Asignar usuarios</span>
                                                             </Link>

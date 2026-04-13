@@ -10,16 +10,15 @@ import {
 import type { FC } from 'react';
 import { useState } from 'react';
 
+import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
-import { TableActions } from '@/components/table-actions';
 import {
     create as usersCreate,
     destroy as usersDestroy,
     edit as usersEdit,
-    show as usersShow,
 } from '@/routes/users';
 
 interface User {
@@ -186,7 +185,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities }) => {
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     <TableActions
-                                                        onView={() => router.get(usersShow(user.id))}
+                                                        actions={{ view: false, edit: true, delete: true }}
                                                         onEdit={() => router.get(usersEdit(user.id))}
                                                         onDelete={() => {
                                                             if (confirm('¿Eliminar este usuario definitivamente?')) {
