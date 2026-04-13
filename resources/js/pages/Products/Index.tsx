@@ -44,6 +44,7 @@ export default function ProductsIndex({ products, can, filters }: Props) {
             }
         );
     };
+
     return (
         <>
             <Head title="Productos" />

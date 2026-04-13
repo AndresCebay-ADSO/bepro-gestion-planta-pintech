@@ -41,6 +41,7 @@ export default function InventoryMovementsIndex({ movements, can, filters }: Pro
             }
         );
     };
+
     return (
         <>
             <Head title="Movimientos de inventario" />

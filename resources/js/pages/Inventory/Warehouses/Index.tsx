@@ -1,10 +1,11 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Users } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import Pagination from '@/components/ui/pagination';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
     index as warehousesIndex,
@@ -15,7 +16,6 @@ import {
 } from '@/routes/warehouses';
 
 import { form as warehousesAssignUsersForm } from '@/routes/warehouses/assign-users';
-import Pagination from '@/components/ui/pagination';
 import type { PaginationLink } from '@/types/ui';
 
 type WarehouseRow = {

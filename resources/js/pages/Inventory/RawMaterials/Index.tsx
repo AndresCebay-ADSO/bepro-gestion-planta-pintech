@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 
 import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';

@@ -4,7 +4,6 @@ import { es } from 'date-fns/locale';
 import {
     Activity,
     Search,
-    ShieldAlert,
     UserPlus,
 } from 'lucide-react';
 import type { FC, FormEvent } from 'react';
@@ -15,7 +14,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Pagination from '@/components/ui/pagination';
-import type { PaginationLink } from '@/types/ui';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import {
     create as usersCreate,
@@ -23,6 +21,7 @@ import {
     edit as usersEdit,
     index as usersIndex,
 } from '@/routes/users';
+import type { PaginationLink } from '@/types/ui';
 
 interface User {
     id: number;
@@ -85,23 +84,6 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
             .join('')
             .toUpperCase()
             .substring(0, 2);
-    };
-
-    const getEventColor = (event: string) => {
-        switch (event) {
-            case 'created':
-                return 'bg-emerald-500';
-            case 'updated':
-                return 'bg-amber-500';
-            case 'deleted':
-                return 'bg-rose-500';
-            case 'role_changed':
-                return 'bg-indigo-500';
-            case 'failed_login':
-                return 'bg-orange-500';
-            default:
-                return 'bg-slate-500';
-        }
     };
 
     return (

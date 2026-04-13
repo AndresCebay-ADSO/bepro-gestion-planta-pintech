@@ -7,6 +7,7 @@ import AuditLogController from '@/actions/App/Http/Controllers/Admin/AuditLogCon
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import Pagination from '@/components/ui/pagination';
 import {
     Select,
     SelectContent,
@@ -14,7 +15,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import Pagination from '@/components/ui/pagination';
 import type { PaginationLink } from '@/types/ui';
 
 type Causer = {
