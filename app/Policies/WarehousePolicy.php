@@ -40,4 +40,3 @@ class WarehousePolicy
         return $user->hasRole('admin');
     }
 }
-

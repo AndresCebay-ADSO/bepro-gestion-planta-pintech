@@ -1,12 +1,12 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useState } from 'react';
 import type { FormEvent } from 'react';
 import AuditLogController from '@/actions/App/Http/Controllers/Admin/AuditLogController';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import Pagination from '@/components/ui/pagination';
 import {
     Select,
     SelectContent,
@@ -14,6 +14,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import type { PaginationLink } from '@/types/ui';
 
 type Causer = {
     id: number;
@@ -35,11 +36,6 @@ type ActivityLog = {
     createdAt: string;
 };
 
-type PaginationLink = {
-    url: string | null;
-    label: string;
-    active: boolean;
-};
 
 type Props = {
     logs: {
@@ -60,41 +56,27 @@ type Props = {
 };
 
 export default function AuditLogsIndex({ logs, filters, options }: Props) {
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [logName, setLogName] = useState(filters.log_name ?? '');
-    const [eventFilter, setEventFilter] = useState(filters.event ?? '');
-    const [dateFrom, setDateFrom] = useState(filters.date_from ?? '');
-    const [dateTo, setDateTo] = useState(filters.date_to ?? '');
+    const { data, setData, get } = useForm({
+        search: filters.search ?? '',
+        log_name: filters.log_name ?? 'all',
+        event: filters.event ?? 'all',
+        date_from: filters.date_from ?? '',
+        date_to: filters.date_to ?? '',
+    });
 
     const handleFilter = (e?: FormEvent) => {
         if (e) {
             e.preventDefault();
         }
 
-        router.get(
-            AuditLogController.index.url(),
-            {
-                search,
-                log_name: logName !== 'all' ? logName : undefined,
-                event: eventFilter !== 'all' ? eventFilter : undefined,
-                date_from: dateFrom,
-                date_to: dateTo,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            }
-        );
+        get(AuditLogController.index.url(), {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
     };
 
     const clearFilters = () => {
-        setSearch('');
-        setLogName('');
-        setEventFilter('');
-        setDateFrom('');
-        setDateTo('');
-        
         router.get(AuditLogController.index.url());
     };
 
@@ -120,7 +102,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
             return '-';
         }
         
-        // Truncar para no romper UI
+        // Truncating to avoid breaking UI
         const jsonStr = JSON.stringify(properties);
 
         if (jsonStr.length > 50) {
@@ -153,26 +135,26 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                     </div>
                 </div>
 
-                {/* Filtros */}
+                {/* Filters */}
                 <div className="rounded-lg border border-border bg-card p-4">
                     <form onSubmit={handleFilter} className="grid grid-cols-1 gap-4 md:grid-cols-6 lg:grid-cols-12">
                         <div className="col-span-1 md:col-span-2 lg:col-span-3">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">Búsqueda</label>
+                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">Search</label>
                             <Input
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Usuario, descripción..."
+                                value={data.search}
+                                onChange={(e) => setData('search', e.target.value)}
+                                placeholder="User, description..."
                             />
                         </div>
                         
                         <div className="col-span-1 md:col-span-2 lg:col-span-2">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">Módulo</label>
-                            <Select value={logName || 'all'} onValueChange={setLogName}>
+                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">Module</label>
+                            <Select value={data.log_name} onValueChange={(val) => setData('log_name', val)}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Módulo" />
+                                    <SelectValue placeholder="Module" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Todos</SelectItem>
+                                    <SelectItem value="all">All</SelectItem>
                                     {options.logNames.map(name => (
                                         <SelectItem key={name} value={name}>{name}</SelectItem>
                                     ))}
@@ -181,13 +163,13 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                         </div>
 
                         <div className="col-span-1 md:col-span-2 lg:col-span-2">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">Evento</label>
-                            <Select value={eventFilter || 'all'} onValueChange={setEventFilter}>
+                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">Event</label>
+                            <Select value={data.event} onValueChange={(val) => setData('event', val)}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Evento" />
+                                    <SelectValue placeholder="Event" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Todos</SelectItem>
+                                    <SelectItem value="all">All</SelectItem>
                                     {options.events.map(ev => (
                                         <SelectItem key={ev} value={ev}>{ev}</SelectItem>
                                     ))}
@@ -196,29 +178,29 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                         </div>
 
                         <div className="col-span-1 md:col-span-3 lg:col-span-2">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">Desde</label>
+                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">From</label>
                             <Input
                                 type="date"
-                                value={dateFrom}
-                                onChange={(e) => setDateFrom(e.target.value)}
+                                value={data.date_from}
+                                onChange={(e) => setData('date_from', e.target.value)}
                             />
                         </div>
 
                         <div className="col-span-1 md:col-span-3 lg:col-span-2">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">Hasta</label>
+                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">To</label>
                             <Input
                                 type="date"
-                                value={dateTo}
-                                onChange={(e) => setDateTo(e.target.value)}
+                                value={data.date_to}
+                                onChange={(e) => setData('date_to', e.target.value)}
                             />
                         </div>
 
                         <div className="col-span-1 md:col-span-6 lg:col-span-1 flex items-end justify-center lg:justify-end gap-2">
-                            <Button type="button" variant="ghost" size="icon" onClick={clearFilters} title="Limpiar Filtros">
+                            <Button type="button" variant="ghost" size="icon" onClick={clearFilters} title="Clear Filters">
                                 ✕
                             </Button>
                             <Button type="submit">
-                                Filtrar
+                                Filter
                             </Button>
                         </div>
                     </form>
@@ -267,7 +249,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                                             {log.event || 'default'}
                                         </span>
                                     </td>
-                                    <td className="p-3 text-foreground break-words max-w-[200px]">
+                                    <td className="p-3 text-foreground wrap-break-word max-w-[200px]">
                                         {log.description}
                                     </td>
                                     <td className="p-3 font-mono text-xs text-muted-foreground max-w-[200px]">
@@ -291,30 +273,9 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                 </div>
 
                 {/* Paginación */}
-                {logs.links.length > 3 && (
-                    <div className="flex flex-wrap gap-2">
-                        {logs.links.filter(l => !l.label.includes('Previous') && !l.label.includes('Next') && !l.label.includes('previous') && !l.label.includes('next')).map((link, index) => (
-                            <Button
-                                key={`${link.label}-${index}`}
-                                type="button"
-                                size="sm"
-                                variant={link.active ? 'default' : 'outline'}
-                                disabled={!link.url}
-                                onClick={() => {
-                                    if (link.url) {
-                                        router.visit(link.url, {
-                                            preserveScroll: true,
-                                            preserveState: true,
-                                        });
-                                    }
-                                }}
-                                dangerouslySetInnerHTML={{
-                                    __html: link.label,
-                                }}
-                            />
-                        ))}
-                    </div>
-                )}
+                <div className="flex justify-center mt-4">
+                    <Pagination links={logs.links} />
+                </div>
             </div>
         </>
     );

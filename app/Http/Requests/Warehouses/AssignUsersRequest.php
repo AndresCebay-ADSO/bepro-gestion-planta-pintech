@@ -21,4 +21,3 @@ class AssignUsersRequest extends FormRequest
         ];
     }
 }
-

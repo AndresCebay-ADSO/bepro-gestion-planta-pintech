@@ -38,4 +38,3 @@ class UpdateWarehouseRequest extends FormRequest
         ]);
     }
 }
-

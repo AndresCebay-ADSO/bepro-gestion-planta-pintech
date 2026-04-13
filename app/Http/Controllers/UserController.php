@@ -18,11 +18,22 @@ class UserController extends Controller
      */
     public function index(Request $request): Response
     {
+        $search = $request->input('search');
+
         $query = User::with('roles');
 
-        $users = $query->paginate(15)->withQueryString();
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
 
-        // Obtener últimas actividades
+        $users = $query
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
         $activities = Activity::with('causer')
             ->latest()
             ->take(5)
@@ -30,6 +41,9 @@ class UserController extends Controller
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
+            'filters' => [
+                'search' => $search,
+            ],
             'recentActivities' => $activities,
         ]);
     }

@@ -9,8 +9,10 @@ ERP web para **Pintech Colombia S.A.S** (pinturas industriales, automotrices y a
 - Base de datos PostgreSQL 16
 - Autenticacion con Laravel Fortify
 - Roles/permisos con Spatie Permission
+- Sistema de Auditoria con Spatie Activitylog (v4)
 - Recuperacion de contrasena por correo con branding Pintech
 - Tema claro/oscuro y layouts auth personalizados
+- Navegacion Premium con barra lateral dinámica por roles
 
 ## Stack tecnico
 
@@ -20,6 +22,7 @@ ERP web para **Pintech Colombia S.A.S** (pinturas industriales, automotrices y a
 - DB: PostgreSQL 16
 - Auth: Laravel Fortify
 - Roles: Spatie Laravel Permission
+- Auditoria: Spatie Laravel Activitylog (v4)
 - Testing: Pest
 - Queue: database (para procesos asinc)
 - Cache: database
@@ -160,12 +163,15 @@ Incluye tablas de negocio y tablas de soporte (cache, jobs, auth, permisos).
 
 Carpeta `docs/`:
 
-- `MER.md` - Modelo entidad relacion / diccionario de datos actualizado
-- `ESPECIFICACION.md`
-- `PLAN_DESARROLLO.md`
-- `SISTEMA_TEMAS_UI.md`
-- `RESUMEN_CAMBIOS_PINTECH_OS.md`
-- `STANDARDS.md`
+- `SOFTWARE_OVERVIEW.md` - **NUEVO** Mapa completo de capacidades del sistema (v1.2).
+- `MER.md` - Modelo entidad relacion / diccionario de datos actualizado tras consolidacion.
+- `SISTEMA_AUDITORIA.md` - Guia técnica del registro de actividad y widgets de trazabilidad.
+- `ACTA_ACTUALIZACION_V1_2.md` - Historial de cambios técnicos v1.1 -> v1.2.
+- `RESUMEN_CAMBIOS_PINTECH_OS.md` - Resumen ejecutivo de ajustes tecnicos iniciales.
+- `ESPECIFICACION.md` - Detalle de requerimientos.
+- `PLAN_DESARROLLO.md` - Hoja de ruta.
+- `STANDARDS.md` - Estándares de código y diseño.
+- `SISTEMA_TEMAS_UI.md` - Guía de implementación del tema visual.
 
 ## Autor
 

@@ -9,24 +9,36 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\UnitOfMeasure;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProductController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $this->authorize('viewAny', Product::class);
 
+        $search = strtolower((string) $request->input('search'));
+
         $products = Product::query()
             ->with(['category:id,name', 'unitOfMeasure:id,name,symbol'])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                        ->orWhereRaw('LOWER(code) LIKE ?', ["%{$search}%"]);
+                });
+            })
             ->latest('id')
             ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('Products/Index', [
             'products' => $products,
+            'filters' => [
+                'search' => $search,
+            ],
             'can' => [
                 'create' => Gate::allows('create', Product::class),
                 'managePrices' => Gate::allows('create', PriceList::class),

@@ -19,12 +19,12 @@ class RawMaterialController extends Controller
     {
         $this->authorize('viewAny', RawMaterial::class);
 
-        $search = trim((string) $request->string('search')->value());
+        $search = strtolower(trim((string) $request->input('search')));
         $user = $request->user();
 
         $rawMaterials = RawMaterial::query()
             ->with(['unitOfMeasure:id,name,symbol'])
-            ->when($search !== '', fn ($query) => $query->where('code', 'ILIKE', "%{$search}%"))
+            ->when($search !== '', fn ($query) => $query->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"]))
             ->latest('id')
             ->paginate(15)
             ->withQueryString()

@@ -6,6 +6,8 @@ use App\Http\Controllers\ComercialController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Inventory\RawMaterialController;
 use App\Http\Controllers\Inventory\WarehouseController;
+use App\Http\Controllers\InventoryMovementController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -23,7 +25,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
     Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
-    Route::resource('users', UserController::class);
+    Route::resource('users', UserController::class)->except(['show']);
     Route::resource('raw-materials', RawMaterialController::class)->except(['index', 'show']);
     Route::resource('warehouses', WarehouseController::class)->except(['index', 'show']);
     Route::get('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsersPage'])->name('warehouses.assign-users.form');
@@ -62,10 +64,12 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
     // Route::resource('price-list', PriceListController::class);
 });
 
-// ADMIN + PRODUCCIÓN + COMERCIAL: Lista de materias primas (según policy)
+// ADMIN + PRODUCCIÓN + COMERCIAL: Consulta de catálogos e inventarios (según policy)
 Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
     Route::resource('raw-materials', RawMaterialController::class)->only(['index']);
     Route::resource('warehouses', WarehouseController::class)->only(['index']);
+    Route::resource('products', ProductController::class);
+    Route::resource('inventory-movements', InventoryMovementController::class);
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

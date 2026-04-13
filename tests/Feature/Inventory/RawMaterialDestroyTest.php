@@ -4,9 +4,16 @@ use App\Models\InventoryBatch;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 
+/**
+ * @property \App\Models\Warehouse $warehouse
+ * @property \App\Models\UnitOfMeasure $unit
+ * @property \App\Models\RawMaterial $rawMaterial
+ * @property \App\Models\User $admin
+ */
 uses(RefreshDatabase::class);
 
 describe('Raw Material Destroy', function () {
@@ -16,6 +23,12 @@ describe('Raw Material Destroy', function () {
             Role::create(['name' => 'produccion']);
             Role::create(['name' => 'comercial']);
         }
+
+        $this->warehouse = Warehouse::create([
+            'name' => 'Test Warehouse',
+            'city' => 'Test City',
+            'type' => 'factory',
+        ]);
 
         $this->unit = UnitOfMeasure::create([
             'code' => 'kg',
@@ -41,16 +54,14 @@ describe('Raw Material Destroy', function () {
             ->delete(route('raw-materials.destroy', $this->rawMaterial));
 
         $response->assertRedirect(route('raw-materials.index'));
-        $this->assertDatabaseHas('raw_materials', [
-            'id' => $this->rawMaterial->id,
-            'deleted_at' => now(),
-        ]);
+        $this->assertTrue($this->rawMaterial->fresh()->trashed());
     });
 
     it('blocks deletion if raw material has batches with remaining_quantity > 0', function () {
         // Crear un batch con stock disponible
         InventoryBatch::create([
             'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouse->id,
             'initial_quantity' => 100,
             'remaining_quantity' => 50, // > 0
             'unit_price' => 10.00,
@@ -74,6 +85,7 @@ describe('Raw Material Destroy', function () {
         // Crear batches agotados
         InventoryBatch::create([
             'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouse->id,
             'initial_quantity' => 100,
             'remaining_quantity' => 0, // Agotado
             'unit_price' => 10.00,
@@ -82,6 +94,7 @@ describe('Raw Material Destroy', function () {
 
         InventoryBatch::create([
             'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouse->id,
             'initial_quantity' => 50,
             'remaining_quantity' => 0, // Agotado
             'unit_price' => 12.00,
@@ -94,16 +107,14 @@ describe('Raw Material Destroy', function () {
         $response->assertRedirect(route('raw-materials.index'));
 
         // Verificar soft delete
-        $this->assertDatabaseHas('raw_materials', [
-            'id' => $this->rawMaterial->id,
-            'deleted_at' => now(),
-        ]);
+        $this->assertTrue($this->rawMaterial->fresh()->trashed());
     });
 
     it('blocks deletion if at least one batch has remaining_quantity > 0', function () {
         // Batch agotado
         InventoryBatch::create([
             'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouse->id,
             'initial_quantity' => 100,
             'remaining_quantity' => 0,
             'unit_price' => 10.00,
@@ -113,6 +124,7 @@ describe('Raw Material Destroy', function () {
         // Batch con stock
         InventoryBatch::create([
             'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouse->id,
             'initial_quantity' => 50,
             'remaining_quantity' => 25, // > 0
             'unit_price' => 12.00,

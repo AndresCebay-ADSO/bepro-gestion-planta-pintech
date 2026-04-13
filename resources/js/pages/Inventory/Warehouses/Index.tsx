@@ -1,15 +1,29 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { Head, useForm, Link, router, usePage } from '@inertiajs/react';
+import { Users } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { route } from 'ziggy-js';
+import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import Pagination from '@/components/ui/pagination';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+    index as warehousesIndex,
+    create as warehousesCreate,
+    show as warehousesShow,
+    edit as warehousesEdit,
+    destroy as warehousesDestroy,
+} from '@/routes/warehouses';
+
+import { form as warehousesAssignUsersForm } from '@/routes/warehouses/assign-users';
+import type { PaginationLink } from '@/types/ui';
 
 type WarehouseRow = {
     id: number;
     name: string;
     city: string;
     address: string | null;
+    type: 'factory' | 'storage';
     is_active: boolean;
     users_count: number;
     can: {
@@ -19,11 +33,6 @@ type WarehouseRow = {
     };
 };
 
-type PaginationLink = {
-    url: string | null;
-    label: string;
-    active: boolean;
-};
 
 type Props = {
     warehouses: {
@@ -39,30 +48,28 @@ type Props = {
 };
 
 export default function WarehousesIndex({ warehouses, filters, can }: Props) {
-    const [search, setSearch] = useState(filters.search ?? '');
+    const { data, setData, get } = useForm({
+        search: filters.search ?? '',
+    });
     const flash = usePage<{ flash?: { success?: string; error?: string } }>().props.flash;
 
-    const paginationLinks = useMemo(
-        () => warehouses.links.filter((link) => !link.label.includes('Previous') && !link.label.includes('Next') && !link.label.includes('previous') && !link.label.includes('next')),
-        [warehouses.links],
-    );
 
     const handleSearch = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        router.get(
-            route('warehouses.index'),
-            { search },
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
+        get(warehousesIndex({ query: { search: data.search } }).url, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
     };
 
     const handleDelete = (id: number) => {
-        if (!window.confirm('¿Estás seguro de eliminar esta bodega?')) {
+        if (!window.confirm('Are you sure you want to delete this warehouse?')) {
             return;
         }
 
-        router.delete(route('warehouses.destroy', id), {
+        router.delete(warehousesDestroy(id).url, {
             preserveScroll: true,
         });
     };
@@ -74,12 +81,12 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
             <div className="space-y-6 p-6">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold text-foreground">Bodegas</h1>
-                        <p className="text-sm text-muted-foreground">Gestiona y consulta las bodegas de operación.</p>
+                        <h1 className="text-2xl font-semibold text-foreground">Warehouses</h1>
+                        <p className="text-sm text-muted-foreground">Manage and consult operating warehouses.</p>
                     </div>
                     {can.create && (
                         <Button asChild>
-                            <Link href={route('warehouses.create')}>Nueva Bodega</Link>
+                            <Link href={warehousesCreate().url}>New Warehouse</Link>
                         </Button>
                     )}
                 </div>
@@ -98,13 +105,13 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
 
                 <form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row">
                     <Input
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        placeholder="Buscar por nombre, ciudad o dirección..."
+                        value={data.search}
+                        onChange={(event) => setData('search', event.target.value)}
+                        placeholder="Search by name, city or address..."
                         className="sm:max-w-md"
                     />
                     <Button type="submit" variant="outline">
-                        Buscar
+                        Search
                     </Button>
                 </form>
 
@@ -112,12 +119,13 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                     <table className="w-full text-sm">
                         <thead className="border-b border-border bg-muted/40">
                             <tr>
-                                <th className="p-3 text-left font-medium text-foreground">Nombre</th>
-                                <th className="p-3 text-left font-medium text-foreground">Ciudad</th>
-                                <th className="p-3 text-left font-medium text-foreground">Dirección</th>
-                                <th className="p-3 text-left font-medium text-foreground">Estado</th>
-                                <th className="p-3 text-left font-medium text-foreground">Usuarios</th>
-                                <th className="p-3 text-right font-medium text-foreground">Acciones</th>
+                                <th className="p-3 text-left font-medium text-foreground">Name</th>
+                                <th className="p-3 text-left font-medium text-foreground">City</th>
+                                <th className="p-3 text-left font-medium text-foreground">Address</th>
+                                <th className="p-3 text-left font-medium text-foreground">Type</th>
+                                <th className="p-3 text-left font-medium text-foreground">Status</th>
+                                <th className="p-3 text-left font-medium text-foreground">Users</th>
+                                <th className="p-3 text-right font-medium text-foreground">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -127,45 +135,53 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                                     <td className="p-3 text-muted-foreground">{warehouse.city}</td>
                                     <td className="p-3 text-muted-foreground">{warehouse.address ?? '-'}</td>
                                     <td className="p-3">
+                                        <Badge variant={warehouse.type === 'factory' ? 'default' : 'secondary'}>
+                                            {warehouse.type === 'factory' ? 'Fábrica' : 'Bodega'}
+                                        </Badge>
+                                    </td>
+                                    <td className="p-3">
                                         <span
                                             className={warehouse.is_active
                                                 ? 'rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-300'
                                                 : 'rounded-full bg-slate-500/15 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300'}
                                         >
-                                            {warehouse.is_active ? 'Activa' : 'Inactiva'}
+                                            {warehouse.is_active ? 'Active' : 'Inactive'}
                                         </span>
                                     </td>
                                     <td className="p-3 text-muted-foreground">{warehouse.users_count}</td>
                                     <td className="p-3 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            {warehouse.can.view && (
-                                                <Button asChild variant="outline" size="sm">
-                                                    <Link href={route('warehouses.show', warehouse.id)}>Ver</Link>
-                                                </Button>
-                                            )}
+                                        <TableActions
+                                            permissions={{ view: warehouse.can.view, edit: warehouse.can.update, delete: warehouse.can.delete }}
+                                            onView={() => router.get(warehousesShow(warehouse.id).url)}
+                                            onEdit={() => router.get(warehousesEdit(warehouse.id).url)}
+                                            onDelete={() => handleDelete(warehouse.id)}
+                                        >
                                             {warehouse.can.update && (
-                                                <>
-                                                    <Button asChild variant="outline" size="sm">
-                                                        <Link href={route('warehouses.edit', warehouse.id)}>Editar</Link>
-                                                    </Button>
-                                                    <Button asChild variant="outline" size="sm">
-                                                        <Link href={route('warehouses.assign-users.form', warehouse.id)}>Asignar usuarios</Link>
-                                                    </Button>
-                                                </>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="h-8 w-8"
+                                                            asChild
+                                                        >
+                                                            <Link href={warehousesAssignUsersForm(warehouse.id).url}>
+                                                                <Users className="h-4 w-4" />
+                                                                <span className="sr-only">Asignar usuarios</span>
+                                                            </Link>
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Asignar usuarios</TooltipContent>
+                                                </Tooltip>
                                             )}
-                                            {warehouse.can.delete && (
-                                                <Button type="button" variant="destructive" size="sm" onClick={() => handleDelete(warehouse.id)}>
-                                                    Eliminar
-                                                </Button>
-                                            )}
-                                        </div>
+                                        </TableActions>
                                     </td>
                                 </tr>
                             ))}
                             {warehouses.data.length === 0 && (
                                 <tr>
                                     <td colSpan={6} className="p-8 text-center text-sm text-muted-foreground">
-                                        No se encontraron bodegas.
+                                        No warehouses found.
                                     </td>
                                 </tr>
                             )}
@@ -173,18 +189,8 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                     </table>
                 </div>
 
-                <div className="flex flex-wrap gap-1">
-                    {paginationLinks.map((link, index) => (
-                        <Button
-                            key={`${link.label}-${index}`}
-                            type="button"
-                            size="sm"
-                            variant={link.active ? 'default' : 'outline'}
-                            disabled={!link.url}
-                            onClick={() => link.url && router.visit(link.url, { preserveState: true, preserveScroll: true })}
-                            dangerouslySetInnerHTML={{ __html: link.label }}
-                        />
-                    ))}
+                <div className="flex justify-center">
+                    <Pagination links={warehouses.links} />
                 </div>
             </div>
         </>

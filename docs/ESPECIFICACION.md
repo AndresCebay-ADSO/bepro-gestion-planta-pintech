@@ -529,8 +529,9 @@ B. Sin cambios: si el administrador ingresa el mismo valor actual, el sistema no
 | **FLUJO 		NORMAL:** |   1. El administrador accede al módulo de órdenes de producción.
   2. Selecciona "Registrar orden de producción".
   3. Selecciona el producto a producir.
-  4. Ingresa la cantidad a producir y la fecha programada.
-  5. El sistema calcula automáticamente los requerimientos de materia prima según la **formulación activa** del producto.
+  4. Selecciona la bodega de destino (Solo bodegas de tipo **Fábrica**).
+  5. Ingresa la cantidad a producir y la fecha programada.
+  6. El sistema calcula automáticamente los requerimientos de materia prima según la **formulación activa** del producto.
   6. El sistema valida disponibilidad de stock.
   7. Registra la orden con estado "Pendiente".
   8. Muestra confirmación. |
@@ -733,3 +734,33 @@ B. QR inválido: el sistema muestra error de acceso. |
   5. Descarga. |
 | **FLUJOS 		ALTERNOS** | A. Sin datos disponibles. |
 | **POSTCONDICIÓN** | Archivo exportado correctamente. |
+
+| **NOMBRE:** | CU54 – Registrar traslado |
+| --- | --- |
+| **ACTORES:** | Administrador, Asistente de Producción |
+| **DESCRIPCIÓN:** | Permite registrar el envío de producto terminado desde la fábrica hacia una bodega de distribución. |
+| **PRECONDICIONES:** | El usuario tiene rol de producción. El origen es una bodega tipo "Fábrica". El destino es una bodega tipo "Bodega". |
+| **FLUJO NORMAL:** | 1. El usuario accede al módulo de inventario / traslados.
+2. Selecciona "Nuevo Traslado".
+3. Selecciona producto, cantidad, origen (Cali) y destino (Neiva).
+4. El sistema valida stock suficiente en origen.
+5. Registra el traslado con estado "pendiente".
+6. Descuenta temporalmente (o marca como comprometido) el stock en origen.
+7. Muestra confirmación. |
+| **FLUJOS ALTERNOS** | A. Stock insuficiente: El sistema muestra error y no permite continuar. |
+| **POSTCONDICIÓN** | El traslado queda registrado en espera de recepción. |
+
+| **NOMBRE:** | CU55 – Recibir traslado |
+| --- | --- |
+| **ACTORES:** | Administrador, Asistente de Producción |
+| **DESCRIPCIÓN:** | Permite confirmar la recepción de un traslado en la bodega de destino, haciendo efectivo el ingreso al stock. |
+| **PRECONDICIONES:** | Existe un traslado con estado "pendiente". El usuario tiene acceso a la bodega destino. |
+| **FLUJO NORMAL:** | 1. El usuario accede a la lista de traslados pendientes en la bodega destino.
+2. Selecciona el traslado recibido.
+3. Verifica cantidades y selecciona "Confirmar Recepción".
+4. El sistema actualiza el estado a "recibido".
+5. Registra la fecha de recepción (`received_at`).
+6. Incrementa el stock en el `finished_inventory` de la bodega destino.
+7. Muestra confirmación. |
+| **FLUJOS ALTERNOS** | A. Diferencias en cantidad: El usuario puede rechazar el traslado o anotar observaciones (el estado pasa a "cancelado" o se requiere ajuste manual). |
+| **POSTCONDICIÓN** | El stock de la bodega destino queda actualizado. |

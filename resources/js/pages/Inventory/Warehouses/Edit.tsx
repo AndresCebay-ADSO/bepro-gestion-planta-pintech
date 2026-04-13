@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type Props = {
     warehouse: {
@@ -12,6 +13,7 @@ type Props = {
         name: string;
         city: string;
         address: string | null;
+        type: 'factory' | 'storage';
         is_active: boolean;
     };
 };
@@ -20,6 +22,7 @@ type WarehouseForm = {
     name: string;
     city: string;
     address: string;
+    type: 'factory' | 'storage';
     is_active: boolean;
 };
 
@@ -28,6 +31,7 @@ export default function WarehousesEdit({ warehouse }: Props) {
         name: warehouse.name,
         city: warehouse.city,
         address: warehouse.address ?? '',
+        type: warehouse.type,
         is_active: warehouse.is_active,
     });
 
@@ -74,6 +78,23 @@ export default function WarehousesEdit({ warehouse }: Props) {
                                 maxLength={255}
                             />
                             <InputError message={form.errors.address} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="type">Tipo de Bodega</Label>
+                            <Select
+                                value={form.data.type}
+                                onValueChange={(value: 'factory' | 'storage') => form.setData('type', value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccione el tipo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="factory">Fábrica</SelectItem>
+                                    <SelectItem value="storage">Bodega / Punto de Venta</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError message={form.errors.type} />
                         </div>
 
                         <div className="flex items-center gap-3 rounded-md border border-border px-3 py-2">

@@ -40,11 +40,22 @@ Bodegas de producto terminado.
 - `name` VARCHAR(100) UNIQUE
 - `city` VARCHAR(100)
 - `address` VARCHAR(255) NULL
+- `type` ENUM('fabrica', 'bodega') DEFAULT 'bodega'
 - `is_active` BOOLEAN DEFAULT true
 - `created_at`, `updated_at`
 - `deleted_at`
 
-### 2.4 raw_materials
+### 2.4 warehouse_user
+Tabla pivote para asignación de usuarios a bodegas.
+
+- `id` BIGINT PK
+- `user_id` BIGINT FK -> `users.id`
+- `warehouse_id` BIGINT FK -> `warehouses.id`
+- `is_default` BOOLEAN DEFAULT false
+- `created_at`, `updated_at`
+- Restriccion UNIQUE (`user_id`, `warehouse_id`)
+
+### 2.5 raw_materials
 Materias primas.
 
 - `id` BIGINT PK
@@ -249,6 +260,21 @@ Alertas del sistema.
 - `updated_by` BIGINT FK NULL -> `users.id`
 - `created_at`, `updated_at`
 
+### 2.19 transfers
+Registra el traslado de producto terminado entre bodegas.
+
+- `id` BIGINT PK
+- `source_warehouse_id` BIGINT FK -> `warehouses.id`
+- `destination_warehouse_id` BIGINT FK -> `warehouses.id`
+- `product_id` BIGINT FK -> `products.id`
+- `quantity` DECIMAL(12,4)
+- `status` ENUM('pendiente', 'enviado', 'recibido', 'cancelado') DEFAULT 'pendiente'
+- `notes` TEXT NULL
+- `created_by` BIGINT FK -> `users.id`
+- `sent_at` TIMESTAMP NULL
+- `received_at` TIMESTAMP NULL
+- `created_at`, `updated_at`
+
 ## 3. Entidades de autenticacion, cola, cache y permisos
 
 ### 3.1 Auth base
@@ -270,7 +296,7 @@ Usuarios y tokens de acceso.
 ### 3.2 Actividad y Auditoría (Spatie Activity Log)
 Registro histórico de acciones administrativas y de negocio.
 
-- `activity_log`
+- `activity_logs`
     - `id` BIGINT PK
     - `log_name` VARCHAR(255) NULL (ej: default, auth, role_change)
     - `description` TEXT (descripcion legible del evento)
@@ -278,7 +304,7 @@ Registro histórico de acciones administrativas y de negocio.
     - `subject_type` VARCHAR(255) NULL (Clase del modelo afectado)
     - `causer_id` BIGINT NULL (ID del usuario que realizo la accion)
     - `causer_type` VARCHAR(255) NULL
-    - `properties` JSON NULL (datos antiguos vs nuevos)
+    - `properties` JSONB NULL (datos antiguos vs nuevos)
     - `batch_uuid` UUID NULL
     - `event` VARCHAR(255) NULL (created, updated, deleted, failed_login)
     - `created_at`, `updated_at`

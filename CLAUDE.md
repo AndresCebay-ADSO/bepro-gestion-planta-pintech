@@ -146,15 +146,44 @@ Key business entities (see `docs/MER.md`):
 
 **Policies**: Check roles with `hasAnyRole(['admin', 'produccion'])` or `hasRole('admin')`.
 
-**Frontend Types**: Inferred from props via Inertia. Use Ziggy `route()` helper for URLs.
+**Frontend Types**: Inferred from props via Inertia. Use Wayfinder route functions (`route().url`) for URLs.
+
+**Search & Pagination (Full Stack)**:
+- **Backend Filter**: Use `whereRaw('LOWER(campo) LIKE ?', ["%{$search}%"])` for portability.
+- **Persistence**: Always append `->withQueryString()` to the `paginate()` call.
+- **Frontend Submission**: Use `useForm().get(route().url, { preserveState: true, replace: true })`.
 
 ## Coding Standards
 
 - **Language**: All code in English (variables, methods, classes). Database tables in English, snake_case, plural.
 - **PHP**: PSR-12 via Laravel Pint. Strict types where possible.
+- **SQL**: Prefer database-agnostic queries. Use `LOWER()` instead of `ILIKE` for case-insensitive search compatibility.
 - **Git**: Conventional commits (`feat:`, `fix:`, `docs:`, `style:`, `refactor:`).
 - **Branches**: `main` (prod), `develop` (integration), `feature/PT-XXX-desc`.
 - **Naming**: PascalCase classes, camelCase variables/methods, snake_case DB columns.
+- **UI Standards**: Use `TableActions` component for all table row actions. 
+  - Rules: Icons only (lucide-react), Tooltips mandatory, `sr-only` text included.
+  - Colors: View (outline), Edit (warning/amber), Delete (destructive/red).
+  - Order: View, Edit, Delete.
+
+### UI/UX Rules (MANDATORY)
+Para acciones en tablas, usar **obligatoriamente** el componente `TableActions` con iconos, tooltips y sr-only (Ver `docs/STANDARDS.md`).
+
+---
+
+## AI Rules (CRITICAL)
+
+When generating code:
+- ALWAYS use Inertia helpers (useForm, Link, router helpers).
+- NEVER use generic React patterns (like manual useState for forms) when Inertia provides a specialized solution.
+- NEVER use hardcoded URLs in the frontend (e.g., `href="/products"`). ALWAYS use Wayfinder route functions (e.g., `href={productsIndex().url}`).
+- Initialize `useForm` directly with default values from props.
+- Seeders MUST be idempotent (use `updateOrCreate`). Use `app()->environment('local', 'testing')` for mock data generation.
+- Follow existing project patterns strictly.
+- Do not introduce new patterns without justification.
+  - Rules: Icons only (lucide-react), Tooltips mandatory, `sr-only` text included.
+  - Colors: View (outline), Edit (warning/amber), Delete (destructive/red).
+  - Order: View, Edit, Delete.
 
 ## Demo Credentials (from seeds)
 

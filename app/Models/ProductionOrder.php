@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class ProductionOrder extends Model
 {
@@ -19,6 +19,17 @@ class ProductionOrder extends Model
             ->logOnly(['order_number', 'actual_quantity', 'yield_percentage', 'status', 'completion_date'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(static function (ProductionOrder $order): void {
+            $warehouse = $order->warehouse ?? Warehouse::find($order->warehouse_id);
+
+            if ($warehouse && ! $warehouse->isFactory()) {
+                throw new \InvalidArgumentException('Solo se pueden asociar órdenes de producción a bodegas tipo Fábrica.');
+            }
+        });
     }
 
     protected $table = 'production_orders';

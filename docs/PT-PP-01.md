@@ -57,6 +57,7 @@ Las principales limitaciones del estado actual son:
 - Ausencia de información en tiempo real
 - Dependencia de archivos Excel para procesos críticos
 - Falta de automatización en el cálculo de costos
+- **Ausencia de un mecanismo formal de traslados entre sedes** (Cali-Neiva) que garantice la trazabilidad de la mercancía en tránsito.
 
 En particular, se presentan las siguientes problemáticas:
 
@@ -102,6 +103,7 @@ El sistema deberá permitir:
 - Soporte para la gestión y actualización de precios
 - Consulta de disponibilidad de productos por parte del área comercial
 - Reducción de procesos manuales
+- **Gestión logística de traslados**: El sistema diferenciará entre la sede de Cali (Fábrica) y Neiva (Bodega/Venta), implementando un flujo de traslados con confirmación en destino para evitar pérdidas de stock.
 - El sistema deberá facilitar la exportación o integración de datos con herramientas de análisis como Power BI, reduciendo los procesos manuales actuales de carga de información.
 
 Adicionalmente, se espera incorporar un mecanismo mediante códigos QR que permita a los clientes acceder a información técnica de los productos, como fichas técnicas, fichas de seguridad y certificados de calidad.
