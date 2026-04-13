@@ -1,9 +1,20 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { route } from 'ziggy-js';
+import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+    index as warehousesIndex,
+    create as warehousesCreate,
+    show as warehousesShow,
+    edit as warehousesEdit,
+    destroy as warehousesDestroy,
+} from '@/routes/warehouses';
+
+import { form as warehousesAssignUsersForm } from '@/routes/warehouses/assign-users';
 
 type WarehouseRow = {
     id: number;
@@ -51,8 +62,8 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
         event.preventDefault();
 
         router.get(
-            route('warehouses.index'),
-            { search },
+            warehousesIndex({ query: { search } }).url,
+            {},
             { preserveState: true, preserveScroll: true, replace: true },
         );
     };
@@ -62,7 +73,7 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
             return;
         }
 
-        router.delete(route('warehouses.destroy', id), {
+        router.delete(warehousesDestroy(id).url, {
             preserveScroll: true,
         });
     };
@@ -79,7 +90,7 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                     </div>
                     {can.create && (
                         <Button asChild>
-                            <Link href={route('warehouses.create')}>Nueva Bodega</Link>
+                            <Link href={warehousesCreate().url}>Nueva Bodega</Link>
                         </Button>
                     )}
                 </div>
@@ -137,28 +148,31 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                                     </td>
                                     <td className="p-3 text-muted-foreground">{warehouse.users_count}</td>
                                     <td className="p-3 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            {warehouse.can.view && (
-                                                <Button asChild variant="outline" size="sm">
-                                                    <Link href={route('warehouses.show', warehouse.id)}>Ver</Link>
-                                                </Button>
-                                            )}
+                                        <TableActions
+                                            permissions={{ view: warehouse.can.view, edit: warehouse.can.update, delete: warehouse.can.delete }}
+                                            onView={() => router.get(warehousesShow(warehouse.id).url)}
+                                            onEdit={() => router.get(warehousesEdit(warehouse.id).url)}
+                                            onDelete={() => handleDelete(warehouse.id)}
+                                        >
                                             {warehouse.can.update && (
-                                                <>
-                                                    <Button asChild variant="outline" size="sm">
-                                                        <Link href={route('warehouses.edit', warehouse.id)}>Editar</Link>
-                                                    </Button>
-                                                    <Button asChild variant="outline" size="sm">
-                                                        <Link href={route('warehouses.assign-users.form', warehouse.id)}>Asignar usuarios</Link>
-                                                    </Button>
-                                                </>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="h-8 w-8"
+                                                            asChild
+                                                        >
+                                                            <Link href={warehousesAssignUsersForm(warehouse.id).url}>
+                                                                <Users className="h-4 w-4" />
+                                                                <span className="sr-only">Asignar usuarios</span>
+                                                            </Link>
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Asignar usuarios</TooltipContent>
+                                                </Tooltip>
                                             )}
-                                            {warehouse.can.delete && (
-                                                <Button type="button" variant="destructive" size="sm" onClick={() => handleDelete(warehouse.id)}>
-                                                    Eliminar
-                                                </Button>
-                                            )}
-                                        </div>
+                                        </TableActions>
                                     </td>
                                 </tr>
                             ))}

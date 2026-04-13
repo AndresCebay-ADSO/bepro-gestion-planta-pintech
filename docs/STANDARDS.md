@@ -59,3 +59,35 @@ Una tarea se considera finalizada solo si:
 2. No existen variables o comentarios "muertos" (borradores).
 3. La funcionalidad ha sido probada localmente.
 4. Se ha actualizado la documentación técnica si es necesario.
+
+---
+
+## 6. Estándares de Interfaz de Usuario (UI/UX)
+
+### 📊 Acciones en Tablas
+Para asegurar una interfaz limpia, profesional y accesible, las acciones por fila en las tablas deben seguir estas reglas:
+
+* **Componente Obligatorio**: Usar exclusivamente el componente `TableActions`.
+* **Prohibición de Texto**: No usar botones con etiquetas de texto dentro de las celdas de acción de las tablas.
+* **Iconografía**: Usar iconos de `lucide-react` (Eye, Pencil, Trash).
+* **Tooltips y Accesibilidad**: Cada acción debe tener un `Tooltip` descriptivo y texto oculto para lectores de pantalla (`sr-only`).
+* **Estados Visuales**:
+    * **View**: Color base/neutral (outline).
+    * **Edit**: Color **Amber** (`variant="warning"`).
+    * **Delete**: Color **Red** (`variant="destructive"`).
+* **Orden de Acciones**: El orden estricto de izquierda a derecha es: 1. Ver, 2. Editar, 3. Eliminar (y acciones adicionales al final).
+
+> [!IMPORTANT]
+> Esta norma aplica **SOLO** a las acciones de fila en tablas. Los botones principales de página (ej. "Crear Nuevo") deben seguir siendo botones con texto para mayor claridad.
+
+---
+
+## 7. Forms (Inertia + React)
+
+- MUST use `useForm` from @inertiajs/react.
+- NEVER use manual `useState` for form data, errors, or loading in Inertia pages.
+- Use `processing` and `errors` from useForm for UI feedback.
+- Initialize `useForm` values directly from props (Avoid useEffect for initialization).
+
+Reason:
+Ensures consistency, reduces boilerplate, and provides native integration with Laravel's validation system.

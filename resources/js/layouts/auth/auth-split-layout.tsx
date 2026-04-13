@@ -10,7 +10,7 @@ export default function AuthSplitLayout({
     return (
         <div className="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
             <div className="relative hidden h-full flex-col border-r border-border bg-card p-10 text-card-foreground lg:flex">
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800" />
+                <div className="absolute inset-0 bg-linear-to-br from-slate-900 via-slate-900 to-slate-800" />
                 <Link href={home()} className="relative z-20 inline-flex w-fit items-center justify-center">
                     <img
                         src="/favicon-logo.png"

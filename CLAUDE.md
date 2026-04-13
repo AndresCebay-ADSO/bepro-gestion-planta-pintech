@@ -155,6 +155,27 @@ Key business entities (see `docs/MER.md`):
 - **Git**: Conventional commits (`feat:`, `fix:`, `docs:`, `style:`, `refactor:`).
 - **Branches**: `main` (prod), `develop` (integration), `feature/PT-XXX-desc`.
 - **Naming**: PascalCase classes, camelCase variables/methods, snake_case DB columns.
+- **UI Standards**: Use `TableActions` component for all table row actions. 
+  - Rules: Icons only (lucide-react), Tooltips mandatory, `sr-only` text included.
+  - Colors: View (outline), Edit (warning/amber), Delete (destructive/red).
+  - Order: View, Edit, Delete.
+
+### UI/UX Rules (MANDATORY)
+Para acciones en tablas, usar **obligatoriamente** el componente `TableActions` con iconos, tooltips y sr-only (Ver `docs/STANDARDS.md`).
+
+---
+
+## AI Rules (CRITICAL)
+
+When generating code:
+- ALWAYS use Inertia helpers (useForm, Link, router helpers).
+- NEVER use generic React patterns (like manual useState for forms) when Inertia provides a specialized solution.
+- Initialize `useForm` directly with default values from props.
+- Follow existing project patterns strictly.
+- Do not introduce new patterns without justification.
+  - Rules: Icons only (lucide-react), Tooltips mandatory, `sr-only` text included.
+  - Colors: View (outline), Edit (warning/amber), Delete (destructive/red).
+  - Order: View, Edit, Delete.
 
 ## Demo Credentials (from seeds)
 

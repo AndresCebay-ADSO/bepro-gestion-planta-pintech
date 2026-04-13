@@ -32,7 +32,7 @@ export default function Login({ status, canResetPassword }: Props) {
                         }}
                     >
                         {/* Overlay azul (más ligero para que se vea la foto) */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#0d2a6e]/55 via-[#0d2a6e]/45 to-[#0a2060]/50" />
+                        <div className="absolute inset-0 bg-linear-to-br from-[#0d2a6e]/55 via-[#0d2a6e]/45 to-[#0a2060]/50" />
 
                         {/* Badge superior */}
                         <div className="relative z-10">

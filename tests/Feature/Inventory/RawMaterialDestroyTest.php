@@ -41,10 +41,7 @@ describe('Raw Material Destroy', function () {
             ->delete(route('raw-materials.destroy', $this->rawMaterial));
 
         $response->assertRedirect(route('raw-materials.index'));
-        $this->assertDatabaseHas('raw_materials', [
-            'id' => $this->rawMaterial->id,
-            'deleted_at' => now(),
-        ]);
+        $this->assertTrue($this->rawMaterial->fresh()->trashed());
     });
 
     it('blocks deletion if raw material has batches with remaining_quantity > 0', function () {
@@ -94,10 +91,7 @@ describe('Raw Material Destroy', function () {
         $response->assertRedirect(route('raw-materials.index'));
 
         // Verificar soft delete
-        $this->assertDatabaseHas('raw_materials', [
-            'id' => $this->rawMaterial->id,
-            'deleted_at' => now(),
-        ]);
+        $this->assertTrue($this->rawMaterial->fresh()->trashed());
     });
 
     it('blocks deletion if at least one batch has remaining_quantity > 0', function () {

@@ -16,7 +16,7 @@ const AdminDashboard: FC<AdminDashboardProps> = ({ role, userName, stats }) => {
     return (
         <div className="min-h-screen bg-background text-foreground">
             {/* Header */}
-            <div className="from-primary to-primary/80 text-primary-foreground bg-gradient-to-r px-8 py-12">
+            <div className="from-primary to-primary/80 text-primary-foreground bg-linear-to-r px-8 py-12">
                 <div className="mx-auto max-w-6xl">
                     <h1 className="mb-2 text-4xl font-bold">
                         👋 HELLO WORLD ADMIN!
