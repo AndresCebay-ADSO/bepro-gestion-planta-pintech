@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
+import { index as formulasIndex } from '@/routes/formulas';
 import { index as usersIndex } from '@/routes/users';
 import type { User, UserRole } from '@/types/auth';
 import type { NavGroup } from '@/types/navigation';
@@ -59,12 +60,10 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Fórmulas',
-                href: '/production/formulas',
+                href: formulasIndex(),
                 icon: FlaskConical,
                 allowedRoles: ['admin', 'produccion'],
                 unauthorizedBehavior: 'disable',
-                disabled: true,
-                disabledLabel: 'Módulo en desarrollo',
             },
             {
                 title: 'Órdenes de Producción',

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Formulas\StoreFormulaRequest;
-use App\Http\Requests\Formulas\UpdateFormulaRequest;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\Product;
@@ -131,27 +130,6 @@ class FormulaController extends Controller
                 'delete' => Gate::allows('delete', $formula),
             ],
         ]);
-    }
-
-    public function edit(Formula $formula): Response
-    {
-        $this->authorize('update', $formula);
-
-        $formula->load(['product:id,code,name']);
-
-        return Inertia::render('Formulas/Edit', [
-            'formula' => $formula,
-        ]);
-    }
-
-    public function update(UpdateFormulaRequest $request, Formula $formula): RedirectResponse
-    {
-        $this->authorize('update', $formula);
-
-        $formula->update($request->validated());
-
-        return redirect()->route('formulas.show', $formula)
-            ->with('success', 'Fórmula actualizada exitosamente.');
     }
 
     public function destroy(Formula $formula): RedirectResponse

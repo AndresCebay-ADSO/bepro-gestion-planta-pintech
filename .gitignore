@@ -30,5 +30,6 @@ yarn-error.log
 .claude/
 .cursor/
 .codex/
+.gemini/
 .mcp.json
 skills-lock.json

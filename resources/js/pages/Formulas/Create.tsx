@@ -13,7 +13,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { index as formulasIndex } from '@/routes/formulas';
+import {
+    index as formulasIndex,
+    store as formulasStore,
+} from '@/routes/formulas';
 
 type RawMaterial = { id: number; code: string };
 type ProductOption = { id: number; code: string; name: string };
@@ -58,7 +61,7 @@ export default function FormulasCreate({
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        post(formulasIndex().url);
+        post(formulasStore().url);
     };
 
     const addDetail = () => {

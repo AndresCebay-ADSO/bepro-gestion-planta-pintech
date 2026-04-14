@@ -74,7 +74,7 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
 
 // ADMIN + PRODUCCIÓN: Gestión de fórmulas
 Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
-    Route::resource('formulas', FormulaController::class);
+    Route::resource('formulas', FormulaController::class)->except(['edit', 'update']);
     Route::post('formulas/{formula}/activate', [FormulaController::class, 'activate'])->name('formulas.activate');
 });
 

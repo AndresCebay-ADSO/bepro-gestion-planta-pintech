@@ -1,8 +1,9 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { TableActions } from '@/components/table-actions';
 import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
 import {
@@ -141,21 +142,31 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                                         {formula.created_at}
                                     </td>
                                     <td className="p-4 text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            asChild
-                                        >
-                                            <Link
-                                                href={
+                                        <TableActions
+                                            actions={{
+                                                view: true,
+                                                edit: false,
+                                                delete: true,
+                                            }}
+                                            onView={() =>
+                                                router.get(
                                                     formulasShow({
                                                         formula: formula.id,
-                                                    }).url
+                                                    }).url,
+                                                )
+                                            }
+                                            onDelete={() => {
+                                                if (
+                                                    window.confirm(
+                                                        `¿Eliminar la fórmula v${formula.version} de ${formula.product?.code}?`,
+                                                    )
+                                                ) {
+                                                    router.delete(
+                                                        `/formulas/${formula.id}`,
+                                                    );
                                                 }
-                                            >
-                                                Ver
-                                            </Link>
-                                        </Button>
+                                            }}
+                                        />
                                     </td>
                                 </tr>
                             ))}
