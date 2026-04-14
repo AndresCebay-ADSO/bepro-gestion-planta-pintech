@@ -33,3 +33,6 @@ yarn-error.log
 .gemini/
 .mcp.json
 skills-lock.json
+
+# Sensitive company files
+docs/Produccion enero 2026.xlsx
