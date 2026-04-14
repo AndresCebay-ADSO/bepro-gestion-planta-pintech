@@ -28,6 +28,18 @@ type Props = {
         current_cost?: string | null;
         current_price?: string | null;
         profit_margin?: string | null;
+        variants?: Array<{
+            id: number;
+            sku: string;
+            presentation_label?: string | null;
+            color?: string | null;
+            finish?: string | null;
+            base_type?: string | null;
+            component_system: '1K' | '2K' | 'KIT';
+            current_price?: string | null;
+            is_active: boolean;
+            unit_of_measure?: { name: string; symbol: string } | null;
+        }>;
         formulas?: FormulaItem[];
     };
     can: {
@@ -136,6 +148,69 @@ export default function ProductsShow({ product, can }: Props) {
                 </div>
 
                 {/* Fórmulas */}
+                <div className="rounded-lg border border-border bg-card">
+                    <div className="flex items-center justify-between border-b border-border px-6 py-4">
+                        <div>
+                            <h2 className="font-medium text-foreground">
+                                Variantes / SKU
+                            </h2>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                Referencias comerciales por presentación, color y acabado.
+                            </p>
+                        </div>
+                    </div>
+
+                    <table className="w-full text-sm">
+                        <thead className="border-b border-border bg-muted/40">
+                            <tr>
+                                <th className="p-4 text-left font-medium">SKU</th>
+                                <th className="p-4 text-left font-medium">Presentación</th>
+                                <th className="p-4 text-left font-medium">Color</th>
+                                <th className="p-4 text-left font-medium">Acabado</th>
+                                <th className="p-4 text-left font-medium">Sistema</th>
+                                <th className="p-4 text-left font-medium">Precio</th>
+                                <th className="p-4 text-left font-medium">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(product.variants ?? []).map((variant) => (
+                                <tr
+                                    key={variant.id}
+                                    className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30"
+                                >
+                                    <td className="p-4 font-mono font-medium">{variant.sku}</td>
+                                    <td className="p-4 text-muted-foreground">
+                                        {variant.presentation_label ?? '-'}
+                                        {variant.unit_of_measure
+                                            ? ` (${variant.unit_of_measure.symbol})`
+                                            : ''}
+                                    </td>
+                                    <td className="p-4 text-muted-foreground">{variant.color ?? '-'}</td>
+                                    <td className="p-4 text-muted-foreground">{variant.finish ?? '-'}</td>
+                                    <td className="p-4">
+                                        <Badge variant="secondary">{variant.component_system}</Badge>
+                                    </td>
+                                    <td className="p-4 text-muted-foreground">
+                                        {variant.current_price ? `$${variant.current_price}` : '-'}
+                                    </td>
+                                    <td className="p-4">
+                                        <Badge variant={variant.is_active ? 'default' : 'secondary'}>
+                                            {variant.is_active ? 'Activa' : 'Inactiva'}
+                                        </Badge>
+                                    </td>
+                                </tr>
+                            ))}
+                            {(product.variants ?? []).length === 0 && (
+                                <tr>
+                                    <td colSpan={7} className="p-8 text-center text-sm text-muted-foreground">
+                                        Este producto aún no tiene variantes registradas.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
                 <div className="rounded-lg border border-border bg-card">
                     <div className="flex items-center justify-between border-b border-border px-6 py-4">
                         <div>

@@ -10,6 +10,7 @@ use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductionController;
+use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -76,6 +77,9 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
 Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
     Route::resource('formulas', FormulaController::class)->except(['edit', 'update']);
     Route::post('formulas/{formula}/activate', [FormulaController::class, 'activate'])->name('formulas.activate');
+    Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
+    Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
+    Route::delete('products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
