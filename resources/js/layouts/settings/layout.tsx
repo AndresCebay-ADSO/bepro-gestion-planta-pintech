@@ -35,7 +35,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
             <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
                 <aside className="w-full max-w-xl lg:w-56">
                     <nav
-                        className="bg-card flex flex-col space-y-1 rounded-xl border border-border p-2 shadow-sm"
+                        className="flex flex-col space-y-1 rounded-xl border border-border bg-card p-2 shadow-sm"
                         aria-label="Settings"
                     >
                         {sidebarNavItems.map((item, index) => (
@@ -55,8 +55,9 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 <Link
                                     href={item.href}
                                     className={cn('text-muted-foreground', {
-                                        'text-foreground':
-                                            isCurrentOrParentUrl(item.href),
+                                        'text-foreground': isCurrentOrParentUrl(
+                                            item.href,
+                                        ),
                                     })}
                                 >
                                     {item.icon && (
@@ -72,7 +73,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                 <Separator className="my-6 lg:hidden" />
 
                 <div className="flex-1 md:max-w-3xl">
-                    <section className="bg-card max-w-2xl space-y-10 rounded-xl border border-border p-6 shadow-sm">
+                    <section className="max-w-2xl space-y-10 rounded-xl border border-border bg-card p-6 shadow-sm">
                         {children}
                     </section>
                 </div>

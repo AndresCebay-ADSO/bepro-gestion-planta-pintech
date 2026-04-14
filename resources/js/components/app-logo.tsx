@@ -1,3 +1,9 @@
+/**
+ * AppLogo Component
+ * Uses the official Pintech brand logo (2026 version)
+ * Logo files located in: /public/images/logo-pintech.{png,svg}
+ * For brand guidelines, see: /docs/LOGOS.md
+ */
 export default function AppLogo() {
     return (
         <div className="flex min-w-0 items-center gap-3">

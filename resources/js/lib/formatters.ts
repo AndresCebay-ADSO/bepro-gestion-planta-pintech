@@ -29,7 +29,7 @@ function getFormatter(maxDecimals: number): Intl.NumberFormat {
             new Intl.NumberFormat('es-CO', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: maxDecimals,
-            })
+            }),
         );
     }
 
@@ -66,7 +66,7 @@ function parseToNumber(value: number | string): number | null {
 function handleEmpty(
     currency: string | undefined,
     alwaysShowCurrency: boolean,
-    emptyValue: string
+    emptyValue: string,
 ): string {
     return alwaysShowCurrency && currency
         ? `${currency}${emptyValue}`
@@ -78,7 +78,7 @@ function handleEmpty(
  */
 export function formatNumber(
     value: number | string | null | undefined,
-    options: FormatNumberOptions = {}
+    options: FormatNumberOptions = {},
 ): string {
     const {
         currency,
@@ -117,7 +117,7 @@ export function formatNumber(
 export function formatCurrency(
     value: number | string | null | undefined,
     currencySymbol: string = '$',
-    options: Omit<FormatNumberOptions, 'currency' | 'alwaysShowCurrency'> = {}
+    options: Omit<FormatNumberOptions, 'currency' | 'alwaysShowCurrency'> = {},
 ): string {
     return formatNumber(value, {
         ...options,
@@ -131,7 +131,7 @@ export function formatCurrency(
  */
 export function formatQuantity(
     value: number | string | null | undefined,
-    options: Omit<FormatNumberOptions, 'currency'> = {}
+    options: Omit<FormatNumberOptions, 'currency'> = {},
 ): string {
     return formatNumber(value, options);
 }
@@ -141,7 +141,7 @@ export function formatQuantity(
  */
 export function formatPercent(
     value: number | string | null | undefined,
-    maxDecimals: number = 2
+    maxDecimals: number = 2,
 ): string {
     if (value === null || value === undefined || value === '') {
         return '-';
@@ -160,7 +160,7 @@ export function formatPercent(
  * Formato para inputs (React / forms)
  */
 export function formatForInput(
-    value: number | string | null | undefined
+    value: number | string | null | undefined,
 ): string {
     if (value === null || value === undefined || value === '') {
         return '';

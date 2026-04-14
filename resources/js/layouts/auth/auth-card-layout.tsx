@@ -1,3 +1,8 @@
+/**
+ * Auth Card Layout
+ * Layout de autenticación con tarjeta centrada
+ * Usa el logo oficial Pintech 2026 - ver /docs/LOGOS.md
+ */
 import { Link } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import {
@@ -21,11 +26,14 @@ export default function AuthCardLayout({
     return (
         <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
             <div className="flex w-full max-w-md flex-col gap-6">
-                <Link href={home()} className="inline-flex items-center justify-center self-center">
+                <Link
+                    href={home()}
+                    className="inline-flex items-center justify-center self-center"
+                >
                     <img
-                        src="/favicon-logo.png"
+                        src="/images/logo-pintech.png"
                         alt="Pintech logo"
-                        className="h-10 w-10 object-contain"
+                        className="h-16 w-auto object-contain"
                     />
                 </Link>
                 <div className="flex flex-col gap-6">

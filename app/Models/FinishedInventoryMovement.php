@@ -15,7 +15,7 @@ class FinishedInventoryMovement extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['product_id', 'warehouse_id', 'type', 'quantity', 'production_order_id'])
+            ->logOnly(['product_id', 'product_variant_id', 'warehouse_id', 'type', 'quantity', 'production_order_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -24,6 +24,7 @@ class FinishedInventoryMovement extends Model
 
     protected $fillable = [
         'product_id',
+        'product_variant_id',
         'warehouse_id',
         'production_order_id',
         'type',
@@ -44,6 +45,11 @@ class FinishedInventoryMovement extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function productVariant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
     public function warehouse(): BelongsTo

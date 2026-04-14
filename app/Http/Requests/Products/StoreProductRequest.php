@@ -15,7 +15,7 @@ class StoreProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => ['bail', 'required', 'string', 'max:50', 'regex:/^[A-Za-z0-9\-_]+$/', Rule::unique('products', 'code')],
+            'code' => ['bail', 'nullable', 'string', 'max:50', Rule::unique('products', 'code')],
             'name' => ['bail', 'required', 'string', 'min:3', 'max:150'],
             'category_id' => [
                 'bail',

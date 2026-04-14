@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         // Seeders de datos maestros (sin dependencias)
         $this->call([
             UnitsOfMeasureSeeder::class,
+            ProductCategorySeeder::class,
             RawMaterialSeeder::class,
         ]);
 

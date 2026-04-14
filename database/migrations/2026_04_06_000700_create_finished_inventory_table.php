@@ -14,12 +14,15 @@ return new class extends Migration
         Schema::create('finished_inventory', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+            $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
             $table->foreignId('warehouse_id')->constrained('warehouses')->onDelete('cascade');
             $table->decimal('quantity', 12, 4)->default(0);
             $table->timestamps();
 
             $table->unique(['product_id', 'warehouse_id']);
+            $table->unique(['product_variant_id', 'warehouse_id']);
             $table->index('warehouse_id');
+            $table->index('product_variant_id');
         });
     }
 

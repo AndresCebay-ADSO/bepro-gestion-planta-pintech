@@ -8,16 +8,30 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Product extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, LogsActivity, SoftDeletes;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('productos')
+            ->setDescriptionForEvent(fn (string $eventName) => "Producto {$eventName}")
+            ->logOnly(['code', 'name', 'category_id', 'is_active'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     protected $table = 'products';
 
     protected $fillable = [
         'code',
         'name',
+        'brand',
+        'description',
         'category_id',
         'unit_of_measure_id',
         'current_cost',
@@ -81,5 +95,10 @@ class Product extends Model
     public function qrCode(): HasOne
     {
         return $this->hasOne(QrCode::class, 'product_id');
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class, 'product_id');
     }
 }

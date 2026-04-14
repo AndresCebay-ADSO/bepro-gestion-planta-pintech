@@ -13,7 +13,7 @@ export function AppShell({ children, variant = 'sidebar' }: Props) {
 
     if (variant === 'header') {
         return (
-            <div className="bg-background text-foreground flex min-h-screen w-full flex-col">
+            <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
                 {children}
             </div>
         );

@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 50)->unique();
+            $table->string('code', 50)->nullable()->unique();
             $table->string('name', 150);
+            $table->string('brand', 100)->default('BEPRO');
+            $table->text('description')->nullable();
             $table->foreignId('category_id')->constrained('product_categories')->onDelete('restrict');
             $table->foreignId('unit_of_measure_id')->constrained('units_of_measure')->restrictOnDelete();
             $table->decimal('current_cost', 12, 4)->nullable();

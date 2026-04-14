@@ -41,7 +41,12 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
     });
 
     const updateRow = (index: number, patch: Partial<UserAssignment>) => {
-        form.setData('users', form.data.users.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row)));
+        form.setData(
+            'users',
+            form.data.users.map((row, rowIndex) =>
+                rowIndex === index ? { ...row, ...patch } : row,
+            ),
+        );
     };
 
     const submit = () => {
@@ -63,8 +68,12 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
 
             <div className="mx-auto max-w-4xl space-y-6 p-6">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-semibold text-foreground">Asignar Usuarios</h1>
-                    <p className="text-sm text-muted-foreground">Bodega: {warehouse.name} ({warehouse.city})</p>
+                    <h1 className="text-2xl font-semibold text-foreground">
+                        Asignar Usuarios
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                        Bodega: {warehouse.name} ({warehouse.city})
+                    </p>
                 </div>
 
                 <form
@@ -78,10 +87,18 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
                         <table className="w-full text-sm">
                             <thead className="border-b border-border bg-muted/40">
                                 <tr>
-                                    <th className="p-3 text-left font-medium text-foreground">Asignar</th>
-                                    <th className="p-3 text-left font-medium text-foreground">Usuario</th>
-                                    <th className="p-3 text-left font-medium text-foreground">Correo</th>
-                                    <th className="p-3 text-left font-medium text-foreground">Bodega por defecto</th>
+                                    <th className="p-3 text-left font-medium text-foreground">
+                                        Asignar
+                                    </th>
+                                    <th className="p-3 text-left font-medium text-foreground">
+                                        Usuario
+                                    </th>
+                                    <th className="p-3 text-left font-medium text-foreground">
+                                        Correo
+                                    </th>
+                                    <th className="p-3 text-left font-medium text-foreground">
+                                        Bodega por defecto
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -89,26 +106,52 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
                                     const row = form.data.users[index];
 
                                     return (
-                                        <tr key={user.id} className="border-b border-border/60 last:border-0">
+                                        <tr
+                                            key={user.id}
+                                            className="border-b border-border/60 last:border-0"
+                                        >
                                             <td className="p-3">
                                                 <Checkbox
                                                     checked={row.assigned}
-                                                    onCheckedChange={(checked) => updateRow(index, {
-                                                        assigned: checked === true,
-                                                        is_default: checked === true ? row.is_default : false,
-                                                    })}
+                                                    onCheckedChange={(
+                                                        checked,
+                                                    ) =>
+                                                        updateRow(index, {
+                                                            assigned:
+                                                                checked ===
+                                                                true,
+                                                            is_default:
+                                                                checked === true
+                                                                    ? row.is_default
+                                                                    : false,
+                                                        })
+                                                    }
                                                 />
                                             </td>
-                                            <td className="p-3 text-foreground">{user.name}</td>
-                                            <td className="p-3 text-muted-foreground">{user.email}</td>
+                                            <td className="p-3 text-foreground">
+                                                {user.name}
+                                            </td>
+                                            <td className="p-3 text-muted-foreground">
+                                                {user.email}
+                                            </td>
                                             <td className="p-3">
                                                 <div className="flex items-center gap-2">
                                                     <Checkbox
                                                         checked={row.is_default}
                                                         disabled={!row.assigned}
-                                                        onCheckedChange={(checked) => updateRow(index, { is_default: checked === true })}
+                                                        onCheckedChange={(
+                                                            checked,
+                                                        ) =>
+                                                            updateRow(index, {
+                                                                is_default:
+                                                                    checked ===
+                                                                    true,
+                                                            })
+                                                        }
                                                     />
-                                                    <Label className="text-xs text-muted-foreground">Predeterminada</Label>
+                                                    <Label className="text-xs text-muted-foreground">
+                                                        Predeterminada
+                                                    </Label>
                                                 </div>
                                             </td>
                                         </tr>
@@ -119,15 +162,21 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
                     </div>
 
                     {form.errors.users && (
-                        <p className="text-sm text-destructive">{form.errors.users}</p>
+                        <p className="text-sm text-destructive">
+                            {form.errors.users}
+                        </p>
                     )}
 
                     <div className="flex flex-col gap-2 pt-2 sm:flex-row">
                         <Button type="submit" disabled={form.processing}>
-                            {form.processing ? 'Guardando...' : 'Guardar asignaciones'}
+                            {form.processing
+                                ? 'Guardando...'
+                                : 'Guardar asignaciones'}
                         </Button>
                         <Button type="button" variant="outline" asChild>
-                            <Link href={route('warehouses.show', warehouse.id)}>Cancelar</Link>
+                            <Link href={route('warehouses.show', warehouse.id)}>
+                                Cancelar
+                            </Link>
                         </Button>
                     </div>
                 </form>
@@ -135,4 +184,3 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
         </>
     );
 }
-

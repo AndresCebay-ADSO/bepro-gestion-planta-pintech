@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('source_warehouse_id')->constrained('warehouses')->onDelete('restrict');
             $table->foreignId('destination_warehouse_id')->constrained('warehouses')->onDelete('restrict');
             $table->foreignId('product_id')->constrained('products')->onDelete('restrict');
+            $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
             $table->decimal('quantity', 12, 4);
             $table->enum('status', ['pending', 'sent', 'received', 'cancelled'])->default('pending');
             $table->text('notes')->nullable();
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->index(['source_warehouse_id', 'status']);
             $table->index(['destination_warehouse_id', 'status']);
             $table->index('product_id');
+            $table->index('product_variant_id');
         });
     }
 

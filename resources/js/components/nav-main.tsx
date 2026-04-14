@@ -33,7 +33,9 @@ export function NavMain({ groups = [] }: { groups: NavGroup[] }) {
                                     <SidebarMenuItem key={item.title}>
                                         <SidebarMenuButton
                                             asChild={!isDisabled}
-                                            isActive={!isDisabled && itemIsActive}
+                                            isActive={
+                                                !isDisabled && itemIsActive
+                                            }
                                             tooltip={{
                                                 children:
                                                     item.disabledLabel ??
@@ -51,10 +53,7 @@ export function NavMain({ groups = [] }: { groups: NavGroup[] }) {
                                                     <Lock className="ml-auto size-3.5 opacity-60" />
                                                 </div>
                                             ) : (
-                                                <Link
-                                                    href={item.href}
-                                                    prefetch
-                                                >
+                                                <Link href={item.href} prefetch>
                                                     {item.icon && <item.icon />}
                                                     <span>{item.title}</span>
                                                 </Link>

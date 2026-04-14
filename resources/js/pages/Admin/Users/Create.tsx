@@ -19,7 +19,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
         email: '',
         password: '',
         password_confirmation: '',
-        role: roles.find(r => r.name === 'produccion')?.name || 'produccion',
+        role: roles.find((r) => r.name === 'produccion')?.name || 'produccion',
     });
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -30,13 +30,13 @@ const UsersCreate: FC<Props> = ({ roles }) => {
     };
 
     return (
-        <div className="bg-background text-foreground min-h-screen px-4 py-8">
+        <div className="min-h-screen bg-background px-4 py-8 text-foreground">
             <div className="mx-auto max-w-2xl">
                 {/* Header */}
                 <div className="mb-8">
                     <Link
                         href={route('users.index')}
-                        className="text-primary hover:text-primary/80 mb-4 inline-block"
+                        className="mb-4 inline-block text-primary hover:text-primary/80"
                     >
                         ← Volver a Gestión de Usuarios
                     </Link>
@@ -55,7 +55,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                 >
                     {/* Name */}
                     <div>
-                        <label className="text-foreground mb-2 block text-sm font-semibold">
+                        <label className="mb-2 block text-sm font-semibold text-foreground">
                             Nombre Completo
                         </label>
                         <input
@@ -64,10 +64,10 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                             placeholder="Ej: Juan Pérez"
-                            className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
+                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
                         />
                         {errors.name && (
-                            <p className="text-destructive mt-1 text-sm">
+                            <p className="mt-1 text-sm text-destructive">
                                 {errors.name}
                             </p>
                         )}
@@ -75,7 +75,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 
                     {/* Email */}
                     <div>
-                        <label className="text-foreground mb-2 block text-sm font-semibold">
+                        <label className="mb-2 block text-sm font-semibold text-foreground">
                             Email
                         </label>
                         <input
@@ -84,10 +84,10 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
                             placeholder="juan@pintech.com"
-                            className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
+                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
                         />
                         {errors.email && (
-                            <p className="text-destructive mt-1 text-sm">
+                            <p className="mt-1 text-sm text-destructive">
                                 {errors.email}
                             </p>
                         )}
@@ -95,14 +95,14 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 
                     {/* Role */}
                     <div>
-                        <label className="text-foreground mb-2 block text-sm font-semibold">
+                        <label className="mb-2 block text-sm font-semibold text-foreground">
                             Rol
                         </label>
                         <select
                             name="role"
                             value={data.role}
                             onChange={(e) => setData('role', e.target.value)}
-                            className="border-input bg-background text-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
+                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
                         >
                             {roles.map((role) => (
                                 <option key={role.id} value={role.name}>
@@ -112,7 +112,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                             ))}
                         </select>
                         {errors.role && (
-                            <p className="text-destructive mt-1 text-sm">
+                            <p className="mt-1 text-sm text-destructive">
                                 {errors.role}
                             </p>
                         )}
@@ -120,18 +120,20 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 
                     {/* Password */}
                     <div>
-                        <label className="text-foreground mb-2 block text-sm font-semibold">
+                        <label className="mb-2 block text-sm font-semibold text-foreground">
                             Contraseña
                         </label>
                         <PasswordInput
                             name="password"
                             value={data.password}
-                            onChange={(e) => setData('password', e.target.value)}
+                            onChange={(e) =>
+                                setData('password', e.target.value)
+                            }
                             placeholder="Mínimo 8 caracteres"
-                            className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
+                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
                         />
                         {errors.password && (
-                            <p className="text-destructive mt-1 text-sm">
+                            <p className="mt-1 text-sm text-destructive">
                                 {errors.password}
                             </p>
                         )}
@@ -139,7 +141,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 
                     {/* Password Confirmation */}
                     <div>
-                        <label className="text-foreground mb-2 block text-sm font-semibold">
+                        <label className="mb-2 block text-sm font-semibold text-foreground">
                             Confirmar Contraseña
                         </label>
                         <PasswordInput
@@ -149,10 +151,10 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                                 setData('password_confirmation', e.target.value)
                             }
                             placeholder="Repite la contraseña"
-                            className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
+                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
                         />
                         {errors.password_confirmation && (
-                            <p className="text-destructive mt-1 text-sm">
+                            <p className="mt-1 text-sm text-destructive">
                                 {errors.password_confirmation}
                             </p>
                         )}
@@ -163,13 +165,13 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1 rounded-lg px-6 py-2 font-semibold transition disabled:opacity-50"
+                            className="flex-1 rounded-lg bg-primary px-6 py-2 font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
                         >
                             {processing ? 'Creando...' : 'Crear Usuario'}
                         </button>
                         <Link
                             href={route('users.index')}
-                            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 flex-1 rounded-lg px-6 py-2 text-center font-semibold transition"
+                            className="flex-1 rounded-lg bg-secondary px-6 py-2 text-center font-semibold text-secondary-foreground transition hover:bg-secondary/80"
                         >
                             Cancelar
                         </Link>

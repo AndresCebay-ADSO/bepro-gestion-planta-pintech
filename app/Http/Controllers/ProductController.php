@@ -79,7 +79,11 @@ class ProductController extends Controller
         $this->authorize('view', $product);
 
         return Inertia::render('Products/Show', [
-            'product' => $product->load(['category:id,name', 'unitOfMeasure:id,name,symbol']),
+            'product' => $product->load([
+                'category:id,name',
+                'unitOfMeasure:id,name,symbol',
+                'formulas' => fn ($q) => $q->with('createdBy:id,name')->orderBy('version', 'desc'),
+            ]),
             'can' => [
                 'update' => Gate::allows('update', $product),
                 'delete' => Gate::allows('delete', $product),

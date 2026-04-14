@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('price_list', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+            $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
             $table->decimal('price', 12, 4);
             $table->decimal('cost_at_time', 12, 4);
             $table->decimal('profit_margin', 5, 2);
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['product_id', 'valid_to']);
+            $table->index(['product_variant_id', 'valid_to']);
             $table->index('valid_from');
             $table->index('valid_to');
         });

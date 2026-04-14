@@ -44,7 +44,9 @@ export default function AppearanceToggleTab({
                     )}
                 >
                     <Icon className={cn('h-4 w-4', !compact && '-ml-1')} />
-                    {!compact && <span className="ml-1.5 text-sm">{label}</span>}
+                    {!compact && (
+                        <span className="ml-1.5 text-sm">{label}</span>
+                    )}
                 </button>
             ))}
         </div>

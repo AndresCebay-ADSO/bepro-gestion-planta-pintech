@@ -1,4 +1,5 @@
-import { useForm } from '@inertiajs/react';
+import type { useForm } from '@inertiajs/react';
+import type { FormEvent, ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,16 +10,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import type { FormEvent, ChangeEvent } from 'react';
 import { Textarea } from '../ui/textarea';
 
-type Option = { 
-    id: number; 
-    name?: string; 
-    code?: string; 
-    lot_number?: string; 
-    order_number?: string; 
-    city?: string; 
+type Option = {
+    id: number;
+    name?: string;
+    code?: string;
+    lot_number?: string;
+    order_number?: string;
+    city?: string;
     type?: string;
     raw_material_id?: number | string;
     remaining_quantity?: string | number;
@@ -46,7 +46,7 @@ export function MovementForm({
 }: Props) {
     // Filter batches based on selected raw material
     const filteredBatches = batches.filter(
-        (b) => Number(b.raw_material_id) === Number(form.data.raw_material_id)
+        (b) => Number(b.raw_material_id) === Number(form.data.raw_material_id),
     );
 
     return (
@@ -63,7 +63,9 @@ export function MovementForm({
                     <Label htmlFor="warehouse_id">Bodega</Label>
                     <Select
                         value={form.data.warehouse_id}
-                        onValueChange={(value) => form.setData('warehouse_id', value)}
+                        onValueChange={(value) =>
+                            form.setData('warehouse_id', value)
+                        }
                     >
                         <SelectTrigger id="warehouse_id">
                             <SelectValue placeholder="Selecciona la bodega" />
@@ -77,7 +79,9 @@ export function MovementForm({
                         </SelectContent>
                     </Select>
                     {form.errors.warehouse_id && (
-                        <p className="text-sm text-destructive">{form.errors.warehouse_id}</p>
+                        <p className="text-sm text-destructive">
+                            {form.errors.warehouse_id}
+                        </p>
                     )}
                 </div>
 
@@ -106,7 +110,9 @@ export function MovementForm({
                         </SelectContent>
                     </Select>
                     {form.errors.raw_material_id && (
-                        <p className="text-sm text-destructive">{form.errors.raw_material_id}</p>
+                        <p className="text-sm text-destructive">
+                            {form.errors.raw_material_id}
+                        </p>
                     )}
                 </div>
 
@@ -126,7 +132,9 @@ export function MovementForm({
                         </SelectContent>
                     </Select>
                     {form.errors.type && (
-                        <p className="text-sm text-destructive">{form.errors.type}</p>
+                        <p className="text-sm text-destructive">
+                            {form.errors.type}
+                        </p>
                     )}
                 </div>
 
@@ -135,22 +143,33 @@ export function MovementForm({
                     <Label htmlFor="batch_id">Lote (Opcional en Entrada)</Label>
                     <Select
                         value={form.data.batch_id}
-                        onValueChange={(value) => form.setData('batch_id', value)}
+                        onValueChange={(value) =>
+                            form.setData('batch_id', value)
+                        }
                         disabled={!form.data.raw_material_id}
                     >
                         <SelectTrigger id="batch_id">
-                            <SelectValue placeholder={form.data.raw_material_id ? "Selecciona lote" : "Selecciona MP primero"} />
+                            <SelectValue
+                                placeholder={
+                                    form.data.raw_material_id
+                                        ? 'Selecciona lote'
+                                        : 'Selecciona MP primero'
+                                }
+                            />
                         </SelectTrigger>
                         <SelectContent>
                             {filteredBatches.map((b) => (
                                 <SelectItem key={b.id} value={String(b.id)}>
-                                    {b.lot_number} (Disp: {b.remaining_quantity})
+                                    {b.lot_number} (Disp: {b.remaining_quantity}
+                                    )
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                     {form.errors.batch_id && (
-                        <p className="text-sm text-destructive">{form.errors.batch_id}</p>
+                        <p className="text-sm text-destructive">
+                            {form.errors.batch_id}
+                        </p>
                     )}
                 </div>
 
@@ -162,11 +181,15 @@ export function MovementForm({
                         type="number"
                         step="0.0001"
                         value={form.data.quantity}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => form.setData('quantity', e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                            form.setData('quantity', e.target.value)
+                        }
                         placeholder="0.0000"
                     />
                     {form.errors.quantity && (
-                        <p className="text-sm text-destructive">{form.errors.quantity}</p>
+                        <p className="text-sm text-destructive">
+                            {form.errors.quantity}
+                        </p>
                     )}
                 </div>
 
@@ -178,11 +201,15 @@ export function MovementForm({
                         type="number"
                         step="0.0001"
                         value={form.data.cost_price}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => form.setData('cost_price', e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                            form.setData('cost_price', e.target.value)
+                        }
                         placeholder="0.00"
                     />
                     {form.errors.cost_price && (
-                        <p className="text-sm text-destructive">{form.errors.cost_price}</p>
+                        <p className="text-sm text-destructive">
+                            {form.errors.cost_price}
+                        </p>
                     )}
                 </div>
 
@@ -193,19 +220,27 @@ export function MovementForm({
                         id="movement_date"
                         type="date"
                         value={form.data.movement_date}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => form.setData('movement_date', e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                            form.setData('movement_date', e.target.value)
+                        }
                     />
                     {form.errors.movement_date && (
-                        <p className="text-sm text-destructive">{form.errors.movement_date}</p>
+                        <p className="text-sm text-destructive">
+                            {form.errors.movement_date}
+                        </p>
                     )}
                 </div>
 
                 {/* Orden de Producción (Opcional) */}
                 <div className="space-y-2">
-                    <Label htmlFor="production_order_id">Orden de Producción (Opcional)</Label>
+                    <Label htmlFor="production_order_id">
+                        Orden de Producción (Opcional)
+                    </Label>
                     <Select
                         value={form.data.production_order_id}
-                        onValueChange={(value) => form.setData('production_order_id', value)}
+                        onValueChange={(value) =>
+                            form.setData('production_order_id', value)
+                        }
                     >
                         <SelectTrigger id="production_order_id">
                             <SelectValue placeholder="Vincular a orden" />
@@ -219,7 +254,9 @@ export function MovementForm({
                         </SelectContent>
                     </Select>
                     {form.errors.production_order_id && (
-                        <p className="text-sm text-destructive">{form.errors.production_order_id}</p>
+                        <p className="text-sm text-destructive">
+                            {form.errors.production_order_id}
+                        </p>
                     )}
                 </div>
             </div>
@@ -230,12 +267,16 @@ export function MovementForm({
                 <Textarea
                     id="notes"
                     value={form.data.notes}
-                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) => form.setData('notes', e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                        form.setData('notes', e.target.value)
+                    }
                     placeholder="Detalles adicionales del movimiento..."
                     className="min-h-[100px]"
                 />
                 {form.errors.notes && (
-                    <p className="text-sm text-destructive">{form.errors.notes}</p>
+                    <p className="text-sm text-destructive">
+                        {form.errors.notes}
+                    </p>
                 )}
             </div>
 
