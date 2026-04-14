@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Validation\ValidationException;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -17,6 +18,32 @@ class Transfer extends Model
     protected static function booted(): void
     {
         static::saving(static function (Transfer $transfer): void {
+            if (! $transfer->product_id && ! $transfer->product_variant_id) {
+                throw ValidationException::withMessages([
+                    'product_variant_id' => __('Debe seleccionar un producto o una variante de producto.'),
+                ]);
+            }
+
+            if ($transfer->product_variant_id) {
+                $variant = $transfer->productVariant ?? ProductVariant::find($transfer->product_variant_id);
+
+                if (! $variant) {
+                    throw ValidationException::withMessages([
+                        'product_variant_id' => __('La variante de producto seleccionada no existe.'),
+                    ]);
+                }
+
+                if (! $transfer->product_id) {
+                    $transfer->product_id = $variant->product_id;
+                }
+
+                if ((int) $transfer->product_id !== (int) $variant->product_id) {
+                    throw ValidationException::withMessages([
+                        'product_id' => __('El producto no corresponde a la variante seleccionada.'),
+                    ]);
+                }
+            }
+
             if ($transfer->source_warehouse_id === $transfer->destination_warehouse_id) {
                 throw new \InvalidArgumentException('La bodega de origen y destino no pueden ser la misma.');
             }

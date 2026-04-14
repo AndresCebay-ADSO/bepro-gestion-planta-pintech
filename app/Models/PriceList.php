@@ -5,12 +5,44 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Validation\ValidationException;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class PriceList extends Model
 {
     use HasFactory, LogsActivity;
+
+    protected static function booted(): void
+    {
+        static::saving(static function (PriceList $priceList): void {
+            if (! $priceList->product_id && ! $priceList->product_variant_id) {
+                throw ValidationException::withMessages([
+                    'product_variant_id' => __('Debe seleccionar un producto o una variante de producto.'),
+                ]);
+            }
+
+            if ($priceList->product_variant_id) {
+                $variant = $priceList->productVariant ?? ProductVariant::find($priceList->product_variant_id);
+
+                if (! $variant) {
+                    throw ValidationException::withMessages([
+                        'product_variant_id' => __('La variante de producto seleccionada no existe.'),
+                    ]);
+                }
+
+                if (! $priceList->product_id) {
+                    $priceList->product_id = $variant->product_id;
+                }
+
+                if ((int) $priceList->product_id !== (int) $variant->product_id) {
+                    throw ValidationException::withMessages([
+                        'product_id' => __('El producto no corresponde a la variante seleccionada.'),
+                    ]);
+                }
+            }
+        });
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

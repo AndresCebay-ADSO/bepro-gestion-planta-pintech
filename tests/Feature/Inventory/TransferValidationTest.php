@@ -6,12 +6,14 @@ namespace Tests\Feature\Inventory;
 
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductVariant;
 use App\Models\Transfer;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 uses(RefreshDatabase::class);
@@ -49,16 +51,26 @@ function setupTransferDependencies()
         'type' => 'storage',
     ]);
 
-    return [$product, $user, $factory, $storage];
+    $variant = ProductVariant::create([
+        'product_id' => $product->id,
+        'sku' => 'TEST-001-1GAL',
+        'unit_of_measure_id' => $uom->id,
+        'presentation_value' => 1,
+        'presentation_label' => '1 gal',
+        'component_system' => '1K',
+    ]);
+
+    return [$product, $variant, $user, $factory, $storage];
 }
 
 test('permite crear un traslado de fabrica a bodega', function () {
-    [$product, $user, $factory, $storage] = setupTransferDependencies();
+    [$product, $variant, $user, $factory, $storage] = setupTransferDependencies();
 
     $transfer = Transfer::create([
         'source_warehouse_id' => $factory->id,
         'destination_warehouse_id' => $storage->id,
         'product_id' => $product->id,
+        'product_variant_id' => $variant->id,
         'quantity' => 50,
         'status' => 'pending',
         'created_by' => $user->id,
@@ -68,12 +80,13 @@ test('permite crear un traslado de fabrica a bodega', function () {
 });
 
 test('falla si el origen y destino son iguales', function () {
-    [$product, $user, $factory, $storage] = setupTransferDependencies();
+    [$product, $variant, $user, $factory, $storage] = setupTransferDependencies();
 
     expect(fn () => Transfer::create([
         'source_warehouse_id' => $factory->id,
         'destination_warehouse_id' => $factory->id,
         'product_id' => $product->id,
+        'product_variant_id' => $variant->id,
         'quantity' => 50,
         'status' => 'pending',
         'created_by' => $user->id,
@@ -81,12 +94,13 @@ test('falla si el origen y destino son iguales', function () {
 });
 
 test('falla si la cantidad es negativa', function () {
-    [$product, $user, $factory, $storage] = setupTransferDependencies();
+    [$product, $variant, $user, $factory, $storage] = setupTransferDependencies();
 
     expect(fn () => Transfer::create([
         'source_warehouse_id' => $factory->id,
         'destination_warehouse_id' => $storage->id,
         'product_id' => $product->id,
+        'product_variant_id' => $variant->id,
         'quantity' => -10,
         'status' => 'pending',
         'created_by' => $user->id,
@@ -94,12 +108,13 @@ test('falla si la cantidad es negativa', function () {
 });
 
 test('falla si el origen no es fabrica', function () {
-    [$product, $user, $factory, $storage] = setupTransferDependencies();
+    [$product, $variant, $user, $factory, $storage] = setupTransferDependencies();
 
     expect(fn () => Transfer::create([
         'source_warehouse_id' => $storage->id,
         'destination_warehouse_id' => $factory->id,
         'product_id' => $product->id,
+        'product_variant_id' => $variant->id,
         'quantity' => 10,
         'status' => 'pending',
         'created_by' => $user->id,
@@ -107,7 +122,7 @@ test('falla si el origen no es fabrica', function () {
 });
 
 test('falla si el destino es fabrica', function () {
-    [$product, $user, $factory, $storage] = setupTransferDependencies();
+    [$product, $variant, $user, $factory, $storage] = setupTransferDependencies();
 
     expect(fn () => Transfer::create([
         'source_warehouse_id' => $factory->id,
@@ -124,8 +139,46 @@ test('falla si el destino es fabrica', function () {
         'source_warehouse_id' => $factory->id,
         'destination_warehouse_id' => $anotherFactory->id,
         'product_id' => $product->id,
+        'product_variant_id' => $variant->id,
         'quantity' => 10,
         'status' => 'pending',
         'created_by' => $user->id,
     ]))->toThrow(InvalidArgumentException::class, 'El destino de un traslado no puede ser una Fábrica.');
+});
+
+test('permite crear traslado solo con variante y completa product_id', function () {
+    [$product, $variant, $user, $factory, $storage] = setupTransferDependencies();
+
+    $transfer = Transfer::create([
+        'source_warehouse_id' => $factory->id,
+        'destination_warehouse_id' => $storage->id,
+        'product_variant_id' => $variant->id,
+        'quantity' => 12,
+        'status' => 'pending',
+        'created_by' => $user->id,
+    ]);
+
+    expect((int) $transfer->product_id)->toBe((int) $product->id);
+});
+
+test('falla si el producto no corresponde a la variante', function () {
+    [$product, $variant, $user, $factory, $storage] = setupTransferDependencies();
+
+    $anotherProduct = Product::create([
+        'code' => 'TEST-999',
+        'name' => 'Another Product',
+        'category_id' => $product->category_id,
+        'unit_of_measure_id' => $product->unit_of_measure_id,
+        'price_threshold' => 3,
+    ]);
+
+    expect(fn () => Transfer::create([
+        'source_warehouse_id' => $factory->id,
+        'destination_warehouse_id' => $storage->id,
+        'product_id' => $anotherProduct->id,
+        'product_variant_id' => $variant->id,
+        'quantity' => 10,
+        'status' => 'pending',
+        'created_by' => $user->id,
+    ]))->toThrow(ValidationException::class);
 });
