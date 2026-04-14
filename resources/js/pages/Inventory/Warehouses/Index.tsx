@@ -69,7 +69,7 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
 
     const handleDelete = (id: number) => {
         if (
-            !window.confirm('Are you sure you want to delete this warehouse?')
+            !window.confirm('¿Estás seguro de que quieres eliminar esta bodega?')
         ) {
             return;
         }
@@ -87,16 +87,16 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold text-foreground">
-                            Warehouses
+                            Bodegas
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Manage and consult operating warehouses.
+                            Administra y consulta las bodegas operativas.
                         </p>
                     </div>
                     {can.create && (
                         <Button asChild>
                             <Link href={warehousesCreate().url}>
-                                New Warehouse
+                                Nueva Bodega
                             </Link>
                         </Button>
                     )}
@@ -123,11 +123,11 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                         onChange={(event) =>
                             setData('search', event.target.value)
                         }
-                        placeholder="Search by name, city or address..."
+                        placeholder="Buscar por nombre, ciudad o dirección..."
                         className="sm:max-w-md"
                     />
                     <Button type="submit" variant="outline">
-                        Search
+                        Buscar
                     </Button>
                 </form>
 
@@ -136,25 +136,25 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                         <thead className="border-b border-border bg-muted/40">
                             <tr>
                                 <th className="p-3 text-left font-medium text-foreground">
-                                    Name
+                                    Nombre
                                 </th>
                                 <th className="p-3 text-left font-medium text-foreground">
-                                    City
+                                    Ciudad
                                 </th>
                                 <th className="p-3 text-left font-medium text-foreground">
-                                    Address
+                                    Dirección
                                 </th>
                                 <th className="p-3 text-left font-medium text-foreground">
-                                    Type
+                                    Tipo
                                 </th>
                                 <th className="p-3 text-left font-medium text-foreground">
-                                    Status
+                                    Estado
                                 </th>
                                 <th className="p-3 text-left font-medium text-foreground">
-                                    Users
+                                    Usuarios
                                 </th>
                                 <th className="p-3 text-right font-medium text-foreground">
-                                    Actions
+                                    Acciones
                                 </th>
                             </tr>
                         </thead>
@@ -195,8 +195,8 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                                             }
                                         >
                                             {warehouse.is_active
-                                                ? 'Active'
-                                                : 'Inactive'}
+                                                ? 'Activa'
+                                                : 'Inactiva'}
                                         </span>
                                     </td>
                                     <td className="p-3 text-muted-foreground">
@@ -264,7 +264,7 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                                         colSpan={6}
                                         className="p-8 text-center text-sm text-muted-foreground"
                                     >
-                                        No warehouses found.
+                                        No se encontraron bodegas.
                                     </td>
                                 </tr>
                             )}

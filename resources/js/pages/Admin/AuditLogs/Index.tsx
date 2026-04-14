@@ -144,20 +144,20 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                     >
                         <div className="col-span-1 md:col-span-2 lg:col-span-3">
                             <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
-                                Search
+                                Buscar
                             </label>
                             <Input
                                 value={data.search}
                                 onChange={(e) =>
                                     setData('search', e.target.value)
                                 }
-                                placeholder="User, description..."
+                                placeholder="Usuario, descripción..."
                             />
                         </div>
 
                         <div className="col-span-1 md:col-span-2 lg:col-span-2">
                             <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
-                                Module
+                                Módulo
                             </label>
                             <Select
                                 value={data.log_name}
@@ -166,10 +166,10 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                                 }
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Module" />
+                                    <SelectValue placeholder="Módulo" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All</SelectItem>
+                                    <SelectItem value="all">Todos</SelectItem>
                                     {options.logNames.map((name) => (
                                         <SelectItem key={name} value={name}>
                                             {name}
@@ -181,17 +181,17 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
 
                         <div className="col-span-1 md:col-span-2 lg:col-span-2">
                             <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
-                                Event
+                                Evento
                             </label>
                             <Select
                                 value={data.event}
                                 onValueChange={(val) => setData('event', val)}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Event" />
+                                    <SelectValue placeholder="Evento" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All</SelectItem>
+                                    <SelectItem value="all">Todos</SelectItem>
                                     {options.events.map((ev) => (
                                         <SelectItem key={ev} value={ev}>
                                             {ev}
@@ -203,7 +203,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
 
                         <div className="col-span-1 md:col-span-3 lg:col-span-2">
                             <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
-                                From
+                                Desde
                             </label>
                             <Input
                                 type="date"
@@ -216,7 +216,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
 
                         <div className="col-span-1 md:col-span-3 lg:col-span-2">
                             <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
-                                To
+                                Hasta
                             </label>
                             <Input
                                 type="date"
@@ -233,11 +233,11 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                                 variant="ghost"
                                 size="icon"
                                 onClick={clearFilters}
-                                title="Clear Filters"
+                                title="Limpiar filtros"
                             >
                                 ✕
                             </Button>
-                            <Button type="submit">Filter</Button>
+                            <Button type="submit">Filtrar</Button>
                         </div>
                     </form>
                 </div>

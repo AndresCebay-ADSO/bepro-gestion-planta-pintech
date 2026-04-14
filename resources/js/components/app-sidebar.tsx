@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    ArrowLeftRight,
     BellRing,
     Boxes,
     Calculator,
@@ -44,6 +45,12 @@ const navigationGroups: NavGroup[] = [
                 title: 'Materias Primas',
                 href: '/raw-materials',
                 icon: Boxes,
+                allowedRoles: ['admin', 'produccion'],
+            },
+            {
+                title: 'Movimientos',
+                href: '/inventory-movements',
+                icon: ArrowLeftRight,
                 allowedRoles: ['admin', 'produccion'],
             },
             {

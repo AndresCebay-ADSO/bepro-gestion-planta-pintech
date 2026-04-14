@@ -77,7 +77,7 @@ export default function RawMaterialsIndex({
     const handleDelete = (code: string) => {
         if (
             !window.confirm(
-                'Are you sure you want to delete this raw material?',
+                '¿Estás seguro de que quieres eliminar esta materia prima?',
             )
         ) {
             return;
@@ -97,17 +97,17 @@ export default function RawMaterialsIndex({
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold text-foreground">
-                            Raw Materials
+                            Materias Primas
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Base inventory of plant raw materials.
+                            Inventario base de materias primas de planta.
                         </p>
                     </div>
 
                     {can.create && (
                         <Button asChild>
                             <Link href={RawMaterialController.create.url()}>
-                                New Raw Material
+                                Nueva Materia Prima
                             </Link>
                         </Button>
                     )}
@@ -134,11 +134,11 @@ export default function RawMaterialsIndex({
                     <Input
                         value={data.search}
                         onChange={(e) => setData('search', e.target.value)}
-                        placeholder="Search by code..."
+                        placeholder="Buscar por código..."
                         className="sm:max-w-sm"
                     />
                     <Button type="submit" variant="outline">
-                        Search
+                        Buscar
                     </Button>
                 </form>
 
@@ -148,22 +148,22 @@ export default function RawMaterialsIndex({
                         <thead className="border-b border-border bg-muted/40">
                             <tr>
                                 <th className="p-3 text-left font-medium">
-                                    Code
+                                    Código
                                 </th>
                                 <th className="p-3 text-left font-medium">
-                                    Unit
+                                    Unidad
                                 </th>
                                 <th className="p-3 text-right font-medium">
-                                    Price
+                                    Precio
                                 </th>
                                 <th className="p-3 text-right font-medium">
-                                    Min Stock
+                                    Stock Mínimo
                                 </th>
                                 <th className="p-3 text-center font-medium">
-                                    Status
+                                    Estado
                                 </th>
                                 <th className="p-3 text-right font-medium">
-                                    Actions
+                                    Acciones
                                 </th>
                             </tr>
                         </thead>
@@ -206,8 +206,8 @@ export default function RawMaterialsIndex({
                                             }
                                         >
                                             {item.is_active
-                                                ? 'Active'
-                                                : 'Inactive'}
+                                                ? 'Activo'
+                                                : 'Inactivo'}
                                         </span>
                                     </td>
 
@@ -247,7 +247,7 @@ export default function RawMaterialsIndex({
                                         colSpan={6}
                                         className="p-10 text-center text-sm text-muted-foreground"
                                     >
-                                        No raw materials registered.
+                                        No se encontraron materias primas.
                                     </td>
                                 </tr>
                             )}
