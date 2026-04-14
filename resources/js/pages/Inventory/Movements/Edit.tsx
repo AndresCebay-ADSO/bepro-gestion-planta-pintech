@@ -7,14 +7,22 @@ type Props = {
     productionOrders: Array<{ id: number; order_number: string }>;
 };
 
-export default function InventoryMovementsEdit({ movement, rawMaterials, batches, productionOrders }: Props) {
+export default function InventoryMovementsEdit({
+    movement,
+    rawMaterials,
+    batches,
+    productionOrders,
+}: Props) {
     return (
         <>
             <Head title="Editar movimiento" />
             <div className="space-y-3 p-6">
-                <h1 className="text-2xl font-semibold">Editar movimiento #{movement.id}</h1>
+                <h1 className="text-2xl font-semibold">
+                    Editar movimiento #{movement.id}
+                </h1>
                 <p className="text-sm text-muted-foreground">
-                    Placeholder de formulario. MP: {rawMaterials.length} | Lotes: {batches.length} | OP: {productionOrders.length}
+                    Placeholder de formulario. MP: {rawMaterials.length} |
+                    Lotes: {batches.length} | OP: {productionOrders.length}
                 </p>
             </div>
         </>

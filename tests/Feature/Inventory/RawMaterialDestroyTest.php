@@ -9,10 +9,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 
 /**
- * @property \App\Models\Warehouse $warehouse
- * @property \App\Models\UnitOfMeasure $unit
- * @property \App\Models\RawMaterial $rawMaterial
- * @property \App\Models\User $admin
+ * @property Warehouse $warehouse
+ * @property UnitOfMeasure $unit
+ * @property RawMaterial $rawMaterial
+ * @property User $admin
  */
 uses(RefreshDatabase::class);
 

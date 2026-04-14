@@ -58,7 +58,8 @@ export default function RawMaterialsEdit({ rawMaterial, units }: Props) {
         form.transform((data) => ({
             ...data,
             unit_of_measure_id: Number(data.unit_of_measure_id),
-            previous_price: data.previous_price === '' ? null : data.previous_price,
+            previous_price:
+                data.previous_price === '' ? null : data.previous_price,
         }));
 
         form.put(route('raw-materials.update', rawMaterial.code));
@@ -71,18 +72,25 @@ export default function RawMaterialsEdit({ rawMaterial, units }: Props) {
             <div className="mx-auto max-w-3xl space-y-6 p-6">
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Link href={route('raw-materials.index')} className="hover:text-foreground">
+                        <Link
+                            href={route('raw-materials.index')}
+                            className="hover:text-foreground"
+                        >
                             Materias Primas
                         </Link>
                         <span>/</span>
-                        <Link href={route('raw-materials.show', rawMaterial.code)} className="hover:text-foreground font-mono">
+                        <Link
+                            href={route('raw-materials.show', rawMaterial.code)}
+                            className="font-mono hover:text-foreground"
+                        >
                             {rawMaterial.code}
                         </Link>
                         <span>/</span>
                         <span>Editar</span>
                     </div>
                     <h1 className="text-2xl font-semibold">
-                        Editar Materia Prima: <span className="font-mono">{rawMaterial.code}</span>
+                        Editar Materia Prima:{' '}
+                        <span className="font-mono">{rawMaterial.code}</span>
                     </h1>
                 </div>
 
@@ -93,7 +101,7 @@ export default function RawMaterialsEdit({ rawMaterial, units }: Props) {
                     submitLabel="Guardar cambios"
                 />
 
-                <div className="flex justify-end pr-2 pt-2 gap-2">
+                <div className="flex justify-end gap-2 pt-2 pr-2">
                     <Button variant="outline" asChild>
                         <Link href={route('raw-materials.index')}>
                             Cancelar

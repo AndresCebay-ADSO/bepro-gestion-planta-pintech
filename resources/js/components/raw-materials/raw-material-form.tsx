@@ -38,7 +38,9 @@ type RawMaterialFormData = {
  * 🔥 SOLO campos string (clave de la solución)
  */
 type StringFields = {
-    [K in keyof RawMaterialFormData]: RawMaterialFormData[K] extends string ? K : never;
+    [K in keyof RawMaterialFormData]: RawMaterialFormData[K] extends string
+        ? K
+        : never;
 }[keyof RawMaterialFormData];
 
 /**
@@ -60,7 +62,8 @@ type Props = {
 
 const MAX_DECIMAL_INTEGER_DIGITS = 14;
 const MAX_DECIMAL_FRACTION_DIGITS = 4;
-const MAX_DECIMAL_INPUT_LENGTH = MAX_DECIMAL_INTEGER_DIGITS + 1 + MAX_DECIMAL_FRACTION_DIGITS;
+const MAX_DECIMAL_INPUT_LENGTH =
+    MAX_DECIMAL_INTEGER_DIGITS + 1 + MAX_DECIMAL_FRACTION_DIGITS;
 const MAX_ALERT_DAYS_INPUT_LENGTH = 4;
 
 function sanitizeDecimalInput(rawValue: string): string {
@@ -85,12 +88,7 @@ function sanitizeIntegerInput(rawValue: string, maxLength: number): string {
 /**
  * Componente reutilizable de formulario
  */
-export function RawMaterialForm({
-    form,
-    units,
-    onSubmit,
-    submitLabel,
-}: Props) {
+export function RawMaterialForm({ form, units, onSubmit, submitLabel }: Props) {
     /**
      * Submit limpio
      */
@@ -111,12 +109,15 @@ export function RawMaterialForm({
     return (
         <form onSubmit={handleSubmit} className="grid min-w-0 gap-6">
             {/* Bloque 1: Identificación */}
-            <div className="rounded-lg border border-border bg-card p-6 space-y-4 shadow-sm">
+            <div className="space-y-4 rounded-lg border border-border bg-card p-6 shadow-sm">
                 <h2 className="font-medium text-foreground">Identificación</h2>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {/* Código */}
                     <div className="grid min-w-0 gap-2">
-                        <Label htmlFor="code">Código de Referencia <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="code">
+                            Código de Referencia{' '}
+                            <span className="text-destructive">*</span>
+                        </Label>
                         <Input
                             id="code"
                             value={form.data.code}
@@ -130,7 +131,10 @@ export function RawMaterialForm({
 
                     {/* Unidad */}
                     <div className="grid min-w-0 gap-2">
-                        <Label htmlFor="unit">Unidad de Media <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="unit">
+                            Unidad de Media{' '}
+                            <span className="text-destructive">*</span>
+                        </Label>
                         <Select
                             value={form.data.unit_of_measure_id}
                             onValueChange={(value) =>
@@ -142,7 +146,10 @@ export function RawMaterialForm({
                             </SelectTrigger>
                             <SelectContent>
                                 {units.map((unit) => (
-                                    <SelectItem key={unit.id} value={String(unit.id)}>
+                                    <SelectItem
+                                        key={unit.id}
+                                        value={String(unit.id)}
+                                    >
                                         {unit.name} ({unit.symbol})
                                     </SelectItem>
                                 ))}
@@ -154,12 +161,17 @@ export function RawMaterialForm({
             </div>
 
             {/* Bloque 2: Precios e Inventario */}
-            <div className="rounded-lg border border-border bg-card p-6 space-y-4 shadow-sm">
-                <h2 className="font-medium text-foreground">Precios y Control de Inventario</h2>
+            <div className="space-y-4 rounded-lg border border-border bg-card p-6 shadow-sm">
+                <h2 className="font-medium text-foreground">
+                    Precios y Control de Inventario
+                </h2>
                 <div className="grid min-w-0 gap-4 md:grid-cols-2">
                     {/* Precios */}
                     <div className="grid min-w-0 gap-2">
-                        <Label htmlFor="current_price">Precio de compra actual <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="current_price">
+                            Precio de compra actual{' '}
+                            <span className="text-destructive">*</span>
+                        </Label>
                         <Input
                             id="current_price"
                             type="text"
@@ -167,15 +179,21 @@ export function RawMaterialForm({
                             maxLength={MAX_DECIMAL_INPUT_LENGTH}
                             value={form.data.current_price}
                             onChange={(event) =>
-                                form.setData('current_price', sanitizeDecimalInput(event.target.value))
+                                form.setData(
+                                    'current_price',
+                                    sanitizeDecimalInput(event.target.value),
+                                )
                             }
                             className="w-full min-w-0 font-mono"
                             placeholder="0.00"
                         />
                         {form.data.current_price && (
-                            <p className="min-w-0 break-all text-xs text-muted-foreground">
+                            <p className="min-w-0 text-xs break-all text-muted-foreground">
                                 <FormattedNumber
-                                    value={form.data.current_price.replace(/\.$/, '')}
+                                    value={form.data.current_price.replace(
+                                        /\.$/,
+                                        '',
+                                    )}
                                     currency
                                 />
                             </p>
@@ -194,15 +212,21 @@ export function RawMaterialForm({
                             maxLength={MAX_DECIMAL_INPUT_LENGTH}
                             value={form.data.previous_price}
                             onChange={(event) =>
-                                form.setData('previous_price', sanitizeDecimalInput(event.target.value))
+                                form.setData(
+                                    'previous_price',
+                                    sanitizeDecimalInput(event.target.value),
+                                )
                             }
                             className="w-full min-w-0 font-mono text-muted-foreground"
                             placeholder="0.00"
                         />
                         {form.data.previous_price && (
-                            <p className="min-w-0 break-all text-xs text-muted-foreground italic">
+                            <p className="min-w-0 text-xs break-all text-muted-foreground italic">
                                 <FormattedNumber
-                                    value={form.data.previous_price.replace(/\.$/, '')}
+                                    value={form.data.previous_price.replace(
+                                        /\.$/,
+                                        '',
+                                    )}
                                     currency
                                 />
                             </p>
@@ -212,7 +236,10 @@ export function RawMaterialForm({
 
                     {/* Stock */}
                     <div className="grid min-w-0 gap-2">
-                        <Label htmlFor="minimum_stock">Stock mínimo en planta <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="minimum_stock">
+                            Stock mínimo en planta{' '}
+                            <span className="text-destructive">*</span>
+                        </Label>
                         <Input
                             id="minimum_stock"
                             type="text"
@@ -220,14 +247,23 @@ export function RawMaterialForm({
                             maxLength={MAX_DECIMAL_INPUT_LENGTH}
                             value={form.data.minimum_stock}
                             onChange={(event) =>
-                                form.setData('minimum_stock', sanitizeDecimalInput(event.target.value))
+                                form.setData(
+                                    'minimum_stock',
+                                    sanitizeDecimalInput(event.target.value),
+                                )
                             }
                             className="w-full min-w-0 font-mono"
                             placeholder="0.00"
                         />
                         {form.data.minimum_stock && (
-                            <p className="min-w-0 break-all text-xs text-muted-foreground">
-                                Resguardo: <FormattedNumber value={form.data.minimum_stock.replace(/\.$/, '')} />
+                            <p className="min-w-0 text-xs break-all text-muted-foreground">
+                                Resguardo:{' '}
+                                <FormattedNumber
+                                    value={form.data.minimum_stock.replace(
+                                        /\.$/,
+                                        '',
+                                    )}
+                                />
                             </p>
                         )}
                         <InputError message={form.errors.minimum_stock} />
@@ -235,7 +271,8 @@ export function RawMaterialForm({
 
                     <div className="grid min-w-0 gap-2">
                         <Label htmlFor="alert_days">
-                            Días de alerta por vencimiento <span className="text-destructive">*</span>
+                            Días de alerta por vencimiento{' '}
+                            <span className="text-destructive">*</span>
                         </Label>
                         <Input
                             id="alert_days"
@@ -246,13 +283,18 @@ export function RawMaterialForm({
                             onChange={(event) =>
                                 form.setData(
                                     'alert_days_before_expiry',
-                                    sanitizeIntegerInput(event.target.value, MAX_ALERT_DAYS_INPUT_LENGTH),
+                                    sanitizeIntegerInput(
+                                        event.target.value,
+                                        MAX_ALERT_DAYS_INPUT_LENGTH,
+                                    ),
                                 )
                             }
                             className="w-full min-w-0"
                             placeholder="30"
                         />
-                        <InputError message={form.errors.alert_days_before_expiry} />
+                        <InputError
+                            message={form.errors.alert_days_before_expiry}
+                        />
                     </div>
                 </div>
 

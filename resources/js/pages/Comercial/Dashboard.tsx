@@ -20,18 +20,20 @@ const ComercialDashboard: FC<ComercialDashboardProps> = ({
     return (
         <div className="min-h-screen bg-background text-foreground">
             {/* Header */}
-            <div className="from-primary to-primary/80 text-primary-foreground bg-linear-to-r px-8 py-12">
+            <div className="bg-linear-to-r from-primary to-primary/80 px-8 py-12 text-primary-foreground">
                 <div className="mx-auto max-w-6xl">
                     <h1 className="mb-2 text-4xl font-bold">
                         💰 HELLO WORLD COMERCIAL!
                     </h1>
-                    <p className="text-primary-foreground/85 text-lg">
+                    <p className="text-lg text-primary-foreground/85">
                         Welcome,{' '}
                         <span className="font-semibold">{userName}</span>
                     </p>
-                    <div className="bg-primary-foreground/15 mt-4 inline-block rounded-full px-4 py-2">
-                        <span className="text-primary-foreground/85">Role: </span>
-                        <span className="text-primary-foreground font-bold tracking-wider uppercase">
+                    <div className="mt-4 inline-block rounded-full bg-primary-foreground/15 px-4 py-2">
+                        <span className="text-primary-foreground/85">
+                            Role:{' '}
+                        </span>
+                        <span className="font-bold tracking-wider text-primary-foreground uppercase">
                             {role}
                         </span>
                     </div>
@@ -88,28 +90,28 @@ const ComercialDashboard: FC<ComercialDashboardProps> = ({
                 {/* Stats Grid */}
                 <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-                        <div className="text-primary mb-2 text-4xl font-bold">
+                        <div className="mb-2 text-4xl font-bold text-primary">
                             📦
                         </div>
-                        <p className="text-muted-foreground text-sm tracking-wide uppercase">
+                        <p className="text-sm tracking-wide text-muted-foreground uppercase">
                             Available Products
                         </p>
                         <p className="text-3xl font-bold text-foreground">-</p>
                     </div>
                     <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-                        <div className="text-primary mb-2 text-4xl font-bold">
+                        <div className="mb-2 text-4xl font-bold text-primary">
                             📋
                         </div>
-                        <p className="text-muted-foreground text-sm tracking-wide uppercase">
+                        <p className="text-sm tracking-wide text-muted-foreground uppercase">
                             Active Quotes
                         </p>
                         <p className="text-3xl font-bold text-foreground">-</p>
                     </div>
                     <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-                        <div className="text-primary mb-2 text-4xl font-bold">
+                        <div className="mb-2 text-4xl font-bold text-primary">
                             🛒
                         </div>
-                        <p className="text-muted-foreground text-sm tracking-wide uppercase">
+                        <p className="text-sm tracking-wide text-muted-foreground uppercase">
                             Pending Orders
                         </p>
                         <p className="text-3xl font-bold text-foreground">-</p>
@@ -123,46 +125,46 @@ const ComercialDashboard: FC<ComercialDashboardProps> = ({
                     </h2>
                     <div className="space-y-3">
                         <div className="flex items-center rounded border-l-4 border-green-500 bg-green-50 p-3">
-                            <span className="text-primary mr-3 font-bold">
+                            <span className="mr-3 font-bold text-primary">
                                 ✓
                             </span>
-                            <code className="text-foreground font-mono">
+                            <code className="font-mono text-foreground">
                                 /availability/*
                             </code>
-                            <span className="text-muted-foreground ml-4">
+                            <span className="ml-4 text-muted-foreground">
                                 Commercial panel (read-only access)
                             </span>
                         </div>
                         <div className="flex items-center rounded border-l-4 border-red-500 bg-red-50 p-3">
-                            <span className="text-destructive mr-3 font-bold">
+                            <span className="mr-3 font-bold text-destructive">
                                 ✗
                             </span>
-                            <code className="text-foreground font-mono">
+                            <code className="font-mono text-foreground">
                                 /admin/*
                             </code>
-                            <span className="text-muted-foreground ml-4">
+                            <span className="ml-4 text-muted-foreground">
                                 Restricted to admin role
                             </span>
                         </div>
                         <div className="flex items-center rounded border-l-4 border-red-500 bg-red-50 p-3">
-                            <span className="text-destructive mr-3 font-bold">
+                            <span className="mr-3 font-bold text-destructive">
                                 ✗
                             </span>
-                            <code className="text-foreground font-mono">
+                            <code className="font-mono text-foreground">
                                 /production/*
                             </code>
-                            <span className="text-muted-foreground ml-4">
+                            <span className="ml-4 text-muted-foreground">
                                 Restricted to production role
                             </span>
                         </div>
                         <div className="flex items-center rounded border-l-4 border-red-500 bg-red-50 p-3">
-                            <span className="text-destructive mr-3 font-bold">
+                            <span className="mr-3 font-bold text-destructive">
                                 ✗
                             </span>
-                            <code className="text-foreground font-mono">
+                            <code className="font-mono text-foreground">
                                 /costs/*
                             </code>
-                            <span className="text-muted-foreground ml-4">
+                            <span className="ml-4 text-muted-foreground">
                                 Restricted to admin & production
                             </span>
                         </div>

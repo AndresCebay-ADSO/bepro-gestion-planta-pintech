@@ -36,7 +36,6 @@ type ActivityLog = {
     createdAt: string;
 };
 
-
 type Props = {
     logs: {
         data: ActivityLog[];
@@ -101,15 +100,17 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
         if (!properties || Object.keys(properties).length === 0) {
             return '-';
         }
-        
+
         // Truncating to avoid breaking UI
         const jsonStr = JSON.stringify(properties);
 
         if (jsonStr.length > 50) {
             return (
-                <div className="relative group cursor-help">
-                    <span className="truncate max-w-[150px] inline-block">{jsonStr}</span>
-                    <div className="absolute hidden group-hover:block z-10 bg-popover text-popover-foreground border shadow-md p-2 rounded-md text-xs bottom-full mb-1 max-w-sm whitespace-pre-wrap left-0">
+                <div className="group relative cursor-help">
+                    <span className="inline-block max-w-[150px] truncate">
+                        {jsonStr}
+                    </span>
+                    <div className="absolute bottom-full left-0 z-10 mb-1 hidden max-w-sm rounded-md border bg-popover p-2 text-xs whitespace-pre-wrap text-popover-foreground shadow-md group-hover:block">
                         {JSON.stringify(properties, null, 2)}
                     </div>
                 </div>
@@ -137,71 +138,106 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
 
                 {/* Filters */}
                 <div className="rounded-lg border border-border bg-card p-4">
-                    <form onSubmit={handleFilter} className="grid grid-cols-1 gap-4 md:grid-cols-6 lg:grid-cols-12">
+                    <form
+                        onSubmit={handleFilter}
+                        className="grid grid-cols-1 gap-4 md:grid-cols-6 lg:grid-cols-12"
+                    >
                         <div className="col-span-1 md:col-span-2 lg:col-span-3">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">Search</label>
+                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
+                                Search
+                            </label>
                             <Input
                                 value={data.search}
-                                onChange={(e) => setData('search', e.target.value)}
+                                onChange={(e) =>
+                                    setData('search', e.target.value)
+                                }
                                 placeholder="User, description..."
                             />
                         </div>
-                        
+
                         <div className="col-span-1 md:col-span-2 lg:col-span-2">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">Module</label>
-                            <Select value={data.log_name} onValueChange={(val) => setData('log_name', val)}>
+                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
+                                Module
+                            </label>
+                            <Select
+                                value={data.log_name}
+                                onValueChange={(val) =>
+                                    setData('log_name', val)
+                                }
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Module" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All</SelectItem>
-                                    {options.logNames.map(name => (
-                                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                                    {options.logNames.map((name) => (
+                                        <SelectItem key={name} value={name}>
+                                            {name}
+                                        </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
 
                         <div className="col-span-1 md:col-span-2 lg:col-span-2">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">Event</label>
-                            <Select value={data.event} onValueChange={(val) => setData('event', val)}>
+                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
+                                Event
+                            </label>
+                            <Select
+                                value={data.event}
+                                onValueChange={(val) => setData('event', val)}
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Event" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All</SelectItem>
-                                    {options.events.map(ev => (
-                                        <SelectItem key={ev} value={ev}>{ev}</SelectItem>
+                                    {options.events.map((ev) => (
+                                        <SelectItem key={ev} value={ev}>
+                                            {ev}
+                                        </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
 
                         <div className="col-span-1 md:col-span-3 lg:col-span-2">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">From</label>
+                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
+                                From
+                            </label>
                             <Input
                                 type="date"
                                 value={data.date_from}
-                                onChange={(e) => setData('date_from', e.target.value)}
+                                onChange={(e) =>
+                                    setData('date_from', e.target.value)
+                                }
                             />
                         </div>
 
                         <div className="col-span-1 md:col-span-3 lg:col-span-2">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">To</label>
+                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
+                                To
+                            </label>
                             <Input
                                 type="date"
                                 value={data.date_to}
-                                onChange={(e) => setData('date_to', e.target.value)}
+                                onChange={(e) =>
+                                    setData('date_to', e.target.value)
+                                }
                             />
                         </div>
 
-                        <div className="col-span-1 md:col-span-6 lg:col-span-1 flex items-end justify-center lg:justify-end gap-2">
-                            <Button type="button" variant="ghost" size="icon" onClick={clearFilters} title="Clear Filters">
+                        <div className="col-span-1 flex items-end justify-center gap-2 md:col-span-6 lg:col-span-1 lg:justify-end">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={clearFilters}
+                                title="Clear Filters"
+                            >
                                 ✕
                             </Button>
-                            <Button type="submit">
-                                Filter
-                            </Button>
+                            <Button type="submit">Filter</Button>
                         </div>
                     </form>
                 </div>
@@ -211,12 +247,24 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                     <table className="w-full text-sm">
                         <thead className="border-b border-border bg-muted/40">
                             <tr>
-                                <th className="p-3 text-left font-medium">Fecha</th>
-                                <th className="p-3 text-left font-medium">Causante</th>
-                                <th className="p-3 text-left font-medium">Módulo</th>
-                                <th className="p-3 text-center font-medium">Evento</th>
-                                <th className="p-3 text-left font-medium">Descripción</th>
-                                <th className="p-3 text-left font-medium">Detalles (Properties)</th>
+                                <th className="p-3 text-left font-medium">
+                                    Fecha
+                                </th>
+                                <th className="p-3 text-left font-medium">
+                                    Causante
+                                </th>
+                                <th className="p-3 text-left font-medium">
+                                    Módulo
+                                </th>
+                                <th className="p-3 text-center font-medium">
+                                    Evento
+                                </th>
+                                <th className="p-3 text-left font-medium">
+                                    Descripción
+                                </th>
+                                <th className="p-3 text-left font-medium">
+                                    Detalles (Properties)
+                                </th>
                             </tr>
                         </thead>
 
@@ -224,35 +272,47 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                             {logs.data.map((log) => (
                                 <tr
                                     key={log.id}
-                                    className="border-b border-border/60 last:border-0 hover:bg-muted/30 transition"
+                                    className="border-b border-border/60 transition last:border-0 hover:bg-muted/30"
                                 >
-                                    <td className="p-3 whitespace-nowrap text-muted-foreground text-xs">
-                                        {format(new Date(log.createdAt), "dd MMM yyyy, HH:mm", { locale: es })}
+                                    <td className="p-3 text-xs whitespace-nowrap text-muted-foreground">
+                                        {format(
+                                            new Date(log.createdAt),
+                                            'dd MMM yyyy, HH:mm',
+                                            { locale: es },
+                                        )}
                                     </td>
                                     <td className="p-3">
                                         {log.causer ? (
                                             <div>
-                                                <div className="font-medium">{log.causer.name}</div>
-                                                <div className="text-xs text-muted-foreground">{log.causer.email}</div>
+                                                <div className="font-medium">
+                                                    {log.causer.name}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    {log.causer.email}
+                                                </div>
                                             </div>
                                         ) : (
-                                            <span className="text-muted-foreground italic">Sistema / Anónimo</span>
+                                            <span className="text-muted-foreground italic">
+                                                Sistema / Anónimo
+                                            </span>
                                         )}
                                     </td>
                                     <td className="p-3">
-                                        <span className="px-2 py-1 rounded bg-secondary text-secondary-foreground text-xs uppercase tracking-wider">
+                                        <span className="rounded bg-secondary px-2 py-1 text-xs tracking-wider text-secondary-foreground uppercase">
                                             {log.logName}
                                         </span>
                                     </td>
                                     <td className="p-3 text-center">
-                                        <span className={`rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-wider ${getEventBadge(log.event)}`}>
+                                        <span
+                                            className={`rounded-full px-2 py-1 text-xs font-semibold tracking-wider uppercase ${getEventBadge(log.event)}`}
+                                        >
                                             {log.event || 'default'}
                                         </span>
                                     </td>
-                                    <td className="p-3 text-foreground wrap-break-word max-w-[200px]">
+                                    <td className="max-w-[200px] p-3 wrap-break-word text-foreground">
                                         {log.description}
                                     </td>
-                                    <td className="p-3 font-mono text-xs text-muted-foreground max-w-[200px]">
+                                    <td className="max-w-[200px] p-3 font-mono text-xs text-muted-foreground">
                                         {formatProperties(log.properties)}
                                     </td>
                                 </tr>
@@ -264,7 +324,8 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                                         colSpan={6}
                                         className="p-10 text-center text-sm text-muted-foreground"
                                     >
-                                        No hay registros que coincidan con los filtros.
+                                        No hay registros que coincidan con los
+                                        filtros.
                                     </td>
                                 </tr>
                             )}
@@ -273,7 +334,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                 </div>
 
                 {/* Paginación */}
-                <div className="flex justify-center mt-4">
+                <div className="mt-4 flex justify-center">
                     <Pagination links={logs.links} />
                 </div>
             </div>

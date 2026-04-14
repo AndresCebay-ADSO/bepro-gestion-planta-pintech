@@ -15,9 +15,12 @@ export default function InventoryMovementsShow({ movement }: Props) {
         <>
             <Head title={`Movimiento ${movement.id}`} />
             <div className="space-y-3 p-6">
-                <h1 className="text-2xl font-semibold">Movimiento #{movement.id}</h1>
+                <h1 className="text-2xl font-semibold">
+                    Movimiento #{movement.id}
+                </h1>
                 <p className="text-sm text-muted-foreground">
-                    {movement.type} - {movement.quantity} - {movement.movement_date}
+                    {movement.type} - {movement.quantity} -{' '}
+                    {movement.movement_date}
                 </p>
             </div>
         </>

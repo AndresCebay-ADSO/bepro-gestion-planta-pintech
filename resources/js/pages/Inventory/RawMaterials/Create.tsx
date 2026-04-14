@@ -38,7 +38,8 @@ export default function RawMaterialsCreate({ units }: Props) {
         form.transform((data) => ({
             ...data,
             unit_of_measure_id: Number(data.unit_of_measure_id),
-            previous_price: data.previous_price === '' ? null : data.previous_price,
+            previous_price:
+                data.previous_price === '' ? null : data.previous_price,
         }));
 
         form.post(route('raw-materials.store'));
@@ -51,13 +52,18 @@ export default function RawMaterialsCreate({ units }: Props) {
             <div className="mx-auto max-w-3xl space-y-6 p-6">
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Link href={route('raw-materials.index')} className="hover:text-foreground">
+                        <Link
+                            href={route('raw-materials.index')}
+                            className="hover:text-foreground"
+                        >
                             Materias Primas
                         </Link>
                         <span>/</span>
                         <span>Crear</span>
                     </div>
-                    <h1 className="text-2xl font-semibold">Nueva Materia Prima</h1>
+                    <h1 className="text-2xl font-semibold">
+                        Nueva Materia Prima
+                    </h1>
                     <p className="text-sm text-muted-foreground">
                         Registra una nueva materia prima base para inventario.
                     </p>
@@ -70,7 +76,7 @@ export default function RawMaterialsCreate({ units }: Props) {
                     submitLabel="Crear Materia Prima"
                 />
 
-                <div className="flex justify-end pr-2 pt-2 gap-2">
+                <div className="flex justify-end gap-2 pt-2 pr-2">
                     <Button variant="outline" asChild>
                         <Link href={route('raw-materials.index')}>
                             Cancelar

@@ -26,7 +26,7 @@ class User extends Authenticatable
     {
         return LogOptions::defaults()
             ->useLogName('usuarios')
-            ->setDescriptionForEvent(fn(string $eventName) => "Usuario {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => "Usuario {$eventName}")
             ->logOnly(['name', 'email', 'is_active', 'last_login_at'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

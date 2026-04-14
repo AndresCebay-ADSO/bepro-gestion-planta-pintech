@@ -18,7 +18,11 @@ type Props = {
             code: string;
             name: string;
             category?: { id: number; name: string } | null;
-            unit_of_measure?: { id: number; name: string; symbol: string } | null;
+            unit_of_measure?: {
+                id: number;
+                name: string;
+                symbol: string;
+            } | null;
             is_active: boolean;
         }>;
         links: PaginationLink[];
@@ -54,8 +58,12 @@ export default function ProductsIndex({ products, can, filters }: Props) {
             <div className="space-y-4 p-6">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold text-foreground">Productos</h1>
-                        <p className="text-sm text-muted-foreground">Gestión del catálogo de productos y precios.</p>
+                        <h1 className="text-2xl font-semibold text-foreground">
+                            Productos
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Gestión del catálogo de productos y precios.
+                        </p>
                     </div>
                     {can.create && (
                         <Button asChild>
@@ -67,8 +75,11 @@ export default function ProductsIndex({ products, can, filters }: Props) {
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                    <form onSubmit={handleSearch} className="relative w-full max-w-sm">
-                        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                    <form
+                        onSubmit={handleSearch}
+                        className="relative w-full max-w-sm"
+                    >
+                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             placeholder="Buscar producto..."
                             value={data.search}
@@ -91,18 +102,39 @@ export default function ProductsIndex({ products, can, filters }: Props) {
                         </thead>
                         <tbody>
                             {products.data.map((product) => (
-                                <tr key={product.id} className="border-b border-border/50">
-                                    <td className="p-3 font-medium">{product.name}</td>
-                                    <td className="p-3 text-muted-foreground font-mono">{product.code || '-'}</td>
-                                    <td className="p-3">{product.category?.name ?? '-'}</td>
+                                <tr
+                                    key={product.id}
+                                    className="border-b border-border/50"
+                                >
+                                    <td className="p-3 font-medium">
+                                        {product.name}
+                                    </td>
+                                    <td className="p-3 font-mono text-muted-foreground">
+                                        {product.code || '-'}
+                                    </td>
                                     <td className="p-3">
-                                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${product.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}>
-                                            {product.is_active ? 'Activo' : 'Inactivo'}
+                                        {product.category?.name ?? '-'}
+                                    </td>
+                                    <td className="p-3">
+                                        <span
+                                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${product.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}
+                                        >
+                                            {product.is_active
+                                                ? 'Activo'
+                                                : 'Inactivo'}
                                         </span>
                                     </td>
-                                    <td className="p-3 text-right space-x-2">
-                                        <Button variant="ghost" size="sm" asChild>
-                                            <Link href={`/products/${product.id}`}>Ver</Link>
+                                    <td className="space-x-2 p-3 text-right">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            asChild
+                                        >
+                                            <Link
+                                                href={`/products/${product.id}`}
+                                            >
+                                                Ver
+                                            </Link>
                                         </Button>
                                     </td>
                                 </tr>
@@ -110,8 +142,8 @@ export default function ProductsIndex({ products, can, filters }: Props) {
                         </tbody>
                     </table>
                 </div>
-                
-                <div className="flex justify-center mt-4">
+
+                <div className="mt-4 flex justify-center">
                     <Pagination links={products.links} />
                 </div>
             </div>

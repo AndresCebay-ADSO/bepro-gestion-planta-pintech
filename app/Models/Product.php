@@ -19,7 +19,7 @@ class Product extends Model
     {
         return LogOptions::defaults()
             ->useLogName('productos')
-            ->setDescriptionForEvent(fn(string $eventName) => "Producto {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => "Producto {$eventName}")
             ->logOnly(['code', 'name', 'category_id', 'is_active'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

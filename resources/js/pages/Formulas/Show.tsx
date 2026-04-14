@@ -33,7 +33,14 @@ type Props = {
 
 export default function FormulasShow({ formula, can }: Props) {
     const handleDelete = () => {
-        if (!window.confirm(`¿Eliminar la fórmula v${formula.version} de ${formula.product?.code}?`)) return;
+        if (
+            !window.confirm(
+                `¿Eliminar la fórmula v${formula.version} de ${formula.product?.code}?`,
+            )
+        ) {
+            return;
+        }
+
         router.delete(`/formulas/${formula.id}`);
     };
 
@@ -43,21 +50,30 @@ export default function FormulasShow({ formula, can }: Props) {
 
     return (
         <>
-            <Head title={`Fórmula v${formula.version} — ${formula.product?.code}`} />
+            <Head
+                title={`Fórmula v${formula.version} — ${formula.product?.code}`}
+            />
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div className="space-y-1">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Link href={formulasIndex().url} className="hover:text-foreground">
+                            <Link
+                                href={formulasIndex().url}
+                                className="hover:text-foreground"
+                            >
                                 Fórmulas
                             </Link>
                             <span>/</span>
                             {formula.product && (
                                 <>
                                     <Link
-                                        href={productsShow({ product: formula.product.id }).url}
-                                        className="hover:text-foreground font-mono"
+                                        href={
+                                            productsShow({
+                                                product: formula.product.id,
+                                            }).url
+                                        }
+                                        className="font-mono hover:text-foreground"
                                     >
                                         {formula.product.code}
                                     </Link>
@@ -70,8 +86,14 @@ export default function FormulasShow({ formula, can }: Props) {
                             <h1 className="text-2xl font-semibold text-foreground">
                                 Fórmula v{formula.version}
                             </h1>
-                            <Badge variant={formula.is_active ? 'default' : 'secondary'}>
-                                {formula.is_active ? 'Versión activa' : 'Inactiva'}
+                            <Badge
+                                variant={
+                                    formula.is_active ? 'default' : 'secondary'
+                                }
+                            >
+                                {formula.is_active
+                                    ? 'Versión activa'
+                                    : 'Inactiva'}
                             </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
@@ -93,7 +115,10 @@ export default function FormulasShow({ formula, can }: Props) {
                             </Button>
                         )}
                         {can.delete && (
-                            <Button variant="destructive" onClick={handleDelete}>
+                            <Button
+                                variant="destructive"
+                                onClick={handleDelete}
+                            >
                                 Eliminar
                             </Button>
                         )}
@@ -103,26 +128,43 @@ export default function FormulasShow({ formula, can }: Props) {
                 {/* Metadata */}
                 <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-3">
                     <div>
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Creada por</p>
-                        <p className="text-sm text-foreground">{formula.created_by?.name ?? '-'}</p>
+                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
+                            Creada por
+                        </p>
+                        <p className="text-sm text-foreground">
+                            {formula.created_by?.name ?? '-'}
+                        </p>
                     </div>
                     <div>
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Fecha</p>
-                        <p className="text-sm text-foreground">{formula.created_at}</p>
+                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
+                            Fecha
+                        </p>
+                        <p className="text-sm text-foreground">
+                            {formula.created_at}
+                        </p>
                     </div>
                     <div>
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Notas</p>
-                        <p className="text-sm text-foreground">{formula.notes ?? '—'}</p>
+                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
+                            Notas
+                        </p>
+                        <p className="text-sm text-foreground">
+                            {formula.notes ?? '—'}
+                        </p>
                     </div>
                 </div>
 
                 {/* Ingredientes */}
                 <div className="rounded-lg border border-border bg-card">
                     <div className="border-b border-border px-6 py-4">
-                        <h2 className="font-medium text-foreground">Ingredientes</h2>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Materias primas necesarias para producir una unidad de{' '}
-                            <span className="font-mono">{formula.product?.code}</span>
+                        <h2 className="font-medium text-foreground">
+                            Ingredientes
+                        </h2>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Materias primas necesarias para producir una unidad
+                            de{' '}
+                            <span className="font-mono">
+                                {formula.product?.code}
+                            </span>
                             {formula.product?.unit_of_measure
                                 ? ` (1 ${formula.product.unit_of_measure.symbol})`
                                 : ''}
@@ -132,21 +174,27 @@ export default function FormulasShow({ formula, can }: Props) {
                     <table className="w-full text-sm">
                         <thead className="border-b border-border bg-muted/40">
                             <tr>
-                                <th className="p-4 text-left font-medium">Código MP</th>
-                                <th className="p-4 text-right font-medium">Cantidad</th>
-                                <th className="p-4 text-left font-medium">Unidad</th>
+                                <th className="p-4 text-left font-medium">
+                                    Código MP
+                                </th>
+                                <th className="p-4 text-right font-medium">
+                                    Cantidad
+                                </th>
+                                <th className="p-4 text-left font-medium">
+                                    Unidad
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             {formula.details.map((detail) => (
                                 <tr
                                     key={detail.id}
-                                    className="border-b border-border/60 last:border-0 hover:bg-muted/30 transition-colors"
+                                    className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30"
                                 >
                                     <td className="p-4 font-mono font-medium text-foreground">
                                         {detail.raw_material?.code ?? '-'}
                                     </td>
-                                    <td className="p-4 text-right tabular-nums text-foreground">
+                                    <td className="p-4 text-right text-foreground tabular-nums">
                                         {detail.quantity}
                                     </td>
                                     <td className="p-4 text-muted-foreground">
@@ -158,8 +206,12 @@ export default function FormulasShow({ formula, can }: Props) {
                             ))}
                             {formula.details.length === 0 && (
                                 <tr>
-                                    <td colSpan={3} className="p-8 text-center text-sm text-muted-foreground">
-                                        Esta fórmula no tiene ingredientes registrados.
+                                    <td
+                                        colSpan={3}
+                                        className="p-8 text-center text-sm text-muted-foreground"
+                                    >
+                                        Esta fórmula no tiene ingredientes
+                                        registrados.
                                     </td>
                                 </tr>
                             )}

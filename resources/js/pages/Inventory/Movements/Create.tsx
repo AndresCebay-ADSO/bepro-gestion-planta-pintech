@@ -3,7 +3,15 @@ import { route } from 'ziggy-js';
 import { MovementForm } from '@/components/inventory/movement-form';
 import { Button } from '@/components/ui/button';
 
-type Option = { id: number; name?: string; code?: string; lot_number?: string; order_number?: string; city?: string; type?: string };
+type Option = {
+    id: number;
+    name?: string;
+    code?: string;
+    lot_number?: string;
+    order_number?: string;
+    city?: string;
+    type?: string;
+};
 
 type Props = {
     rawMaterials: Option[];
@@ -48,7 +56,10 @@ export default function InventoryMovementsCreate({
             raw_material_id: Number(data.raw_material_id),
             warehouse_id: Number(data.warehouse_id),
             batch_id: data.batch_id === '' ? null : Number(data.batch_id),
-            production_order_id: data.production_order_id === '' ? null : Number(data.production_order_id),
+            production_order_id:
+                data.production_order_id === ''
+                    ? null
+                    : Number(data.production_order_id),
             quantity: Number(data.quantity),
             cost_price: Number(data.cost_price),
         }));
@@ -62,9 +73,12 @@ export default function InventoryMovementsCreate({
 
             <div className="mx-auto max-w-4xl space-y-6 p-6">
                 <div>
-                    <h1 className="text-2xl font-semibold text-foreground">Registrar Movimiento de Inventario</h1>
+                    <h1 className="text-2xl font-semibold text-foreground">
+                        Registrar Movimiento de Inventario
+                    </h1>
                     <p className="text-sm text-muted-foreground">
-                        Documenta una entrada o salida de materia prima en una bodega específica.
+                        Documenta una entrada o salida de materia prima en una
+                        bodega específica.
                     </p>
                 </div>
 
@@ -80,7 +94,11 @@ export default function InventoryMovementsCreate({
                     />
 
                     <div className="mt-6 border-t pt-6">
-                        <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
+                        <Button
+                            variant="ghost"
+                            asChild
+                            className="text-muted-foreground hover:text-foreground"
+                        >
                             <Link href={route('inventory-movements.index')}>
                                 ← Volver al listado
                             </Link>
