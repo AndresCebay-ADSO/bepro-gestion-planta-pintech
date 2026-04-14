@@ -42,6 +42,7 @@ class Transfer extends Model
         'source_warehouse_id',
         'destination_warehouse_id',
         'product_id',
+        'product_variant_id',
         'quantity',
         'status',
         'notes',
@@ -62,7 +63,7 @@ class Transfer extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['source_warehouse_id', 'destination_warehouse_id', 'product_id', 'quantity', 'status'])
+            ->logOnly(['source_warehouse_id', 'destination_warehouse_id', 'product_id', 'product_variant_id', 'quantity', 'status'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -80,6 +81,11 @@ class Transfer extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function productVariant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
     public function createdBy(): BelongsTo

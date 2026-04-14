@@ -30,6 +30,8 @@ class Product extends Model
     protected $fillable = [
         'code',
         'name',
+        'brand',
+        'description',
         'category_id',
         'unit_of_measure_id',
         'current_cost',
@@ -93,5 +95,10 @@ class Product extends Model
     public function qrCode(): HasOne
     {
         return $this->hasOne(QrCode::class, 'product_id');
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class, 'product_id');
     }
 }

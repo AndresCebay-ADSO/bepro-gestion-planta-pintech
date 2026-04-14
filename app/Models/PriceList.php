@@ -15,7 +15,7 @@ class PriceList extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['product_id', 'price', 'profit_margin', 'update_type'])
+            ->logOnly(['product_id', 'product_variant_id', 'price', 'profit_margin', 'update_type'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -24,6 +24,7 @@ class PriceList extends Model
 
     protected $fillable = [
         'product_id',
+        'product_variant_id',
         'price',
         'cost_at_time',
         'profit_margin',
@@ -49,6 +50,11 @@ class PriceList extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function productVariant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
     public function createdBy(): BelongsTo

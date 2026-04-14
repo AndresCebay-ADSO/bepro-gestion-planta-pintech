@@ -15,7 +15,7 @@ class FinishedInventory extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['product_id', 'warehouse_id', 'quantity'])
+            ->logOnly(['product_id', 'product_variant_id', 'warehouse_id', 'quantity'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -24,6 +24,7 @@ class FinishedInventory extends Model
 
     protected $fillable = [
         'product_id',
+        'product_variant_id',
         'warehouse_id',
         'quantity',
     ];
@@ -38,6 +39,11 @@ class FinishedInventory extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function productVariant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
     public function warehouse(): BelongsTo

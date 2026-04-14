@@ -46,4 +46,9 @@ class UnitOfMeasure extends Model
     {
         return $this->hasMany(FormulaDetail::class, 'unit_of_measure_id');
     }
+
+    public function productVariants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class, 'unit_of_measure_id');
+    }
 }
