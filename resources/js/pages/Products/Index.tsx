@@ -19,6 +19,7 @@ type Props = {
             name: string;
             category?: { id: number; name: string } | null;
             unit_of_measure?: { id: number; name: string; symbol: string } | null;
+            is_active: boolean;
         }>;
         links: PaginationLink[];
     };
@@ -81,17 +82,29 @@ export default function ProductsIndex({ products, can, filters }: Props) {
                     <table className="w-full text-sm">
                         <thead className="border-b border-border">
                             <tr>
-                                <th className="p-3 text-left">Codigo</th>
                                 <th className="p-3 text-left">Nombre</th>
-                                <th className="p-3 text-left">Categoria</th>
+                                <th className="p-3 text-left">Referencia</th>
+                                <th className="p-3 text-left">Categoría</th>
+                                <th className="p-3 text-left">Estado</th>
+                                <th className="p-3 text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {products.data.map((product) => (
                                 <tr key={product.id} className="border-b border-border/50">
-                                    <td className="p-3">{product.code}</td>
-                                    <td className="p-3">{product.name}</td>
+                                    <td className="p-3 font-medium">{product.name}</td>
+                                    <td className="p-3 text-muted-foreground font-mono">{product.code || '-'}</td>
                                     <td className="p-3">{product.category?.name ?? '-'}</td>
+                                    <td className="p-3">
+                                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${product.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}>
+                                            {product.is_active ? 'Activo' : 'Inactivo'}
+                                        </span>
+                                    </td>
+                                    <td className="p-3 text-right space-x-2">
+                                        <Button variant="ghost" size="sm" asChild>
+                                            <Link href={`/products/${product.id}`}>Ver</Link>
+                                        </Button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>

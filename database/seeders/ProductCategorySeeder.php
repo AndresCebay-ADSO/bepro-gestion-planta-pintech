@@ -8,43 +8,43 @@ use Illuminate\Database\Seeder;
 class ProductCategorySeeder extends Seeder
 {
     /**
-     * Categorías del negocio Pintech basadas en los prefijos de código que usa la jefa.
-     * Ej: R01, R02 → Resinas | A01, A39 → Acabados | T01 → Tintas base
+     * Categorías del negocio Pintech para PRODUCTOS TERMINADOS (Pinturas).
+     * Los códigos de prefijos puros corresponden a materias primas, no productos comerciales.
      */
     public function run(): void
     {
         $categories = [
             [
-                'name' => 'Resinas',
-                'description' => 'Productos con prefijo R. Base principal para pinturas y recubrimientos.',
+                'name' => 'Esmaltes Alquídicos',
+                'description' => 'Esmaltes sintéticos base solvente para protección y decoración de metales y maderas.',
             ],
             [
-                'name' => 'Acabados',
-                'description' => 'Productos con prefijo A. Acabados finales y lacas.',
+                'name' => 'Pinturas de Caucho / Látex',
+                'description' => 'Pinturas base agua emulsionadas para interiores y exteriores.',
             ],
             [
-                'name' => 'Tintas Base',
-                'description' => 'Productos con prefijo T. Tintas base para pigmentación.',
+                'name' => 'Impermeabilizantes',
+                'description' => 'Recubrimientos elastoméricos para protección contra humedad e impermeabilización de techos y muros.',
             ],
             [
-                'name' => 'Esmaltes',
-                'description' => 'Productos con prefijo E. Esmaltes industriales y decorativos.',
+                'name' => 'Pinturas Especiales / Epóxicas',
+                'description' => 'Sistemas epóxicos y poliuretanos para alta resistencia industrial y pisos.',
             ],
             [
-                'name' => 'Imprimantes',
-                'description' => 'Productos con prefijo I. Imprimantes y fondos anticorrosivos.',
+                'name' => 'Anticorrosivos',
+                'description' => 'Fondos y bases para protección inicial de superficies metálicas contra la oxidación.',
             ],
             [
-                'name' => 'Selladores',
-                'description' => 'Productos con prefijo S. Selladores y masillas.',
+                'name' => 'Pinturas en Polvo',
+                'description' => 'Recubrimientos horneables sin solventes para acabados industriales.',
             ],
             [
-                'name' => 'Diluyentes',
-                'description' => 'Productos con prefijo D. Diluyentes y solventes.',
+                'name' => 'Lacas y Acabados para Madera',
+                'description' => 'Lacas nitrocelulósicas, catalizadas y selladores para la industria maderera.',
             ],
             [
-                'name' => 'Otros',
-                'description' => 'Productos que no corresponden a una categoría específica.',
+                'name' => 'Masillas y Empastes',
+                'description' => 'Productos para preparación y nivelación de superficies.',
             ],
         ];
 

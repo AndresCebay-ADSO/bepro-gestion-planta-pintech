@@ -65,7 +65,7 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                     </div>
                     <h1 className="text-2xl font-semibold text-foreground">Nuevo Producto</h1>
                     <p className="text-sm text-muted-foreground">
-                        Registra un nuevo producto en el catálogo. El código debe seguir el prefijo de categoría (ej: R01, A39).
+                        Registra un nuevo producto de pintura en el catálogo.
                     </p>
                 </div>
 
@@ -76,12 +76,12 @@ export default function ProductsCreate({ categories, units, can }: Props) {
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div className="space-y-2">
-                                <Label htmlFor="code">Código *</Label>
+                                <Label htmlFor="code">Referencia / Código interno</Label>
                                 <Input
                                     id="code"
                                     value={data.code}
                                     onChange={(e) => setData('code', e.target.value.toUpperCase())}
-                                    placeholder="R01, A39, T02…"
+                                    placeholder="Opcional..."
                                     className="font-mono"
                                 />
                                 {errors.code && (

@@ -49,28 +49,33 @@ export default function RawMaterialsCreate({ units }: Props) {
             <Head title="Nueva Materia Prima" />
 
             <div className="mx-auto max-w-3xl space-y-6 p-6">
-                <div>
+                <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Link href={route('raw-materials.index')} className="hover:text-foreground">
+                            Materias Primas
+                        </Link>
+                        <span>/</span>
+                        <span>Crear</span>
+                    </div>
                     <h1 className="text-2xl font-semibold">Nueva Materia Prima</h1>
                     <p className="text-sm text-muted-foreground">
-                        Registra una nueva materia prima.
+                        Registra una nueva materia prima base para inventario.
                     </p>
                 </div>
 
-                <div className="rounded-lg border bg-card p-6">
-                    <RawMaterialForm
-                        form={form}
-                        units={units}
-                        onSubmit={submit}
-                        submitLabel="Guardar"
-                    />
+                <RawMaterialForm
+                    form={form}
+                    units={units}
+                    onSubmit={submit}
+                    submitLabel="Crear Materia Prima"
+                />
 
-                    <div className="pt-4">
-                        <Button variant="outline" asChild>
-                            <Link href={route('raw-materials.index')}>
-                                Cancelar
-                            </Link>
-                        </Button>
-                    </div>
+                <div className="flex justify-end pr-2 pt-2 gap-2">
+                    <Button variant="outline" asChild>
+                        <Link href={route('raw-materials.index')}>
+                            Cancelar
+                        </Link>
+                    </Button>
                 </div>
             </div>
         </>

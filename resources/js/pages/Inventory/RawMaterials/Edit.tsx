@@ -69,28 +69,36 @@ export default function RawMaterialsEdit({ rawMaterial, units }: Props) {
             <Head title={`Editar ${rawMaterial.code}`} />
 
             <div className="mx-auto max-w-3xl space-y-6 p-6">
-                <div>
-                    <h1 className="text-2xl font-semibold">Editar Materia Prima</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Actualiza {rawMaterial.code}
-                    </p>
+                <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Link href={route('raw-materials.index')} className="hover:text-foreground">
+                            Materias Primas
+                        </Link>
+                        <span>/</span>
+                        <Link href={route('raw-materials.show', rawMaterial.code)} className="hover:text-foreground font-mono">
+                            {rawMaterial.code}
+                        </Link>
+                        <span>/</span>
+                        <span>Editar</span>
+                    </div>
+                    <h1 className="text-2xl font-semibold">
+                        Editar Materia Prima: <span className="font-mono">{rawMaterial.code}</span>
+                    </h1>
                 </div>
 
-                <div className="rounded-lg border bg-card p-6">
-                    <RawMaterialForm
-                        form={form}
-                        units={units}
-                        onSubmit={submit}
-                        submitLabel="Guardar cambios"
-                    />
+                <RawMaterialForm
+                    form={form}
+                    units={units}
+                    onSubmit={submit}
+                    submitLabel="Guardar cambios"
+                />
 
-                    <div className="pt-4">
-                        <Button variant="outline" asChild>
-                            <Link href={route('raw-materials.index')}>
-                                Cancelar
-                            </Link>
-                        </Button>
-                    </div>
+                <div className="flex justify-end pr-2 pt-2 gap-2">
+                    <Button variant="outline" asChild>
+                        <Link href={route('raw-materials.index')}>
+                            Cancelar
+                        </Link>
+                    </Button>
                 </div>
             </div>
         </>
