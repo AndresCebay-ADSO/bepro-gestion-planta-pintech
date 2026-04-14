@@ -12,7 +12,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import {
-    show as productsShow,
     index as productsIndex,
 } from '@/routes/products';
 
