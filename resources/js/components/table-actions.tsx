@@ -1,8 +1,13 @@
-import { Eye, Loader2, Pencil, Trash } from "lucide-react";
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { Eye, Loader2, Pencil, Trash } from 'lucide-react';
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 interface ActionConfig {
     view?: boolean;
@@ -33,7 +38,9 @@ export function TableActions({
 }: TableActionsProps) {
     return (
         <TooltipProvider delayDuration={400}>
-            <div className={cn("flex items-center gap-2 justify-end", className)}>
+            <div
+                className={cn('flex items-center justify-end gap-2', className)}
+            >
                 {/* Visualización (View) */}
                 {actions.view && permissions.view && (
                     <Tooltip>
@@ -96,7 +103,9 @@ export function TableActions({
                                 ) : (
                                     <Trash />
                                 )}
-                                <span className="sr-only">Eliminar registro</span>
+                                <span className="sr-only">
+                                    Eliminar registro
+                                </span>
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>Eliminar registro</TooltipContent>

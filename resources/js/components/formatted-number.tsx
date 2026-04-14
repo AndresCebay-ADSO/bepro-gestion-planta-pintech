@@ -13,7 +13,12 @@
  * ```
  */
 
-import { formatNumber, formatCurrency, formatQuantity, formatPercent } from '@/lib/formatters';
+import {
+    formatNumber,
+    formatCurrency,
+    formatQuantity,
+    formatPercent,
+} from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
 interface FormattedNumberProps {
@@ -58,7 +63,10 @@ export function FormattedNumber({
         formatted = formatPercent(value, maxDecimals);
     } else if (currency) {
         const currencySymbol = typeof currency === 'string' ? currency : '$';
-        formatted = formatCurrency(value, currencySymbol, { maxDecimals, emptyValue });
+        formatted = formatCurrency(value, currencySymbol, {
+            maxDecimals,
+            emptyValue,
+        });
     } else {
         formatted = formatQuantity(value, { maxDecimals, emptyValue });
     }
@@ -80,7 +88,10 @@ export function FormattedNumber({
     // Determinar color basado en el valor si colorize está activado
     const numericValue = typeof value === 'string' ? parseFloat(value) : value;
     const colorClass =
-        colorize && numericValue !== null && numericValue !== undefined && !Number.isNaN(numericValue)
+        colorize &&
+        numericValue !== null &&
+        numericValue !== undefined &&
+        !Number.isNaN(numericValue)
             ? numericValue < 0
                 ? 'text-red-600 dark:text-red-400'
                 : numericValue > 0

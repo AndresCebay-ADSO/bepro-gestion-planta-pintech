@@ -29,7 +29,6 @@ type RawMaterialRow = {
     };
 };
 
-
 type Props = {
     rawMaterials: {
         data: RawMaterialRow[];
@@ -46,7 +45,11 @@ type Props = {
 /**
  * Main Component
  */
-export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props) {
+export default function RawMaterialsIndex({
+    rawMaterials,
+    filters,
+    can,
+}: Props) {
     const { data, setData, get } = useForm({
         search: filters.search ?? '',
     });
@@ -54,7 +57,6 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
     const flash = usePage<{
         flash?: { success?: string; error?: string };
     }>().props.flash;
-
 
     /**
      * Search
@@ -73,7 +75,11 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
      * Delete
      */
     const handleDelete = (code: string) => {
-        if (!window.confirm('Are you sure you want to delete this raw material?')) {
+        if (
+            !window.confirm(
+                '¿Estás seguro de que quieres eliminar esta materia prima?',
+            )
+        ) {
             return;
         }
 
@@ -87,22 +93,21 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
             <Head title="Materias Primas" />
 
             <div className="space-y-6 p-6">
-
                 {/* Header */}
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold text-foreground">
-                            Raw Materials
+                            Materias Primas
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Base inventory of plant raw materials.
+                            Inventario base de materias primas de planta.
                         </p>
                     </div>
 
                     {can.create && (
                         <Button asChild>
                             <Link href={RawMaterialController.create.url()}>
-                                New Raw Material
+                                Nueva Materia Prima
                             </Link>
                         </Button>
                     )}
@@ -129,26 +134,37 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                     <Input
                         value={data.search}
                         onChange={(e) => setData('search', e.target.value)}
-                        placeholder="Search by code..."
+                        placeholder="Buscar por código..."
                         className="sm:max-w-sm"
                     />
                     <Button type="submit" variant="outline">
-                        Search
+                        Buscar
                     </Button>
                 </form>
 
                 {/* Tabla */}
                 <div className="overflow-x-auto rounded-lg border border-border bg-card">
                     <table className="w-full text-sm">
-
                         <thead className="border-b border-border bg-muted/40">
                             <tr>
-                                <th className="p-3 text-left font-medium">Code</th>
-                                <th className="p-3 text-left font-medium">Unit</th>
-                                <th className="p-3 text-right font-medium">Price</th>
-                                <th className="p-3 text-right font-medium">Min Stock</th>
-                                <th className="p-3 text-center font-medium">Status</th>
-                                <th className="p-3 text-right font-medium">Actions</th>
+                                <th className="p-3 text-left font-medium">
+                                    Código
+                                </th>
+                                <th className="p-3 text-left font-medium">
+                                    Unidad
+                                </th>
+                                <th className="p-3 text-right font-medium">
+                                    Precio
+                                </th>
+                                <th className="p-3 text-right font-medium">
+                                    Stock Mínimo
+                                </th>
+                                <th className="p-3 text-center font-medium">
+                                    Estado
+                                </th>
+                                <th className="p-3 text-right font-medium">
+                                    Acciones
+                                </th>
                             </tr>
                         </thead>
 
@@ -156,7 +172,7 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                             {rawMaterials.data.map((item) => (
                                 <tr
                                     key={item.id}
-                                    className="border-b border-border/60 last:border-0 hover:bg-muted/30 transition"
+                                    className="border-b border-border/60 transition last:border-0 hover:bg-muted/30"
                                 >
                                     <td className="p-3 font-medium text-foreground">
                                         {item.code}
@@ -190,8 +206,8 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                                             }
                                         >
                                             {item.is_active
-                                                ? 'Active'
-                                                : 'Inactive'}
+                                                ? 'Activo'
+                                                : 'Inactivo'}
                                         </span>
                                     </td>
 
@@ -205,15 +221,15 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                                             onView={() =>
                                                 router.get(
                                                     RawMaterialController.show.url(
-                                                        item.code
-                                                    )
+                                                        item.code,
+                                                    ),
                                                 )
                                             }
                                             onEdit={() =>
                                                 router.get(
                                                     RawMaterialController.edit.url(
-                                                        item.code
-                                                    )
+                                                        item.code,
+                                                    ),
                                                 )
                                             }
                                             onDelete={() =>
@@ -231,7 +247,7 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                                         colSpan={6}
                                         className="p-10 text-center text-sm text-muted-foreground"
                                     >
-                                        No raw materials registered.
+                                        No se encontraron materias primas.
                                     </td>
                                 </tr>
                             )}
@@ -240,7 +256,7 @@ export default function RawMaterialsIndex({ rawMaterials, filters, can }: Props)
                 </div>
 
                 {/* Paginación */}
-                <div className="flex justify-center mt-4">
+                <div className="mt-4 flex justify-center">
                     <Pagination links={rawMaterials.links} />
                 </div>
             </div>

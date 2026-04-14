@@ -17,6 +17,8 @@ class RawMaterial extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
+            ->useLogName('materias_primas')
+            ->setDescriptionForEvent(fn (string $eventName) => "Materia prima {$eventName}")
             ->logOnly(['code', 'unit_of_measure_id', 'current_price', 'minimum_stock', 'is_active'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

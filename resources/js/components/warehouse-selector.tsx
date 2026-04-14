@@ -24,7 +24,9 @@ type WarehouseContext = {
 };
 
 export default function WarehouseSelector() {
-    const { warehouseContext } = usePage<{ warehouseContext?: WarehouseContext }>().props;
+    const { warehouseContext } = usePage<{
+        warehouseContext?: WarehouseContext;
+    }>().props;
 
     if (!warehouseContext?.current || warehouseContext.available.length <= 1) {
         return null;
@@ -41,10 +43,15 @@ export default function WarehouseSelector() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="h-10 max-w-[220px] justify-between gap-2 text-sm">
+                <Button
+                    variant="outline"
+                    className="h-10 max-w-[220px] justify-between gap-2 text-sm"
+                >
                     <span className="inline-flex min-w-0 items-center gap-2">
                         <Warehouse className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{warehouseContext.current.name}</span>
+                        <span className="truncate">
+                            {warehouseContext.current.name}
+                        </span>
                     </span>
                     <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-70" />
                 </Button>
@@ -59,13 +66,19 @@ export default function WarehouseSelector() {
                         className="flex items-center justify-between"
                     >
                         <div className="grid">
-                            <span className="font-medium">{warehouse.name}</span>
-                            <span className="text-xs text-muted-foreground">{warehouse.city}</span>
+                            <span className="font-medium">
+                                {warehouse.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                                {warehouse.city}
+                            </span>
                         </div>
                         <Check
                             className={cn(
                                 'h-4 w-4',
-                                warehouseContext.current?.id === warehouse.id ? 'opacity-100' : 'opacity-0',
+                                warehouseContext.current?.id === warehouse.id
+                                    ? 'opacity-100'
+                                    : 'opacity-0',
                             )}
                         />
                     </DropdownMenuItem>
@@ -74,4 +87,3 @@ export default function WarehouseSelector() {
         </DropdownMenu>
     );
 }
-

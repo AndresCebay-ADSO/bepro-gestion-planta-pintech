@@ -1,11 +1,7 @@
 import { useForm, Link, router } from '@inertiajs/react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import {
-    Activity,
-    Search,
-    UserPlus,
-} from 'lucide-react';
+import { Activity, Search, UserPlus } from 'lucide-react';
 import type { FC, FormEvent } from 'react';
 
 import { TableActions } from '@/components/table-actions';
@@ -59,7 +55,6 @@ interface Props {
 }
 
 const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
-
     const form = useForm({
         search: filters.search ?? '',
     });
@@ -84,20 +79,23 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
     };
 
     return (
-        <div className="bg-background min-h-screen p-6">
+        <div className="min-h-screen bg-background p-6">
             <div className="mx-auto max-w-7xl space-y-8">
-
                 {/* HEADER */}
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight text-foreground">
                             Gestión de Usuarios
                         </h1>
-                        <p className="text-muted-foreground mt-1">
-                            Gestiona el acceso, permisos y roles del personal de planta.
+                        <p className="mt-1 text-muted-foreground">
+                            Gestiona el acceso, permisos y roles del personal de
+                            planta.
                         </p>
                     </div>
-                    <Button asChild className="shrink-0 bg-blue-600 hover:bg-blue-700">
+                    <Button
+                        asChild
+                        className="shrink-0 bg-blue-600 hover:bg-blue-700"
+                    >
                         <Link href={usersCreate().url}>
                             <UserPlus className="mr-2 h-4 w-4" />
                             Nuevo Usuario
@@ -106,12 +104,17 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                    <form onSubmit={handleSearch} className="relative w-full max-w-sm">
-                        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                    <form
+                        onSubmit={handleSearch}
+                        className="relative w-full max-w-sm"
+                    >
+                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             placeholder="Buscar usuario..."
                             value={form.data.search}
-                            onChange={(e) => form.setData('search', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('search', e.target.value)
+                            }
                             className="pl-10"
                         />
                     </form>
@@ -119,31 +122,44 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
 
                 {/* GRID */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-
                     {/* TABLE */}
                     <div className="lg:col-span-9">
                         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-card">
                             <table className="w-full">
-                                <thead className="bg-slate-50/50 border-b border-slate-100 dark:bg-muted/50 dark:border-slate-800">
+                                <thead className="border-b border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-muted/50">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">Usuario</th>
-                                        <th className="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">Rol</th>
-                                        <th className="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">Último Acceso</th>
-                                        <th className="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">Estado</th>
-                                        <th className="px-4 py-3 text-right text-xs font-bold uppercase text-slate-500">Acciones</th>
+                                        <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">
+                                            Usuario
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">
+                                            Rol
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">
+                                            Último Acceso
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">
+                                            Estado
+                                        </th>
+                                        <th className="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase">
+                                            Acciones
+                                        </th>
                                     </tr>
                                 </thead>
 
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                     {users.data.length > 0 ? (
                                         users.data.map((user) => (
-                                            <tr key={user.id} className="hover:bg-slate-50/50 transition-colors dark:hover:bg-muted/30">
-
+                                            <tr
+                                                key={user.id}
+                                                className="transition-colors hover:bg-slate-50/50 dark:hover:bg-muted/30"
+                                            >
                                                 {/* USER */}
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-3">
                                                         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                                            {getInitials(user.name)}
+                                                            {getInitials(
+                                                                user.name,
+                                                            )}
                                                         </div>
                                                         <div className="min-w-0">
                                                             <p className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -158,43 +174,79 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
 
                                                 {/* ROLE */}
                                                 <td className="px-4 py-3 whitespace-nowrap">
-                                                    <Badge variant="secondary" className="uppercase font-bold">
-                                                        {user.roles[0]?.name || 'Invitado'}
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="font-bold uppercase"
+                                                    >
+                                                        {user.roles[0]?.name ||
+                                                            'Invitado'}
                                                     </Badge>
                                                 </td>
 
                                                 {/* LAST LOGIN */}
-                                                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                                                <td className="px-4 py-3 text-sm whitespace-nowrap text-slate-600 dark:text-slate-400">
                                                     {user.last_login_at
-                                                        ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true, locale: es })
+                                                        ? formatDistanceToNow(
+                                                              new Date(
+                                                                  user.last_login_at,
+                                                              ),
+                                                              {
+                                                                  addSuffix: true,
+                                                                  locale: es,
+                                                              },
+                                                          )
                                                         : 'Nunca'}
                                                 </td>
 
                                                 {/* STATUS */}
                                                 <td className="px-4 py-3">
-                                                    <span className={`text-xs font-bold ${user.is_active ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                                        {user.is_active ? 'Activo' : 'Inactivo'}
+                                                    <span
+                                                        className={`text-xs font-bold ${user.is_active ? 'text-emerald-600' : 'text-slate-400'}`}
+                                                    >
+                                                        {user.is_active
+                                                            ? 'Activo'
+                                                            : 'Inactivo'}
                                                     </span>
                                                 </td>
 
                                                 {/* ACTIONS */}
                                                 <td className="px-4 py-3 text-right">
                                                     <TableActions
-                                                        actions={{ view: false, edit: true, delete: true }}
-                                                        onEdit={() => router.get(usersEdit(user.id).url)}
+                                                        actions={{
+                                                            view: false,
+                                                            edit: true,
+                                                            delete: true,
+                                                        }}
+                                                        onEdit={() =>
+                                                            router.get(
+                                                                usersEdit(
+                                                                    user.id,
+                                                                ).url,
+                                                            )
+                                                        }
                                                         onDelete={() => {
-                                                            if (confirm('¿Eliminar este usuario definitivamente?')) {
-                                                                router.delete(usersDestroy(user.id).url);
+                                                            if (
+                                                                confirm(
+                                                                    '¿Eliminar este usuario definitivamente?',
+                                                                )
+                                                            ) {
+                                                                router.delete(
+                                                                    usersDestroy(
+                                                                        user.id,
+                                                                    ).url,
+                                                                );
                                                             }
                                                         }}
                                                     />
                                                 </td>
-
                                             </tr>
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan={5} className="py-12 text-center text-slate-400">
+                                            <td
+                                                colSpan={5}
+                                                className="py-12 text-center text-slate-400"
+                                            >
                                                 No se encontraron usuarios.
                                             </td>
                                         </tr>
@@ -204,14 +256,14 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
 
                             {/* PAGINATION */}
                             <div className="border-t border-slate-100 px-4 py-4 dark:border-slate-800">
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                    <span className="text-xs text-slate-500 font-medium">
-                                        Mostrando {users.data.length} de {users.total} usuarios
+                                <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+                                    <span className="text-xs font-medium text-slate-500">
+                                        Mostrando {users.data.length} de{' '}
+                                        {users.total} usuarios
                                     </span>
                                     <Pagination links={users.links} />
                                 </div>
                             </div>
-
                         </div>
                     </div>
 
@@ -228,12 +280,17 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
                                 {recentActivities.map((activity) => (
                                     <div key={activity.id} className="mb-4">
                                         <p className="text-xs text-blue-400">
-                                            {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true, locale: es })}
+                                            {formatDistanceToNow(
+                                                new Date(activity.created_at),
+                                                { addSuffix: true, locale: es },
+                                            )}
                                         </p>
-                                        <p className="text-sm font-bold">{activity.description}</p>
+                                        <p className="text-sm font-bold">
+                                            {activity.description}
+                                        </p>
                                     </div>
                                 ))}
-                                <Button asChild className="w-full mt-4">
+                                <Button asChild className="mt-4 w-full">
                                     <Link href={auditLogsIndex().url}>
                                         VER TODOS LOS LOGS
                                     </Link>
@@ -241,7 +298,6 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
                             </CardContent>
                         </Card>
                     </div>
-
                 </div>
             </div>
         </div>

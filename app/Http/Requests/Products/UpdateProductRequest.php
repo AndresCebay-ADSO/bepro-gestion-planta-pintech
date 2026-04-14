@@ -20,10 +20,9 @@ class UpdateProductRequest extends FormRequest
         return [
             'code' => [
                 'bail',
-                'required',
+                'nullable',
                 'string',
                 'max:50',
-                'regex:/^[A-Za-z0-9\-_]+$/',
                 Rule::unique('products', 'code')->ignore($productId),
             ],
             'name' => ['bail', 'required', 'string', 'min:3', 'max:150'],

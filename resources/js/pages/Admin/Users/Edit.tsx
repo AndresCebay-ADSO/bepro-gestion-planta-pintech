@@ -32,13 +32,13 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
     };
 
     return (
-        <div className="bg-background text-foreground min-h-screen px-4 py-8">
+        <div className="min-h-screen bg-background px-4 py-8 text-foreground">
             <div className="mx-auto max-w-2xl">
                 {/* Header */}
                 <div className="mb-8">
                     <Link
                         href={route('users.index')}
-                        className="text-primary hover:text-primary/80 mb-4 inline-block"
+                        className="mb-4 inline-block text-primary hover:text-primary/80"
                     >
                         ← Volver a Gestión de Usuarios
                     </Link>
@@ -57,7 +57,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                 >
                     {/* Name */}
                     <div>
-                        <label className="text-foreground mb-2 block text-sm font-semibold">
+                        <label className="mb-2 block text-sm font-semibold text-foreground">
                             Nombre Completo
                         </label>
                         <input
@@ -65,10 +65,10 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                             name="name"
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
-                            className="border-input bg-background text-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
+                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
                         />
                         {errors.name && (
-                            <p className="text-destructive mt-1 text-sm">
+                            <p className="mt-1 text-sm text-destructive">
                                 {errors.name}
                             </p>
                         )}
@@ -76,7 +76,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
 
                     {/* Email */}
                     <div>
-                        <label className="text-foreground mb-2 block text-sm font-semibold">
+                        <label className="mb-2 block text-sm font-semibold text-foreground">
                             Email
                         </label>
                         <input
@@ -84,10 +84,10 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                             name="email"
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
-                            className="border-input bg-background text-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
+                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
                         />
                         {errors.email && (
-                            <p className="text-destructive mt-1 text-sm">
+                            <p className="mt-1 text-sm text-destructive">
                                 {errors.email}
                             </p>
                         )}
@@ -95,14 +95,14 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
 
                     {/* Role */}
                     <div>
-                        <label className="text-foreground mb-2 block text-sm font-semibold">
+                        <label className="mb-2 block text-sm font-semibold text-foreground">
                             Rol
                         </label>
                         <select
                             name="role"
                             value={data.role}
                             onChange={(e) => setData('role', e.target.value)}
-                            className="border-input bg-background text-foreground focus:ring-ring/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
+                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
                         >
                             {roles.map((role) => (
                                 <option key={role.id} value={role.name}>
@@ -112,7 +112,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                             ))}
                         </select>
                         {errors.role && (
-                            <p className="text-destructive mt-1 text-sm">
+                            <p className="mt-1 text-sm text-destructive">
                                 {errors.role}
                             </p>
                         )}
@@ -120,7 +120,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
 
                     {/* Info */}
                     <div className="rounded-lg border border-primary/30 bg-primary/10 p-4">
-                        <p className="text-primary text-sm">
+                        <p className="text-sm text-primary">
                             💡 Para cambiar la contraseña, el usuario debe usar
                             la opción "Olvidé mi contraseña" en el login.
                         </p>
@@ -131,13 +131,13 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1 rounded-lg px-6 py-2 font-semibold transition disabled:opacity-50"
+                            className="flex-1 rounded-lg bg-primary px-6 py-2 font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
                         >
                             {processing ? 'Actualizando...' : 'Guardar Cambios'}
                         </button>
                         <Link
                             href={route('users.index')}
-                            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 flex-1 rounded-lg px-6 py-2 text-center font-semibold transition"
+                            className="flex-1 rounded-lg bg-secondary px-6 py-2 text-center font-semibold text-secondary-foreground transition hover:bg-secondary/80"
                         >
                             Cancelar
                         </Link>

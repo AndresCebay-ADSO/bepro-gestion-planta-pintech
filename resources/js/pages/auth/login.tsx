@@ -36,7 +36,7 @@ export default function Login({ status, canResetPassword }: Props) {
 
                         {/* Badge superior */}
                         <div className="relative z-10">
-                            <span className="text-primary-foreground/75 inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 px-3 py-1 text-xs font-semibold tracking-widest uppercase">
+                            <span className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 px-3 py-1 text-xs font-semibold tracking-widest text-primary-foreground/75 uppercase">
                                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
                                 Sistema de Planta
                             </span>
@@ -44,12 +44,12 @@ export default function Login({ status, canResetPassword }: Props) {
 
                         {/* Frase central */}
                         <div className="relative z-10 space-y-4">
-                            <h1 className="text-primary-foreground text-3xl leading-snug font-bold">
+                            <h1 className="text-3xl leading-snug font-bold text-primary-foreground">
                                 Precisión en cada gota.
                                 <br />
                                 Control en cada lote.
                             </h1>
-                            <p className="text-primary-foreground/70 max-w-xs text-sm leading-relaxed">
+                            <p className="max-w-xs text-sm leading-relaxed text-primary-foreground/70">
                                 Accede al ecosistema PINTECH para monitoreo en
                                 tiempo real de inventarios, formulaciones y
                                 producción de pinturas.
@@ -62,7 +62,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                 <p className="text-2xl font-bold text-emerald-400">
                                     99.9%
                                 </p>
-                                <p className="text-primary-foreground/60 text-xs tracking-widest uppercase">
+                                <p className="text-xs tracking-widest text-primary-foreground/60 uppercase">
                                     Disponibilidad
                                 </p>
                             </div>
@@ -97,14 +97,14 @@ export default function Login({ status, canResetPassword }: Props) {
                             <h2 className="text-xl font-semibold text-foreground">
                                 Portal de Operaciones
                             </h2>
-                            <p className="text-muted-foreground mt-1 text-sm">
+                            <p className="mt-1 text-sm text-muted-foreground">
                                 Ingresa a tu cuenta autorizada de planta.
                             </p>
                         </div>
 
                         {/* Mensaje de estado */}
                         {status && (
-                            <div className="text-primary mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-center text-sm font-medium">
+                            <div className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-center text-sm font-medium text-primary">
                                 {status}
                             </div>
                         )}
@@ -122,12 +122,12 @@ export default function Login({ status, canResetPassword }: Props) {
                                     <div className="grid gap-1.5">
                                         <Label
                                             htmlFor="email"
-                                            className="text-muted-foreground text-xs font-semibold tracking-widest uppercase"
+                                            className="text-xs font-semibold tracking-widest text-muted-foreground uppercase"
                                         >
                                             Correo electrónico
                                         </Label>
                                         <div className="relative">
-                                            <span className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2">
+                                            <span className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground">
                                                 <svg
                                                     xmlns="http://www.w3.org/2000/svg"
                                                     className="h-4 w-4"
@@ -160,14 +160,14 @@ export default function Login({ status, canResetPassword }: Props) {
                                         <div className="flex items-center justify-between">
                                             <Label
                                                 htmlFor="password"
-                                                className="text-muted-foreground text-xs font-semibold tracking-widest uppercase"
+                                                className="text-xs font-semibold tracking-widest text-muted-foreground uppercase"
                                             >
                                                 Contraseña
                                             </Label>
                                             {canResetPassword && (
                                                 <a
                                                     href={request.url()}
-                                                    className="text-primary text-xs hover:underline"
+                                                    className="text-xs text-primary hover:underline"
                                                     tabIndex={5}
                                                 >
                                                     ¿Olvidaste tu contraseña?
@@ -196,7 +196,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                         />
                                         <Label
                                             htmlFor="remember"
-                                            className="text-muted-foreground cursor-pointer text-sm"
+                                            className="cursor-pointer text-sm text-muted-foreground"
                                         >
                                             Recordar sesión
                                         </Label>
@@ -208,7 +208,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                         tabIndex={4}
                                         disabled={processing}
                                         data-test="login-button"
-                                        className="bg-primary text-primary-foreground hover:bg-primary/90 mt-1 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg py-2.5 font-semibold transition-all duration-200"
+                                        className="mt-1 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary py-2.5 font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary/90"
                                     >
                                         {processing ? (
                                             <Spinner />
@@ -233,7 +233,7 @@ export default function Login({ status, canResetPassword }: Props) {
                         </Form>
 
                         {/* Footer */}
-                        <div className="text-muted-foreground mt-8 flex items-center justify-between text-xs">
+                        <div className="mt-8 flex items-center justify-between text-xs text-muted-foreground">
                             <span className="flex items-center gap-1.5">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"

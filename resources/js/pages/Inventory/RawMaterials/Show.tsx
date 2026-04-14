@@ -40,7 +40,6 @@ type Props = {
  * Componente
  */
 export default function RawMaterialsShow({ rawMaterial, can }: Props) {
-
     const handleDelete = () => {
         if (!window.confirm('¿Estás seguro de eliminar esta materia prima?')) {
             return;
@@ -54,7 +53,6 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
             <Head title={`Materia Prima ${rawMaterial.code}`} />
 
             <div className="space-y-6 p-6">
-
                 {/* Header */}
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -75,14 +73,22 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
 
                         {can.update && (
                             <Button asChild>
-                                <Link href={route('raw-materials.edit', rawMaterial.code)}>
+                                <Link
+                                    href={route(
+                                        'raw-materials.edit',
+                                        rawMaterial.code,
+                                    )}
+                                >
                                     Editar
                                 </Link>
                             </Button>
                         )}
 
                         {can.delete && (
-                            <Button variant="destructive" onClick={handleDelete}>
+                            <Button
+                                variant="destructive"
+                                onClick={handleDelete}
+                            >
                                 Eliminar
                             </Button>
                         )}
@@ -91,7 +97,6 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
 
                 {/* Información general */}
                 <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-2">
-
                     <InfoItem label="Código interno" value={rawMaterial.code} />
 
                     <InfoItem
@@ -121,7 +126,10 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                     <InfoItem
                         label="Precio actual"
                         value={
-                            <FormattedNumber value={rawMaterial.current_price} currency />
+                            <FormattedNumber
+                                value={rawMaterial.current_price}
+                                currency
+                            />
                         }
                     />
 
@@ -139,7 +147,9 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                     <InfoItem
                         label="Stock mínimo"
                         value={
-                            <FormattedNumber value={rawMaterial.minimum_stock} />
+                            <FormattedNumber
+                                value={rawMaterial.minimum_stock}
+                            />
                         }
                     />
 
@@ -151,7 +161,6 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
 
                 {/* Lotes */}
                 <div className="overflow-x-auto rounded-lg border border-border bg-card">
-
                     <div className="border-b border-border px-4 py-3">
                         <h2 className="font-medium text-foreground">
                             Lotes asociados
@@ -159,14 +168,15 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                     </div>
 
                     <table className="w-full text-sm">
-
                         <thead className="border-b border-border bg-muted/40">
                             <tr>
                                 <th className="p-3 text-left">Lote</th>
                                 <th className="p-3 text-left">Proveedor</th>
                                 <th className="p-3 text-left">Entrada</th>
                                 <th className="p-3 text-left">Vence</th>
-                                <th className="p-3 text-right">Cantidad inicial</th>
+                                <th className="p-3 text-right">
+                                    Cantidad inicial
+                                </th>
                                 <th className="p-3 text-right">Disponible</th>
                             </tr>
                         </thead>
@@ -175,7 +185,7 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                             {rawMaterial.inventory_batches.map((batch) => (
                                 <tr
                                     key={batch.id}
-                                    className="border-b border-border/60 last:border-0 hover:bg-muted/30 transition"
+                                    className="border-b border-border/60 transition last:border-0 hover:bg-muted/30"
                                 >
                                     <td className="p-3 text-foreground">
                                         {batch.lot_number ?? '-'}
@@ -194,7 +204,9 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                                     </td>
 
                                     <td className="p-3 text-right">
-                                        <FormattedNumber value={batch.initial_quantity} />
+                                        <FormattedNumber
+                                            value={batch.initial_quantity}
+                                        />
                                     </td>
 
                                     <td className="p-3 text-right">
@@ -209,8 +221,12 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
 
                             {rawMaterial.inventory_batches.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="p-10 text-center text-sm text-muted-foreground">
-                                        No hay lotes registrados para esta materia prima.
+                                    <td
+                                        colSpan={6}
+                                        className="p-10 text-center text-sm text-muted-foreground"
+                                    >
+                                        No hay lotes registrados para esta
+                                        materia prima.
                                     </td>
                                 </tr>
                             )}
@@ -225,21 +241,13 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
 /**
  * Subcomponente reutilizable (🔥 clave nivel pro)
  */
-function InfoItem({
-    label,
-    value,
-}: {
-    label: string;
-    value: React.ReactNode;
-}) {
+function InfoItem({ label, value }: { label: string; value: React.ReactNode }) {
     return (
         <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs tracking-wide text-muted-foreground uppercase">
                 {label}
             </p>
-            <div className="text-sm text-foreground mt-1">
-                {value}
-            </div>
+            <div className="mt-1 text-sm text-foreground">{value}</div>
         </div>
     );
 }

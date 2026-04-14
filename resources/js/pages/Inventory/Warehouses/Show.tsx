@@ -55,8 +55,12 @@ export default function WarehousesShow({ warehouse, can }: Props) {
             <div className="space-y-6 p-6">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold text-foreground">{warehouse.name}</h1>
-                        <p className="text-sm text-muted-foreground">Detalle de bodega, usuarios e inventario terminado.</p>
+                        <h1 className="text-2xl font-semibold text-foreground">
+                            {warehouse.name}
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Detalle de bodega, usuarios e inventario terminado.
+                        </p>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
@@ -65,16 +69,33 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                         </Button>
                         {can.assignUsers && (
                             <Button variant="outline" asChild>
-                                <Link href={route('warehouses.assign-users.form', warehouse.id)}>Asignar usuarios</Link>
+                                <Link
+                                    href={route(
+                                        'warehouses.assign-users.form',
+                                        warehouse.id,
+                                    )}
+                                >
+                                    Asignar usuarios
+                                </Link>
                             </Button>
                         )}
                         {can.update && (
                             <Button asChild>
-                                <Link href={route('warehouses.edit', warehouse.id)}>Editar</Link>
+                                <Link
+                                    href={route(
+                                        'warehouses.edit',
+                                        warehouse.id,
+                                    )}
+                                >
+                                    Editar
+                                </Link>
                             </Button>
                         )}
                         {can.delete && (
-                            <Button variant="destructive" onClick={handleDelete}>
+                            <Button
+                                variant="destructive"
+                                onClick={handleDelete}
+                            >
                                 Eliminar
                             </Button>
                         )}
@@ -83,49 +104,87 @@ export default function WarehousesShow({ warehouse, can }: Props) {
 
                 <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-2">
                     <div>
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Ciudad</p>
-                        <p className="text-sm text-foreground">{warehouse.city}</p>
+                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
+                            Ciudad
+                        </p>
+                        <p className="text-sm text-foreground">
+                            {warehouse.city}
+                        </p>
                     </div>
                     <div>
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Estado</p>
-                        <p className="text-sm text-foreground">{warehouse.is_active ? 'Activa' : 'Inactiva'}</p>
+                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
+                            Estado
+                        </p>
+                        <p className="text-sm text-foreground">
+                            {warehouse.is_active ? 'Activa' : 'Inactiva'}
+                        </p>
                     </div>
                     <div>
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Tipo</p>
+                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
+                            Tipo
+                        </p>
                         <p className="font-medium">
-                            {warehouse.type === 'factory' ? 'Fábrica (Producción)' : 'Bodega (Almacenamiento / Venta)'}
+                            {warehouse.type === 'factory'
+                                ? 'Fábrica (Producción)'
+                                : 'Bodega (Almacenamiento / Venta)'}
                         </p>
                     </div>
                     <div className="md:col-span-2">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Dirección</p>
-                        <p className="text-sm text-foreground">{warehouse.address ?? '-'}</p>
+                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
+                            Dirección
+                        </p>
+                        <p className="text-sm text-foreground">
+                            {warehouse.address ?? '-'}
+                        </p>
                     </div>
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-2">
                     <div className="overflow-x-auto rounded-lg border border-border bg-card">
                         <div className="border-b border-border px-4 py-3">
-                            <h2 className="font-medium text-foreground">Usuarios asignados</h2>
+                            <h2 className="font-medium text-foreground">
+                                Usuarios asignados
+                            </h2>
                         </div>
                         <table className="w-full text-sm">
                             <thead className="border-b border-border bg-muted/40">
                                 <tr>
-                                    <th className="p-3 text-left font-medium text-foreground">Nombre</th>
-                                    <th className="p-3 text-left font-medium text-foreground">Correo</th>
-                                    <th className="p-3 text-left font-medium text-foreground">Predeterminada</th>
+                                    <th className="p-3 text-left font-medium text-foreground">
+                                        Nombre
+                                    </th>
+                                    <th className="p-3 text-left font-medium text-foreground">
+                                        Correo
+                                    </th>
+                                    <th className="p-3 text-left font-medium text-foreground">
+                                        Predeterminada
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {warehouse.users.map((user) => (
-                                    <tr key={user.id} className="border-b border-border/60 last:border-0">
-                                        <td className="p-3 text-foreground">{user.name}</td>
-                                        <td className="p-3 text-muted-foreground">{user.email}</td>
-                                        <td className="p-3 text-muted-foreground">{user.pivot?.is_default ? 'Sí' : 'No'}</td>
+                                    <tr
+                                        key={user.id}
+                                        className="border-b border-border/60 last:border-0"
+                                    >
+                                        <td className="p-3 text-foreground">
+                                            {user.name}
+                                        </td>
+                                        <td className="p-3 text-muted-foreground">
+                                            {user.email}
+                                        </td>
+                                        <td className="p-3 text-muted-foreground">
+                                            {user.pivot?.is_default
+                                                ? 'Sí'
+                                                : 'No'}
+                                        </td>
                                     </tr>
                                 ))}
                                 {warehouse.users.length === 0 && (
                                     <tr>
-                                        <td colSpan={3} className="p-8 text-center text-sm text-muted-foreground">
+                                        <td
+                                            colSpan={3}
+                                            className="p-8 text-center text-sm text-muted-foreground"
+                                        >
                                             No hay usuarios asignados.
                                         </td>
                                     </tr>
@@ -136,28 +195,50 @@ export default function WarehousesShow({ warehouse, can }: Props) {
 
                     <div className="overflow-x-auto rounded-lg border border-border bg-card">
                         <div className="border-b border-border px-4 py-3">
-                            <h2 className="font-medium text-foreground">Stock de producto terminado</h2>
+                            <h2 className="font-medium text-foreground">
+                                Stock de producto terminado
+                            </h2>
                         </div>
                         <table className="w-full text-sm">
                             <thead className="border-b border-border bg-muted/40">
                                 <tr>
-                                    <th className="p-3 text-left font-medium text-foreground">Código</th>
-                                    <th className="p-3 text-left font-medium text-foreground">Producto</th>
-                                    <th className="p-3 text-left font-medium text-foreground">Cantidad</th>
+                                    <th className="p-3 text-left font-medium text-foreground">
+                                        Código
+                                    </th>
+                                    <th className="p-3 text-left font-medium text-foreground">
+                                        Producto
+                                    </th>
+                                    <th className="p-3 text-left font-medium text-foreground">
+                                        Cantidad
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {warehouse.finished_inventories.map((item) => (
-                                    <tr key={item.id} className="border-b border-border/60 last:border-0">
-                                        <td className="p-3 text-foreground">{item.product?.code ?? '-'}</td>
-                                        <td className="p-3 text-muted-foreground">{item.product?.name ?? '-'}</td>
-                                        <td className="p-3 text-muted-foreground">{item.quantity}</td>
+                                    <tr
+                                        key={item.id}
+                                        className="border-b border-border/60 last:border-0"
+                                    >
+                                        <td className="p-3 text-foreground">
+                                            {item.product?.code ?? '-'}
+                                        </td>
+                                        <td className="p-3 text-muted-foreground">
+                                            {item.product?.name ?? '-'}
+                                        </td>
+                                        <td className="p-3 text-muted-foreground">
+                                            {item.quantity}
+                                        </td>
                                     </tr>
                                 ))}
-                                {warehouse.finished_inventories.length === 0 && (
+                                {warehouse.finished_inventories.length ===
+                                    0 && (
                                     <tr>
-                                        <td colSpan={3} className="p-8 text-center text-sm text-muted-foreground">
-                                            No hay inventario terminado en esta bodega.
+                                        <td
+                                            colSpan={3}
+                                            className="p-8 text-center text-sm text-muted-foreground"
+                                        >
+                                            No hay inventario terminado en esta
+                                            bodega.
                                         </td>
                                     </tr>
                                 )}
@@ -169,4 +250,3 @@ export default function WarehousesShow({ warehouse, can }: Props) {
         </>
     );
 }
-
