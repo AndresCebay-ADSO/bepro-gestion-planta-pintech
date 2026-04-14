@@ -1,9 +1,9 @@
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
+import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TableActions } from '@/components/table-actions';
 import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
 import {
