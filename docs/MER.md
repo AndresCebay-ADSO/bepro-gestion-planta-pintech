@@ -1,6 +1,6 @@
 # MER / Diccionario de Datos - Pintech OS
 
-Documento actualizado al estado real de migraciones consolidadas (abril 2026).
+Documento actualizado al estado real de migraciones consolidadas (abril 2026, rev. variantes SKU).
 
 ## 1. Contexto
 
@@ -91,6 +91,8 @@ Catalogo de productos terminados.
 - `id` BIGINT PK
 - `code` VARCHAR(50) UNIQUE
 - `name` VARCHAR(150)
+- `brand` VARCHAR(100) DEFAULT `BEPRO`
+- `description` TEXT NULL
 - `category_id` BIGINT FK -> `product_categories.id`
 - `unit_of_measure_id` BIGINT FK -> `units_of_measure.id`
 - `current_cost` DECIMAL(12,4) NULL
@@ -101,17 +103,38 @@ Catalogo de productos terminados.
 - `created_at`, `updated_at`
 - `deleted_at`
 
-### 2.7 finished_inventory
+### 2.7 product_variants
+Variantes/SKU comerciales por producto base.
+
+- `id` BIGINT PK
+- `product_id` BIGINT FK -> `products.id`
+- `sku` VARCHAR(80) UNIQUE
+- `unit_of_measure_id` BIGINT FK -> `units_of_measure.id`
+- `presentation_value` DECIMAL(12,4) NULL
+- `presentation_label` VARCHAR(50) NULL
+- `color` VARCHAR(100) NULL
+- `finish` VARCHAR(50) NULL
+- `base_type` VARCHAR(50) NULL
+- `component_system` ENUM(`1K`, `2K`, `KIT`) DEFAULT `1K`
+- `current_cost` DECIMAL(12,4) NULL
+- `current_price` DECIMAL(12,4) NULL
+- `is_active` BOOLEAN DEFAULT true
+- `created_at`, `updated_at`
+- `deleted_at`
+
+### 2.8 finished_inventory
 Stock de producto terminado por bodega.
 
 - `id` BIGINT PK
 - `product_id` BIGINT FK -> `products.id`
+- `product_variant_id` BIGINT FK NULL -> `product_variants.id`
 - `warehouse_id` BIGINT FK -> `warehouses.id`
 - `quantity` DECIMAL(12,4) DEFAULT 0
 - `created_at`, `updated_at`
 - Restriccion UNIQUE (`product_id`, `warehouse_id`)
+- Restriccion UNIQUE (`product_variant_id`, `warehouse_id`)
 
-### 2.8 formulas
+### 2.9 formulas
 Formulas/versiones por producto.
 
 - `id` BIGINT PK
@@ -123,7 +146,7 @@ Formulas/versiones por producto.
 - `created_at`, `updated_at`
 - `deleted_at`
 
-### 2.9 formula_details
+### 2.10 formula_details
 Detalle de materias primas por formula.
 
 - `id` BIGINT PK
@@ -134,7 +157,7 @@ Detalle de materias primas por formula.
 - `created_at`, `updated_at`
 - Restriccion UNIQUE (`formula_id`, `raw_material_id`)
 
-### 2.10 production_orders
+### 2.11 production_orders
 Ordenes de produccion.
 
 - `id` BIGINT PK
@@ -152,7 +175,7 @@ Ordenes de produccion.
 - `created_by` BIGINT FK -> `users.id`
 - `created_at`, `updated_at`
 
-### 2.11 production_order_details
+### 2.12 production_order_details
 Consumo detallado por lote dentro de cada orden.
 
 - `id` BIGINT PK
@@ -164,7 +187,7 @@ Consumo detallado por lote dentro de cada orden.
 - `total_cost` DECIMAL(12,4)
 - `created_at`, `updated_at`
 
-### 2.12 inventory_movements
+### 2.13 inventory_movements
 Movimientos de inventario de materia prima.
 
 - `id` BIGINT PK
@@ -179,11 +202,12 @@ Movimientos de inventario de materia prima.
 - `created_by` BIGINT FK -> `users.id`
 - `created_at`, `updated_at`
 
-### 2.13 finished_inventory_movements
+### 2.14 finished_inventory_movements
 Movimientos de producto terminado.
 
 - `id` BIGINT PK
 - `product_id` BIGINT FK -> `products.id`
+- `product_variant_id` BIGINT FK NULL -> `product_variants.id`
 - `warehouse_id` BIGINT FK -> `warehouses.id`
 - `production_order_id` BIGINT FK NULL -> `production_orders.id`
 - `type` ENUM(`entrada`,`salida`)
@@ -193,7 +217,7 @@ Movimientos de producto terminado.
 - `created_by` BIGINT FK -> `users.id`
 - `created_at`, `updated_at`
 
-### 2.14 production_costs
+### 2.15 production_costs
 Historial de costos calculados.
 
 - `id` BIGINT PK
@@ -204,11 +228,12 @@ Historial de costos calculados.
 - `calculated_at` TIMESTAMP DEFAULT current_timestamp
 - `created_at`, `updated_at`
 
-### 2.15 price_list
+### 2.16 price_list
 Historial de precios.
 
 - `id` BIGINT PK
 - `product_id` BIGINT FK -> `products.id`
+- `product_variant_id` BIGINT FK NULL -> `product_variants.id`
 - `price` DECIMAL(12,4)
 - `cost_at_time` DECIMAL(12,4)
 - `profit_margin` DECIMAL(5,2)
@@ -219,7 +244,7 @@ Historial de precios.
 - `created_by` BIGINT FK NULL -> `users.id`
 - `created_at`, `updated_at`
 
-### 2.16 qr_codes
+### 2.17 qr_codes
 QR por producto para documentos.
 
 - `id` BIGINT PK
@@ -231,7 +256,7 @@ QR por producto para documentos.
 - `created_at`, `updated_at`
 - `deleted_at`
 
-### 2.17 qr_documents
+### 2.18 qr_documents
 Documentos asociados al QR.
 
 - `id` BIGINT PK
@@ -245,7 +270,7 @@ Documentos asociados al QR.
 - `created_at`, `updated_at`
 - `deleted_at`
 
-### 2.18 alerts
+### 2.19 alerts
 Alertas del sistema.
 
 - `id` BIGINT PK
@@ -260,13 +285,14 @@ Alertas del sistema.
 - `updated_by` BIGINT FK NULL -> `users.id`
 - `created_at`, `updated_at`
 
-### 2.19 transfers
+### 2.20 transfers
 Registra el traslado de producto terminado entre bodegas.
 
 - `id` BIGINT PK
 - `source_warehouse_id` BIGINT FK -> `warehouses.id`
 - `destination_warehouse_id` BIGINT FK -> `warehouses.id`
 - `product_id` BIGINT FK -> `products.id`
+- `product_variant_id` BIGINT FK NULL -> `product_variants.id`
 - `quantity` DECIMAL(12,4)
 - `status` ENUM('pendiente', 'enviado', 'recibido', 'cancelado') DEFAULT 'pendiente'
 - `notes` TEXT NULL
@@ -329,6 +355,8 @@ Registro histórico de acciones administrativas y de negocio.
 
 - `products` -> `product_categories`
 - `products` -> `units_of_measure`
+- `products` -> `product_variants`
+- `product_variants` -> `products`, `units_of_measure`
 - `raw_materials` -> `units_of_measure`
 - `formulas` -> `products`
 - `formula_details` -> `formulas`, `raw_materials`, `units_of_measure`
@@ -336,13 +364,14 @@ Registro histórico de acciones administrativas y de negocio.
 - `inventory_movements` -> `raw_materials`, `inventory_batches`, `production_orders`
 - `production_orders` -> `products`, `formulas`, `warehouses`
 - `production_order_details` -> `production_orders`, `inventory_batches`, `raw_materials`
-- `finished_inventory` -> `products`, `warehouses`
-- `finished_inventory_movements` -> `products`, `warehouses`, `production_orders`
+- `finished_inventory` -> `products`, `product_variants`, `warehouses`
+- `finished_inventory_movements` -> `products`, `product_variants`, `warehouses`, `production_orders`
 - `production_costs` -> `products`, `formulas`
-- `price_list` -> `products`, `users`
+- `price_list` -> `products`, `product_variants`, `users`
 - `qr_codes` -> `products`
 - `qr_documents` -> `qr_codes`, `users`
 - `alerts` -> `raw_materials`, `inventory_batches`, `users`
+- `transfers` -> `warehouses`, `products`, `product_variants`, `users`
 
 ## 5. Notas de implementacion
 

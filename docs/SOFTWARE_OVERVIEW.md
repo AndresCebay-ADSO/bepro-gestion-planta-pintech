@@ -1,6 +1,6 @@
 # Pintech OS - Visión General del Software
 
-Este documento proporciona una descripción exhaustiva del sistema Pintech OS, su arquitectura, funcionalidades implementadas y estado actual del desarrollo (Versión 1.2 - Abril 2026).
+Este documento proporciona una descripción exhaustiva del sistema Pintech OS, su arquitectura, funcionalidades implementadas y estado actual del desarrollo (Versión 1.3 - Abril 2026).
 
 ---
 
@@ -41,7 +41,13 @@ Pintech OS está construido bajo una arquitectura moderna de Aplicación de Pág
 - **Órdenes de Producción**: Seguimiento del ciclo de vida (Pendiente -> En Proceso -> Finalizada).
 - **Cálculo de Costos**: Integración con precios de materias primas para determinación de márgenes.
 
-### 2.4 Sistema de Auditoría (Nuevo v1.2)
+### 2.4 Catálogo de Productos (Variantes SKU)
+- **Producto Base + Variantes**: Se separa el producto base de sus referencias comerciales (SKU).
+- **SKU por Presentación**: Soporte para presentación, color, acabado, tipo de base y sistema de componentes (`1K`, `2K`, `KIT`).
+- **Compatibilidad Progresiva**: Flujos operativos permiten transición gradual, manteniendo `product_id` y agregando `product_variant_id`.
+- **Operación Variante-Primero**: Inventario terminado, traslados y precios soportan carga directa por variante.
+
+### 2.5 Sistema de Auditoría (Nuevo v1.2)
 - **Trazabilidad Total**: Registro de quién, cuándo y qué cambió en modelos críticos (`User`, `RawMaterial`, `Warehouse`).
 - **Registro de Seguridad**: Auditoría de inicios de sesión fallidos y cambios de roles.
 - **Políticas de Retención**: Limpieza automática de registros mayores a 180 días para optimización de base de datos.
@@ -71,5 +77,5 @@ Pintech OS está construido bajo una arquitectura moderna de Aplicación de Pág
 ## 5. Contacto y Soporte
 
 Desarrollado para **Pintech Colombia S.A.S**.  
-*Versión del Documento: 1.2*  
-*Fecha de última actualización: 10 de Abril, 2026*
+*Versión del Documento: 1.3*  
+*Fecha de última actualización: 14 de Abril, 2026*
