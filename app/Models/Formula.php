@@ -22,8 +22,6 @@ class Formula extends Model
             ->dontSubmitEmptyLogs();
     }
 
-    protected $table = 'formulas';
-
     protected $fillable = [
         'product_id',
         'version',

@@ -24,7 +24,6 @@ class RawMaterial extends Model
             ->dontSubmitEmptyLogs();
     }
 
-    protected $table = 'raw_materials';
 
     protected $fillable = [
         'code',

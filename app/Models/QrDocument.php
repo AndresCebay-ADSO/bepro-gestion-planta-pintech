@@ -11,8 +11,6 @@ class QrDocument extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'qr_documents';
-
     protected $fillable = [
         'qr_code_id',
         'document_type',

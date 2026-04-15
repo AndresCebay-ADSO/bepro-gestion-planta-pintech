@@ -10,13 +10,13 @@ class ProductionOrderDetail extends Model
 {
     use HasFactory;
 
-    protected $table = 'production_order_details';
 
     protected $fillable = [
         'production_order_id',
         'batch_id',
         'raw_material_id',
-        'quantity',
+        'planned_quantity',
+        'actual_quantity',
         'unit_cost',
         'total_cost',
     ];
@@ -24,7 +24,8 @@ class ProductionOrderDetail extends Model
     protected function casts(): array
     {
         return [
-            'quantity' => 'decimal:4',
+            'planned_quantity' => 'decimal:4',
+            'actual_quantity' => 'decimal:4',
             'unit_cost' => 'decimal:4',
             'total_cost' => 'decimal:4',
         ];

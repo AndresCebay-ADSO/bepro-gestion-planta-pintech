@@ -11,8 +11,6 @@ class UnitOfMeasure extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'units_of_measure';
-
     protected $fillable = [
         'code',
         'name',

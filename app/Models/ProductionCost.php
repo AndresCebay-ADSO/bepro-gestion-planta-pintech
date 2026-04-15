@@ -10,8 +10,6 @@ class ProductionCost extends Model
 {
     use HasFactory;
 
-    protected $table = 'production_costs';
-
     protected $fillable = [
         'product_id',
         'formula_id',

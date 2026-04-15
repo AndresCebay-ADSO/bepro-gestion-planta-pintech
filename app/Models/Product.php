@@ -25,7 +25,6 @@ class Product extends Model
             ->dontSubmitEmptyLogs();
     }
 
-    protected $table = 'products';
 
     protected $fillable = [
         'code',

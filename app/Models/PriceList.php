@@ -23,7 +23,7 @@ class PriceList extends Model
             }
 
             if ($priceList->product_variant_id) {
-                $variant = $priceList->productVariant ?? ProductVariant::find($priceList->product_variant_id);
+                $variant = $priceList->loadMissing('productVariant')->productVariant;
 
                 if (! $variant) {
                     throw ValidationException::withMessages([
@@ -51,8 +51,6 @@ class PriceList extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
-
-    protected $table = 'price_list';
 
     protected $fillable = [
         'product_id',

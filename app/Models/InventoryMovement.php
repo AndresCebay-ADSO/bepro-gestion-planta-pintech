@@ -20,8 +20,6 @@ class InventoryMovement extends Model
             ->dontSubmitEmptyLogs();
     }
 
-    protected $table = 'inventory_movements';
-
     protected $fillable = [
         'raw_material_id',
         'warehouse_id',

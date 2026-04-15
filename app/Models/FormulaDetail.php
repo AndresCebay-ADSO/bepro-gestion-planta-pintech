@@ -10,8 +10,6 @@ class FormulaDetail extends Model
 {
     use HasFactory;
 
-    protected $table = 'formula_details';
-
     protected $fillable = [
         'formula_id',
         'raw_material_id',

@@ -52,8 +52,6 @@ class FinishedInventory extends Model
             ->dontSubmitEmptyLogs();
     }
 
-    protected $table = 'finished_inventory';
-
     protected $fillable = [
         'product_id',
         'product_variant_id',

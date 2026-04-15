@@ -21,8 +21,6 @@ class InventoryBatch extends Model
             ->dontSubmitEmptyLogs();
     }
 
-    protected $table = 'inventory_batches';
-
     protected $fillable = [
         'raw_material_id',
         'warehouse_id',

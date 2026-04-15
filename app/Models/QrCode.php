@@ -12,8 +12,6 @@ class QrCode extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'qr_codes';
-
     protected $fillable = [
         'product_id',
         'token',

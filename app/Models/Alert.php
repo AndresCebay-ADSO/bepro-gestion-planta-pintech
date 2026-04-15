@@ -10,8 +10,6 @@ class Alert extends Model
 {
     use HasFactory;
 
-    protected $table = 'alerts';
-
     protected $fillable = [
         'type',
         'raw_material_id',
