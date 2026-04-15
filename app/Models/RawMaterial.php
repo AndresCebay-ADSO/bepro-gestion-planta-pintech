@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,8 +12,38 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $code
+ * @property int $unit_of_measure_id
+ * @property float $current_price
+ * @property float $previous_price
+ * @property float $minimum_stock
+ * @property int $alert_days_before_expiry
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ *
+ * @property-read \App\Models\UnitOfMeasure $unitOfMeasure
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\InventoryBatch[] $inventoryBatches
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\FormulaDetail[] $formulaDetails
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\InventoryMovement[] $inventoryMovements
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ProductionOrderDetail[] $productionOrderDetails
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Alert[] $alerts
+ */
+#[Fillable([
+    'code',
+    'unit_of_measure_id',
+    'current_price',
+    'previous_price',
+    'minimum_stock',
+    'alert_days_before_expiry',
+    'is_active',
+])]
 class RawMaterial extends Model
 {
+    /** @use HasFactory<\Database\Factories\RawMaterialFactory> */
     use HasFactory, LogsActivity, SoftDeletes;
 
     public function getActivitylogOptions(): LogOptions
@@ -24,17 +56,6 @@ class RawMaterial extends Model
             ->dontSubmitEmptyLogs();
     }
 
-
-    protected $fillable = [
-        'code',
-        'unit_of_measure_id',
-        'current_price',
-        'previous_price',
-        'minimum_stock',
-        'alert_days_before_expiry',
-        'is_active',
-    ];
-
     protected function casts(): array
     {
         return [
@@ -44,6 +65,14 @@ class RawMaterial extends Model
             'alert_days_before_expiry' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Scope a query to only include active materials.
+     */
+    public function scopeActive(Builder $query): void
+    {
+        $query->where('is_active', true);
     }
 
     public function unitOfMeasure(): BelongsTo

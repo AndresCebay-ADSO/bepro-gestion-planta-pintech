@@ -2,62 +2,47 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ValidatesProductVariant;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Validation\ValidationException;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property int $product_id
+ * @property int|null $product_variant_id
+ * @property int $warehouse_id
+ * @property float $quantity
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ *
+ * @property-read \App\Models\Product $product
+ * @property-read \App\Models\ProductVariant|null $productVariant
+ * @property-read \App\Models\Warehouse $warehouse
+ */
+#[Fillable([
+    'product_id',
+    'product_variant_id',
+    'warehouse_id',
+    'quantity',
+])]
 class FinishedInventory extends Model
 {
-    use HasFactory, LogsActivity;
-
-    protected static function booted(): void
-    {
-        static::saving(static function (FinishedInventory $inventory): void {
-            if (! $inventory->product_id && ! $inventory->product_variant_id) {
-                throw ValidationException::withMessages([
-                    'product_variant_id' => __('Debe seleccionar un producto o una variante de producto.'),
-                ]);
-            }
-
-            if ($inventory->product_variant_id) {
-                $variant = $inventory->productVariant ?? ProductVariant::find($inventory->product_variant_id);
-
-                if (! $variant) {
-                    throw ValidationException::withMessages([
-                        'product_variant_id' => __('La variante de producto seleccionada no existe.'),
-                    ]);
-                }
-
-                if (! $inventory->product_id) {
-                    $inventory->product_id = $variant->product_id;
-                }
-
-                if ((int) $inventory->product_id !== (int) $variant->product_id) {
-                    throw ValidationException::withMessages([
-                        'product_id' => __('El producto no corresponde a la variante seleccionada.'),
-                    ]);
-                }
-            }
-        });
-    }
+    /** @use HasFactory<\Database\Factories\FinishedInventoryFactory> */
+    use HasFactory, LogsActivity, ValidatesProductVariant;
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
+            ->useLogName('inventario_terminado')
+            ->setDescriptionForEvent(fn (string $eventName) => "Inventario terminado {$eventName}")
             ->logOnly(['product_id', 'product_variant_id', 'warehouse_id', 'quantity'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
-
-    protected $fillable = [
-        'product_id',
-        'product_variant_id',
-        'warehouse_id',
-        'quantity',
-    ];
 
     protected function casts(): array
     {

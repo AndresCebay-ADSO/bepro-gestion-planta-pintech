@@ -2,71 +2,65 @@
 
 namespace App\Models;
 
+use App\Enums\InventoryMovementType;
+use App\Models\Concerns\ValidatesProductVariant;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Validation\ValidationException;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property int $product_id
+ * @property int|null $product_variant_id
+ * @property int $warehouse_id
+ * @property int|null $production_order_id
+ * @property InventoryMovementType $type
+ * @property float $quantity
+ * @property \Illuminate\Support\Carbon $movement_date
+ * @property string|null $notes
+ * @property int $created_by
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ *
+ * @property-read \App\Models\Product $product
+ * @property-read \App\Models\ProductVariant|null $productVariant
+ * @property-read \App\Models\Warehouse $warehouse
+ * @property-read \App\Models\ProductionOrder|null $productionOrder
+ * @property-read \App\Models\User $createdBy
+ */
+#[Fillable([
+    'product_id',
+    'product_variant_id',
+    'warehouse_id',
+    'production_order_id',
+    'type',
+    'quantity',
+    'movement_date',
+    'notes',
+    'created_by',
+])]
 class FinishedInventoryMovement extends Model
 {
-    use HasFactory, LogsActivity;
-
-    protected static function booted(): void
-    {
-        static::saving(static function (FinishedInventoryMovement $movement): void {
-            if (! $movement->product_id && ! $movement->product_variant_id) {
-                throw ValidationException::withMessages([
-                    'product_variant_id' => __('Debe seleccionar un producto o una variante de producto.'),
-                ]);
-            }
-
-            if ($movement->product_variant_id) {
-                $variant = $movement->productVariant ?? ProductVariant::find($movement->product_variant_id);
-
-                if (! $variant) {
-                    throw ValidationException::withMessages([
-                        'product_variant_id' => __('La variante de producto seleccionada no existe.'),
-                    ]);
-                }
-
-                if (! $movement->product_id) {
-                    $movement->product_id = $variant->product_id;
-                }
-
-                if ((int) $movement->product_id !== (int) $variant->product_id) {
-                    throw ValidationException::withMessages([
-                        'product_id' => __('El producto no corresponde a la variante seleccionada.'),
-                    ]);
-                }
-            }
-        });
-    }
+    /** @use HasFactory<\Database\Factories\FinishedInventoryMovementFactory> */
+    use HasFactory, LogsActivity, ValidatesProductVariant;
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
+            ->useLogName('movimientos_inventario_terminado')
+            ->setDescriptionForEvent(fn (string $eventName) => "Movimiento inv. terminado {$eventName}")
             ->logOnly(['product_id', 'product_variant_id', 'warehouse_id', 'type', 'quantity', 'production_order_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
 
-    protected $fillable = [
-        'product_id',
-        'product_variant_id',
-        'warehouse_id',
-        'production_order_id',
-        'type',
-        'quantity',
-        'movement_date',
-        'notes',
-        'created_by',
-    ];
-
     protected function casts(): array
     {
         return [
+            'type' => InventoryMovementType::class,
             'quantity' => 'decimal:4',
             'movement_date' => 'date',
         ];
