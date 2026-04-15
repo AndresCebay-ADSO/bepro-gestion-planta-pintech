@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('name', 150);
             $table->string('brand', 100)->default('BEPRO');
             $table->text('description')->nullable();
-            $table->foreignId('category_id')->constrained('product_categories')->onDelete('restrict');
-            $table->foreignId('unit_of_measure_id')->constrained('units_of_measure')->restrictOnDelete();
+            $table->foreignId('category_id')->constrained('product_categories')->restrictOnDelete();
+            $table->foreignId('unit_of_measure_id')->constrained('unit_of_measures')->restrictOnDelete();
             $table->decimal('current_cost', 12, 4)->nullable();
             $table->decimal('profit_margin', 5, 2)->nullable();
             $table->decimal('current_price', 12, 4)->nullable();
@@ -27,7 +27,6 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index('code');
             $table->index('is_active');
             $table->index('category_id');
         });

@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('production_orders', function (Blueprint $table) {
             $table->id();
             $table->string('order_number', 20)->unique();
-            $table->foreignId('product_id')->constrained('products')->onDelete('restrict');
-            $table->foreignId('formula_id')->constrained('formulas')->onDelete('restrict');
-            $table->foreignId('warehouse_id')->constrained('warehouses')->onDelete('restrict');
+            $table->foreignId('product_id')->constrained('products')->restrictOnDelete();
+            $table->foreignId('formula_id')->constrained('formulas')->restrictOnDelete();
+            $table->foreignId('warehouse_id')->constrained('warehouses')->restrictOnDelete();
             $table->decimal('quantity', 12, 4);
             $table->decimal('actual_quantity', 12, 4)->nullable();
             $table->decimal('yield_percentage', 5, 2)->nullable();
@@ -24,10 +24,9 @@ return new class extends Migration
             $table->date('planned_date');
             $table->date('completion_date')->nullable();
             $table->text('notes')->nullable();
-            $table->foreignId('created_by')->constrained('users')->onDelete('restrict');
+            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
             $table->timestamps();
 
-            $table->index('order_number');
             $table->index('status');
             $table->index(['product_id', 'status']);
         });

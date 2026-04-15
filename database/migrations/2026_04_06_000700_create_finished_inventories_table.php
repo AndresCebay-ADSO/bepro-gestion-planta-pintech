@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('finished_inventories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
-            $table->foreignId('warehouse_id')->constrained('warehouses')->onDelete('cascade');
+            $table->foreignId('warehouse_id')->constrained('warehouses')->cascadeOnDelete();
             $table->decimal('quantity', 12, 4)->default(0);
             $table->timestamps();
 

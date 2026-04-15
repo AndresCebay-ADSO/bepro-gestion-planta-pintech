@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('transfers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('source_warehouse_id')->constrained('warehouses')->onDelete('restrict');
-            $table->foreignId('destination_warehouse_id')->constrained('warehouses')->onDelete('restrict');
-            $table->foreignId('product_id')->constrained('products')->onDelete('restrict');
+            $table->foreignId('source_warehouse_id')->constrained('warehouses')->restrictOnDelete();
+            $table->foreignId('destination_warehouse_id')->constrained('warehouses')->restrictOnDelete();
+            $table->foreignId('product_id')->constrained('products')->restrictOnDelete();
             $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
             $table->decimal('quantity', 12, 4);
             $table->enum('status', ['pending', 'sent', 'received', 'cancelled'])->default('pending');
             $table->text('notes')->nullable();
-            $table->foreignId('created_by')->constrained('users')->onDelete('restrict');
+            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
             $table->timestamp('sent_at')->nullable();
             $table->timestamp('received_at')->nullable();
             $table->timestamps();

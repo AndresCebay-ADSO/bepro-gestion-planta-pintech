@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('inventory_batches', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('raw_material_id')->constrained('raw_materials')->onDelete('restrict');
-            $table->foreignId('warehouse_id')->constrained('warehouses')->onDelete('restrict');
+            $table->foreignId('raw_material_id')->constrained('raw_materials')->restrictOnDelete();
+            $table->foreignId('warehouse_id')->constrained('warehouses')->restrictOnDelete();
             $table->decimal('initial_quantity', 12, 4);
             $table->decimal('remaining_quantity', 12, 4);
             $table->decimal('unit_price', 12, 4);

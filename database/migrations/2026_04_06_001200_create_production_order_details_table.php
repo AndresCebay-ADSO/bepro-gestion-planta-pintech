@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('production_order_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('production_order_id')->constrained('production_orders')->onDelete('cascade');
-            $table->foreignId('batch_id')->constrained('inventory_batches')->onDelete('restrict');
-            $table->foreignId('raw_material_id')->constrained('raw_materials')->onDelete('restrict');
+            $table->foreignId('production_order_id')->constrained('production_orders')->cascadeOnDelete();
+            $table->foreignId('batch_id')->constrained('inventory_batches')->restrictOnDelete();
+            $table->foreignId('raw_material_id')->constrained('raw_materials')->restrictOnDelete();
             $table->decimal('planned_quantity', 12, 4); //lo que se planea consumir
             $table->decimal('actual_quantity', 12, 4)->nullable(); //lo que se consume realmente
             $table->decimal('unit_cost', 12, 4);

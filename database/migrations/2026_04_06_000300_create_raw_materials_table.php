@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('raw_materials', function (Blueprint $table) {
             $table->id();
             $table->string('code', 50)->unique();
-            $table->foreignId('unit_of_measure_id')->constrained('units_of_measure')->restrictOnDelete();
+            $table->foreignId('unit_of_measure_id')->constrained('unit_of_measures')->restrictOnDelete();
             $table->decimal('current_price', 18, 4);
             $table->decimal('previous_price', 18, 4)->nullable();
             $table->decimal('minimum_stock', 12, 4)->default(0);

@@ -13,16 +13,16 @@ return new class extends Migration
     {
         Schema::create('inventory_movements', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('raw_material_id')->constrained('raw_materials')->onDelete('restrict');
-            $table->foreignId('warehouse_id')->constrained('warehouses')->onDelete('restrict');
-            $table->foreignId('batch_id')->nullable()->constrained('inventory_batches')->onDelete('restrict');
+            $table->foreignId('raw_material_id')->constrained('raw_materials')->restrictOnDelete();
+            $table->foreignId('warehouse_id')->constrained('warehouses')->restrictOnDelete();
+            $table->foreignId('batch_id')->nullable()->constrained('inventory_batches')->restrictOnDelete();
             $table->foreignId('production_order_id')->nullable()->constrained('production_orders')->nullOnDelete();
             $table->enum('type', ['entry', 'exit']);
             $table->decimal('quantity', 12, 4);
             $table->decimal('cost_price', 12, 4);
             $table->date('movement_date');
             $table->text('notes')->nullable();
-            $table->foreignId('created_by')->constrained('users')->onDelete('restrict');
+            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
             $table->timestamps();
 
             $table->index(['raw_material_id', 'movement_date']);
