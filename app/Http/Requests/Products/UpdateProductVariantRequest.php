@@ -23,7 +23,7 @@ class UpdateProductVariantRequest extends FormRequest
                 'bail',
                 'required',
                 'integer',
-                Rule::exists('units_of_measure', 'id')->whereNull('deleted_at'),
+                Rule::exists('unit_of_measures', 'id')->whereNull('deleted_at'),
             ],
             'presentation_value' => ['nullable', 'numeric', 'gt:0', 'decimal:0,4'],
             'presentation_label' => ['nullable', 'string', 'max:50'],
