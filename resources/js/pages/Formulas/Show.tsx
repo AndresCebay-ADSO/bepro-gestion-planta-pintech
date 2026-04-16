@@ -196,7 +196,7 @@ export default function FormulasShow({ formula, can }: Props) {
                                         {detail.raw_material?.code ?? '-'}
                                     </td>
                                     <td className="p-4 text-right text-foreground tabular-nums">
-                                        <FormattedNumber value={detail.quantity} maxDecimals={4} trimTrailingZeros />
+                                        <FormattedNumber value={detail.quantity} maxDecimals={2} />
                                     </td>
                                     <td className="p-4 text-muted-foreground">
                                         {detail.unit_of_measure

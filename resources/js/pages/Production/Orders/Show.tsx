@@ -71,7 +71,7 @@ export default function ProductionOrderShow({ order }: Props) {
                             </Badge>
                         </div>
                         <p className="text-muted-foreground mt-1">
-                            {order.product?.name} • Planta Cali • <FormattedNumber value={order.quantity} maxDecimals={4} trimTrailingZeros /> L Proyectados
+                            {order.product?.name} • Planta Cali • <FormattedNumber value={order.quantity} maxDecimals={2} /> L Proyectados
                         </p>
                     </div>
                     {isCompleted && (
@@ -143,7 +143,7 @@ export default function ProductionOrderShow({ order }: Props) {
                                                 {data.ingredients.map((ing: any, idx: number) => (
                                                     <tr key={ing.id} className="border-b last:border-0">
                                                         <td className="p-3 font-medium">{ing.raw_material_name}</td>
-                                                        <td className="p-3 text-right text-muted-foreground"><FormattedNumber value={ing.planned_quantity} maxDecimals={4} trimTrailingZeros /></td>
+                                                        <td className="p-3 text-right text-muted-foreground"><FormattedNumber value={ing.planned_quantity} maxDecimals={2} /></td>
                                                         <td className="p-3">
                                                             <Input
                                                                 className="h-8 text-right"
@@ -180,7 +180,7 @@ export default function ProductionOrderShow({ order }: Props) {
                                                 {data.packaging.map((pack: any, idx: number) => (
                                                     <tr key={pack.id} className="border-b last:border-0">
                                                         <td className="p-3 font-medium">{pack.presentation}</td>
-                                                        <td className="p-3 text-right text-muted-foreground"><FormattedNumber value={pack.planned_units} maxDecimals={0} trimTrailingZeros /></td>
+                                                        <td className="p-3 text-right text-muted-foreground"><FormattedNumber value={pack.planned_units} maxDecimals={0} /></td>
                                                         <td className="p-3">
                                                             <Input
                                                                 className="h-8 text-right"

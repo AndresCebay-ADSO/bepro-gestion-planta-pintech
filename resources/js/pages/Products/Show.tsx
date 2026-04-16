@@ -1,6 +1,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
+import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -395,7 +396,7 @@ export default function ProductsShow({ product, can, units }: Props) {
                                         <Badge variant="secondary">{variant.component_system}</Badge>
                                     </td>
                                     <td className="p-4 text-muted-foreground">
-                                        {variant.current_price ? <FormattedNumber value={variant.current_price} currency maxDecimals={2} trimTrailingZeros /> : '-'}
+                                        {variant.current_price ? <FormattedNumber value={variant.current_price} currency maxDecimals={2} /> : '-'}
                                     </td>
                                     <td className="p-4">
                                         <Badge variant={variant.is_active ? 'default' : 'secondary'}>
@@ -491,7 +492,7 @@ export default function ProductsShow({ product, can, units }: Props) {
                                         {formula.created_by?.name ?? '-'}
                                     </td>
                                     <td className="p-4 text-xs text-muted-foreground">
-                                        {formula.created_at}
+                                        <FormattedDate value={formula.created_at} format="datetime" />
                                     </td>
                                     <td className="p-4 text-right">
                                         <Button

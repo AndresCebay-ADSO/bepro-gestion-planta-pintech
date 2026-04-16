@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 
+import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 
 type Props = {
@@ -21,8 +22,8 @@ export default function InventoryMovementsShow({ movement }: Props) {
                     Movimiento #{movement.id}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                    {movement.type} - <FormattedNumber value={movement.quantity} maxDecimals={4} trimTrailingZeros /> -{' '}
-                    {movement.movement_date}
+                    {movement.type} - <FormattedNumber value={movement.quantity} maxDecimals={2} /> -{' '}
+                    <FormattedDate value={movement.movement_date} format="date" />
                 </p>
             </div>
         </>

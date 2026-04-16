@@ -188,12 +188,14 @@ export default function RawMaterialsIndex({
                                         <FormattedNumber
                                             value={item.current_price}
                                             currency
+                                            maxDecimals={2}
                                         />
                                     </td>
 
                                     <td className="p-3 text-right">
                                         <FormattedNumber
                                             value={item.minimum_stock}
+                                            maxDecimals={2}
                                         />
                                     </td>
 
