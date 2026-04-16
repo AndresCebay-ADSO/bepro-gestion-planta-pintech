@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\RawMaterials\StoreRawMaterialRequest;
 use App\Http\Requests\RawMaterials\UpdateRawMaterialRequest;
 use App\Models\RawMaterial;
+use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,7 +24,7 @@ class RawMaterialController extends Controller
         $user = $request->user();
 
         $rawMaterials = RawMaterial::query()
-            ->with(['unitOfMeasure:id,name,symbol'])
+            ->with(['category:id,name', 'unitOfMeasure:id,name,symbol'])
             ->when($search !== '', fn ($query) => $query->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"]))
             ->latest('id')
             ->paginate(15)
@@ -37,6 +38,10 @@ class RawMaterialController extends Controller
                     'minimum_stock' => $rawMaterial->minimum_stock,
                     'alert_days_before_expiry' => $rawMaterial->alert_days_before_expiry,
                     'is_active' => $rawMaterial->is_active,
+                    'category' => $rawMaterial->category ? [
+                        'id' => $rawMaterial->category->id,
+                        'name' => $rawMaterial->category->name,
+                    ] : null,
                     'unit_of_measure' => $rawMaterial->unitOfMeasure ? [
                         'id' => $rawMaterial->unitOfMeasure->id,
                         'name' => $rawMaterial->unitOfMeasure->name,
@@ -66,6 +71,11 @@ class RawMaterialController extends Controller
         $this->authorize('create', RawMaterial::class);
 
         return Inertia::render('Inventory/RawMaterials/Create', [
+            'categories' => RawMaterialCategory::query()
+                ->select('id', 'name', 'code')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(),
             'units' => UnitOfMeasure::query()
                 ->select('id', 'name', 'symbol')
                 ->where('is_active', true)
@@ -91,6 +101,7 @@ class RawMaterialController extends Controller
 
         return Inertia::render('Inventory/RawMaterials/Show', [
             'rawMaterial' => $rawMaterial->load([
+                'category:id,name,code',
                 'unitOfMeasure:id,name,symbol',
                 'inventoryBatches' => fn ($query) => $query
                     ->select(
@@ -120,6 +131,11 @@ class RawMaterialController extends Controller
 
         return Inertia::render('Inventory/RawMaterials/Edit', [
             'rawMaterial' => $rawMaterial,
+            'categories' => RawMaterialCategory::query()
+                ->select('id', 'name', 'code')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(),
             'units' => UnitOfMeasure::query()
                 ->select('id', 'name', 'symbol')
                 ->where('is_active', true)

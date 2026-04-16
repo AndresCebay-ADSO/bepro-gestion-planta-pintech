@@ -42,6 +42,8 @@ interface FormattedNumberProps {
     size?: 'sm' | 'base' | 'lg';
     /** Mostrar el valor en negrita */
     bold?: boolean;
+    /** Eliminar ceros al final de decimales (útil para vistas de detalle) */
+    trimTrailingZeros?: boolean;
 }
 
 export function FormattedNumber({
@@ -55,6 +57,7 @@ export function FormattedNumber({
     colorize = false,
     size = 'base',
     bold = false,
+    trimTrailingZeros = false,
 }: FormattedNumberProps) {
     // Determinar la función de formateo
     let formatted: string;
@@ -66,9 +69,10 @@ export function FormattedNumber({
         formatted = formatCurrency(value, currencySymbol, {
             maxDecimals,
             emptyValue,
+            trimTrailingZeros,
         });
     } else {
-        formatted = formatQuantity(value, { maxDecimals, emptyValue });
+        formatted = formatQuantity(value, { maxDecimals, emptyValue, trimTrailingZeros });
     }
 
     // Determinar clases de alineación

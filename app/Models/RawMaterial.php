@@ -15,6 +15,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 /**
  * @property int $id
  * @property string $code
+ * @property int|null $category_id
  * @property int $unit_of_measure_id
  * @property float $current_price
  * @property float $previous_price
@@ -25,6 +26,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
  *
+ * @property-read \App\Models\RawMaterialCategory|null $category
  * @property-read \App\Models\UnitOfMeasure $unitOfMeasure
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\InventoryBatch[] $inventoryBatches
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\FormulaDetail[] $formulaDetails
@@ -34,6 +36,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  */
 #[Fillable([
     'code',
+    'category_id',
     'unit_of_measure_id',
     'current_price',
     'previous_price',
@@ -73,6 +76,11 @@ class RawMaterial extends Model
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(RawMaterialCategory::class, 'category_id');
     }
 
     public function unitOfMeasure(): BelongsTo

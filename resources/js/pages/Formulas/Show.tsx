@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 
+import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { index as formulasIndex } from '@/routes/formulas';
@@ -195,7 +196,7 @@ export default function FormulasShow({ formula, can }: Props) {
                                         {detail.raw_material?.code ?? '-'}
                                     </td>
                                     <td className="p-4 text-right text-foreground tabular-nums">
-                                        {detail.quantity}
+                                        <FormattedNumber value={detail.quantity} maxDecimals={4} trimTrailingZeros />
                                     </td>
                                     <td className="p-4 text-muted-foreground">
                                         {detail.unit_of_measure

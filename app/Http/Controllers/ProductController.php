@@ -91,6 +91,11 @@ class ProductController extends Controller
                 'update' => Gate::allows('update', $product),
                 'delete' => Gate::allows('delete', $product),
             ],
+            'units' => UnitOfMeasure::query()
+                ->select('id', 'name', 'symbol')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 

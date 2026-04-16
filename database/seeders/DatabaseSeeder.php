@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             UnitsOfMeasureSeeder::class,
             ProductCategorySeeder::class,
             RawMaterialSeeder::class,
+            ProductSeeder::class,
+            RawMaterialCategorySeeder::class,
         ]);
 
         // Seeders de roles y usuarios

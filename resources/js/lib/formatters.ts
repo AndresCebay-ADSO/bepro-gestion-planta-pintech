@@ -13,6 +13,8 @@ export interface FormatNumberOptions {
     maxDecimals?: number;
     alwaysShowCurrency?: boolean;
     emptyValue?: string;
+    /** Eliminar ceros al final (útil para vistas de detalle) */
+    trimTrailingZeros?: boolean;
 }
 
 /**
@@ -34,6 +36,27 @@ function getFormatter(maxDecimals: number): Intl.NumberFormat {
     }
 
     return formatterCache.get(key)!;
+}
+
+/**
+ * Elimina ceros al final de la parte decimal y la coma si no queda decimal
+ * Ej: "100,9300" → "100,93", "100,0000" → "100"
+ */
+function trimTrailingZerosFromFormatted(formatted: string): string {
+    // Si no tiene coma, no hay decimales que procesar
+    if (!formatted.includes(',')) {
+        return formatted;
+    }
+
+    // Eliminar ceros al final
+    let result = formatted.replace(/0+$/, '');
+
+    // Si terminó en coma, eliminar la coma también
+    if (result.endsWith(',')) {
+        result = result.slice(0, -1);
+    }
+
+    return result;
 }
 
 /**
@@ -85,6 +108,7 @@ export function formatNumber(
         maxDecimals = 4,
         alwaysShowCurrency = false,
         emptyValue = '-',
+        trimTrailingZeros = false,
     } = options;
 
     // Vacíos
@@ -99,7 +123,12 @@ export function formatNumber(
     }
 
     const formatter = getFormatter(maxDecimals);
-    const formatted = formatter.format(Math.abs(numValue));
+    let formatted = formatter.format(Math.abs(numValue));
+
+    // Eliminar ceros al final si está habilitado (para vistas de detalle)
+    if (trimTrailingZeros) {
+        formatted = trimTrailingZerosFromFormatted(formatted);
+    }
 
     // Manejo correcto de negativos
     if (currency) {

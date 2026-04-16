@@ -129,6 +129,8 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                             <FormattedNumber
                                 value={rawMaterial.current_price}
                                 currency
+                                maxDecimals={2}
+                                trimTrailingZeros
                             />
                         }
                     />
@@ -139,6 +141,8 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                             <FormattedNumber
                                 value={rawMaterial.previous_price}
                                 currency
+                                maxDecimals={2}
+                                trimTrailingZeros
                                 emptyValue="-"
                             />
                         }
@@ -149,6 +153,8 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                         value={
                             <FormattedNumber
                                 value={rawMaterial.minimum_stock}
+                                maxDecimals={4}
+                                trimTrailingZeros
                             />
                         }
                     />
@@ -206,12 +212,16 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                                     <td className="p-3 text-right">
                                         <FormattedNumber
                                             value={batch.initial_quantity}
+                                            maxDecimals={4}
+                                            trimTrailingZeros
                                         />
                                     </td>
 
                                     <td className="p-3 text-right">
                                         <FormattedNumber
                                             value={batch.remaining_quantity}
+                                            maxDecimals={4}
+                                            trimTrailingZeros
                                             bold
                                             colorize
                                         />
