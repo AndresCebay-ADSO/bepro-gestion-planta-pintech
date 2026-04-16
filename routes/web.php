@@ -10,6 +10,7 @@ use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductionController;
+use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -73,10 +74,15 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
     Route::resource('inventory-movements', InventoryMovementController::class);
 });
 
-// ADMIN + PRODUCCIÓN: Gestión de fórmulas
+// ADMIN + PRODUCCIÓN: Gestión de fórmulas y órdenes
 Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
     Route::resource('formulas', FormulaController::class)->except(['edit', 'update']);
     Route::post('formulas/{formula}/activate', [FormulaController::class, 'activate'])->name('formulas.activate');
+    
+    // Órdenes de Producción
+    Route::resource('production-orders', ProductionOrderController::class);
+    Route::post('production-orders/{order}/complete', [ProductionOrderController::class, 'complete'])->name('production-orders.complete');
+
     Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
     Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
     Route::delete('products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');

@@ -32,6 +32,8 @@ class ProductionOrderPackagingPlan extends Model
     /** @use HasFactory<\Database\Factories\ProductionOrderPackagingPlanFactory> */
     use HasFactory;
 
+    protected $table = 'production_order_packaging_plan';
+
     protected function casts(): array
     {
         return [
