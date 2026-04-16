@@ -15,11 +15,11 @@ return new class extends Migration
             // Agitación y Mezcla
             $table->dateTime('agitation_start_time')->nullable()->after('status');
             $table->dateTime('agitation_end_time')->nullable()->after('agitation_start_time');
-            
+
             // Calidad
             $table->decimal('viscosity_ku', 8, 2)->nullable()->after('agitation_end_time')->comment('Viscosidad en unidades Krebs (KU)');
             $table->decimal('grinding_hg', 8, 2)->nullable()->after('viscosity_ku')->comment('Molienda en unidades Hegman (HG)');
-            
+
             // Operación y Cierre
             $table->string('responsible_name')->nullable()->after('grinding_hg');
             $table->dateTime('packaging_start_time')->nullable()->after('responsible_name');
