@@ -15,10 +15,8 @@ use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
-use Spatie\Permission\Models\Role;
-use App\Services\ProductionOrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Validation\ValidationException;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -33,7 +31,7 @@ beforeEach(function () {
         'name' => 'Planta Cali',
         'city' => 'Cali',
         'type' => 'factory',
-        'is_active' => true
+        'is_active' => true,
     ]);
 
     $category = ProductCategory::create(['name' => 'General']);
@@ -69,7 +67,7 @@ beforeEach(function () {
         'quantity' => 0.5,
         'unit_of_measure_id' => $uom->id,
     ]);
-    
+
     ProductVariant::create([
         'product_id' => $product->id,
         'sku' => 'VAR-001',
@@ -157,10 +155,10 @@ test('it completes order and updates inventory', function () {
         'grinding_hg' => 7,
         'responsible_name' => 'Operario Juan',
         'ingredients' => [
-            ['id' => $detail->id, 'actual_quantity' => 52]
+            ['id' => $detail->id, 'actual_quantity' => 52],
         ],
         'packaging' => [
-            ['id' => $pack->id, 'actual_units' => 19]
+            ['id' => $pack->id, 'actual_units' => 19],
         ],
     ]);
 
@@ -168,20 +166,20 @@ test('it completes order and updates inventory', function () {
 
     $order->refresh();
     expect($order->status->value)->toBe('completed');
-    expect((float)$order->viscosity_ku)->toBe(105.0);
-    
+    expect((float) $order->viscosity_ku)->toBe(105.0);
+
     $batch->refresh();
-    expect((float)$batch->remaining_quantity)->toBe(48.0);
-    
+    expect((float) $batch->remaining_quantity)->toBe(48.0);
+
     $this->assertDatabaseHas('inventory_movements', [
         'production_order_id' => $order->id,
         'type' => 'exit',
-        'quantity' => 52
+        'quantity' => 52,
     ]);
 
     $this->assertDatabaseHas('finished_inventories', [
         'product_id' => $order->product_id,
         'product_variant_id' => $variant->id,
-        'quantity' => 19
+        'quantity' => 19,
     ]);
 });

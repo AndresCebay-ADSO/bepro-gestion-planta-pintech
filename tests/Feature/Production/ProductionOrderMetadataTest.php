@@ -71,7 +71,7 @@ test('permite guardar y recuperar metadata operacional en una orden de producciÃ
         'status' => 'pending',
         'planned_date' => now(),
         'created_by' => $user->id,
-        
+
         // Metadata operacional
         'agitation_start_time' => $agitationStart,
         'agitation_end_time' => $agitationEnd,
@@ -85,8 +85,8 @@ test('permite guardar y recuperar metadata operacional en una orden de producciÃ
 
     expect($order->agitation_start_time->format('Y-m-d H:i:s'))->toBe($agitationStart->format('Y-m-d H:i:s'));
     expect($order->agitation_end_time->format('Y-m-d H:i:s'))->toBe($agitationEnd->format('Y-m-d H:i:s'));
-    expect((float)$order->viscosity_ku)->toBe(105.5);
-    expect((float)$order->grinding_hg)->toBe(7.25);
+    expect((float) $order->viscosity_ku)->toBe(105.5);
+    expect((float) $order->grinding_hg)->toBe(7.25);
     expect($order->responsible_name)->toBe('Juan Perez');
-    expect((float)$order->spillage_quantity)->toBe(2.5);
+    expect((float) $order->spillage_quantity)->toBe(2.5);
 });
