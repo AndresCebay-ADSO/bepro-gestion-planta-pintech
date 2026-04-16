@@ -10,6 +10,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { formatNumber } from '@/lib/formatters';
 import { Textarea } from '../ui/textarea';
 
 type Option = {
@@ -160,8 +161,7 @@ export function MovementForm({
                         <SelectContent>
                             {filteredBatches.map((b) => (
                                 <SelectItem key={b.id} value={String(b.id)}>
-                                    {b.lot_number} (Disp: {b.remaining_quantity}
-                                    )
+                                    {b.lot_number} (Disp: {formatNumber(b.remaining_quantity, { maxDecimals: 2 })})
                                 </SelectItem>
                             ))}
                         </SelectContent>

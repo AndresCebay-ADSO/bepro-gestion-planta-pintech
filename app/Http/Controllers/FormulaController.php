@@ -35,6 +35,7 @@ class FormulaController extends Controller
             ->when($productId, fn ($q) => $q->where('product_id', $productId))
             ->latest('id')
             ->paginate(15)
+            ->onEachSide(1)
             ->withQueryString();
 
         return Inertia::render('Formulas/Index', [

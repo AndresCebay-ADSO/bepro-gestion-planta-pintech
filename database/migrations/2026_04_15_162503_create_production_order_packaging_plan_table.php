@@ -12,8 +12,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('production_order_id')->constrained('production_orders')->cascadeOnDelete();
             $table->foreignId('product_variant_id')->constrained('product_variants')->restrictOnDelete();
-            $table->decimal('planned_units', 12, 4);// Cuántas unidades de este SKU se espera envasar
-            $table->decimal('actual_units', 12, 4)->nullable();// Cuántas se envasaron realmente
+            $table->decimal('planned_units', 12, 4); // Cuántas unidades de este SKU se espera envasar
+            $table->decimal('actual_units', 12, 4)->nullable(); // Cuántas se envasaron realmente
             $table->text('notes')->nullable();
             $table->timestamps();
 

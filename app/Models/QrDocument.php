@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use App\Enums\QrDocumentType;
+use Database\Factories\QrDocumentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -18,12 +20,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $version
  * @property bool $is_current
  * @property int $uploaded_by
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property \Illuminate\Support\Carbon|null $deleted_at
- *
- * @property-read \App\Models\QrCode $qrCode
- * @property-read \App\Models\User $uploadedBy
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
+ * @property-read QrCode $qrCode
+ * @property-read User $uploadedBy
  */
 #[Fillable([
     'qr_code_id',
@@ -36,7 +37,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 ])]
 class QrDocument extends Model
 {
-    /** @use HasFactory<\Database\Factories\QrDocumentFactory> */
+    /** @use HasFactory<QrDocumentFactory> */
     use HasFactory, SoftDeletes;
 
     protected function casts(): array

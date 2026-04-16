@@ -1,6 +1,7 @@
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
+import { FormattedDate } from '@/components/formatted-date';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -139,7 +140,7 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                                         {formula.notes ?? '-'}
                                     </td>
                                     <td className="p-4 text-xs text-muted-foreground">
-                                        {formula.created_at}
+                                        <FormattedDate value={formula.created_at} format="datetime" />
                                     </td>
                                     <td className="p-4 text-right">
                                         <TableActions

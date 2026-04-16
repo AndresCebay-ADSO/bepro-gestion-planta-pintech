@@ -2,38 +2,43 @@
 
 namespace App\Models;
 
+use Database\Factories\RawMaterialFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
  * @property string $code
+ * @property int|null $category_id
  * @property int $unit_of_measure_id
  * @property float $current_price
  * @property float $previous_price
  * @property float $minimum_stock
  * @property int $alert_days_before_expiry
  * @property bool $is_active
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property \Illuminate\Support\Carbon|null $deleted_at
- *
- * @property-read \App\Models\UnitOfMeasure $unitOfMeasure
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\InventoryBatch[] $inventoryBatches
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\FormulaDetail[] $formulaDetails
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\InventoryMovement[] $inventoryMovements
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ProductionOrderDetail[] $productionOrderDetails
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Alert[] $alerts
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
+ * @property-read RawMaterialCategory|null $category
+ * @property-read UnitOfMeasure $unitOfMeasure
+ * @property-read Collection|InventoryBatch[] $inventoryBatches
+ * @property-read Collection|FormulaDetail[] $formulaDetails
+ * @property-read Collection|InventoryMovement[] $inventoryMovements
+ * @property-read Collection|ProductionOrderDetail[] $productionOrderDetails
+ * @property-read Collection|Alert[] $alerts
  */
 #[Fillable([
     'code',
+    'category_id',
     'unit_of_measure_id',
     'current_price',
     'previous_price',
@@ -43,7 +48,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 ])]
 class RawMaterial extends Model
 {
-    /** @use HasFactory<\Database\Factories\RawMaterialFactory> */
+    /** @use HasFactory<RawMaterialFactory> */
     use HasFactory, LogsActivity, SoftDeletes;
 
     public function getActivitylogOptions(): LogOptions
@@ -73,6 +78,11 @@ class RawMaterial extends Model
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(RawMaterialCategory::class, 'category_id');
     }
 
     public function unitOfMeasure(): BelongsTo

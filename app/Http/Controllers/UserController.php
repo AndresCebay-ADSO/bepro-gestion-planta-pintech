@@ -32,6 +32,7 @@ class UserController extends Controller
         $users = $query
             ->latest()
             ->paginate(15)
+            ->onEachSide(1)
             ->withQueryString();
 
         $activities = Activity::with('causer')

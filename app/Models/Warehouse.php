@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use App\Enums\WarehouseType;
+use Database\Factories\WarehouseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -20,14 +23,13 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string|null $address
  * @property WarehouseType $type
  * @property bool $is_active
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property \Illuminate\Support\Carbon|null $deleted_at
- *
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\FinishedInventory[] $finishedInventories
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ProductionOrder[] $productionOrders
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\FinishedInventoryMovement[] $finishedInventoryMovements
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\User[] $users
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
+ * @property-read Collection|FinishedInventory[] $finishedInventories
+ * @property-read Collection|ProductionOrder[] $productionOrders
+ * @property-read Collection|FinishedInventoryMovement[] $finishedInventoryMovements
+ * @property-read Collection|User[] $users
  */
 #[Fillable([
     'name',
@@ -38,7 +40,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 ])]
 class Warehouse extends Model
 {
-    /** @use HasFactory<\Database\Factories\WarehouseFactory> */
+    /** @use HasFactory<WarehouseFactory> */
     use HasFactory, LogsActivity, SoftDeletes;
 
     public function getActivitylogOptions(): LogOptions

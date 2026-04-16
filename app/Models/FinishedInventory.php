@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use App\Models\Concerns\ValidatesProductVariant;
+use Database\Factories\FinishedInventoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -16,12 +18,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int|null $product_variant_id
  * @property int $warehouse_id
  * @property float $quantity
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- *
- * @property-read \App\Models\Product $product
- * @property-read \App\Models\ProductVariant|null $productVariant
- * @property-read \App\Models\Warehouse $warehouse
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Product $product
+ * @property-read ProductVariant|null $productVariant
+ * @property-read Warehouse $warehouse
  */
 #[Fillable([
     'product_id',
@@ -31,7 +32,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 ])]
 class FinishedInventory extends Model
 {
-    /** @use HasFactory<\Database\Factories\FinishedInventoryFactory> */
+    /** @use HasFactory<FinishedInventoryFactory> */
     use HasFactory, LogsActivity, ValidatesProductVariant;
 
     public function getActivitylogOptions(): LogOptions

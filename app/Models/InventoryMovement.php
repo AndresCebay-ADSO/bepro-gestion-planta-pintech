@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use App\Enums\InventoryMovementType;
+use Database\Factories\InventoryMovementFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -19,17 +21,16 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property InventoryMovementType $type
  * @property float $quantity
  * @property float $cost_price
- * @property \Illuminate\Support\Carbon $movement_date
+ * @property Carbon $movement_date
  * @property string|null $notes
  * @property int $created_by
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- *
- * @property-read \App\Models\RawMaterial $rawMaterial
- * @property-read \App\Models\Warehouse $warehouse
- * @property-read \App\Models\InventoryBatch|null $batch
- * @property-read \App\Models\ProductionOrder|null $productionOrder
- * @property-read \App\Models\User $createdBy
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read RawMaterial $rawMaterial
+ * @property-read Warehouse $warehouse
+ * @property-read InventoryBatch|null $batch
+ * @property-read ProductionOrder|null $productionOrder
+ * @property-read User $createdBy
  */
 #[Fillable([
     'raw_material_id',
@@ -45,7 +46,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 ])]
 class InventoryMovement extends Model
 {
-    /** @use HasFactory<\Database\Factories\InventoryMovementFactory> */
+    /** @use HasFactory<InventoryMovementFactory> */
     use HasFactory, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions

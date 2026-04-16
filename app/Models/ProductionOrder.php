@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Enums\ProductionOrderStatus;
+use Database\Factories\ProductionOrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -21,21 +24,28 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property float|null $actual_quantity
  * @property float|null $yield_percentage
  * @property ProductionOrderStatus $status
- * @property \Illuminate\Support\Carbon $planned_date
- * @property \Illuminate\Support\Carbon|null $completion_date
+ * @property Carbon $planned_date
+ * @property Carbon|null $completion_date
  * @property string|null $notes
+ * @property Carbon|null $agitation_start_time
+ * @property Carbon|null $agitation_end_time
+ * @property float|null $viscosity_ku
+ * @property float|null $grinding_hg
+ * @property string|null $responsible_name
+ * @property Carbon|null $packaging_start_time
+ * @property Carbon|null $packaging_end_time
+ * @property float $spillage_quantity
  * @property int $created_by
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- *
- * @property-read \App\Models\Product $product
- * @property-read \App\Models\Formula $formula
- * @property-read \App\Models\Warehouse $warehouse
- * @property-read \App\Models\User $createdBy
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ProductionOrderDetail[] $details
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\InventoryMovement[] $inventoryMovements
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\FinishedInventoryMovement[] $finishedInventoryMovements
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ProductionOrderPackagingPlan[] $packagingPlans
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Product $product
+ * @property-read Formula $formula
+ * @property-read Warehouse $warehouse
+ * @property-read User $createdBy
+ * @property-read Collection|ProductionOrderDetail[] $details
+ * @property-read Collection|InventoryMovement[] $inventoryMovements
+ * @property-read Collection|FinishedInventoryMovement[] $finishedInventoryMovements
+ * @property-read Collection|ProductionOrderPackagingPlan[] $packagingPlans
  */
 #[Fillable([
     'order_number',
@@ -49,11 +59,19 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'planned_date',
     'completion_date',
     'notes',
+    'agitation_start_time',
+    'agitation_end_time',
+    'viscosity_ku',
+    'grinding_hg',
+    'responsible_name',
+    'packaging_start_time',
+    'packaging_end_time',
+    'spillage_quantity',
     'created_by',
 ])]
 class ProductionOrder extends Model
 {
-    /** @use HasFactory<\Database\Factories\ProductionOrderFactory> */
+    /** @use HasFactory<ProductionOrderFactory> */
     use HasFactory, LogsActivity;
 
     protected static function booted(): void
@@ -86,6 +104,13 @@ class ProductionOrder extends Model
             'yield_percentage' => 'decimal:2',
             'planned_date' => 'date',
             'completion_date' => 'date',
+            'agitation_start_time' => 'datetime',
+            'agitation_end_time' => 'datetime',
+            'viscosity_ku' => 'decimal:2',
+            'grinding_hg' => 'decimal:2',
+            'packaging_start_time' => 'datetime',
+            'packaging_end_time' => 'datetime',
+            'spillage_quantity' => 'decimal:4',
         ];
     }
 

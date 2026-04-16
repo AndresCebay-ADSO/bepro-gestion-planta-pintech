@@ -32,6 +32,7 @@ class ProductController extends Controller
             })
             ->latest('id')
             ->paginate(15)
+            ->onEachSide(1)
             ->withQueryString();
 
         return Inertia::render('Products/Index', [
@@ -91,6 +92,11 @@ class ProductController extends Controller
                 'update' => Gate::allows('update', $product),
                 'delete' => Gate::allows('delete', $product),
             ],
+            'units' => UnitOfMeasure::query()
+                ->select('id', 'name', 'symbol')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 

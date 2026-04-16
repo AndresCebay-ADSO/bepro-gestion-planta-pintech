@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Database\Factories\InventoryBatchFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -17,18 +20,17 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property float $initial_quantity
  * @property float $remaining_quantity
  * @property float $unit_price
- * @property \Illuminate\Support\Carbon $entry_date
- * @property \Illuminate\Support\Carbon|null $expiry_date
+ * @property Carbon $entry_date
+ * @property Carbon|null $expiry_date
  * @property string|null $supplier
  * @property string|null $lot_number
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- *
- * @property-read \App\Models\RawMaterial $rawMaterial
- * @property-read \App\Models\Warehouse $warehouse
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\InventoryMovement[] $inventoryMovements
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ProductionOrderDetail[] $productionOrderDetails
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Alert[] $alerts
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read RawMaterial $rawMaterial
+ * @property-read Warehouse $warehouse
+ * @property-read Collection|InventoryMovement[] $inventoryMovements
+ * @property-read Collection|ProductionOrderDetail[] $productionOrderDetails
+ * @property-read Collection|Alert[] $alerts
  */
 #[Fillable([
     'raw_material_id',
@@ -43,7 +45,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 ])]
 class InventoryBatch extends Model
 {
-    /** @use HasFactory<\Database\Factories\InventoryBatchFactory> */
+    /** @use HasFactory<InventoryBatchFactory> */
     use HasFactory, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
