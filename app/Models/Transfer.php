@@ -4,10 +4,12 @@ namespace App\Models;
 
 use App\Enums\TransferStatus;
 use App\Models\Concerns\ValidatesProductVariant;
+use Database\Factories\TransferFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -21,16 +23,15 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property TransferStatus $status
  * @property string|null $notes
  * @property int $created_by
- * @property \Illuminate\Support\Carbon|null $sent_at
- * @property \Illuminate\Support\Carbon|null $received_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- *
- * @property-read \App\Models\Warehouse $sourceWarehouse
- * @property-read \App\Models\Warehouse $destinationWarehouse
- * @property-read \App\Models\Product $product
- * @property-read \App\Models\ProductVariant|null $productVariant
- * @property-read \App\Models\User $createdBy
+ * @property Carbon|null $sent_at
+ * @property Carbon|null $received_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Warehouse $sourceWarehouse
+ * @property-read Warehouse $destinationWarehouse
+ * @property-read Product $product
+ * @property-read ProductVariant|null $productVariant
+ * @property-read User $createdBy
  */
 #[Fillable([
     'source_warehouse_id',
@@ -46,7 +47,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 ])]
 class Transfer extends Model
 {
-    /** @use HasFactory<\Database\Factories\TransferFactory> */
+    /** @use HasFactory<TransferFactory> */
     use HasFactory, LogsActivity, ValidatesProductVariant;
 
     protected static function booted(): void

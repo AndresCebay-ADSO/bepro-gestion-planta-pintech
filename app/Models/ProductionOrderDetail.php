@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Database\Factories\ProductionOrderDetailFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -16,12 +18,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property float|null $actual_quantity
  * @property float $unit_cost
  * @property float $total_cost
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- *
- * @property-read \App\Models\ProductionOrder $productionOrder
- * @property-read \App\Models\InventoryBatch $batch
- * @property-read \App\Models\RawMaterial $rawMaterial
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read ProductionOrder $productionOrder
+ * @property-read InventoryBatch $batch
+ * @property-read RawMaterial $rawMaterial
  */
 #[Fillable([
     'production_order_id',
@@ -34,7 +35,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class ProductionOrderDetail extends Model
 {
-    /** @use HasFactory<\Database\Factories\ProductionOrderDetailFactory> */
+    /** @use HasFactory<ProductionOrderDetailFactory> */
     use HasFactory;
 
     protected function casts(): array

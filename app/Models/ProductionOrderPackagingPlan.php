@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Database\Factories\ProductionOrderPackagingPlanFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -14,11 +16,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property float $planned_units
  * @property float|null $actual_units
  * @property string|null $notes
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- *
- * @property-read \App\Models\ProductionOrder $productionOrder
- * @property-read \App\Models\ProductVariant $productVariant
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read ProductionOrder $productionOrder
+ * @property-read ProductVariant $productVariant
  */
 #[Fillable([
     'production_order_id',
@@ -29,7 +30,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class ProductionOrderPackagingPlan extends Model
 {
-    /** @use HasFactory<\Database\Factories\ProductionOrderPackagingPlanFactory> */
+    /** @use HasFactory<ProductionOrderPackagingPlanFactory> */
     use HasFactory;
 
     protected $table = 'production_order_packaging_plan';
