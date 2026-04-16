@@ -18,28 +18,23 @@ class RawMaterialSeeder extends Seeder
     public function run(): void
     {
         // Ensure necessary units of measure exist
-        $kgUnit = UnitOfMeasure::firstOrCreate(
-            ['code' => 'kg'],
-            ['name' => 'Kilogramo', 'symbol' => 'kg', 'is_active' => true]
-        );
-        $literUnit = UnitOfMeasure::firstOrCreate(
-            ['code' => 'l'],
-            ['name' => 'Litro', 'symbol' => 'L', 'is_active' => true]
-        );
+        $kgUnit = UnitOfMeasure::where('code', 'kg')->first();
+        $literUnit = UnitOfMeasure::where('code', 'l')->first();
+        $unitUnit = UnitOfMeasure::where('code', 'u')->first();
 
-        // --- 3 Original raw materials ---
+        // --- 1. Original raw materials (Chemicals) ---
         $items = [
-            ['code' => 'MP001', 'unit' => 'kg', 'price' => 18.5000],
-            ['code' => 'RES01', 'unit' => 'kg', 'price' => 24.9000],
-            ['code' => 'AC4', 'unit' => 'l', 'price' => 12.7500],
+            ['code' => 'MP001', 'unit' => 'kg', 'price' => 18.5000, 'name' => 'Pigmento Blanco'],
+            ['code' => 'RES01', 'unit' => 'kg', 'price' => 24.9000, 'name' => 'Resina Acrílica'],
+            ['code' => 'AC4', 'unit' => 'l', 'price' => 12.7500, 'name' => 'Ajustador de Viscosidad'],
         ];
 
         foreach ($items as $item) {
-            $unitId = ($item['unit'] === 'kg') ? $kgUnit->id : $literUnit->id;
+            $unit = UnitOfMeasure::where('code', $item['unit'])->first();
             RawMaterial::updateOrCreate(
                 ['code' => $item['code']],
                 [
-                    'unit_of_measure_id' => $unitId,
+                    'unit_of_measure_id' => $unit->id,
                     'current_price' => $item['price'],
                     'previous_price' => null,
                     'minimum_stock' => 0,
@@ -49,18 +44,39 @@ class RawMaterialSeeder extends Seeder
             );
         }
 
-        // --- 97 additional raw materials for pagination testing ---
-        $units = ['kg', 'l'];
-        $unitIds = [
-            'kg' => $kgUnit->id,
-            'l' => $literUnit->id,
+        // --- 2. Packaging Materials (Containers) ---
+        $packaging = [
+            ['code' => 'ENV-GL-1GL', 'price' => 2500, 'name' => 'Envase Galón Plástico'],
+            ['code' => 'ENV-BI-5GL', 'price' => 8500, 'name' => 'Envase Bidón 5gl'],
+            ['code' => 'ENV-BA-2.5GL', 'price' => 5500, 'name' => 'Envase Balde 2.5gl'],
+            ['code' => 'ENV-TA-50GL', 'price' => 45000, 'name' => 'Envase Tambor 50gl'],
+            ['code' => 'ENV-CU-15L', 'price' => 7800, 'name' => 'Envase Cuñete 15L'],
+            ['code' => 'ENV-GL-1/4', 'price' => 1200, 'name' => 'Envase 1/4 Galón'],
+            ['code' => 'ENV-GL-1/16', 'price' => 800, 'name' => 'Envase 1/16 Galón'],
         ];
 
-        for ($i = 1; $i <= 97; $i++) {
-            $unitType = $units[array_rand($units)];
-            $unitId = $unitIds[$unitType];
+        foreach ($packaging as $pack) {
+            RawMaterial::updateOrCreate(
+                ['code' => $pack['code']],
+                [
+                    'unit_of_measure_id' => $unitUnit->id,
+                    'current_price' => $pack['price'],
+                    'previous_price' => null,
+                    'minimum_stock' => 100,
+                    'alert_days_before_expiry' => 0,
+                    'is_active' => true,
+                ]
+            );
+        }
 
-            $code = 'MP'.str_pad($i + 100, 4, '0', STR_PAD_LEFT); // MP0101..MP0197
+        // --- 3. Additional raw materials for pagination testing ---
+        $units = ['kg', 'l'];
+
+        for ($i = 1; $i <= 50; $i++) {
+            $unitCode = $units[array_rand($units)];
+            $unitId = ($unitCode === 'kg') ? $kgUnit->id : $literUnit->id;
+
+            $code = 'MP'.str_pad($i + 100, 4, '0', STR_PAD_LEFT); 
 
             RawMaterial::updateOrCreate(
                 ['code' => $code],
@@ -77,6 +93,6 @@ class RawMaterialSeeder extends Seeder
             );
         }
 
-        $this->command->info('Created/Updated '.RawMaterial::count().' raw materials.');
+        $this->command->info('Created/Updated '.RawMaterial::count().' raw materials (including packaging).');
     }
 }
