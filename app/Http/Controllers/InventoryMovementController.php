@@ -8,6 +8,7 @@ use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
 use App\Models\ProductionOrder;
 use App\Models\RawMaterial;
+use App\Models\Warehouse;
 use App\Services\InventoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,6 +42,7 @@ class InventoryMovementController extends Controller
             ->latest('movement_date')
             ->latest('id')
             ->paginate(20)
+            ->onEachSide(1)
             ->withQueryString();
 
         return Inertia::render('Inventory/Movements/Index', [

@@ -27,6 +27,12 @@ class UpdateRawMaterialRequest extends FormRequest
                 'max:50',
                 Rule::unique('raw_materials', 'code')->ignore($rawMaterialId)->whereNull('deleted_at'),
             ],
+            'category_id' => [
+                'bail',
+                'nullable',
+                'integer',
+                Rule::exists('raw_material_categories', 'id')->whereNull('deleted_at'),
+            ],
             'unit_of_measure_id' => [
                 'bail',
                 'required',
@@ -44,6 +50,7 @@ class UpdateRawMaterialRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'category_id' => $this->input('category_id'),
             'minimum_stock' => $this->input('minimum_stock', 0),
             'alert_days_before_expiry' => $this->input('alert_days_before_expiry', 30),
             'is_active' => $this->boolean('is_active', true),

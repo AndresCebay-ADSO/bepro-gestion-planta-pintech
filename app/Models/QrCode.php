@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use Database\Factories\QrCodeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -17,13 +20,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $url
  * @property bool $is_active
  * @property int $created_by
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property \Illuminate\Support\Carbon|null $deleted_at
- *
- * @property-read \App\Models\Product $product
- * @property-read \App\Models\User $createdBy
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\QrDocument[] $documents
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
+ * @property-read Product $product
+ * @property-read User $createdBy
+ * @property-read Collection|QrDocument[] $documents
  */
 #[Fillable([
     'product_id',
@@ -34,7 +36,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 ])]
 class QrCode extends Model
 {
-    /** @use HasFactory<\Database\Factories\QrCodeFactory> */
+    /** @use HasFactory<QrCodeFactory> */
     use HasFactory, SoftDeletes;
 
     protected function casts(): array

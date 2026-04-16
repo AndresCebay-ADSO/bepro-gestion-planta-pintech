@@ -23,6 +23,14 @@ Pintech OS es una plataforma empresarial integral para la gestión de operacione
 
 ## Cambios Recientes
 
+### v1.5 - Sistema de Formateo y UX (Abril 2026)
+
+- **Nuevo componente FormattedDate**: Formateo consistente de fechas en todo el sistema (`15 ene 2024`, `15 ene 2024, 10:30`)
+- **Mejora en FormattedNumber**: Soporte para `maxDecimals` y `trimTrailingZeros` según contexto (tablas vs detalle)
+- **Paginación optimizada**: Todos los controladores actualizados con `onEachSide(1)` para mostrar máximo 7 botones de paginación
+- **Corrección de decimales**: Tablas muestran 2 decimales (resumen), vistas de detalle muestran precisión completa (4 decimales)
+- **Documentación de componentes**: Nuevo documento `COMPONENTES_UI.md` con guías de uso
+
 ### v1.4 - Mejoras en Gestión de Variantes (Mayo 2026)
 
 - **Reestructuración SKU**: Separación completa entre producto base y referencias comerciales (SKU), permitiendo gestión independiente de definiciones técnicas y presentaciones de mercado.
@@ -79,13 +87,14 @@ Pintech OS está construido bajo una arquitectura moderna de Aplicación de Pág
 - **CRUD Completo**: Creación, edición, listado y eliminación de variantes con validaciones de consistencia.
 - **Backend Optimizado**: Endpoints especializados para gestión de variantes con validaciones de integridad referencial.
 
-### 2.5 Sistema de Auditoría y Seguridad (v1.4)
+### 2.5 Sistema de Auditoría y Seguridad (v1.4-v1.5)
 - **Trazabilidad Total**: Registro completo de quién, cuándo y qué cambió en todos los modelos del sistema (`User`, `RawMaterial`, `ProductVariant`, `Warehouse`, `InventoryTransaction`).
 - **Registro de Seguridad**: Auditoría automática de inicios de sesión fallidos, cambios de roles y actividades sospechosas.
 - **Políticas de Retención**: Limpieza automática de registros mayores a 180 días para optimización de rendimiento.
 - **Widget de Actividad**: Componente de UI que muestra las 5 actividades recientes del usuario con filtros por tipo y fecha.
 - **Panel Administrativo**: Vistas detalladas con filtros avanzados, exportación a Excel y visualización de tendencias.
 - **Historial de Cambios**: Registro del valor anterior y nuevo para cada operación de actualización.
+- **Mejora v1.5**: Fechas formateadas consistentemente en logs de auditoría (`dd MMM yyyy, HH:mm`)
 
 ---
 
@@ -105,11 +114,13 @@ Pintech OS está construido bajo una arquitectura moderna de Aplicación de Pág
 - **Pruebas Automatizadas**: Suite de tests con [Pest PHP](https://pestphp.com) para validación de lógica crítica.
 - **Internacionalización**: Aplicación totalmente traducida al español (es).
 - **Documentación Viva**: Mantención de actas de actualización y manuales técnicos en el directorio `docs/`.
+- **Componentes UI Documentados**: Guía de uso de `FormattedNumber`, `FormattedDate`, `TableActions` en `docs/COMPONENTES_UI.md`.
+- **Paginación Estandarizada**: Todos los listados usan `->paginate(15)->onEachSide(1)->withQueryString()` para UX consistente.
 
 ---
 
 ## 5. Contacto y Soporte
 
 Desarrollado para **Pintech Colombia S.A.S**.  
-*Versión del Documento: 1.4*  
-*Fecha de última actualización: Mayo, 2026*
+*Versión del Documento: 1.5*  
+*Fecha de última actualización: Abril, 2026*

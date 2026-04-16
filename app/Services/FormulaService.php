@@ -41,7 +41,7 @@ class FormulaService
 
     /**
      * Obtiene el factor de conversión entre dos unidades de medida.
-     * (Implementación simplificada, asume conversiones lineales definidas en la DB)
+     * Utiliza las equivalencias a KG o Litros definidas en la base de datos.
      */
     protected function getConversionFactor($fromUnit, $toUnit): float
     {
@@ -49,8 +49,18 @@ class FormulaService
             return 1.0;
         }
 
-        // Aquí iría la lógica usando los campos to_kg_conversion / to_liter_conversion
-        // Por ahora, retornamos 1.0 como placeholder
+        // Conversión basada en Volumen (Litros)
+        if ($fromUnit->to_liter_conversion !== null && $toUnit->to_liter_conversion !== null) {
+            return (float) $fromUnit->to_liter_conversion / (float) $toUnit->to_liter_conversion;
+        }
+
+        // Conversión basada en Peso (KG)
+        if ($fromUnit->to_kg_conversion !== null && $toUnit->to_kg_conversion !== null) {
+            return (float) $fromUnit->to_kg_conversion / (float) $toUnit->to_kg_conversion;
+        }
+
+        // Si no hay factores de conversión compatibles, asumimos factor 1.0
+        // (En un futuro se podría lanzar una excepción o manejar densidades)
         return 1.0;
     }
 }

@@ -2,6 +2,8 @@ import { Head, useForm, Link } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import type { FormEvent } from 'react';
 
+import { FormattedDate } from '@/components/formatted-date';
+import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
@@ -113,7 +115,7 @@ export default function InventoryMovementsIndex({
                                     className="border-b border-border/50 transition-colors hover:bg-muted/30"
                                 >
                                     <td className="p-4">
-                                        {movement.movement_date}
+                                        <FormattedDate value={movement.movement_date} />
                                     </td>
                                     <td className="p-4">
                                         <span
@@ -140,7 +142,7 @@ export default function InventoryMovementsIndex({
                                         {movement.raw_material?.code ?? '-'}
                                     </td>
                                     <td className="p-4 text-right font-medium">
-                                        {movement.quantity}
+                                        <FormattedNumber value={movement.quantity} maxDecimals={2} />
                                     </td>
                                 </tr>
                             ))}

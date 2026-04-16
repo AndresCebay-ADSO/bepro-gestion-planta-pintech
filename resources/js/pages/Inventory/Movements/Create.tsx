@@ -43,7 +43,7 @@ export default function InventoryMovementsCreate({
         warehouse_id: '',
         batch_id: '',
         production_order_id: '',
-        type: 'entrada',
+        type: 'entry',
         quantity: '',
         cost_price: '',
         movement_date: new Date().toISOString().split('T')[0],

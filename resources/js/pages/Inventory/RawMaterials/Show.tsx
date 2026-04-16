@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 
+import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
 
@@ -129,6 +130,8 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                             <FormattedNumber
                                 value={rawMaterial.current_price}
                                 currency
+                                maxDecimals={4}
+                                trimTrailingZeros
                             />
                         }
                     />
@@ -139,6 +142,8 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                             <FormattedNumber
                                 value={rawMaterial.previous_price}
                                 currency
+                                maxDecimals={4}
+                                trimTrailingZeros
                                 emptyValue="-"
                             />
                         }
@@ -149,6 +154,8 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                         value={
                             <FormattedNumber
                                 value={rawMaterial.minimum_stock}
+                                maxDecimals={4}
+                                trimTrailingZeros
                             />
                         }
                     />
@@ -196,22 +203,24 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                                     </td>
 
                                     <td className="p-3 text-muted-foreground">
-                                        {batch.entry_date}
+                                        <FormattedDate value={batch.entry_date} />
                                     </td>
 
                                     <td className="p-3 text-muted-foreground">
-                                        {batch.expiry_date ?? '-'}
+                                        <FormattedDate value={batch.expiry_date} />
                                     </td>
 
                                     <td className="p-3 text-right">
                                         <FormattedNumber
                                             value={batch.initial_quantity}
+                                            maxDecimals={2}
                                         />
                                     </td>
 
                                     <td className="p-3 text-right">
                                         <FormattedNumber
                                             value={batch.remaining_quantity}
+                                            maxDecimals={2}
                                             bold
                                             colorize
                                         />

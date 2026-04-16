@@ -130,7 +130,9 @@ Para garantizar consistencia y persistencia en los filtros, todas las listas deb
 ### Backend (Controller)
 1. Capturar el filtro: `$search = $request->input('search');`
 2. Aplicar filtro con SQL portable: `->when($search, fn($q, $s) => $q->whereRaw('LOWER(name) LIKE ?', ["%{$s}%"]))`
-3. Paginación con persistencia: `->paginate(10)->withQueryString()`
+3. Paginación con persistencia y límite de botones: `->paginate(15)->onEachSide(1)->withQueryString()`
+   - `onEachSide(1)` limita la paginación a máximo 7 botones (primero, último, actual, y 1 a cada lado)
+   - Evita paginaciones extensas que rompen el layout en listados grandes
 
 ### Frontend (React)
 1. Usar `useForm` de Inertia para el estado de búsqueda.

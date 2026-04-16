@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use Database\Factories\FormulaFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -19,15 +22,14 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property bool $is_active
  * @property string|null $notes
  * @property int $created_by
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property \Illuminate\Support\Carbon|null $deleted_at
- *
- * @property-read \App\Models\Product $product
- * @property-read \App\Models\User $createdBy
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\FormulaDetail[] $details
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ProductionOrder[] $productionOrders
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ProductionCost[] $productionCosts
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
+ * @property-read Product $product
+ * @property-read User $createdBy
+ * @property-read Collection|FormulaDetail[] $details
+ * @property-read Collection|ProductionOrder[] $productionOrders
+ * @property-read Collection|ProductionCost[] $productionCosts
  */
 #[Fillable([
     'product_id',
@@ -38,7 +40,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 ])]
 class Formula extends Model
 {
-    /** @use HasFactory<\Database\Factories\FormulaFactory> */
+    /** @use HasFactory<FormulaFactory> */
     use HasFactory, LogsActivity, SoftDeletes;
 
     public function getActivitylogOptions(): LogOptions

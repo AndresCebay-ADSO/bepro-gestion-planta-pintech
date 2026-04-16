@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use App\Enums\ComponentSystem;
+use Database\Factories\ProductVariantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -27,16 +30,15 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property float|null $current_cost
  * @property float|null $current_price
  * @property bool $is_active
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property \Illuminate\Support\Carbon|null $deleted_at
- *
- * @property-read \App\Models\Product $product
- * @property-read \App\Models\UnitOfMeasure $unitOfMeasure
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\FinishedInventory[] $finishedInventories
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\FinishedInventoryMovement[] $finishedInventoryMovements
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Transfer[] $transfers
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\PriceList[] $priceLists
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
+ * @property-read Product $product
+ * @property-read UnitOfMeasure $unitOfMeasure
+ * @property-read Collection|FinishedInventory[] $finishedInventories
+ * @property-read Collection|FinishedInventoryMovement[] $finishedInventoryMovements
+ * @property-read Collection|Transfer[] $transfers
+ * @property-read Collection|PriceList[] $priceLists
  */
 #[Fillable([
     'product_id',
@@ -54,7 +56,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 ])]
 class ProductVariant extends Model
 {
-    /** @use HasFactory<\Database\Factories\ProductVariantFactory> */
+    /** @use HasFactory<ProductVariantFactory> */
     use HasFactory, LogsActivity, SoftDeletes;
 
     public function getActivitylogOptions(): LogOptions

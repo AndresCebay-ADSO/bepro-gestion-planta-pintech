@@ -4,10 +4,12 @@ namespace App\Models;
 
 use App\Enums\PriceUpdateType;
 use App\Models\Concerns\ValidatesProductVariant;
+use Database\Factories\PriceListFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -20,15 +22,14 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property float $profit_margin
  * @property PriceUpdateType $update_type
  * @property float|null $variation_percentage
- * @property \Illuminate\Support\Carbon $valid_from
- * @property \Illuminate\Support\Carbon|null $valid_to
+ * @property Carbon $valid_from
+ * @property Carbon|null $valid_to
  * @property int|null $created_by
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- *
- * @property-read \App\Models\Product $product
- * @property-read \App\Models\ProductVariant|null $productVariant
- * @property-read \App\Models\User|null $createdBy
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Product $product
+ * @property-read ProductVariant|null $productVariant
+ * @property-read User|null $createdBy
  */
 #[Fillable([
     'product_id',
@@ -44,7 +45,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 ])]
 class PriceList extends Model
 {
-    /** @use HasFactory<\Database\Factories\PriceListFactory> */
+    /** @use HasFactory<PriceListFactory> */
     use HasFactory, LogsActivity, ValidatesProductVariant;
 
     public function getActivitylogOptions(): LogOptions

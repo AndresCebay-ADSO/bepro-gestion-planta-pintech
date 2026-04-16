@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Database\Factories\ProductionCostFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -13,12 +15,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $formula_id
  * @property float $cost
  * @property float|null $variation_percentage
- * @property \Illuminate\Support\Carbon $calculated_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- *
- * @property-read \App\Models\Product $product
- * @property-read \App\Models\Formula $formula
+ * @property Carbon $calculated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Product $product
+ * @property-read Formula $formula
  */
 #[Fillable([
     'product_id',
@@ -29,7 +30,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class ProductionCost extends Model
 {
-    /** @use HasFactory<\Database\Factories\ProductionCostFactory> */
+    /** @use HasFactory<ProductionCostFactory> */
     use HasFactory;
 
     protected function casts(): array
