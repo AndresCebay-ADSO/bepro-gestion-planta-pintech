@@ -4,6 +4,7 @@ import {
     BellRing,
     Boxes,
     Calculator,
+    ClipboardList,
     Factory,
     FlaskConical,
     LayoutGrid,
@@ -29,6 +30,7 @@ import { index as auditLogsIndex } from '@/routes/audit-logs';
 import { index as formulasIndex } from '@/routes/formulas';
 import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
 import { index as productionIndex } from '@/routes/production';
+import { index as productionOrdersIndex } from '@/routes/production-orders';
 import { index as productsIndex } from '@/routes/products';
 import { index as rawMaterialsIndex } from '@/routes/raw-materials';
 import { index as usersIndex } from '@/routes/users';
@@ -78,9 +80,16 @@ const navigationGroups: NavGroup[] = [
                 unauthorizedBehavior: 'disable',
             },
             {
-                title: 'Órdenes de Producción',
+                title: 'Centro de Producción',
                 href: productionIndex().url,
-                icon: Warehouse,
+                icon: Factory,
+                allowedRoles: ['admin', 'produccion'],
+                unauthorizedBehavior: 'disable',
+            },
+            {
+                title: 'Órdenes de Producción',
+                href: productionOrdersIndex().url,
+                icon: ClipboardList,
                 allowedRoles: ['admin', 'produccion'],
                 unauthorizedBehavior: 'disable',
             },
