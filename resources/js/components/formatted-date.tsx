@@ -23,12 +23,18 @@ export function FormattedDate({
         return <span>{emptyValue}</span>;
     }
 
+    const formattedValue = formatDateValue(value, formatType);
+
+    return <span>{formattedValue}</span>;
+}
+
+function formatDateValue(value: string, formatType: FormattedDateProps['format']): string {
     try {
         const date = new Date(value);
-        const pattern = formatPatterns[formatType];
-        const formatted = format(date, pattern, { locale: es });
-        return <span>{formatted}</span>;
+        const pattern = formatPatterns[formatType ?? 'short'];
+
+        return format(date, pattern, { locale: es });
     } catch {
-        return <span>{value}</span>;
+        return value;
     }
 }

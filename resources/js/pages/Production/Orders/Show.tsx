@@ -1,20 +1,20 @@
 import { Head, useForm } from '@inertiajs/react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
+import { format } from 'date-fns';
 import {
     Beaker,
     Clock,
     CheckCircle2,
     User as UserIcon,
 } from 'lucide-react';
-import { format } from 'date-fns';
 import { complete as productionOrderComplete } from '@/actions/App/Http/Controllers/ProductionOrderController';
 import { FormattedNumber } from '@/components/formatted-number';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 
 type Props = {
     order: any; // Simplified for initial build, will refine types as we go
@@ -50,6 +50,7 @@ export default function ProductionOrderShow({ order }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (confirm('¿Estás seguro de finalizar esta orden? Esta acción actualizará los inventarios de forma irreversible.')) {
             post(productionOrderComplete({ order: order.id }).url);
         }

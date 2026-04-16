@@ -13,10 +13,31 @@ class InventoryService
     public function storeMovement(array $data, int $userId): InventoryMovement
     {
         return DB::transaction(function () use ($data, $userId) {
+            $typeValue = $data['type'] instanceof InventoryMovementType ? $data['type']->value : $data['type'];
+            $batchId = $data['batch_id'] ?? null;
+
+            // Si es entrada sin lote, crear un nuevo lote automáticamente
+            if ($typeValue === InventoryMovementType::Entry->value && $batchId === null) {
+                $batch = InventoryBatch::create([
+                    'raw_material_id' => $data['raw_material_id'],
+                    'warehouse_id' => $data['warehouse_id'],
+                    'initial_quantity' => $data['quantity'],
+                    'remaining_quantity' => $data['quantity'],
+                    'unit_price' => $data['cost_price'],
+                    'entry_date' => $data['movement_date'],
+                    'expiry_date' => null,
+                    'supplier' => null,
+                    'lot_number' => null,
+                ]);
+                $batchId = $batch->id;
+            }
+
+            $isNewBatch = $typeValue === InventoryMovementType::Entry->value && ($data['batch_id'] ?? null) === null;
+
             $movementData = [
                 'raw_material_id' => $data['raw_material_id'],
                 'warehouse_id' => $data['warehouse_id'],
-                'batch_id' => $data['batch_id'] ?? null,
+                'batch_id' => $batchId,
                 'production_order_id' => $data['production_order_id'] ?? null,
                 'type' => $data['type'],
                 'quantity' => $data['quantity'],
@@ -26,7 +47,10 @@ class InventoryService
                 'created_by' => $userId,
             ];
 
-            $this->applyMovement($movementData['type'], $movementData['quantity'], $movementData['raw_material_id'], $movementData['batch_id']);
+            // Solo aplicar movimiento si no se creó un nuevo lote (el lote ya tiene la cantidad correcta)
+            if (! $isNewBatch) {
+                $this->applyMovement($movementData['type'], $movementData['quantity'], $movementData['raw_material_id'], $movementData['batch_id']);
+            }
 
             return InventoryMovement::create($movementData);
         });

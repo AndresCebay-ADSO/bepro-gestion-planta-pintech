@@ -10,8 +10,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '../ui/textarea';
 import { formatNumber } from '@/lib/formatters';
+import { Textarea } from '../ui/textarea';
 
 type Option = {
     id: number;
