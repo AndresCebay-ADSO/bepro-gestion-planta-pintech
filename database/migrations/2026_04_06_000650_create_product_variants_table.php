@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->string('sku', 80)->unique();
-            $table->foreignId('unit_of_measure_id')->constrained('units_of_measure')->restrictOnDelete();
+            $table->foreignId('unit_of_measure_id')->constrained('unit_of_measures')->restrictOnDelete();
             $table->decimal('presentation_value', 12, 4)->nullable();
             $table->string('presentation_label', 50)->nullable(); // 1 gal, 5 gal, Kit 7.3 gal
             $table->string('color', 100)->nullable();
@@ -29,7 +29,6 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index(['product_id', 'is_active']);
-            $table->index('sku');
             $table->index('color');
             $table->index('finish');
         });

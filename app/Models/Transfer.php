@@ -1,18 +1,53 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Models;
 
+use App\Enums\TransferStatus;
+use App\Models\Concerns\ValidatesProductVariant;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property int $source_warehouse_id
+ * @property int $destination_warehouse_id
+ * @property int $product_id
+ * @property int|null $product_variant_id
+ * @property float $quantity
+ * @property TransferStatus $status
+ * @property string|null $notes
+ * @property int $created_by
+ * @property \Illuminate\Support\Carbon|null $sent_at
+ * @property \Illuminate\Support\Carbon|null $received_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ *
+ * @property-read \App\Models\Warehouse $sourceWarehouse
+ * @property-read \App\Models\Warehouse $destinationWarehouse
+ * @property-read \App\Models\Product $product
+ * @property-read \App\Models\ProductVariant|null $productVariant
+ * @property-read \App\Models\User $createdBy
+ */
+#[Fillable([
+    'source_warehouse_id',
+    'destination_warehouse_id',
+    'product_id',
+    'product_variant_id',
+    'quantity',
+    'status',
+    'notes',
+    'created_by',
+    'sent_at',
+    'received_at',
+])]
 class Transfer extends Model
 {
-    use HasFactory, LogsActivity;
+    /** @use HasFactory<\Database\Factories\TransferFactory> */
+    use HasFactory, LogsActivity, ValidatesProductVariant;
 
     protected static function booted(): void
     {
@@ -38,34 +73,24 @@ class Transfer extends Model
         });
     }
 
-    protected $fillable = [
-        'source_warehouse_id',
-        'destination_warehouse_id',
-        'product_id',
-        'product_variant_id',
-        'quantity',
-        'status',
-        'notes',
-        'created_by',
-        'sent_at',
-        'received_at',
-    ];
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('traslados')
+            ->setDescriptionForEvent(fn (string $eventName) => "Traslado {$eventName}")
+            ->logOnly(['source_warehouse_id', 'destination_warehouse_id', 'product_id', 'product_variant_id', 'quantity', 'status'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     protected function casts(): array
     {
         return [
+            'status' => TransferStatus::class,
             'quantity' => 'decimal:4',
             'sent_at' => 'datetime',
             'received_at' => 'datetime',
         ];
-    }
-
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logOnly(['source_warehouse_id', 'destination_warehouse_id', 'product_id', 'product_variant_id', 'quantity', 'status'])
-            ->logOnlyDirty()
-            ->dontSubmitEmptyLogs();
     }
 
     public function sourceWarehouse(): BelongsTo

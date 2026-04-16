@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('units_of_measure', function (Blueprint $table) {
+        Schema::create('unit_of_measures', function (Blueprint $table) {
             $table->id();
             $table->string('code', 20)->unique(); // kg, lt, gal, ml, unidad
             $table->string('name', 100); // Kilogramo, Litro, Galón, Mililitro, Unidad
@@ -33,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('units_of_measure');
+        Schema::dropIfExists('unit_of_measures');
     }
 };

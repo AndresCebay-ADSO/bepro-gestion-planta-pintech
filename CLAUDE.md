@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Pintech OS** - ERP web for Pintech Colombia S.A.S (industrial paints). Laravel 13 + React 18 + Inertia.js + TypeScript + Tailwind v4 + PostgreSQL 16.
+**Pintech OS** - ERP web for Pintech Colombia S.A.S (industrial paints). Laravel 13 + React 19 + Inertia.js + TypeScript + Tailwind v4 + PostgreSQL 16.
 
 ## Common Commands
 
@@ -89,7 +89,13 @@ Middleware `role:` enforces access. Controllers use Policies + `authorize()` met
 
 ```
 app/
+├── Enums/                    # PHP Enums for DB enum fields
 ├── Http/Controllers/         # Resource controllers, thin logic
+│   ├── Admin/
+│   ├── Inventory/
+│   ├── Settings/
+│   ├── ProductVariantController.php
+│   └── ...
 ├── Http/Requests/            # Form Request classes per domain
 │   ├── Products/
 │   ├── Inventory/
@@ -97,6 +103,7 @@ app/
 ├── Policies/                 # Authorization rules
 ├── Services/                 # Complex business logic
 └── Models/                   # Eloquent, relationships
+    └── Concerns/             # Shared traits (ValidatesProductVariant)
 ```
 
 Controllers use Form Requests for validation, delegate to Services for complex logic. Policies check `hasRole()` for granular access.
@@ -125,14 +132,25 @@ Pages use PascalCase folders matching controller resource names. Components use 
 
 Key business entities (see `docs/MER.md`):
 
-- `units_of_measure`, `product_categories` - Catalogs
+- `unit_of_measures`, `product_categories` - Catalogs
 - `raw_materials`, `inventory_batches` - Raw materials with lot tracking (PEPS/FIFO)
-- `products`, `finished_inventory` - Finished goods
+- `products`, `product_variants` - Finished goods with SKU variants
+- `finished_inventories`, `finished_inventory_movements` - Stock tracking by warehouse
 - `formulas`, `formula_details` - Product recipes
-- `production_orders`, `production_order_details` - Manufacturing orders
-- `inventory_movements` - Stock transactions
+- `production_orders`, `production_order_details`, `production_order_packaging_plan` - Manufacturing orders
+- `inventory_movements` - Raw material stock transactions
+- `transfers` - Inter-warehouse transfers of finished goods
 - `price_lists`, `production_costs` - Pricing history
-- `activity_log` - Registro de auditoría del sistema (Spatie)
+- `warehouses`, `warehouse_user` - Multi-warehouse with user assignments
+- `qr_codes`, `qr_documents` - Product documentation QR system
+- `alerts` - System alerts (low stock, expiry, price variation)
+- `activity_log` - Audit log (Spatie)
+
+### PHP Enums (`app/Enums/`)
+
+All DB enum fields have a corresponding PHP Enum with `label()` method:
+- `InventoryMovementType`, `WarehouseType`, `ProductionOrderStatus`, `TransferStatus`
+- `AlertType`, `AlertSeverity`, `PriceUpdateType`, `ComponentSystem`, `QrDocumentType`
 
 ### Key UI Layouts
 
@@ -141,6 +159,8 @@ Key business entities (see `docs/MER.md`):
 ### Key Patterns
 
 **Controllers**: Use `Inertia::render('Products/Index')` with PascalCase paths. Pass `can` array for UI permission hints.
+
+**Models**: Use `#[Fillable]` attribute, PHPDoc `@property` annotations, `casts()` method, `scopeActive()` for `is_active` columns, Enum casting for DB enum fields. Models with product/variant validation use `ValidatesProductVariant` trait.
 
 **Form Requests**: Domain-organized under `app/Http/Requests/{Domain}/`. Validation rules + authorization via `authorize()`.
 

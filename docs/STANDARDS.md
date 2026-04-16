@@ -23,7 +23,7 @@ Toda la lógica de programación, variables y base de datos debe estar en inglé
 ## 2. Estándar de Código (PHP/Laravel)
 
 Seguiremos el estándar **PSR-12**, que es el utilizado por Laravel de forma nativa.
-* Uso estricto de tipos (`declare(strict_types=1);`) en lo posible.
+* Uso estricto de tipos (`declare(strict_types=1);`) si se adopta, debe ser en **todos** los archivos del mismo tipo, no selectivamente.
 * Validaciones siempre en **Form Requests**, no en el Controlador.
 * Lógica compleja en **Services**, los controladores deben ser delgados (*Skinny Controllers*).
 
@@ -80,6 +80,35 @@ Para asegurar una interfaz limpia, profesional y accesible, las acciones por fil
 
 > [!IMPORTANT]
 > Esta norma aplica **SOLO** a las acciones de fila en tablas. Los botones principales de página (ej. "Crear Nuevo") deben seguir siendo botones con texto para mayor claridad.
+
+---
+
+## 6b. Convenciones de Modelos Eloquent
+
+Todo modelo debe seguir este patrón estandarizado:
+
+### Estructura obligatoria
+1. **PHPDoc `@property`**: Documentar todas las columnas y relaciones.
+2. **`#[Fillable]`**: Usar el atributo PHP 8 en lugar de `protected $fillable`.
+3. **`HasFactory` con genéricos**: `/** @use HasFactory<\Database\Factories\ModelFactory> */`.
+4. **`casts()` como método**: No como propiedad.
+5. **Enum casting**: Todo campo `ENUM` de la DB debe tener un PHP Enum en `app/Enums/` y cast correspondiente.
+6. **`scopeActive()`**: Todos los modelos con columna `is_active` deben implementar este scope.
+7. **`LogsActivity` estandarizado**: Siempre con `useLogName()` y `setDescriptionForEvent()`.
+
+### Orden de secciones en el modelo
+1. Traits
+2. Constants / Attributes (`#[Fillable]`, `#[Hidden]`)
+3. `booted()` / hooks de ciclo de vida
+4. `getActivitylogOptions()`
+5. `casts()`
+6. Scopes
+7. Relationships
+8. Accessors / Mutators
+9. Custom methods
+
+### Validación product/variant
+Modelos que trabajan con `product_id` + `product_variant_id` deben usar el trait `ValidatesProductVariant` (`app/Models/Concerns/`).
 
 ---
 

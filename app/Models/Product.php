@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,8 +13,50 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string|null $code
+ * @property string $name
+ * @property string $brand
+ * @property string|null $description
+ * @property int $category_id
+ * @property int $unit_of_measure_id
+ * @property float|null $current_cost
+ * @property float|null $profit_margin
+ * @property float|null $current_price
+ * @property float $price_threshold
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ *
+ * @property-read \App\Models\ProductCategory $category
+ * @property-read \App\Models\UnitOfMeasure $unitOfMeasure
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\FinishedInventory[] $finishedInventories
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\FinishedInventoryMovement[] $finishedInventoryMovements
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Formula[] $formulas
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ProductionOrder[] $productionOrders
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ProductionCost[] $productionCosts
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\PriceList[] $priceLists
+ * @property-read \App\Models\QrCode|null $qrCode
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ProductVariant[] $variants
+ */
+#[Fillable([
+    'code',
+    'name',
+    'brand',
+    'description',
+    'category_id',
+    'unit_of_measure_id',
+    'current_cost',
+    'profit_margin',
+    'current_price',
+    'price_threshold',
+    'is_active',
+])]
 class Product extends Model
 {
+    /** @use HasFactory<\Database\Factories\ProductFactory> */
     use HasFactory, LogsActivity, SoftDeletes;
 
     public function getActivitylogOptions(): LogOptions
@@ -25,22 +69,6 @@ class Product extends Model
             ->dontSubmitEmptyLogs();
     }
 
-    protected $table = 'products';
-
-    protected $fillable = [
-        'code',
-        'name',
-        'brand',
-        'description',
-        'category_id',
-        'unit_of_measure_id',
-        'current_cost',
-        'profit_margin',
-        'current_price',
-        'price_threshold',
-        'is_active',
-    ];
-
     protected function casts(): array
     {
         return [
@@ -50,6 +78,14 @@ class Product extends Model
             'price_threshold' => 'decimal:2',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Scope a query to only include active products.
+     */
+    public function scopeActive(Builder $query): void
+    {
+        $query->where('is_active', true);
     }
 
     public function category(): BelongsTo

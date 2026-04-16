@@ -2,14 +2,50 @@
 
 namespace App\Models;
 
+use App\Enums\InventoryMovementType;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property int $raw_material_id
+ * @property int $warehouse_id
+ * @property int|null $batch_id
+ * @property int|null $production_order_id
+ * @property InventoryMovementType $type
+ * @property float $quantity
+ * @property float $cost_price
+ * @property \Illuminate\Support\Carbon $movement_date
+ * @property string|null $notes
+ * @property int $created_by
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ *
+ * @property-read \App\Models\RawMaterial $rawMaterial
+ * @property-read \App\Models\Warehouse $warehouse
+ * @property-read \App\Models\InventoryBatch|null $batch
+ * @property-read \App\Models\ProductionOrder|null $productionOrder
+ * @property-read \App\Models\User $createdBy
+ */
+#[Fillable([
+    'raw_material_id',
+    'warehouse_id',
+    'batch_id',
+    'production_order_id',
+    'type',
+    'quantity',
+    'cost_price',
+    'movement_date',
+    'notes',
+    'created_by',
+])]
 class InventoryMovement extends Model
 {
+    /** @use HasFactory<\Database\Factories\InventoryMovementFactory> */
     use HasFactory, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
@@ -20,24 +56,10 @@ class InventoryMovement extends Model
             ->dontSubmitEmptyLogs();
     }
 
-    protected $table = 'inventory_movements';
-
-    protected $fillable = [
-        'raw_material_id',
-        'warehouse_id',
-        'batch_id',
-        'production_order_id',
-        'type',
-        'quantity',
-        'cost_price',
-        'movement_date',
-        'notes',
-        'created_by',
-    ];
-
     protected function casts(): array
     {
         return [
+            'type' => InventoryMovementType::class,
             'quantity' => 'decimal:4',
             'cost_price' => 'decimal:4',
             'movement_date' => 'date',

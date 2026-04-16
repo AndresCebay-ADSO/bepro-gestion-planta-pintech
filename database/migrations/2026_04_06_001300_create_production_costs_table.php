@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('production_costs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
-            $table->foreignId('formula_id')->constrained('formulas')->onDelete('restrict');
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->foreignId('formula_id')->constrained('formulas')->restrictOnDelete();
             $table->decimal('cost', 12, 4);
             $table->decimal('variation_percentage', 8, 4)->nullable();
             $table->timestamp('calculated_at')->useCurrent();

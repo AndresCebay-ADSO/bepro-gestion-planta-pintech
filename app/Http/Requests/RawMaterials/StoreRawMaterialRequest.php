@@ -28,7 +28,7 @@ class StoreRawMaterialRequest extends FormRequest
                 'bail',
                 'required',
                 'integer',
-                Rule::exists('units_of_measure', 'id')->whereNull('deleted_at'),
+                Rule::exists('unit_of_measures', 'id')->whereNull('deleted_at'),
             ],
             'current_price' => ['bail', 'required', 'numeric', 'min:0', 'max:'.self::MAX_PRICE, 'decimal:0,4'],
             'previous_price' => ['nullable', 'numeric', 'min:0', 'max:'.self::MAX_PRICE, 'decimal:0,4'],

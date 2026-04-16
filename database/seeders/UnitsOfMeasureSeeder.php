@@ -107,7 +107,7 @@ class UnitsOfMeasureSeeder extends Seeder
         ];
 
         foreach ($units as $unit) {
-            DB::table('units_of_measure')->updateOrInsert(
+            DB::table('unit_of_measures')->updateOrInsert(
                 ['code' => $unit['code']],
                 array_merge($unit, [
                     'created_at' => now(),
