@@ -24,6 +24,14 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property \Illuminate\Support\Carbon $planned_date
  * @property \Illuminate\Support\Carbon|null $completion_date
  * @property string|null $notes
+ * @property \Illuminate\Support\Carbon|null $agitation_start_time
+ * @property \Illuminate\Support\Carbon|null $agitation_end_time
+ * @property float|null $viscosity_ku
+ * @property float|null $grinding_hg
+ * @property string|null $responsible_name
+ * @property \Illuminate\Support\Carbon|null $packaging_start_time
+ * @property \Illuminate\Support\Carbon|null $packaging_end_time
+ * @property float $spillage_quantity
  * @property int $created_by
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -49,6 +57,14 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'planned_date',
     'completion_date',
     'notes',
+    'agitation_start_time',
+    'agitation_end_time',
+    'viscosity_ku',
+    'grinding_hg',
+    'responsible_name',
+    'packaging_start_time',
+    'packaging_end_time',
+    'spillage_quantity',
     'created_by',
 ])]
 class ProductionOrder extends Model
@@ -86,6 +102,13 @@ class ProductionOrder extends Model
             'yield_percentage' => 'decimal:2',
             'planned_date' => 'date',
             'completion_date' => 'date',
+            'agitation_start_time' => 'datetime',
+            'agitation_end_time' => 'datetime',
+            'viscosity_ku' => 'decimal:2',
+            'grinding_hg' => 'decimal:2',
+            'packaging_start_time' => 'datetime',
+            'packaging_end_time' => 'datetime',
+            'spillage_quantity' => 'decimal:4',
         ];
     }
 

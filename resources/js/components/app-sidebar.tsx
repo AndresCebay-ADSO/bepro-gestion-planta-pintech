@@ -27,7 +27,12 @@ import {
 import { dashboard } from '@/routes';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import { index as formulasIndex } from '@/routes/formulas';
+import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
+import { index as productionIndex } from '@/routes/production';
+import { index as productsIndex } from '@/routes/products';
+import { index as rawMaterialsIndex } from '@/routes/raw-materials';
 import { index as usersIndex } from '@/routes/users';
+import { index as warehousesIndex } from '@/routes/warehouses';
 import type { User, UserRole } from '@/types/auth';
 import type { NavGroup } from '@/types/navigation';
 
@@ -43,43 +48,41 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Materias Primas',
-                href: '/raw-materials',
+                href: rawMaterialsIndex().url,
                 icon: Boxes,
                 allowedRoles: ['admin', 'produccion'],
             },
             {
                 title: 'Movimientos',
-                href: '/inventory-movements',
+                href: inventoryMovementsIndex().url,
                 icon: ArrowLeftRight,
                 allowedRoles: ['admin', 'produccion'],
             },
             {
                 title: 'Bodegas',
-                href: '/warehouses',
+                href: warehousesIndex().url,
                 icon: Warehouse,
                 allowedRoles: ['admin', 'produccion', 'comercial'],
             },
             {
-                title: 'Producto Terminado',
-                href: '/production/finished-goods',
+                title: 'Portafolio de Productos',
+                href: productsIndex().url,
                 icon: Factory,
                 allowedRoles: ['admin', 'produccion', 'comercial'],
             },
             {
                 title: 'Fórmulas',
-                href: formulasIndex(),
+                href: formulasIndex().url,
                 icon: FlaskConical,
                 allowedRoles: ['admin', 'produccion'],
                 unauthorizedBehavior: 'disable',
             },
             {
                 title: 'Órdenes de Producción',
-                href: '/production/orders',
+                href: productionIndex().url,
                 icon: Warehouse,
                 allowedRoles: ['admin', 'produccion'],
                 unauthorizedBehavior: 'disable',
-                disabled: true,
-                disabledLabel: 'Módulo en desarrollo',
             },
         ],
     },
