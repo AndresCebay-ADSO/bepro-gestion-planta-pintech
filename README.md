@@ -166,11 +166,12 @@ Carpeta `docs/`:
 - `SOFTWARE_OVERVIEW.md` - **NUEVO** Mapa completo de capacidades del sistema (v1.2).
 - `MER.md` - Modelo entidad relacion / diccionario de datos actualizado tras consolidacion.
 - `SISTEMA_AUDITORIA.md` - Guia técnica del registro de actividad y widgets de trazabilidad.
+- `COMPONENTES_UI.md` - Guía de uso de componentes reutilizables (FormattedNumber, FormattedDate, TableActions).
 - `ACTA_ACTUALIZACION_V1_2.md` - Historial de cambios técnicos v1.1 -> v1.2.
 - `RESUMEN_CAMBIOS_PINTECH_OS.md` - Resumen ejecutivo de ajustes tecnicos iniciales.
 - `ESPECIFICACION.md` - Detalle de requerimientos.
 - `PLAN_DESARROLLO.md` - Hoja de ruta.
-- `STANDARDS.md` - Estándares de código y diseño.
+- `STANDARDS.md` - Estándares de código, paginación y diseño.
 - `SISTEMA_TEMAS_UI.md` - Guía de implementación del tema visual.
 
 ## Autor
