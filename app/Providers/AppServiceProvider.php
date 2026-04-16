@@ -12,6 +12,7 @@ use App\Policies\FormulaPolicy;
 use App\Policies\PriceListPolicy;
 use App\Policies\RawMaterialPolicy;
 use App\Policies\WarehousePolicy;
+use App\Services\FormulaService;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -29,7 +30,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(FormulaService::class, function ($app) {
+            return new FormulaService;
+        });
     }
 
     /**

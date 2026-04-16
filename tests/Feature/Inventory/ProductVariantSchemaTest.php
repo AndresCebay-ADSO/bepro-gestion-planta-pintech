@@ -25,8 +25,8 @@ test('el esquema incluye tabla de variantes de producto', function () {
 });
 
 test('las tablas operativas incluyen product_variant_id para migracion gradual', function () {
-    expect(Schema::hasColumn('finished_inventory', 'product_variant_id'))->toBeTrue();
+    expect(Schema::hasColumn('finished_inventories', 'product_variant_id'))->toBeTrue();
     expect(Schema::hasColumn('finished_inventory_movements', 'product_variant_id'))->toBeTrue();
     expect(Schema::hasColumn('transfers', 'product_variant_id'))->toBeTrue();
-    expect(Schema::hasColumn('price_list', 'product_variant_id'))->toBeTrue();
+    expect(Schema::hasColumn('price_lists', 'product_variant_id'))->toBeTrue();
 });
