@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('alerts', function (Blueprint $table) {
             $table->id();
             $table->enum('type', ['stock_bajo', 'vencimiento_proximo', 'variacion_precio']);
-            $table->foreignId('raw_material_id')->nullable()->constrained('raw_materials')->onDelete('cascade');
-            $table->foreignId('batch_id')->nullable()->constrained('inventory_batches')->onDelete('cascade');
+            $table->foreignId('raw_material_id')->nullable()->constrained('raw_materials')->cascadeOnDelete();
+            $table->foreignId('batch_id')->nullable()->constrained('inventory_batches')->cascadeOnDelete();
             $table->enum('severity', ['baja', 'media', 'alta'])->default('media');
             $table->text('message');
             $table->boolean('is_resolved')->default(false);

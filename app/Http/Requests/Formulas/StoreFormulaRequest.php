@@ -34,7 +34,7 @@ class StoreFormulaRequest extends FormRequest
             'details.*.unit_of_measure_id' => [
                 'required',
                 'integer',
-                Rule::exists('units_of_measure', 'id'),
+                Rule::exists('unit_of_measures', 'id'),
             ],
         ];
     }

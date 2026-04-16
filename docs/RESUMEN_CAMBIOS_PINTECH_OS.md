@@ -131,3 +131,47 @@ Se implementó notificación personalizada para controlar la salutation exacta.
 - `resources/js/Pages/Admin/Users/Create.tsx` y `Edit.tsx`:
   - **Botón Vislumbrar Contraseña:** Se instaló e implementó el componente `<PasswordInput>` (creado con lucide-react y radix ui) en la creación de usuarios para permitir visualizar las contraseñas escritas (Contraseña y Confirmación).
   - **Corrección Bug de Mensajes de Validación**: Se corrigió el error donde Inertia escupía un objeto con llave string `Record<string, string>`, pero el cliente TypeScript lo trataba como arreglo devolviendo el índice cero `{errors.name[0]}`, lo que causaba que el sistema solo renderizara la primera letra del error.
+
+---
+
+## 9) Refactor de Catálogo por Variantes SKU (Abril 2026)
+
+Se incorporó una base técnica para manejar catálogo real de productos con referencias comerciales por presentación/atributos.
+
+### Cambios de esquema
+- Nueva tabla `product_variants`:
+  - `product_id`, `sku`, `unit_of_measure_id`
+  - `presentation_value`, `presentation_label`
+  - `color`, `finish`, `base_type`, `component_system`
+  - `current_cost`, `current_price`, `is_active`
+- Ajustes en `products`:
+  - Nuevos campos: `brand`, `description`
+- Soporte gradual de variantes en tablas operativas:
+  - `finished_inventory.product_variant_id`
+  - `finished_inventory_movements.product_variant_id`
+  - `price_list.product_variant_id`
+  - `transfers.product_variant_id`
+
+### Cambios de modelo/lógica
+- Nuevo modelo: `App\\Models\\ProductVariant`.
+- Relaciones nuevas en `Product`, `UnitOfMeasure`, `FinishedInventory`, `FinishedInventoryMovement`, `Transfer`, `PriceList`.
+- Validaciones de consistencia de dominio:
+  - Si llega `product_variant_id`, se completa `product_id` automáticamente.
+  - Si `product_id` y `product_variant_id` no corresponden, se lanza error de validación.
+
+### Gestión de variantes en módulo de productos
+- Nuevo controlador: `ProductVariantController` (store/update/destroy).
+- Nuevos requests:
+  - `StoreProductVariantRequest`
+  - `UpdateProductVariantRequest`
+- Nuevas rutas:
+  - `products.variants.store`
+  - `products.variants.update`
+  - `products.variants.destroy`
+- Vista de detalle de producto (`Products/Show`) actualizada para visualizar variantes SKU.
+
+### Validación automatizada
+- `tests/Feature/Inventory/ProductVariantSchemaTest.php`
+- `tests/Feature/Inventory/TransferValidationTest.php`
+- `tests/Feature/Inventory/PriceListVariantValidationTest.php`
+- `tests/Feature/Products/ProductVariantManagementTest.php`

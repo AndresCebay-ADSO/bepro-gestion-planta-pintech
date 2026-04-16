@@ -36,7 +36,7 @@ class UpdateProductRequest extends FormRequest
                 'bail',
                 'required',
                 'integer',
-                Rule::exists('units_of_measure', 'id')->whereNull('deleted_at'),
+                Rule::exists('unit_of_measures', 'id')->whereNull('deleted_at'),
             ],
             'current_cost' => ['nullable', 'numeric', 'min:0', 'decimal:0,4'],
             'profit_margin' => ['nullable', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],

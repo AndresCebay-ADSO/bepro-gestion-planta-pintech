@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('formula_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('formula_id')->constrained('formulas')->onDelete('cascade');
-            $table->foreignId('raw_material_id')->constrained('raw_materials')->onDelete('restrict');
+            $table->foreignId('formula_id')->constrained('formulas')->cascadeOnDelete();
+            $table->foreignId('raw_material_id')->constrained('raw_materials')->restrictOnDelete();
             $table->decimal('quantity', 12, 4);
-            $table->foreignId('unit_of_measure_id')->constrained('units_of_measure')->restrictOnDelete();
+            $table->foreignId('unit_of_measure_id')->constrained('unit_of_measures')->restrictOnDelete();
             $table->timestamps();
 
             $table->unique(['formula_id', 'raw_material_id']);

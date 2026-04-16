@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\InventoryMovementType;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
 use Illuminate\Support\Facades\DB;
@@ -64,9 +65,11 @@ class InventoryService
         });
     }
 
-    private function applyMovement(string $type, string|float $quantity, int $rawMaterialId, ?int $batchId): void
+    private function applyMovement(string|InventoryMovementType $type, string|float $quantity, int $rawMaterialId, ?int $batchId): void
     {
-        if ($type === 'exit' && $batchId === null) {
+        $typeValue = $type instanceof InventoryMovementType ? $type->value : $type;
+
+        if ($typeValue === InventoryMovementType::Exit->value && $batchId === null) {
             throw ValidationException::withMessages([
                 'batch_id' => __('Debes seleccionar un lote para registrar una salida.'),
             ]);
@@ -86,7 +89,7 @@ class InventoryService
 
         $quantity = (float) $quantity;
 
-        if ($type === 'entry') {
+        if ($typeValue === InventoryMovementType::Entry->value) {
             $batch->remaining_quantity = (float) $batch->remaining_quantity + $quantity;
             $batch->save();
 
@@ -112,7 +115,7 @@ class InventoryService
         $batch = InventoryBatch::query()->lockForUpdate()->findOrFail($movement->batch_id);
         $quantity = (float) $movement->quantity;
 
-        if ($movement->type === 'entry') {
+        if ($movement->type === InventoryMovementType::Entry) {
             if ((float) $batch->remaining_quantity < $quantity) {
                 throw ValidationException::withMessages([
                     'batch_id' => __('No es posible revertir el movimiento porque el lote no tiene stock suficiente.'),
