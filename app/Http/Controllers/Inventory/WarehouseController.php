@@ -46,6 +46,7 @@ class WarehouseController extends Controller
 
         $warehouses = $query
             ->paginate(15)
+            ->onEachSide(1)
             ->withQueryString()
             ->through(function (Warehouse $warehouse) use ($user): array {
                 return [

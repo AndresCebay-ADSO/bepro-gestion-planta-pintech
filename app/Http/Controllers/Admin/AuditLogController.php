@@ -57,7 +57,7 @@ class AuditLogController extends Controller
             $query->whereDate('created_at', '<=', $request->input('date_to'));
         }
 
-        $logs = $query->paginate(20)->withQueryString();
+        $logs = $query->paginate(20)->onEachSide(1)->withQueryString();
 
         // Transformar a camelCase para cumplir con estándares de TS del proyecto
         $logs->getCollection()->transform(function ($log) {

@@ -32,6 +32,7 @@ class ProductController extends Controller
             })
             ->latest('id')
             ->paginate(15)
+            ->onEachSide(1)
             ->withQueryString();
 
         return Inertia::render('Products/Index', [

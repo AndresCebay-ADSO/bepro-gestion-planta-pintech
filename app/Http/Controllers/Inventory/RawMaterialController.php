@@ -28,6 +28,7 @@ class RawMaterialController extends Controller
             ->when($search !== '', fn ($query) => $query->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"]))
             ->latest('id')
             ->paginate(15)
+            ->onEachSide(1)
             ->withQueryString()
             ->through(function (RawMaterial $rawMaterial) use ($user): array {
                 return [

@@ -42,6 +42,7 @@ class InventoryMovementController extends Controller
             ->latest('movement_date')
             ->latest('id')
             ->paginate(20)
+            ->onEachSide(1)
             ->withQueryString();
 
         return Inertia::render('Inventory/Movements/Index', [

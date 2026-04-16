@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProductionOrderStatus;
 use App\Models\Formula;
 use App\Models\ProductionOrder;
 use App\Services\ProductionOrderService;
@@ -26,7 +27,8 @@ class ProductionOrderController extends Controller
         $orders = ProductionOrder::query()
             ->with(['product', 'formula', 'warehouse'])
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            ->onEachSide(1);
 
         return Inertia::render('Production/Orders/Index', [
             'orders' => $orders,
@@ -39,10 +41,10 @@ class ProductionOrderController extends Controller
     public function show(ProductionOrder $order): Response
     {
         $order->load([
-            'product', 
-            'formula.details.rawMaterial', 
-            'details.rawMaterial', 
-            'packagingPlans.productVariant'
+            'product',
+            'formula.details.rawMaterial',
+            'details.rawMaterial',
+            'packagingPlans.productVariant',
         ]);
 
         return Inertia::render('Production/Orders/Show', [
@@ -65,15 +67,15 @@ class ProductionOrderController extends Controller
         ]);
 
         $formula = Formula::findOrFail($validated['formula_id']);
-        
+
         // Validar stock antes de crear (Guardia de Paso C)
         $this->productionOrderService->validateStockForOrder($formula, (float) $validated['quantity']);
 
         // Lógica de creación (Simplificada para este paso)
         $order = ProductionOrder::create([
             ...$validated,
-            'order_number' => 'OP-' . strtoupper(uniqid()),
-            'status' => \App\Enums\ProductionOrderStatus::Pending,
+            'order_number' => 'OP-'.strtoupper(uniqid()),
+            'status' => ProductionOrderStatus::Pending,
             'created_by' => auth()->id(),
         ]);
 
