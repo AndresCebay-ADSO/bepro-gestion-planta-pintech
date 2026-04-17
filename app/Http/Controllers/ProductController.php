@@ -100,11 +100,13 @@ class ProductController extends Controller
                 ->get(),
             'rawMaterials' => RawMaterial::query()
                 ->with('category:id,name')
-                ->whereHas('category', fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%envase%']))
-                ->orWhere('name', 'like', '%bidón%')
-                ->orWhere('name', 'like', '%galón%')
-                ->orWhere('name', 'like', '%tambor%')
-                ->select('id', 'code', 'name', 'category_id')
+                ->where(fn ($q) => $q
+                    ->whereHas('category', fn ($cq) => $cq->whereRaw('LOWER(name) LIKE ?', ['%envase%']))
+                    ->orWhere('code', 'like', '%bidón%')
+                    ->orWhere('code', 'like', '%galón%')
+                    ->orWhere('code', 'like', '%tambor%')
+                )
+                ->select('id', 'code', 'category_id')
                 ->get(),
         ]);
     }

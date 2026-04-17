@@ -73,8 +73,7 @@ type Props = {
     rawMaterials?: Array<{
         id: number;
         code: string;
-        name: string;
-        category?: { name: string } | null;
+        category?: { id: number; name: string };
     }>;
 };
 
@@ -371,10 +370,9 @@ export default function ProductsShow({ product, can, units, rawMaterials }: Prop
                                                     <SelectValue placeholder="Selecciona el envase (opcional)" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="">Sin envase</SelectItem>
-                                                    {rawMaterials?.filter((rm: any) => rm.category?.name?.toLowerCase().includes('envase') || rm.category?.name?.toLowerCase().includes('container')).map((rm: any) => (
+                                                    {rawMaterials?.map((rm: any) => (
                                                         <SelectItem key={rm.id} value={String(rm.id)}>
-                                                            {rm.code} — {rm.name}
+                                                            {rm.code}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>

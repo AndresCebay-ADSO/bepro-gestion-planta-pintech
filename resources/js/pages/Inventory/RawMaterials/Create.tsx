@@ -9,12 +9,20 @@ type UnitOption = {
     symbol: string;
 };
 
+type CategoryOption = {
+    id: number;
+    name: string;
+    code: string;
+};
+
 type Props = {
+    categories: CategoryOption[];
     units: UnitOption[];
 };
 
 type RawMaterialFormData = {
     code: string;
+    category_id: string;
     unit_of_measure_id: string;
     current_price: string;
     previous_price: string;
@@ -23,9 +31,10 @@ type RawMaterialFormData = {
     is_active: boolean;
 };
 
-export default function RawMaterialsCreate({ units }: Props) {
+export default function RawMaterialsCreate({ categories, units }: Props) {
     const form = useForm<RawMaterialFormData>({
         code: '',
+        category_id: '',
         unit_of_measure_id: '',
         current_price: '',
         previous_price: '',
@@ -71,6 +80,7 @@ export default function RawMaterialsCreate({ units }: Props) {
 
                 <RawMaterialForm
                     form={form}
+                    categories={categories}
                     units={units}
                     onSubmit={submit}
                     submitLabel="Crear Materia Prima"
