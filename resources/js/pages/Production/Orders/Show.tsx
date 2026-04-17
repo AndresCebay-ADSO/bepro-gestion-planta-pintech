@@ -36,7 +36,7 @@ export default function ProductionOrderShow({ order }: Props) {
         notes: order.notes ?? '',
         ingredients: order.details.map((detail: any) => ({
             id: detail.id,
-            raw_material_name: detail.raw_material?.name,
+            raw_material_name: detail.raw_material?.code,
             planned_quantity: detail.planned_quantity,
             actual_quantity: detail.actual_quantity ?? detail.planned_quantity,
         })),

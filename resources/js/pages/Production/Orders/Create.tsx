@@ -1,6 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Plus, Trash2 } from 'lucide-react';
-import type { FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,7 +54,7 @@ export default function ProductionOrdersCreate({ products, warehouses }: Props) 
     const availableFormulas = selectedProduct?.formulas || [];
     const availableVariants = selectedProduct?.variants || [];
 
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         post(productionOrderStore().url);
     };
@@ -119,9 +118,12 @@ export default function ProductionOrdersCreate({ products, warehouses }: Props) 
                                 <Select
                                     value={data.product_id}
                                     onValueChange={(v: string) => {
-                                        setData('product_id', v);
-                                        setData('formula_id', ''); // Resetear fórmula
-                                        setData('packaging', []); // Resetear envasado
+                                        setData({
+                                            ...data,
+                                            product_id: v,
+                                            formula_id: '',
+                                            packaging: [],
+                                        });
                                     }}
                                 >
                                     <SelectTrigger id="product_id">
