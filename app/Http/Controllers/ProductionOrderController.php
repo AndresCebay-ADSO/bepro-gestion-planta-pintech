@@ -60,7 +60,10 @@ class ProductionOrderController extends Controller
     public function create(): Response
     {
         $products = Product::query()
-            ->with(['activeFormula', 'variants' => fn ($q) => $q->where('is_active', true)])
+            ->with([
+                'formulas' => fn ($q) => $q->where('is_active', true),
+                'variants' => fn ($q) => $q->where('is_active', true),
+            ])
             ->where('is_active', true)
             ->get()
             ->map(fn ($p) => [
