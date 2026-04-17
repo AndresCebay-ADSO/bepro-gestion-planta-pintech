@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
         // NOTA: Los siguientes seeders deben ejecutarse manualmente cuando
         // el usuario quiera crear datos de prueba:
         // - RawMaterialSeeder::class      // Materias primas
-        // - ProductSeeder::class          // Productos base
+        // - ProductSeeder::class          // Productos base (unidad: galones)
         // - InventoryBatchSeeder::class   // Lotes de inventario
     }
 }

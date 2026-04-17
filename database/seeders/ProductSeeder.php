@@ -20,8 +20,8 @@ class ProductSeeder extends Seeder
     {
         $categories = ProductCategory::all()->keyBy('name');
 
-        // Unidad base para productos (litros - volumen de pintura)
-        $literUnit = UnitOfMeasure::where('code', 'l')->first();
+        // Unidad base para productos (galones - volumen de pintura)
+        $gallonUnit = UnitOfMeasure::where('code', 'gl')->first();
 
         $products = [
             // Esmaltes Alquídicos
@@ -214,7 +214,7 @@ class ProductSeeder extends Seeder
                 ['code' => $product['code']],
                 [
                     'category_id' => $category?->id,
-                    'unit_of_measure_id' => $literUnit?->id,
+                    'unit_of_measure_id' => $gallonUnit?->id,
                     'name' => $product['name'],
                     'description' => $product['description'],
                     'is_active' => $product['is_active'],
