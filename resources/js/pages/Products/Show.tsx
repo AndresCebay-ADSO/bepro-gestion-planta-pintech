@@ -205,7 +205,7 @@ export default function ProductsShow({ product, can, units }: Props) {
                                 Variantes / SKU
                             </h2>
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                                Referencias comerciales por presentación, color y acabado.
+                                Presentaciones de venta: galón, bidón, tambor, etc. El valor se define en galones.
                             </p>
                         </div>
                         {can.update && (
@@ -256,15 +256,18 @@ export default function ProductsShow({ product, can, units }: Props) {
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="presentation_value">Valor Presentación</Label>
+                                                <Label htmlFor="presentation_value">Valor Presentación (en galones)</Label>
                                                 <Input
                                                     id="presentation_value"
                                                     type="number"
                                                     step="0.0001"
                                                     value={form.data.presentation_value}
                                                     onChange={(e) => form.setData('presentation_value', e.target.value)}
-                                                    placeholder="Ej: 3.785"
+                                                    placeholder="Ej: 1, 5, 0.75, 50"
                                                 />
+                                                <p className="text-xs text-muted-foreground">
+                                                    Ejemplos: 1 = Galón, 5 = Bidón 5gal, 0.75 = 3/4 galón, 50 = Tambor
+                                                </p>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="presentation_label">Label Presentación</Label>
@@ -272,7 +275,7 @@ export default function ProductsShow({ product, can, units }: Props) {
                                                     id="presentation_label"
                                                     value={form.data.presentation_label}
                                                     onChange={(e) => form.setData('presentation_label', e.target.value)}
-                                                    placeholder="Ej: Galón 3.785L"
+                                                    placeholder="Ej: Galón 3.785L, Bidón 5 Gal"
                                                 />
                                             </div>
                                         </div>
