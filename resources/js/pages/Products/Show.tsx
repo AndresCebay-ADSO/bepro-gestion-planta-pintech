@@ -86,6 +86,7 @@ export default function ProductsShow({ product, can, units }: Props) {
         component_system: '1K',
         current_cost: '',
         current_price: '',
+        package_raw_material_id: '',
         is_active: true,
     });
 
@@ -352,6 +353,29 @@ export default function ProductsShow({ product, can, units }: Props) {
                                                     placeholder="0.00"
                                                 />
                                             </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="package_raw_material_id">Envase / Contenedor</Label>
+                                            <Select
+                                                value={form.data.package_raw_material_id}
+                                                onValueChange={(v) => form.setData('package_raw_material_id', v)}
+                                            >
+                                                <SelectTrigger id="package_raw_material_id">
+                                                    <SelectValue placeholder="Selecciona el envase (opcional)" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="">Sin envase</SelectItem>
+                                                    {rawMaterials?.filter((rm: any) => rm.category?.name?.toLowerCase().includes('envase') || rm.category?.name?.toLowerCase().includes('container')).map((rm: any) => (
+                                                        <SelectItem key={rm.id} value={String(rm.id)}>
+                                                            {rm.code} — {rm.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <p className="text-xs text-muted-foreground">
+                                                Se descontará del inventario al completar la orden de producción
+                                            </p>
                                         </div>
 
                                         <div className="flex justify-end gap-2 pt-4">

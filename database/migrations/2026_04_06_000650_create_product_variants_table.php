@@ -24,6 +24,10 @@ return new class extends Migration
             $table->enum('component_system', ['1K', '2K', 'KIT'])->default('1K');
             $table->decimal('current_cost', 12, 4)->nullable();
             $table->decimal('current_price', 12, 4)->nullable();
+            $table->foreignId('package_raw_material_id')
+                ->nullable()
+                ->constrained('raw_materials')
+                ->nullOnDelete();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();

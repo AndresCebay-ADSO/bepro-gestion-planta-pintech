@@ -7,6 +7,7 @@ use App\Http\Requests\Products\UpdateProductRequest;
 use App\Models\PriceList;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -84,7 +85,7 @@ class ProductController extends Controller
                 'category:id,name',
                 'unitOfMeasure:id,name,symbol',
                 'variants' => fn ($query) => $query
-                    ->with('unitOfMeasure:id,name,symbol')
+                    ->with(['unitOfMeasure:id,name,symbol', 'packageRawMaterial:id,code,name,category_id'])
                     ->orderBy('sku'),
                 'formulas' => fn ($q) => $q->with('createdBy:id,name')->orderBy('version', 'desc'),
             ]),
@@ -96,6 +97,14 @@ class ProductController extends Controller
                 ->select('id', 'name', 'symbol')
                 ->where('is_active', true)
                 ->orderBy('name')
+                ->get(),
+            'rawMaterials' => RawMaterial::query()
+                ->with('category:id,name')
+                ->whereHas('category', fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%envase%']))
+                ->orWhere('name', 'like', '%bidón%')
+                ->orWhere('name', 'like', '%galón%')
+                ->orWhere('name', 'like', '%tambor%')
+                ->select('id', 'code', 'name', 'category_id')
                 ->get(),
         ]);
     }
