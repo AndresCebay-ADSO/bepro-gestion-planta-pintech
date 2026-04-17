@@ -70,9 +70,15 @@ type Props = {
         name: string;
         symbol: string;
     }>;
+    rawMaterials?: Array<{
+        id: number;
+        code: string;
+        name: string;
+        category?: { name: string } | null;
+    }>;
 };
 
-export default function ProductsShow({ product, can, units }: Props) {
+export default function ProductsShow({ product, can, units, rawMaterials }: Props) {
     const [isOpen, setIsOpen] = useState(false);
 
     const form = useForm({
