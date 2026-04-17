@@ -14,22 +14,25 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seeders de datos maestros (sin dependencias)
+        // Seeders de configuración base (requeridos)
         $this->call([
-            UnitsOfMeasureSeeder::class,
-            ProductCategorySeeder::class,
-            RawMaterialSeeder::class,
-            ProductSeeder::class,
-            RawMaterialCategorySeeder::class,
+            UnitsOfMeasureSeeder::class,      // Unidades: gr, kg, l, gl, u
+            RawMaterialCategorySeeder::class, // Categorías materia prima
+            ProductCategorySeeder::class,      // Categorías productos
+            WarehouseSeeder::class,            // Bodegas
         ]);
 
-        // Seeders de roles y usuarios
+        // Seeders de usuarios y permisos
         $this->call([
             RolePermissionSeeder::class,
             UserSeeder::class,
-            WarehouseSeeder::class,
             WarehouseUserSeeder::class,
-            InventoryBatchSeeder::class,
         ]);
+
+        // NOTA: Los siguientes seeders deben ejecutarse manualmente cuando
+        // el usuario quiera crear datos de prueba:
+        // - RawMaterialSeeder::class      // Materias primas
+        // - ProductSeeder::class          // Productos base
+        // - InventoryBatchSeeder::class   // Lotes de inventario
     }
 }
