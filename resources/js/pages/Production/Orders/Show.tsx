@@ -72,7 +72,7 @@ export default function ProductionOrderShow({ order }: Props) {
                             </Badge>
                         </div>
                         <p className="text-muted-foreground mt-1">
-                            {order.product?.name} • Planta Cali • <FormattedNumber value={order.quantity} maxDecimals={2} /> L Proyectados
+                            {order.product?.name} • Planta Cali • <FormattedNumber value={order.quantity} maxDecimals={2} /> gal Proyectados
                         </p>
                     </div>
                     {isCompleted && (
@@ -229,7 +229,7 @@ export default function ProductionOrderShow({ order }: Props) {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="spillage">Derrame Detectado (L)</Label>
+                                    <Label htmlFor="spillage">Derrame Detectado (gal)</Label>
                                     <Input
                                         id="spillage"
                                         type="number"

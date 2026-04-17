@@ -6,7 +6,9 @@ namespace App\Http\Controllers;
 
 use App\Enums\ProductionOrderStatus;
 use App\Models\Formula;
+use App\Models\Product;
 use App\Models\ProductionOrder;
+use App\Models\Warehouse;
 use App\Services\ProductionOrderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,6 +51,42 @@ class ProductionOrderController extends Controller
 
         return Inertia::render('Production/Orders/Show', [
             'order' => $order,
+        ]);
+    }
+
+    /**
+     * Mostrar formulario para crear nueva orden.
+     */
+    public function create(): Response
+    {
+        $products = Product::query()
+            ->with(['activeFormula', 'variants' => fn ($q) => $q->where('is_active', true)])
+            ->where('is_active', true)
+            ->get()
+            ->map(fn ($p) => [
+                'id' => $p->id,
+                'code' => $p->code,
+                'name' => $p->name,
+                'formulas' => $p->formulas->map(fn ($f) => [
+                    'id' => $f->id,
+                    'version' => $f->version,
+                    'is_active' => $f->is_active,
+                ]),
+                'variants' => $p->variants->map(fn ($v) => [
+                    'id' => $v->id,
+                    'sku' => $v->sku,
+                    'presentation_label' => $v->presentation_label,
+                    'presentation_value' => $v->presentation_value,
+                ]),
+            ]);
+
+        $warehouses = Warehouse::query()
+            ->where('is_active', true)
+            ->get(['id', 'name']);
+
+        return Inertia::render('Production/Orders/Create', [
+            'products' => $products,
+            'warehouses' => $warehouses,
         ]);
     }
 
