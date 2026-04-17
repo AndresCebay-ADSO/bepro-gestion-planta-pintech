@@ -85,7 +85,7 @@ class ProductController extends Controller
                 'category:id,name',
                 'unitOfMeasure:id,name,symbol',
                 'variants' => fn ($query) => $query
-                    ->with(['unitOfMeasure:id,name,symbol', 'packageRawMaterial:id,code,name,category_id'])
+                    ->with(['unitOfMeasure:id,name,symbol', 'packageRawMaterial:id,code,category_id'])
                     ->orderBy('sku'),
                 'formulas' => fn ($q) => $q->with('createdBy:id,name')->orderBy('version', 'desc'),
             ]),
