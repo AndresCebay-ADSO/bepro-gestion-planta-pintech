@@ -20,23 +20,23 @@ use Illuminate\Validation\ValidationException;
 class ProductionOrderService
 {
     /**
-     * Validar si hay stock suficiente en la Planta Cali (ID: 1) para producir una cantidad específica.
+     * Validar si hay stock suficiente en la bodega seleccionada para producir una cantidad específica.
      */
-    public function validateStockForOrder(Formula $formula, float $quantity): void
+    public function validateStockForOrder(Formula $formula, float $quantity, int $warehouseId): void
     {
-        $factoryWarehouseId = 1; // Planta Cali
+        $warehouse = \App\Models\Warehouse::findOrFail($warehouseId);
 
         foreach ($formula->details as $detail) {
             $required = $detail->quantity * $quantity;
 
             $available = InventoryBatch::where('raw_material_id', $detail->raw_material_id)
-                ->where('warehouse_id', $factoryWarehouseId)
+                ->where('warehouse_id', $warehouseId)
                 ->sum('remaining_quantity');
 
             if ($available < $required) {
-                $materialName = $detail->rawMaterial->name;
+                $materialCode = $detail->rawMaterial->code;
                 throw ValidationException::withMessages([
-                    'product_id' => "Stock insuficiente de '{$materialName}' en Planta Cali. Requerido: {$required}, Disponible: {$available}.",
+                    'product_id' => "Stock insuficiente de '{$materialCode}' en {$warehouse->name}. Requerido: {$required}, Disponible: {$available}.",
                 ]);
             }
         }

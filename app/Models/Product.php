@@ -115,6 +115,12 @@ class Product extends Model
         return $this->hasMany(Formula::class, 'product_id');
     }
 
+    public function activeFormula(): HasOne
+    {
+        return $this->hasOne(Formula::class, 'product_id')
+            ->where('is_active', true);
+    }
+
     public function productionOrders(): HasMany
     {
         return $this->hasMany(ProductionOrder::class, 'product_id');

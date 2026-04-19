@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\UnitOfMeasure;
 use Illuminate\Database\Seeder;
 
 /**
@@ -18,6 +19,9 @@ class ProductSeeder extends Seeder
     public function run(): void
     {
         $categories = ProductCategory::all()->keyBy('name');
+
+        // Unidad base para productos (galones - volumen de pintura)
+        $gallonUnit = UnitOfMeasure::where('code', 'gl')->first();
 
         $products = [
             // Esmaltes Alquídicos
@@ -210,6 +214,7 @@ class ProductSeeder extends Seeder
                 ['code' => $product['code']],
                 [
                     'category_id' => $category?->id,
+                    'unit_of_measure_id' => $gallonUnit?->id,
                     'name' => $product['name'],
                     'description' => $product['description'],
                     'is_active' => $product['is_active'],

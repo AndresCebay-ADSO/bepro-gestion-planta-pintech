@@ -36,7 +36,7 @@ export default function ProductionOrderShow({ order }: Props) {
         notes: order.notes ?? '',
         ingredients: order.details.map((detail: any) => ({
             id: detail.id,
-            raw_material_name: detail.raw_material?.name,
+            raw_material_name: detail.raw_material?.code,
             planned_quantity: detail.planned_quantity,
             actual_quantity: detail.actual_quantity ?? detail.planned_quantity,
         })),
@@ -72,7 +72,7 @@ export default function ProductionOrderShow({ order }: Props) {
                             </Badge>
                         </div>
                         <p className="text-muted-foreground mt-1">
-                            {order.product?.name} • Planta Cali • <FormattedNumber value={order.quantity} maxDecimals={2} /> L Proyectados
+                            {order.product?.name} • Planta Cali • <FormattedNumber value={order.quantity} maxDecimals={2} /> gal Proyectados
                         </p>
                     </div>
                     {isCompleted && (
@@ -229,7 +229,7 @@ export default function ProductionOrderShow({ order }: Props) {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="spillage">Derrame Detectado (L)</Label>
+                                    <Label htmlFor="spillage">Derrame Detectado (gal)</Label>
                                     <Input
                                         id="spillage"
                                         type="number"

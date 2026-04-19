@@ -24,8 +24,15 @@ type UnitOption = {
     symbol: string;
 };
 
+type CategoryOption = {
+    id: number;
+    name: string;
+    code: string;
+};
+
 type RawMaterialFormData = {
     code: string;
+    category_id: string;
     unit_of_measure_id: string;
     current_price: string;
     previous_price: string;
@@ -55,6 +62,7 @@ type InertiaForm<T> = {
 
 type Props = {
     form: InertiaForm<RawMaterialFormData>;
+    categories: CategoryOption[];
     units: UnitOption[];
     onSubmit: () => void;
     submitLabel: string;
@@ -88,7 +96,7 @@ function sanitizeIntegerInput(rawValue: string, maxLength: number): string {
 /**
  * Componente reutilizable de formulario
  */
-export function RawMaterialForm({ form, units, onSubmit, submitLabel }: Props) {
+export function RawMaterialForm({ form, categories, units, onSubmit, submitLabel }: Props) {
     /**
      * Submit limpio
      */
@@ -127,6 +135,35 @@ export function RawMaterialForm({ form, units, onSubmit, submitLabel }: Props) {
                             placeholder="Ej. R01, T05"
                         />
                         <InputError message={form.errors.code} />
+                    </div>
+
+                    {/* Categoría */}
+                    <div className="grid min-w-0 gap-2">
+                        <Label htmlFor="category">
+                            Categoría{' '}
+                            <span className="text-destructive">*</span>
+                        </Label>
+                        <Select
+                            value={form.data.category_id}
+                            onValueChange={(value) =>
+                                form.setData('category_id', value)
+                            }
+                        >
+                            <SelectTrigger id="category" className="w-full min-w-0">
+                                <SelectValue placeholder="Seleccionar categoría" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {categories.map((category) => (
+                                    <SelectItem
+                                        key={category.id}
+                                        value={String(category.id)}
+                                    >
+                                        {category.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <InputError message={form.errors.category_id} />
                     </div>
 
                     {/* Unidad */}

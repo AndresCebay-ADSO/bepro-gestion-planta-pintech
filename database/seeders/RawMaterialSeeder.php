@@ -19,6 +19,7 @@ class RawMaterialSeeder extends Seeder
     public function run(): void
     {
         // Ensure necessary units of measure exist
+        $gramUnit = UnitOfMeasure::where('code', 'gr')->first();
         $kgUnit = UnitOfMeasure::where('code', 'kg')->first();
         $literUnit = UnitOfMeasure::where('code', 'l')->first();
         $unitUnit = UnitOfMeasure::where('code', 'u')->first();

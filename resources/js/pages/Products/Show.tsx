@@ -70,9 +70,14 @@ type Props = {
         name: string;
         symbol: string;
     }>;
+    rawMaterials?: Array<{
+        id: number;
+        code: string;
+        category?: { id: number; name: string };
+    }>;
 };
 
-export default function ProductsShow({ product, can, units }: Props) {
+export default function ProductsShow({ product, can, units, rawMaterials }: Props) {
     const [isOpen, setIsOpen] = useState(false);
 
     const form = useForm({
@@ -86,6 +91,7 @@ export default function ProductsShow({ product, can, units }: Props) {
         component_system: '1K',
         current_cost: '',
         current_price: '',
+        package_raw_material_id: '',
         is_active: true,
     });
 
@@ -205,7 +211,7 @@ export default function ProductsShow({ product, can, units }: Props) {
                                 Variantes / SKU
                             </h2>
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                                Referencias comerciales por presentación, color y acabado.
+                                Presentaciones de venta: galón, bidón, tambor, etc. El valor se define en galones.
                             </p>
                         </div>
                         {can.update && (
@@ -256,15 +262,18 @@ export default function ProductsShow({ product, can, units }: Props) {
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="presentation_value">Valor Presentación</Label>
+                                                <Label htmlFor="presentation_value">Valor Presentación (en galones)</Label>
                                                 <Input
                                                     id="presentation_value"
                                                     type="number"
                                                     step="0.0001"
                                                     value={form.data.presentation_value}
                                                     onChange={(e) => form.setData('presentation_value', e.target.value)}
-                                                    placeholder="Ej: 3.785"
+                                                    placeholder="Ej: 1, 5, 0.75, 50"
                                                 />
+                                                <p className="text-xs text-muted-foreground">
+                                                    Ejemplos: 1 = Galón, 5 = Bidón 5gal, 0.75 = 3/4 galón, 50 = Tambor
+                                                </p>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="presentation_label">Label Presentación</Label>
@@ -272,7 +281,7 @@ export default function ProductsShow({ product, can, units }: Props) {
                                                     id="presentation_label"
                                                     value={form.data.presentation_label}
                                                     onChange={(e) => form.setData('presentation_label', e.target.value)}
-                                                    placeholder="Ej: Galón 3.785L"
+                                                    placeholder="Ej: Galón 3.785L, Bidón 5 Gal"
                                                 />
                                             </div>
                                         </div>
@@ -349,6 +358,28 @@ export default function ProductsShow({ product, can, units }: Props) {
                                                     placeholder="0.00"
                                                 />
                                             </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="package_raw_material_id">Envase / Contenedor</Label>
+                                            <Select
+                                                value={form.data.package_raw_material_id}
+                                                onValueChange={(v) => form.setData('package_raw_material_id', v)}
+                                            >
+                                                <SelectTrigger id="package_raw_material_id">
+                                                    <SelectValue placeholder="Selecciona el envase (opcional)" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {rawMaterials?.map((rm: any) => (
+                                                        <SelectItem key={rm.id} value={String(rm.id)}>
+                                                            {rm.code}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <p className="text-xs text-muted-foreground">
+                                                Se descontará del inventario al completar la orden de producción
+                                            </p>
                                         </div>
 
                                         <div className="flex justify-end gap-2 pt-4">

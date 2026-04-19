@@ -52,6 +52,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'component_system',
     'current_cost',
     'current_price',
+    'package_raw_material_id',
     'is_active',
 ])]
 class ProductVariant extends Model
@@ -75,6 +76,7 @@ class ProductVariant extends Model
                 'component_system',
                 'current_cost',
                 'current_price',
+                'package_raw_material_id',
                 'is_active',
             ])
             ->logOnlyDirty()
@@ -128,5 +130,10 @@ class ProductVariant extends Model
     public function priceLists(): HasMany
     {
         return $this->hasMany(PriceList::class, 'product_variant_id');
+    }
+
+    public function packageRawMaterial(): BelongsTo
+    {
+        return $this->belongsTo(RawMaterial::class, 'package_raw_material_id');
     }
 }
