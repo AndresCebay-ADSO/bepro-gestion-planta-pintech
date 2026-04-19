@@ -9,9 +9,16 @@ type UnitOption = {
     symbol: string;
 };
 
+type CategoryOption = {
+    id: number;
+    name: string;
+    code: string;
+};
+
 type RawMaterial = {
     id: number;
     code: string;
+    category_id: number | null;
     unit_of_measure_id: number;
     current_price: string;
     previous_price: string | null;
@@ -22,11 +29,13 @@ type RawMaterial = {
 
 type Props = {
     rawMaterial: RawMaterial;
+    categories: CategoryOption[];
     units: UnitOption[];
 };
 
 type RawMaterialFormData = {
     code: string;
+    category_id: string;
     unit_of_measure_id: string;
     current_price: string;
     previous_price: string;
@@ -43,9 +52,10 @@ const trimZeroes = (val: string | null | undefined): string => {
     return val.includes('.') ? val.replace(/0+$/, '').replace(/\.$/, '') : val;
 };
 
-export default function RawMaterialsEdit({ rawMaterial, units }: Props) {
+export default function RawMaterialsEdit({ rawMaterial, categories, units }: Props) {
     const form = useForm<RawMaterialFormData>({
         code: rawMaterial.code,
+        category_id: rawMaterial.category_id ? String(rawMaterial.category_id) : '',
         unit_of_measure_id: String(rawMaterial.unit_of_measure_id),
         current_price: trimZeroes(rawMaterial.current_price),
         previous_price: trimZeroes(rawMaterial.previous_price),
@@ -96,6 +106,7 @@ export default function RawMaterialsEdit({ rawMaterial, units }: Props) {
 
                 <RawMaterialForm
                     form={form}
+                    categories={categories}
                     units={units}
                     onSubmit={submit}
                     submitLabel="Guardar cambios"

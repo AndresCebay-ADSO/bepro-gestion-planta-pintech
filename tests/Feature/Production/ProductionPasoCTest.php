@@ -100,16 +100,35 @@ test('it allows order creation if stock is sufficient', function () {
         'entry_date' => now(),
     ]);
 
+    $variant = ProductVariant::where('product_id', $this->formula->product_id)->first();
+
     $response = $this->post(route('production-orders.store'), [
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
         'quantity' => 100,
         'planned_date' => now()->addDay()->toDateString(),
+        'packaging' => [
+            ['product_variant_id' => $variant->id, 'planned_units' => 20],
+        ],
     ]);
 
     $response->assertRedirect();
     $this->assertDatabaseCount('production_orders', 1);
+
+    // Verificar que se crearon los detalles de ingredientes
+    $this->assertDatabaseCount('production_order_details', 1);
+    $this->assertDatabaseHas('production_order_details', [
+        'raw_material_id' => $this->material->id,
+        'planned_quantity' => 50, // 0.5 * 100
+    ]);
+
+    // Verificar que se creó el plan de envasado
+    $this->assertDatabaseCount('production_order_packaging_plan', 1);
+    $this->assertDatabaseHas('production_order_packaging_plan', [
+        'product_variant_id' => $variant->id,
+        'planned_units' => 20,
+    ]);
 });
 
 test('it completes order and updates inventory', function () {

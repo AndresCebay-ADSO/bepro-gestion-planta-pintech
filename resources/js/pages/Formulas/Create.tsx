@@ -105,8 +105,8 @@ export default function FormulasCreate({
                         Nueva Fórmula
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        La nueva versión se creará automáticamente y se marcará
-                        como activa para el producto seleccionado.
+                        Define los ingredientes necesarios para producir 1 galón del producto.
+                        Esta fórmula se usará para calcular consumos en órdenes de producción.
                     </p>
                 </div>
 
@@ -171,11 +171,11 @@ export default function FormulasCreate({
                         <div className="flex items-center justify-between border-b border-border px-6 py-4">
                             <div>
                                 <h2 className="font-medium text-foreground">
-                                    Ingredientes
+                                    Ingredientes por Galón
                                 </h2>
                                 <p className="mt-0.5 text-xs text-muted-foreground">
-                                    Define las materias primas y cantidades para
-                                    producir una unidad del producto.
+                                    Cantidades de materias primas para producir exactamente 1 galón.
+                                    Ejemplo: 1.5 kg de resina por galón de esmalte.
                                 </p>
                             </div>
                             <Button
@@ -248,7 +248,7 @@ export default function FormulasCreate({
                                     <div className="col-span-3 space-y-1">
                                         {index === 0 && (
                                             <Label className="text-xs text-muted-foreground">
-                                                Cantidad
+                                                Cantidad (por galón)
                                             </Label>
                                         )}
                                         <Input
@@ -263,7 +263,7 @@ export default function FormulasCreate({
                                                     e.target.value,
                                                 )
                                             }
-                                            placeholder="0.0000"
+                                            placeholder="Ej: 1.5"
                                         />
                                         {(errors as Record<string, string>)[
                                             `details.${index}.quantity`

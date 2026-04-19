@@ -1,9 +1,12 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import {
     show as productionOrderShow,
+    create as productionOrderCreate,
 } from '@/routes/production-orders';
 import type { PaginationLink } from '@/types/ui';
 
@@ -61,6 +64,12 @@ export default function ProductionOrdersIndex({ orders }: Props) {
                             Gestión y seguimiento de la fabricación de pinturas en Planta Cali.
                         </p>
                     </div>
+                    <Button asChild>
+                        <Link href={productionOrderCreate().url}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Nueva Orden
+                        </Link>
+                    </Button>
                 </div>
 
                 <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
@@ -93,7 +102,7 @@ export default function ProductionOrdersIndex({ orders }: Props) {
                                         </div>
                                     </td>
                                     <td className="p-4">
-                                        {order.quantity} L
+                                        {order.quantity} gal
                                     </td>
                                     <td className="p-4">
                                         <Badge variant={getStatusVariant(order.status)}>
