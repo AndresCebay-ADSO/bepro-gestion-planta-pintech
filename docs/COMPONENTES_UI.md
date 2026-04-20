@@ -154,7 +154,7 @@ const options = rawMaterials.map(rm => ({
 <Combobox
     options={options}
     value={data.raw_material_id}
-    onChange={(val) => setData('raw_material_id', val)}
+    onChange={(val) => setData('raw_material_id', String(val))}
     placeholder="Busca una materia prima..."
 />
 ```

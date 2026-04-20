@@ -129,7 +129,7 @@ export default function ProductionOrdersCreate({ products, warehouses }: Props) 
                                 <Combobox
                                     options={productOptions}
                                     value={data.product_id}
-                                    onChange={(v: string | number) => {
+                                    onChange={(v) => {
                                         setData({
                                             ...data,
                                             product_id: String(v),
