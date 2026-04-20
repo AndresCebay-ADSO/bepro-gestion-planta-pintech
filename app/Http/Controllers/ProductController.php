@@ -34,7 +34,28 @@ class ProductController extends Controller
             ->latest('id')
             ->paginate(15)
             ->onEachSide(1)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (Product $product) => [
+                'id' => $product->id,
+                'code' => $product->code,
+                'name' => $product->name,
+                'is_active' => $product->is_active,
+                'current_price' => $product->current_price,
+                'category' => $product->category ? [
+                    'id' => $product->category->id,
+                    'name' => $product->category->name,
+                ] : null,
+                'unit_of_measure' => $product->unitOfMeasure ? [
+                    'id' => $product->unitOfMeasure->id,
+                    'name' => $product->unitOfMeasure->name,
+                    'symbol' => $product->unitOfMeasure->symbol,
+                ] : null,
+                'can' => [
+                    'view' => Gate::allows('view', $product),
+                    'update' => Gate::allows('update', $product),
+                    'delete' => Gate::allows('delete', $product),
+                ],
+            ]);
 
         return Inertia::render('Products/Index', [
             'products' => $products,
