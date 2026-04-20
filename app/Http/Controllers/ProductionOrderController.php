@@ -6,12 +6,16 @@ namespace App\Http\Controllers;
 
 use App\Enums\ProductionOrderStatus;
 use App\Models\Formula;
+use App\Models\InventoryBatch;
 use App\Models\Product;
 use App\Models\ProductionOrder;
+use App\Models\ProductionOrderDetail;
+use App\Models\ProductionOrderPackagingPlan;
 use App\Models\Warehouse;
 use App\Services\ProductionOrderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -116,7 +120,7 @@ class ProductionOrderController extends Controller
         // Validar stock antes de crear
         $this->productionOrderService->validateStockForOrder($formula, (float) $validated['quantity'], (int) $validated['warehouse_id']);
 
-        $order = \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $formula) {
+        $order = DB::transaction(function () use ($validated, $formula) {
             $order = ProductionOrder::create([
                 'product_id' => $validated['product_id'],
                 'formula_id' => $validated['formula_id'],
@@ -134,14 +138,14 @@ class ProductionOrderController extends Controller
                 $plannedQuantity = $detail->quantity * (float) $validated['quantity'];
 
                 // Buscar lote FIFO con stock disponible en la bodega seleccionada
-                $batch = \App\Models\InventoryBatch::where('raw_material_id', $detail->raw_material_id)
+                $batch = InventoryBatch::where('raw_material_id', $detail->raw_material_id)
                     ->where('warehouse_id', $validated['warehouse_id'])
                     ->where('remaining_quantity', '>', 0)
                     ->orderBy('entry_date')
                     ->orderBy('id')
                     ->first();
 
-                \App\Models\ProductionOrderDetail::create([
+                ProductionOrderDetail::create([
                     'production_order_id' => $order->id,
                     'raw_material_id' => $detail->raw_material_id,
                     'batch_id' => $batch->id,
@@ -154,7 +158,7 @@ class ProductionOrderController extends Controller
             // Crear plan de envasado si se proporcionó
             if (! empty($validated['packaging'])) {
                 foreach ($validated['packaging'] as $packData) {
-                    \App\Models\ProductionOrderPackagingPlan::create([
+                    ProductionOrderPackagingPlan::create([
                         'production_order_id' => $order->id,
                         'product_variant_id' => $packData['product_variant_id'],
                         'planned_units' => $packData['planned_units'],

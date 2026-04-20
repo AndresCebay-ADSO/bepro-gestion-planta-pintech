@@ -5,38 +5,31 @@ import type { FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
-import {
-    create as productsCreate,
-    index as productsIndex,
-} from '@/routes/products';
+import products from '@/routes/products';
 import type { PaginationLink } from '@/types/ui';
+
+type ProductRow = {
+    id: number;
+    code: string;
+    name: string;
+    category?: { id: number; name: string } | null;
+    is_active: boolean;
+};
 
 type Props = {
     products: {
-        data: Array<{
-            id: number;
-            code: string;
-            name: string;
-            category?: { id: number; name: string } | null;
-            unit_of_measure?: {
-                id: number;
-                name: string;
-                symbol: string;
-            } | null;
-            is_active: boolean;
-        }>;
+        data: ProductRow[];
         links: PaginationLink[];
     };
     can: {
         create: boolean;
-        managePrices: boolean;
     };
     filters: {
         search?: string;
     };
 };
 
-export default function ProductsIndex({ products, can, filters }: Props) {
+export default function ProductsIndex({ products: productsData, can, filters }: Props) {
     const { data, setData, get } = useForm({
         search: filters.search ?? '',
     });
@@ -44,7 +37,7 @@ export default function ProductsIndex({ products, can, filters }: Props) {
     const handleSearch = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        get(productsIndex().url, {
+        get(products.index().url, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -67,7 +60,7 @@ export default function ProductsIndex({ products, can, filters }: Props) {
                     </div>
                     {can.create && (
                         <Button asChild>
-                            <Link href={productsCreate().url}>
+                            <Link href={products.create().url}>
                                 Nuevo Producto
                             </Link>
                         </Button>
@@ -101,7 +94,7 @@ export default function ProductsIndex({ products, can, filters }: Props) {
                             </tr>
                         </thead>
                         <tbody>
-                            {products.data.map((product) => (
+                            {productsData.data.map((product) => (
                                 <tr
                                     key={product.id}
                                     className="border-b border-border/50"
@@ -131,7 +124,7 @@ export default function ProductsIndex({ products, can, filters }: Props) {
                                             asChild
                                         >
                                             <Link
-                                                href={`/products/${product.id}`}
+                                                href={products.show(product.id).url}
                                             >
                                                 Ver
                                             </Link>
@@ -144,9 +137,10 @@ export default function ProductsIndex({ products, can, filters }: Props) {
                 </div>
 
                 <div className="mt-4 flex justify-center">
-                    <Pagination links={products.links} />
+                    <Pagination links={productsData.links} />
                 </div>
             </div>
         </>
     );
 }
+

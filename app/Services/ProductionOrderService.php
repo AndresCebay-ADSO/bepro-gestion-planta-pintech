@@ -14,6 +14,7 @@ use App\Models\InventoryMovement;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderPackagingPlan;
+use App\Models\Warehouse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -24,7 +25,7 @@ class ProductionOrderService
      */
     public function validateStockForOrder(Formula $formula, float $quantity, int $warehouseId): void
     {
-        $warehouse = \App\Models\Warehouse::findOrFail($warehouseId);
+        $warehouse = Warehouse::findOrFail($warehouseId);
 
         foreach ($formula->details as $detail) {
             $required = $detail->quantity * $quantity;
