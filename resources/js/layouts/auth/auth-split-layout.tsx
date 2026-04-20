@@ -21,7 +21,7 @@ export default function AuthSplitLayout({
                     className="relative z-20 inline-flex w-fit items-center justify-center"
                 >
                     <img
-                        src="/images/logo-pintech.png"
+                        src="/images/logo-pintech.svg?v=1.1"
                         alt="Pintech logo"
                         className="h-16 w-auto object-contain"
                     />
@@ -34,7 +34,7 @@ export default function AuthSplitLayout({
                         className="inline-flex items-center justify-center lg:hidden"
                     >
                         <img
-                            src="/images/logo-pintech.png"
+                            src="/images/logo-pintech.svg?v=1.1"
                             alt="Pintech logo"
                             className="h-16 w-auto object-contain"
                         />

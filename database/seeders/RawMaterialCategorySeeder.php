@@ -28,16 +28,6 @@ class RawMaterialCategorySeeder extends Seeder
                 'name' => 'Envases Plásticos',
                 'description' => 'Galones, bidones, tambores y otros recipientes plásticos',
             ],
-            [
-                'code' => 'TAPAS',
-                'name' => 'Tapas y Accesorios',
-                'description' => 'Tapas flex, tapas rosca, asas y accesorios de cierre',
-            ],
-            [
-                'code' => 'ETIQUETAS',
-                'name' => 'Etiquetas y Empaque',
-                'description' => 'Etiquetas adhesivas, cintas, material de empaque',
-            ],
         ];
 
         foreach ($categories as $category) {
@@ -49,6 +39,6 @@ class RawMaterialCategorySeeder extends Seeder
             );
         }
 
-        $this->command->info('Created/Updated '.RawMaterialCategory::count().' raw material categories.');
+        $this->command->info('Created/Updated ' . RawMaterialCategory::count() . ' raw material categories.');
     }
 }

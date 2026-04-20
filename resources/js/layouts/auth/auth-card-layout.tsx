@@ -31,7 +31,7 @@ export default function AuthCardLayout({
                     className="inline-flex items-center justify-center self-center"
                 >
                     <img
-                        src="/images/logo-pintech.png"
+                        src="/images/logo-pintech.svg?v=1.1"
                         alt="Pintech logo"
                         className="h-16 w-auto object-contain"
                     />

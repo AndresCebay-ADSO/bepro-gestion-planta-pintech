@@ -1,13 +1,24 @@
 /**
  * AppLogoIcon Component
- * Displays the official Pintech brand logo (2026 version) as an image.
- * For full SVG version, use: /public/images/logo-pintech.svg
- * For brand guidelines, see: /docs/LOGOS.md
+ * Displays the floral icon part of the Pintech brand logo.
+ * Optimized for small sizes (sidebar collapsed, icons, etc).
+ * For branding guidelines, see: /docs/LOGOS.md
  */
 import type { ImgHTMLAttributes } from 'react';
 
 export default function AppLogoIcon(
     props: Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'>,
 ) {
-    return <img {...props} src="/images/logo-pintech.png" alt="Pintech logo" />;
+    return (
+        <img
+            {...props}
+            src="/images/logo-icon.svg?v=1.1"
+            alt="Pintech Icon"
+            width={32}
+            height={32}
+        />
+    );
+
+
 }
+
