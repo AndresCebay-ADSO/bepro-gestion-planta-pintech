@@ -9,22 +9,19 @@
 Los logos oficiales de Pintech Colombia S.A.S se encuentran en:
 
 ```
-public/images/
-├── logo-pintech.png    # Logo principal en formato PNG (507 KB)
-└── logo-pintech.svg    # Logo principal en formato SVG vectorial (165 KB)
+public/
+├── images/
+│   ├── logo-pintech.png    # Logo completo PNG (2026)
+│   ├── logo-pintech.svg    # Logo completo SVG (2026)
+│   └── logo-icon.svg       # ICONO FLORAL solo (2026)
+├── favicon.ico             # Favicon (Flor)
+├── favicon-logo.png        # Icono PNG (Compatibilidad)
+└── apple-touch-icon.png    # Icono para dispositivos Apple
 ```
 
-## 📦 Archivos de Origen
-
-Los archivos originales entregados por diseño se mantienen en:
-
-```
-docs/logos/
-├── logo vector pintech LINEAS 2026.png    # Archivo original PNG
-└── logo vector pintech LINEAS 2026.svg    # Archivo original SVG
-```
 
 ## 🎨 Identidad Cromática
+
 
 El logo utiliza la siguiente paleta de colores:
 
