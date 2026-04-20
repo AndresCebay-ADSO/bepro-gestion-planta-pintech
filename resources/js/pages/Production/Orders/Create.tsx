@@ -11,6 +11,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import { Textarea } from '@/components/ui/textarea';
 import {
     index as productionOrderIndex,
@@ -53,6 +54,16 @@ export default function ProductionOrdersCreate({ products, warehouses }: Props) 
     const selectedProduct = products.find(p => p.id === Number(data.product_id));
     const availableFormulas = selectedProduct?.formulas || [];
     const availableVariants = selectedProduct?.variants || [];
+
+    const productOptions = products.map((p) => ({
+        id: String(p.id),
+        label: `${p.code} — ${p.name}`,
+    }));
+
+    const variantOptions = availableVariants.map((v) => ({
+        id: String(v.id),
+        label: `${v.sku} — ${v.presentation_label} (${v.presentation_value} gal)`,
+    }));
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -115,33 +126,19 @@ export default function ProductionOrdersCreate({ products, warehouses }: Props) 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div className="space-y-2">
                                 <Label htmlFor="product_id">Producto *</Label>
-                                <Select
+                                <Combobox
+                                    options={productOptions}
                                     value={data.product_id}
-                                    onValueChange={(v: string) => {
+                                    onChange={(v) => {
                                         setData({
                                             ...data,
-                                            product_id: v,
+                                            product_id: String(v),
                                             formula_id: '',
                                             packaging: [],
                                         });
                                     }}
-                                >
-                                    <SelectTrigger id="product_id">
-                                        <SelectValue placeholder="Selecciona un producto" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {products.map((p) => (
-                                            <SelectItem
-                                                key={p.id}
-                                                value={String(p.id)}
-                                            >
-                                                <span className="font-mono">{p.code}</span>
-                                                {' — '}
-                                                {p.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    placeholder="Busca o selecciona un producto..."
+                                />
                                 {errors.product_id && (
                                     <p className="text-sm text-destructive">{errors.product_id}</p>
                                 )}
@@ -309,26 +306,15 @@ export default function ProductionOrdersCreate({ products, warehouses }: Props) 
                                                     Presentación (SKU)
                                                 </Label>
                                             )}
-                                            <Select
+                                            <Combobox
+                                                options={variantOptions}
                                                 value={pack.product_variant_id}
-                                                onValueChange={(v) =>
-                                                    updatePackaging(index, 'product_variant_id', v)
+                                                onChange={(v) =>
+                                                    updatePackaging(index, 'product_variant_id', String(v))
                                                 }
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Selecciona..." />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {availableVariants.map((v: VariantOption) => (
-                                                        <SelectItem
-                                                            key={v.id}
-                                                            value={String(v.id)}
-                                                        >
-                                                            {v.sku} — {v.presentation_label} ({v.presentation_value} gal)
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                                placeholder="Presentación..."
+                                                disabled={!data.product_id}
+                                            />
                                         </div>
 
                                         <div className="col-span-4 space-y-1">

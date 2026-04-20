@@ -22,7 +22,7 @@ export default function AuthSimpleLayout({
                             className="inline-flex items-center justify-center"
                         >
                             <img
-                                src="/images/logo-pintech.png"
+                                src="/images/logo-pintech.svg?v=1.1"
                                 alt="Pintech logo"
                                 className="h-24 w-auto object-contain"
                             />
