@@ -47,24 +47,16 @@ class InventoryMovementController extends Controller
 
         return Inertia::render('Inventory/Movements/Index', [
             'movements' => $movements,
+            'rawMaterials' => Inertia::optional(fn () => RawMaterial::query()->select('id', 'code')->where('is_active', true)->orderBy('code')->get()),
+            'batches' => Inertia::optional(fn () => InventoryBatch::query()->select('id', 'raw_material_id', 'lot_number', 'remaining_quantity')->orderByDesc('id')->get()),
+            'productionOrders' => Inertia::optional(fn () => ProductionOrder::query()->select('id', 'order_number', 'status')->orderByDesc('id')->get()),
+            'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->get()),
             'filters' => [
                 'search' => $search,
             ],
             'can' => [
                 'create' => Gate::allows('create', InventoryMovement::class),
             ],
-        ]);
-    }
-
-    public function create(): Response
-    {
-        $this->authorize('create', InventoryMovement::class);
-
-        return Inertia::render('Inventory/Movements/Create', [
-            'rawMaterials' => RawMaterial::query()->select('id', 'code')->where('is_active', true)->orderBy('code')->get(),
-            'batches' => InventoryBatch::query()->select('id', 'raw_material_id', 'lot_number', 'remaining_quantity')->orderByDesc('id')->get(),
-            'productionOrders' => ProductionOrder::query()->select('id', 'order_number', 'status')->orderByDesc('id')->get(),
-            'warehouses' => Warehouse::query()->select('id', 'name', 'city', 'type')->get(),
         ]);
     }
 

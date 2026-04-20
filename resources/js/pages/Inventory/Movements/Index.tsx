@@ -1,6 +1,6 @@
-import { Head, useForm, Link } from '@inertiajs/react';
-import { Search } from 'lucide-react';
-import type { FormEvent } from 'react';
+import { Head, useForm, router } from '@inertiajs/react';
+import { Search, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+import { type FormEvent, useState, useEffect } from 'react';
 
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -8,10 +8,31 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
 import {
-    create as inventoryMovementsCreate,
-    index as inventoryMovementsIndex,
-} from '@/routes/inventory-movements';
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
+import { EntryMovementForm } from '@/components/inventory/entry-movement-form';
+import { ExitMovementForm } from '@/components/inventory/exit-movement-form';
+import { Skeleton } from '@/components/ui/skeleton';
+
+import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
 import type { PaginationLink } from '@/types/ui';
+
+type Option = {
+    id: number;
+    name?: string;
+    code?: string;
+    lot_number?: string;
+    order_number?: string;
+    city?: string;
+    type?: string;
+    raw_material_id?: number | string;
+    remaining_quantity?: string | number;
+    status?: string;
+};
 
 type Props = {
     movements: {
@@ -25,6 +46,10 @@ type Props = {
         }>;
         links: PaginationLink[];
     };
+    rawMaterials?: Option[];
+    batches?: Option[];
+    warehouses?: Option[];
+    productionOrders?: Option[];
     can: { create: boolean };
     filters: {
         search?: string;
@@ -33,12 +58,28 @@ type Props = {
 
 export default function InventoryMovementsIndex({
     movements,
+    rawMaterials,
+    batches,
+    warehouses,
+    productionOrders,
     can,
     filters,
 }: Props) {
     const { data, setData, get } = useForm({
         search: filters.search ?? '',
     });
+
+    const [drawerState, setDrawerState] = useState<{ isOpen: boolean; mode: 'entry' | 'exit' }>({ isOpen: false, mode: 'entry' });
+    const [isLoadingFormData, setIsLoadingFormData] = useState(false);
+    const [fetchError, setFetchError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const openParam = params.get('open');
+        if (can.create && (openParam === 'entry' || openParam === 'exit')) {
+            openDrawer(openParam);
+        }
+    }, [can.create]);
 
     const handleSearch = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -48,6 +89,29 @@ export default function InventoryMovementsIndex({
             preserveScroll: true,
             replace: true,
         });
+    };
+
+    const openDrawer = (mode: 'entry' | 'exit') => {
+        setDrawerState({ isOpen: true, mode });
+        setFetchError(null);
+
+        // Lazy load form dependencies if missing
+        if (!rawMaterials || !batches || !warehouses || !productionOrders) {
+            setIsLoadingFormData(true);
+            router.reload({
+                only: ['rawMaterials', 'batches', 'warehouses', 'productionOrders'],
+                onSuccess: () => setIsLoadingFormData(false),
+                onError: () => {
+                    setIsLoadingFormData(false);
+                    setFetchError('Error de red al cargar los datos. Por favor, intente nuevamente.');
+                }
+            });
+        }
+    };
+
+    const onSuccessForm = () => {
+        setDrawerState((prev) => ({ ...prev, isOpen: false }));
+        router.reload({ only: ['movements'] });
     };
 
     return (
@@ -64,11 +128,22 @@ export default function InventoryMovementsIndex({
                         </p>
                     </div>
                     {can.create && (
-                        <Button asChild>
-                            <Link href={inventoryMovementsCreate().url}>
-                                Nuevo Movimiento
-                            </Link>
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                onClick={() => openDrawer('entry')}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                            >
+                                <ArrowDownToLine className="mr-2 h-4 w-4" />
+                                Entrada
+                            </Button>
+                            <Button
+                                onClick={() => openDrawer('exit')}
+                                className="bg-amber-600 hover:bg-amber-700 text-white"
+                            >
+                                <ArrowUpFromLine className="mr-2 h-4 w-4" />
+                                Salida
+                            </Button>
+                        </div>
                     )}
                 </div>
 
@@ -119,11 +194,10 @@ export default function InventoryMovementsIndex({
                                     </td>
                                     <td className="p-4">
                                         <span
-                                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                                                movement.type === 'entry'
+                                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${movement.type === 'entry'
                                                     ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                                                     : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                            }`}
+                                                }`}
                                         >
                                             {movement.type === 'entry'
                                                 ? 'ENTRADA'
@@ -154,6 +228,82 @@ export default function InventoryMovementsIndex({
                     <Pagination links={movements.links} />
                 </div>
             </div>
+
+            <Sheet open={drawerState.isOpen} onOpenChange={(open) => setDrawerState(prev => ({ ...prev, isOpen: open }))}>
+                <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+                    <SheetHeader className="mb-6">
+                        <SheetTitle className="flex items-center gap-2">
+                            {drawerState.mode === 'entry' ? (
+                                <>
+                                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                        <ArrowDownToLine className="h-4 w-4" />
+                                    </span>
+                                    Registrar Entrada
+                                </>
+                            ) : (
+                                <>
+                                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                                        <ArrowUpFromLine className="h-4 w-4" />
+                                    </span>
+                                    Registrar Salida
+                                </>
+                            )}
+                        </SheetTitle>
+                        <SheetDescription>
+                            {drawerState.mode === 'entry'
+                                ? 'Ingresa nueva mercancía al inventario. Al guardar, el inventario aumentará.'
+                                : 'Retira mercancía del inventario. El sistema verificará la disponibilidad en el lote.'}
+                        </SheetDescription>
+                    </SheetHeader>
+
+                    {isLoadingFormData ? (
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                                <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                                <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                                <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                                <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                            </div>
+                            <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-24 w-full" /></div>
+                        </div>
+                    ) : fetchError ? (
+                        <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-center mt-6">
+                            <p className="text-sm font-medium text-destructive">{fetchError}</p>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="mt-4"
+                                onClick={() => openDrawer(drawerState.mode)}
+                            >
+                                Reintentar
+                            </Button>
+                        </div>
+                    ) : (rawMaterials && batches && warehouses && productionOrders) ? (
+                        drawerState.mode === 'entry' ? (
+                            <EntryMovementForm
+                                rawMaterials={rawMaterials}
+                                batches={batches}
+                                warehouses={warehouses}
+                                productionOrders={productionOrders}
+                                onSuccess={onSuccessForm}
+                            />
+                        ) : (
+                            <ExitMovementForm
+                                rawMaterials={rawMaterials}
+                                batches={batches}
+                                warehouses={warehouses}
+                                productionOrders={productionOrders}
+                                onSuccess={onSuccessForm}
+                            />
+                        )
+                    ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                            No se pudieron cargar los datos del formulario.
+                        </div>
+                    )}
+                </SheetContent>
+            </Sheet>
         </>
     );
 }

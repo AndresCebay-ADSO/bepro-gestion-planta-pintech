@@ -71,7 +71,9 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
     Route::resource('raw-materials', RawMaterialController::class)->only(['index']);
     Route::resource('warehouses', WarehouseController::class)->only(['index']);
     Route::resource('products', ProductController::class);
-    Route::resource('inventory-movements', InventoryMovementController::class);
+    Route::resource('inventory-movements', InventoryMovementController::class)
+        ->except(['create'])
+        ->where(['inventory_movement' => '[0-9]+']);
 });
 
 // ADMIN + PRODUCCIÓN: Gestión de fórmulas y órdenes
