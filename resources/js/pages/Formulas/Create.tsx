@@ -12,6 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import { Textarea } from '@/components/ui/textarea';
 import {
     index as formulasIndex,
@@ -58,6 +59,16 @@ export default function FormulasCreate({
         notes: '',
         details: [emptyDetail()],
     });
+
+    const productOptions = products.map((p) => ({
+        id: String(p.id),
+        label: `${p.code} — ${p.name}`,
+    }));
+
+    const rawMaterialOptions = rawMaterials.map((rm) => ({
+        id: String(rm.id),
+        label: rm.code,
+    }));
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -119,27 +130,12 @@ export default function FormulasCreate({
 
                         <div className="space-y-2">
                             <Label htmlFor="product_id">Producto *</Label>
-                            <Select
+                            <Combobox
+                                options={productOptions}
                                 value={data.product_id}
-                                onValueChange={(v) => setData('product_id', v)}
-                            >
-                                <SelectTrigger id="product_id">
-                                    <SelectValue placeholder="Selecciona el producto" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {products.map((p) => (
-                                        <SelectItem
-                                            key={p.id}
-                                            value={String(p.id)}
-                                        >
-                                            <span className="font-mono">
-                                                {p.code}
-                                            </span>{' '}
-                                            — {p.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                onChange={(v) => setData('product_id', String(v))}
+                                placeholder="Busca o selecciona el producto..."
+                            />
                             {errors.product_id && (
                                 <p className="text-sm text-destructive">
                                     {errors.product_id}
@@ -201,32 +197,18 @@ export default function FormulasCreate({
                                                 Materia Prima
                                             </Label>
                                         )}
-                                        <Select
+                                        <Combobox
+                                            options={rawMaterialOptions}
                                             value={detail.raw_material_id}
-                                            onValueChange={(v) =>
+                                            onChange={(v) =>
                                                 updateDetail(
                                                     index,
                                                     'raw_material_id',
-                                                    v,
+                                                    String(v),
                                                 )
                                             }
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Selecciona..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {rawMaterials.map((rm) => (
-                                                    <SelectItem
-                                                        key={rm.id}
-                                                        value={String(rm.id)}
-                                                    >
-                                                        <span className="font-mono">
-                                                            {rm.code}
-                                                        </span>
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Materia..."
+                                        />
                                         {(errors as Record<string, string>)[
                                             `details.${index}.raw_material_id`
                                         ] && (

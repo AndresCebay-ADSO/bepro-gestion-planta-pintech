@@ -124,6 +124,52 @@ Componente estandarizado para acciones de fila en tablas.
 
 ---
 
+## Combobox (Buscador Seleccionable)
+
+Componente para selección de opciones con búsqueda integrada. Diseñado para manejar catálogos grandes (ej: 400+ materias primas) y evitar el recorte visual en contenedores pequeños mediante el uso de Portals.
+
+**Ubicación:** `resources/js/components/ui/combobox.tsx`
+
+### Props
+
+| Prop | Tipo | Default | Descripción |
+|------|------|---------|-------------|
+| `options` | `ComboboxOptionType[]` | - | Array de `{ id, label, description?, disabled? }` |
+| `value` | `string \| number \| null` | - | Valor seleccionado (ID) |
+| `onChange` | `(value: string \| number) => void` | - | Callback al seleccionar una opción |
+| `placeholder` | `string` | `'Seleccionar...'` | Texto cuando no hay selección |
+| `emptyText` | `string` | `'Sin resultados.'` | Texto cuando no hay coincidencias |
+| `className` | `string` | - | Clases adicionales para el contenedor |
+| `disabled` | `boolean` | `false` | Deshabilitar el componente |
+
+### Uso recomendado
+
+```tsx
+const options = rawMaterials.map(rm => ({
+    id: rm.id,
+    label: rm.code,
+    description: rm.name
+}));
+
+<Combobox
+    options={options}
+    value={data.raw_material_id}
+    onChange={(val) => setData('raw_material_id', val)}
+    placeholder="Busca una materia prima..."
+/>
+```
+
+### ¿Cuándo usar Combobox vs Select?
+
+| Característica | Select Standard | Combobox (Buscador) |
+|----------------|-----------------|----------------------|
+| **Número de items** | Pocos (< 15) | Muchos (> 15 o cientos) |
+| **Búsqueda** | No | Sí (instantánea) |
+| **Overflow** | Puede cortarse | Seguro (usa Portals) |
+| **Uso común** | Tipos, Estados, Bodegas | Productos, Materias Primas, Clientes |
+
+---
+
 ## Guías de implementación
 
 ### 1. Siempre usar componentes formateadores
