@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\ProductionOrderStatus;
+use App\Http\Requests\Production\CompleteProductionOrderRequest;
+use App\Http\Requests\Production\StoreProductionOrderRequest;
 use App\Models\Formula;
 use App\Models\InventoryBatch;
 use App\Models\Product;
@@ -100,19 +102,9 @@ class ProductionOrderController extends Controller
     /**
      * Crear una nueva orden (Planificación).
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreProductionOrderRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'formula_id' => 'required|exists:formulas,id',
-            'warehouse_id' => 'required|exists:warehouses,id',
-            'quantity' => 'required|numeric|min:0.01',
-            'planned_date' => 'required|date',
-            'notes' => 'nullable|string',
-            'packaging' => 'nullable|array',
-            'packaging.*.product_variant_id' => 'required_with:packaging|exists:product_variants,id',
-            'packaging.*.planned_units' => 'required_with:packaging|numeric|min:0.01',
-        ]);
+        $validated = $request->validated();
 
         $formula = Formula::findOrFail($validated['formula_id']);
         $formula->load('details');
@@ -176,26 +168,9 @@ class ProductionOrderController extends Controller
     /**
      * Finalizar orden con datos reales de planta.
      */
-    public function complete(Request $request, ProductionOrder $order): RedirectResponse
+    public function complete(CompleteProductionOrderRequest $request, ProductionOrder $order): RedirectResponse
     {
-        $validated = $request->validate([
-            'actual_yield_quantity' => 'nullable|numeric|min:0',
-            'viscosity_ku' => 'nullable|numeric|min:0',
-            'grinding_hg' => 'nullable|numeric|min:0',
-            'agitation_start_time' => 'nullable|date',
-            'agitation_end_time' => 'nullable|date',
-            'packaging_start_time' => 'nullable|date',
-            'packaging_end_time' => 'nullable|date',
-            'responsible_name' => 'nullable|string|max:255',
-            'spillage_quantity' => 'nullable|numeric|min:0',
-            'ingredients' => 'required|array',
-            'ingredients.*.id' => 'required|exists:production_order_details,id',
-            'ingredients.*.actual_quantity' => 'required|numeric|min:0',
-            'packaging' => 'required|array',
-            'packaging.*.id' => 'required|exists:production_order_packaging_plan,id',
-            'packaging.*.actual_units' => 'required|numeric|min:0',
-            'notes' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         $this->productionOrderService->completeOrder($order, $validated);
 

@@ -133,7 +133,7 @@ Pages use PascalCase folders matching controller resource names. Components use 
 Key business entities (see `docs/MER.md`):
 
 - `unit_of_measures`, `product_categories` - Catalogs
-- `raw_materials`, `inventory_batches` - Raw materials with lot tracking (PEPS/FIFO)
+- `raw_materials`, `inventory_batches` - Raw materials (NOTE: `raw_materials` lacks a `name` field due to privacy policies; identification is exclusively by `code`)
 - `products`, `product_variants` - Finished goods with SKU variants
 - `finished_inventories`, `finished_inventory_movements` - Stock tracking by warehouse
 - `formulas`, `formula_details` - Product recipes

@@ -462,7 +462,7 @@ export default function ProductsShow({ product, can, units, rawMaterials }: Prop
                         <Button size="sm" asChild>
                             <Link
                                 href={
-                                    formulasCreate({ product_id: product.id })
+                                    formulasCreate({ query: { product_id: product.id } })
                                         .url
                                 }
                             >
