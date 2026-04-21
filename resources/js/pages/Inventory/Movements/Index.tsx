@@ -1,6 +1,6 @@
 import { Head, useForm, router } from '@inertiajs/react';
 import { Search, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
-import { type FormEvent, useState, useEffect, useCallback } from 'react';
+import { type FormEvent, useState, useEffect, useCallback, useRef } from 'react';
 
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -91,29 +91,22 @@ export default function InventoryMovementsIndex({
         }
     }, [rawMaterials, batches, warehouses, productionOrders]);
 
+    const hasOpenedFromUrl = useRef(false);
+
     useEffect(() => {
+        if (hasOpenedFromUrl.current) return;
+
         const params = new URLSearchParams(window.location.search);
         const openParam = params.get('open');
+        
         if (can.create && (openParam === 'entry' || openParam === 'exit')) {
-            // Inline openDrawer logic to avoid setState-in-effect ESLint error
-            const mode = openParam;
-            setDrawerState({ isOpen: true, mode });
-            setFetchError(null);
-
-            // Lazy load form dependencies if missing
-            if (!rawMaterials || !batches || !warehouses || !productionOrders) {
-                setIsLoadingFormData(true);
-                router.reload({
-                    only: ['rawMaterials', 'batches', 'warehouses', 'productionOrders'],
-                    onSuccess: () => setIsLoadingFormData(false),
-                    onError: () => {
-                        setIsLoadingFormData(false);
-                        setFetchError('Error de red al cargar los datos. Por favor, intente nuevamente.');
-                    }
-                });
-            }
+            hasOpenedFromUrl.current = true;
+            // Use setTimeout to avoid synchronous setState inside effect (cascading renders)
+            setTimeout(() => {
+                openDrawer(openParam);
+            }, 0);
         }
-    }, [can.create, rawMaterials, batches, warehouses, productionOrders]);
+    }, [can.create, openDrawer]);
 
     const handleSearch = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
