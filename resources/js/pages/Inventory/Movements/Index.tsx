@@ -95,9 +95,25 @@ export default function InventoryMovementsIndex({
         const params = new URLSearchParams(window.location.search);
         const openParam = params.get('open');
         if (can.create && (openParam === 'entry' || openParam === 'exit')) {
-            openDrawer(openParam);
+            // Inline openDrawer logic to avoid setState-in-effect ESLint error
+            const mode = openParam;
+            setDrawerState({ isOpen: true, mode });
+            setFetchError(null);
+
+            // Lazy load form dependencies if missing
+            if (!rawMaterials || !batches || !warehouses || !productionOrders) {
+                setIsLoadingFormData(true);
+                router.reload({
+                    only: ['rawMaterials', 'batches', 'warehouses', 'productionOrders'],
+                    onSuccess: () => setIsLoadingFormData(false),
+                    onError: () => {
+                        setIsLoadingFormData(false);
+                        setFetchError('Error de red al cargar los datos. Por favor, intente nuevamente.');
+                    }
+                });
+            }
         }
-    }, [can.create, openDrawer]);
+    }, [can.create, rawMaterials, batches, warehouses, productionOrders]);
 
     const handleSearch = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
