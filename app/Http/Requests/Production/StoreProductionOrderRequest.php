@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Production;
 
+use App\Enums\WarehouseType;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreProductionOrderRequest extends FormRequest
 {
@@ -19,14 +22,19 @@ class StoreProductionOrderRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
             'product_id' => 'required|exists:products,id',
             'formula_id' => 'required|exists:formulas,id',
-            'warehouse_id' => 'required|exists:warehouses,id',
+            'warehouse_id' => [
+                'required',
+                Rule::exists('warehouses', 'id')
+                    ->where('type', WarehouseType::Factory->value)
+                    ->where('is_active', true),
+            ],
             'quantity' => 'required|numeric|min:0.01',
             'planned_date' => 'required|date',
             'notes' => 'nullable|string',
