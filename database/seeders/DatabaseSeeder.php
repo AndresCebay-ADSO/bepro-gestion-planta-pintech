@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UnitsOfMeasureSeeder::class,      // Unidades: gr, kg, l, gl, u
             RawMaterialCategorySeeder::class, // Categorías materia prima
+            RawMaterialSeeder::class,         // Materias primas
             ProductCategorySeeder::class,      // Categorías productos
             WarehouseSeeder::class,            // Bodegas
         ]);

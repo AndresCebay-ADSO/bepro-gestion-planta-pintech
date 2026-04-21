@@ -2,6 +2,9 @@
 
 > Documento de decisiones arquitectónicas y patrones recomendados para el desarrollo del sistema.
 
+### 📜 Nota de Privacidad - Materias Primas
+Debido a una política de privacidad y seguridad industrial de Pintech Colombia S.A.S, el modelo **RawMaterial** NO incluye un campo `name`. Todas las materias primas se gestionan exclusivamente mediante sus **códigos internos** para proteger la propiedad intelectual de las formulaciones. No se debe intentar añadir el campo `name` a esta tabla.
+
 ## 1. Filosofía
 
 **Mantenerlo simple**. Este es un proyecto de 3 meses con 1 desarrollador. La arquitectura actual (Laravel + Inertia + React) es suficiente. No agregar complejidad innecesaria.
