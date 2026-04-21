@@ -45,9 +45,9 @@ export function MovementFormBase({
     type,
     children,
 }: Props) {
-    const filteredBatches = batches.filter(
-        (b) => Number(b.raw_material_id) === Number(form.data.raw_material_id),
-    );
+    const filteredBatches = form.data.raw_material_id
+        ? batches.filter((b) => Number(b.raw_material_id) === Number(form.data.raw_material_id))
+        : [];
 
     return (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
