@@ -87,11 +87,8 @@ export function MovementFormBase({
                     }))}
                     value={form.data.raw_material_id}
                     onChange={(value) => {
-                        form.setData({
-                            ...form.data,
-                            raw_material_id: String(value),
-                            batch_id: '',
-                        });
+                        form.setData('raw_material_id', String(value));
+                        form.setData('batch_id', '');
                     }}
                     placeholder="Busca o selecciona materia prima..."
                     emptyText="No se encontraron materias primas"
