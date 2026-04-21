@@ -23,17 +23,12 @@ class DatabaseSeeder extends Seeder
             WarehouseSeeder::class,            // Bodegas
         ]);
 
-        // Seeders de usuarios y permisos
+        // Seeders de datos de negocio y operación
         $this->call([
             RolePermissionSeeder::class,
             UserSeeder::class,
             WarehouseUserSeeder::class,
+            InventoryBatchSeeder::class,
         ]);
-
-        // NOTA: Los siguientes seeders deben ejecutarse manualmente cuando
-        // el usuario quiera crear datos de prueba:
-        // - RawMaterialSeeder::class      // Materias primas
-        // - ProductSeeder::class          // Productos base (unidad: galones)
-        // - InventoryBatchSeeder::class   // Lotes de inventario
     }
 }

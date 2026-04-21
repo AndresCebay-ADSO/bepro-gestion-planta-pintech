@@ -9,6 +9,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import { Textarea } from '@/components/ui/textarea';
 import { formatNumber } from '@/lib/formatters';
 
@@ -78,27 +79,23 @@ export function MovementFormBase({
 
             <div className="space-y-2">
                 <Label htmlFor="raw_material_id">Materia Prima</Label>
-                <Select
+                <Combobox
+                    options={rawMaterials.map((rm) => ({
+                        id: String(rm.id),
+                        label: rm.code ?? `MP #${rm.id}`,
+                        description: rm.name,
+                    }))}
                     value={form.data.raw_material_id}
-                    onValueChange={(value) => {
+                    onChange={(value) => {
                         form.setData({
                             ...form.data,
-                            raw_material_id: value,
+                            raw_material_id: String(value),
                             batch_id: '',
                         });
                     }}
-                >
-                    <SelectTrigger id="raw_material_id">
-                        <SelectValue placeholder="Selecciona materia prima" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {rawMaterials.map((rm) => (
-                            <SelectItem key={rm.id} value={String(rm.id)}>
-                                {rm.code}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                    placeholder="Busca o selecciona materia prima..."
+                    emptyText="No se encontraron materias primas"
+                />
                 {form.errors.raw_material_id && (
                     <p className="text-sm text-destructive">
                         {form.errors.raw_material_id}
