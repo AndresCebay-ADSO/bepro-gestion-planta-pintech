@@ -1,6 +1,6 @@
 import { Head, useForm, router } from '@inertiajs/react';
 import { Search, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
-import { type FormEvent, useState, useEffect } from 'react';
+import { type FormEvent, useState, useEffect, useCallback } from 'react';
 
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -73,25 +73,7 @@ export default function InventoryMovementsIndex({
     const [isLoadingFormData, setIsLoadingFormData] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const openParam = params.get('open');
-        if (can.create && (openParam === 'entry' || openParam === 'exit')) {
-            openDrawer(openParam);
-        }
-    }, [can.create]);
-
-    const handleSearch = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-
-        get(inventoryMovementsIndex().url, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
-
-    const openDrawer = (mode: 'entry' | 'exit') => {
+    const openDrawer = useCallback((mode: 'entry' | 'exit') => {
         setDrawerState({ isOpen: true, mode });
         setFetchError(null);
 
@@ -107,6 +89,24 @@ export default function InventoryMovementsIndex({
                 }
             });
         }
+    }, [rawMaterials, batches, warehouses, productionOrders]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const openParam = params.get('open');
+        if (can.create && (openParam === 'entry' || openParam === 'exit')) {
+            openDrawer(openParam);
+        }
+    }, [can.create, openDrawer]);
+
+    const handleSearch = (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        get(inventoryMovementsIndex().url, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
     };
 
     const onSuccessForm = () => {
