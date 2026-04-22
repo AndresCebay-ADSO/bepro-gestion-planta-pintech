@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Production;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CompleteProductionOrderRequest extends FormRequest
 {
@@ -19,10 +21,13 @@ class CompleteProductionOrderRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
+        $order = $this->route('order');
+        $orderId = is_object($order) ? $order->id : null;
+
         return [
             'actual_yield_quantity' => 'nullable|numeric|min:0',
             'viscosity_ku' => 'nullable|numeric|min:0',
@@ -34,11 +39,19 @@ class CompleteProductionOrderRequest extends FormRequest
             'responsible_name' => 'nullable|string|max:255',
             'spillage_quantity' => 'nullable|numeric|min:0',
             'ingredients' => 'required|array',
-            'ingredients.*.id' => 'required|exists:production_order_details,id',
+            'ingredients.*.id' => [
+                'required',
+                Rule::exists('production_order_details', 'id')
+                    ->when($orderId !== null, fn ($query) => $query->where('production_order_id', $orderId)),
+            ],
             'ingredients.*.actual_quantity' => 'required|numeric|min:0',
-            'packaging' => 'required|array',
-            'packaging.*.id' => 'required|exists:production_order_packaging_plan,id',
-            'packaging.*.actual_units' => 'required|numeric|min:0',
+            'packaging' => 'nullable|array',
+            'packaging.*.id' => [
+                'required_with:packaging',
+                Rule::exists('production_order_packaging_plan', 'id')
+                    ->when($orderId !== null, fn ($query) => $query->where('production_order_id', $orderId)),
+            ],
+            'packaging.*.actual_units' => 'required_with:packaging|numeric|min:0',
             'notes' => 'nullable|string',
         ];
     }

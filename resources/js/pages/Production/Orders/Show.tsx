@@ -22,6 +22,7 @@ type Props = {
 
 export default function ProductionOrderShow({ order }: Props) {
     const isCompleted = order.status === 'completed';
+    const hasOrderData = order.details.length > 0 || order.packaging_plans.length > 0;
 
     const { data, setData, post, processing, errors } = useForm({
         actual_yield_quantity: order.actual_quantity ?? order.quantity,
@@ -161,6 +162,13 @@ export default function ProductionOrderShow({ order }: Props) {
                                                         </td>
                                                     </tr>
                                                 ))}
+                                                {data.ingredients.length === 0 && (
+                                                    <tr>
+                                                        <td className="p-3 text-muted-foreground" colSpan={3}>
+                                                            Esta orden no tiene insumos planificados.
+                                                        </td>
+                                                    </tr>
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
@@ -198,6 +206,13 @@ export default function ProductionOrderShow({ order }: Props) {
                                                         </td>
                                                     </tr>
                                                 ))}
+                                                {data.packaging.length === 0 && (
+                                                    <tr>
+                                                        <td className="p-3 text-muted-foreground" colSpan={3}>
+                                                            Esta orden no tiene plan de empaque.
+                                                        </td>
+                                                    </tr>
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
@@ -275,14 +290,30 @@ export default function ProductionOrderShow({ order }: Props) {
                                 </div>
 
                                 {!isCompleted && (
+                                    <>
+                                        {errors.packaging && (
+                                            <p className="text-xs text-destructive">{errors.packaging}</p>
+                                        )}
+                                        {errors.ingredients && (
+                                            <p className="text-xs text-destructive">{errors.ingredients}</p>
+                                        )}
+                                    </>
+                                )}
+
+                                {!isCompleted && (
                                     <Button 
                                         type="submit" 
                                         className="w-full mt-4" 
                                         size="lg"
-                                        disabled={processing}
+                                        disabled={processing || !hasOrderData}
                                     >
                                         {processing ? 'Finalizando...' : 'Finalizar Producción'}
                                     </Button>
+                                )}
+                                {!isCompleted && !hasOrderData && (
+                                    <p className="text-xs text-destructive">
+                                        La orden no tiene detalle de insumos ni plan de empaque. Revise la fórmula y vuelva a crearla.
+                                    </p>
                                 )}
                             </CardContent>
                         </Card>
