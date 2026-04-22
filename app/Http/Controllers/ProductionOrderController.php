@@ -238,9 +238,11 @@ class ProductionOrderController extends Controller
     {
         $prefix = 'OP-'.now()->format('ymd').'-';
 
-        // PostgreSQL advisory lock to prevent race conditions when 0 rows exist
-        $lockKey = crc32($prefix);
-        DB::statement('SELECT pg_advisory_xact_lock(?)', [$lockKey]);
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            // PostgreSQL advisory lock to prevent race conditions when 0 rows exist
+            $lockKey = crc32($prefix);
+            DB::statement('SELECT pg_advisory_xact_lock(?)', [$lockKey]);
+        }
 
         $lastOrder = ProductionOrder::where('order_number', 'like', $prefix.'%')
             ->orderByDesc('order_number')
