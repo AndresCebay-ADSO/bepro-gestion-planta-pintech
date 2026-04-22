@@ -45,13 +45,13 @@ class CompleteProductionOrderRequest extends FormRequest
                     ->when($orderId !== null, fn ($query) => $query->where('production_order_id', $orderId)),
             ],
             'ingredients.*.actual_quantity' => 'required|numeric|min:0',
-            'packaging' => 'nullable|array',
+            'packaging' => 'array',
             'packaging.*.id' => [
-                'required_with:packaging',
+                'required',
                 Rule::exists('production_order_packaging_plan', 'id')
                     ->when($orderId !== null, fn ($query) => $query->where('production_order_id', $orderId)),
             ],
-            'packaging.*.actual_units' => 'required_with:packaging|numeric|min:0',
+            'packaging.*.actual_units' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
         ];
     }

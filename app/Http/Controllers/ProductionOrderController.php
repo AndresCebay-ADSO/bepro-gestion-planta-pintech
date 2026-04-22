@@ -240,6 +240,7 @@ class ProductionOrderController extends Controller
 
         $lastOrder = ProductionOrder::where('order_number', 'like', $prefix.'%')
             ->orderByDesc('order_number')
+            ->lockForUpdate()
             ->value('order_number');
 
         $nextSequence = 1;
