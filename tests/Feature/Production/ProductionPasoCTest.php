@@ -316,7 +316,9 @@ test('it shows production order detail with loaded data for the view', function 
     $response = $this->get(route('production-orders.show', $order));
 
     $response->assertOk();
-    $response->assertSee('Production/Orders/Show');
+    $response->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+        ->component('Production/Orders/Show')
+    );
     $response->assertSee('OP-VIEW-0001');
     $response->assertSee('Pintura Test');
     $response->assertSee('packaging_plans');
