@@ -14,6 +14,8 @@ use App\Models\InventoryMovement;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderPackagingPlan;
+use App\Models\ProductVariant;
+use App\Models\RawMaterial;
 use App\Models\Warehouse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -78,27 +80,11 @@ class ProductionOrderService
 
                 $detail->update(['actual_quantity' => $actualQuantity]);
 
-                // Registrar salida de inventario
-                InventoryMovement::create([
-                    'raw_material_id' => $detail->raw_material_id,
-                    'warehouse_id' => $order->warehouse_id,
-                    'batch_id' => $detail->batch_id,
-                    'production_order_id' => $order->id,
-                    'type' => InventoryMovementType::Exit,
-                    'quantity' => $actualQuantity,
-                    'cost_price' => $detail->unit_cost,
-                    'movement_date' => now(),
-                    'notes' => "Consumo en OP #{$order->order_number}",
-                    'created_by' => $userId,
-                ]);
-
-                // Descontar del lote
-                $batch = $detail->batch;
-                $batch->decrement('remaining_quantity', $actualQuantity);
+                $this->consumeRawMaterialFifo($order, $detail, $actualQuantity, $userId);
             }
 
             // 3. Procesar Entrada de Producto Terminado (Packaging Plan)
-            foreach ($data['packaging'] as $packData) {
+            foreach (($data['packaging'] ?? []) as $packData) {
                 $plan = ProductionOrderPackagingPlan::findOrFail($packData['id']);
                 $actualUnits = (float) $packData['actual_units'];
 
@@ -121,12 +107,30 @@ class ProductionOrderService
                     // Actualizar o crear registro en FinishedInventory
                     $inventory = FinishedInventory::firstOrNew([
                         'product_id' => $order->product_id,
-                        'product_variant_id' => $plan->product_variant_id,
                         'warehouse_id' => $order->warehouse_id,
                     ]);
 
+                    if (! $inventory->exists && $inventory->product_variant_id === null) {
+                        $inventory->product_variant_id = $plan->product_variant_id;
+                    }
+
                     $inventory->quantity = ($inventory->quantity ?? 0) + $actualUnits;
                     $inventory->save();
+
+                    $variant = ProductVariant::query()
+                        ->select(['id', 'package_raw_material_id'])
+                        ->find($plan->product_variant_id);
+
+                    if ($variant?->package_raw_material_id !== null) {
+                        $this->consumeRawMaterialFifoByMaterialId(
+                            order: $order,
+                            rawMaterialId: (int) $variant->package_raw_material_id,
+                            requiredQuantity: $actualUnits,
+                            userId: $userId,
+                            errorKey: 'packaging',
+                            contextLabel: 'envase'
+                        );
+                    }
                 }
             }
 
@@ -137,5 +141,79 @@ class ProductionOrderService
 
             return $order->refresh();
         });
+    }
+
+    private function consumeRawMaterialFifo(ProductionOrder $order, ProductionOrderDetail $detail, float $requiredQuantity, int $userId): void
+    {
+        $this->consumeRawMaterialFifoByMaterialId(
+            order: $order,
+            rawMaterialId: $detail->raw_material_id,
+            requiredQuantity: $requiredQuantity,
+            userId: $userId,
+            errorKey: 'ingredients'
+        );
+    }
+
+    private function consumeRawMaterialFifoByMaterialId(
+        ProductionOrder $order,
+        int $rawMaterialId,
+        float $requiredQuantity,
+        int $userId,
+        string $errorKey,
+        string $contextLabel = 'materia prima'
+    ): void {
+        if ($requiredQuantity <= 0) {
+            return;
+        }
+
+        $remainingToConsume = $requiredQuantity;
+
+        $batches = InventoryBatch::query()
+            ->where('raw_material_id', $rawMaterialId)
+            ->where('warehouse_id', $order->warehouse_id)
+            ->where('remaining_quantity', '>', 0)
+            ->orderBy('entry_date')
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+
+        /** @var RawMaterial|null $rawMaterial */
+        $rawMaterial = RawMaterial::query()->find($rawMaterialId);
+        $materialCode = $rawMaterial?->code ?? (string) $rawMaterialId;
+
+        foreach ($batches as $batch) {
+            if ($remainingToConsume <= 0) {
+                break;
+            }
+
+            $availableInBatch = (float) $batch->remaining_quantity;
+            if ($availableInBatch <= 0) {
+                continue;
+            }
+
+            $consumedQuantity = min($availableInBatch, $remainingToConsume);
+
+            InventoryMovement::create([
+                'raw_material_id' => $rawMaterialId,
+                'warehouse_id' => $order->warehouse_id,
+                'batch_id' => $batch->id,
+                'production_order_id' => $order->id,
+                'type' => InventoryMovementType::Exit,
+                'quantity' => $consumedQuantity,
+                'cost_price' => $batch->unit_price,
+                'movement_date' => now(),
+                'notes' => "Consumo FIFO en OP #{$order->order_number}",
+                'created_by' => $userId,
+            ]);
+
+            $batch->decrement('remaining_quantity', $consumedQuantity);
+            $remainingToConsume -= $consumedQuantity;
+        }
+
+        if ($remainingToConsume > 0) {
+            throw ValidationException::withMessages([
+                $errorKey => "Stock insuficiente de {$contextLabel} '{$materialCode}' en finalización. Requerido: {$requiredQuantity}, faltante: {$remainingToConsume}.",
+            ]);
+        }
     }
 }

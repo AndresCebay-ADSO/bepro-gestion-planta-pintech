@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\ProductionOrderStatus;
+use App\Enums\WarehouseType;
 use App\Http\Requests\Production\CompleteProductionOrderRequest;
 use App\Http\Requests\Production\StoreProductionOrderRequest;
 use App\Models\Formula;
@@ -16,7 +17,6 @@ use App\Models\ProductionOrderPackagingPlan;
 use App\Models\Warehouse;
 use App\Services\ProductionOrderService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -46,17 +46,69 @@ class ProductionOrderController extends Controller
     /**
      * Detalle de una orden para consulta o cierre.
      */
-    public function show(ProductionOrder $order): Response
+    public function show(ProductionOrder $productionOrder): Response
     {
-        $order->load([
+        $productionOrder->load([
             'product',
             'formula.details.rawMaterial',
             'details.rawMaterial',
             'packagingPlans.productVariant',
+            'warehouse',
         ]);
 
+        $orderData = [
+            'id' => $productionOrder->id,
+            'order_number' => $productionOrder->order_number,
+            'status' => $productionOrder->status->value,
+            'quantity' => (float) $productionOrder->quantity,
+            'actual_quantity' => $productionOrder->actual_quantity !== null ? (float) $productionOrder->actual_quantity : null,
+            'yield_percentage' => $productionOrder->yield_percentage !== null ? (float) $productionOrder->yield_percentage : null,
+            'planned_date' => optional($productionOrder->planned_date)->toDateString(),
+            'completion_date' => optional($productionOrder->completion_date)->toISOString(),
+            'viscosity_ku' => $productionOrder->viscosity_ku !== null ? (float) $productionOrder->viscosity_ku : null,
+            'grinding_hg' => $productionOrder->grinding_hg !== null ? (float) $productionOrder->grinding_hg : null,
+            'agitation_start_time' => optional($productionOrder->agitation_start_time)->format('Y-m-d\TH:i'),
+            'agitation_end_time' => optional($productionOrder->agitation_end_time)->format('Y-m-d\TH:i'),
+            'packaging_start_time' => optional($productionOrder->packaging_start_time)->format('Y-m-d\TH:i'),
+            'packaging_end_time' => optional($productionOrder->packaging_end_time)->format('Y-m-d\TH:i'),
+            'responsible_name' => $productionOrder->responsible_name,
+            'spillage_quantity' => (float) $productionOrder->spillage_quantity,
+            'notes' => $productionOrder->notes,
+            'product' => $productionOrder->product ? [
+                'id' => $productionOrder->product->id,
+                'name' => $productionOrder->product->name,
+                'code' => $productionOrder->product->code,
+            ] : null,
+            'formula' => $productionOrder->formula ? [
+                'id' => $productionOrder->formula->id,
+                'version' => $productionOrder->formula->version,
+            ] : null,
+            'warehouse' => $productionOrder->warehouse ? [
+                'id' => $productionOrder->warehouse->id,
+                'name' => $productionOrder->warehouse->name,
+            ] : null,
+            'details' => $productionOrder->details->map(fn (ProductionOrderDetail $detail) => [
+                'id' => $detail->id,
+                'planned_quantity' => (float) $detail->planned_quantity,
+                'actual_quantity' => $detail->actual_quantity !== null ? (float) $detail->actual_quantity : null,
+                'raw_material' => $detail->rawMaterial ? [
+                    'id' => $detail->rawMaterial->id,
+                    'code' => $detail->rawMaterial->code,
+                ] : null,
+            ])->values(),
+            'packaging_plans' => $productionOrder->packagingPlans->map(fn (ProductionOrderPackagingPlan $plan) => [
+                'id' => $plan->id,
+                'planned_units' => (float) $plan->planned_units,
+                'actual_units' => $plan->actual_units !== null ? (float) $plan->actual_units : null,
+                'product_variant' => $plan->productVariant ? [
+                    'id' => $plan->productVariant->id,
+                    'presentation_label' => $plan->productVariant->presentation_label,
+                ] : null,
+            ])->values(),
+        ];
+
         return Inertia::render('Production/Orders/Show', [
-            'order' => $order,
+            'order' => $orderData,
         ]);
     }
 
@@ -91,6 +143,7 @@ class ProductionOrderController extends Controller
 
         $warehouses = Warehouse::query()
             ->where('is_active', true)
+            ->where('type', WarehouseType::Factory->value)
             ->get(['id', 'name']);
 
         return Inertia::render('Production/Orders/Create', [
@@ -184,6 +237,12 @@ class ProductionOrderController extends Controller
     private function generateOrderNumber(): string
     {
         $prefix = 'OP-'.now()->format('ymd').'-';
+
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            // PostgreSQL advisory lock to prevent race conditions when 0 rows exist
+            $lockKey = crc32($prefix);
+            DB::statement('SELECT pg_advisory_xact_lock(?)', [$lockKey]);
+        }
 
         $lastOrder = ProductionOrder::where('order_number', 'like', $prefix.'%')
             ->orderByDesc('order_number')
