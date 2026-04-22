@@ -21,7 +21,7 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->user = User::factory()->create();
+    $this->user = User::factory()->create(['email_verified_at' => now()]);
     $this->user->assignRole(Role::create(['name' => 'admin']));
     $this->actingAs($this->user);
 
@@ -200,5 +200,353 @@ test('it completes order and updates inventory', function () {
         'product_id' => $order->product_id,
         'product_variant_id' => $variant->id,
         'quantity' => 19,
+    ]);
+});
+
+test('it completes order even when there is no packaging plan', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 60,
+        'remaining_quantity' => 60,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-NOPACK',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $response = $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 98,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+    ]);
+
+    $response->assertRedirect();
+    $order->refresh();
+
+    expect($order->status->value)->toBe('completed');
+    $this->assertDatabaseCount('finished_inventory_movements', 0);
+});
+
+test('it rejects creating order in non-factory warehouse', function () {
+    InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $storageWarehouse = Warehouse::create([
+        'name' => 'Bodega Medellin',
+        'city' => 'Medellin',
+        'type' => 'storage',
+        'is_active' => true,
+    ]);
+
+    $response = $this->post(route('production-orders.store'), [
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $storageWarehouse->id,
+        'quantity' => 50,
+        'planned_date' => now()->addDay()->toDateString(),
+    ]);
+
+    $response->assertSessionHasErrors(['warehouse_id']);
+    $this->assertDatabaseCount('production_orders', 0);
+});
+
+test('it shows production order detail with loaded data for the view', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-VIEW-0001',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $variant = ProductVariant::where('product_id', $order->product_id)->first();
+    ProductionOrderPackagingPlan::create([
+        'production_order_id' => $order->id,
+        'product_variant_id' => $variant->id,
+        'planned_units' => 20,
+    ]);
+
+    $response = $this->get(route('production-orders.show', $order));
+
+    $response->assertOk();
+    $response->assertSee('Production/Orders/Show');
+    $response->assertSee('OP-VIEW-0001');
+    $response->assertSee('Pintura Test');
+    $response->assertSee('packaging_plans');
+});
+
+test('it aggregates finished inventory by product and warehouse when packaging has multiple variants', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 200,
+        'remaining_quantity' => 200,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-MULTI-VAR',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $firstVariant = ProductVariant::where('product_id', $order->product_id)->first();
+    $secondVariant = ProductVariant::create([
+        'product_id' => $order->product_id,
+        'sku' => 'VAR-002',
+        'unit_of_measure_id' => $firstVariant->unit_of_measure_id,
+        'presentation_label' => 'Cuarto',
+        'is_active' => true,
+    ]);
+
+    $firstPack = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $order->id,
+        'product_variant_id' => $firstVariant->id,
+        'planned_units' => 10,
+    ]);
+
+    $secondPack = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $order->id,
+        'product_variant_id' => $secondVariant->id,
+        'planned_units' => 10,
+    ]);
+
+    $response = $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 95,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [
+            ['id' => $firstPack->id, 'actual_units' => 10],
+            ['id' => $secondPack->id, 'actual_units' => 10],
+        ],
+    ]);
+
+    $response->assertRedirect();
+    $this->assertDatabaseCount('finished_inventories', 1);
+    $this->assertDatabaseHas('finished_inventories', [
+        'product_id' => $order->product_id,
+        'warehouse_id' => $order->warehouse_id,
+        'quantity' => 20,
+    ]);
+    $this->assertDatabaseCount('finished_inventory_movements', 2);
+});
+
+test('it consumes raw material using fifo across multiple batches', function () {
+    $oldestBatch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now()->subDays(3),
+    ]);
+
+    $middleBatch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 6,
+        'entry_date' => now()->subDays(2),
+    ]);
+
+    InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 7,
+        'entry_date' => now()->subDay(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-FIFO-001',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $oldestBatch->id,
+        'planned_quantity' => 100,
+        'unit_cost' => 5,
+        'total_cost' => 500,
+    ]);
+
+    $response = $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 95,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 150],
+        ],
+        'packaging' => [],
+    ]);
+
+    $response->assertRedirect();
+
+    $oldestBatch->refresh();
+    $middleBatch->refresh();
+
+    expect((float) $oldestBatch->remaining_quantity)->toBe(0.0);
+    expect((float) $middleBatch->remaining_quantity)->toBe(50.0);
+
+    $this->assertDatabaseHas('inventory_movements', [
+        'production_order_id' => $order->id,
+        'batch_id' => $oldestBatch->id,
+        'quantity' => 100,
+        'type' => 'exit',
+    ]);
+
+    $this->assertDatabaseHas('inventory_movements', [
+        'production_order_id' => $order->id,
+        'batch_id' => $middleBatch->id,
+        'quantity' => 50,
+        'type' => 'exit',
+    ]);
+});
+
+test('it consumes packaging raw material when finishing production by variant units', function () {
+    $formulaBatch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 120,
+        'remaining_quantity' => 120,
+        'unit_price' => 5,
+        'entry_date' => now()->subDays(2),
+    ]);
+
+    $packagingRawMaterial = RawMaterial::create([
+        'code' => 'ENV-001',
+        'unit_of_measure_id' => $this->material->unit_of_measure_id,
+        'current_price' => 1200,
+    ]);
+
+    $packagingBatch = InventoryBatch::create([
+        'raw_material_id' => $packagingRawMaterial->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 50,
+        'remaining_quantity' => 50,
+        'unit_price' => 1.2,
+        'entry_date' => now()->subDay(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-ENV-001',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $formulaBatch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $variant = ProductVariant::where('product_id', $order->product_id)->first();
+    $variant->update(['package_raw_material_id' => $packagingRawMaterial->id]);
+
+    $pack = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $order->id,
+        'product_variant_id' => $variant->id,
+        'planned_units' => 20,
+    ]);
+
+    $response = $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 95,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [
+            ['id' => $pack->id, 'actual_units' => 20],
+        ],
+    ]);
+
+    $response->assertRedirect();
+    $packagingBatch->refresh();
+
+    expect((float) $packagingBatch->remaining_quantity)->toBe(30.0);
+
+    $this->assertDatabaseHas('inventory_movements', [
+        'production_order_id' => $order->id,
+        'raw_material_id' => $packagingRawMaterial->id,
+        'batch_id' => $packagingBatch->id,
+        'quantity' => 20,
+        'type' => 'exit',
     ]);
 });
