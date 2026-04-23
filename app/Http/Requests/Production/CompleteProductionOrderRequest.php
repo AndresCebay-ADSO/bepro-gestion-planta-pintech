@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Production;
 
+use App\Models\ProductionOrderPackagingPlan;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class CompleteProductionOrderRequest extends FormRequest
 {
+    private const float YIELD_TOLERANCE = 0.01;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -53,6 +57,76 @@ class CompleteProductionOrderRequest extends FormRequest
             ],
             'packaging.*.actual_units' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
+        ];
+    }
+
+    /**
+     * Get the "after" validation callables for the request.
+     *
+     * @return array<callable(Validator): void>
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                if ($validator->errors()->isNotEmpty()) {
+                    return;
+                }
+
+                $actualYield = $this->input('actual_yield_quantity');
+                if ($actualYield === null) {
+                    return;
+                }
+
+                $packaging = $this->input('packaging');
+                if (! is_array($packaging) || $packaging === []) {
+                    return;
+                }
+
+                $packagingIds = collect($packaging)
+                    ->pluck('id')
+                    ->filter()
+                    ->map(fn ($id) => (int) $id)
+                    ->values()
+                    ->all();
+
+                if ($packagingIds === []) {
+                    return;
+                }
+
+                $plans = ProductionOrderPackagingPlan::query()
+                    ->whereIn('id', $packagingIds)
+                    ->with('productVariant:id,presentation_value')
+                    ->get()
+                    ->keyBy('id');
+
+                $expectedYield = 0.0;
+                foreach ($packaging as $packagingData) {
+                    $planId = (int) ($packagingData['id'] ?? 0);
+                    $plan = $plans->get($planId);
+                    if ($plan === null) {
+                        continue;
+                    }
+
+                    $actualUnits = (float) ($packagingData['actual_units'] ?? 0);
+                    if ($actualUnits <= 0) {
+                        continue;
+                    }
+
+                    $presentationValue = (float) ($plan->productVariant?->presentation_value ?? 1);
+                    $expectedYield += ($actualUnits * $presentationValue);
+                }
+
+                $difference = abs((float) $actualYield - $expectedYield);
+                if ($difference <= self::YIELD_TOLERANCE) {
+                    return;
+                }
+
+                $validator->errors()->add(
+                    'actual_yield_quantity',
+                    "El rendimiento real debe coincidir con el envasado equivalente. Registrado: {$actualYield}, esperado: {$expectedYield} (tolerancia: ".self::YIELD_TOLERANCE.').'
+                );
+            },
         ];
     }
 }

@@ -52,9 +52,35 @@ class ProductionOrderController extends Controller
             'product',
             'formula.details.rawMaterial',
             'details.rawMaterial',
-            'packagingPlans.productVariant',
+            'packagingPlans.productVariant.packageRawMaterial',
+            'finishedInventoryMovements',
             'warehouse',
         ]);
+
+        $rawMaterialIds = $productionOrder->details
+            ->pluck('raw_material_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $fifoBatchesByMaterial = InventoryBatch::query()
+            ->where('warehouse_id', $productionOrder->warehouse_id)
+            ->whereIn('raw_material_id', $rawMaterialIds)
+            ->where('remaining_quantity', '>', 0)
+            ->orderBy('entry_date')
+            ->orderBy('id')
+            ->get(['raw_material_id', 'remaining_quantity', 'unit_price'])
+            ->groupBy('raw_material_id');
+
+        $finishedCostByVariant = $productionOrder->finishedInventoryMovements
+            ->keyBy('product_variant_id');
+
+        $totalFinishedCost = (float) $productionOrder->finishedInventoryMovements
+            ->sum(fn ($movement) => (float) $movement->quantity * (float) ($movement->cost_price ?? 0));
+
+        $totalBulkCost = (float) $productionOrder->details
+            ->sum(fn (ProductionOrderDetail $detail) => (float) $detail->total_cost);
 
         $orderData = [
             'id' => $productionOrder->id,
@@ -87,24 +113,54 @@ class ProductionOrderController extends Controller
                 'id' => $productionOrder->warehouse->id,
                 'name' => $productionOrder->warehouse->name,
             ] : null,
+            'total_bulk_cost' => $totalBulkCost,
+            'total_finished_cost' => $totalFinishedCost,
             'details' => $productionOrder->details->map(fn (ProductionOrderDetail $detail) => [
                 'id' => $detail->id,
+                'raw_material_id' => (int) $detail->raw_material_id,
                 'planned_quantity' => (float) $detail->planned_quantity,
                 'actual_quantity' => $detail->actual_quantity !== null ? (float) $detail->actual_quantity : null,
+                'unit_cost' => (float) $detail->unit_cost,
+                'total_cost' => (float) $detail->total_cost,
+                'fifo_batches' => ($fifoBatchesByMaterial->get($detail->raw_material_id) ?? collect())
+                    ->map(fn ($batch) => [
+                        'remaining_quantity' => (float) $batch->remaining_quantity,
+                        'unit_price' => (float) $batch->unit_price,
+                    ])
+                    ->values()
+                    ->all(),
                 'raw_material' => $detail->rawMaterial ? [
                     'id' => $detail->rawMaterial->id,
                     'code' => $detail->rawMaterial->code,
                 ] : null,
             ])->values(),
-            'packaging_plans' => $productionOrder->packagingPlans->map(fn (ProductionOrderPackagingPlan $plan) => [
-                'id' => $plan->id,
-                'planned_units' => (float) $plan->planned_units,
-                'actual_units' => $plan->actual_units !== null ? (float) $plan->actual_units : null,
-                'product_variant' => $plan->productVariant ? [
-                    'id' => $plan->productVariant->id,
-                    'presentation_label' => $plan->productVariant->presentation_label,
-                ] : null,
-            ])->values(),
+            'packaging_plans' => $productionOrder->packagingPlans->map(function (ProductionOrderPackagingPlan $plan) use ($finishedCostByVariant, $productionOrder) {
+                $presentationValue = (float) ($plan->productVariant?->presentation_value ?? 1);
+                $costMovement = $finishedCostByVariant->get($plan->product_variant_id);
+                $packageRawMaterialId = $plan->productVariant?->package_raw_material_id;
+                $packageUnitCostEstimate = null;
+
+                if ($packageRawMaterialId !== null) {
+                    $packageUnitCostEstimate = $this->productionOrderService->estimateMaterialUnitCostForPlanning(
+                        rawMaterialId: (int) $packageRawMaterialId,
+                        warehouseId: (int) $productionOrder->warehouse_id,
+                        requiredQuantity: 1
+                    );
+                }
+
+                return [
+                    'id' => $plan->id,
+                    'planned_units' => (float) $plan->planned_units,
+                    'actual_units' => $plan->actual_units !== null ? (float) $plan->actual_units : null,
+                    'cost_price' => $costMovement?->cost_price !== null ? (float) $costMovement->cost_price : null,
+                    'package_unit_cost_estimate' => $packageUnitCostEstimate,
+                    'product_variant' => $plan->productVariant ? [
+                        'id' => $plan->productVariant->id,
+                        'presentation_label' => $plan->productVariant->presentation_label,
+                        'presentation_value' => $presentationValue,
+                    ] : null,
+                ];
+            })->values(),
         ];
 
         return Inertia::render('Production/Orders/Show', [
@@ -178,25 +234,22 @@ class ProductionOrderController extends Controller
                 'created_by' => auth()->id(),
             ]);
 
-            // Crear detalles de ingredientes basados en la fórmula con asignación FIFO de lotes
+            // Crear detalles de ingredientes basados en la fórmula (sin reservar lote en planificación)
             foreach ($formula->details as $detail) {
                 $plannedQuantity = $detail->quantity * (float) $validated['quantity'];
-
-                // Buscar lote FIFO con stock disponible en la bodega seleccionada
-                $batch = InventoryBatch::where('raw_material_id', $detail->raw_material_id)
-                    ->where('warehouse_id', $validated['warehouse_id'])
-                    ->where('remaining_quantity', '>', 0)
-                    ->orderBy('entry_date')
-                    ->orderBy('id')
-                    ->first();
+                $estimatedUnitCost = $this->productionOrderService->estimateMaterialUnitCostForPlanning(
+                    rawMaterialId: (int) $detail->raw_material_id,
+                    warehouseId: (int) $validated['warehouse_id'],
+                    requiredQuantity: (float) $plannedQuantity
+                );
 
                 ProductionOrderDetail::create([
                     'production_order_id' => $order->id,
                     'raw_material_id' => $detail->raw_material_id,
-                    'batch_id' => $batch->id,
+                    'batch_id' => null,
                     'planned_quantity' => $plannedQuantity,
-                    'unit_cost' => $batch->unit_price,
-                    'total_cost' => $plannedQuantity * $batch->unit_price,
+                    'unit_cost' => $estimatedUnitCost,
+                    'total_cost' => $plannedQuantity * $estimatedUnitCost,
                 ]);
             }
 

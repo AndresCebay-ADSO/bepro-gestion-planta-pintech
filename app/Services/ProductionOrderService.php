@@ -24,6 +24,52 @@ use Illuminate\Validation\ValidationException;
 class ProductionOrderService
 {
     /**
+     * Estimar costo unitario (sin consumir inventario) usando FIFO de lotes disponibles.
+     */
+    public function estimateMaterialUnitCostForPlanning(int $rawMaterialId, int $warehouseId, float $requiredQuantity): float
+    {
+        if ($requiredQuantity <= 0) {
+            return 0.0;
+        }
+
+        $remainingToEstimate = $requiredQuantity;
+        $estimatedCost = 0.0;
+        $estimatedQuantity = 0.0;
+
+        $batches = InventoryBatch::query()
+            ->where('raw_material_id', $rawMaterialId)
+            ->where('warehouse_id', $warehouseId)
+            ->where('remaining_quantity', '>', 0)
+            ->orderBy('entry_date')
+            ->orderBy('id')
+            ->get(['remaining_quantity', 'unit_price']);
+
+        foreach ($batches as $batch) {
+            if ($remainingToEstimate <= 0) {
+                break;
+            }
+
+            $availableInBatch = (float) $batch->remaining_quantity;
+            if ($availableInBatch <= 0) {
+                continue;
+            }
+
+            $quantityToEstimate = min($availableInBatch, $remainingToEstimate);
+            $unitPrice = (float) $batch->unit_price;
+
+            $estimatedCost += ($quantityToEstimate * $unitPrice);
+            $estimatedQuantity += $quantityToEstimate;
+            $remainingToEstimate -= $quantityToEstimate;
+        }
+
+        if ($estimatedQuantity > 0) {
+            return $estimatedCost / $estimatedQuantity;
+        }
+
+        return (float) (RawMaterial::query()->whereKey($rawMaterialId)->value('current_price') ?? 0);
+    }
+
+    /**
      * Validar si hay stock suficiente en la bodega seleccionada para producir una cantidad específica.
      */
     public function validateStockForOrder(Formula $formula, float $quantity, int $warehouseId): void
@@ -74,18 +120,30 @@ class ProductionOrderService
                 'notes' => $data['notes'] ?? $order->notes,
             ]);
 
-            // 2. Procesar Consumo de Materias Primas (Detalles)
+            // 2. Procesar consumo real de materias primas y costo real del granel
+            $totalBulkCost = 0.0;
             foreach ($data['ingredients'] as $ingredientData) {
                 $detail = ProductionOrderDetail::findOrFail($ingredientData['id']);
                 $actualQuantity = (float) $ingredientData['actual_quantity'];
 
-                $detail->update(['actual_quantity' => $actualQuantity]);
+                $consumedCost = $this->consumeRawMaterialFifo($order, $detail, $actualQuantity, $userId);
+                $realUnitCost = $actualQuantity > 0 ? ($consumedCost / $actualQuantity) : (float) $detail->unit_cost;
 
-                $this->consumeRawMaterialFifo($order, $detail, $actualQuantity, $userId);
+                $detail->update([
+                    'actual_quantity' => $actualQuantity,
+                    'unit_cost' => $realUnitCost,
+                    'total_cost' => $consumedCost,
+                ]);
+
+                $totalBulkCost += $consumedCost;
             }
 
-            // 2.5. Calcular costos distribuidos por variante
-            $distributedCosts = $this->calculateDistributedCosts($order, $data['packaging'] ?? []);
+            // 2.5. Distribuir costo de granel según rendimiento por presentación
+            $distributedBulkCosts = $this->calculateDistributedBulkCosts(
+                order: $order,
+                packagingData: $data['packaging'] ?? [],
+                totalBulkCost: $totalBulkCost
+            );
 
             // 3. Procesar Entrada de Producto Terminado (Packaging Plan)
             foreach (($data['packaging'] ?? []) as $packData) {
@@ -95,7 +153,26 @@ class ProductionOrderService
                 $plan->update(['actual_units' => $actualUnits]);
 
                 if ($actualUnits > 0) {
-                    $costPriceForVariant = $distributedCosts[$plan->product_variant_id] ?? 0;
+                    $variant = ProductVariant::query()
+                        ->select(['id', 'presentation_value', 'package_raw_material_id'])
+                        ->find($plan->product_variant_id);
+
+                    $packagingUnitCost = 0.0;
+                    if ($variant?->package_raw_material_id !== null) {
+                        $packagingTotalCost = $this->consumeRawMaterialFifoByMaterialId(
+                            order: $order,
+                            rawMaterialId: (int) $variant->package_raw_material_id,
+                            requiredQuantity: $actualUnits,
+                            userId: $userId,
+                            errorKey: 'packaging',
+                            contextLabel: 'envase'
+                        );
+
+                        $packagingUnitCost = $actualUnits > 0 ? ($packagingTotalCost / $actualUnits) : 0.0;
+                    }
+
+                    $bulkCostForVariant = $distributedBulkCosts[$plan->product_variant_id] ?? 0.0;
+                    $costPriceForVariant = $bulkCostForVariant + $packagingUnitCost;
 
                     // Registrar entrada de producto terminado
                     FinishedInventoryMovement::create([
@@ -127,30 +204,10 @@ class ProductionOrderService
 
                     $inventory->quantity = ($inventory->quantity ?? 0) + $actualUnits;
                     $inventory->save();
-
-                    $variant = ProductVariant::query()
-                        ->select(['id', 'package_raw_material_id'])
-                        ->find($plan->product_variant_id);
-
-                    if ($variant?->package_raw_material_id !== null) {
-                        $this->consumeRawMaterialFifoByMaterialId(
-                            order: $order,
-                            rawMaterialId: (int) $variant->package_raw_material_id,
-                            requiredQuantity: $actualUnits,
-                            userId: $userId,
-                            errorKey: 'packaging',
-                            contextLabel: 'envase'
-                        );
-                    }
                 }
             }
 
-            // 4. Crear/actualizar ProductionCost con el costo total del granel
-            $totalBulkCost = InventoryMovement::query()
-                ->where('production_order_id', $order->id)
-                ->where('type', InventoryMovementType::Exit)
-                ->sum(DB::raw('quantity * cost_price'));
-
+            // 4. Crear/actualizar ProductionCost con el costo real del granel (sin envase)
             if ($totalBulkCost > 0) {
                 ProductionCost::updateOrCreate(
                     [
@@ -168,9 +225,9 @@ class ProductionOrderService
         });
     }
 
-    private function consumeRawMaterialFifo(ProductionOrder $order, ProductionOrderDetail $detail, float $requiredQuantity, int $userId): void
+    private function consumeRawMaterialFifo(ProductionOrder $order, ProductionOrderDetail $detail, float $requiredQuantity, int $userId): float
     {
-        $this->consumeRawMaterialFifoByMaterialId(
+        return $this->consumeRawMaterialFifoByMaterialId(
             order: $order,
             rawMaterialId: $detail->raw_material_id,
             requiredQuantity: $requiredQuantity,
@@ -186,12 +243,13 @@ class ProductionOrderService
         int $userId,
         string $errorKey,
         string $contextLabel = 'materia prima'
-    ): void {
+    ): float {
         if ($requiredQuantity <= 0) {
-            return;
+            return 0.0;
         }
 
         $remainingToConsume = $requiredQuantity;
+        $totalConsumedCost = 0.0;
 
         $batches = InventoryBatch::query()
             ->where('raw_material_id', $rawMaterialId)
@@ -217,6 +275,7 @@ class ProductionOrderService
             }
 
             $consumedQuantity = min($availableInBatch, $remainingToConsume);
+            $unitPrice = (float) $batch->unit_price;
 
             InventoryMovement::create([
                 'raw_material_id' => $rawMaterialId,
@@ -225,7 +284,7 @@ class ProductionOrderService
                 'production_order_id' => $order->id,
                 'type' => InventoryMovementType::Exit,
                 'quantity' => $consumedQuantity,
-                'cost_price' => $batch->unit_price,
+                'cost_price' => $unitPrice,
                 'movement_date' => now(),
                 'notes' => "Consumo FIFO en OP #{$order->order_number}",
                 'created_by' => $userId,
@@ -233,6 +292,7 @@ class ProductionOrderService
 
             $batch->decrement('remaining_quantity', $consumedQuantity);
             $remainingToConsume -= $consumedQuantity;
+            $totalConsumedCost += ($consumedQuantity * $unitPrice);
         }
 
         if ($remainingToConsume > 0) {
@@ -240,6 +300,8 @@ class ProductionOrderService
                 $errorKey => "Stock insuficiente de {$contextLabel} '{$materialCode}' en finalización. Requerido: {$requiredQuantity}, faltante: {$remainingToConsume}.",
             ]);
         }
+
+        return $totalConsumedCost;
     }
 
     /**
@@ -248,19 +310,9 @@ class ProductionOrderService
      * @param  array  $packagingData  Array of packaging plan data with 'id' and 'actual_units'
      * @return array Array keyed by product_variant_id with cost_price for each variant
      */
-    private function calculateDistributedCosts(ProductionOrder $order, array $packagingData): array
+    private function calculateDistributedBulkCosts(ProductionOrder $order, array $packagingData, float $totalBulkCost): array
     {
-        if (empty($packagingData)) {
-            return [];
-        }
-
-        // Calculate total bulk cost (sum of all consumed ingredients with their costs)
-        $totalBulkCost = (float) InventoryMovement::query()
-            ->where('production_order_id', $order->id)
-            ->where('type', InventoryMovementType::Exit)
-            ->sum(DB::raw('quantity * cost_price'));
-
-        if ($totalBulkCost <= 0) {
+        if (empty($packagingData) || $totalBulkCost <= 0) {
             return [];
         }
 
@@ -322,21 +374,9 @@ class ProductionOrderService
                 continue;
             }
 
-            // Cost distributed for this variant: (cost_per_unit_bulk) * presentation_value
+            // Costo por unidad de esta variante sin incluir envase.
             $presentationValue = (float) ($variant->presentation_value ?? 1);
-            $costWithPresentation = $costPerUnitBulk * $presentationValue;
-
-            // Add packaging material cost if exists
-            $packagingCost = 0;
-            if ($variant->package_raw_material_id !== null) {
-                $packagingCost = (float) InventoryBatch::query()
-                    ->where('raw_material_id', $variant->package_raw_material_id)
-                    ->orderBy('entry_date')
-                    ->value('unit_price') ?? 0;
-            }
-
-            $finalCostPrice = $costWithPresentation + $packagingCost;
-            $distributedCosts[$variant->id] = $finalCostPrice;
+            $distributedCosts[$variant->id] = $costPerUnitBulk * $presentationValue;
         }
 
         return $distributedCosts;

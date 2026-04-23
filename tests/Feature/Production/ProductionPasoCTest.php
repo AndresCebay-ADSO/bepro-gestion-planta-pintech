@@ -123,6 +123,9 @@ test('it allows order creation if stock is sufficient', function () {
     $this->assertDatabaseHas('production_order_details', [
         'raw_material_id' => $this->material->id,
         'planned_quantity' => 50, // 0.5 * 100
+        'batch_id' => null,
+        'unit_cost' => 5,
+        'total_cost' => 250,
     ]);
 
     // Verificar que se creó el plan de envasado
@@ -171,7 +174,7 @@ test('it completes order and updates inventory', function () {
     ]);
 
     $response = $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 95,
+        'actual_yield_quantity' => 19,
         'viscosity_ku' => 105,
         'grinding_hg' => 7,
         'responsible_name' => 'Operario Juan',
@@ -247,6 +250,62 @@ test('it completes order even when there is no packaging plan', function () {
 
     expect($order->status->value)->toBe('completed');
     $this->assertDatabaseCount('finished_inventory_movements', 0);
+});
+
+test('it rejects completion when actual yield does not match packaging equivalent beyond tolerance', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-YIELD-VALID',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $variant = ProductVariant::where('product_id', $order->product_id)->first();
+    $variant->update(['presentation_value' => 5]);
+
+    $pack = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $order->id,
+        'product_variant_id' => $variant->id,
+        'planned_units' => 2,
+    ]);
+
+    $response = $this->from(route('production-orders.show', $order))
+        ->post(route('production-orders.complete', $order), [
+            'actual_yield_quantity' => 9.98,
+            'ingredients' => [
+                ['id' => $detail->id, 'actual_quantity' => 50],
+            ],
+            'packaging' => [
+                ['id' => $pack->id, 'actual_units' => 2],
+            ],
+        ]);
+
+    $response->assertRedirect(route('production-orders.show', $order));
+    $response->assertSessionHasErrors('actual_yield_quantity');
+    $order->refresh();
+    expect($order->status->value)->toBe('pending');
 });
 
 test('it rejects creating order in non-factory warehouse', function () {
@@ -378,7 +437,7 @@ test('it aggregates finished inventory by product and warehouse when packaging h
     ]);
 
     $response = $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 95,
+        'actual_yield_quantity' => 20,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -447,7 +506,7 @@ test('it consumes raw material using fifo across multiple batches', function () 
     ]);
 
     $response = $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 95,
+        'actual_yield_quantity' => 150,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 150],
         ],
@@ -458,9 +517,12 @@ test('it consumes raw material using fifo across multiple batches', function () 
 
     $oldestBatch->refresh();
     $middleBatch->refresh();
+    $detail->refresh();
 
     expect((float) $oldestBatch->remaining_quantity)->toBe(0.0);
     expect((float) $middleBatch->remaining_quantity)->toBe(50.0);
+    expect((float) $detail->total_cost)->toBe(800.0);
+    expect(round((float) $detail->unit_cost, 4))->toBe(5.3333);
 
     $this->assertDatabaseHas('inventory_movements', [
         'production_order_id' => $order->id,
@@ -532,7 +594,7 @@ test('it consumes packaging raw material when finishing production by variant un
     ]);
 
     $response = $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 95,
+        'actual_yield_quantity' => 20,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -595,7 +657,7 @@ test('it calculates cost_price correctly for single variant with packaging', fun
     ]);
 
     $response = $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 95,
+        'actual_yield_quantity' => 20,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -677,7 +739,7 @@ test('it distributes bulk cost across multiple variants by presentation_value', 
     ]);
 
     $response = $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 95,
+        'actual_yield_quantity' => 30,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -768,7 +830,7 @@ test('it includes packaging material cost in cost_price', function () {
     ]);
 
     $response = $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 95,
+        'actual_yield_quantity' => 20,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -828,7 +890,7 @@ test('it creates production_costs record for historical tracking', function () {
     ]);
 
     $response = $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 95,
+        'actual_yield_quantity' => 20,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
