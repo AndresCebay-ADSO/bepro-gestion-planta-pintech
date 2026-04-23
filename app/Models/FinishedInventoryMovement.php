@@ -21,7 +21,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int|null $production_order_id
  * @property InventoryMovementType $type
  * @property float $quantity
- * @property float|null $cost_price
+ * @property float|null $cost_price Costo unitario del producto terminado al momento del movimiento.
  * @property Carbon $movement_date
  * @property string|null $notes
  * @property int $created_by

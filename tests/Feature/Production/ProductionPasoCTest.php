@@ -8,6 +8,7 @@ use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderPackagingPlan;
@@ -901,10 +902,181 @@ test('it creates production_costs record for historical tracking', function () {
 
     $response->assertRedirect();
 
-    // Verify ProductionCost record was created/updated
+    // Verify ProductionCost historical record was created for this order
     $this->assertDatabaseHas('production_costs', [
+        'production_order_id' => $order->id,
         'product_id' => $order->product_id,
         'formula_id' => $order->formula_id,
         'cost' => 250, // Total bulk cost: 50 * 5
+        'unit_cost' => 12.5, // 250 / 20
     ]);
+});
+
+test('it keeps production_costs history for multiple orders with the same formula', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 300,
+        'remaining_quantity' => 300,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $firstOrder = ProductionOrder::create([
+        'order_number' => 'OP-HIST-A',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $firstDetail = ProductionOrderDetail::create([
+        'production_order_id' => $firstOrder->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $this->post(route('production-orders.complete', $firstOrder), [
+        'ingredients' => [
+            ['id' => $firstDetail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [],
+    ])->assertRedirect();
+
+    $secondOrder = ProductionOrder::create([
+        'order_number' => 'OP-HIST-B',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 120,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $secondDetail = ProductionOrderDetail::create([
+        'production_order_id' => $secondOrder->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 60,
+        'unit_cost' => 5,
+        'total_cost' => 300,
+    ]);
+
+    $this->post(route('production-orders.complete', $secondOrder), [
+        'ingredients' => [
+            ['id' => $secondDetail->id, 'actual_quantity' => 60],
+        ],
+        'packaging' => [],
+    ])->assertRedirect();
+
+    expect(ProductionCost::count())->toBe(2);
+    $this->assertDatabaseHas('production_costs', [
+        'production_order_id' => $firstOrder->id,
+        'cost' => 250,
+    ]);
+    $this->assertDatabaseHas('production_costs', [
+        'production_order_id' => $secondOrder->id,
+        'cost' => 300,
+    ]);
+});
+
+test('it sets unit_cost and total_cost to zero when actual quantity is zero', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-ZERO-001',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $this->post(route('production-orders.complete', $order), [
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 0],
+        ],
+        'packaging' => [],
+    ])->assertRedirect();
+
+    $detail->refresh();
+    expect((float) $detail->unit_cost)->toBe(0.0);
+    expect((float) $detail->total_cost)->toBe(0.0);
+});
+
+test('it previews fifo costs from backend endpoint using multiple batches', function () {
+    InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 50,
+        'remaining_quantity' => 50,
+        'unit_price' => 5,
+        'entry_date' => now()->subDay(),
+    ]);
+
+    InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 50,
+        'remaining_quantity' => 50,
+        'unit_price' => 7,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-PREVIEW-001',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => null,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $response = $this->postJson(route('production-orders.preview-costs', $order), [
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 60],
+        ],
+        'packaging' => [],
+    ]);
+
+    $response->assertOk();
+    expect(round((float) $response->json('ingredients.0.unit_cost'), 4))->toBe(5.3333);
+    expect((float) $response->json('ingredients.0.total_cost'))->toBe(320.0);
+    expect((float) $response->json('total_bulk_cost'))->toBe(320.0);
 });

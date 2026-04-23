@@ -28,6 +28,204 @@ class ProductionOrderService
      */
     public function estimateMaterialUnitCostForPlanning(int $rawMaterialId, int $warehouseId, float $requiredQuantity): float
     {
+        $unitCosts = $this->estimateMaterialUnitCostsForPlanning(
+            warehouseId: $warehouseId,
+            requirementsByMaterialId: [$rawMaterialId => $requiredQuantity]
+        );
+
+        return (float) ($unitCosts[$rawMaterialId] ?? 0.0);
+    }
+
+    /**
+     * Estimar costos unitarios por materia prima (sin consumir inventario) usando FIFO.
+     *
+     * @param  array<int, float|int>  $requirementsByMaterialId
+     * @return array<int, float>
+     */
+    public function estimateMaterialUnitCostsForPlanning(int $warehouseId, array $requirementsByMaterialId): array
+    {
+        if ($requirementsByMaterialId === []) {
+            return [];
+        }
+
+        $requirements = collect($requirementsByMaterialId)
+            ->mapWithKeys(fn ($requiredQuantity, $materialId) => [(int) $materialId => (float) $requiredQuantity])
+            ->filter(fn (float $requiredQuantity) => $requiredQuantity > 0);
+
+        if ($requirements->isEmpty()) {
+            return [];
+        }
+
+        $materialIds = $requirements->keys()->all();
+        $batchesByMaterial = InventoryBatch::query()
+            ->where('warehouse_id', $warehouseId)
+            ->whereIn('raw_material_id', $materialIds)
+            ->where('remaining_quantity', '>', 0)
+            ->orderBy('entry_date')
+            ->orderBy('id')
+            ->get(['raw_material_id', 'remaining_quantity', 'unit_price'])
+            ->groupBy('raw_material_id');
+
+        $fallbackPrices = RawMaterial::query()
+            ->whereIn('id', $materialIds)
+            ->pluck('current_price', 'id');
+
+        $estimatedUnitCosts = [];
+
+        foreach ($requirements as $materialId => $requiredQuantity) {
+            $batches = $batchesByMaterial->get($materialId, collect());
+            $estimatedUnitCost = $this->estimateAverageUnitCostFromBatches($requiredQuantity, $batches);
+
+            if ($estimatedUnitCost <= 0) {
+                $estimatedUnitCost = (float) ($fallbackPrices->get($materialId) ?? 0);
+            }
+
+            $estimatedUnitCosts[(int) $materialId] = $estimatedUnitCost;
+        }
+
+        return $estimatedUnitCosts;
+    }
+
+    /**
+     * Vista previa de costos para la pantalla de cierre sin consumir inventario.
+     *
+     * @param  array<int, array{id:int,actual_quantity:float|int}>  $ingredients
+     * @param  array<int, array{id:int,actual_units:float|int}>  $packaging
+     * @return array{
+     *   ingredients: array<int, array{id:int,unit_cost:float,total_cost:float,actual_quantity:float}>,
+     *   packaging: array<int, array{id:int,cost_price:float,total_cost:float,equivalent:float,actual_units:float}>,
+     *   total_bulk_cost: float,
+     *   total_finished_cost: float,
+     *   total_equivalent: float
+     * }
+     */
+    public function previewOrderCosts(ProductionOrder $order, array $ingredients, array $packaging): array
+    {
+        $order->loadMissing(['details', 'packagingPlans.productVariant']);
+
+        $detailsById = $order->details->keyBy('id');
+        $ingredientRequirements = [];
+        $ingredientRows = [];
+        $totalBulkCost = 0.0;
+
+        foreach ($ingredients as $ingredientData) {
+            $detailId = (int) ($ingredientData['id'] ?? 0);
+            $actualQuantity = max(0.0, (float) ($ingredientData['actual_quantity'] ?? 0));
+            $detail = $detailsById->get($detailId);
+
+            if ($detail === null) {
+                continue;
+            }
+
+            $ingredientRequirements[(int) $detail->raw_material_id] =
+                ($ingredientRequirements[(int) $detail->raw_material_id] ?? 0.0) + $actualQuantity;
+
+            $ingredientRows[] = [
+                'id' => $detailId,
+                'raw_material_id' => (int) $detail->raw_material_id,
+                'actual_quantity' => $actualQuantity,
+            ];
+        }
+
+        $ingredientUnitCosts = $this->estimateMaterialUnitCostsForPlanning(
+            warehouseId: (int) $order->warehouse_id,
+            requirementsByMaterialId: $ingredientRequirements
+        );
+
+        $ingredientResults = [];
+
+        foreach ($ingredientRows as $row) {
+            $unitCost = (float) ($ingredientUnitCosts[$row['raw_material_id']] ?? 0.0);
+            $totalCost = $row['actual_quantity'] * $unitCost;
+            $totalBulkCost += $totalCost;
+
+            $ingredientResults[] = [
+                'id' => $row['id'],
+                'actual_quantity' => $row['actual_quantity'],
+                'unit_cost' => $unitCost,
+                'total_cost' => $totalCost,
+            ];
+        }
+
+        $distributedBulkCosts = $this->calculateDistributedBulkCosts(
+            order: $order,
+            packagingData: $packaging,
+            totalBulkCost: $totalBulkCost
+        );
+
+        $plansById = $order->packagingPlans->keyBy('id');
+        $packagingRequirements = [];
+        $packagingRows = [];
+
+        foreach ($packaging as $packagingData) {
+            $planId = (int) ($packagingData['id'] ?? 0);
+            $actualUnits = max(0.0, (float) ($packagingData['actual_units'] ?? 0));
+            $plan = $plansById->get($planId);
+
+            if ($plan === null || $actualUnits <= 0) {
+                continue;
+            }
+
+            $packageRawMaterialId = $plan->productVariant?->package_raw_material_id;
+            if ($packageRawMaterialId !== null) {
+                $packagingRequirements[(int) $packageRawMaterialId] =
+                    ($packagingRequirements[(int) $packageRawMaterialId] ?? 0.0) + $actualUnits;
+            }
+
+            $packagingRows[] = [
+                'id' => $planId,
+                'actual_units' => $actualUnits,
+                'product_variant_id' => (int) $plan->product_variant_id,
+                'presentation_value' => (float) ($plan->productVariant?->presentation_value ?? 1),
+                'package_raw_material_id' => $packageRawMaterialId !== null ? (int) $packageRawMaterialId : null,
+            ];
+        }
+
+        $packagingUnitCosts = $this->estimateMaterialUnitCostsForPlanning(
+            warehouseId: (int) $order->warehouse_id,
+            requirementsByMaterialId: $packagingRequirements
+        );
+
+        $packagingResults = [];
+        $totalFinishedCost = 0.0;
+        $totalEquivalent = 0.0;
+
+        foreach ($packagingRows as $row) {
+            $bulkCostPerUnit = (float) ($distributedBulkCosts[$row['product_variant_id']] ?? 0.0);
+            $packagingUnitCost = $row['package_raw_material_id'] !== null
+                ? (float) ($packagingUnitCosts[$row['package_raw_material_id']] ?? 0.0)
+                : 0.0;
+
+            $costPrice = $bulkCostPerUnit + $packagingUnitCost;
+            $totalCost = $row['actual_units'] * $costPrice;
+            $equivalent = $row['actual_units'] * $row['presentation_value'];
+
+            $totalFinishedCost += $totalCost;
+            $totalEquivalent += $equivalent;
+
+            $packagingResults[] = [
+                'id' => $row['id'],
+                'actual_units' => $row['actual_units'],
+                'cost_price' => $costPrice,
+                'total_cost' => $totalCost,
+                'equivalent' => $equivalent,
+            ];
+        }
+
+        return [
+            'ingredients' => $ingredientResults,
+            'packaging' => $packagingResults,
+            'total_bulk_cost' => $totalBulkCost,
+            'total_finished_cost' => $totalFinishedCost,
+            'total_equivalent' => $totalEquivalent,
+        ];
+    }
+
+    /**
+     * @param  iterable<int, InventoryBatch>  $batches
+     */
+    private function estimateAverageUnitCostFromBatches(float $requiredQuantity, iterable $batches): float
+    {
         if ($requiredQuantity <= 0) {
             return 0.0;
         }
@@ -35,14 +233,6 @@ class ProductionOrderService
         $remainingToEstimate = $requiredQuantity;
         $estimatedCost = 0.0;
         $estimatedQuantity = 0.0;
-
-        $batches = InventoryBatch::query()
-            ->where('raw_material_id', $rawMaterialId)
-            ->where('warehouse_id', $warehouseId)
-            ->where('remaining_quantity', '>', 0)
-            ->orderBy('entry_date')
-            ->orderBy('id')
-            ->get(['remaining_quantity', 'unit_price']);
 
         foreach ($batches as $batch) {
             if ($remainingToEstimate <= 0) {
@@ -66,7 +256,7 @@ class ProductionOrderService
             return $estimatedCost / $estimatedQuantity;
         }
 
-        return (float) (RawMaterial::query()->whereKey($rawMaterialId)->value('current_price') ?? 0);
+        return 0.0;
     }
 
     /**
@@ -127,7 +317,7 @@ class ProductionOrderService
                 $actualQuantity = (float) $ingredientData['actual_quantity'];
 
                 $consumedCost = $this->consumeRawMaterialFifo($order, $detail, $actualQuantity, $userId);
-                $realUnitCost = $actualQuantity > 0 ? ($consumedCost / $actualQuantity) : (float) $detail->unit_cost;
+                $realUnitCost = $actualQuantity > 0 ? ($consumedCost / $actualQuantity) : 0.0;
 
                 $detail->update([
                     'actual_quantity' => $actualQuantity,
@@ -182,6 +372,7 @@ class ProductionOrderService
                         'production_order_id' => $order->id,
                         'type' => InventoryMovementType::Entry,
                         'quantity' => $actualUnits,
+                        // cost_price representa costo unitario del terminado en este movimiento.
                         'cost_price' => $costPriceForVariant,
                         'movement_date' => now(),
                         'notes' => "Finalización OP #{$order->order_number}",
@@ -207,18 +398,32 @@ class ProductionOrderService
                 }
             }
 
-            // 4. Crear/actualizar ProductionCost con el costo real del granel (sin envase)
+            $yieldRealQuantity = (float) ($data['actual_yield_quantity'] ?? $order->quantity);
+            $yieldTheoreticalQuantity = (float) $order->quantity;
+            $yieldVarianceQuantity = $yieldRealQuantity - $yieldTheoreticalQuantity;
+            $yieldPercentage = $yieldTheoreticalQuantity > 0
+                ? (($yieldRealQuantity / $yieldTheoreticalQuantity) * 100)
+                : null;
+
+            $order->update([
+                'yield_real_quantity' => $yieldRealQuantity,
+                'yield_theoretical_quantity' => $yieldTheoreticalQuantity,
+                'yield_variance_quantity' => $yieldVarianceQuantity,
+                'yield_percentage' => $yieldPercentage,
+            ]);
+
+            // 4. Crear historial de ProductionCost con el costo real del granel (sin envase)
             if ($totalBulkCost > 0) {
-                ProductionCost::updateOrCreate(
-                    [
-                        'product_id' => $order->product_id,
-                        'formula_id' => $order->formula_id,
-                    ],
-                    [
-                        'cost' => $totalBulkCost,
-                        'calculated_at' => now(),
-                    ]
-                );
+                $costPerYieldUnit = $yieldRealQuantity > 0 ? ($totalBulkCost / $yieldRealQuantity) : null;
+
+                ProductionCost::create([
+                    'product_id' => $order->product_id,
+                    'formula_id' => $order->formula_id,
+                    'production_order_id' => $order->id,
+                    'cost' => $totalBulkCost,
+                    'unit_cost' => $costPerYieldUnit,
+                    'calculated_at' => now(),
+                ]);
             }
 
             return $order->refresh();

@@ -7,15 +7,16 @@ namespace App\Http\Controllers;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\WarehouseType;
 use App\Http\Requests\Production\CompleteProductionOrderRequest;
+use App\Http\Requests\Production\PreviewProductionOrderCostsRequest;
 use App\Http\Requests\Production\StoreProductionOrderRequest;
 use App\Models\Formula;
-use App\Models\InventoryBatch;
 use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderPackagingPlan;
 use App\Models\Warehouse;
 use App\Services\ProductionOrderService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -57,24 +58,20 @@ class ProductionOrderController extends Controller
             'warehouse',
         ]);
 
-        $rawMaterialIds = $productionOrder->details
-            ->pluck('raw_material_id')
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
-
-        $fifoBatchesByMaterial = InventoryBatch::query()
-            ->where('warehouse_id', $productionOrder->warehouse_id)
-            ->whereIn('raw_material_id', $rawMaterialIds)
-            ->where('remaining_quantity', '>', 0)
-            ->orderBy('entry_date')
-            ->orderBy('id')
-            ->get(['raw_material_id', 'remaining_quantity', 'unit_price'])
-            ->groupBy('raw_material_id');
-
         $finishedCostByVariant = $productionOrder->finishedInventoryMovements
             ->keyBy('product_variant_id');
+
+        $packageRawMaterialRequirements = $productionOrder->packagingPlans
+            ->map(fn (ProductionOrderPackagingPlan $plan) => $plan->productVariant?->package_raw_material_id)
+            ->filter()
+            ->unique()
+            ->mapWithKeys(fn ($rawMaterialId) => [(int) $rawMaterialId => 1.0])
+            ->all();
+
+        $packageUnitCostEstimates = $this->productionOrderService->estimateMaterialUnitCostsForPlanning(
+            warehouseId: (int) $productionOrder->warehouse_id,
+            requirementsByMaterialId: $packageRawMaterialRequirements
+        );
 
         $totalFinishedCost = (float) $productionOrder->finishedInventoryMovements
             ->sum(fn ($movement) => (float) $movement->quantity * (float) ($movement->cost_price ?? 0));
@@ -88,6 +85,9 @@ class ProductionOrderController extends Controller
             'status' => $productionOrder->status->value,
             'quantity' => (float) $productionOrder->quantity,
             'actual_quantity' => $productionOrder->actual_quantity !== null ? (float) $productionOrder->actual_quantity : null,
+            'yield_real_quantity' => $productionOrder->yield_real_quantity !== null ? (float) $productionOrder->yield_real_quantity : null,
+            'yield_theoretical_quantity' => $productionOrder->yield_theoretical_quantity !== null ? (float) $productionOrder->yield_theoretical_quantity : null,
+            'yield_variance_quantity' => $productionOrder->yield_variance_quantity !== null ? (float) $productionOrder->yield_variance_quantity : null,
             'yield_percentage' => $productionOrder->yield_percentage !== null ? (float) $productionOrder->yield_percentage : null,
             'planned_date' => optional($productionOrder->planned_date)->toDateString(),
             'completion_date' => optional($productionOrder->completion_date)->toISOString(),
@@ -122,31 +122,18 @@ class ProductionOrderController extends Controller
                 'actual_quantity' => $detail->actual_quantity !== null ? (float) $detail->actual_quantity : null,
                 'unit_cost' => (float) $detail->unit_cost,
                 'total_cost' => (float) $detail->total_cost,
-                'fifo_batches' => ($fifoBatchesByMaterial->get($detail->raw_material_id) ?? collect())
-                    ->map(fn ($batch) => [
-                        'remaining_quantity' => (float) $batch->remaining_quantity,
-                        'unit_price' => (float) $batch->unit_price,
-                    ])
-                    ->values()
-                    ->all(),
                 'raw_material' => $detail->rawMaterial ? [
                     'id' => $detail->rawMaterial->id,
                     'code' => $detail->rawMaterial->code,
                 ] : null,
             ])->values(),
-            'packaging_plans' => $productionOrder->packagingPlans->map(function (ProductionOrderPackagingPlan $plan) use ($finishedCostByVariant, $productionOrder) {
+            'packaging_plans' => $productionOrder->packagingPlans->map(function (ProductionOrderPackagingPlan $plan) use ($finishedCostByVariant, $packageUnitCostEstimates) {
                 $presentationValue = (float) ($plan->productVariant?->presentation_value ?? 1);
                 $costMovement = $finishedCostByVariant->get($plan->product_variant_id);
                 $packageRawMaterialId = $plan->productVariant?->package_raw_material_id;
-                $packageUnitCostEstimate = null;
-
-                if ($packageRawMaterialId !== null) {
-                    $packageUnitCostEstimate = $this->productionOrderService->estimateMaterialUnitCostForPlanning(
-                        rawMaterialId: (int) $packageRawMaterialId,
-                        warehouseId: (int) $productionOrder->warehouse_id,
-                        requiredQuantity: 1
-                    );
-                }
+                $packageUnitCostEstimate = $packageRawMaterialId !== null
+                    ? ($packageUnitCostEstimates[(int) $packageRawMaterialId] ?? 0.0)
+                    : null;
 
                 return [
                     'id' => $plan->id,
@@ -282,6 +269,22 @@ class ProductionOrderController extends Controller
 
         return redirect()->route('production-orders.show', $order)
             ->with('success', 'Producción finalizada e inventario actualizado.');
+    }
+
+    /**
+     * Vista previa de costos estimados durante el cierre de la orden.
+     */
+    public function previewCosts(PreviewProductionOrderCostsRequest $request, ProductionOrder $order): JsonResponse
+    {
+        $validated = $request->validated();
+
+        return response()->json(
+            $this->productionOrderService->previewOrderCosts(
+                order: $order,
+                ingredients: $validated['ingredients'],
+                packaging: $validated['packaging'] ?? []
+            )
+        );
     }
 
     /**

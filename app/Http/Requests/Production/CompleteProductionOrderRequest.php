@@ -12,8 +12,6 @@ use Illuminate\Validation\Validator;
 
 class CompleteProductionOrderRequest extends FormRequest
 {
-    private const float YIELD_TOLERANCE = 0.01;
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -118,13 +116,15 @@ class CompleteProductionOrderRequest extends FormRequest
                 }
 
                 $difference = abs((float) $actualYield - $expectedYield);
-                if ($difference <= self::YIELD_TOLERANCE) {
+                $yieldTolerance = (float) config('production.yield_tolerance', 0.01);
+
+                if ($difference <= $yieldTolerance) {
                     return;
                 }
 
                 $validator->errors()->add(
                     'actual_yield_quantity',
-                    "El rendimiento real debe coincidir con el envasado equivalente. Registrado: {$actualYield}, esperado: {$expectedYield} (tolerancia: ".self::YIELD_TOLERANCE.').'
+                    "El rendimiento real debe coincidir con el envasado equivalente. Registrado: {$actualYield}, esperado: {$expectedYield} (tolerancia: {$yieldTolerance})."
                 );
             },
         ];
