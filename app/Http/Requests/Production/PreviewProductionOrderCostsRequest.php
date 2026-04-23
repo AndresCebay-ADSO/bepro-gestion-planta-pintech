@@ -32,6 +32,7 @@ class PreviewProductionOrderCostsRequest extends FormRequest
             'ingredients' => 'required|array',
             'ingredients.*.id' => [
                 'required',
+                'distinct:strict',
                 Rule::exists('production_order_details', 'id')
                     ->when($orderId !== null, fn ($query) => $query->where('production_order_id', $orderId)),
             ],
@@ -39,6 +40,7 @@ class PreviewProductionOrderCostsRequest extends FormRequest
             'packaging' => 'array',
             'packaging.*.id' => [
                 'required',
+                'distinct:strict',
                 Rule::exists('production_order_packaging_plan', 'id')
                     ->where('production_order_id', $orderId),
             ],

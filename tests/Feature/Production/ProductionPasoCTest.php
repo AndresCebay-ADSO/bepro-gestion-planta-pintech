@@ -1080,3 +1080,98 @@ test('it previews fifo costs from backend endpoint using multiple batches', func
     expect((float) $response->json('ingredients.0.total_cost'))->toBe(320.0);
     expect((float) $response->json('total_bulk_cost'))->toBe(320.0);
 });
+
+test('it rejects completion when ingredient detail ids are duplicated', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-DUP-ING',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $response = $this->from(route('production-orders.show', $order))
+        ->post(route('production-orders.complete', $order), [
+            'actual_yield_quantity' => 100,
+            'ingredients' => [
+                ['id' => $detail->id, 'actual_quantity' => 25],
+                ['id' => $detail->id, 'actual_quantity' => 25],
+            ],
+            'packaging' => [],
+        ]);
+
+    $response->assertRedirect(route('production-orders.show', $order));
+    $response->assertSessionHasErrors('ingredients.1.id');
+});
+
+test('it rejects preview when packaging ids are duplicated', function () {
+    InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-DUP-PREVIEW',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => null,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $variant = ProductVariant::where('product_id', $order->product_id)->first();
+    $pack = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $order->id,
+        'product_variant_id' => $variant->id,
+        'planned_units' => 20,
+    ]);
+
+    $response = $this->postJson(route('production-orders.preview-costs', $order), [
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [
+            ['id' => $pack->id, 'actual_units' => 10],
+            ['id' => $pack->id, 'actual_units' => 10],
+        ],
+    ]);
+
+    $response->assertUnprocessable();
+    $response->assertJsonValidationErrors('packaging.1.id');
+});
