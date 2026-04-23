@@ -1,5 +1,4 @@
 import { Head, useForm } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import {
     Beaker,
@@ -7,6 +6,7 @@ import {
     CheckCircle2,
     User as UserIcon,
 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     complete as productionOrderComplete,
     previewCosts as productionOrderPreviewCosts,
@@ -75,8 +75,11 @@ export default function ProductionOrderShow({ order }: Props) {
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
         const controller = new AbortController();
+        let loadingIndicatorId: number | null = null;
         const timeoutId = window.setTimeout(async () => {
-            setPreviewLoading(true);
+            loadingIndicatorId = window.setTimeout(() => {
+                setPreviewLoading(true);
+            }, 180);
 
             try {
                 const response = await fetch(productionOrderPreviewCosts({ order: order.id }).url, {
@@ -110,13 +113,23 @@ export default function ProductionOrderShow({ order }: Props) {
                     // silently ignore preview errors to avoid blocking the UI
                 }
             } finally {
+                if (loadingIndicatorId !== null) {
+                    window.clearTimeout(loadingIndicatorId);
+                }
+
                 setPreviewLoading(false);
             }
         }, 250);
 
         return () => {
             controller.abort();
+
+            if (loadingIndicatorId !== null) {
+                window.clearTimeout(loadingIndicatorId);
+            }
+
             window.clearTimeout(timeoutId);
+            setPreviewLoading(false);
         };
     }, [data.ingredients, data.packaging, isCompleted, order.id]);
 
@@ -224,8 +237,12 @@ export default function ProductionOrderShow({ order }: Props) {
                                 <CardDescription>
                                     Ingrese los datos reales obtenidos al finalizar el proceso.
                                     {!isCompleted ? ' Los costos se estiman en vivo desde servidor mientras editas.' : ''}
-                                    {!isCompleted && previewLoading ? ' Recalculando...' : ''}
                                 </CardDescription>
+                                {!isCompleted && (
+                                    <p className="h-5 text-xs text-muted-foreground">
+                                        {previewLoading ? 'Recalculando costos...' : ''}
+                                    </p>
+                                )}
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
