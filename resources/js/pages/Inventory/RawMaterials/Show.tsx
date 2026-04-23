@@ -41,6 +41,11 @@ type Props = {
  * Componente
  */
 export default function RawMaterialsShow({ rawMaterial, can }: Props) {
+    const totalAvailableQuantity = rawMaterial.inventory_batches.reduce(
+        (sum, batch) => sum + (Number(batch.remaining_quantity) || 0),
+        0,
+    );
+
     const handleDelete = () => {
         if (!window.confirm('¿Estás seguro de eliminar esta materia prima?')) {
             return;
@@ -164,6 +169,17 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                         label="Alerta por vencimiento"
                         value={`${rawMaterial.alert_days_before_expiry} días`}
                     />
+
+                    <InfoItem
+                        label="Total disponible (lotes)"
+                        value={
+                            <FormattedNumber
+                                value={totalAvailableQuantity}
+                                maxDecimals={4}
+                                trimTrailingZeros
+                            />
+                        }
+                    />
                 </div>
 
                 {/* Lotes */}
@@ -181,6 +197,9 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                                 <th className="p-3 text-left">Proveedor</th>
                                 <th className="p-3 text-left">Entrada</th>
                                 <th className="p-3 text-left">Vence</th>
+                                <th className="p-3 text-right">
+                                    Precio unitario
+                                </th>
                                 <th className="p-3 text-right">
                                     Cantidad inicial
                                 </th>
@@ -212,6 +231,15 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
 
                                     <td className="p-3 text-right">
                                         <FormattedNumber
+                                            value={batch.unit_price}
+                                            currency
+                                            maxDecimals={4}
+                                            trimTrailingZeros
+                                        />
+                                    </td>
+
+                                    <td className="p-3 text-right">
+                                        <FormattedNumber
                                             value={batch.initial_quantity}
                                             maxDecimals={2}
                                         />
@@ -231,7 +259,7 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                             {rawMaterial.inventory_batches.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={6}
+                                        colSpan={7}
                                         className="p-10 text-center text-sm text-muted-foreground"
                                     >
                                         No hay lotes registrados para esta
@@ -240,6 +268,27 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                                 </tr>
                             )}
                         </tbody>
+
+                        {rawMaterial.inventory_batches.length > 0 && (
+                            <tfoot>
+                                <tr className="border-t border-border bg-muted/30">
+                                    <td
+                                        colSpan={6}
+                                        className="p-3 text-right font-medium text-foreground"
+                                    >
+                                        Total Disponible
+                                    </td>
+                                    <td className="p-3 text-right font-medium text-foreground">
+                                        <FormattedNumber
+                                            value={totalAvailableQuantity}
+                                            maxDecimals={4}
+                                            trimTrailingZeros
+                                            bold
+                                        />
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        )}
                     </table>
                 </div>
             </div>

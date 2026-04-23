@@ -30,6 +30,7 @@ class RawMaterialController extends Controller
 
         $rawMaterials = RawMaterial::query()
             ->with(['category:id,name', 'unitOfMeasure:id,name,symbol'])
+            ->withSum('inventoryBatches as available_stock', 'remaining_quantity')
             ->when($search !== '', fn ($query) => $query->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"]))
             ->latest('id')
             ->paginate(15)
@@ -42,6 +43,7 @@ class RawMaterialController extends Controller
                     'current_price' => $rawMaterial->current_price,
                     'previous_price' => $rawMaterial->previous_price,
                     'minimum_stock' => $rawMaterial->minimum_stock,
+                    'available_stock' => $rawMaterial->available_stock ?? 0,
                     'alert_days_before_expiry' => $rawMaterial->alert_days_before_expiry,
                     'is_active' => $rawMaterial->is_active,
                     'category' => $rawMaterial->category ? [

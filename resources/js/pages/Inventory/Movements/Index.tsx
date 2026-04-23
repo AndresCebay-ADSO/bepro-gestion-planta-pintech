@@ -1,9 +1,12 @@
 import { Head, useForm, router } from '@inertiajs/react';
 import { Search, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
-import { type FormEvent, useState, useEffect, useCallback, useRef } from 'react';
+import {  useState, useEffect, useCallback, useRef } from 'react';
+import type {FormEvent} from 'react';
 
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
+import { EntryMovementForm } from '@/components/inventory/entry-movement-form';
+import { ExitMovementForm } from '@/components/inventory/exit-movement-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
@@ -14,8 +17,6 @@ import {
     SheetHeader,
     SheetTitle,
 } from '@/components/ui/sheet';
-import { EntryMovementForm } from '@/components/inventory/entry-movement-form';
-import { ExitMovementForm } from '@/components/inventory/exit-movement-form';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
@@ -94,7 +95,9 @@ export default function InventoryMovementsIndex({
     const hasOpenedFromUrl = useRef(false);
 
     useEffect(() => {
-        if (hasOpenedFromUrl.current) return;
+        if (hasOpenedFromUrl.current) {
+return;
+}
 
         const params = new URLSearchParams(window.location.search);
         const openParam = params.get('open');

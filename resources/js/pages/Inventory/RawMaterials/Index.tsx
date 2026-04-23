@@ -19,6 +19,7 @@ type RawMaterialRow = {
     current_price: string;
     previous_price: string | null;
     minimum_stock: string;
+    available_stock: string | number;
     alert_days_before_expiry: number;
     is_active: boolean;
     unit_of_measure: { id: number; name: string; symbol: string } | null;
@@ -157,7 +158,7 @@ export default function RawMaterialsIndex({
                                     Precio
                                 </th>
                                 <th className="p-3 text-right font-medium">
-                                    Stock Mínimo
+                                    Stock Disponible
                                 </th>
                                 <th className="p-3 text-center font-medium">
                                     Estado
@@ -194,7 +195,7 @@ export default function RawMaterialsIndex({
 
                                     <td className="p-3 text-right">
                                         <FormattedNumber
-                                            value={item.minimum_stock}
+                                            value={item.available_stock}
                                             maxDecimals={2}
                                         />
                                     </td>

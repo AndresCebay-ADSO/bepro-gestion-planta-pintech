@@ -1,10 +1,10 @@
 import { useForm } from '@inertiajs/react';
 import type { FormEvent, ChangeEvent } from 'react';
-import { MovementFormBase } from './movement-form-base';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { route } from 'ziggy-js';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { MovementFormBase } from './movement-form-base';
 
 type Option = {
     id: number;

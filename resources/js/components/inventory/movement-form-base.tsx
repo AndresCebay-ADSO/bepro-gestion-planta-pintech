@@ -1,5 +1,6 @@
 import type { useForm } from '@inertiajs/react';
 import type { ChangeEvent, ReactNode } from 'react';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -9,7 +10,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Combobox } from '@/components/ui/combobox';
 import { Textarea } from '@/components/ui/textarea';
 import { formatNumber } from '@/lib/formatters';
 
