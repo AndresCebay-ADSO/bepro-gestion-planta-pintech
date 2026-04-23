@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\FinishedInventoryMovement;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
@@ -16,6 +17,7 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
@@ -316,7 +318,7 @@ test('it shows production order detail with loaded data for the view', function 
     $response = $this->get(route('production-orders.show', $order));
 
     $response->assertOk();
-    $response->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+    $response->assertInertia(fn (AssertableInertia $page) => $page
         ->component('Production/Orders/Show')
     );
     $response->assertSee('OP-VIEW-0001');
@@ -550,5 +552,297 @@ test('it consumes packaging raw material when finishing production by variant un
         'batch_id' => $packagingBatch->id,
         'quantity' => 20,
         'type' => 'exit',
+    ]);
+});
+
+test('it calculates cost_price correctly for single variant with packaging', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-COST-001',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $variant = ProductVariant::where('product_id', $order->product_id)->first();
+    $variant->update(['presentation_value' => 1]); // 1 galón
+
+    $pack = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $order->id,
+        'product_variant_id' => $variant->id,
+        'planned_units' => 20,
+    ]);
+
+    $response = $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 95,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [
+            ['id' => $pack->id, 'actual_units' => 20],
+        ],
+    ]);
+
+    $response->assertRedirect();
+
+    // Verify cost_price was calculated and stored
+    $movement = FinishedInventoryMovement::where('production_order_id', $order->id)
+        ->where('product_variant_id', $variant->id)
+        ->first();
+
+    expect($movement)->not->toBeNull();
+    expect((float) $movement->cost_price)->toBe(12.5); // (50*5)/20 = 12.5
+    expect((float) $movement->quantity)->toBe(20.0);
+
+    // Verify ProductVariant.current_cost was updated
+    $variant->refresh();
+    expect((float) $variant->current_cost)->toBe(12.5);
+});
+
+test('it distributes bulk cost across multiple variants by presentation_value', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-MULTI-COST',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    // Create two variants with different presentation_values
+    $variant1 = ProductVariant::where('product_id', $order->product_id)->first();
+    $variant1->update(['presentation_value' => 1, 'sku' => 'VAR-GALON']); // Galón = 1
+
+    $variant2 = ProductVariant::create([
+        'product_id' => $order->product_id,
+        'sku' => 'VAR-BIDON',
+        'unit_of_measure_id' => $variant1->unit_of_measure_id,
+        'presentation_value' => 5,
+        'presentation_label' => 'Bidon 5 Galones',
+        'is_active' => true,
+    ]);
+
+    // Create packaging plans: 20 gallons + 2 bidons (10 gallons) = 30 gallons total
+    $pack1 = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $order->id,
+        'product_variant_id' => $variant1->id,
+        'planned_units' => 20,
+    ]);
+
+    $pack2 = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $order->id,
+        'product_variant_id' => $variant2->id,
+        'planned_units' => 2,
+    ]);
+
+    $response = $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 95,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [
+            ['id' => $pack1->id, 'actual_units' => 20],
+            ['id' => $pack2->id, 'actual_units' => 2],
+        ],
+    ]);
+
+    $response->assertRedirect();
+
+    // Total bulk cost: 50 * 5 = 250
+    // Total units: 20 + (2*5) = 30 gallons equivalent
+    // Cost per gallon: 250 / 30 = 8.333...
+    // Galón cost: 8.333... * 1 = 8.333...
+    // Bidon cost: 8.333... * 5 = 41.666...
+
+    $movement1 = FinishedInventoryMovement::where('production_order_id', $order->id)
+        ->where('product_variant_id', $variant1->id)
+        ->first();
+
+    $movement2 = FinishedInventoryMovement::where('production_order_id', $order->id)
+        ->where('product_variant_id', $variant2->id)
+        ->first();
+
+    expect($movement1)->not->toBeNull();
+    expect($movement2)->not->toBeNull();
+
+    expect(round((float) $movement1->cost_price, 2))->toBe(8.33); // Galón
+    expect(round((float) $movement2->cost_price, 2))->toBe(41.67); // Bidon
+});
+
+test('it includes packaging material cost in cost_price', function () {
+    $ingredientBatch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $packagingMaterial = RawMaterial::create([
+        'code' => 'ENV-GALON',
+        'unit_of_measure_id' => UnitOfMeasure::create(['code' => 'UN', 'name' => 'Unidad', 'symbol' => 'UN'])->id,
+        'current_price' => 500,
+    ]);
+
+    $packagingBatch = InventoryBatch::create([
+        'raw_material_id' => $packagingMaterial->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 500,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-PKG-COST',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $ingredientBatch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $variant = ProductVariant::where('product_id', $order->product_id)->first();
+    $variant->update([
+        'presentation_value' => 1,
+        'package_raw_material_id' => $packagingMaterial->id,
+    ]);
+
+    $pack = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $order->id,
+        'product_variant_id' => $variant->id,
+        'planned_units' => 20,
+    ]);
+
+    $response = $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 95,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [
+            ['id' => $pack->id, 'actual_units' => 20],
+        ],
+    ]);
+
+    $response->assertRedirect();
+
+    // Total bulk cost: 250, Total units: 20, Cost per unit: 12.5
+    // Packaging cost: 500 (unit_price from batch)
+    // Total cost_price: 12.5 + 500 = 512.5
+    $movement = FinishedInventoryMovement::where('production_order_id', $order->id)
+        ->where('product_variant_id', $variant->id)
+        ->first();
+
+    expect($movement)->not->toBeNull();
+    expect((float) $movement->cost_price)->toBe(512.5); // 12.5 (bulk) + 500 (packaging)
+});
+
+test('it creates production_costs record for historical tracking', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-HIST-001',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $variant = ProductVariant::where('product_id', $order->product_id)->first();
+    $pack = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $order->id,
+        'product_variant_id' => $variant->id,
+        'planned_units' => 20,
+    ]);
+
+    $response = $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 95,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [
+            ['id' => $pack->id, 'actual_units' => 20],
+        ],
+    ]);
+
+    $response->assertRedirect();
+
+    // Verify ProductionCost record was created/updated
+    $this->assertDatabaseHas('production_costs', [
+        'product_id' => $order->product_id,
+        'formula_id' => $order->formula_id,
+        'cost' => 250, // Total bulk cost: 50 * 5
     ]);
 });

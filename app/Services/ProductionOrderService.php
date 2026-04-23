@@ -11,6 +11,7 @@ use App\Models\FinishedInventoryMovement;
 use App\Models\Formula;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
+use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderPackagingPlan;
@@ -83,6 +84,9 @@ class ProductionOrderService
                 $this->consumeRawMaterialFifo($order, $detail, $actualQuantity, $userId);
             }
 
+            // 2.5. Calcular costos distribuidos por variante
+            $distributedCosts = $this->calculateDistributedCosts($order, $data['packaging'] ?? []);
+
             // 3. Procesar Entrada de Producto Terminado (Packaging Plan)
             foreach (($data['packaging'] ?? []) as $packData) {
                 $plan = ProductionOrderPackagingPlan::findOrFail($packData['id']);
@@ -91,6 +95,8 @@ class ProductionOrderService
                 $plan->update(['actual_units' => $actualUnits]);
 
                 if ($actualUnits > 0) {
+                    $costPriceForVariant = $distributedCosts[$plan->product_variant_id] ?? 0;
+
                     // Registrar entrada de producto terminado
                     FinishedInventoryMovement::create([
                         'product_id' => $order->product_id,
@@ -99,10 +105,15 @@ class ProductionOrderService
                         'production_order_id' => $order->id,
                         'type' => InventoryMovementType::Entry,
                         'quantity' => $actualUnits,
+                        'cost_price' => $costPriceForVariant,
                         'movement_date' => now(),
                         'notes' => "Finalización OP #{$order->order_number}",
                         'created_by' => $userId,
                     ]);
+
+                    // Actualizar ProductVariant.current_cost con el costo calculado
+                    ProductVariant::where('id', $plan->product_variant_id)
+                        ->update(['current_cost' => $costPriceForVariant]);
 
                     // Actualizar o crear registro en FinishedInventory
                     $inventory = FinishedInventory::firstOrNew([
@@ -134,10 +145,24 @@ class ProductionOrderService
                 }
             }
 
-            // 4. Calcular Porcentaje de Rendimiento
-            // (Opcional, basado en la lógica de negocio final)
-            // $plannedInput = $order->quantity;
-            // $order->update(['yield_percentage' => ($actualOutput / $plannedInput) * 100]);
+            // 4. Crear/actualizar ProductionCost con el costo total del granel
+            $totalBulkCost = InventoryMovement::query()
+                ->where('production_order_id', $order->id)
+                ->where('type', InventoryMovementType::Exit)
+                ->sum(DB::raw('quantity * cost_price'));
+
+            if ($totalBulkCost > 0) {
+                ProductionCost::updateOrCreate(
+                    [
+                        'product_id' => $order->product_id,
+                        'formula_id' => $order->formula_id,
+                    ],
+                    [
+                        'cost' => $totalBulkCost,
+                        'calculated_at' => now(),
+                    ]
+                );
+            }
 
             return $order->refresh();
         });
@@ -215,5 +240,105 @@ class ProductionOrderService
                 $errorKey => "Stock insuficiente de {$contextLabel} '{$materialCode}' en finalización. Requerido: {$requiredQuantity}, faltante: {$remainingToConsume}.",
             ]);
         }
+    }
+
+    /**
+     * Calculate distributed costs for each variant based on bulk cost and presentation_value.
+     *
+     * @param  array  $packagingData  Array of packaging plan data with 'id' and 'actual_units'
+     * @return array Array keyed by product_variant_id with cost_price for each variant
+     */
+    private function calculateDistributedCosts(ProductionOrder $order, array $packagingData): array
+    {
+        if (empty($packagingData)) {
+            return [];
+        }
+
+        // Calculate total bulk cost (sum of all consumed ingredients with their costs)
+        $totalBulkCost = (float) InventoryMovement::query()
+            ->where('production_order_id', $order->id)
+            ->where('type', InventoryMovementType::Exit)
+            ->sum(DB::raw('quantity * cost_price'));
+
+        if ($totalBulkCost <= 0) {
+            return [];
+        }
+
+        $packagingDataMap = []; // Map packaging plan id to data
+
+        foreach ($packagingData as $packData) {
+            $packagingDataMap[$packData['id']] = $packData;
+        }
+
+        // Get all packaging plans with their variants first
+        $plans = ProductionOrderPackagingPlan::query()
+            ->where('production_order_id', $order->id)
+            ->with('productVariant')
+            ->get();
+
+        // Calculate total rendimiento (sum of actual_units * presentation_value from all packaging plans)
+        $totalRendimiento = 0;
+        foreach ($plans as $plan) {
+            if (! isset($packagingDataMap[$plan->id])) {
+                continue;
+            }
+
+            $variant = $plan->productVariant;
+            if (! $variant) {
+                continue;
+            }
+
+            $actualUnits = (float) ($packagingDataMap[$plan->id]['actual_units'] ?? 0);
+            if ($actualUnits <= 0) {
+                continue;
+            }
+
+            $presentationValue = (float) ($variant->presentation_value ?? 1);
+            $totalRendimiento += $actualUnits * $presentationValue;
+        }
+
+        if ($totalRendimiento <= 0) {
+            return [];
+        }
+
+        // Cost per unit of rendimiento (bulk)
+        $costPerUnitBulk = $totalBulkCost / $totalRendimiento;
+
+        $distributedCosts = [];
+
+        // Distribute cost to each variant based on its presentation_value
+        foreach ($plans as $plan) {
+            if (! isset($packagingDataMap[$plan->id])) {
+                continue;
+            }
+
+            $variant = $plan->productVariant;
+            if (! $variant) {
+                continue;
+            }
+
+            $actualUnits = (float) ($packagingDataMap[$plan->id]['actual_units'] ?? 0);
+            if ($actualUnits <= 0) {
+                continue;
+            }
+
+            // Cost distributed for this variant: (cost_per_unit_bulk) * presentation_value
+            $presentationValue = (float) ($variant->presentation_value ?? 1);
+            $costWithPresentation = $costPerUnitBulk * $presentationValue;
+
+            // Add packaging material cost if exists
+            $packagingCost = 0;
+            if ($variant->package_raw_material_id !== null) {
+                $packagingCost = (float) InventoryBatch::query()
+                    ->where('raw_material_id', $variant->package_raw_material_id)
+                    ->orderBy('entry_date')
+                    ->value('unit_price') ?? 0;
+            }
+
+            $finalCostPrice = $costWithPresentation + $packagingCost;
+            $distributedCosts[$variant->id] = $finalCostPrice;
+        }
+
+        return $distributedCosts;
     }
 }
