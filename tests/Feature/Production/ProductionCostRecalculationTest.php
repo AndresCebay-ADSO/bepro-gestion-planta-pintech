@@ -6,6 +6,7 @@ use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductionCost;
+use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
@@ -71,6 +72,23 @@ beforeEach(function () {
 });
 
 test('it recalculates and stores production cost when a formula is created', function () {
+    $variantOne = ProductVariant::create([
+        'product_id' => $this->product->id,
+        'sku' => 'P-RECALC-01-1GL',
+        'unit_of_measure_id' => $this->unit->id,
+        'component_system' => '1K',
+        'presentation_value' => 1,
+        'current_cost' => null,
+    ]);
+    $variantFive = ProductVariant::create([
+        'product_id' => $this->product->id,
+        'sku' => 'P-RECALC-01-5GL',
+        'unit_of_measure_id' => $this->unit->id,
+        'component_system' => '1K',
+        'presentation_value' => 5,
+        'current_cost' => null,
+    ]);
+
     $response = $this->post(route('formulas.store'), [
         'product_id' => $this->product->id,
         'details' => [
@@ -99,6 +117,12 @@ test('it recalculates and stores production cost when a formula is created', fun
 
     $this->product->refresh();
     expect((float) $this->product->current_cost)->toBe(35.0);
+    expect((float) $this->product->current_price)->toBe(43.75);
+
+    $variantOne->refresh();
+    $variantFive->refresh();
+    expect((float) $variantOne->current_cost)->toBe(35.0);
+    expect((float) $variantFive->current_cost)->toBe(175.0);
 });
 
 test('it recalculates production costs when a raw material price changes', function () {
@@ -143,4 +167,42 @@ test('it recalculates production costs when a raw material price changes', funct
 
     $this->product->refresh();
     expect((float) $this->product->current_cost)->toBe(39.0);
+    expect((float) $this->product->current_price)->toBe(48.75);
+});
+
+test('it keeps current price when cost variation is below threshold', function () {
+    $this->post(route('formulas.store'), [
+        'product_id' => $this->product->id,
+        'details' => [
+            [
+                'raw_material_id' => $this->rawMaterialOne->id,
+                'quantity' => 2,
+                'unit_of_measure_id' => $this->unit->id,
+            ],
+            [
+                'raw_material_id' => $this->rawMaterialTwo->id,
+                'quantity' => 3,
+                'unit_of_measure_id' => $this->unit->id,
+            ],
+        ],
+    ])->assertRedirect(route('formulas.index'));
+
+    $this->product->refresh();
+    expect((float) $this->product->current_price)->toBe(43.75);
+
+    $response = $this->patch(route('raw-materials.update', $this->rawMaterialOne), [
+        'code' => $this->rawMaterialOne->code,
+        'category_id' => null,
+        'unit_of_measure_id' => $this->unit->id,
+        'current_price' => 10.1,
+        'minimum_stock' => 0,
+        'alert_days_before_expiry' => 30,
+        'is_active' => true,
+    ]);
+
+    $response->assertRedirect(route('raw-materials.index'));
+
+    $this->product->refresh();
+    expect((float) $this->product->current_cost)->toBe(35.2);
+    expect((float) $this->product->current_price)->toBe(43.75);
 });

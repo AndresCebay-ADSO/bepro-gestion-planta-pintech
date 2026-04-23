@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductionCost;
+use App\Models\ProductVariant;
 use Illuminate\Support\Facades\DB;
 
 class ProductionCostRecalculationService
@@ -39,9 +40,34 @@ class ProductionCostRecalculationService
                 $variationPercentage = (($calculatedCost - (float) $previousCost->cost) / (float) $previousCost->cost) * 100;
             }
 
-            Product::query()
-                ->where('id', $productId)
-                ->update(['current_cost' => $calculatedCost]);
+            $product = Product::query()
+                ->select('id', 'current_price', 'profit_margin', 'price_threshold')
+                ->find($productId);
+
+            if ($product !== null) {
+                $productUpdates = ['current_cost' => $calculatedCost];
+
+                $priceThreshold = (float) ($product->price_threshold ?? 0);
+                $shouldUpdatePrice = $product->current_price === null
+                    || ($variationPercentage !== null && abs($variationPercentage) >= $priceThreshold);
+
+                if ($shouldUpdatePrice && $product->profit_margin !== null) {
+                    $profitMargin = (float) $product->profit_margin;
+                    $productUpdates['current_price'] = $calculatedCost * (1 + ($profitMargin / 100));
+                }
+
+                $product->update($productUpdates);
+            }
+
+            ProductVariant::query()
+                ->where('product_id', $productId)
+                ->get(['id', 'presentation_value'])
+                ->each(function (ProductVariant $variant) use ($calculatedCost): void {
+                    $presentationValue = (float) ($variant->presentation_value ?? 1);
+                    $variant->update([
+                        'current_cost' => $calculatedCost * $presentationValue,
+                    ]);
+                });
 
             return ProductionCost::create([
                 'product_id' => $productId,
