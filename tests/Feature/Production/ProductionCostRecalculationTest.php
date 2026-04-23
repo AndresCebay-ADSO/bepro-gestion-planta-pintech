@@ -123,9 +123,21 @@ test('it recalculates and stores production cost when a formula is created', fun
     $variantFive->refresh();
     expect((float) $variantOne->current_cost)->toBe(35.0);
     expect((float) $variantFive->current_cost)->toBe(175.0);
+    expect((float) $variantOne->current_price)->toBe(43.75);
+    expect((float) $variantFive->current_price)->toBe(218.75);
 });
 
 test('it recalculates production costs when a raw material price changes', function () {
+    $variant = ProductVariant::create([
+        'product_id' => $this->product->id,
+        'sku' => 'P-RECALC-01-1GL-RAW-UPD',
+        'unit_of_measure_id' => $this->unit->id,
+        'component_system' => '1K',
+        'presentation_value' => 1,
+        'current_cost' => null,
+        'current_price' => null,
+    ]);
+
     $this->post(route('formulas.store'), [
         'product_id' => $this->product->id,
         'details' => [
@@ -168,9 +180,23 @@ test('it recalculates production costs when a raw material price changes', funct
     $this->product->refresh();
     expect((float) $this->product->current_cost)->toBe(39.0);
     expect((float) $this->product->current_price)->toBe(48.75);
+
+    $variant->refresh();
+    expect((float) $variant->current_cost)->toBe(39.0);
+    expect((float) $variant->current_price)->toBe(48.75);
 });
 
 test('it keeps current price when cost variation is below threshold', function () {
+    $variant = ProductVariant::create([
+        'product_id' => $this->product->id,
+        'sku' => 'P-RECALC-01-1GL-BELOW-THRESHOLD',
+        'unit_of_measure_id' => $this->unit->id,
+        'component_system' => '1K',
+        'presentation_value' => 1,
+        'current_cost' => null,
+        'current_price' => null,
+    ]);
+
     $this->post(route('formulas.store'), [
         'product_id' => $this->product->id,
         'details' => [
@@ -189,6 +215,8 @@ test('it keeps current price when cost variation is below threshold', function (
 
     $this->product->refresh();
     expect((float) $this->product->current_price)->toBe(43.75);
+    $variant->refresh();
+    expect((float) $variant->current_price)->toBe(43.75);
 
     $response = $this->patch(route('raw-materials.update', $this->rawMaterialOne), [
         'code' => $this->rawMaterialOne->code,
@@ -205,4 +233,8 @@ test('it keeps current price when cost variation is below threshold', function (
     $this->product->refresh();
     expect((float) $this->product->current_cost)->toBe(35.2);
     expect((float) $this->product->current_price)->toBe(43.75);
+
+    $variant->refresh();
+    expect((float) $variant->current_cost)->toBe(35.2);
+    expect((float) $variant->current_price)->toBe(43.75);
 });

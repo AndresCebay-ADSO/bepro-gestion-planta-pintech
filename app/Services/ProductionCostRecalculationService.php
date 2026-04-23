@@ -43,6 +43,9 @@ class ProductionCostRecalculationService
             $product = Product::query()
                 ->select('id', 'current_price', 'profit_margin', 'price_threshold')
                 ->find($productId);
+            $autoUpdateVariantPrice = (bool) config('production.auto_update_variant_price', true);
+            $productProfitMargin = $product?->profit_margin !== null ? (float) $product->profit_margin : null;
+            $productPriceThreshold = (float) ($product?->price_threshold ?? 0);
 
             if ($product !== null) {
                 $productUpdates = ['current_cost' => $calculatedCost];
@@ -61,11 +64,33 @@ class ProductionCostRecalculationService
 
             ProductVariant::query()
                 ->where('product_id', $productId)
-                ->get(['id', 'presentation_value'])
-                ->each(function (ProductVariant $variant) use ($calculatedCost): void {
+                ->get(['id', 'presentation_value', 'current_cost', 'current_price'])
+                ->each(function (ProductVariant $variant) use (
+                    $calculatedCost,
+                    $autoUpdateVariantPrice,
+                    $productProfitMargin,
+                    $productPriceThreshold
+                ): void {
                     $presentationValue = (float) ($variant->presentation_value ?? 1);
+                    $newVariantCost = $calculatedCost * $presentationValue;
+                    $variantUpdates = ['current_cost' => $newVariantCost];
+
+                    if ($autoUpdateVariantPrice && $productProfitMargin !== null) {
+                        $previousVariantCost = $variant->current_cost !== null ? (float) $variant->current_cost : null;
+                        $shouldUpdateVariantPrice = $this->shouldUpdatePriceFromCostChange(
+                            currentPrice: $variant->current_price !== null ? (float) $variant->current_price : null,
+                            previousCost: $previousVariantCost,
+                            newCost: $newVariantCost,
+                            threshold: $productPriceThreshold
+                        );
+
+                        if ($shouldUpdateVariantPrice) {
+                            $variantUpdates['current_price'] = $newVariantCost * (1 + ($productProfitMargin / 100));
+                        }
+                    }
+
                     $variant->update([
-                        'current_cost' => $calculatedCost * $presentationValue,
+                        ...$variantUpdates,
                     ]);
                 });
 
@@ -99,5 +124,20 @@ class ProductionCostRecalculationService
         }
 
         return $recalculated;
+    }
+
+    private function shouldUpdatePriceFromCostChange(?float $currentPrice, ?float $previousCost, float $newCost, float $threshold): bool
+    {
+        if ($currentPrice === null) {
+            return true;
+        }
+
+        if ($previousCost === null || $previousCost <= 0) {
+            return false;
+        }
+
+        $variationPercentage = abs((($newCost - $previousCost) / $previousCost) * 100);
+
+        return $variationPercentage >= $threshold;
     }
 }

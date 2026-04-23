@@ -650,6 +650,10 @@ test('it calculates cost_price correctly for single variant with packaging', fun
 
     $variant = ProductVariant::where('product_id', $order->product_id)->first();
     $variant->update(['presentation_value' => 1]); // 1 galón
+    Product::where('id', $order->product_id)->update([
+        'profit_margin' => 20,
+        'price_threshold' => 0,
+    ]);
 
     $pack = ProductionOrderPackagingPlan::create([
         'production_order_id' => $order->id,
@@ -681,6 +685,7 @@ test('it calculates cost_price correctly for single variant with packaging', fun
     // Verify ProductVariant.current_cost was updated
     $variant->refresh();
     expect((float) $variant->current_cost)->toBe(12.5);
+    expect((float) $variant->current_price)->toBe(15.0);
 });
 
 test('it distributes bulk cost across multiple variants by presentation_value', function () {

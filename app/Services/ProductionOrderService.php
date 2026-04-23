@@ -11,6 +11,7 @@ use App\Models\FinishedInventoryMovement;
 use App\Models\Formula;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
+use App\Models\Product;
 use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
@@ -334,6 +335,12 @@ class ProductionOrderService
                 packagingData: $data['packaging'] ?? [],
                 totalBulkCost: $totalBulkCost
             );
+            $productForPricing = Product::query()
+                ->select(['id', 'profit_margin', 'price_threshold'])
+                ->find($order->product_id);
+            $autoUpdateVariantPrice = (bool) config('production.auto_update_variant_price', true);
+            $productProfitMargin = $productForPricing?->profit_margin !== null ? (float) $productForPricing->profit_margin : null;
+            $productPriceThreshold = (float) ($productForPricing?->price_threshold ?? 0);
 
             // 3. Procesar Entrada de Producto Terminado (Packaging Plan)
             foreach (($data['packaging'] ?? []) as $packData) {
@@ -344,7 +351,7 @@ class ProductionOrderService
 
                 if ($actualUnits > 0) {
                     $variant = ProductVariant::query()
-                        ->select(['id', 'presentation_value', 'package_raw_material_id'])
+                        ->select(['id', 'presentation_value', 'package_raw_material_id', 'current_cost', 'current_price'])
                         ->find($plan->product_variant_id);
 
                     $packagingUnitCost = 0.0;
@@ -379,9 +386,24 @@ class ProductionOrderService
                         'created_by' => $userId,
                     ]);
 
-                    // Actualizar ProductVariant.current_cost con el costo calculado
-                    ProductVariant::where('id', $plan->product_variant_id)
-                        ->update(['current_cost' => $costPriceForVariant]);
+                    if ($variant !== null) {
+                        $variantUpdates = ['current_cost' => $costPriceForVariant];
+
+                        if ($autoUpdateVariantPrice && $productProfitMargin !== null) {
+                            $shouldUpdateVariantPrice = $this->shouldUpdatePriceFromCostChange(
+                                currentPrice: $variant->current_price !== null ? (float) $variant->current_price : null,
+                                previousCost: $variant->current_cost !== null ? (float) $variant->current_cost : null,
+                                newCost: $costPriceForVariant,
+                                threshold: $productPriceThreshold
+                            );
+
+                            if ($shouldUpdateVariantPrice) {
+                                $variantUpdates['current_price'] = $costPriceForVariant * (1 + ($productProfitMargin / 100));
+                            }
+                        }
+
+                        $variant->update($variantUpdates);
+                    }
 
                     // Actualizar o crear registro en FinishedInventory
                     $inventory = FinishedInventory::firstOrNew([
@@ -587,5 +609,20 @@ class ProductionOrderService
         }
 
         return $distributedCosts;
+    }
+
+    private function shouldUpdatePriceFromCostChange(?float $currentPrice, ?float $previousCost, float $newCost, float $threshold): bool
+    {
+        if ($currentPrice === null) {
+            return true;
+        }
+
+        if ($previousCost === null || $previousCost <= 0) {
+            return false;
+        }
+
+        $variationPercentage = abs((($newCost - $previousCost) / $previousCost) * 100);
+
+        return $variationPercentage >= $threshold;
     }
 }
