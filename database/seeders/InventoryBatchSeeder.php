@@ -12,45 +12,66 @@ class InventoryBatchSeeder extends Seeder
     public function run(): void
     {
         $cali = Warehouse::where('name', 'Planta Cali')->first();
-        $neiva = Warehouse::where('name', 'Bodega Neiva')->first();
 
-        if (! $cali || ! $neiva) {
-            $this->command->error('Warehouses not found. Run WarehouseSeeder first.');
+        if (! $cali) {
+            $this->command->error('Warehouse Planta Cali not found. Run WarehouseSeeder first.');
+
             return;
         }
 
-        $rawMaterials = RawMaterial::all();
+        // Configuración de lotes específicos: [cantidad, precio_unitario]
+        $batchesConfig = [
+            'S - 7 R' => [
+                ['qty' => 50, 'price' => 1500],
+                ['qty' => 120, 'price' => 2000],
+                ['qty' => 164, 'price' => 1700],
+            ],
+            'S - 11 R' => [
+                ['qty' => 9, 'price' => 2000],
+                ['qty' => 7, 'price' => 1000],
+                ['qty' => 43, 'price' => 1500],
+            ],
+            'S - 4' => [
+                ['qty' => 100, 'price' => 1800],
+                ['qty' => 100, 'price' => 2000],
+                ['qty' => 380, 'price' => 2200],
+            ],
+            'S - 5' => [
+                ['qty' => 76, 'price' => 1800],
+                ['qty' => 10, 'price' => 2000],
+                ['qty' => 90, 'price' => 2300],
+            ],
+            'ENV-P-BI5' => [
+                ['qty' => 10, 'price' => 20000],
+                ['qty' => 7, 'price' => 25000],
+                ['qty' => 50, 'price' => 21000],
+            ],
+        ];
 
-        foreach ($rawMaterials as $material) {
-            // Decidir cuántos lotes crear para este material (1 a 3)
-            $batchCount = rand(1, 3);
+        foreach ($batchesConfig as $code => $batches) {
+            $material = RawMaterial::where('code', $code)->first();
 
-            for ($i = 0; $i < $batchCount; $i++) {
-                $daysAgo = rand(0, 45);
+            if (! $material) {
+                $this->command->warn("Raw material with code '{$code}' not found.");
+
+                continue;
+            }
+
+            foreach ($batches as $index => $batch) {
+                // Fechas en orden cronológico: lote 1 más antiguo, lote 3 más reciente
+                $daysAgo = 60 - ($index * 15) + rand(0, 10);
                 $entryDate = now()->subDays($daysAgo);
-                
-                // 10% de probabilidad de que el material esté próximo a vencer (o ya vencido) para pruebas
-                $isExpiring = (rand(1, 10) === 1);
-                $expiryDate = $isExpiring 
-                    ? now()->addDays(rand(-5, 15)) 
-                    : now()->addDays(rand(180, 720));
-
-                $initialQty = rand(20, 500);
-                // Si es un lote viejo (más de 20 días), el stock restante debería ser menor
-                $remainingQty = ($daysAgo > 20) ? rand(0, (int)($initialQty * 0.4)) : rand((int)($initialQty * 0.5), $initialQty);
-
-                // Toda la materia prima se concentra en la Planta Cali (Fábrica) según especificación
-                $warehouseId = $cali->id;
+                $expiryDate = now()->addDays(rand(180, 720));
 
                 InventoryBatch::create([
                     'raw_material_id' => $material->id,
-                    'warehouse_id' => $warehouseId,
-                    'initial_quantity' => $initialQty,
-                    'remaining_quantity' => $remainingQty,
-                    'unit_price' => $material->current_price ?? 5000,
+                    'warehouse_id' => $cali->id,
+                    'initial_quantity' => $batch['qty'],
+                    'remaining_quantity' => $batch['qty'],
+                    'unit_price' => $batch['price'],
                     'entry_date' => $entryDate,
                     'expiry_date' => $expiryDate,
-                    'lot_number' => 'LOTE-' . $entryDate->format('Y-m') . '-' . str_pad($material->id, 4, '0', STR_PAD_LEFT),
+                    'lot_number' => 'LOTE-'.$entryDate->format('Y-m').'-'.str_pad($material->id, 4, '0', STR_PAD_LEFT).'-'.($index + 1),
                     'supplier' => fake('es_CO')->company(),
                 ]);
             }

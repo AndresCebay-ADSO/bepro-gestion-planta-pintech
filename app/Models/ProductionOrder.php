@@ -22,6 +22,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $warehouse_id
  * @property float $quantity
  * @property float|null $actual_quantity
+ * @property float|null $yield_real_quantity
+ * @property float|null $yield_theoretical_quantity
+ * @property float|null $yield_variance_quantity
  * @property float|null $yield_percentage
  * @property ProductionOrderStatus $status
  * @property Carbon $planned_date
@@ -54,6 +57,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'warehouse_id',
     'quantity',
     'actual_quantity',
+    'yield_real_quantity',
+    'yield_theoretical_quantity',
+    'yield_variance_quantity',
     'yield_percentage',
     'status',
     'planned_date',
@@ -101,6 +107,9 @@ class ProductionOrder extends Model
             'status' => ProductionOrderStatus::class,
             'quantity' => 'decimal:4',
             'actual_quantity' => 'decimal:4',
+            'yield_real_quantity' => 'decimal:4',
+            'yield_theoretical_quantity' => 'decimal:4',
+            'yield_variance_quantity' => 'decimal:4',
             'yield_percentage' => 'decimal:2',
             'planned_date' => 'date',
             'completion_date' => 'date',

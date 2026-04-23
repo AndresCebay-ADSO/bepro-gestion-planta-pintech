@@ -1,4 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import {
     Beaker,
@@ -6,7 +7,10 @@ import {
     CheckCircle2,
     User as UserIcon,
 } from 'lucide-react';
-import { complete as productionOrderComplete } from '@/actions/App/Http/Controllers/ProductionOrderController';
+import {
+    complete as productionOrderComplete,
+    previewCosts as productionOrderPreviewCosts,
+} from '@/actions/App/Http/Controllers/ProductionOrderController';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,6 +22,14 @@ import { Textarea } from '@/components/ui/textarea';
 
 type Props = {
     order: any; // Simplified for initial build, will refine types as we go
+};
+
+type PreviewCostData = {
+    ingredients: Array<{ id: number; unit_cost: number; total_cost: number; actual_quantity: number }>;
+    packaging: Array<{ id: number; cost_price: number; total_cost: number; equivalent: number; actual_units: number }>;
+    total_bulk_cost: number;
+    total_finished_cost: number;
+    total_equivalent: number;
 };
 
 export default function ProductionOrderShow({ order }: Props) {
@@ -40,20 +52,135 @@ export default function ProductionOrderShow({ order }: Props) {
             raw_material_name: detail.raw_material?.code,
             planned_quantity: detail.planned_quantity,
             actual_quantity: detail.actual_quantity ?? detail.planned_quantity,
+            unit_cost: detail.unit_cost ?? 0,
+            total_cost: detail.total_cost ?? 0,
         })),
         packaging: order.packaging_plans.map((pack: any) => ({
             id: pack.id,
             presentation: pack.product_variant?.presentation_label ?? 'Unidad',
+            presentation_value: pack.product_variant?.presentation_value ?? 1,
             planned_units: pack.planned_units,
             actual_units: pack.actual_units ?? pack.planned_units,
+            cost_price: pack.cost_price ?? null,
         })),
     });
+
+    const [previewCosts, setPreviewCosts] = useState<PreviewCostData | null>(null);
+    const [previewLoading, setPreviewLoading] = useState(false);
+
+    useEffect(() => {
+        if (isCompleted) {
+            return;
+        }
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(async () => {
+            setPreviewLoading(true);
+
+            try {
+                const response = await fetch(productionOrderPreviewCosts({ order: order.id }).url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({
+                        ingredients: data.ingredients.map((ingredient: any) => ({
+                            id: ingredient.id,
+                            actual_quantity: Number(ingredient.actual_quantity) || 0,
+                        })),
+                        packaging: data.packaging.map((pack: any) => ({
+                            id: pack.id,
+                            actual_units: Number(pack.actual_units) || 0,
+                        })),
+                    }),
+                    signal: controller.signal,
+                });
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const payload = (await response.json()) as PreviewCostData;
+                setPreviewCosts(payload);
+            } catch (error) {
+                if ((error as Error).name !== 'AbortError') {
+                    // silently ignore preview errors to avoid blocking the UI
+                }
+            } finally {
+                setPreviewLoading(false);
+            }
+        }, 250);
+
+        return () => {
+            controller.abort();
+            window.clearTimeout(timeoutId);
+        };
+    }, [data.ingredients, data.packaging, isCompleted, order.id]);
+
+    const previewIngredientsById = useMemo(() => {
+        if (!previewCosts) {
+            return new Map<number, PreviewCostData['ingredients'][number]>();
+        }
+
+        return new Map(previewCosts.ingredients.map((ingredient) => [ingredient.id, ingredient]));
+    }, [previewCosts]);
+
+    const previewPackagingById = useMemo(() => {
+        if (!previewCosts) {
+            return new Map<number, PreviewCostData['packaging'][number]>();
+        }
+
+        return new Map(previewCosts.packaging.map((pack) => [pack.id, pack]));
+    }, [previewCosts]);
+
+    const ingredientRows = isCompleted
+        ? order.details.map((detail: any) => ({
+              id: detail.id,
+              raw_material_name: detail.raw_material?.code,
+              planned_quantity: detail.planned_quantity,
+              actual_quantity: detail.actual_quantity ?? detail.planned_quantity,
+              unit_cost: detail.unit_cost ?? 0,
+              total_cost: detail.total_cost ?? 0,
+          }))
+        : data.ingredients.map((ing: any) => ({
+              ...ing,
+              unit_cost: previewIngredientsById.get(ing.id)?.unit_cost ?? ing.unit_cost ?? 0,
+              total_cost: previewIngredientsById.get(ing.id)?.total_cost ?? ing.total_cost ?? 0,
+          }));
+
+    const packagingRows = isCompleted
+        ? order.packaging_plans.map((pack: any) => ({
+              id: pack.id,
+              presentation: pack.product_variant?.presentation_label ?? 'Unidad',
+              presentation_value: pack.product_variant?.presentation_value ?? 1,
+              planned_units: pack.planned_units,
+              actual_units: pack.actual_units ?? pack.planned_units,
+              cost_price: pack.cost_price ?? null,
+          }))
+        : data.packaging.map((pack: any) => ({
+              ...pack,
+              cost_price: previewPackagingById.get(pack.id)?.cost_price ?? pack.cost_price ?? 0,
+          }));
+
+    const totalEquivalent = isCompleted
+        ? packagingRows.reduce((sum: number, pack: any) => {
+              return sum + ((Number(pack.actual_units) || 0) * (Number(pack.presentation_value) || 0));
+          }, 0)
+        : (previewCosts?.total_equivalent ?? 0);
+
+    const pendingBulkCost = previewCosts?.total_bulk_cost ?? 0;
+    const pendingFinishedCost = previewCosts?.total_finished_cost ?? 0;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
         if (confirm('¿Estás seguro de finalizar esta orden? Esta acción actualizará los inventarios de forma irreversible.')) {
-            post(productionOrderComplete({ order: order.id }).url);
+            post(productionOrderComplete({ order: order.id }).url, {
+                preserveState: false,
+            });
         }
     };
 
@@ -96,10 +223,30 @@ export default function ProductionOrderShow({ order }: Props) {
                                 </CardTitle>
                                 <CardDescription>
                                     Ingrese los datos reales obtenidos al finalizar el proceso.
+                                    {!isCompleted ? ' Los costos se estiman en vivo desde servidor mientras editas.' : ''}
+                                    {!isCompleted && previewLoading ? ' Recalculando...' : ''}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="actual-yield">Rendimiento Real (eq. gal)</Label>
+                                        <Input
+                                            id="actual-yield"
+                                            type="number"
+                                            step="0.0001"
+                                            placeholder="Ej: 19.7500"
+                                            value={data.actual_yield_quantity}
+                                            onChange={e => setData('actual_yield_quantity', e.target.value)}
+                                            disabled={isCompleted}
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            Debe coincidir con el equivalente envasado dentro de la tolerancia.
+                                        </p>
+                                        {errors.actual_yield_quantity && (
+                                            <p className="text-xs text-destructive">{errors.actual_yield_quantity}</p>
+                                        )}
+                                    </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="viscosity">Viscosidad (KU)</Label>
                                         <Input
@@ -139,10 +286,12 @@ export default function ProductionOrderShow({ order }: Props) {
                                                     <th className="p-3 text-left">Materia Prima</th>
                                                     <th className="p-3 text-right">Planeado</th>
                                                     <th className="p-3 text-right w-32">Real Gastado</th>
+                                                    <th className="p-3 text-right">Costo Unit.</th>
+                                                    <th className="p-3 text-right">Costo Total</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {data.ingredients.map((ing: any, idx: number) => (
+                                                {ingredientRows.map((ing: any, idx: number) => (
                                                     <tr key={ing.id} className="border-b last:border-0">
                                                         <td className="p-3 font-medium">{ing.raw_material_name}</td>
                                                         <td className="p-3 text-right text-muted-foreground"><FormattedNumber value={ing.planned_quantity} maxDecimals={2} /></td>
@@ -160,11 +309,17 @@ export default function ProductionOrderShow({ order }: Props) {
                                                                 disabled={isCompleted}
                                                             />
                                                         </td>
+                                                        <td className="p-3 text-right text-muted-foreground">
+                                                            <FormattedNumber value={ing.unit_cost} currency maxDecimals={2} />
+                                                        </td>
+                                                        <td className="p-3 text-right font-medium">
+                                                            <FormattedNumber value={ing.total_cost} currency maxDecimals={2} />
+                                                        </td>
                                                     </tr>
                                                 ))}
-                                                {data.ingredients.length === 0 && (
+                                                {ingredientRows.length === 0 && (
                                                     <tr>
-                                                        <td className="p-3 text-muted-foreground" colSpan={3}>
+                                                        <td className="p-3 text-muted-foreground" colSpan={5}>
                                                             Esta orden no tiene insumos planificados.
                                                         </td>
                                                     </tr>
@@ -183,10 +338,13 @@ export default function ProductionOrderShow({ order }: Props) {
                                                     <th className="p-3 text-left">Presentación</th>
                                                     <th className="p-3 text-right">Planeado</th>
                                                     <th className="p-3 text-right w-32">Real Producido</th>
+                                                    <th className="p-3 text-right">Eq. Gal</th>
+                                                    <th className="p-3 text-right">Costo Unit.</th>
+                                                    <th className="p-3 text-right">Costo Total</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {data.packaging.map((pack: any, idx: number) => (
+                                                {packagingRows.map((pack: any, idx: number) => (
                                                     <tr key={pack.id} className="border-b last:border-0">
                                                         <td className="p-3 font-medium">{pack.presentation}</td>
                                                         <td className="p-3 text-right text-muted-foreground"><FormattedNumber value={pack.planned_units} maxDecimals={0} /></td>
@@ -204,11 +362,20 @@ export default function ProductionOrderShow({ order }: Props) {
                                                                 disabled={isCompleted}
                                                             />
                                                         </td>
+                                                        <td className="p-3 text-right text-muted-foreground">
+                                                            <FormattedNumber value={(Number(pack.actual_units) || 0) * (Number(pack.presentation_value) || 0)} maxDecimals={2} />
+                                                        </td>
+                                                        <td className="p-3 text-right text-muted-foreground">
+                                                            <FormattedNumber value={pack.cost_price} currency maxDecimals={2} />
+                                                        </td>
+                                                        <td className="p-3 text-right font-medium">
+                                                            <FormattedNumber value={(Number(pack.actual_units) || 0) * (Number(pack.cost_price) || 0)} currency maxDecimals={2} />
+                                                        </td>
                                                     </tr>
                                                 ))}
-                                                {data.packaging.length === 0 && (
+                                                {packagingRows.length === 0 && (
                                                     <tr>
-                                                        <td className="p-3 text-muted-foreground" colSpan={3}>
+                                                        <td className="p-3 text-muted-foreground" colSpan={6}>
                                                             Esta orden no tiene plan de empaque.
                                                         </td>
                                                     </tr>
@@ -332,6 +499,18 @@ export default function ProductionOrderShow({ order }: Props) {
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Bodega:</span>
                                     <span className="font-medium">{order.warehouse?.name}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Rend. envasado (eq. gal):</span>
+                                    <span className="font-medium"><FormattedNumber value={totalEquivalent} maxDecimals={2} /></span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Costo granel acumulado:</span>
+                                    <span className="font-medium"><FormattedNumber value={isCompleted ? order.total_bulk_cost : pendingBulkCost} currency maxDecimals={2} /></span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Costo terminado total:</span>
+                                    <span className="font-medium"><FormattedNumber value={isCompleted ? order.total_finished_cost : pendingFinishedCost} currency maxDecimals={2} /></span>
                                 </div>
                             </CardContent>
                         </Card>

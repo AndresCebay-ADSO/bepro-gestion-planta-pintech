@@ -84,6 +84,7 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
     // Órdenes de Producción
     Route::resource('production-orders', ProductionOrderController::class);
     Route::post('production-orders/{order}/complete', [ProductionOrderController::class, 'complete'])->name('production-orders.complete');
+    Route::post('production-orders/{order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])->name('production-orders.preview-costs');
 
     Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
     Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');

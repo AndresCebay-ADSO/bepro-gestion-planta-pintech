@@ -12,7 +12,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $production_order_id
- * @property int $batch_id
+ * @property int|null $batch_id
  * @property int $raw_material_id
  * @property float $planned_quantity
  * @property float|null $actual_quantity
@@ -21,7 +21,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read ProductionOrder $productionOrder
- * @property-read InventoryBatch $batch
+ * @property-read InventoryBatch|null $batch
  * @property-read RawMaterial $rawMaterial
  */
 #[Fillable([

@@ -13,18 +13,23 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $product_id
  * @property int $formula_id
+ * @property int|null $production_order_id
  * @property float $cost
+ * @property float|null $unit_cost
  * @property float|null $variation_percentage
  * @property Carbon $calculated_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Product $product
  * @property-read Formula $formula
+ * @property-read ProductionOrder|null $productionOrder
  */
 #[Fillable([
     'product_id',
     'formula_id',
+    'production_order_id',
     'cost',
+    'unit_cost',
     'variation_percentage',
     'calculated_at',
 ])]
@@ -37,6 +42,7 @@ class ProductionCost extends Model
     {
         return [
             'cost' => 'decimal:4',
+            'unit_cost' => 'decimal:4',
             'variation_percentage' => 'decimal:4',
             'calculated_at' => 'datetime',
         ];
@@ -50,5 +56,10 @@ class ProductionCost extends Model
     public function formula(): BelongsTo
     {
         return $this->belongsTo(Formula::class, 'formula_id');
+    }
+
+    public function productionOrder(): BelongsTo
+    {
+        return $this->belongsTo(ProductionOrder::class, 'production_order_id');
     }
 }

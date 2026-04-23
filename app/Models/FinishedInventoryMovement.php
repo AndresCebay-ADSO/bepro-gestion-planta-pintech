@@ -21,6 +21,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int|null $production_order_id
  * @property InventoryMovementType $type
  * @property float $quantity
+ * @property float|null $cost_price Costo unitario del producto terminado al momento del movimiento.
  * @property Carbon $movement_date
  * @property string|null $notes
  * @property int $created_by
@@ -39,6 +40,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'production_order_id',
     'type',
     'quantity',
+    'cost_price',
     'movement_date',
     'notes',
     'created_by',
@@ -63,6 +65,7 @@ class FinishedInventoryMovement extends Model
         return [
             'type' => InventoryMovementType::class,
             'quantity' => 'decimal:4',
+            'cost_price' => 'decimal:4',
             'movement_date' => 'date',
         ];
     }
