@@ -230,6 +230,24 @@ export default function ProductionOrderShow({ order }: Props) {
                             <CardContent className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
+                                        <Label htmlFor="actual-yield">Rendimiento Real (eq. gal)</Label>
+                                        <Input
+                                            id="actual-yield"
+                                            type="number"
+                                            step="0.0001"
+                                            placeholder="Ej: 19.7500"
+                                            value={data.actual_yield_quantity}
+                                            onChange={e => setData('actual_yield_quantity', e.target.value)}
+                                            disabled={isCompleted}
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            Debe coincidir con el equivalente envasado dentro de la tolerancia.
+                                        </p>
+                                        {errors.actual_yield_quantity && (
+                                            <p className="text-xs text-destructive">{errors.actual_yield_quantity}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
                                         <Label htmlFor="viscosity">Viscosidad (KU)</Label>
                                         <Input
                                             id="viscosity"
@@ -440,9 +458,6 @@ export default function ProductionOrderShow({ order }: Props) {
 
                                 {!isCompleted && (
                                     <>
-                                        {errors.actual_yield_quantity && (
-                                            <p className="text-xs text-destructive">{errors.actual_yield_quantity}</p>
-                                        )}
                                         {errors.packaging && (
                                             <p className="text-xs text-destructive">{errors.packaging}</p>
                                         )}
