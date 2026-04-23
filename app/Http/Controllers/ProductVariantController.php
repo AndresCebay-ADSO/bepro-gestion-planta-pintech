@@ -6,10 +6,15 @@ use App\Http\Requests\Products\StoreProductVariantRequest;
 use App\Http\Requests\Products\UpdateProductVariantRequest;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\ProductionCostRecalculationService;
 use Illuminate\Http\RedirectResponse;
 
 class ProductVariantController extends Controller
 {
+    public function __construct(
+        private readonly ProductionCostRecalculationService $productionCostRecalculationService
+    ) {}
+
     public function store(StoreProductVariantRequest $request, Product $product): RedirectResponse
     {
         $this->authorize('update', $product);
@@ -18,6 +23,7 @@ class ProductVariantController extends Controller
         $validated['product_id'] = $product->id;
 
         ProductVariant::create($validated);
+        $this->productionCostRecalculationService->recalculateForProduct((int) $product->id);
 
         return redirect()
             ->route('products.show', $product)
@@ -31,6 +37,7 @@ class ProductVariantController extends Controller
         abort_if((int) $variant->product_id !== (int) $product->id, 404);
 
         $variant->update($request->validated());
+        $this->productionCostRecalculationService->recalculateForProduct((int) $product->id);
 
         return redirect()
             ->route('products.show', $product)
