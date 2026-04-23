@@ -8,6 +8,7 @@ use App\Http\Requests\RawMaterials\UpdateRawMaterialRequest;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
+use App\Services\ProductionCostRecalculationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -16,6 +17,10 @@ use Inertia\Response;
 
 class RawMaterialController extends Controller
 {
+    public function __construct(
+        private readonly ProductionCostRecalculationService $productionCostRecalculationService
+    ) {}
+
     public function index(Request $request): Response
     {
         $this->authorize('viewAny', RawMaterial::class);
@@ -149,7 +154,19 @@ class RawMaterialController extends Controller
     {
         $this->authorize('update', $rawMaterial);
 
-        $rawMaterial->update($request->validated());
+        $validated = $request->validated();
+        $currentPriceChanged = isset($validated['current_price'])
+            && (string) $rawMaterial->current_price !== (string) $validated['current_price'];
+
+        if ($currentPriceChanged && ! array_key_exists('previous_price', $validated)) {
+            $validated['previous_price'] = $rawMaterial->current_price;
+        }
+
+        $rawMaterial->update($validated);
+
+        if ($currentPriceChanged) {
+            $this->productionCostRecalculationService->recalculateForRawMaterial((int) $rawMaterial->id);
+        }
 
         return redirect()
             ->route('raw-materials.index')
