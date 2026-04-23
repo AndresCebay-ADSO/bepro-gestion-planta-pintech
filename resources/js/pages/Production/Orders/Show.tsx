@@ -186,6 +186,10 @@ export default function ProductionOrderShow({ order }: Props) {
 
     const pendingBulkCost = previewCosts?.total_bulk_cost ?? 0;
     const pendingFinishedCost = previewCosts?.total_finished_cost ?? 0;
+    const marginPercentage = Number(order.product?.profit_margin ?? 0);
+    const activeFinishedCost = isCompleted ? Number(order.total_finished_cost || 0) : Number(pendingFinishedCost || 0);
+    const estimatedMarginValue = activeFinishedCost * (marginPercentage / 100);
+    const estimatedTargetValue = activeFinishedCost + estimatedMarginValue;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -528,6 +532,18 @@ export default function ProductionOrderShow({ order }: Props) {
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Costo terminado total:</span>
                                     <span className="font-medium"><FormattedNumber value={isCompleted ? order.total_finished_cost : pendingFinishedCost} currency maxDecimals={2} /></span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Margen producto (%):</span>
+                                    <span className="font-medium"><FormattedNumber value={marginPercentage} maxDecimals={2} />%</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Margen estimado:</span>
+                                    <span className="font-medium"><FormattedNumber value={estimatedMarginValue} currency maxDecimals={2} /></span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Valor objetivo c/margen:</span>
+                                    <span className="font-medium"><FormattedNumber value={estimatedTargetValue} currency maxDecimals={2} /></span>
                                 </div>
                             </CardContent>
                         </Card>

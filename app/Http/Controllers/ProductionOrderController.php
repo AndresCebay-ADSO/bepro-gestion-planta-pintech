@@ -104,6 +104,7 @@ class ProductionOrderController extends Controller
                 'id' => $productionOrder->product->id,
                 'name' => $productionOrder->product->name,
                 'code' => $productionOrder->product->code,
+                'profit_margin' => $productionOrder->product->profit_margin !== null ? (float) $productionOrder->product->profit_margin : null,
             ] : null,
             'formula' => $productionOrder->formula ? [
                 'id' => $productionOrder->formula->id,
