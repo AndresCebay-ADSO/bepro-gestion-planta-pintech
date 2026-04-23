@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\InventoryBatch;
 use App\Models\RawMaterial;
 use App\Models\Warehouse;
+use App\Services\RawMaterialReferencePriceService;
 use Illuminate\Database\Seeder;
 
 class InventoryBatchSeeder extends Seeder
@@ -74,7 +75,11 @@ class InventoryBatchSeeder extends Seeder
                     'lot_number' => 'LOTE-'.$entryDate->format('Y-m').'-'.str_pad($material->id, 4, '0', STR_PAD_LEFT).'-'.($index + 1),
                     'supplier' => fake('es_CO')->company(),
                 ]);
+
             }
+
+            app(RawMaterialReferencePriceService::class)
+                ->syncRawMaterialCurrentPrice((int) $material->id);
         }
 
         $this->command->info('Inventory batches seeded successfully.');

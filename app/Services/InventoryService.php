@@ -10,6 +10,11 @@ use Illuminate\Validation\ValidationException;
 
 class InventoryService
 {
+    public function __construct(
+        private readonly RawMaterialReferencePriceService $rawMaterialReferencePriceService,
+        private readonly ProductionCostRecalculationService $productionCostRecalculationService
+    ) {}
+
     public function storeMovement(array $data, int $userId): InventoryMovement
     {
         return DB::transaction(function () use ($data, $userId) {
@@ -52,13 +57,19 @@ class InventoryService
                 $this->applyMovement($movementData['type'], $movementData['quantity'], $movementData['raw_material_id'], $movementData['batch_id']);
             }
 
-            return InventoryMovement::create($movementData);
+            $movement = InventoryMovement::create($movementData);
+
+            $this->syncReferencePriceAndDependentCosts((int) $movementData['raw_material_id']);
+
+            return $movement;
         });
     }
 
     public function updateMovement(InventoryMovement $movement, array $data): InventoryMovement
     {
         return DB::transaction(function () use ($movement, $data) {
+            $previousRawMaterialId = (int) $movement->raw_material_id;
+
             $this->reverseMovement($movement);
 
             $movementData = [
@@ -77,6 +88,11 @@ class InventoryService
 
             $movement->update($movementData);
 
+            $updatedRawMaterialId = (int) $movementData['raw_material_id'];
+            collect([$previousRawMaterialId, $updatedRawMaterialId])
+                ->unique()
+                ->each(fn (int $rawMaterialId) => $this->syncReferencePriceAndDependentCosts($rawMaterialId));
+
             return $movement->refresh();
         });
     }
@@ -84,9 +100,23 @@ class InventoryService
     public function deleteMovement(InventoryMovement $movement): void
     {
         DB::transaction(function () use ($movement) {
+            $rawMaterialId = (int) $movement->raw_material_id;
+
             $this->reverseMovement($movement);
             $movement->delete();
+
+            $this->syncReferencePriceAndDependentCosts($rawMaterialId);
         });
+    }
+
+    private function syncReferencePriceAndDependentCosts(int $rawMaterialId): void
+    {
+        $currentPriceChanged = $this->rawMaterialReferencePriceService
+            ->syncRawMaterialCurrentPrice($rawMaterialId);
+
+        if ($currentPriceChanged) {
+            $this->productionCostRecalculationService->recalculateForRawMaterial($rawMaterialId);
+        }
     }
 
     private function applyMovement(string|InventoryMovementType $type, string|float $quantity, int $rawMaterialId, ?int $batchId): void
