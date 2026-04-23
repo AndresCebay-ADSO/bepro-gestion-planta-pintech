@@ -8,6 +8,7 @@ use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductionCost;
 use App\Models\ProductVariant;
+use App\Models\RawMaterial;
 use Illuminate\Support\Facades\DB;
 
 class ProductionCostRecalculationService
@@ -62,37 +63,54 @@ class ProductionCostRecalculationService
                 $product->update($productUpdates);
             }
 
-            ProductVariant::query()
+            $variants = ProductVariant::query()
                 ->where('product_id', $productId)
-                ->get(['id', 'presentation_value', 'current_cost', 'current_price'])
-                ->each(function (ProductVariant $variant) use (
-                    $calculatedCost,
-                    $autoUpdateVariantPrice,
-                    $productProfitMargin,
-                    $productPriceThreshold
-                ): void {
-                    $presentationValue = (float) ($variant->presentation_value ?? 1);
-                    $newVariantCost = $calculatedCost * $presentationValue;
-                    $variantUpdates = ['current_cost' => $newVariantCost];
+                ->get(['id', 'presentation_value', 'package_raw_material_id', 'current_cost', 'current_price']);
 
-                    if ($autoUpdateVariantPrice && $productProfitMargin !== null) {
-                        $previousVariantCost = $variant->current_cost !== null ? (float) $variant->current_cost : null;
-                        $shouldUpdateVariantPrice = $this->shouldUpdatePriceFromCostChange(
-                            currentPrice: $variant->current_price !== null ? (float) $variant->current_price : null,
-                            previousCost: $previousVariantCost,
-                            newCost: $newVariantCost,
-                            threshold: $productPriceThreshold
-                        );
+            $packageMaterialIds = $variants
+                ->pluck('package_raw_material_id')
+                ->filter()
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
 
-                        if ($shouldUpdateVariantPrice) {
-                            $variantUpdates['current_price'] = $newVariantCost * (1 + ($productProfitMargin / 100));
-                        }
+            $packageUnitPrices = RawMaterial::query()
+                ->whereIn('id', $packageMaterialIds)
+                ->pluck('current_price', 'id');
+
+            $variants->each(function (ProductVariant $variant) use (
+                $calculatedCost,
+                $autoUpdateVariantPrice,
+                $productProfitMargin,
+                $productPriceThreshold,
+                $packageUnitPrices
+            ): void {
+                $packageUnitCost = $variant->package_raw_material_id !== null
+                    ? (float) ($packageUnitPrices->get((int) $variant->package_raw_material_id) ?? 0.0)
+                    : 0.0;
+
+                $presentationValue = (float) ($variant->presentation_value ?? 1);
+                $newVariantCost = ($calculatedCost * $presentationValue) + $packageUnitCost;
+
+                $variantUpdates = ['current_cost' => $newVariantCost];
+
+                if ($autoUpdateVariantPrice && $productProfitMargin !== null) {
+                    $previousVariantCost = $variant->current_cost !== null ? (float) $variant->current_cost : null;
+                    $shouldUpdateVariantPrice = $this->shouldUpdatePriceFromCostChange(
+                        currentPrice: $variant->current_price !== null ? (float) $variant->current_price : null,
+                        previousCost: $previousVariantCost,
+                        newCost: $newVariantCost,
+                        threshold: $productPriceThreshold
+                    );
+
+                    if ($shouldUpdateVariantPrice) {
+                        $variantUpdates['current_price'] = $newVariantCost * (1 + ($productProfitMargin / 100));
                     }
+                }
 
-                    $variant->update([
-                        ...$variantUpdates,
-                    ]);
-                });
+                $variant->update($variantUpdates);
+            });
 
             return ProductionCost::create([
                 'product_id' => $productId,

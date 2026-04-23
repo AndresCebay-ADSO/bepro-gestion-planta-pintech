@@ -69,6 +69,16 @@ beforeEach(function () {
         'alert_days_before_expiry' => 30,
         'is_active' => true,
     ]);
+
+    $this->packagingMaterial = RawMaterial::create([
+        'code' => 'ENV-REC-01',
+        'unit_of_measure_id' => $this->unit->id,
+        'current_price' => 8,
+        'previous_price' => null,
+        'minimum_stock' => 0,
+        'alert_days_before_expiry' => 30,
+        'is_active' => true,
+    ]);
 });
 
 test('it recalculates and stores production cost when a formula is created', function () {
@@ -237,4 +247,41 @@ test('it keeps current price when cost variation is below threshold', function (
     $variant->refresh();
     expect((float) $variant->current_cost)->toBe(35.2);
     expect((float) $variant->current_price)->toBe(43.75);
+});
+
+test('it includes package cost in variant cost and auto price on recalculation', function () {
+    ProductVariant::create([
+        'product_id' => $this->product->id,
+        'sku' => 'P-RECALC-01-ENV',
+        'unit_of_measure_id' => $this->unit->id,
+        'component_system' => '1K',
+        'presentation_value' => 1,
+        'package_raw_material_id' => $this->packagingMaterial->id,
+        'current_cost' => null,
+        'current_price' => null,
+    ]);
+
+    $this->post(route('formulas.store'), [
+        'product_id' => $this->product->id,
+        'details' => [
+            [
+                'raw_material_id' => $this->rawMaterialOne->id,
+                'quantity' => 2,
+                'unit_of_measure_id' => $this->unit->id,
+            ],
+            [
+                'raw_material_id' => $this->rawMaterialTwo->id,
+                'quantity' => 3,
+                'unit_of_measure_id' => $this->unit->id,
+            ],
+        ],
+    ])->assertRedirect(route('formulas.index'));
+
+    $variant = ProductVariant::query()
+        ->where('sku', 'P-RECALC-01-ENV')
+        ->first();
+
+    expect($variant)->not->toBeNull();
+    expect((float) $variant->current_cost)->toBe(43.0); // 35 bulk + 8 envase
+    expect((float) $variant->current_price)->toBe(53.75); // +25%
 });

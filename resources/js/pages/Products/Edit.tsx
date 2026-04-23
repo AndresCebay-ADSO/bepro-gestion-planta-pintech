@@ -62,7 +62,7 @@ export default function ProductsEdit({
             ? String(product.unit_of_measure_id)
             : '',
         current_cost: product.current_cost ?? '',
-        profit_margin: product.profit_margin ?? '',
+        profit_margin: product.profit_margin ?? '0',
         current_price: product.current_price ?? '',
         price_threshold: product.price_threshold ?? '0',
         is_active: product.is_active,
@@ -270,7 +270,7 @@ export default function ProductsEdit({
 
                                 <div className="space-y-2">
                                     <Label htmlFor="profit_margin">
-                                        Margen de ganancia (%)
+                                        Margen de ganancia (%) *
                                     </Label>
                                     <Input
                                         id="profit_margin"
@@ -278,6 +278,7 @@ export default function ProductsEdit({
                                         step="0.01"
                                         min="0"
                                         max="100"
+                                        required
                                         value={data.profit_margin}
                                         onChange={(e) =>
                                             setData(

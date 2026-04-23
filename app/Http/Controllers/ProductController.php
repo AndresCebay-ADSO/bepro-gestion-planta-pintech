@@ -88,7 +88,7 @@ class ProductController extends Controller
 
         $validated = $request->validated();
 
-        if (array_key_exists('current_price', $validated) || array_key_exists('profit_margin', $validated)) {
+        if (array_key_exists('current_price', $validated)) {
             $this->authorize('create', PriceList::class);
         }
 
@@ -152,12 +152,11 @@ class ProductController extends Controller
 
         $validated = $request->validated();
 
-        $priceFields = ['current_cost', 'current_price', 'profit_margin', 'price_threshold'];
-        foreach ($priceFields as $field) {
-            if (array_key_exists($field, $validated) && (string) ($product->{$field} ?? '') !== (string) $validated[$field]) {
-                $this->authorize('create', PriceList::class);
-                break;
-            }
+        if (
+            array_key_exists('current_price', $validated)
+            && (string) ($product->current_price ?? '') !== (string) $validated['current_price']
+        ) {
+            $this->authorize('create', PriceList::class);
         }
 
         $product->update($validated);

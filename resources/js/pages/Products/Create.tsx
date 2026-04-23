@@ -42,7 +42,7 @@ export default function ProductsCreate({ categories, units, can }: Props) {
         category_id: '',
         unit_of_measure_id: '',
         current_cost: '',
-        profit_margin: '',
+        profit_margin: '0',
         current_price: '',
         price_threshold: '0',
         is_active: true,
@@ -196,8 +196,7 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                     Precios y Costos
                                 </h2>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    Campos opcionales. Puedes completarlos más
-                                    adelante.
+                                    Define margen y umbral para cálculo automático de precios.
                                 </p>
                             </div>
 
@@ -254,7 +253,7 @@ export default function ProductsCreate({ categories, units, can }: Props) {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="profit_margin">
-                                        Margen de ganancia (%)
+                                        Margen de ganancia (%) *
                                     </Label>
                                     <Input
                                         id="profit_margin"
@@ -262,6 +261,7 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                         step="0.01"
                                         min="0"
                                         max="100"
+                                        required
                                         value={data.profit_margin}
                                         onChange={(e) =>
                                             setData(
