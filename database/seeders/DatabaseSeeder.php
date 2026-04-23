@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             WarehouseUserSeeder::class,
             InventoryBatchSeeder::class,
+            ProductSeeder::class,
         ]);
     }
 }
