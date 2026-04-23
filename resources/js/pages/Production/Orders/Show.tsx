@@ -1,4 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import {
     Beaker,
@@ -6,7 +7,10 @@ import {
     CheckCircle2,
     User as UserIcon,
 } from 'lucide-react';
-import { complete as productionOrderComplete } from '@/actions/App/Http/Controllers/ProductionOrderController';
+import {
+    complete as productionOrderComplete,
+    previewCosts as productionOrderPreviewCosts,
+} from '@/actions/App/Http/Controllers/ProductionOrderController';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,43 +24,13 @@ type Props = {
     order: any; // Simplified for initial build, will refine types as we go
 };
 
-type FifoBatch = {
-    remaining_quantity: number;
-    unit_price: number;
+type PreviewCostData = {
+    ingredients: Array<{ id: number; unit_cost: number; total_cost: number; actual_quantity: number }>;
+    packaging: Array<{ id: number; cost_price: number; total_cost: number; equivalent: number; actual_units: number }>;
+    total_bulk_cost: number;
+    total_finished_cost: number;
+    total_equivalent: number;
 };
-
-function estimateFifoUnitCost(requiredQuantity: number, fifoBatches: FifoBatch[]): number {
-    if (requiredQuantity <= 0) {
-        return 0;
-    }
-
-    let remainingToConsume = requiredQuantity;
-    let totalCost = 0;
-    let consumed = 0;
-
-    for (const batch of fifoBatches) {
-        if (remainingToConsume <= 0) {
-            break;
-        }
-
-        const available = Number(batch.remaining_quantity) || 0;
-        const unitPrice = Number(batch.unit_price) || 0;
-        if (available <= 0) {
-            continue;
-        }
-
-        const qty = Math.min(available, remainingToConsume);
-        totalCost += (qty * unitPrice);
-        consumed += qty;
-        remainingToConsume -= qty;
-    }
-
-    if (consumed <= 0) {
-        return 0;
-    }
-
-    return totalCost / consumed;
-}
 
 export default function ProductionOrderShow({ order }: Props) {
     const isCompleted = order.status === 'completed';
@@ -75,13 +49,11 @@ export default function ProductionOrderShow({ order }: Props) {
         notes: order.notes ?? '',
         ingredients: order.details.map((detail: any) => ({
             id: detail.id,
-            raw_material_id: detail.raw_material_id,
             raw_material_name: detail.raw_material?.code,
             planned_quantity: detail.planned_quantity,
             actual_quantity: detail.actual_quantity ?? detail.planned_quantity,
             unit_cost: detail.unit_cost ?? 0,
             total_cost: detail.total_cost ?? 0,
-            fifo_batches: detail.fifo_batches ?? [],
         })),
         packaging: order.packaging_plans.map((pack: any) => ({
             id: pack.id,
@@ -90,45 +62,94 @@ export default function ProductionOrderShow({ order }: Props) {
             planned_units: pack.planned_units,
             actual_units: pack.actual_units ?? pack.planned_units,
             cost_price: pack.cost_price ?? null,
-            package_unit_cost_estimate: pack.package_unit_cost_estimate ?? 0,
         })),
     });
 
-    const pendingBulkCost = data.ingredients.reduce((sum: number, ing: any) => {
-        const actualQuantity = Number(ing.actual_quantity) || 0;
-        const unitCost = Number(ing.unit_cost) || 0;
-        return sum + (actualQuantity * unitCost);
-    }, 0);
+    const [previewCosts, setPreviewCosts] = useState<PreviewCostData | null>(null);
+    const [previewLoading, setPreviewLoading] = useState(false);
 
-    const pendingEquivalent = data.packaging.reduce((sum: number, pack: any) => {
-        const units = Number(pack.actual_units) || 0;
-        const presentationValue = Number(pack.presentation_value) || 0;
-        return sum + (units * presentationValue);
-    }, 0);
+    useEffect(() => {
+        if (isCompleted) {
+            return;
+        }
 
-    const liveBulkCostPerEquivalent = pendingEquivalent > 0 ? pendingBulkCost / pendingEquivalent : 0;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(async () => {
+            setPreviewLoading(true);
+
+            try {
+                const response = await fetch(productionOrderPreviewCosts({ order: order.id }).url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({
+                        ingredients: data.ingredients.map((ingredient: any) => ({
+                            id: ingredient.id,
+                            actual_quantity: Number(ingredient.actual_quantity) || 0,
+                        })),
+                        packaging: data.packaging.map((pack: any) => ({
+                            id: pack.id,
+                            actual_units: Number(pack.actual_units) || 0,
+                        })),
+                    }),
+                    signal: controller.signal,
+                });
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const payload = (await response.json()) as PreviewCostData;
+                setPreviewCosts(payload);
+            } catch (error) {
+                if ((error as Error).name !== 'AbortError') {
+                    // silently ignore preview errors to avoid blocking the UI
+                }
+            } finally {
+                setPreviewLoading(false);
+            }
+        }, 250);
+
+        return () => {
+            controller.abort();
+            window.clearTimeout(timeoutId);
+        };
+    }, [data.ingredients, data.packaging, isCompleted, order.id]);
+
+    const previewIngredientsById = useMemo(() => {
+        if (!previewCosts) {
+            return new Map<number, PreviewCostData['ingredients'][number]>();
+        }
+
+        return new Map(previewCosts.ingredients.map((ingredient) => [ingredient.id, ingredient]));
+    }, [previewCosts]);
+
+    const previewPackagingById = useMemo(() => {
+        if (!previewCosts) {
+            return new Map<number, PreviewCostData['packaging'][number]>();
+        }
+
+        return new Map(previewCosts.packaging.map((pack) => [pack.id, pack]));
+    }, [previewCosts]);
 
     const ingredientRows = isCompleted
         ? order.details.map((detail: any) => ({
               id: detail.id,
-              raw_material_id: detail.raw_material_id,
               raw_material_name: detail.raw_material?.code,
               planned_quantity: detail.planned_quantity,
               actual_quantity: detail.actual_quantity ?? detail.planned_quantity,
               unit_cost: detail.unit_cost ?? 0,
               total_cost: detail.total_cost ?? 0,
-              fifo_batches: detail.fifo_batches ?? [],
           }))
-        : data.ingredients.map((ing: any) => {
-              const actualQuantity = Number(ing.actual_quantity) || 0;
-              const unitCost = estimateFifoUnitCost(actualQuantity, ing.fifo_batches ?? []);
-
-              return {
-                  ...ing,
-                  unit_cost: unitCost,
-                  total_cost: actualQuantity * unitCost,
-              };
-          });
+        : data.ingredients.map((ing: any) => ({
+              ...ing,
+              unit_cost: previewIngredientsById.get(ing.id)?.unit_cost ?? ing.unit_cost ?? 0,
+              total_cost: previewIngredientsById.get(ing.id)?.total_cost ?? ing.total_cost ?? 0,
+          }));
 
     const packagingRows = isCompleted
         ? order.packaging_plans.map((pack: any) => ({
@@ -139,26 +160,19 @@ export default function ProductionOrderShow({ order }: Props) {
               actual_units: pack.actual_units ?? pack.planned_units,
               cost_price: pack.cost_price ?? null,
           }))
-        : data.packaging.map((pack: any) => {
-              const presentationValue = Number(pack.presentation_value) || 0;
-              const packagingUnitCostEstimate = Number(pack.package_unit_cost_estimate) || 0;
-              const costPrice = (liveBulkCostPerEquivalent * presentationValue) + packagingUnitCostEstimate;
+        : data.packaging.map((pack: any) => ({
+              ...pack,
+              cost_price: previewPackagingById.get(pack.id)?.cost_price ?? pack.cost_price ?? 0,
+          }));
 
-              return {
-                  ...pack,
-                  cost_price: costPrice,
-              };
-          });
+    const totalEquivalent = isCompleted
+        ? packagingRows.reduce((sum: number, pack: any) => {
+              return sum + ((Number(pack.actual_units) || 0) * (Number(pack.presentation_value) || 0));
+          }, 0)
+        : (previewCosts?.total_equivalent ?? 0);
 
-    const totalEquivalent = packagingRows.reduce((sum: number, pack: any) => {
-        return sum + ((Number(pack.actual_units) || 0) * (Number(pack.presentation_value) || 0));
-    }, 0);
-
-    const pendingFinishedCost = packagingRows.reduce((sum: number, pack: any) => {
-        const units = Number(pack.actual_units) || 0;
-        const costPrice = Number(pack.cost_price) || 0;
-        return sum + (units * costPrice);
-    }, 0);
+    const pendingBulkCost = previewCosts?.total_bulk_cost ?? 0;
+    const pendingFinishedCost = previewCosts?.total_finished_cost ?? 0;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -209,7 +223,8 @@ export default function ProductionOrderShow({ order }: Props) {
                                 </CardTitle>
                                 <CardDescription>
                                     Ingrese los datos reales obtenidos al finalizar el proceso.
-                                    {!isCompleted ? ' Los costos se estiman en vivo mientras editas.' : ''}
+                                    {!isCompleted ? ' Los costos se estiman en vivo desde servidor mientras editas.' : ''}
+                                    {!isCompleted && previewLoading ? ' Recalculando...' : ''}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
