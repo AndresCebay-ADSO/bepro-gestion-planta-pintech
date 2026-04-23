@@ -412,18 +412,20 @@ class ProductionOrderService
                 'yield_percentage' => $yieldPercentage,
             ]);
 
-            // 4. Crear historial de ProductionCost con el costo real del granel (sin envase)
+            // 4. Crear / actualizar historial de ProductionCost con el costo real del granel (sin envase)
             if ($totalBulkCost > 0) {
                 $costPerYieldUnit = $yieldRealQuantity > 0 ? ($totalBulkCost / $yieldRealQuantity) : null;
 
-                ProductionCost::create([
-                    'product_id' => $order->product_id,
-                    'formula_id' => $order->formula_id,
-                    'production_order_id' => $order->id,
-                    'cost' => $totalBulkCost,
-                    'unit_cost' => $costPerYieldUnit,
-                    'calculated_at' => now(),
-                ]);
+                ProductionCost::updateOrCreate(
+                    ['production_order_id' => $order->id],
+                    [
+                        'product_id' => $order->product_id,
+                        'formula_id' => $order->formula_id,
+                        'cost' => $totalBulkCost,
+                        'unit_cost' => $costPerYieldUnit,
+                        'calculated_at' => now(),
+                    ]
+                );
             }
 
             return $order->refresh();

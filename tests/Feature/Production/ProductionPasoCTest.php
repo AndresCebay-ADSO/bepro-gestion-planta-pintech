@@ -912,6 +912,72 @@ test('it creates production_costs record for historical tracking', function () {
     ]);
 });
 
+test('it updates existing production_cost record for the same order instead of failing unique constraint', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-HIST-UPD',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    ProductionCost::create([
+        'product_id' => $order->product_id,
+        'formula_id' => $order->formula_id,
+        'production_order_id' => $order->id,
+        'cost' => 1,
+        'unit_cost' => 1,
+        'calculated_at' => now()->subDay(),
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $variant = ProductVariant::where('product_id', $order->product_id)->first();
+    $pack = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $order->id,
+        'product_variant_id' => $variant->id,
+        'planned_units' => 20,
+    ]);
+
+    $response = $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 20,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [
+            ['id' => $pack->id, 'actual_units' => 20],
+        ],
+    ]);
+
+    $response->assertRedirect();
+    expect(ProductionCost::where('production_order_id', $order->id)->count())->toBe(1);
+
+    $this->assertDatabaseHas('production_costs', [
+        'production_order_id' => $order->id,
+        'cost' => 250,
+        'unit_cost' => 12.5,
+    ]);
+});
+
 test('it keeps production_costs history for multiple orders with the same formula', function () {
     $batch = InventoryBatch::create([
         'raw_material_id' => $this->material->id,
