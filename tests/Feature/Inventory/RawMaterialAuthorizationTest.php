@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\RawMaterial;
+use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,6 +22,11 @@ describe('Raw Material Authorization', function () {
             'code' => 'kg',
             'name' => 'Kilogramo',
             'symbol' => 'kg',
+        ]);
+        $this->category = RawMaterialCategory::create([
+            'code' => 'AUTH-CAT',
+            'name' => 'Categoría Auth',
+            'is_active' => true,
         ]);
     });
 
@@ -145,6 +151,7 @@ describe('Raw Material Authorization', function () {
             $response = $this->actingAs($admin)
                 ->post(route('raw-materials.store'), [
                     'code' => 'MP002',
+                    'category_id' => $this->category->id,
                     'unit_of_measure_id' => $this->unit->id,
                     'current_price' => 150.00,
                     'minimum_stock' => 20,
@@ -163,6 +170,7 @@ describe('Raw Material Authorization', function () {
             $response = $this->actingAs($user)
                 ->post(route('raw-materials.store'), [
                     'code' => 'MP003',
+                    'category_id' => $this->category->id,
                     'unit_of_measure_id' => $this->unit->id,
                     'current_price' => 150.00,
                 ]);

@@ -206,8 +206,7 @@ export function RawMaterialForm({ form, categories, units, onSubmit, submitLabel
                     {/* Precios */}
                     <div className="grid min-w-0 gap-2">
                         <Label htmlFor="current_price">
-                            Precio de compra actual{' '}
-                            <span className="text-destructive">*</span>
+                            Precio de compra actual (opcional)
                         </Label>
                         <Input
                             id="current_price"
@@ -236,6 +235,9 @@ export function RawMaterialForm({ form, categories, units, onSubmit, submitLabel
                             </p>
                         )}
                         <InputError message={form.errors.current_price} />
+                        <p className="min-w-0 text-xs break-all text-muted-foreground">
+                            Si lo dejas vacío, se inicializa en 0 hasta registrar lotes.
+                        </p>
                     </div>
 
                     <div className="grid min-w-0 gap-2">

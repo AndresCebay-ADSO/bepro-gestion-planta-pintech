@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\RawMaterial;
+use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,12 +22,18 @@ describe('Raw Material Store Validation', function (): void {
             'name' => 'Kilogramo',
             'symbol' => 'kg',
         ]);
+        $this->category = RawMaterialCategory::create([
+            'code' => 'TEST-CAT',
+            'name' => 'Categoría Test',
+            'is_active' => true,
+        ]);
 
         $this->admin = User::factory()->create();
         $this->admin->assignRole('admin');
 
         $this->validData = [
             'code' => 'MP001',
+            'category_id' => $this->category->id,
             'unit_of_measure_id' => $this->unit->id,
             'current_price' => 100.00,
             'previous_price' => null,
@@ -68,7 +75,7 @@ describe('Raw Material Store Validation', function (): void {
         $response->assertSessionHasErrors('unit_of_measure_id');
     });
 
-    it('requires current_price to be positive', function (): void {
+    it('validates current_price to be positive when provided', function (): void {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
                 ...$this->validData,
@@ -78,7 +85,7 @@ describe('Raw Material Store Validation', function (): void {
         $response->assertSessionHasErrors('current_price');
     });
 
-    it('requires current_price to be numeric', function (): void {
+    it('validates current_price to be numeric when provided', function (): void {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
                 ...$this->validData,
@@ -117,6 +124,21 @@ describe('Raw Material Store Validation', function (): void {
         ]);
     });
 
+    it('defaults current_price to zero when omitted', function (): void {
+        $response = $this->actingAs($this->admin)
+            ->post(route('raw-materials.store'), [
+                ...$this->validData,
+                'code' => 'MP003',
+                'current_price' => null,
+            ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('raw_materials', [
+            'code' => 'MP003',
+            'current_price' => 0,
+        ]);
+    });
+
     it('requires minimum_stock to be non-negative', function (): void {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
@@ -145,5 +167,15 @@ describe('Raw Material Store Validation', function (): void {
             ]);
 
         $response->assertRedirect();
+    });
+
+    it('requires category_id to exist', function (): void {
+        $response = $this->actingAs($this->admin)
+            ->post(route('raw-materials.store'), [
+                ...$this->validData,
+                'category_id' => 9999,
+            ]);
+
+        $response->assertSessionHasErrors('category_id');
     });
 });

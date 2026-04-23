@@ -29,7 +29,7 @@ class UpdateRawMaterialRequest extends FormRequest
             ],
             'category_id' => [
                 'bail',
-                'nullable',
+                'required',
                 'integer',
                 Rule::exists('raw_material_categories', 'id')->whereNull('deleted_at'),
             ],
