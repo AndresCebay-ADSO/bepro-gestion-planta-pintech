@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
+use App\Services\ProductionCostRecalculationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -17,6 +18,10 @@ use Inertia\Response;
 
 class ProductController extends Controller
 {
+    public function __construct(
+        private readonly ProductionCostRecalculationService $productionCostRecalculationService
+    ) {}
+
     public function index(Request $request): Response
     {
         $this->authorize('viewAny', Product::class);
@@ -151,15 +156,44 @@ class ProductController extends Controller
         $this->authorize('update', $product);
 
         $validated = $request->validated();
+        $priceWasManuallyChanged = array_key_exists('current_price', $validated)
+            && (string) ($product->current_price ?? '') !== (string) ($validated['current_price'] ?? '');
 
-        if (
-            array_key_exists('current_price', $validated)
-            && (string) ($product->current_price ?? '') !== (string) $validated['current_price']
-        ) {
+        if ($priceWasManuallyChanged) {
             $this->authorize('create', PriceList::class);
         }
 
         $product->update($validated);
+
+        if (
+            ($product->wasChanged('profit_margin') || $product->wasChanged('price_threshold') || $product->wasChanged('current_cost'))
+            && ! $priceWasManuallyChanged
+        ) {
+            $costRecord = $this->productionCostRecalculationService->recalculateForProduct(
+                (int) $product->id,
+                forcePriceRefresh: true
+            );
+
+            if ($costRecord === null) {
+                $cost = (float) ($product->current_cost ?? 0);
+                $margin = (float) ($product->profit_margin ?? 0);
+                $newPrice = $cost * (1 + ($margin / 100));
+
+                $product->updateQuietly(['current_price' => $newPrice]);
+
+                foreach ($product->variants()->with('packageRawMaterial')->get() as $variant) {
+                    $packageCost = (float) ($variant->packageRawMaterial?->current_price ?? 0);
+                    $presentation = (float) ($variant->presentation_value ?? 1);
+                    $newVariantCost = ($cost * $presentation) + $packageCost;
+                    $newVariantPrice = $newVariantCost * (1 + ($margin / 100));
+
+                    $variant->updateQuietly([
+                        'current_cost' => $newVariantCost,
+                        'current_price' => $newVariantPrice,
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('products.index')->with('success', __('Producto actualizado exitosamente.'));
     }

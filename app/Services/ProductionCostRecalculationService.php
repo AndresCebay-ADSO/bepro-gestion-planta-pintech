@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class ProductionCostRecalculationService
 {
-    public function recalculateForProduct(int $productId): ?ProductionCost
+    public function recalculateForProduct(int $productId, bool $forcePriceRefresh = false): ?ProductionCost
     {
         $activeFormula = Formula::query()
             ->where('product_id', $productId)
@@ -25,7 +25,7 @@ class ProductionCostRecalculationService
             return null;
         }
 
-        return DB::transaction(function () use ($activeFormula, $productId): ProductionCost {
+        return DB::transaction(function () use ($activeFormula, $productId, $forcePriceRefresh): ProductionCost {
             $calculatedCost = (float) $activeFormula->details
                 ->sum(fn ($detail) => (float) $detail->quantity * (float) $detail->rawMaterial->current_price);
 
@@ -52,7 +52,8 @@ class ProductionCostRecalculationService
                 $productUpdates = ['current_cost' => $calculatedCost];
 
                 $priceThreshold = (float) ($product->price_threshold ?? 0);
-                $shouldUpdatePrice = $product->current_price === null
+                $shouldUpdatePrice = $forcePriceRefresh
+                    || $product->current_price === null
                     || ($variationPercentage !== null && abs($variationPercentage) >= $priceThreshold);
 
                 if ($shouldUpdatePrice && $product->profit_margin !== null) {
@@ -84,7 +85,8 @@ class ProductionCostRecalculationService
                 $autoUpdateVariantPrice,
                 $productProfitMargin,
                 $productPriceThreshold,
-                $packageUnitPrices
+                $packageUnitPrices,
+                $forcePriceRefresh
             ): void {
                 $packageUnitCost = $variant->package_raw_material_id !== null
                     ? (float) ($packageUnitPrices->get((int) $variant->package_raw_material_id) ?? 0.0)
@@ -97,7 +99,7 @@ class ProductionCostRecalculationService
 
                 if ($autoUpdateVariantPrice && $productProfitMargin !== null) {
                     $previousVariantCost = $variant->current_cost !== null ? (float) $variant->current_cost : null;
-                    $shouldUpdateVariantPrice = $this->shouldUpdatePriceFromCostChange(
+                    $shouldUpdateVariantPrice = $forcePriceRefresh || $this->shouldUpdatePriceFromCostChange(
                         currentPrice: $variant->current_price !== null ? (float) $variant->current_price : null,
                         previousCost: $previousVariantCost,
                         newCost: $newVariantCost,
