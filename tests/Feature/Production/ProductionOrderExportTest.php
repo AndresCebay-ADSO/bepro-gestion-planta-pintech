@@ -15,6 +15,7 @@ use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 uses(RefreshDatabase::class);
 
@@ -124,8 +125,8 @@ test('exportExcel returns an Excel download for an authenticated user', function
 
     $contentType = $response->headers->get('content-type');
     expect($contentType)->toContain('spreadsheet');
-    
-    if ($response->baseResponse instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse) {
+
+    if ($response->baseResponse instanceof BinaryFileResponse) {
         expect($response->baseResponse->getFile()->getSize())->toBeGreaterThan(0);
     } else {
         expect(strlen($response->getContent()))->toBeGreaterThan(0);
