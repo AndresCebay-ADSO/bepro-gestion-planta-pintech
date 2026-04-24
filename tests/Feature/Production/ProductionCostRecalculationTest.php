@@ -8,6 +8,7 @@ use App\Models\ProductCategory;
 use App\Models\ProductionCost;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
+use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -37,6 +38,11 @@ beforeEach(function () {
     $this->category = ProductCategory::create([
         'name' => 'Pinturas',
     ]);
+    $this->rawMaterialCategory = RawMaterialCategory::create([
+        'code' => 'RM-REC-CAT',
+        'name' => 'Materia Prima Test',
+        'is_active' => true,
+    ]);
 
     $this->product = Product::create([
         'code' => 'P-RECALC-01',
@@ -52,6 +58,7 @@ beforeEach(function () {
 
     $this->rawMaterialOne = RawMaterial::create([
         'code' => 'RM-REC-01',
+        'category_id' => $this->rawMaterialCategory->id,
         'unit_of_measure_id' => $this->unit->id,
         'current_price' => 10,
         'previous_price' => null,
@@ -62,6 +69,7 @@ beforeEach(function () {
 
     $this->rawMaterialTwo = RawMaterial::create([
         'code' => 'RM-REC-02',
+        'category_id' => $this->rawMaterialCategory->id,
         'unit_of_measure_id' => $this->unit->id,
         'current_price' => 5,
         'previous_price' => null,
@@ -72,6 +80,7 @@ beforeEach(function () {
 
     $this->packagingMaterial = RawMaterial::create([
         'code' => 'ENV-REC-01',
+        'category_id' => $this->rawMaterialCategory->id,
         'unit_of_measure_id' => $this->unit->id,
         'current_price' => 8,
         'previous_price' => null,
@@ -166,7 +175,7 @@ test('it recalculates production costs when a raw material price changes', funct
 
     $response = $this->patch(route('raw-materials.update', $this->rawMaterialOne), [
         'code' => $this->rawMaterialOne->code,
-        'category_id' => null,
+        'category_id' => $this->rawMaterialCategory->id,
         'unit_of_measure_id' => $this->unit->id,
         'current_price' => 12,
         'minimum_stock' => 0,
@@ -230,7 +239,7 @@ test('it keeps current price when cost variation is below threshold', function (
 
     $response = $this->patch(route('raw-materials.update', $this->rawMaterialOne), [
         'code' => $this->rawMaterialOne->code,
-        'category_id' => null,
+        'category_id' => $this->rawMaterialCategory->id,
         'unit_of_measure_id' => $this->unit->id,
         'current_price' => 10.1,
         'minimum_stock' => 0,
@@ -284,4 +293,55 @@ test('it includes package cost in variant cost and auto price on recalculation',
     expect($variant)->not->toBeNull();
     expect((float) $variant->current_cost)->toBe(43.0); // 35 bulk + 8 envase
     expect((float) $variant->current_price)->toBe(53.75); // +25%
+});
+
+test('it refreshes product and variant prices when profit margin is updated', function () {
+    $variant = ProductVariant::create([
+        'product_id' => $this->product->id,
+        'sku' => 'P-RECALC-01-1GL-MARGIN-UPD',
+        'unit_of_measure_id' => $this->unit->id,
+        'component_system' => '1K',
+        'presentation_value' => 1,
+        'current_cost' => null,
+        'current_price' => null,
+    ]);
+
+    $this->post(route('formulas.store'), [
+        'product_id' => $this->product->id,
+        'details' => [
+            [
+                'raw_material_id' => $this->rawMaterialOne->id,
+                'quantity' => 2,
+                'unit_of_measure_id' => $this->unit->id,
+            ],
+            [
+                'raw_material_id' => $this->rawMaterialTwo->id,
+                'quantity' => 3,
+                'unit_of_measure_id' => $this->unit->id,
+            ],
+        ],
+    ])->assertRedirect(route('formulas.index'));
+
+    $this->product->refresh();
+    $variant->refresh();
+    expect((float) $this->product->current_cost)->toBe(35.0);
+    expect((float) $this->product->current_price)->toBe(43.75);
+    expect((float) $variant->current_price)->toBe(43.75);
+
+    $this->patch(route('products.update', $this->product), [
+        'code' => $this->product->code,
+        'name' => $this->product->name,
+        'category_id' => $this->product->category_id,
+        'unit_of_measure_id' => $this->product->unit_of_measure_id,
+        'profit_margin' => 40,
+        'price_threshold' => $this->product->price_threshold,
+        'is_active' => true,
+    ])->assertRedirect(route('products.index'));
+
+    $this->product->refresh();
+    $variant->refresh();
+    expect((float) $this->product->current_cost)->toBe(35.0);
+    expect((float) $this->product->current_price)->toBe(49.0);
+    expect((float) $variant->current_cost)->toBe(35.0);
+    expect((float) $variant->current_price)->toBe(49.0);
 });
