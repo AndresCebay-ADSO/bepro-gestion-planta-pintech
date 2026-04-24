@@ -323,10 +323,9 @@ class RawMaterialSeeder extends Seeder
             );
         }
 
-
-        $this->command->info('Created/Updated ' . RawMaterial::count() . ' raw materials:');
-        $this->command->info('  - Químicos: ' . RawMaterial::where('category_id', $catQuimicos?->id)->count());
-        $this->command->info('  - Envases Metálicos: ' . RawMaterial::where('category_id', $catEnvMetal?->id)->count());
-        $this->command->info('  - Envases Plásticos: ' . RawMaterial::where('category_id', $catEnvPlast?->id)->count());
+        $this->command->info('Created/Updated '.RawMaterial::count().' raw materials:');
+        $this->command->info('  - Químicos: '.RawMaterial::where('category_id', $catQuimicos?->id)->count());
+        $this->command->info('  - Envases Metálicos: '.RawMaterial::where('category_id', $catEnvMetal?->id)->count());
+        $this->command->info('  - Envases Plásticos: '.RawMaterial::where('category_id', $catEnvPlast?->id)->count());
     }
 }

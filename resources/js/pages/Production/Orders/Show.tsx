@@ -4,11 +4,15 @@ import {
     Beaker,
     Clock,
     CheckCircle2,
+    FileSpreadsheet,
+    FileText,
     User as UserIcon,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
     complete as productionOrderComplete,
+    exportExcel as productionOrderExportExcel,
+    exportPdf as productionOrderExportPdf,
     previewCosts as productionOrderPreviewCosts,
 } from '@/actions/App/Http/Controllers/ProductionOrderController';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -220,12 +224,30 @@ export default function ProductionOrderShow({ order }: Props) {
                             {order.product?.name} • Planta Cali • <FormattedNumber value={order.quantity} maxDecimals={2} /> gal Proyectados
                         </p>
                     </div>
-                    {isCompleted && (
-                        <div className="flex items-center gap-2 text-green-600 font-medium">
-                            <CheckCircle2 className="w-5 h-5" />
-                            Finalizada el {format(new Date(order.completion_date), 'dd/MM/yyyy HH:mm')}
-                        </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                        {isCompleted && (
+                            <div className="flex items-center gap-2 text-green-600 font-medium mr-4">
+                                <CheckCircle2 className="w-5 h-5" />
+                                Finalizada el {format(new Date(order.completion_date), 'dd/MM/yyyy HH:mm')}
+                            </div>
+                        )}
+                        <a
+                            href={productionOrderExportPdf.url(order.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground transition-colors"
+                        >
+                            <FileText className="w-4 h-4" />
+                            PDF
+                        </a>
+                        <a
+                            href={productionOrderExportExcel.url(order.id)}
+                            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground transition-colors"
+                        >
+                            <FileSpreadsheet className="w-4 h-4" />
+                            Excel
+                        </a>
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
