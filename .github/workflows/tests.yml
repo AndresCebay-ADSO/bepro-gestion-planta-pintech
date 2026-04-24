@@ -41,7 +41,7 @@ jobs:
         run: npm i
 
       - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader --ignore-platform-req=php+
 
       - name: Copy Environment File
         run: cp .env.example .env
