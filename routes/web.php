@@ -81,7 +81,12 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
     Route::resource('formulas', FormulaController::class)->except(['edit', 'update']);
     Route::post('formulas/{formula}/activate', [FormulaController::class, 'activate'])->name('formulas.activate');
 
-    // Órdenes de Producción
+    // Órdenes de Producción — exportaciones (antes del resource para Wayfinder)
+    Route::get('production-orders/{production_order}/export-pdf', [ProductionOrderController::class, 'exportPdf'])
+        ->name('production-orders.export-pdf');
+    Route::get('production-orders/{production_order}/export-excel', [ProductionOrderController::class, 'exportExcel'])
+        ->name('production-orders.export-excel');
+
     Route::resource('production-orders', ProductionOrderController::class);
     Route::post('production-orders/{order}/complete', [ProductionOrderController::class, 'complete'])->name('production-orders.complete');
     Route::post('production-orders/{order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])->name('production-orders.preview-costs');

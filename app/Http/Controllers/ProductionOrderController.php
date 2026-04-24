@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ProductionOrderStatus;
 use App\Enums\WarehouseType;
+use App\Exports\ProductionOrderExport;
 use App\Http\Requests\Production\CompleteProductionOrderRequest;
 use App\Http\Requests\Production\PreviewProductionOrderCostsRequest;
 use App\Http\Requests\Production\StoreProductionOrderRequest;
@@ -16,11 +17,14 @@ use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderPackagingPlan;
 use App\Models\Warehouse;
 use App\Services\ProductionOrderService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProductionOrderController extends Controller
 {
@@ -33,6 +37,8 @@ class ProductionOrderController extends Controller
      */
     public function index(): Response
     {
+        $this->authorize('viewAny', ProductionOrder::class);
+
         $orders = ProductionOrder::query()
             ->with(['product', 'formula', 'warehouse'])
             ->latest()
@@ -48,6 +54,201 @@ class ProductionOrderController extends Controller
      * Detalle de una orden para consulta o cierre.
      */
     public function show(ProductionOrder $productionOrder): Response
+    {
+        $this->authorize('view', $productionOrder);
+
+        return Inertia::render('Production/Orders/Show', [
+            'order' => $this->buildOrderData($productionOrder),
+        ]);
+    }
+
+    /**
+     * Exportar orden de producción como PDF (ficha industrial FPR-01).
+     */
+    public function exportPdf(ProductionOrder $productionOrder): \Illuminate\Http\Response
+    {
+        $this->authorize('view', $productionOrder);
+
+        $orderData = $this->buildOrderData($productionOrder);
+        $filename = "orden-produccion-{$orderData['order_number']}.pdf";
+
+        $logoPath = public_path('images/logo-pintech.png');
+        $logoBase64 = file_exists($logoPath)
+            ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath))
+            : null;
+
+        /** @var \Barryvdh\DomPDF\PDF $pdf */
+        $pdf = Pdf::loadView('pdf.production-order', [
+            'order' => $orderData,
+            'logoBase64' => $logoBase64,
+            'generatedAt' => now()->format('d/m/Y H:i'),
+        ]);
+
+        $pdf->setPaper('letter');
+
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Exportar orden de producción como Excel.
+     *
+     * NOTE: Diseñado para una orden individual. Si se requiere exportación
+     * masiva desde el índice en el futuro, se deberá refactorizar esta clase.
+     */
+    public function exportExcel(ProductionOrder $productionOrder): BinaryFileResponse
+    {
+        $this->authorize('view', $productionOrder);
+
+        $orderData = $this->buildOrderData($productionOrder);
+        $filename = "orden-produccion-{$orderData['order_number']}.xlsx";
+
+        return Excel::download(new ProductionOrderExport($orderData), $filename);
+    }
+
+    /**
+     * Mostrar formulario para crear nueva orden.
+     */
+    public function create(): Response
+    {
+        $this->authorize('create', ProductionOrder::class);
+
+        $products = Product::query()
+            ->with([
+                'formulas' => fn ($q) => $q->where('is_active', true),
+                'variants' => fn ($q) => $q->where('is_active', true),
+            ])
+            ->where('is_active', true)
+            ->get()
+            ->map(fn ($p) => [
+                'id' => $p->id,
+                'code' => $p->code,
+                'name' => $p->name,
+                'formulas' => $p->formulas->map(fn ($f) => [
+                    'id' => $f->id,
+                    'version' => $f->version,
+                    'is_active' => $f->is_active,
+                ]),
+                'variants' => $p->variants->map(fn ($v) => [
+                    'id' => $v->id,
+                    'sku' => $v->sku,
+                    'presentation_label' => $v->presentation_label,
+                    'presentation_value' => $v->presentation_value,
+                ]),
+            ]);
+
+        $warehouses = Warehouse::query()
+            ->where('is_active', true)
+            ->where('type', WarehouseType::Factory->value)
+            ->get(['id', 'name']);
+
+        return Inertia::render('Production/Orders/Create', [
+            'products' => $products,
+            'warehouses' => $warehouses,
+        ]);
+    }
+
+    /**
+     * Crear una nueva orden (Planificación).
+     */
+    public function store(StoreProductionOrderRequest $request): RedirectResponse
+    {
+        $this->authorize('create', ProductionOrder::class);
+
+        $validated = $request->validated();
+
+        $formula = Formula::findOrFail($validated['formula_id']);
+        $formula->load('details');
+
+        // Validar stock antes de crear
+        $this->productionOrderService->validateStockForOrder($formula, (float) $validated['quantity'], (int) $validated['warehouse_id']);
+
+        $order = DB::transaction(function () use ($validated, $formula) {
+            $order = ProductionOrder::create([
+                'product_id' => $validated['product_id'],
+                'formula_id' => $validated['formula_id'],
+                'warehouse_id' => $validated['warehouse_id'],
+                'quantity' => $validated['quantity'],
+                'planned_date' => $validated['planned_date'],
+                'notes' => $validated['notes'] ?? null,
+                'order_number' => $this->generateOrderNumber(),
+                'status' => ProductionOrderStatus::Pending,
+                'created_by' => auth()->id(),
+            ]);
+
+            // Crear detalles de ingredientes basados en la fórmula (sin reservar lote en planificación)
+            foreach ($formula->details as $detail) {
+                $plannedQuantity = $detail->quantity * (float) $validated['quantity'];
+                $estimatedUnitCost = $this->productionOrderService->estimateMaterialUnitCostForPlanning(
+                    rawMaterialId: (int) $detail->raw_material_id,
+                    warehouseId: (int) $validated['warehouse_id'],
+                    requiredQuantity: (float) $plannedQuantity
+                );
+
+                ProductionOrderDetail::create([
+                    'production_order_id' => $order->id,
+                    'raw_material_id' => $detail->raw_material_id,
+                    'batch_id' => null,
+                    'planned_quantity' => $plannedQuantity,
+                    'unit_cost' => $estimatedUnitCost,
+                    'total_cost' => $plannedQuantity * $estimatedUnitCost,
+                ]);
+            }
+
+            // Crear plan de envasado si se proporcionó
+            if (! empty($validated['packaging'])) {
+                foreach ($validated['packaging'] as $packData) {
+                    ProductionOrderPackagingPlan::create([
+                        'production_order_id' => $order->id,
+                        'product_variant_id' => $packData['product_variant_id'],
+                        'planned_units' => $packData['planned_units'],
+                    ]);
+                }
+            }
+
+            return $order;
+        });
+
+        return redirect()->route('production-orders.show', $order)
+            ->with('success', 'Orden de producción creada con éxito.');
+    }
+
+    /**
+     * Finalizar orden con datos reales de planta.
+     */
+    public function complete(CompleteProductionOrderRequest $request, ProductionOrder $order): RedirectResponse
+    {
+        $this->authorize('update', $order);
+
+        $validated = $request->validated();
+
+        $this->productionOrderService->completeOrder($order, $validated);
+
+        return redirect()->route('production-orders.show', $order)
+            ->with('success', 'Producción finalizada e inventario actualizado.');
+    }
+
+    /**
+     * Vista previa de costos estimados durante el cierre de la orden.
+     */
+    public function previewCosts(PreviewProductionOrderCostsRequest $request, ProductionOrder $order): JsonResponse
+    {
+        $validated = $request->validated();
+
+        return response()->json(
+            $this->productionOrderService->previewOrderCosts(
+                order: $order,
+                ingredients: $validated['ingredients'],
+                packaging: $validated['packaging'] ?? []
+            )
+        );
+    }
+
+    /**
+     * Carga relaciones y transforma la orden en un array estructurado.
+     *
+     * @return array<string, mixed>
+     */
+    private function buildOrderData(ProductionOrder $productionOrder): array
     {
         $productionOrder->load([
             'product',
@@ -79,7 +280,7 @@ class ProductionOrderController extends Controller
         $totalBulkCost = (float) $productionOrder->details
             ->sum(fn (ProductionOrderDetail $detail) => (float) $detail->total_cost);
 
-        $orderData = [
+        return [
             'id' => $productionOrder->id,
             'order_number' => $productionOrder->order_number,
             'status' => $productionOrder->status->value,
@@ -150,142 +351,6 @@ class ProductionOrderController extends Controller
                 ];
             })->values(),
         ];
-
-        return Inertia::render('Production/Orders/Show', [
-            'order' => $orderData,
-        ]);
-    }
-
-    /**
-     * Mostrar formulario para crear nueva orden.
-     */
-    public function create(): Response
-    {
-        $products = Product::query()
-            ->with([
-                'formulas' => fn ($q) => $q->where('is_active', true),
-                'variants' => fn ($q) => $q->where('is_active', true),
-            ])
-            ->where('is_active', true)
-            ->get()
-            ->map(fn ($p) => [
-                'id' => $p->id,
-                'code' => $p->code,
-                'name' => $p->name,
-                'formulas' => $p->formulas->map(fn ($f) => [
-                    'id' => $f->id,
-                    'version' => $f->version,
-                    'is_active' => $f->is_active,
-                ]),
-                'variants' => $p->variants->map(fn ($v) => [
-                    'id' => $v->id,
-                    'sku' => $v->sku,
-                    'presentation_label' => $v->presentation_label,
-                    'presentation_value' => $v->presentation_value,
-                ]),
-            ]);
-
-        $warehouses = Warehouse::query()
-            ->where('is_active', true)
-            ->where('type', WarehouseType::Factory->value)
-            ->get(['id', 'name']);
-
-        return Inertia::render('Production/Orders/Create', [
-            'products' => $products,
-            'warehouses' => $warehouses,
-        ]);
-    }
-
-    /**
-     * Crear una nueva orden (Planificación).
-     */
-    public function store(StoreProductionOrderRequest $request): RedirectResponse
-    {
-        $validated = $request->validated();
-
-        $formula = Formula::findOrFail($validated['formula_id']);
-        $formula->load('details');
-
-        // Validar stock antes de crear
-        $this->productionOrderService->validateStockForOrder($formula, (float) $validated['quantity'], (int) $validated['warehouse_id']);
-
-        $order = DB::transaction(function () use ($validated, $formula) {
-            $order = ProductionOrder::create([
-                'product_id' => $validated['product_id'],
-                'formula_id' => $validated['formula_id'],
-                'warehouse_id' => $validated['warehouse_id'],
-                'quantity' => $validated['quantity'],
-                'planned_date' => $validated['planned_date'],
-                'notes' => $validated['notes'] ?? null,
-                'order_number' => $this->generateOrderNumber(),
-                'status' => ProductionOrderStatus::Pending,
-                'created_by' => auth()->id(),
-            ]);
-
-            // Crear detalles de ingredientes basados en la fórmula (sin reservar lote en planificación)
-            foreach ($formula->details as $detail) {
-                $plannedQuantity = $detail->quantity * (float) $validated['quantity'];
-                $estimatedUnitCost = $this->productionOrderService->estimateMaterialUnitCostForPlanning(
-                    rawMaterialId: (int) $detail->raw_material_id,
-                    warehouseId: (int) $validated['warehouse_id'],
-                    requiredQuantity: (float) $plannedQuantity
-                );
-
-                ProductionOrderDetail::create([
-                    'production_order_id' => $order->id,
-                    'raw_material_id' => $detail->raw_material_id,
-                    'batch_id' => null,
-                    'planned_quantity' => $plannedQuantity,
-                    'unit_cost' => $estimatedUnitCost,
-                    'total_cost' => $plannedQuantity * $estimatedUnitCost,
-                ]);
-            }
-
-            // Crear plan de envasado si se proporcionó
-            if (! empty($validated['packaging'])) {
-                foreach ($validated['packaging'] as $packData) {
-                    ProductionOrderPackagingPlan::create([
-                        'production_order_id' => $order->id,
-                        'product_variant_id' => $packData['product_variant_id'],
-                        'planned_units' => $packData['planned_units'],
-                    ]);
-                }
-            }
-
-            return $order;
-        });
-
-        return redirect()->route('production-orders.show', $order)
-            ->with('success', 'Orden de producción creada con éxito.');
-    }
-
-    /**
-     * Finalizar orden con datos reales de planta.
-     */
-    public function complete(CompleteProductionOrderRequest $request, ProductionOrder $order): RedirectResponse
-    {
-        $validated = $request->validated();
-
-        $this->productionOrderService->completeOrder($order, $validated);
-
-        return redirect()->route('production-orders.show', $order)
-            ->with('success', 'Producción finalizada e inventario actualizado.');
-    }
-
-    /**
-     * Vista previa de costos estimados durante el cierre de la orden.
-     */
-    public function previewCosts(PreviewProductionOrderCostsRequest $request, ProductionOrder $order): JsonResponse
-    {
-        $validated = $request->validated();
-
-        return response()->json(
-            $this->productionOrderService->previewOrderCosts(
-                order: $order,
-                ingredients: $validated['ingredients'],
-                packaging: $validated['packaging'] ?? []
-            )
-        );
     }
 
     /**
