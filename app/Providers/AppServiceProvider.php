@@ -5,11 +5,13 @@ namespace App\Providers;
 use App\Listeners\LogFailedLoginAttempt;
 use App\Models\Formula;
 use App\Models\PriceList;
+use App\Models\ProductionOrder;
 use App\Models\RawMaterial;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Policies\FormulaPolicy;
 use App\Policies\PriceListPolicy;
+use App\Policies\ProductionOrderPolicy;
 use App\Policies\RawMaterialPolicy;
 use App\Policies\WarehousePolicy;
 use App\Services\FormulaService;
@@ -66,6 +68,7 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Formula::class, FormulaPolicy::class);
         Gate::policy(PriceList::class, PriceListPolicy::class);
+        Gate::policy(ProductionOrder::class, ProductionOrderPolicy::class);
         Gate::policy(RawMaterial::class, RawMaterialPolicy::class);
         Gate::policy(Warehouse::class, WarehousePolicy::class);
 

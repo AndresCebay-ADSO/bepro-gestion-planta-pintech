@@ -232,6 +232,8 @@ class ProductionOrderController extends Controller
      */
     public function previewCosts(PreviewProductionOrderCostsRequest $request, ProductionOrder $order): JsonResponse
     {
+        $this->authorize('view', $order);
+
         $validated = $request->validated();
 
         return response()->json(
@@ -327,6 +329,7 @@ class ProductionOrderController extends Controller
                 'raw_material' => $detail->rawMaterial ? [
                     'id' => $detail->rawMaterial->id,
                     'code' => $detail->rawMaterial->code,
+                    'name' => $detail->rawMaterial->name,
                 ] : null,
             ])->values(),
             'packaging_plans' => $productionOrder->packagingPlans->map(function (ProductionOrderPackagingPlan $plan) use ($finishedCostByVariant, $packageUnitCostEstimates) {

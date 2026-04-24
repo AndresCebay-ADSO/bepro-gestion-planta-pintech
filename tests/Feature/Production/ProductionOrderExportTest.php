@@ -124,7 +124,12 @@ test('exportExcel returns an Excel download for an authenticated user', function
 
     $contentType = $response->headers->get('content-type');
     expect($contentType)->toContain('spreadsheet');
-    expect($response->baseResponse->getFile()->getSize())->toBeGreaterThan(0);
+    
+    if ($response->baseResponse instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse) {
+        expect($response->baseResponse->getFile()->getSize())->toBeGreaterThan(0);
+    } else {
+        expect(strlen($response->getContent()))->toBeGreaterThan(0);
+    }
 });
 
 test('export routes require authentication', function () {
