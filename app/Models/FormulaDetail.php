@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
  * @property int $raw_material_id
  * @property float $quantity
  * @property int $unit_of_measure_id
+ * @property int $step_order
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Formula $formula
@@ -26,6 +27,7 @@ use Illuminate\Support\Carbon;
     'raw_material_id',
     'quantity',
     'unit_of_measure_id',
+    'step_order',
 ])]
 class FormulaDetail extends Model
 {
@@ -36,6 +38,7 @@ class FormulaDetail extends Model
     {
         return [
             'quantity' => 'decimal:4',
+            'step_order' => 'integer',
         ];
     }
 
