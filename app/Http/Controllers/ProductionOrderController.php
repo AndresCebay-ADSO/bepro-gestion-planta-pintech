@@ -388,7 +388,7 @@ class ProductionOrderController extends Controller
     }
 
     /**
-     * Filas para PDF/Excel: pasos ordenados con total acumulado (órdenes abiertas)
+     * Filas para PDF/Excel: pasos ordenados por step_order (órdenes no completadas)
      * o consolidado por materia prima (orden completada).
      *
      * @return array{mode: string, rows: list<array<string, mixed>>}
@@ -421,20 +421,16 @@ class ProductionOrderController extends Controller
             ];
         }
 
-        $running = [];
         $rows = [];
 
         foreach ($details as $detail) {
-            $materialId = (int) $detail->raw_material_id;
             $qty = (float) $detail->planned_quantity;
-            $running[$materialId] = round(($running[$materialId] ?? 0.0) + $qty, 4);
 
             $rows[] = [
                 'step_order' => (int) $detail->step_order,
                 'raw_material_code' => $detail->rawMaterial->code ?? 'N/A',
                 'raw_material_name' => $detail->rawMaterial->name ?? 'N/A',
                 'planned_quantity' => $qty,
-                'running_total_planned' => $running[$materialId],
                 'actual_quantity' => $detail->actual_quantity !== null ? (float) $detail->actual_quantity : null,
             ];
         }

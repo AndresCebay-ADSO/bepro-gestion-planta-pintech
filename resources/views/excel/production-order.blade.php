@@ -130,7 +130,7 @@
             <th colspan="3" style="border: 1px solid #000000;">COD</th>
             <th colspan="3" style="border: 1px solid #000000;">CANT. KG</th>
             <th colspan="6" style="border: 1px solid #000000;">DESCRIPCIÓN</th>
-            <th colspan="3" style="border: 1px solid #000000;">TOTAL ACUM. / ESTADO</th>
+            <th colspan="3" style="border: 1px solid #000000;">{{ $pdfMode === 'consolidated' ? 'AGREGADO' : 'ESTADO' }}</th>
         </tr>
         @if($pdfMode === 'consolidated')
             @foreach($pdfRows as $row)
@@ -165,9 +165,7 @@
                         {{ number_format($row['planned_quantity'], 2) }}
                     </td>
                     <td colspan="6" style="border: 1px solid #000000;">{{ $row['raw_material_name'] }}</td>
-                    <td colspan="3" style="border: 1px solid #000000; text-align: center;">
-                        {{ number_format($row['running_total_planned'], 2) }} kg
-                    </td>
+                    <td colspan="3" style="border: 1px solid #000000; text-align: center;">AGREGADO</td>
                 </tr>
             @endforeach
             <tr style="font-weight: bold;">
