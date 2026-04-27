@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\WarehouseType;
 use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Database\Seeder;
@@ -14,25 +15,31 @@ class WarehouseUserSeeder extends Seeder
     public function run(): void
     {
         $warehouses = Warehouse::query()->orderBy('name')->get();
-        $neiva = $warehouses->firstWhere('name', 'Planta Neiva');
+
+        // Debe coincidir con WarehouseSeeder (antes se usaba "Planta Neiva", que no existe).
+        $defaultPivotWarehouse = $warehouses->firstWhere('name', 'Bodega Neiva')
+            ?? $warehouses->first();
+
+        $factoryWarehouse = Warehouse::query()
+            ->where('type', WarehouseType::Factory->value)
+            ->first();
 
         $adminUsers = User::query()->role('admin')->get();
         foreach ($adminUsers as $admin) {
             $sync = [];
             foreach ($warehouses as $warehouse) {
                 $sync[$warehouse->id] = [
-                    'is_default' => $neiva ? $warehouse->id === $neiva->id : false,
+                    'is_default' => $defaultPivotWarehouse && $warehouse->id === $defaultPivotWarehouse->id,
                 ];
             }
 
             $admin->warehouses()->syncWithoutDetaching($sync);
         }
 
-        $productionUsers = User::query()->role('produccion')->get();
-        foreach ($productionUsers as $productionUser) {
-            if ($neiva) {
+        foreach (User::query()->role('produccion')->get() as $productionUser) {
+            if ($factoryWarehouse !== null) {
                 $productionUser->warehouses()->sync([
-                    $neiva->id => ['is_default' => true],
+                    $factoryWarehouse->id => ['is_default' => true],
                 ]);
             }
         }
@@ -42,7 +49,7 @@ class WarehouseUserSeeder extends Seeder
             $sync = [];
             foreach ($warehouses as $warehouse) {
                 $sync[$warehouse->id] = [
-                    'is_default' => $neiva ? $warehouse->id === $neiva->id : false,
+                    'is_default' => $defaultPivotWarehouse && $warehouse->id === $defaultPivotWarehouse->id,
                 ];
             }
 
