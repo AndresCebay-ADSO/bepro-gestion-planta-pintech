@@ -57,16 +57,16 @@ test('admin cannot delete a user that has records via created_by in system table
     // Equivalente a tener production_orders.created_by = $target->id pero sin
     // necesitar toda la cadena de FKs de product/formula/warehouse en el test DB.
     DB::table('activity_logs')->insert([
-        'log_name'     => 'produccion',
-        'description'  => 'orden creada',
+        'log_name' => 'produccion',
+        'description' => 'orden creada',
         'subject_type' => 'App\\Models\\ProductionOrder',
-        'subject_id'   => 999,
-        'causer_type'  => 'App\\Models\\User',
-        'causer_id'    => $target->id,
-        'event'        => 'created',
-        'properties'   => '{}',
-        'created_at'   => now(),
-        'updated_at'   => now(),
+        'subject_id' => 999,
+        'causer_type' => 'App\\Models\\User',
+        'causer_id' => $target->id,
+        'event' => 'created',
+        'properties' => '{}',
+        'created_at' => now(),
+        'updated_at' => now(),
     ]);
 
     $this->actingAs($admin)
