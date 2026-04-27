@@ -241,9 +241,9 @@ return;
                 </div>
             </div>
 
-            <Sheet open={drawerState.isOpen} onOpenChange={(open) => setDrawerState(prev => ({ ...prev, isOpen: open }))}>
-                <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
-                    <SheetHeader className="mb-6">
+            <Sheet open={drawerState.isOpen} onOpenChange={(open) => setDrawerState(prev => ({ ...prev, isOpen: open }))} modal={false}>
+                <SheetContent side="right" className="w-full sm:max-w-2xl flex flex-col">
+                    <SheetHeader className="mb-6 flex-shrink-0">
                         <SheetTitle className="flex items-center gap-2">
                             {drawerState.mode === 'entry' ? (
                                 <>
@@ -268,52 +268,54 @@ return;
                         </SheetDescription>
                     </SheetHeader>
 
-                    {isLoadingFormData ? (
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-                                <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-                                <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-                                <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-                                <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                    <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+                        {isLoadingFormData ? (
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                                </div>
+                                <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-24 w-full" /></div>
                             </div>
-                            <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-24 w-full" /></div>
-                        </div>
-                    ) : fetchError ? (
-                        <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-center mt-6">
-                            <p className="text-sm font-medium text-destructive">{fetchError}</p>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="mt-4"
-                                onClick={() => openDrawer(drawerState.mode)}
-                            >
-                                Reintentar
-                            </Button>
-                        </div>
-                    ) : (rawMaterials && batches && warehouses && productionOrders) ? (
-                        drawerState.mode === 'entry' ? (
-                            <EntryMovementForm
-                                rawMaterials={rawMaterials}
-                                batches={batches}
-                                warehouses={warehouses}
-                                productionOrders={productionOrders}
-                                onSuccess={onSuccessForm}
-                            />
+                        ) : fetchError ? (
+                            <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-center mt-6">
+                                <p className="text-sm font-medium text-destructive">{fetchError}</p>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-4"
+                                    onClick={() => openDrawer(drawerState.mode)}
+                                >
+                                    Reintentar
+                                </Button>
+                            </div>
+                        ) : (rawMaterials && batches && warehouses && productionOrders) ? (
+                            drawerState.mode === 'entry' ? (
+                                <EntryMovementForm
+                                    rawMaterials={rawMaterials}
+                                    batches={batches}
+                                    warehouses={warehouses}
+                                    productionOrders={productionOrders}
+                                    onSuccess={onSuccessForm}
+                                />
+                            ) : (
+                                <ExitMovementForm
+                                    rawMaterials={rawMaterials}
+                                    batches={batches}
+                                    warehouses={warehouses}
+                                    productionOrders={productionOrders}
+                                    onSuccess={onSuccessForm}
+                                />
+                            )
                         ) : (
-                            <ExitMovementForm
-                                rawMaterials={rawMaterials}
-                                batches={batches}
-                                warehouses={warehouses}
-                                productionOrders={productionOrders}
-                                onSuccess={onSuccessForm}
-                            />
-                        )
-                    ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                            No se pudieron cargar los datos del formulario.
-                        </div>
-                    )}
+                            <div className="text-center py-8 text-muted-foreground">
+                                No se pudieron cargar los datos del formulario.
+                            </div>
+                        )}
+                    </div>
                 </SheetContent>
             </Sheet>
         </>

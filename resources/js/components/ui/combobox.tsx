@@ -38,6 +38,7 @@ export function Combobox({
     disabled = false
 }: ComboboxProps) {
     const [query, setQuery] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
 
     const selectedOption = options.find((o) => String(o.id) === String(value));
 
@@ -52,18 +53,19 @@ export function Combobox({
 
     return (
         <div className={cn("w-full", className)}>
-            <HeadlessCombobox 
-                value={value ?? undefined} 
+            <HeadlessCombobox
+                value={value ?? undefined}
                 onChange={(v) => {
                     if (v !== null && v !== undefined) {
                         onChange(v as string | number);
-                        setQuery(''); // Clear query on selection
+                        setQuery('');
+                        setIsOpen(false);
                     }
-                }} 
+                }}
                 disabled={disabled}
             >
                 <div className="relative">
-                    <ComboboxButton as="div" className={cn(
+                    <ComboboxButton className={cn(
                         "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-hidden transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50",
                         disabled && "cursor-not-allowed opacity-50"
                     )}>
@@ -85,9 +87,9 @@ export function Combobox({
                             leaveFrom="opacity-100"
                             leaveTo="opacity-0"
                         >
-                            <ComboboxOptions 
+                            <ComboboxOptions
                                 anchor="bottom start"
-                                className="z-100 mt-1 max-h-60 w-(--input-width) overflow-auto rounded-md border border-border bg-popover py-1 text-base shadow-lg outline-hidden sm:text-sm [--anchor-gap:4px]"
+                                className="z-[100] mt-1 max-h-48 min-w-64 overflow-auto rounded-md border border-border bg-popover py-1 text-base shadow-lg outline-hidden sm:text-sm [--anchor-gap:4px]"
                             >
                                 {filteredOptions.length === 0 ? (
                                     <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground">
@@ -97,10 +99,10 @@ export function Combobox({
                                     filteredOptions.map((option) => (
                                         <ComboboxOption
                                             key={option.id}
-                                            className={({ focus }) =>
+                                            className={({ active }) =>
                                                 cn(
-                                                    "relative cursor-default select-none py-1.5 pl-3 pr-9 transition-colors outline-none",
-                                                    focus ? "bg-accent text-accent-foreground" : "text-foreground"
+                                                    "relative cursor-pointer select-none py-1.5 pl-3 pr-9 transition-colors outline-none",
+                                                    active ? "bg-accent text-accent-foreground" : "text-foreground"
                                                 )
                                             }
                                             value={option.id}

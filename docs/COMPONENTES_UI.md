@@ -168,6 +168,21 @@ const options = rawMaterials.map(rm => ({
 | **Overflow** | Puede cortarse | Seguro (usa Portals) |
 | **Uso común** | Tipos, Estados, Bodegas | Productos, Materias Primas, Clientes |
 
+### Uso dentro de Sheets (Modales)
+
+Cuando uses el Combobox dentro de un `Sheet` de Radix UI, **debes agregar `modal={false}`** al Sheet para que el dropdown (que se renderiza via Portal fuera del Sheet) reciba eventos de mouse correctamente:
+
+```tsx
+<Sheet modal={false}>
+    <SheetContent>
+        {/* El Combobox funcionará correctamente aquí */}
+        <Combobox ... />
+    </SheetContent>
+</Sheet>
+```
+
+> ⚠️ **Nota:** Esto permite interacciones fuera del Sheet. Si necesitas bloquear el fondo, considera usar el `Select` estándar de Radix UI en su lugar.
+
 ---
 
 ## Guías de implementación
