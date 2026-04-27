@@ -1,7 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { usePage } from '@inertiajs/react';
 import { AlertCircle, CheckCircle2, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export function FlashMessages() {
     const { flash } = usePage().props as any;
