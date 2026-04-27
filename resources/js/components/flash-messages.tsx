@@ -5,20 +5,18 @@ import { useEffect, useState } from 'react';
 
 export function FlashMessages() {
     const { flash } = usePage().props as any;
-    const [isVisible, setIsVisible] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [dismissedMessage, setDismissedMessage] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (flash.message) {
-            setMessage({ type: 'success', text: flash.message });
-            setIsVisible(true);
-        } else if (flash.error) {
-            setMessage({ type: 'error', text: flash.error });
-            setIsVisible(true);
-        }
-    }, [flash]);
+    // Derivamos el mensaje directamente del prop (Single Source of Truth)
+    const currentFlash = flash.message || flash.error || null;
+    const message = flash.message
+        ? { type: 'success' as const, text: flash.message }
+        : flash.error
+          ? { type: 'error' as const, text: flash.error }
+          : null;
 
-    if (!isVisible || !message) return null;
+    // Si el mensaje actual es el mismo que el usuario ya cerró, no mostramos nada
+    if (!message || dismissedMessage === currentFlash) return null;
 
     return (
         <div className="mb-4">
@@ -31,7 +29,7 @@ export function FlashMessages() {
                 <AlertTitle>{message.type === 'error' ? 'Error' : 'Éxito'}</AlertTitle>
                 <AlertDescription>{message.text}</AlertDescription>
                 <button
-                    onClick={() => setIsVisible(false)}
+                    onClick={() => setDismissedMessage(currentFlash)}
                     className="absolute right-2 top-2 rounded-md p-1 opacity-70 transition-opacity hover:opacity-100"
                 >
                     <X className="h-4 w-4" />
