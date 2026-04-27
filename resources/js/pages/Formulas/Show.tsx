@@ -8,6 +8,7 @@ import { show as productsShow } from '@/routes/products';
 
 type DetailItem = {
     id: number;
+    step_order: number;
     quantity: string;
     raw_material?: { id: number; code: string } | null;
     unit_of_measure?: { name: string; symbol: string } | null;
@@ -175,6 +176,9 @@ export default function FormulasShow({ formula, can }: Props) {
                     <table className="w-full text-sm">
                         <thead className="border-b border-border bg-muted/40">
                             <tr>
+                                <th className="w-14 p-4 text-center font-medium">
+                                    Paso
+                                </th>
                                 <th className="p-4 text-left font-medium">
                                     Código MP
                                 </th>
@@ -192,6 +196,9 @@ export default function FormulasShow({ formula, can }: Props) {
                                     key={detail.id}
                                     className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30"
                                 >
+                                    <td className="p-4 text-center tabular-nums text-muted-foreground">
+                                        {detail.step_order ?? '—'}
+                                    </td>
                                     <td className="p-4 font-mono font-medium text-foreground">
                                         {detail.raw_material?.code ?? '-'}
                                     </td>
@@ -208,7 +215,7 @@ export default function FormulasShow({ formula, can }: Props) {
                             {formula.details.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={3}
+                                        colSpan={4}
                                         className="p-8 text-center text-sm text-muted-foreground"
                                     >
                                         Esta fórmula no tiene ingredientes
