@@ -234,17 +234,26 @@ export default function FormulasCreate({
                                             </Label>
                                         )}
                                         <Input
-                                            type="number"
-                                            step="0.0001"
-                                            min="0.0001"
+                                            type="text"
+                                            inputMode="decimal"
+                                            pattern="^\d*\.?\d{0,4}$"
                                             value={detail.quantity}
-                                            onChange={(e) =>
-                                                updateDetail(
-                                                    index,
-                                                    'quantity',
-                                                    e.target.value,
-                                                )
-                                            }
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                // Permitir vacío o número decimal con máx 4 decimales
+                                                if (
+                                                    val === '' ||
+                                                    /^\d*\.?\d{0,4}$/.test(
+                                                        val,
+                                                    )
+                                                ) {
+                                                    updateDetail(
+                                                        index,
+                                                        'quantity',
+                                                        val,
+                                                    );
+                                                }
+                                            }}
                                             placeholder="Ej: 1.5"
                                         />
                                         {(errors as Record<string, string>)[
