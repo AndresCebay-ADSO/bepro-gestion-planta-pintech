@@ -115,6 +115,11 @@
         </tr>
 
         <!-- SECCIÓN 3: MATERIA PRIMA Y CANTIDADES -->
+        @php
+            $pdfMaterials = $order['pdf_materials'] ?? ['mode' => 'steps', 'rows' => []];
+            $pdfMode = $pdfMaterials['mode'] ?? 'steps';
+            $pdfRows = $pdfMaterials['rows'] ?? [];
+        @endphp
         <tr>
             <th colspan="15"
                 style="background-color: #4a7c59; color: #ffffff; font-weight: bold; text-align: center; border: 1px solid #000000;">
@@ -125,28 +130,55 @@
             <th colspan="3" style="border: 1px solid #000000;">COD</th>
             <th colspan="3" style="border: 1px solid #000000;">CANT. KG</th>
             <th colspan="6" style="border: 1px solid #000000;">DESCRIPCIÓN</th>
-            <th colspan="3" style="border: 1px solid #000000;">ESTADO</th>
+            <th colspan="3" style="border: 1px solid #000000;">TOTAL ACUM. / ESTADO</th>
         </tr>
-        @foreach($order['details'] as $detail)
-            <tr>
+        @if($pdfMode === 'consolidated')
+            @foreach($pdfRows as $row)
+                <tr>
+                    <td colspan="3" style="border: 1px solid #000000; text-align: center;">
+                        {{ $row['raw_material_code'] }}
+                    </td>
+                    <td colspan="3" style="border: 1px solid #000000; text-align: center;">
+                        {{ number_format($row['planned_quantity'], 2) }}
+                    </td>
+                    <td colspan="6" style="border: 1px solid #000000;">{{ $row['raw_material_name'] }}</td>
+                    <td colspan="3" style="border: 1px solid #000000; text-align: center;">
+                        {{ isset($row['actual_quantity']) ? number_format($row['actual_quantity'], 2).' kg' : 'AGREGADO' }}
+                    </td>
+                </tr>
+            @endforeach
+            <tr style="font-weight: bold;">
+                <td colspan="3" style="border: 1px solid #000000; text-align: right; background-color: #f2f2f2;">TOTAL</td>
                 <td colspan="3" style="border: 1px solid #000000; text-align: center;">
-                    {{ $detail['raw_material']['code'] ?? 'N/A' }}
+                    {{ number_format(collect($pdfRows)->sum('planned_quantity'), 2) }}
+                    kg
                 </td>
-                <td colspan="3" style="border: 1px solid #000000; text-align: center;">
-                    {{ number_format($detail['actual_quantity'] ?? $detail['planned_quantity'], 2) }}
-                </td>
-                <td colspan="6" style="border: 1px solid #000000;">{{ $detail['raw_material']['name'] ?? 'N/A' }}</td>
-                <td colspan="3" style="border: 1px solid #000000; text-align: center;">AGREGADO</td>
+                <td colspan="9" style="border: 1px solid #000000; background-color: #f2f2f2;"></td>
             </tr>
-        @endforeach
-        <tr style="font-weight: bold;">
-            <td colspan="3" style="border: 1px solid #000000; text-align: right; background-color: #f2f2f2;">TOTAL</td>
-            <td colspan="3" style="border: 1px solid #000000; text-align: center;">
-                {{ number_format(collect($order['details'])->sum('actual_quantity') ?: collect($order['details'])->sum('planned_quantity'), 2) }}
-                kg
-            </td>
-            <td colspan="9" style="border: 1px solid #000000; background-color: #f2f2f2;"></td>
-        </tr>
+        @else
+            @foreach($pdfRows as $row)
+                <tr>
+                    <td colspan="3" style="border: 1px solid #000000; text-align: center;">
+                        {{ $row['step_order'] }}. {{ $row['raw_material_code'] }}
+                    </td>
+                    <td colspan="3" style="border: 1px solid #000000; text-align: center;">
+                        {{ number_format($row['planned_quantity'], 2) }}
+                    </td>
+                    <td colspan="6" style="border: 1px solid #000000;">{{ $row['raw_material_name'] }}</td>
+                    <td colspan="3" style="border: 1px solid #000000; text-align: center;">
+                        {{ number_format($row['running_total_planned'], 2) }} kg
+                    </td>
+                </tr>
+            @endforeach
+            <tr style="font-weight: bold;">
+                <td colspan="3" style="border: 1px solid #000000; text-align: right; background-color: #f2f2f2;">TOTAL</td>
+                <td colspan="3" style="border: 1px solid #000000; text-align: center;">
+                    {{ number_format(collect($pdfRows)->sum('planned_quantity'), 2) }}
+                    kg
+                </td>
+                <td colspan="9" style="border: 1px solid #000000; background-color: #f2f2f2;"></td>
+            </tr>
+        @endif
 
         <tr>
             <td colspan="15" style="height: 10px;"></td>

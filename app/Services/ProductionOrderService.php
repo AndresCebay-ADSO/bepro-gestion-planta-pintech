@@ -267,15 +267,19 @@ class ProductionOrderService
     {
         $warehouse = Warehouse::findOrFail($warehouseId);
 
+        $requirements = [];
         foreach ($formula->details as $detail) {
-            $required = $detail->quantity * $quantity;
+            $materialId = (int) $detail->raw_material_id;
+            $requirements[$materialId] = ($requirements[$materialId] ?? 0.0) + ((float) $detail->quantity * $quantity);
+        }
 
-            $available = InventoryBatch::where('raw_material_id', $detail->raw_material_id)
+        foreach ($requirements as $materialId => $required) {
+            $available = (float) InventoryBatch::where('raw_material_id', $materialId)
                 ->where('warehouse_id', $warehouseId)
                 ->sum('remaining_quantity');
 
             if ($available < $required) {
-                $materialCode = $detail->rawMaterial->code;
+                $materialCode = RawMaterial::whereKey($materialId)->value('code') ?? (string) $materialId;
                 throw ValidationException::withMessages([
                     'product_id' => "Stock insuficiente de '{$materialCode}' en {$warehouse->name}. Requerido: {$required}, Disponible: {$available}.",
                 ]);

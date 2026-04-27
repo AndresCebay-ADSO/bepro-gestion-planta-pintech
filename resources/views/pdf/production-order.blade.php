@@ -262,46 +262,94 @@
     </table>
 
     {{-- ⑤ MATERIA PRIMA Y CANTIDADES --}}
+    @php
+        $pdfMaterials = $order['pdf_materials'] ?? ['mode' => 'steps', 'rows' => []];
+        $pdfMode = $pdfMaterials['mode'] ?? 'steps';
+        $pdfRows = $pdfMaterials['rows'] ?? [];
+    @endphp
     <table style="margin-top: 8px;">
         <tr>
-            <td colspan="5" class="section-header">MATERIA PRIMA Y CANTIDADES</td>
+            <td colspan="{{ $pdfMode === 'consolidated' ? 5 : 7 }}" class="section-header">MATERIA PRIMA Y CANTIDADES</td>
         </tr>
-        <tr>
-            <th class="label text-center" style="width: 15%;">COD</th>
-            <th class="label text-center" style="width: 18%;">CANTIDAD EN KG</th>
-            <th class="label text-center" style="width: 18%;">CANTIDAD EN GRAMOS</th>
-            <th class="label text-center" style="width: 34%;">OBSERVACIONES</th>
-            <th class="label text-center" style="width: 15%;">AGREGADO</th>
-        </tr>
-        @php
-            $totalKg = 0;
-            $totalGrams = 0;
-        @endphp
-        @foreach($order['details'] as $detail)
-            @php
-                $qty = $detail['planned_quantity'];
-                $kg = $qty >= 1 ? $qty : 0;
-                $grams = $qty < 1 ? $qty * 1000 : 0;
-                $totalKg += $kg;
-                $totalGrams += $grams;
-            @endphp
+        @if($pdfMode === 'consolidated')
             <tr>
-                <td class="text-center">{{ $detail['raw_material']['code'] ?? 'N/A' }}</td>
-                <td class="text-center">{{ $kg > 0 ? number_format($kg, 2) : '' }}</td>
-                <td class="text-center">{{ $grams > 0 ? number_format($grams, 0) : '' }}</td>
-                <td></td>
-                <td class="text-center">
-                    {{ $detail['actual_quantity'] !== null ? number_format($detail['actual_quantity'], 2) : '' }}
-                </td>
+                <th class="label text-center" style="width: 15%;">COD</th>
+                <th class="label text-center" style="width: 18%;">CANTIDAD EN KG</th>
+                <th class="label text-center" style="width: 18%;">CANTIDAD EN GRAMOS</th>
+                <th class="label text-center" style="width: 34%;">OBSERVACIONES</th>
+                <th class="label text-center" style="width: 15%;">AGREGADO</th>
             </tr>
-        @endforeach
-        <tr class="text-bold">
-            <td class="text-center label">TOTAL</td>
-            <td class="text-center">{{ number_format($totalKg, 2) }}</td>
-            <td class="text-center">{{ $totalGrams > 0 ? number_format($totalGrams, 0) : '0' }}</td>
-            <td></td>
-            <td></td>
-        </tr>
+            @php
+                $totalKg = 0;
+                $totalGrams = 0;
+            @endphp
+            @foreach($pdfRows as $row)
+                @php
+                    $qty = $row['planned_quantity'];
+                    $kg = $qty >= 1 ? $qty : 0;
+                    $grams = $qty < 1 ? $qty * 1000 : 0;
+                    $totalKg += $kg;
+                    $totalGrams += $grams;
+                @endphp
+                <tr>
+                    <td class="text-center">{{ $row['raw_material_code'] }}</td>
+                    <td class="text-center">{{ $kg > 0 ? number_format($kg, 2) : '' }}</td>
+                    <td class="text-center">{{ $grams > 0 ? number_format($grams, 0) : '' }}</td>
+                    <td></td>
+                    <td class="text-center">
+                        {{ isset($row['actual_quantity']) ? number_format($row['actual_quantity'], 2) : '' }}
+                    </td>
+                </tr>
+            @endforeach
+            <tr class="text-bold">
+                <td class="text-center label">TOTAL</td>
+                <td class="text-center">{{ number_format($totalKg, 2) }}</td>
+                <td class="text-center">{{ $totalGrams > 0 ? number_format($totalGrams, 0) : '0' }}</td>
+                <td></td>
+                <td></td>
+            </tr>
+        @else
+            <tr>
+                <th class="label text-center" style="width: 6%;">#</th>
+                <th class="label text-center" style="width: 13%;">COD</th>
+                <th class="label text-center" style="width: 14%;">CANTIDAD EN KG</th>
+                <th class="label text-center" style="width: 14%;">CANTIDAD EN GRAMOS</th>
+                <th class="label text-center" style="width: 14%;">TOTAL ACUM. (KG)</th>
+                <th class="label text-center" style="width: 24%;">OBSERVACIONES</th>
+                <th class="label text-center" style="width: 15%;">AGREGADO</th>
+            </tr>
+            @php
+                $totalKg = 0;
+                $totalGrams = 0;
+            @endphp
+            @foreach($pdfRows as $row)
+                @php
+                    $qty = $row['planned_quantity'];
+                    $kg = $qty >= 1 ? $qty : 0;
+                    $grams = $qty < 1 ? $qty * 1000 : 0;
+                    $totalKg += $kg;
+                    $totalGrams += $grams;
+                    $run = $row['running_total_planned'];
+                @endphp
+                <tr>
+                    <td class="text-center">{{ $row['step_order'] }}</td>
+                    <td class="text-center">{{ $row['raw_material_code'] }}</td>
+                    <td class="text-center">{{ $kg > 0 ? number_format($kg, 2) : '' }}</td>
+                    <td class="text-center">{{ $grams > 0 ? number_format($grams, 0) : '' }}</td>
+                    <td class="text-center">{{ number_format($run, 2) }}</td>
+                    <td></td>
+                    <td class="text-center">
+                        {{ isset($row['actual_quantity']) ? number_format($row['actual_quantity'], 2) : '' }}
+                    </td>
+                </tr>
+            @endforeach
+            <tr class="text-bold">
+                <td class="text-center label" colspan="2">TOTAL</td>
+                <td class="text-center">{{ number_format($totalKg, 2) }}</td>
+                <td class="text-center">{{ $totalGrams > 0 ? number_format($totalGrams, 0) : '0' }}</td>
+                <td colspan="3"></td>
+            </tr>
+        @endif
     </table>
 
     {{-- ⑥ NOMBRE RESPONSABLE --}}
