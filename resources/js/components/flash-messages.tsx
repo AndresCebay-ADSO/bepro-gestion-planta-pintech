@@ -1,7 +1,7 @@
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { usePage } from '@inertiajs/react';
 import { AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { useState } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export function FlashMessages() {
     const { flash } = usePage().props as any;
@@ -16,7 +16,9 @@ export function FlashMessages() {
           : null;
 
     // Si el mensaje actual es el mismo que el usuario ya cerró, no mostramos nada
-    if (!message || dismissedMessage === currentFlash) return null;
+    if (!message || dismissedMessage === currentFlash) {
+return null;
+}
 
     return (
         <div className="mb-4">

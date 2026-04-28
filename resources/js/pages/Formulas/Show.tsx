@@ -1,5 +1,10 @@
 import { Head, Link, router } from '@inertiajs/react';
 
+import {
+    activate as formulasActivate,
+    destroy as formulasDestroy,
+    edit as formulasEdit,
+} from '@/actions/App/Http/Controllers/FormulaController';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,6 +34,7 @@ type Props = {
         } | null;
         details: DetailItem[];
         created_by?: { name: string } | null;
+        has_production_orders: boolean;
     };
     can: { update: boolean; delete: boolean };
 };
@@ -43,11 +49,11 @@ export default function FormulasShow({ formula, can }: Props) {
             return;
         }
 
-        router.delete(`/formulas/${formula.id}`);
+        router.delete(formulasDestroy(formula.id));
     };
 
     const handleActivate = () => {
-        router.post(`/formulas/${formula.id}/activate`);
+        router.post(formulasActivate(formula.id));
     };
 
     return (
@@ -111,6 +117,13 @@ export default function FormulasShow({ formula, can }: Props) {
                         <Button variant="outline" asChild>
                             <Link href={formulasIndex().url}>Volver</Link>
                         </Button>
+                        {can.update && !formula.has_production_orders && (
+                            <Button variant="outline" asChild>
+                                <Link href={formulasEdit(formula.id).url}>
+                                    Editar fórmula
+                                </Link>
+                            </Button>
+                        )}
                         {!formula.is_active && can.update && (
                             <Button variant="outline" onClick={handleActivate}>
                                 Activar esta versión
@@ -154,6 +167,13 @@ export default function FormulasShow({ formula, can }: Props) {
                         </p>
                     </div>
                 </div>
+
+                {formula.has_production_orders && (
+                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900">
+                        Esta fórmula ya fue usada en órdenes de producción. Por
+                        seguridad del histórico, ya no se puede editar.
+                    </div>
+                )}
 
                 {/* Ingredientes */}
                 <div className="rounded-lg border border-border bg-card">

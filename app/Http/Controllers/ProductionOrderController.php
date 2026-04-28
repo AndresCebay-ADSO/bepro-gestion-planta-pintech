@@ -14,7 +14,9 @@ use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
+use App\Models\ProductionOrderLineAdjustment;
 use App\Models\ProductionOrderPackagingPlan;
+use App\Models\RawMaterial;
 use App\Models\Warehouse;
 use App\Services\ProductionOrderService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -57,8 +59,18 @@ class ProductionOrderController extends Controller
     {
         $this->authorize('view', $productionOrder);
 
+        $rawMaterials = RawMaterial::query()
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get(['id', 'code'])
+            ->map(fn (RawMaterial $rm) => [
+                'id' => $rm->id,
+                'label' => $rm->code,
+            ]);
+
         return Inertia::render('Production/Orders/Show', [
             'order' => $this->buildOrderData($productionOrder),
+            'rawMaterials' => $rawMaterials,
         ]);
     }
 
@@ -260,6 +272,7 @@ class ProductionOrderController extends Controller
             'packagingPlans.productVariant.packageRawMaterial',
             'finishedInventoryMovements',
             'warehouse',
+            'lineAdjustments.rawMaterial',
         ]);
 
         $finishedCostByVariant = $productionOrder->finishedInventoryMovements
@@ -358,6 +371,18 @@ class ProductionOrderController extends Controller
                     ] : null,
                 ];
             })->values(),
+            'line_adjustments' => $productionOrder->lineAdjustments->map(fn (ProductionOrderLineAdjustment $adj) => [
+                'id' => $adj->id,
+                'raw_material_id' => (int) $adj->raw_material_id,
+                'quantity' => (float) $adj->quantity,
+                'reason' => $adj->reason,
+                'notes' => $adj->notes,
+                'created_at' => $adj->created_at?->toISOString(),
+                'raw_material' => $adj->rawMaterial ? [
+                    'id' => $adj->rawMaterial->id,
+                    'code' => $adj->rawMaterial->code,
+                ] : null,
+            ])->values(),
         ];
     }
 

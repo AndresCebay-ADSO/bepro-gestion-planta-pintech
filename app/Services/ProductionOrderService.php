@@ -148,6 +148,26 @@ class ProductionOrderService
             ];
         }
 
+        // Incluir costo estimado de ajustes de línea en el granel
+        $order->loadMissing('lineAdjustments');
+        $adjustmentRequirements = [];
+        foreach ($order->lineAdjustments as $adjustment) {
+            $materialId = (int) $adjustment->raw_material_id;
+            $adjustmentRequirements[$materialId] = ($adjustmentRequirements[$materialId] ?? 0.0) + (float) $adjustment->quantity;
+        }
+
+        if ($adjustmentRequirements !== []) {
+            $adjustmentUnitCosts = $this->estimateMaterialUnitCostsForPlanning(
+                warehouseId: (int) $order->warehouse_id,
+                requirementsByMaterialId: $adjustmentRequirements
+            );
+
+            foreach ($adjustmentRequirements as $materialId => $quantity) {
+                $unitCost = (float) ($adjustmentUnitCosts[$materialId] ?? 0.0);
+                $totalBulkCost += $quantity * $unitCost;
+            }
+        }
+
         $distributedBulkCosts = $this->calculateDistributedBulkCosts(
             order: $order,
             packagingData: $packaging,
@@ -331,6 +351,21 @@ class ProductionOrderService
                 ]);
 
                 $totalBulkCost += $consumedCost;
+            }
+
+            // 2.1. Procesar consumo de ajustes de línea (MPs fuera de fórmula)
+            $order->loadMissing('lineAdjustments');
+            foreach ($order->lineAdjustments as $adjustment) {
+                $adjustmentCost = $this->consumeRawMaterialFifoByMaterialId(
+                    order: $order,
+                    rawMaterialId: (int) $adjustment->raw_material_id,
+                    requiredQuantity: (float) $adjustment->quantity,
+                    userId: $userId,
+                    errorKey: 'line_adjustments',
+                    contextLabel: 'ajuste de línea'
+                );
+
+                $totalBulkCost += $adjustmentCost;
             }
 
             // 2.5. Distribuir costo de granel según rendimiento por presentación

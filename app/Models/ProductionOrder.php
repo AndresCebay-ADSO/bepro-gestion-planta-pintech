@@ -49,6 +49,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read Collection|InventoryMovement[] $inventoryMovements
  * @property-read Collection|FinishedInventoryMovement[] $finishedInventoryMovements
  * @property-read Collection|ProductionOrderPackagingPlan[] $packagingPlans
+ * @property-read Collection|ProductionOrderLineAdjustment[] $lineAdjustments
  */
 #[Fillable([
     'order_number',
@@ -163,5 +164,10 @@ class ProductionOrder extends Model
     public function packagingPlans(): HasMany
     {
         return $this->hasMany(ProductionOrderPackagingPlan::class, 'production_order_id');
+    }
+
+    public function lineAdjustments(): HasMany
+    {
+        return $this->hasMany(ProductionOrderLineAdjustment::class, 'production_order_id');
     }
 }
