@@ -18,7 +18,8 @@ return new class extends Migration
         }
 
         Schema::table('formula_details', function (Blueprint $table) {
-            // Quitar unique legacy si existe (nombre por convención Laravel)
+            // Quitar unique legacy si existe (nombre por convención Laravel).
+            // Decisión de negocio: la misma MP puede repetirse en pasos distintos de la fórmula.
             $indexes = Schema::getIndexes('formula_details');
             foreach ($indexes as $index) {
                 $cols = $index['columns'] ?? [];

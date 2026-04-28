@@ -143,7 +143,7 @@
                     </td>
                     <td colspan="6" style="border: 1px solid #000000;">{{ $row['raw_material_name'] }}</td>
                     <td colspan="3" style="border: 1px solid #000000; text-align: center;">
-                        {{ isset($row['actual_quantity']) ? number_format($row['actual_quantity'], 2).' kg' : 'AGREGADO' }}
+                        {{ isset($row['actual_quantity']) ? number_format($row['actual_quantity'], 2).' kg' : '' }}
                     </td>
                 </tr>
             @endforeach

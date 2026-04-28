@@ -395,7 +395,7 @@ class ProductionOrderController extends Controller
      */
     private function buildPdfMaterialsPayload(ProductionOrder $order): array
     {
-        $details = $order->details;
+        $details = $order->details->sortBy('step_order')->values();
 
         if ($order->status === ProductionOrderStatus::Completed) {
             $rows = $details->groupBy('raw_material_id')

@@ -38,7 +38,7 @@ class WarehouseUserSeeder extends Seeder
 
         foreach (User::query()->role('produccion')->get() as $productionUser) {
             if ($factoryWarehouse !== null) {
-                $productionUser->warehouses()->sync([
+                $productionUser->warehouses()->syncWithoutDetaching([
                     $factoryWarehouse->id => ['is_default' => true],
                 ]);
             }
