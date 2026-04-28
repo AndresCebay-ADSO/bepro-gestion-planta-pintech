@@ -5,14 +5,81 @@ use App\Models\ProductionOrder;
 use App\Models\ProductionOrderLineAdjustment;
 use App\Models\RawMaterial;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
+
+uses(RefreshDatabase::class);
+
+use App\Enums\WarehouseType;
+use App\Models\Formula;
+use App\Models\Product;
+use App\Models\ProductCategory;
+use App\Models\RawMaterialCategory;
+use App\Models\UnitOfMeasure;
+use App\Models\Warehouse;
 
 beforeEach(function () {
-    $this->user = User::factory()->create(['role' => 'admin']);
+    if (Role::count() === 0) {
+        Role::create(['name' => 'admin']);
+        Role::create(['name' => 'produccion']);
+        Role::create(['name' => 'comercial']);
+    }
+
+    $this->user = User::factory()->create([
+        'email_verified_at' => now(),
+    ]);
+    $this->user->assignRole('admin');
+    
     $this->actingAs($this->user);
-    $this->rawMaterial = RawMaterial::factory()->create(['is_active' => true]);
-    $this->productionOrder = ProductionOrder::factory()->create([
+
+    $unit = UnitOfMeasure::create(['code' => 'kg', 'name' => 'Kilo', 'symbol' => 'kg']);
+    $rmCat = RawMaterialCategory::create(['code' => 'RMC', 'name' => 'RM Cat', 'is_active' => true]);
+    $pCat = ProductCategory::create(['name' => 'Prod Cat']);
+    
+    $product = Product::create([
+        'code' => 'P-01',
+        'name' => 'Pintura',
+        'category_id' => $pCat->id,
+        'unit_of_measure_id' => $unit->id,
+        'profit_margin' => 25,
+        'price_threshold' => 3,
+        'is_active' => true,
+    ]);
+
+    $formula = Formula::create([
+        'product_id' => $product->id,
+        'version' => 1,
+        'is_active' => true,
+        'notes' => 'Original',
+        'created_by' => $this->user->id,
+    ]);
+
+    $warehouse = Warehouse::create([
+        'name' => 'Planta',
+        'city' => 'Cali',
+        'type' => WarehouseType::Factory,
+        'is_active' => true,
+    ]);
+
+    $this->rawMaterial = RawMaterial::create([
+        'code' => 'RM-01',
+        'category_id' => $rmCat->id,
+        'unit_of_measure_id' => $unit->id,
+        'current_price' => 10,
+        'minimum_stock' => 0,
+        'alert_days_before_expiry' => 30,
+        'is_active' => true,
+    ]);
+
+    $this->productionOrder = ProductionOrder::create([
+        'order_number' => 'OP-001',
+        'product_id' => $product->id,
+        'formula_id' => $formula->id,
+        'warehouse_id' => $warehouse->id,
+        'quantity' => 10,
+        'planned_date' => now()->toDateString(),
         'status' => ProductionOrderStatus::Pending,
-        'warehouse_id' => 1, // Adjust as per your factory setup
+        'created_by' => $this->user->id,
     ]);
 });
 
