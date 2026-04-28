@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
 import {
     Beaker,
@@ -6,6 +6,8 @@ import {
     CheckCircle2,
     FileSpreadsheet,
     FileText,
+    Plus,
+    Trash2,
     User as UserIcon,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -15,6 +17,11 @@ import {
     exportPdf as productionOrderExportPdf,
     previewCosts as productionOrderPreviewCosts,
 } from '@/actions/App/Http/Controllers/ProductionOrderController';
+import {
+    store as storeLineAdjustment,
+    destroy as destroyLineAdjustment,
+} from '@/actions/App/Http/Controllers/Production/LineAdjustmentController';
+import { Combobox } from '@/components/ui/combobox';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,7 +32,8 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 
 type Props = {
-    order: any; // Simplified for initial build, will refine types as we go
+    order: any;
+    rawMaterials: Array<{ id: number; label: string }>;
 };
 
 type PreviewCostData = {
@@ -36,7 +44,7 @@ type PreviewCostData = {
     total_equivalent: number;
 };
 
-export default function ProductionOrderShow({ order }: Props) {
+export default function ProductionOrderShow({ order, rawMaterials }: Props) {
     const isCompleted = order.status === 'completed';
     const hasOrderData = order.details.length > 0 || order.packaging_plans.length > 0;
 
@@ -67,6 +75,7 @@ export default function ProductionOrderShow({ order }: Props) {
             actual_units: pack.actual_units ?? pack.planned_units,
             cost_price: pack.cost_price ?? null,
         })),
+        line_adjustments: [], // Placeholder for validation errors
     });
 
     const [previewCosts, setPreviewCosts] = useState<PreviewCostData | null>(null);
@@ -200,7 +209,7 @@ export default function ProductionOrderShow({ order }: Props) {
 
         if (confirm('¿Estás seguro de finalizar esta orden? Esta acción actualizará los inventarios de forma irreversible.')) {
             post(productionOrderComplete({ order: order.id }).url, {
-                preserveState: false,
+                preserveScroll: true,
             });
         }
     };
@@ -372,6 +381,70 @@ export default function ProductionOrderShow({ order }: Props) {
                                     </div>
                                 </div>
 
+                                {/* Ajustes de Línea */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <Label className="flex items-center gap-1.5">
+                                            <Plus className="w-4 h-4 text-orange-500" />
+                                            Ajustes de Línea
+                                        </Label>
+                                        {!isCompleted && (
+                                            <span className="text-xs text-muted-foreground">MPs adicionales fuera de fórmula</span>
+                                        )}
+                                    </div>
+
+                                    {/* Tabla de ajustes existentes */}
+                                    {(order.line_adjustments?.length > 0) && (
+                                        <div className="rounded-md border overflow-hidden">
+                                            <table className="w-full text-sm">
+                                                <thead className="bg-orange-50 dark:bg-orange-950/20 border-b">
+                                                    <tr>
+                                                        <th className="p-3 text-left">Materia Prima</th>
+                                                        <th className="p-3 text-right">Cantidad</th>
+                                                        <th className="p-3 text-left">Motivo</th>
+                                                        {!isCompleted && <th className="p-3 w-12"></th>}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {order.line_adjustments.map((adj: any) => (
+                                                        <tr key={adj.id} className="border-b last:border-0">
+                                                            <td className="p-3 font-medium">{adj.raw_material?.code ?? 'N/A'}</td>
+                                                            <td className="p-3 text-right"><FormattedNumber value={adj.quantity} maxDecimals={4} /></td>
+                                                            <td className="p-3 text-muted-foreground">{adj.reason}</td>
+                                                            {!isCompleted && (
+                                                                <td className="p-3">
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-7 w-7 text-destructive hover:text-destructive"
+                                                                        onClick={() => {
+                                                                            if (confirm('¿Eliminar este ajuste de línea?')) {
+                                                                                router.delete(destroyLineAdjustment({ order: order.id, adjustment: adj.id }).url, {
+                                                                                    preserveScroll: true,
+                                                                                });
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </Button>
+                                                                </td>
+                                                            )}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+
+                                    {/* Formulario inline para agregar ajuste */}
+                                    {!isCompleted && <LineAdjustmentForm orderId={order.id} rawMaterials={rawMaterials} />}
+
+                                    {isCompleted && (order.line_adjustments?.length ?? 0) === 0 && (
+                                        <p className="text-xs text-muted-foreground">No se registraron ajustes de línea en esta orden.</p>
+                                    )}
+                                </div>
+
                                 <div className="space-y-4">
                                     <Label>Empaque Final (Unidades)</Label>
                                     <div className="rounded-md border overflow-hidden">
@@ -507,6 +580,9 @@ export default function ProductionOrderShow({ order }: Props) {
                                         {errors.ingredients && (
                                             <p className="text-xs text-destructive">{errors.ingredients}</p>
                                         )}
+                                        {errors.line_adjustments && (
+                                            <p className="text-xs text-destructive">{errors.line_adjustments}</p>
+                                        )}
                                     </>
                                 )}
 
@@ -573,5 +649,98 @@ export default function ProductionOrderShow({ order }: Props) {
                 </form>
             </div>
         </>
+    );
+}
+
+function LineAdjustmentForm({ orderId, rawMaterials }: { orderId: number; rawMaterials: Array<{ id: number; label: string }> }) {
+    const [rawMaterialId, setRawMaterialId] = useState<number | null>(null);
+    const [quantity, setQuantity] = useState('');
+    const [reason, setReason] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+    const comboboxOptions = rawMaterials.map((rm) => ({ id: rm.id, label: rm.label }));
+
+    const handleAdd = () => {
+        if (!rawMaterialId || !quantity || !reason.trim()) {
+            const errors: Record<string, string> = {};
+            if (!rawMaterialId) { errors.raw_material_id = 'Seleccione una MP.'; }
+            if (!quantity) { errors.quantity = 'Ingrese cantidad.'; }
+            if (!reason.trim()) { errors.reason = 'Ingrese motivo.'; }
+            setFormErrors(errors);
+            return;
+        }
+
+        setSubmitting(true);
+        setFormErrors({});
+
+        router.post(storeLineAdjustment({ order: orderId }).url, {
+            raw_material_id: rawMaterialId,
+            quantity: Number(quantity),
+            reason: reason.trim(),
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setRawMaterialId(null);
+                setQuantity('');
+                setReason('');
+            },
+            onError: (errors) => {
+                setFormErrors(errors as Record<string, string>);
+            },
+            onFinish: () => setSubmitting(false),
+        });
+    };
+
+    return (
+        <div className="rounded-md border border-dashed border-orange-300 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/10 p-3 space-y-3">
+            <p className="text-xs font-medium text-orange-700 dark:text-orange-400">Agregar ajuste de línea</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="space-y-1">
+                    <Combobox
+                        options={comboboxOptions}
+                        value={rawMaterialId}
+                        onChange={(v) => setRawMaterialId(Number(v))}
+                        placeholder="Materia prima..."
+                        emptyText="Sin resultados"
+                    />
+                    {formErrors.raw_material_id && <p className="text-xs text-destructive">{formErrors.raw_material_id}</p>}
+                </div>
+                <div className="space-y-1">
+                    <Input
+                        type="number"
+                        step="0.0001"
+                        min="0.0001"
+                        placeholder="Cantidad"
+                        className="h-9"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                    />
+                    {formErrors.quantity && <p className="text-xs text-destructive">{formErrors.quantity}</p>}
+                </div>
+                <div className="space-y-1">
+                    <Input
+                        placeholder="Motivo (ej: corrección viscosidad)"
+                        className="h-9"
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        maxLength={500}
+                    />
+                    {formErrors.reason && <p className="text-xs text-destructive">{formErrors.reason}</p>}
+                </div>
+            </div>
+            {formErrors.production_order && <p className="text-xs text-destructive">{formErrors.production_order}</p>}
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-950/30"
+                onClick={handleAdd}
+                disabled={submitting}
+            >
+                <Plus className="w-4 h-4 mr-1" />
+                {submitting ? 'Guardando...' : 'Agregar'}
+            </Button>
+        </div>
     );
 }

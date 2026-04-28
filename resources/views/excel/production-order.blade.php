@@ -182,6 +182,41 @@
             <td colspan="15" style="height: 10px;"></td>
         </tr>
 
+        <!-- SECCIÓN 3.1: AJUSTES DE LÍNEA -->
+        @if(!empty($order['line_adjustments']) && count($order['line_adjustments']) > 0)
+            <tr>
+                <th colspan="15"
+                    style="background-color: #c67b1c; color: #ffffff; font-weight: bold; text-align: center; border: 1px solid #000000;">
+                    AJUSTES DE LÍNEA (MPs ADICIONALES)
+                </th>
+            </tr>
+            <tr style="font-weight: bold; background-color: #fce4d6; text-align: center;">
+                <th colspan="3" style="border: 1px solid #000000;">COD</th>
+                <th colspan="3" style="border: 1px solid #000000;">CANT. KG</th>
+                <th colspan="6" style="border: 1px solid #000000;">MOTIVO / DESCRIPCIÓN</th>
+                <th colspan="3" style="border: 1px solid #000000;">ESTADO</th>
+            </tr>
+            @foreach($order['line_adjustments'] as $adj)
+                <tr>
+                    <td colspan="3" style="border: 1px solid #000000; text-align: center;">
+                        {{ $adj['raw_material']['code'] ?? 'N/A' }}
+                    </td>
+                    <td colspan="3" style="border: 1px solid #000000; text-align: center;">
+                        {{ number_format($adj['quantity'], 4) }}
+                    </td>
+                    <td colspan="6" style="border: 1px solid #000000;">{{ $adj['reason'] }} {{ $adj['notes'] ? '- '.$adj['notes'] : '' }}</td>
+                    <td colspan="3" style="border: 1px solid #000000; text-align: center;">AGREGADO</td>
+                </tr>
+            @endforeach
+            <tr>
+                <td colspan="15" style="height: 10px;"></td>
+            </tr>
+        @endif
+
+        <tr>
+            <td colspan="15" style="height: 10px;"></td>
+        </tr>
+
         <!-- SECCIÓN 4: RESULTADOS DE CALIDAD -->
         <tr>
             <th colspan="15"

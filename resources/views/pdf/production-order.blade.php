@@ -349,6 +349,29 @@
         @endif
     </table>
 
+    {{-- ⑤.1 AJUSTES DE LÍNEA (MPs fuera de fórmula) --}}
+    @if(!empty($order['line_adjustments']) && count($order['line_adjustments']) > 0)
+        <table style="margin-top: 8px;">
+            <tr>
+                <td colspan="4" class="section-header" style="background-color: #c67b1c;">AJUSTES DE LÍNEA (MPs ADICIONALES)</td>
+            </tr>
+            <tr>
+                <th class="label text-center" style="width: 20%;">MATERIA PRIMA</th>
+                <th class="label text-center" style="width: 20%;">CANTIDAD</th>
+                <th class="label text-center" style="width: 40%;">MOTIVO</th>
+                <th class="label text-center" style="width: 20%;">OBSERVACIONES</th>
+            </tr>
+            @foreach($order['line_adjustments'] as $adj)
+                <tr>
+                    <td class="text-center">{{ $adj['raw_material']['code'] ?? 'N/A' }}</td>
+                    <td class="text-center">{{ number_format($adj['quantity'], 4) }}</td>
+                    <td>{{ $adj['reason'] }}</td>
+                    <td>{{ $adj['notes'] ?? '' }}</td>
+                </tr>
+            @endforeach
+        </table>
+    @endif
+
     {{-- ⑥ NOMBRE RESPONSABLE --}}
     <table style="margin-top: 8px;">
         <tr>

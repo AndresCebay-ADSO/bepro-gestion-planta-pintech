@@ -9,6 +9,7 @@ use App\Http\Controllers\Inventory\RawMaterialController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\Production\LineAdjustmentController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProductVariantController;
@@ -78,7 +79,7 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
 
 // ADMIN + PRODUCCIÓN: Gestión de fórmulas y órdenes
 Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
-    Route::resource('formulas', FormulaController::class)->except(['edit', 'update']);
+    Route::resource('formulas', FormulaController::class);
     Route::post('formulas/{formula}/activate', [FormulaController::class, 'activate'])->name('formulas.activate');
 
     // Órdenes de Producción — exportaciones (antes del resource para Wayfinder)
@@ -90,6 +91,10 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
     Route::resource('production-orders', ProductionOrderController::class);
     Route::post('production-orders/{order}/complete', [ProductionOrderController::class, 'complete'])->name('production-orders.complete');
     Route::post('production-orders/{order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])->name('production-orders.preview-costs');
+
+    // Ajustes de línea
+    Route::post('production-orders/{order}/line-adjustments', [LineAdjustmentController::class, 'store'])->name('production-orders.line-adjustments.store');
+    Route::delete('production-orders/{order}/line-adjustments/{adjustment}', [LineAdjustmentController::class, 'destroy'])->name('production-orders.line-adjustments.destroy');
 
     Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
     Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
