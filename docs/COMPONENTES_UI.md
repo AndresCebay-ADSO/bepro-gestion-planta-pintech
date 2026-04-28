@@ -4,6 +4,66 @@ Documentación de componentes React reutilizables para mantener consistencia vis
 
 ---
 
+## DecimalInput (Patrón para números decimales precisos)
+
+Patrón para inputs que requieren precisión decimal exacta (cantidades, costos, fórmulas). **Evita el clásico "fantasma del punto flotante"** causado por la representación binaria IEEE 754.
+
+### El problema
+
+JavaScript usa punto flotante binario. Números simples como `0.06` no tienen representación exacta:
+
+```javascript
+0.06.toString()           // "0.06" (parece OK)
+0.1 + 0.2 === 0.3       // false (da 0.30000000000000004)
+// En inputs: 0.06 → 0.060000000000000005 al re-renderizar
+```
+
+Esto causa que valores "cambien solos" al interactuar con otros campos del formulario.
+
+### La solución: type="text" + validación
+
+Mantener el valor como **string** durante toda la vida del formulario. Solo convertir a número en el backend.
+
+```tsx
+<Input
+    type="text"                    // ← NUNCA "number" para decimales precisos
+    inputMode="decimal"              // ← Teclado numérico en móviles
+    pattern="^\d*\.?\d{0,4}$"        // ← Validación HTML5 (max 4 decimales)
+    value={detail.quantity}          // ← String, no number
+    onChange={(e) => {
+        const val = e.target.value;
+        // Solo permitir: vacío, dígitos, un punto, máx 4 decimales
+        if (val === '' || /^\d*\.?\d{0,4}$/.test(val)) {
+            updateDetail(index, 'quantity', val);
+        }
+    }}
+    placeholder="Ej: 1.5"
+/>
+```
+
+### ¿Cuándo usar este patrón?
+
+| Contexto | ¿Usar patrón? | Razón |
+|----------|---------------|-------|
+| Cantidades de fórmulas | ✅ **Sí** | Precisión crítica |
+| Costos / Precios | ✅ **Sí** | Precisión monetaria |
+| Porcentajes | ✅ **Sí** | Ej: 0.06% exacto |
+| Stock físico (unidades) | ❌ No | `type="number"` está OK |
+| IDs, cantidades enteras | ❌ No | `type="number"` o `type="text"` simple |
+
+### Validación en backend (PHP/Laravel)
+
+```php
+'quantity' => ['required', 'numeric', 'regex:/^\d+(\.\d{1,4})?$/']
+```
+
+### Referencias
+
+- [What Every Programmer Should Know About Floating-Point Arithmetic](https://floating-point-gui.de/)
+- IEEE 754 Double Precision (64-bit)
+
+---
+
 ## FormattedNumber
 
 Componente para mostrar números formateados según estándar colombiano (puntos para miles, coma para decimales).

@@ -116,8 +116,9 @@ export default function FormulasCreate({
                         Nueva Fórmula
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Define los ingredientes necesarios para producir 1 galón del producto.
-                        Esta fórmula se usará para calcular consumos en órdenes de producción.
+                        Define los ingredientes en el orden de proceso (paso 1, 2, 3…). La misma
+                        materia prima puede repetirse en pasos distintos. Las cantidades son por
+                        galón. Esta fórmula alimenta consumos y órdenes de producción.
                     </p>
                 </div>
 
@@ -170,8 +171,8 @@ export default function FormulasCreate({
                                     Ingredientes por Galón
                                 </h2>
                                 <p className="mt-0.5 text-xs text-muted-foreground">
-                                    Cantidades de materias primas para producir exactamente 1 galón.
-                                    Ejemplo: 1.5 kg de resina por galón de esmalte.
+                                    Una fila por paso; el orden importa en planta. Cantidades por 1
+                                    galón (ej. 1.5 kg de resina por galón).
                                 </p>
                             </div>
                             <Button
@@ -191,7 +192,17 @@ export default function FormulasCreate({
                                     key={index}
                                     className="grid grid-cols-12 items-end gap-3 p-4"
                                 >
-                                    <div className="col-span-5 space-y-1">
+                                    <div className="col-span-1 space-y-1">
+                                        {index === 0 && (
+                                            <Label className="text-xs text-muted-foreground">
+                                                Paso
+                                            </Label>
+                                        )}
+                                        <p className="py-2 text-center text-sm font-medium tabular-nums text-muted-foreground">
+                                            {index + 1}
+                                        </p>
+                                    </div>
+                                    <div className="col-span-4 space-y-1">
                                         {index === 0 && (
                                             <Label className="text-xs text-muted-foreground">
                                                 Materia Prima
@@ -234,17 +245,26 @@ export default function FormulasCreate({
                                             </Label>
                                         )}
                                         <Input
-                                            type="number"
-                                            step="0.0001"
-                                            min="0.0001"
+                                            type="text"
+                                            inputMode="decimal"
+                                            pattern="^\d*\.?\d{0,4}$"
                                             value={detail.quantity}
-                                            onChange={(e) =>
-                                                updateDetail(
-                                                    index,
-                                                    'quantity',
-                                                    e.target.value,
-                                                )
-                                            }
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                // Permitir vacío o número decimal con máx 4 decimales
+                                                if (
+                                                    val === '' ||
+                                                    /^\d*\.?\d{0,4}$/.test(
+                                                        val,
+                                                    )
+                                                ) {
+                                                    updateDetail(
+                                                        index,
+                                                        'quantity',
+                                                        val,
+                                                    );
+                                                }
+                                            }}
                                             placeholder="Ej: 1.5"
                                         />
                                         {(errors as Record<string, string>)[

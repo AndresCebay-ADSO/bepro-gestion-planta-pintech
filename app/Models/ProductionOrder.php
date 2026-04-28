@@ -145,7 +145,9 @@ class ProductionOrder extends Model
 
     public function details(): HasMany
     {
-        return $this->hasMany(ProductionOrderDetail::class, 'production_order_id');
+        return $this->hasMany(ProductionOrderDetail::class, 'production_order_id')
+            ->orderBy('step_order')
+            ->orderBy('id');
     }
 
     public function inventoryMovements(): HasMany

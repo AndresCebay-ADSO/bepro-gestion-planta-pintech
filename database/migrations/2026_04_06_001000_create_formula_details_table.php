@@ -17,9 +17,10 @@ return new class extends Migration
             $table->foreignId('raw_material_id')->constrained('raw_materials')->restrictOnDelete();
             $table->decimal('quantity', 12, 4);
             $table->foreignId('unit_of_measure_id')->constrained('unit_of_measures')->restrictOnDelete();
+            $table->unsignedSmallInteger('step_order')->default(0);
             $table->timestamps();
 
-            $table->unique(['formula_id', 'raw_material_id']);
+            $table->index(['formula_id', 'step_order']);
             $table->index('raw_material_id');
         });
     }

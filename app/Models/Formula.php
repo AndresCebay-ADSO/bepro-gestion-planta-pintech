@@ -81,7 +81,9 @@ class Formula extends Model
 
     public function details(): HasMany
     {
-        return $this->hasMany(FormulaDetail::class, 'formula_id');
+        return $this->hasMany(FormulaDetail::class, 'formula_id')
+            ->orderBy('step_order')
+            ->orderBy('id');
     }
 
     public function productionOrders(): HasMany

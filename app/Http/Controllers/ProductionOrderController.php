@@ -188,6 +188,7 @@ class ProductionOrderController extends Controller
                     'production_order_id' => $order->id,
                     'raw_material_id' => $detail->raw_material_id,
                     'batch_id' => null,
+                    'step_order' => $detail->step_order,
                     'planned_quantity' => $plannedQuantity,
                     'unit_cost' => $estimatedUnitCost,
                     'total_cost' => $plannedQuantity * $estimatedUnitCost,
@@ -282,6 +283,8 @@ class ProductionOrderController extends Controller
         $totalBulkCost = (float) $productionOrder->details
             ->sum(fn (ProductionOrderDetail $detail) => (float) $detail->total_cost);
 
+        $pdfMaterials = $this->buildPdfMaterialsPayload($productionOrder);
+
         return [
             'id' => $productionOrder->id,
             'order_number' => $productionOrder->order_number,
@@ -319,9 +322,11 @@ class ProductionOrderController extends Controller
             ] : null,
             'total_bulk_cost' => $totalBulkCost,
             'total_finished_cost' => $totalFinishedCost,
+            'pdf_materials' => $pdfMaterials,
             'details' => $productionOrder->details->map(fn (ProductionOrderDetail $detail) => [
                 'id' => $detail->id,
                 'raw_material_id' => (int) $detail->raw_material_id,
+                'step_order' => (int) $detail->step_order,
                 'planned_quantity' => (float) $detail->planned_quantity,
                 'actual_quantity' => $detail->actual_quantity !== null ? (float) $detail->actual_quantity : null,
                 'unit_cost' => (float) $detail->unit_cost,
@@ -380,5 +385,59 @@ class ProductionOrderController extends Controller
         }
 
         return $prefix.str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Filas para PDF/Excel: pasos ordenados por step_order (órdenes no completadas)
+     * o consolidado por materia prima (orden completada).
+     *
+     * @return array{mode: string, rows: list<array<string, mixed>>}
+     */
+    private function buildPdfMaterialsPayload(ProductionOrder $order): array
+    {
+        $details = $order->details->sortBy('step_order')->values();
+
+        if ($order->status === ProductionOrderStatus::Completed) {
+            $rows = $details->groupBy('raw_material_id')
+                ->map(function ($group) {
+                    /** @var ProductionOrderDetail $first */
+                    $first = $group->first();
+
+                    return [
+                        'raw_material_code' => $first->rawMaterial->code ?? 'N/A',
+                        'raw_material_name' => $first->rawMaterial->name ?? 'N/A',
+                        'planned_quantity' => round((float) $group->sum(fn (ProductionOrderDetail $d) => (float) $d->planned_quantity), 4),
+                        'actual_quantity' => round((float) $group->sum(fn (ProductionOrderDetail $d) => (float) ($d->actual_quantity ?? 0)), 4),
+                    ];
+                })
+                ->values()
+                ->sortBy('raw_material_code')
+                ->values()
+                ->all();
+
+            return [
+                'mode' => 'consolidated',
+                'rows' => $rows,
+            ];
+        }
+
+        $rows = [];
+
+        foreach ($details as $detail) {
+            $qty = (float) $detail->planned_quantity;
+
+            $rows[] = [
+                'step_order' => (int) $detail->step_order,
+                'raw_material_code' => $detail->rawMaterial->code ?? 'N/A',
+                'raw_material_name' => $detail->rawMaterial->name ?? 'N/A',
+                'planned_quantity' => $qty,
+                'actual_quantity' => $detail->actual_quantity !== null ? (float) $detail->actual_quantity : null,
+            ];
+        }
+
+        return [
+            'mode' => 'steps',
+            'rows' => $rows,
+        ];
     }
 }

@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
  * @property int $production_order_id
  * @property int|null $batch_id
  * @property int $raw_material_id
+ * @property int $step_order
  * @property float $planned_quantity
  * @property float|null $actual_quantity
  * @property float $unit_cost
@@ -28,6 +29,7 @@ use Illuminate\Support\Carbon;
     'production_order_id',
     'batch_id',
     'raw_material_id',
+    'step_order',
     'planned_quantity',
     'actual_quantity',
     'unit_cost',
@@ -41,6 +43,7 @@ class ProductionOrderDetail extends Model
     protected function casts(): array
     {
         return [
+            'step_order' => 'integer',
             'planned_quantity' => 'decimal:4',
             'actual_quantity' => 'decimal:4',
             'unit_cost' => 'decimal:4',

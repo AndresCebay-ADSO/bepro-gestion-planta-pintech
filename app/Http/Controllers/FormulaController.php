@@ -103,12 +103,13 @@ class FormulaController extends Controller
                 'created_by' => $request->user()->id,
             ]);
 
-            foreach ($validated['details'] as $detail) {
+            foreach ($validated['details'] as $index => $detail) {
                 FormulaDetail::create([
                     'formula_id' => $formula->id,
                     'raw_material_id' => $detail['raw_material_id'],
                     'quantity' => $detail['quantity'],
                     'unit_of_measure_id' => $detail['unit_of_measure_id'],
+                    'step_order' => $index + 1,
                 ]);
             }
 
