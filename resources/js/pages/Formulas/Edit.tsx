@@ -3,8 +3,8 @@ import type { FormEvent } from 'react';
 
 import { FormulaForm } from '@/components/formulas/formula-form';
 import type { FormulaFormData } from '@/components/formulas/formula-form';
-import { formatForInput } from '@/lib/formatters';
 import { Button } from '@/components/ui/button';
+import { formatForInput } from '@/lib/formatters';
 import {
     index as formulasIndex,
     show as formulasShow,
@@ -42,7 +42,7 @@ export default function FormulasEdit({
     rawMaterials,
     units,
 }: Props) {
-    const { data, setData, put, processing, errors } = useForm<FormulaFormData>({
+    const { data, setData, processing, errors } = useForm<FormulaFormData>({
         product_id: String(formula.product.id),
         notes: formula.notes ?? '',
         details: formula.details.map((detail) => ({

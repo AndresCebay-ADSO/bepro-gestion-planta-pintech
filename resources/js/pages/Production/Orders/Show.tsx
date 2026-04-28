@@ -12,20 +12,20 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
+    store as storeLineAdjustment,
+    destroy as destroyLineAdjustment,
+} from '@/actions/App/Http/Controllers/Production/LineAdjustmentController';
+import {
     complete as productionOrderComplete,
     exportExcel as productionOrderExportExcel,
     exportPdf as productionOrderExportPdf,
     previewCosts as productionOrderPreviewCosts,
 } from '@/actions/App/Http/Controllers/ProductionOrderController';
-import {
-    store as storeLineAdjustment,
-    destroy as destroyLineAdjustment,
-} from '@/actions/App/Http/Controllers/Production/LineAdjustmentController';
-import { Combobox } from '@/components/ui/combobox';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -664,10 +664,21 @@ function LineAdjustmentForm({ orderId, rawMaterials }: { orderId: number; rawMat
     const handleAdd = () => {
         if (!rawMaterialId || !quantity || !reason.trim()) {
             const errors: Record<string, string> = {};
-            if (!rawMaterialId) { errors.raw_material_id = 'Seleccione una MP.'; }
-            if (!quantity) { errors.quantity = 'Ingrese cantidad.'; }
-            if (!reason.trim()) { errors.reason = 'Ingrese motivo.'; }
+
+            if (!rawMaterialId) {
+ errors.raw_material_id = 'Seleccione una MP.'; 
+}
+
+            if (!quantity) {
+ errors.quantity = 'Ingrese cantidad.'; 
+}
+
+            if (!reason.trim()) {
+ errors.reason = 'Ingrese motivo.'; 
+}
+
             setFormErrors(errors);
+
             return;
         }
 

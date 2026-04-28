@@ -29,7 +29,7 @@ export default function FormulasCreate({
     units,
     selectedProductId,
 }: Props) {
-    const { data, setData, post, processing, errors } = useForm<FormulaFormData>({
+    const { data, setData, processing, errors } = useForm<FormulaFormData>({
         product_id: selectedProductId ?? '',
         notes: '',
         details: [createEmptyFormulaDetail()],
