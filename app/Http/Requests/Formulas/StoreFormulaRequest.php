@@ -7,6 +7,23 @@ use Illuminate\Validation\Rule;
 
 class StoreFormulaRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $details = $this->input('details', []);
+
+        if (is_array($details)) {
+            $this->merge([
+                'details' => array_map(function ($detail) {
+                    if (is_array($detail) && isset($detail['quantity'])) {
+                        $detail['quantity'] = str_replace(',', '.', $detail['quantity']);
+                    }
+
+                    return $detail;
+                }, $details),
+            ]);
+        }
+    }
+
     public function authorize(): bool
     {
         return $this->user()?->hasAnyRole(['admin', 'produccion']) ?? false;
