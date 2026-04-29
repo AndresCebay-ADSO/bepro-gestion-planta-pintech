@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
@@ -102,19 +103,19 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::authenticateUsing(function (Request $request) {
             $user = User::where('email', $request->email)->first();
 
-            if ($user &&
-                Hash::check($request->password, $user->password) &&
-                $user->is_active) {
-                return $user;
-            }
-
-            if ($user && ! $user->is_active) {
-                // Se podría lanzar una excepción o manejar el error de otra forma
-                // Por ahora retornamos null para fallar la autenticación
+            if (! $user || ! Hash::check($request->password, $user->password)) {
                 return null;
             }
 
-            return null;
+            // Mensaje diferenciado intencional.
+            // No aplica riesgo de enumeración en contexto cerrado sin registro público.
+            if (! $user->is_active) {
+                throw ValidationException::withMessages([
+                    Fortify::username() => __('auth.account_inactive'),
+                ]);
+            }
+
+            return $user;
         });
     }
 }

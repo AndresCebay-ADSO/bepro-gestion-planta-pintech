@@ -29,13 +29,13 @@ beforeEach(function () {
         'email_verified_at' => now(),
     ]);
     $this->user->assignRole('admin');
-    
+
     $this->actingAs($this->user);
 
     $unit = UnitOfMeasure::create(['code' => 'kg', 'name' => 'Kilo', 'symbol' => 'kg']);
     $rmCat = RawMaterialCategory::create(['code' => 'RMC', 'name' => 'RM Cat', 'is_active' => true]);
     $pCat = ProductCategory::create(['name' => 'Prod Cat']);
-    
+
     $product = Product::create([
         'code' => 'P-01',
         'name' => 'Pintura',
