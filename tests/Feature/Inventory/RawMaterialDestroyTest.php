@@ -215,7 +215,7 @@ describe('Raw Material Destroy', function () {
         $this->assertFalse((bool) $this->rawMaterial->fresh()->is_active);
     });
 
-    it('allows deactivation when raw material has production order details', function () {
+    it('blocks deletion when raw material has production order details', function () {
         $productCategory = ProductCategory::create(['name' => 'Test Category']);
 
         $product = Product::create([
@@ -259,5 +259,30 @@ describe('Raw Material Destroy', function () {
         $response->assertRedirect(route('raw-materials.index'));
         $response->assertSessionHas('success', 'Materia prima desactivada exitosamente (conserva historial).');
         $this->assertFalse((bool) $this->rawMaterial->fresh()->is_active);
+    });
+
+    it('blocks action when raw material is already inactive', function () {
+        InventoryMovement::create([
+            'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouse->id,
+            'type' => 'entry',
+            'quantity' => 100,
+            'cost_price' => 10.00,
+            'movement_date' => now()->subDays(10),
+            'created_by' => $this->admin->id,
+        ]);
+
+        $this->rawMaterial->update(['is_active' => false]);
+
+        $response = $this->actingAs($this->admin)
+            ->delete(route('raw-materials.destroy', $this->rawMaterial));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+
+        $this->assertDatabaseHas('raw_materials', [
+            'id' => $this->rawMaterial->id,
+            'is_active' => false,
+        ]);
     });
 });

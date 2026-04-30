@@ -179,6 +179,10 @@ class RawMaterialController extends Controller
     {
         $this->authorize('delete', $rawMaterial);
 
+        if (! $rawMaterial->is_active) {
+            return back()->with('error', __('La materia prima ya se encuentra inactiva.'));
+        }
+
         $hasActivity = $rawMaterial->inventoryBatches()->exists()
             || $rawMaterial->inventoryMovements()->exists()
             || $rawMaterial->formulaDetails()->exists()
