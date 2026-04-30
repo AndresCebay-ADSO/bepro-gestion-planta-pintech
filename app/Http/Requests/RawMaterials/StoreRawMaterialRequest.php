@@ -22,7 +22,7 @@ class StoreRawMaterialRequest extends FormRequest
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('raw_materials', 'code')->whereNull('deleted_at'),
+                Rule::unique('raw_materials', 'code'),
             ],
             'category_id' => [
                 'bail',

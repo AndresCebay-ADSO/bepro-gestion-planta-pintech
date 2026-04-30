@@ -19,7 +19,7 @@ class StoreInventoryBatchRequest extends FormRequest
                 'bail',
                 'required',
                 'integer',
-                Rule::exists('raw_materials', 'id')->whereNull('deleted_at'),
+                Rule::exists('raw_materials', 'id')->where('is_active', true),
             ],
             'initial_quantity' => ['bail', 'required', 'numeric', 'gt:0', 'decimal:0,4'],
             'remaining_quantity' => ['nullable', 'numeric', 'min:0', 'decimal:0,4'],

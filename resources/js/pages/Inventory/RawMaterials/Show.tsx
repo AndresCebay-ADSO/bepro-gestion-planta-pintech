@@ -47,7 +47,7 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
     );
 
     const handleDelete = () => {
-        if (!window.confirm('¿Estás seguro de eliminar esta materia prima?')) {
+        if (!window.confirm('¿Estás seguro de que quieres eliminar o desactivar esta materia prima? (El sistema determinará la acción según su historial)')) {
             return;
         }
 
@@ -90,12 +90,12 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                             </Button>
                         )}
 
-                        {can.delete && (
+                        {can.delete && rawMaterial.is_active && (
                             <Button
                                 variant="destructive"
                                 onClick={handleDelete}
                             >
-                                Eliminar
+                                Desactivar / Eliminar
                             </Button>
                         )}
                     </div>

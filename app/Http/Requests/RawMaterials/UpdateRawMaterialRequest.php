@@ -25,7 +25,7 @@ class UpdateRawMaterialRequest extends FormRequest
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('raw_materials', 'code')->ignore($rawMaterialId)->whereNull('deleted_at'),
+                Rule::unique('raw_materials', 'code')->ignore($rawMaterialId),
             ],
             'category_id' => [
                 'bail',

@@ -78,7 +78,7 @@ export default function RawMaterialsIndex({
     const handleDelete = (code: string) => {
         if (
             !window.confirm(
-                '¿Estás seguro de que quieres eliminar esta materia prima?',
+                '¿Estás seguro de que quieres eliminar o desactivar esta materia prima? (El sistema determinará la acción según su historial)',
             )
         ) {
             return;

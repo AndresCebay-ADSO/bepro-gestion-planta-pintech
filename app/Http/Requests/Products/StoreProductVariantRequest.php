@@ -30,7 +30,7 @@ class StoreProductVariantRequest extends FormRequest
             'component_system' => ['bail', 'required', Rule::in(['1K', '2K', 'KIT'])],
             'current_cost' => ['nullable', 'numeric', 'min:0', 'decimal:0,4'],
             'current_price' => ['nullable', 'numeric', 'min:0', 'decimal:0,4'],
-            'package_raw_material_id' => ['nullable', 'integer', Rule::exists('raw_materials', 'id')->whereNull('deleted_at')],
+            'package_raw_material_id' => ['nullable', 'integer', Rule::exists('raw_materials', 'id')->where('is_active', true)],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }

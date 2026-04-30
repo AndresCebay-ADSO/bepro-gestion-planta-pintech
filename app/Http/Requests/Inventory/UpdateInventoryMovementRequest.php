@@ -19,7 +19,10 @@ class UpdateInventoryMovementRequest extends FormRequest
                 'bail',
                 'required',
                 'integer',
-                Rule::exists('raw_materials', 'id')->whereNull('deleted_at'),
+                Rule::exists('raw_materials', 'id')->when(
+                    (int) $this->raw_material_id !== (int) ($this->route('inventory_movement')?->raw_material_id),
+                    fn ($rule) => $rule->where('is_active', true)
+                ),
             ],
             'warehouse_id' => ['bail', 'required', 'integer', Rule::exists('warehouses', 'id')],
             'batch_id' => ['nullable', 'integer', Rule::exists('inventory_batches', 'id')],

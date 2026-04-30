@@ -45,7 +45,7 @@ class StoreFormulaRequest extends FormRequest
             'details.*.raw_material_id' => [
                 'required',
                 'integer',
-                Rule::exists('raw_materials', 'id')->whereNull('deleted_at'),
+                Rule::exists('raw_materials', 'id')->where('is_active', true),
             ],
             'details.*.quantity' => ['required', 'numeric', 'min:0.0001'],
             'details.*.unit_of_measure_id' => [

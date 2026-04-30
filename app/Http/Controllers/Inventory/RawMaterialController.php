@@ -179,18 +179,31 @@ class RawMaterialController extends Controller
     {
         $this->authorize('delete', $rawMaterial);
 
+        $hasActivity = $rawMaterial->inventoryBatches()->exists()
+            || $rawMaterial->inventoryMovements()->exists()
+            || $rawMaterial->formulaDetails()->exists()
+            || $rawMaterial->productionOrderDetails()->exists();
+
+        if (! $hasActivity) {
+            $rawMaterial->delete();
+
+            return redirect()
+                ->route('raw-materials.index')
+                ->with('success', __('Materia prima eliminada físicamente exitosamente.'));
+        }
+
         $hasAvailableBatches = $rawMaterial->inventoryBatches()
             ->where('remaining_quantity', '>', 0)
             ->exists();
 
         if ($hasAvailableBatches) {
-            return back()->with('error', __('No se puede eliminar la materia prima porque tiene lotes activos con stock disponible.'));
+            return back()->with('error', __('No se puede desactivar ni eliminar la materia prima porque tiene lotes activos con stock disponible.'));
         }
 
-        $rawMaterial->delete();
+        $rawMaterial->update(['is_active' => false]);
 
         return redirect()
             ->route('raw-materials.index')
-            ->with('success', __('Materia prima eliminada exitosamente.'));
+            ->with('success', __('Materia prima desactivada exitosamente (conserva historial).'));
     }
 }
