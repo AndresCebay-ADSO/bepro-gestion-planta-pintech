@@ -167,7 +167,7 @@ class RawMaterialController extends Controller
 
         $validated = $request->validated();
         $currentPriceChanged = isset($validated['current_price'])
-            && (string) $rawMaterial->current_price !== (string) $validated['current_price'];
+            && abs((float) $rawMaterial->current_price - (float) $validated['current_price']) > 0.0001;
 
         if ($currentPriceChanged && ! array_key_exists('previous_price', $validated)) {
             $validated['previous_price'] = $rawMaterial->current_price;

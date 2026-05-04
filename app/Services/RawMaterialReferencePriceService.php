@@ -13,6 +13,7 @@ class RawMaterialReferencePriceService
     {
         $rawMaterial = RawMaterial::query()
             ->select(['id', 'current_price', 'previous_price'])
+            ->lockForUpdate()
             ->find($rawMaterialId);
 
         if ($rawMaterial === null) {

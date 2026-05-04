@@ -31,14 +31,4 @@ class RawMaterialPolicy
     {
         return $user->hasRole('admin');
     }
-
-    public function restore(User $user, RawMaterial $rawMaterial): bool
-    {
-        return $user->hasRole('admin');
-    }
-
-    public function forceDelete(User $user, RawMaterial $rawMaterial): bool
-    {
-        return $user->hasRole('admin');
-    }
 }
