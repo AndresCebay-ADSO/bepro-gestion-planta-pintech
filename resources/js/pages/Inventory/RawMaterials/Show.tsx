@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { route } from 'ziggy-js';
+import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
 
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -34,6 +34,7 @@ type Props = {
     can: {
         update: boolean;
         delete: boolean;
+        reactivate: boolean;
     };
 };
 
@@ -51,7 +52,11 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
             return;
         }
 
-        router.delete(route('raw-materials.destroy', rawMaterial.code));
+        router.delete(RawMaterialController.destroy.url(rawMaterial.code));
+    };
+
+    const handleReactivate = () => {
+        router.patch(RawMaterialController.reactivate.url(rawMaterial.code));
     };
 
     return (
@@ -72,7 +77,7 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
 
                     <div className="flex flex-wrap gap-2">
                         <Button variant="outline" asChild>
-                            <Link href={route('raw-materials.index')}>
+                            <Link href={RawMaterialController.index.url()}>
                                 Volver
                             </Link>
                         </Button>
@@ -80,8 +85,7 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                         {can.update && (
                             <Button asChild>
                                 <Link
-                                    href={route(
-                                        'raw-materials.edit',
+                                    href={RawMaterialController.edit.url(
                                         rawMaterial.code,
                                     )}
                                 >
@@ -96,6 +100,15 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                                 onClick={handleDelete}
                             >
                                 Desactivar / Eliminar
+                            </Button>
+                        )}
+
+                        {can.reactivate && (
+                            <Button
+                                variant="outline"
+                                onClick={handleReactivate}
+                            >
+                                Reactivar
                             </Button>
                         )}
                     </div>

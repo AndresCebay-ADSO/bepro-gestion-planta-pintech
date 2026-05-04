@@ -31,6 +31,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::resource('users', UserController::class)->except(['show']);
     Route::resource('raw-materials', RawMaterialController::class)->except(['index', 'show']);
+    Route::patch('raw-materials/{raw_material}/reactivate', [RawMaterialController::class, 'reactivate'])->name('raw-materials.reactivate');
     Route::resource('warehouses', WarehouseController::class)->except(['index', 'show']);
     Route::get('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsersPage'])->name('warehouses.assign-users.form');
     Route::post('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsers'])->name('warehouses.assign-users');
@@ -68,8 +69,11 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
 });
 
 // ADMIN + PRODUCCIÓN + COMERCIAL: Consulta de catálogos e inventarios (según policy)
-Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
     Route::resource('raw-materials', RawMaterialController::class)->only(['index']);
+});
+
+Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
     Route::resource('warehouses', WarehouseController::class)->only(['index']);
     Route::resource('products', ProductController::class);
     Route::resource('inventory-movements', InventoryMovementController::class)

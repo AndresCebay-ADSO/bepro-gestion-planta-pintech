@@ -9,7 +9,7 @@ class RawMaterialPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'produccion', 'comercial']);
+        return $user->hasAnyRole(['admin', 'produccion']);
     }
 
     public function view(User $user, RawMaterial $rawMaterial): bool
