@@ -54,4 +54,18 @@ class WarehouseContextService
 
         return $available->first();
     }
+
+    /**
+     * Resolves the most appropriate warehouse for inventory movements (prefers factories).
+     */
+    public function resolveMovementWarehouse(?Warehouse $currentWarehouse): ?Warehouse
+    {
+        if ($currentWarehouse !== null && $currentWarehouse->type === 'factory') {
+            return $currentWarehouse;
+        }
+
+        $factoryWarehouse = Warehouse::query()->where('type', 'factory')->where('is_active', true)->first();
+
+        return $factoryWarehouse ?? $currentWarehouse;
+    }
 }

@@ -37,6 +37,8 @@ class InventoryMovementController extends Controller
             )
             : null;
 
+        $movementWarehouse = $this->warehouseContextService->resolveMovementWarehouse($currentWarehouse);
+
         $movements = InventoryMovement::query()
             ->with([
                 'rawMaterial:id,code',
@@ -61,8 +63,8 @@ class InventoryMovementController extends Controller
             'rawMaterials' => Inertia::optional(fn () => RawMaterial::query()->select('id', 'code')->where('is_active', true)->orderBy('code')->get()),
             'batches' => Inertia::optional(fn () => InventoryBatch::query()
                 ->when(
-                    $currentWarehouse !== null,
-                    fn ($query) => $query->where('warehouse_id', $currentWarehouse->id),
+                    $movementWarehouse !== null,
+                    fn ($query) => $query->where('warehouse_id', $movementWarehouse->id),
                     fn ($query) => $query->whereRaw('1 = 0')
                 )
                 ->where('remaining_quantity', '>', 0)
@@ -71,7 +73,7 @@ class InventoryMovementController extends Controller
                 ->get()),
             'productionOrders' => Inertia::optional(fn () => ProductionOrder::query()->select('id', 'order_number', 'status')->orderByDesc('id')->get()),
             'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->get()),
-            'currentWarehouseId' => $currentWarehouse?->id,
+            'currentWarehouseId' => $movementWarehouse?->id,
             'filters' => [
                 'search' => $search,
             ],
