@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Concerns\DeterminesPriceRefresh;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductionCost;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 
 class ProductionCostRecalculationService
 {
+    use DeterminesPriceRefresh;
+
     public function recalculateForProduct(int $productId, bool $forcePriceRefresh = false): ?ProductionCost
     {
         $activeFormula = Formula::query()
@@ -144,20 +147,5 @@ class ProductionCostRecalculationService
         }
 
         return $recalculated;
-    }
-
-    private function shouldUpdatePriceFromCostChange(?float $currentPrice, ?float $previousCost, float $newCost, float $threshold): bool
-    {
-        if ($currentPrice === null) {
-            return true;
-        }
-
-        if ($previousCost === null || $previousCost <= 0) {
-            return false;
-        }
-
-        $variationPercentage = abs((($newCost - $previousCost) / $previousCost) * 100);
-
-        return $variationPercentage >= $threshold;
     }
 }
