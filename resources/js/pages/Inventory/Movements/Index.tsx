@@ -1,4 +1,4 @@
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head, useForm, router, usePage } from '@inertiajs/react';
 import { Search, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import {  useState, useEffect, useCallback, useRef } from 'react';
 import type {FormEvent} from 'react';
@@ -52,6 +52,7 @@ type Props = {
     warehouses?: Option[];
     productionOrders?: Option[];
     can: { create: boolean };
+    currentWarehouseId?: number | null;
     filters: {
         search?: string;
     };
@@ -64,6 +65,7 @@ export default function InventoryMovementsIndex({
     warehouses,
     productionOrders,
     can,
+    currentWarehouseId,
     filters,
 }: Props) {
     const { data, setData, get } = useForm({
@@ -73,6 +75,7 @@ export default function InventoryMovementsIndex({
     const [drawerState, setDrawerState] = useState<{ isOpen: boolean; mode: 'entry' | 'exit' }>({ isOpen: false, mode: 'entry' });
     const [isLoadingFormData, setIsLoadingFormData] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
+    const flash = usePage<{ flash?: { success?: string; error?: string } }>().props.flash;
 
     const openDrawer = useCallback((mode: 'entry' | 'exit') => {
         setDrawerState({ isOpen: true, mode });
@@ -174,6 +177,17 @@ return;
                     </form>
                 </div>
 
+                {flash?.success && (
+                    <div className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+                        {flash.success}
+                    </div>
+                )}
+                {flash?.error && (
+                    <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+                        {flash.error}
+                    </div>
+                )}
+
                 <div className="rounded-xl border border-border bg-card shadow-sm">
                     <table className="w-full text-sm">
                         <thead className="border-b border-border bg-muted/50">
@@ -232,6 +246,13 @@ return;
                                     </td>
                                 </tr>
                             ))}
+                            {movements.data.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                                        No hay movimientos registrados para los filtros seleccionados.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -299,6 +320,7 @@ return;
                                     batches={batches}
                                     warehouses={warehouses}
                                     productionOrders={productionOrders}
+                                    defaultWarehouseId={currentWarehouseId ?? undefined}
                                     onSuccess={onSuccessForm}
                                 />
                             ) : (
@@ -307,6 +329,7 @@ return;
                                     batches={batches}
                                     warehouses={warehouses}
                                     productionOrders={productionOrders}
+                                    defaultWarehouseId={currentWarehouseId ?? undefined}
                                     onSuccess={onSuccessForm}
                                 />
                             )

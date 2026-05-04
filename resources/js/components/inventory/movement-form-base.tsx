@@ -22,6 +22,7 @@ type Option = {
     city?: string;
     type?: string;
     raw_material_id?: number | string;
+    warehouse_id?: number | string;
     remaining_quantity?: string | number;
     status?: string;
 };
@@ -46,7 +47,11 @@ export function MovementFormBase({
     children,
 }: Props) {
     const filteredBatches = form.data.raw_material_id
-        ? batches.filter((b) => Number(b.raw_material_id) === Number(form.data.raw_material_id))
+        ? batches.filter(
+            (b) =>
+                Number(b.raw_material_id) === Number(form.data.raw_material_id)
+                && Number(b.warehouse_id) === Number(form.data.warehouse_id),
+        )
         : [];
 
     return (
@@ -55,9 +60,10 @@ export function MovementFormBase({
                 <Label htmlFor="warehouse_id">Bodega</Label>
                 <Select
                     value={form.data.warehouse_id}
-                    onValueChange={(value) =>
-                        form.setData('warehouse_id', value)
-                    }
+                    onValueChange={(value) => {
+                        form.setData('warehouse_id', value);
+                        form.setData('batch_id', '');
+                    }}
                 >
                     <SelectTrigger id="warehouse_id">
                         <SelectValue placeholder="Selecciona la bodega" />
@@ -235,4 +241,3 @@ export function MovementFormBase({
         </div>
     );
 }
-

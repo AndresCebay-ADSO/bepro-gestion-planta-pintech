@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Inventory;
 
+use App\Models\InventoryBatch;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -38,6 +39,31 @@ class StoreInventoryMovementRequest extends FormRequest
             'movement_date' => ['bail', 'required', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'created_by' => ['prohibited'],
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function ($validator): void {
+                $batchId = $this->input('batch_id');
+                if ($batchId === null || $batchId === '') {
+                    return;
+                }
+
+                $batch = InventoryBatch::query()->find((int) $batchId);
+                if ($batch === null) {
+                    return;
+                }
+
+                if ((int) $batch->raw_material_id !== (int) $this->input('raw_material_id')) {
+                    $validator->errors()->add('batch_id', __('El lote seleccionado no pertenece a la materia prima indicada.'));
+                }
+
+                if ((int) $batch->warehouse_id !== (int) $this->input('warehouse_id')) {
+                    $validator->errors()->add('batch_id', __('El lote seleccionado no pertenece a la bodega indicada.'));
+                }
+            },
         ];
     }
 }

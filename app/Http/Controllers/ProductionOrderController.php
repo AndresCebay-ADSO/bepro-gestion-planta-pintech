@@ -234,7 +234,11 @@ class ProductionOrderController extends Controller
 
         $validated = $request->validated();
 
-        $this->productionOrderService->completeOrder($order, $validated);
+        try {
+            $this->productionOrderService->completeOrder($order, $validated);
+        } catch (\DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
 
         return redirect()->route('production-orders.show', $order)
             ->with('success', 'Producción finalizada e inventario actualizado.');

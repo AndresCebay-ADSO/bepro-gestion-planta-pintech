@@ -6,6 +6,7 @@ use App\Models\FinishedInventoryMovement;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
+use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductionCost;
@@ -207,6 +208,58 @@ test('it completes order and updates inventory', function () {
         'product_variant_id' => $variant->id,
         'quantity' => 19,
     ]);
+});
+
+test('it prevents completing the same production order twice', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-IDEMPOTENT',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 100,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [],
+    ])->assertRedirect();
+
+    $secondResponse = $this->from(route('production-orders.show', $order))
+        ->post(route('production-orders.complete', $order), [
+            'actual_yield_quantity' => 100,
+            'ingredients' => [
+                ['id' => $detail->id, 'actual_quantity' => 50],
+            ],
+            'packaging' => [],
+        ]);
+
+    $secondResponse->assertRedirect(route('production-orders.show', $order));
+    $secondResponse->assertSessionHas('error', 'La orden ya ha sido completada.');
+    expect(InventoryMovement::where('production_order_id', $order->id)->count())->toBe(1);
 });
 
 test('it completes order even when there is no packaging plan', function () {

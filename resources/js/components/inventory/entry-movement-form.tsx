@@ -24,6 +24,7 @@ type Props = {
     batches: Option[];
     warehouses: Option[];
     productionOrders: Option[];
+    defaultWarehouseId?: number;
     onSuccess?: () => void;
 };
 
@@ -32,11 +33,22 @@ export function EntryMovementForm({
     batches,
     warehouses,
     productionOrders,
+    defaultWarehouseId,
     onSuccess,
 }: Props) {
-    const form = useForm({
+    const form = useForm<{
+        raw_material_id: string;
+        warehouse_id: string;
+        batch_id: string;
+        production_order_id: string;
+        type: 'entry';
+        quantity: string;
+        cost_price: string;
+        movement_date: string;
+        notes: string;
+    }>({
         raw_material_id: '',
-        warehouse_id: '',
+        warehouse_id: defaultWarehouseId ? String(defaultWarehouseId) : '',
         batch_id: '',
         production_order_id: '',
         type: 'entry',

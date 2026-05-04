@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Concerns\DeterminesPriceRefresh;
 use App\Enums\InventoryMovementType;
 use App\Enums\ProductionOrderStatus;
 use App\Models\FinishedInventory;
@@ -24,6 +25,8 @@ use Illuminate\Validation\ValidationException;
 
 class ProductionOrderService
 {
+    use DeterminesPriceRefresh;
+
     /**
      * Estimar costo unitario (sin consumir inventario) usando FIFO de lotes disponibles.
      */
@@ -313,17 +316,21 @@ class ProductionOrderService
     public function completeOrder(ProductionOrder $order, array $data): ProductionOrder
     {
         return DB::transaction(function () use ($order, $data) {
-            if ($order->status === ProductionOrderStatus::Completed) {
+            $lockedOrder = ProductionOrder::query()
+                ->lockForUpdate()
+                ->findOrFail($order->id);
+
+            if ($lockedOrder->status === ProductionOrderStatus::Completed) {
                 throw new \DomainException('La orden ya ha sido completada.');
             }
 
             $userId = auth()->id() ?? throw new \RuntimeException('No authenticated user');
 
             // 1. Actualizar metadatos operacionales de la orden
-            $order->update([
+            $lockedOrder->update([
                 'status' => ProductionOrderStatus::Completed,
                 'completion_date' => now(),
-                'actual_quantity' => $data['actual_yield_quantity'] ?? $order->quantity,
+                'actual_quantity' => $data['actual_yield_quantity'] ?? $lockedOrder->quantity,
                 'viscosity_ku' => $data['viscosity_ku'] ?? null,
                 'grinding_hg' => $data['grinding_hg'] ?? null,
                 'agitation_start_time' => $data['agitation_start_time'] ?? null,
@@ -332,16 +339,24 @@ class ProductionOrderService
                 'packaging_end_time' => $data['packaging_end_time'] ?? null,
                 'responsible_name' => $data['responsible_name'] ?? null,
                 'spillage_quantity' => $data['spillage_quantity'] ?? 0,
-                'notes' => $data['notes'] ?? $order->notes,
+                'notes' => $data['notes'] ?? $lockedOrder->notes,
             ]);
 
             // 2. Procesar consumo real de materias primas y costo real del granel
+            $lockedOrder->loadMissing(['details', 'packagingPlans', 'lineAdjustments']);
+            $detailsById = $lockedOrder->details->keyBy('id');
             $totalBulkCost = 0.0;
             foreach ($data['ingredients'] as $ingredientData) {
-                $detail = ProductionOrderDetail::findOrFail($ingredientData['id']);
+                $detail = $detailsById->get((int) $ingredientData['id']);
+                if ($detail === null) {
+                    throw ValidationException::withMessages([
+                        'ingredients' => __('Uno de los ingredientes no pertenece a la orden de producción seleccionada.'),
+                    ]);
+                }
+
                 $actualQuantity = (float) $ingredientData['actual_quantity'];
 
-                $consumedCost = $this->consumeRawMaterialFifo($order, $detail, $actualQuantity, $userId);
+                $consumedCost = $this->consumeRawMaterialFifo($lockedOrder, $detail, $actualQuantity, $userId);
                 $realUnitCost = $actualQuantity > 0 ? ($consumedCost / $actualQuantity) : 0.0;
 
                 $detail->update([
@@ -354,10 +369,9 @@ class ProductionOrderService
             }
 
             // 2.1. Procesar consumo de ajustes de línea (MPs fuera de fórmula)
-            $order->loadMissing('lineAdjustments');
-            foreach ($order->lineAdjustments as $adjustment) {
+            foreach ($lockedOrder->lineAdjustments as $adjustment) {
                 $adjustmentCost = $this->consumeRawMaterialFifoByMaterialId(
-                    order: $order,
+                    order: $lockedOrder,
                     rawMaterialId: (int) $adjustment->raw_material_id,
                     requiredQuantity: (float) $adjustment->quantity,
                     userId: $userId,
@@ -370,20 +384,26 @@ class ProductionOrderService
 
             // 2.5. Distribuir costo de granel según rendimiento por presentación
             $distributedBulkCosts = $this->calculateDistributedBulkCosts(
-                order: $order,
+                order: $lockedOrder,
                 packagingData: $data['packaging'] ?? [],
                 totalBulkCost: $totalBulkCost
             );
             $productForPricing = Product::query()
                 ->select(['id', 'profit_margin', 'price_threshold'])
-                ->find($order->product_id);
+                ->find($lockedOrder->product_id);
             $autoUpdateVariantPrice = (bool) config('production.auto_update_variant_price', true);
             $productProfitMargin = $productForPricing?->profit_margin !== null ? (float) $productForPricing->profit_margin : null;
             $productPriceThreshold = (float) ($productForPricing?->price_threshold ?? 0);
 
             // 3. Procesar Entrada de Producto Terminado (Packaging Plan)
+            $packagingPlansById = $lockedOrder->packagingPlans->keyBy('id');
             foreach (($data['packaging'] ?? []) as $packData) {
-                $plan = ProductionOrderPackagingPlan::findOrFail($packData['id']);
+                $plan = $packagingPlansById->get((int) $packData['id']);
+                if ($plan === null) {
+                    throw ValidationException::withMessages([
+                        'packaging' => __('Uno de los planes de envasado no pertenece a la orden de producción seleccionada.'),
+                    ]);
+                }
                 $actualUnits = (float) $packData['actual_units'];
 
                 $plan->update(['actual_units' => $actualUnits]);
@@ -396,7 +416,7 @@ class ProductionOrderService
                     $packagingUnitCost = 0.0;
                     if ($variant?->package_raw_material_id !== null) {
                         $packagingTotalCost = $this->consumeRawMaterialFifoByMaterialId(
-                            order: $order,
+                            order: $lockedOrder,
                             rawMaterialId: (int) $variant->package_raw_material_id,
                             requiredQuantity: $actualUnits,
                             userId: $userId,
@@ -412,16 +432,16 @@ class ProductionOrderService
 
                     // Registrar entrada de producto terminado
                     FinishedInventoryMovement::create([
-                        'product_id' => $order->product_id,
+                        'product_id' => $lockedOrder->product_id,
                         'product_variant_id' => $plan->product_variant_id,
-                        'warehouse_id' => $order->warehouse_id,
-                        'production_order_id' => $order->id,
+                        'warehouse_id' => $lockedOrder->warehouse_id,
+                        'production_order_id' => $lockedOrder->id,
                         'type' => InventoryMovementType::Entry,
                         'quantity' => $actualUnits,
                         // cost_price representa costo unitario del terminado en este movimiento.
                         'cost_price' => $costPriceForVariant,
                         'movement_date' => now(),
-                        'notes' => "Finalización OP #{$order->order_number}",
+                        'notes' => "Finalización OP #{$lockedOrder->order_number}",
                         'created_by' => $userId,
                     ]);
 
@@ -445,10 +465,12 @@ class ProductionOrderService
                     }
 
                     // Actualizar o crear registro en FinishedInventory
-                    $inventory = FinishedInventory::firstOrNew([
-                        'product_id' => $order->product_id,
-                        'warehouse_id' => $order->warehouse_id,
-                    ]);
+                    $inventory = FinishedInventory::query()
+                        ->lockForUpdate()
+                        ->firstOrNew([
+                            'product_id' => $lockedOrder->product_id,
+                            'warehouse_id' => $lockedOrder->warehouse_id,
+                        ]);
 
                     if (! $inventory->exists && $inventory->product_variant_id === null) {
                         $inventory->product_variant_id = $plan->product_variant_id;
@@ -459,14 +481,14 @@ class ProductionOrderService
                 }
             }
 
-            $yieldRealQuantity = (float) ($data['actual_yield_quantity'] ?? $order->quantity);
-            $yieldTheoreticalQuantity = (float) $order->quantity;
+            $yieldRealQuantity = (float) ($data['actual_yield_quantity'] ?? $lockedOrder->quantity);
+            $yieldTheoreticalQuantity = (float) $lockedOrder->quantity;
             $yieldVarianceQuantity = $yieldRealQuantity - $yieldTheoreticalQuantity;
             $yieldPercentage = $yieldTheoreticalQuantity > 0
                 ? (($yieldRealQuantity / $yieldTheoreticalQuantity) * 100)
                 : null;
 
-            $order->update([
+            $lockedOrder->update([
                 'yield_real_quantity' => $yieldRealQuantity,
                 'yield_theoretical_quantity' => $yieldTheoreticalQuantity,
                 'yield_variance_quantity' => $yieldVarianceQuantity,
@@ -478,10 +500,10 @@ class ProductionOrderService
                 $costPerYieldUnit = $yieldRealQuantity > 0 ? ($totalBulkCost / $yieldRealQuantity) : null;
 
                 ProductionCost::updateOrCreate(
-                    ['production_order_id' => $order->id],
+                    ['production_order_id' => $lockedOrder->id],
                     [
-                        'product_id' => $order->product_id,
-                        'formula_id' => $order->formula_id,
+                        'product_id' => $lockedOrder->product_id,
+                        'formula_id' => $lockedOrder->formula_id,
                         'cost' => $totalBulkCost,
                         'unit_cost' => $costPerYieldUnit,
                         'calculated_at' => now(),
@@ -489,7 +511,7 @@ class ProductionOrderService
                 );
             }
 
-            return $order->refresh();
+            return $lockedOrder->refresh();
         });
     }
 
@@ -648,20 +670,5 @@ class ProductionOrderService
         }
 
         return $distributedCosts;
-    }
-
-    private function shouldUpdatePriceFromCostChange(?float $currentPrice, ?float $previousCost, float $newCost, float $threshold): bool
-    {
-        if ($currentPrice === null) {
-            return true;
-        }
-
-        if ($previousCost === null || $previousCost <= 0) {
-            return false;
-        }
-
-        $variationPercentage = abs((($newCost - $previousCost) / $previousCost) * 100);
-
-        return $variationPercentage >= $threshold;
     }
 }
