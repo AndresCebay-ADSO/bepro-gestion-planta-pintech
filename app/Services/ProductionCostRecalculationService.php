@@ -30,7 +30,7 @@ class ProductionCostRecalculationService
 
         return DB::transaction(function () use ($activeFormula, $productId, $forcePriceRefresh): ProductionCost {
             $calculatedCost = (float) $activeFormula->details
-                ->sum(fn ($detail) => (float) $detail->quantity * (float) $detail->rawMaterial->current_price);
+                ->sum(fn ($detail) => (float) $detail->quantity * (float) ($detail->rawMaterial->current_price ?? 0));
 
             $previousCost = ProductionCost::query()
                 ->where('product_id', $productId)
@@ -81,7 +81,8 @@ class ProductionCostRecalculationService
 
             $packageUnitPrices = RawMaterial::query()
                 ->whereIn('id', $packageMaterialIds)
-                ->pluck('current_price', 'id');
+                ->pluck('current_price', 'id')
+                ->map(fn ($price) => (float) ($price ?? 0));
 
             $variants->each(function (ProductVariant $variant) use (
                 $calculatedCost,

@@ -51,7 +51,7 @@ class StoreRawMaterialRequest extends FormRequest
         $this->merge([
             'category_id' => $this->input('category_id'),
             'minimum_stock' => $this->input('minimum_stock', 0),
-            'current_price' => $currentPrice === null ? 0 : $currentPrice,
+            'current_price' => ($currentPrice === null || $currentPrice === '') ? null : $currentPrice,
             'alert_days_before_expiry' => $this->input('alert_days_before_expiry', 30),
             'is_active' => $this->boolean('is_active', true),
         ]);

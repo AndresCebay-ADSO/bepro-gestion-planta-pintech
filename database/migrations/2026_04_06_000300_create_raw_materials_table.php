@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('code', 50)->unique();
             $table->foreignId('unit_of_measure_id')->constrained('unit_of_measures')->restrictOnDelete();
-            $table->decimal('current_price', 18, 4);
+            $table->decimal('current_price', 18, 4)->nullable();
             $table->decimal('previous_price', 18, 4)->nullable();
             $table->decimal('minimum_stock', 12, 4)->default(0);
             $table->integer('alert_days_before_expiry')->default(30);

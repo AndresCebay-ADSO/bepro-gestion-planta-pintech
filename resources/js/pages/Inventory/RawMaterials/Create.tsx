@@ -48,7 +48,7 @@ export default function RawMaterialsCreate({ categories, units }: Props) {
             ...data,
             category_id: Number(data.category_id),
             unit_of_measure_id: Number(data.unit_of_measure_id),
-            current_price: data.current_price === '' ? '0' : data.current_price,
+            current_price: data.current_price === '' ? null : data.current_price,
             previous_price:
                 data.previous_price === '' ? null : data.previous_price,
         }));

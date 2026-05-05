@@ -19,7 +19,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string $code
  * @property int|null $category_id
  * @property int $unit_of_measure_id
- * @property float $current_price
+ * @property float|null $current_price
  * @property float $previous_price
  * @property float $minimum_stock
  * @property int $alert_days_before_expiry

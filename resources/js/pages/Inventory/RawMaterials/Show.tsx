@@ -23,7 +23,7 @@ type Props = {
     rawMaterial: {
         id: number;
         code: string;
-        current_price: string;
+        current_price: string | null;
         previous_price: string | null;
         minimum_stock: string;
         alert_days_before_expiry: number;
@@ -150,6 +150,7 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                                 currency
                                 maxDecimals={4}
                                 trimTrailingZeros
+                                emptyValue="Sin precio de referencia"
                             />
                         }
                     />

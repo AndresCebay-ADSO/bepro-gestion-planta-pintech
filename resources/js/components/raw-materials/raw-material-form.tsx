@@ -236,7 +236,7 @@ export function RawMaterialForm({ form, categories, units, onSubmit, submitLabel
                         )}
                         <InputError message={form.errors.current_price} />
                         <p className="min-w-0 text-xs break-all text-muted-foreground">
-                            Si lo dejas vacío, se inicializa en 0 hasta registrar lotes.
+                            Si lo dejas vacío, se actualizará automáticamente al registrar lotes.
                         </p>
                     </div>
 

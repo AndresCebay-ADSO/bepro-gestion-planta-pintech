@@ -32,4 +32,9 @@ class RawMaterialFactory extends Factory
     {
         return $this->state(fn (): array => ['is_active' => false]);
     }
+
+    public function withoutPrice(): static
+    {
+        return $this->state(fn (): array => ['current_price' => null]);
+    }
 }

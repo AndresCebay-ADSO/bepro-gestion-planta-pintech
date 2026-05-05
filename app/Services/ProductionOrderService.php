@@ -72,7 +72,8 @@ class ProductionOrderService
 
         $fallbackPrices = RawMaterial::query()
             ->whereIn('id', $materialIds)
-            ->pluck('current_price', 'id');
+            ->pluck('current_price', 'id')
+            ->map(fn ($price) => (float) ($price ?? 0));
 
         $estimatedUnitCosts = [];
 
