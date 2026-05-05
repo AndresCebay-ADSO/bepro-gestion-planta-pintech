@@ -124,7 +124,7 @@ describe('Raw Material Store Validation', function (): void {
         ]);
     });
 
-    it('defaults current_price to zero when omitted', function (): void {
+    it('defaults current_price to null when omitted', function (): void {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
                 ...$this->validData,
@@ -135,7 +135,7 @@ describe('Raw Material Store Validation', function (): void {
         $response->assertRedirect();
         $this->assertDatabaseHas('raw_materials', [
             'code' => 'MP003',
-            'current_price' => 0,
+            'current_price' => null,
         ]);
     });
 

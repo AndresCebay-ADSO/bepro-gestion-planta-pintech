@@ -146,3 +146,31 @@ test('inventory movements apply the same policy and keep conservative cost refer
     $this->rawMaterial->refresh();
     expect((float) $this->rawMaterial->current_price)->toBe(5000.0);
 });
+
+test('inventory movement correctly updates current_price for raw materials created without a price', function () {
+    $materialWithoutPrice = RawMaterial::factory()->withoutPrice()->create([
+        'unit_of_measure_id' => $this->unit->id,
+    ]);
+
+    expect($materialWithoutPrice->current_price)->toBeNull();
+
+    $user = User::factory()->create();
+    $inventoryService = app(InventoryService::class);
+
+    $inventoryService->storeMovement([
+        'raw_material_id' => $materialWithoutPrice->id,
+        'warehouse_id' => $this->warehouse->id,
+        'batch_id' => null,
+        'production_order_id' => null,
+        'type' => InventoryMovementType::Entry->value,
+        'quantity' => 50,
+        'cost_price' => 1500,
+        'movement_date' => now()->toDateString(),
+        'notes' => 'First entry',
+    ], (int) $user->id);
+
+    $materialWithoutPrice->refresh();
+
+    // The price should be updated to 1500 since it's the only lot
+    expect((float) $materialWithoutPrice->current_price)->toBe(1500.0);
+});
