@@ -19,8 +19,8 @@ return new class extends Migration
             $table->decimal('quantity', 12, 4)->default(0);
             $table->timestamps();
 
-            $table->unique(['product_id', 'warehouse_id']);
-            $table->unique(['product_variant_id', 'warehouse_id']);
+            // Composite unique constraint to allow multiple variants of the same product in the same warehouse
+            $table->unique(['product_id', 'product_variant_id', 'warehouse_id'], 'finished_inv_prod_var_wh_unique');
             $table->index('warehouse_id');
             $table->index('product_variant_id');
         });

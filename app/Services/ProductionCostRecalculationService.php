@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Concerns\DeterminesPriceRefresh;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductionCost;
@@ -14,7 +13,9 @@ use Illuminate\Support\Facades\DB;
 
 class ProductionCostRecalculationService
 {
-    use DeterminesPriceRefresh;
+    public function __construct(
+        private readonly VariantPricingService $variantPricingService
+    ) {}
 
     public function recalculateForProduct(int $productId, bool $forcePriceRefresh = false): ?ProductionCost
     {
@@ -96,26 +97,15 @@ class ProductionCostRecalculationService
                     ? (float) ($packageUnitPrices->get((int) $variant->package_raw_material_id) ?? 0.0)
                     : 0.0;
 
-                $presentationValue = (float) ($variant->presentation_value ?? 1);
-                $newVariantCost = ($calculatedCost * $presentationValue) + $packageUnitCost;
-
-                $variantUpdates = ['current_cost' => $newVariantCost];
-
-                if ($autoUpdateVariantPrice && $productProfitMargin !== null) {
-                    $previousVariantCost = $variant->current_cost !== null ? (float) $variant->current_cost : null;
-                    $shouldUpdateVariantPrice = $forcePriceRefresh || $this->shouldUpdatePriceFromCostChange(
-                        currentPrice: $variant->current_price !== null ? (float) $variant->current_price : null,
-                        previousCost: $previousVariantCost,
-                        newCost: $newVariantCost,
-                        threshold: $productPriceThreshold
-                    );
-
-                    if ($shouldUpdateVariantPrice) {
-                        $variantUpdates['current_price'] = $newVariantCost * (1 + ($productProfitMargin / 100));
-                    }
-                }
-
-                $variant->update($variantUpdates);
+                $this->variantPricingService->updateVariantCostAndPrice(
+                    variant: $variant,
+                    bulkCost: $calculatedCost,
+                    profitMargin: $productProfitMargin,
+                    priceThreshold: $productPriceThreshold,
+                    packageUnitCost: $packageUnitCost,
+                    autoUpdatePrice: $autoUpdateVariantPrice,
+                    forceRefresh: $forcePriceRefresh
+                );
             });
 
             return ProductionCost::create([

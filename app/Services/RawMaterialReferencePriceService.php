@@ -116,6 +116,6 @@ class RawMaterialReferencePriceService
             return $priceA === $priceB;
         }
 
-        return round($priceA, 4) === round($priceB, 4);
+        return abs(round($priceA, 4) - round($priceB, 4)) < PHP_FLOAT_EPSILON;
     }
 }

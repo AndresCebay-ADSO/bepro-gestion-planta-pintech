@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Concerns\DeterminesPriceRefresh;
 use App\Enums\InventoryMovementType;
 use App\Enums\ProductionOrderStatus;
 use App\Models\FinishedInventory;
@@ -25,7 +24,9 @@ use Illuminate\Validation\ValidationException;
 
 class ProductionOrderService
 {
-    use DeterminesPriceRefresh;
+    public function __construct(
+        private readonly VariantPricingService $variantPricingService
+    ) {}
 
     /**
      * Estimar costo unitario (sin consumir inventario) usando FIFO de lotes disponibles.
@@ -312,6 +313,91 @@ class ProductionOrderService
     }
 
     /**
+     * Crear una nueva orden (Planificación).
+     */
+    public function createOrder(array $data): ProductionOrder
+    {
+        $formula = Formula::findOrFail($data['formula_id']);
+        $formula->load('details');
+
+        return DB::transaction(function () use ($data, $formula) {
+            // Validar stock antes de crear (advisory check dentro de la transacción)
+            $this->validateStockForOrder($formula, (float) $data['quantity'], (int) $data['warehouse_id']);
+
+            $order = ProductionOrder::create([
+                'product_id' => $data['product_id'],
+                'formula_id' => $data['formula_id'],
+                'warehouse_id' => $data['warehouse_id'],
+                'quantity' => $data['quantity'],
+                'planned_date' => $data['planned_date'],
+                'notes' => $data['notes'] ?? null,
+                'order_number' => $this->generateOrderNumber(),
+                'status' => ProductionOrderStatus::Pending,
+                'created_by' => auth()->id(),
+            ]);
+
+            // Crear detalles de ingredientes basados en la fórmula (sin reservar lote en planificación)
+            foreach ($formula->details as $detail) {
+                $plannedQuantity = $detail->quantity * (float) $data['quantity'];
+                $estimatedUnitCost = $this->estimateMaterialUnitCostForPlanning(
+                    rawMaterialId: (int) $detail->raw_material_id,
+                    warehouseId: (int) $data['warehouse_id'],
+                    requiredQuantity: (float) $plannedQuantity
+                );
+
+                ProductionOrderDetail::create([
+                    'production_order_id' => $order->id,
+                    'raw_material_id' => $detail->raw_material_id,
+                    'batch_id' => null,
+                    'step_order' => $detail->step_order,
+                    'planned_quantity' => $plannedQuantity,
+                    'unit_cost' => $estimatedUnitCost,
+                    'total_cost' => $plannedQuantity * $estimatedUnitCost,
+                ]);
+            }
+
+            // Crear plan de envasado si se proporcionó
+            if (! empty($data['packaging'])) {
+                foreach ($data['packaging'] as $packData) {
+                    ProductionOrderPackagingPlan::create([
+                        'production_order_id' => $order->id,
+                        'product_variant_id' => $packData['product_variant_id'],
+                        'planned_units' => $packData['planned_units'],
+                    ]);
+                }
+            }
+
+            return $order;
+        });
+    }
+
+    /**
+     * Genera un número de orden secuencial: OP-YYMMDD-XXXX (max 16 chars).
+     */
+    private function generateOrderNumber(): string
+    {
+        $prefix = 'OP-'.now()->format('ymd').'-';
+
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            // PostgreSQL advisory lock to prevent race conditions when 0 rows exist
+            $lockKey = crc32($prefix);
+            DB::statement('SELECT pg_advisory_xact_lock(?)', [$lockKey]);
+        }
+
+        $lastOrder = ProductionOrder::where('order_number', 'like', $prefix.'%')
+            ->orderByDesc('order_number')
+            ->value('order_number');
+
+        $nextSequence = 1;
+        if ($lastOrder !== null) {
+            $lastSequence = (int) substr($lastOrder, strlen($prefix));
+            $nextSequence = $lastSequence + 1;
+        }
+
+        return $prefix.str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
      * Cerrar una orden de producción, procesando el consumo real y la entrada de producto terminado.
      */
     public function completeOrder(ProductionOrder $order, array $data): ProductionOrder
@@ -321,8 +407,15 @@ class ProductionOrderService
                 ->lockForUpdate()
                 ->findOrFail($order->id);
 
-            if ($lockedOrder->status === ProductionOrderStatus::Completed) {
-                throw new \DomainException('La orden ya ha sido completada.');
+            $allowedForCompletion = [
+                ProductionOrderStatus::Pending,
+                ProductionOrderStatus::InProgress,
+            ];
+
+            if (! in_array($lockedOrder->status, $allowedForCompletion, true)) {
+                throw new \DomainException(
+                    "No se puede completar una orden en estado '{$lockedOrder->status->label()}'."
+                );
             }
 
             $userId = auth()->id() ?? throw new \RuntimeException('No authenticated user');
@@ -447,35 +540,28 @@ class ProductionOrderService
                     ]);
 
                     if ($variant !== null) {
-                        $variantUpdates = ['current_cost' => $costPriceForVariant];
+                        $presentationValue = (float) ($variant->presentation_value ?? 1);
+                        $bulkCost = $presentationValue > 0 ? ($bulkCostForVariant / $presentationValue) : 0.0;
 
-                        if ($autoUpdateVariantPrice && $productProfitMargin !== null) {
-                            $shouldUpdateVariantPrice = $this->shouldUpdatePriceFromCostChange(
-                                currentPrice: $variant->current_price !== null ? (float) $variant->current_price : null,
-                                previousCost: $variant->current_cost !== null ? (float) $variant->current_cost : null,
-                                newCost: $costPriceForVariant,
-                                threshold: $productPriceThreshold
-                            );
-
-                            if ($shouldUpdateVariantPrice) {
-                                $variantUpdates['current_price'] = $costPriceForVariant * (1 + ($productProfitMargin / 100));
-                            }
-                        }
-
-                        $variant->update($variantUpdates);
+                        $this->variantPricingService->updateVariantCostAndPrice(
+                            variant: $variant,
+                            bulkCost: $bulkCost,
+                            profitMargin: $productProfitMargin,
+                            priceThreshold: $productPriceThreshold,
+                            packageUnitCost: $packagingUnitCost,
+                            autoUpdatePrice: $autoUpdateVariantPrice,
+                            forceRefresh: false
+                        );
                     }
 
-                    // Actualizar o crear registro en FinishedInventory
+                    // Actualizar o crear registro en FinishedInventory (por variante)
                     $inventory = FinishedInventory::query()
                         ->lockForUpdate()
                         ->firstOrNew([
                             'product_id' => $lockedOrder->product_id,
+                            'product_variant_id' => $plan->product_variant_id,
                             'warehouse_id' => $lockedOrder->warehouse_id,
                         ]);
-
-                    if (! $inventory->exists && $inventory->product_variant_id === null) {
-                        $inventory->product_variant_id = $plan->product_variant_id;
-                    }
 
                     $inventory->quantity = ($inventory->quantity ?? 0) + $actualUnits;
                     $inventory->save();
@@ -511,6 +597,41 @@ class ProductionOrderService
                     ]
                 );
             }
+
+            return $lockedOrder->refresh();
+        });
+    }
+
+    public function cancelOrder(ProductionOrder $order, ?string $reason = null): ProductionOrder
+    {
+        return DB::transaction(function () use ($order, $reason) {
+            $lockedOrder = ProductionOrder::query()
+                ->lockForUpdate()
+                ->findOrFail($order->id);
+
+            $allowedForCancellation = [
+                ProductionOrderStatus::Pending,
+                ProductionOrderStatus::InProgress,
+            ];
+
+            if (! in_array($lockedOrder->status, $allowedForCancellation, true)) {
+                throw new \DomainException(
+                    "No se puede cancelar una orden en estado '{$lockedOrder->status->label()}'."
+                );
+            }
+
+            $notes = $lockedOrder->notes;
+            if ($reason !== null && $reason !== '') {
+                $notes = trim(implode("\n\n", array_filter([
+                    $lockedOrder->notes,
+                    "Cancelación: {$reason}",
+                ])));
+            }
+
+            $lockedOrder->update([
+                'status' => ProductionOrderStatus::Cancelled,
+                'notes' => $notes,
+            ]);
 
             return $lockedOrder->refresh();
         });

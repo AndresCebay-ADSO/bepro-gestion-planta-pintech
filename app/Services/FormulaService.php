@@ -59,8 +59,10 @@ class FormulaService
             return (float) $fromUnit->to_kg_conversion / (float) $toUnit->to_kg_conversion;
         }
 
-        // Si no hay factores de conversión compatibles, asumimos factor 1.0
-        // (En un futuro se podría lanzar una excepción o manejar densidades)
-        return 1.0;
+        // No hay factores de conversión compatibles entre las unidades
+        throw new \DomainException(
+            "No se puede convertir entre '{$fromUnit->symbol}' y '{$toUnit->symbol}': "
+            .'no hay factores de conversión compatibles (ni por peso ni por volumen).'
+        );
     }
 }

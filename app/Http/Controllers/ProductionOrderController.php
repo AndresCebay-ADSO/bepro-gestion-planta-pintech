@@ -7,10 +7,10 @@ namespace App\Http\Controllers;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\WarehouseType;
 use App\Exports\ProductionOrderExport;
+use App\Http\Requests\Production\CancelProductionOrderRequest;
 use App\Http\Requests\Production\CompleteProductionOrderRequest;
 use App\Http\Requests\Production\PreviewProductionOrderCostsRequest;
 use App\Http\Requests\Production\StoreProductionOrderRequest;
-use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
@@ -22,7 +22,6 @@ use App\Services\ProductionOrderService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
@@ -166,60 +165,7 @@ class ProductionOrderController extends Controller
     {
         $this->authorize('create', ProductionOrder::class);
 
-        $validated = $request->validated();
-
-        $formula = Formula::findOrFail($validated['formula_id']);
-        $formula->load('details');
-
-        // Validar stock antes de crear
-        $this->productionOrderService->validateStockForOrder($formula, (float) $validated['quantity'], (int) $validated['warehouse_id']);
-
-        $order = DB::transaction(function () use ($validated, $formula) {
-            $order = ProductionOrder::create([
-                'product_id' => $validated['product_id'],
-                'formula_id' => $validated['formula_id'],
-                'warehouse_id' => $validated['warehouse_id'],
-                'quantity' => $validated['quantity'],
-                'planned_date' => $validated['planned_date'],
-                'notes' => $validated['notes'] ?? null,
-                'order_number' => $this->generateOrderNumber(),
-                'status' => ProductionOrderStatus::Pending,
-                'created_by' => auth()->id(),
-            ]);
-
-            // Crear detalles de ingredientes basados en la fórmula (sin reservar lote en planificación)
-            foreach ($formula->details as $detail) {
-                $plannedQuantity = $detail->quantity * (float) $validated['quantity'];
-                $estimatedUnitCost = $this->productionOrderService->estimateMaterialUnitCostForPlanning(
-                    rawMaterialId: (int) $detail->raw_material_id,
-                    warehouseId: (int) $validated['warehouse_id'],
-                    requiredQuantity: (float) $plannedQuantity
-                );
-
-                ProductionOrderDetail::create([
-                    'production_order_id' => $order->id,
-                    'raw_material_id' => $detail->raw_material_id,
-                    'batch_id' => null,
-                    'step_order' => $detail->step_order,
-                    'planned_quantity' => $plannedQuantity,
-                    'unit_cost' => $estimatedUnitCost,
-                    'total_cost' => $plannedQuantity * $estimatedUnitCost,
-                ]);
-            }
-
-            // Crear plan de envasado si se proporcionó
-            if (! empty($validated['packaging'])) {
-                foreach ($validated['packaging'] as $packData) {
-                    ProductionOrderPackagingPlan::create([
-                        'production_order_id' => $order->id,
-                        'product_variant_id' => $packData['product_variant_id'],
-                        'planned_units' => $packData['planned_units'],
-                    ]);
-                }
-            }
-
-            return $order;
-        });
+        $order = $this->productionOrderService->createOrder($request->validated());
 
         return redirect()->route('production-orders.show', $order)
             ->with('success', 'Orden de producción creada con éxito.');
@@ -242,6 +188,23 @@ class ProductionOrderController extends Controller
 
         return redirect()->route('production-orders.show', $order)
             ->with('success', 'Producción finalizada e inventario actualizado.');
+    }
+
+    /**
+     * Cancelar una orden de producción.
+     */
+    public function cancel(CancelProductionOrderRequest $request, ProductionOrder $order): RedirectResponse
+    {
+        $this->authorize('delete', $order);
+
+        try {
+            $this->productionOrderService->cancelOrder($order, $request->validated('reason'));
+
+            return redirect()->route('production-orders.show', $order)
+                ->with('success', 'Orden de producción cancelada con éxito.');
+        } catch (\DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
     }
 
     /**
@@ -351,7 +314,6 @@ class ProductionOrderController extends Controller
                 'raw_material' => $detail->rawMaterial ? [
                     'id' => $detail->rawMaterial->id,
                     'code' => $detail->rawMaterial->code,
-                    'name' => $detail->rawMaterial->name,
                 ] : null,
             ])->values(),
             'packaging_plans' => $productionOrder->packagingPlans->map(function (ProductionOrderPackagingPlan $plan) use ($finishedCostByVariant, $packageUnitCostEstimates) {
@@ -391,32 +353,6 @@ class ProductionOrderController extends Controller
     }
 
     /**
-     * Genera un número de orden secuencial: OP-YYMMDD-XXXX (max 16 chars).
-     */
-    private function generateOrderNumber(): string
-    {
-        $prefix = 'OP-'.now()->format('ymd').'-';
-
-        if (DB::connection()->getDriverName() === 'pgsql') {
-            // PostgreSQL advisory lock to prevent race conditions when 0 rows exist
-            $lockKey = crc32($prefix);
-            DB::statement('SELECT pg_advisory_xact_lock(?)', [$lockKey]);
-        }
-
-        $lastOrder = ProductionOrder::where('order_number', 'like', $prefix.'%')
-            ->orderByDesc('order_number')
-            ->value('order_number');
-
-        $nextSequence = 1;
-        if ($lastOrder !== null) {
-            $lastSequence = (int) substr($lastOrder, strlen($prefix));
-            $nextSequence = $lastSequence + 1;
-        }
-
-        return $prefix.str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
-    }
-
-    /**
      * Filas para PDF/Excel: pasos ordenados por step_order (órdenes no completadas)
      * o consolidado por materia prima (orden completada).
      *
@@ -434,7 +370,7 @@ class ProductionOrderController extends Controller
 
                     return [
                         'raw_material_code' => $first->rawMaterial->code ?? 'N/A',
-                        'raw_material_name' => $first->rawMaterial->name ?? 'N/A',
+                        'raw_material_name' => $first->rawMaterial->code ?? 'N/A',
                         'planned_quantity' => round((float) $group->sum(fn (ProductionOrderDetail $d) => (float) $d->planned_quantity), 4),
                         'actual_quantity' => round((float) $group->sum(fn (ProductionOrderDetail $d) => (float) ($d->actual_quantity ?? 0)), 4),
                     ];
@@ -458,7 +394,7 @@ class ProductionOrderController extends Controller
             $rows[] = [
                 'step_order' => (int) $detail->step_order,
                 'raw_material_code' => $detail->rawMaterial->code ?? 'N/A',
-                'raw_material_name' => $detail->rawMaterial->name ?? 'N/A',
+                'raw_material_name' => $detail->rawMaterial->code ?? 'N/A',
                 'planned_quantity' => $qty,
                 'actual_quantity' => $detail->actual_quantity !== null ? (float) $detail->actual_quantity : null,
             ];

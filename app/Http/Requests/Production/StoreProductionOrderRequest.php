@@ -28,7 +28,13 @@ class StoreProductionOrderRequest extends FormRequest
     {
         return [
             'product_id' => 'required|exists:products,id',
-            'formula_id' => 'required|exists:formulas,id',
+            'formula_id' => [
+                'required',
+                Rule::exists('formulas', 'id')
+                    ->where('product_id', $this->input('product_id'))
+                    ->where('is_active', true)
+                    ->whereNull('deleted_at'),
+            ],
             'warehouse_id' => [
                 'required',
                 Rule::exists('warehouses', 'id')

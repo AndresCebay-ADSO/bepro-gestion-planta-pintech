@@ -94,6 +94,7 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
 
     Route::resource('production-orders', ProductionOrderController::class);
     Route::post('production-orders/{order}/complete', [ProductionOrderController::class, 'complete'])->name('production-orders.complete');
+    Route::post('production-orders/{order}/cancel', [ProductionOrderController::class, 'cancel'])->name('production-orders.cancel');
     Route::post('production-orders/{order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])->name('production-orders.preview-costs');
 
     // Ajustes de línea
