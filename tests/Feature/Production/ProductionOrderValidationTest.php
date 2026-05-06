@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -93,4 +94,73 @@ test('lanza excepcion si se intenta guardar una orden de produccion en una bodeg
         'planned_date' => now(),
         'created_by' => $user->id,
     ]))->toThrow(InvalidArgumentException::class, 'Solo se pueden asociar órdenes de producción a bodegas tipo Fábrica.');
+});
+
+test('rejects formula_id that belongs to another product', function () {
+    Role::create(['name' => 'admin']);
+
+    [$product, $user, $formula] = createDependencies();
+    $user->forceFill(['email_verified_at' => now()])->save();
+    $user->assignRole('admin');
+
+    $otherProduct = Product::create([
+        'code' => 'TEST-002',
+        'name' => 'Otro Producto',
+        'category_id' => $product->category_id,
+        'unit_of_measure_id' => $product->unit_of_measure_id,
+        'current_cost' => 12,
+        'profit_margin' => 35,
+        'current_price' => 16.2,
+        'price_threshold' => 5,
+    ]);
+
+    $warehouse = Warehouse::create([
+        'name' => 'Fábrica Palmira',
+        'city' => 'Palmira',
+        'type' => 'factory',
+        'is_active' => true,
+    ]);
+
+    $response = $this->actingAs($user)
+        ->from(route('production-orders.create'))
+        ->post(route('production-orders.store'), [
+            'product_id' => $otherProduct->id,
+            'formula_id' => $formula->id,
+            'warehouse_id' => $warehouse->id,
+            'quantity' => 100,
+            'planned_date' => now()->addDay()->toDateString(),
+        ]);
+
+    $response->assertRedirect(route('production-orders.create'));
+    $response->assertSessionHasErrors(['formula_id']);
+});
+
+test('rejects soft deleted formula_id', function () {
+    Role::create(['name' => 'admin']);
+
+    [$product, $user, $formula] = createDependencies();
+    $user->forceFill(['email_verified_at' => now()])->save();
+    $user->assignRole('admin');
+
+    $warehouse = Warehouse::create([
+        'name' => 'Fábrica Yumbo',
+        'city' => 'Yumbo',
+        'type' => 'factory',
+        'is_active' => true,
+    ]);
+
+    $formula->delete();
+
+    $response = $this->actingAs($user)
+        ->from(route('production-orders.create'))
+        ->post(route('production-orders.store'), [
+            'product_id' => $product->id,
+            'formula_id' => $formula->id,
+            'warehouse_id' => $warehouse->id,
+            'quantity' => 100,
+            'planned_date' => now()->addDay()->toDateString(),
+        ]);
+
+    $response->assertRedirect(route('production-orders.create'));
+    $response->assertSessionHasErrors(['formula_id']);
 });

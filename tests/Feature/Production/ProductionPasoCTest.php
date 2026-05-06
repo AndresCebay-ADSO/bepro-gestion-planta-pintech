@@ -18,6 +18,7 @@ use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\ProductionOrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Role;
@@ -136,6 +137,57 @@ test('it allows order creation if stock is sufficient', function () {
         'product_variant_id' => $variant->id,
         'planned_units' => 20,
     ]);
+});
+
+test('store delegates production order creation to the service', function () {
+    InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $variant = ProductVariant::where('product_id', $this->formula->product_id)->firstOrFail();
+    $expectedOrder = ProductionOrder::create([
+        'order_number' => 'OP-DELEGATE-01',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now()->addDay(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $service = Mockery::mock(ProductionOrderService::class);
+    $service->shouldReceive('createOrder')
+        ->once()
+        ->with(Mockery::on(function (array $payload) use ($variant): bool {
+            return $payload['product_id'] === $this->formula->product_id
+                && $payload['formula_id'] === $this->formula->id
+                && $payload['warehouse_id'] === $this->factory->id
+                && (float) $payload['quantity'] === 100.0
+                && $payload['packaging'][0]['product_variant_id'] === $variant->id
+                && (float) $payload['packaging'][0]['planned_units'] === 20.0;
+        }))
+        ->andReturn($expectedOrder);
+
+    $this->app->instance(ProductionOrderService::class, $service);
+
+    $response = $this->post(route('production-orders.store'), [
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'planned_date' => now()->addDay()->toDateString(),
+        'packaging' => [
+            ['product_variant_id' => $variant->id, 'planned_units' => 20],
+        ],
+    ]);
+
+    $response->assertRedirect(route('production-orders.show', $expectedOrder));
 });
 
 test('it completes order and updates inventory', function () {
@@ -258,7 +310,7 @@ test('it prevents completing the same production order twice', function () {
         ]);
 
     $secondResponse->assertRedirect(route('production-orders.show', $order));
-    $secondResponse->assertSessionHas('error', 'La orden ya ha sido completada.');
+    $secondResponse->assertSessionHas('error', "No se puede completar una orden en estado 'Completada'.");
     expect(InventoryMovement::where('production_order_id', $order->id)->count())->toBe(1);
 });
 
@@ -439,7 +491,7 @@ test('it shows production order detail with loaded data for the view', function 
     $response->assertSee('packaging_plans');
 });
 
-test('it aggregates finished inventory by product and warehouse when packaging has multiple variants', function () {
+test('it creates separate finished inventory records per variant when packaging has multiple variants', function () {
     $batch = InventoryBatch::create([
         'raw_material_id' => $this->material->id,
         'warehouse_id' => $this->factory->id,
@@ -502,11 +554,20 @@ test('it aggregates finished inventory by product and warehouse when packaging h
     ]);
 
     $response->assertRedirect();
-    $this->assertDatabaseCount('finished_inventories', 1);
+
+    // Each variant gets its own finished_inventories record (trazabilidad por variante)
+    $this->assertDatabaseCount('finished_inventories', 2);
     $this->assertDatabaseHas('finished_inventories', [
         'product_id' => $order->product_id,
+        'product_variant_id' => $firstVariant->id,
         'warehouse_id' => $order->warehouse_id,
-        'quantity' => 20,
+        'quantity' => 10,
+    ]);
+    $this->assertDatabaseHas('finished_inventories', [
+        'product_id' => $order->product_id,
+        'product_variant_id' => $secondVariant->id,
+        'warehouse_id' => $order->warehouse_id,
+        'quantity' => 10,
     ]);
     $this->assertDatabaseCount('finished_inventory_movements', 2);
 });

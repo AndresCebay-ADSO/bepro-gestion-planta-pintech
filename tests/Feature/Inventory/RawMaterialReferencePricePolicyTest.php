@@ -174,3 +174,31 @@ test('inventory movement correctly updates current_price for raw materials creat
     // The price should be updated to 1500 since it's the only lot
     expect((float) $materialWithoutPrice->current_price)->toBe(1500.0);
 });
+
+test('reference price sync ignores differences smaller than rounded float precision', function () {
+    $this->rawMaterial->update([
+        'current_price' => 2500.1234,
+        'previous_price' => 2000,
+    ]);
+
+    InventoryBatch::create([
+        'raw_material_id' => $this->rawMaterial->id,
+        'warehouse_id' => $this->warehouse->id,
+        'initial_quantity' => 20,
+        'remaining_quantity' => 20,
+        'unit_price' => 2500.1234000001,
+        'entry_date' => now()->toDateString(),
+        'expiry_date' => null,
+        'supplier' => 'Proveedor Preciso',
+        'lot_number' => 'LOT-PREC-01',
+    ]);
+
+    $changed = app(RawMaterialReferencePriceService::class)
+        ->syncRawMaterialCurrentPrice((int) $this->rawMaterial->id);
+
+    expect($changed)->toBeFalse();
+
+    $this->rawMaterial->refresh();
+    expect((float) $this->rawMaterial->current_price)->toBe(2500.1234);
+    expect((float) $this->rawMaterial->previous_price)->toBe(2000.0);
+});

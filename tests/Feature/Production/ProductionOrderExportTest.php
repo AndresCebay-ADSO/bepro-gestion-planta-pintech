@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\ProductionOrderController;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -141,4 +142,19 @@ test('export routes require authentication', function () {
 
     $this->get(route('production-orders.export-excel', $order))
         ->assertRedirect('/login');
+});
+
+test('pdf payload uses raw material code when name is unavailable', function () {
+    [$order, $user] = createExportTestDependencies();
+
+    $controller = app(ProductionOrderController::class);
+    $method = new ReflectionMethod($controller, 'buildPdfMaterialsPayload');
+    $method->setAccessible(true);
+
+    $this->actingAs($user);
+    $payload = $method->invoke($controller, $order);
+
+    expect($payload)->toBeArray();
+    expect($payload['rows'][0]['raw_material_code'])->toBe('RM-EXP-01');
+    expect($payload['rows'][0]['raw_material_name'])->toBe('RM-EXP-01');
 });
