@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
+use App\Services\ProductionCostRecalculationService;
 use Illuminate\Database\Seeder;
 
 class FormulaSeeder extends Seeder
@@ -15,13 +16,34 @@ class FormulaSeeder extends Seeder
     /**
      * Run the database seeds.
      */
-    public function run(): void
+    public function run(ProductionCostRecalculationService $recalculationService): void
     {
         $kgUnit = UnitOfMeasure::where('symbol', 'kg')->orWhere('name', 'Kilogramo')->first();
         $admin = User::first();
 
         // Estructura de prueba para fórmulas de productos específicos
         $formulas = [
+
+            // Ajustadores
+            'BP ESMALTE POLIURETANO BLANCO' => [
+                ['R-7 A', 1.45],
+                ['ABS-1 PU', 0.03],
+                ['ABA-3 P', 0.01],
+                ['C-3', 0.45],
+                ['C-3 POL P', 0.45],
+                ['S-11 S', 0.095],
+                ['S-10', 0.0225],
+                ['S-8 B', 0.05],
+                ['C-6', 0.404],
+                ['R-7 A', 1.45],
+                ['S-10', 0.075],
+                ['S-4', 0.1975],
+                ['S-11 S', 0.095],
+                ['S-6', 0.0125],
+                ['ABS-4', 0.015],
+                ['ABS-5', 0.015],
+                ['ABS-6', 0.0002],
+            ],
             'BP ANTICORROSIVO BASE AGUA ROJO' => [
                 ['AGUA', 1.2],
                 ['ABA-1', 0.06],
@@ -53,6 +75,36 @@ class FormulaSeeder extends Seeder
                 ['S - 3', 0.425],
                 ['ABS - 9', 0.006],
                 ['ABS - 13', 0.032],
+            ],
+            'BP AJUSTADOR IE-400 FM' => [
+                ['S-7', 1],
+                ['S-11', 0.17],
+                ['S-4', 1.68],
+                ['S-5', 0.504],
+            ],
+            'BP AJUSTADOR IP-350' => [
+                ['S-4', 3.126],
+                ['S-10', 0.105],
+                ['S-6', 0.105],
+            ],
+            'BP AJUSTADOR AP-100' => [
+                ['S-4', 2.68],
+                ['S-10', 0.34],
+                ['S-6', 0.34],
+            ],
+            'BP PRIMER EPOXICO HS 2K TINTEABLE' => [
+                ['R-5 C', 0.6],
+                ['ABS-2', 0.002],
+                ['ABS-3', 0.01],
+                ['ABS-7', 0.03],
+                ['ABS-15', 0.0212],
+                ['C-6', 2],
+                ['S-7', 0.453],
+                ['R-5 C', 0.6],
+                ['S-4', 0.31],
+                ['S-6', 0.038],
+                ['ABS-5', 0.011],
+                ['ABS-4 R', 0.008],
             ],
         ];
 
@@ -113,7 +165,9 @@ class FormulaSeeder extends Seeder
                 $step++;
             }
 
-            $this->command->info("Fórmula creada exitosamente para: {$productName}");
+            $recalculationService->recalculateForProduct((int) $product->id);
+
+            $this->command->info("Fórmula y costos calculados para: {$productName}");
         }
     }
 }

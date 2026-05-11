@@ -24,12 +24,12 @@ class InventoryBatchSeeder extends Seeder
             'A-1' => [
                 ['qty' => 17, 'price' => 7000], // 1 GARRAFAS DE 17KG
                 ['qty' => 51, 'price' => 6950], // 3 GARRAFAS DE 17KG
-                ['qty' => 34, 'price' => 6900], // 2 GARRAFAS DE 17KG
+                ['qty' => 1000, 'price' => 6900], // 2 GARRAFAS DE 17KG
             ],
             'A-2' => [
                 ['qty' => 40, 'price' => 11890],
                 ['qty' => 40, 'price' => 11900],
-                ['qty' => 20, 'price' => 12000],
+                ['qty' => 1000, 'price' => 12000],
             ],
             'A-3 A' => [
                 ['qty' => 180, 'price' => 13000],
@@ -696,7 +696,7 @@ class InventoryBatchSeeder extends Seeder
                 ['qty' => 100, 'price' => 9150],
                 ['qty' => 100, 'price' => 9300],
             ],
-            'R-5 R' => [
+            'R-5' => [
                 ['qty' => 100, 'price' => 8800],
                 ['qty' => 100, 'price' => 8750],
                 ['qty' => 100, 'price' => 8900],
@@ -866,7 +866,7 @@ class InventoryBatchSeeder extends Seeder
                 ['qty' => 100, 'price' => 14700],
                 ['qty' => 100, 'price' => 14950],
             ],
-            'S-7 CONCQUIMICA' => [
+            'S-7' => [
                 ['qty' => 100, 'price' => 9200],
                 ['qty' => 100, 'price' => 9150],
                 ['qty' => 100, 'price' => 9300],
@@ -902,6 +902,11 @@ class InventoryBatchSeeder extends Seeder
                 ['qty' => 100, 'price' => 11350],
             ],
             'S-11 S' => [
+                ['qty' => 100, 'price' => 14500],
+                ['qty' => 100, 'price' => 14400],
+                ['qty' => 100, 'price' => 14650],
+            ],
+            'S-11' => [
                 ['qty' => 100, 'price' => 14500],
                 ['qty' => 100, 'price' => 14400],
                 ['qty' => 100, 'price' => 14650],
@@ -1082,12 +1087,13 @@ class InventoryBatchSeeder extends Seeder
                 $daysAgo = 60 - ($index * 15) + rand(0, 10);
                 $entryDate = now()->subDays($daysAgo);
                 $expiryDate = now()->addDays(rand(180, 720));
+                $quantity = max($batch['qty'], 1000);
 
                 InventoryBatch::create([
                     'raw_material_id' => $material->id,
                     'warehouse_id' => $cali->id,
-                    'initial_quantity' => $batch['qty'],
-                    'remaining_quantity' => $batch['qty'],
+                    'initial_quantity' => $quantity,
+                    'remaining_quantity' => $quantity,
                     'unit_price' => $batch['price'],
                     'entry_date' => $entryDate,
                     'expiry_date' => $expiryDate,

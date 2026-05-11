@@ -16,7 +16,7 @@ class InventoryBatchFactory extends Factory
 
     public function definition(): array
     {
-        $initialQuantity = $this->faker->randomFloat(4, 1, 500);
+        $initialQuantity = $this->faker->randomFloat(4, 1000, 5000);
 
         return [
             'raw_material_id' => RawMaterial::factory(),

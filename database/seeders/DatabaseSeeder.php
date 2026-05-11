@@ -29,8 +29,9 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             WarehouseUserSeeder::class,
             ProductSeeder::class,
-            FormulaSeeder::class,
             InventoryBatchSeeder::class,
+            ProductVariantSeeder::class,
+            FormulaSeeder::class,
         ]);
     }
 }
