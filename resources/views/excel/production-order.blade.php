@@ -9,12 +9,12 @@
             </th>
             <th colspan="2" style="font-weight: bold; border: 1px solid #000000; background-color: #f0f0f0;"> CÓDIGO
             </th>
-            <th colspan="2" style="font-size: 10px; border: 1px solid #000000; background-color: #ffffff;">FPR-01</th>
+            <th colspan="2" style="font-size: 10px; border: 1px solid #000000; background-color: #ffffff;">FPR-02</th>
         </tr>
         <tr>
             <th colspan="2" style="font-weight: bold; border: 1px solid #000000; background-color: #f0f0f0;"> VERSIÓN
             </th>
-            <th colspan="2" style="font-size: 10px; border: 1px solid #000000; background-color: #ffffff;">1.0</th>
+            <th colspan="2" style="font-size: 10px; border: 1px solid #000000; background-color: #ffffff;">2.0</th>
         </tr>
         <tr>
             <th colspan="2" style="font-weight: bold; border: 1px solid #000000; background-color: #f0f0f0;"> FECHA</th>

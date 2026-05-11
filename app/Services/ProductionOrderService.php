@@ -372,11 +372,11 @@ class ProductionOrderService
     }
 
     /**
-     * Genera un número de orden secuencial: OP-YYMMDD-XXXX (max 16 chars).
+     * Genera un número de orden secuencial: OP-YYYY-XXXX (reinicia cada año).
      */
     private function generateOrderNumber(): string
     {
-        $prefix = 'OP-'.now()->format('ymd').'-';
+        $prefix = 'OP-'.now()->format('Y').'-';
 
         if (DB::connection()->getDriverName() === 'pgsql') {
             // PostgreSQL advisory lock to prevent race conditions when 0 rows exist

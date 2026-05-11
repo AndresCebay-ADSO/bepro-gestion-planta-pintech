@@ -126,11 +126,11 @@
                 ORDEN DE PRODUCCION
             </td>
             <td class="label" style="width: 15%;">CÓDIGO:</td>
-            <td class="value" style="width: 15%;">FPR-01</td>
+            <td class="value" style="width: 15%;">FPR-02</td>
         </tr>
         <tr>
             <td class="label">VERSIÓN:</td>
-            <td class="value">1.0</td>
+            <td class="value">2.0</td>
         </tr>
         <tr>
             <td class="label">FECHA:</td>
