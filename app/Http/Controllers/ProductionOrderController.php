@@ -16,6 +16,7 @@ use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderLineAdjustment;
 use App\Models\ProductionOrderPackagingPlan;
+use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\Warehouse;
 use App\Services\ProductionOrderService;
@@ -67,9 +68,21 @@ class ProductionOrderController extends Controller
                 'label' => $rm->code,
             ]);
 
+        $availableVariants = ProductVariant::query()
+            ->where('product_id', $productionOrder->product_id)
+            ->where('is_active', true)
+            ->get(['id', 'sku', 'presentation_label', 'presentation_value'])
+            ->map(fn (ProductVariant $v) => [
+                'id' => $v->id,
+                'sku' => $v->sku,
+                'presentation_label' => $v->presentation_label,
+                'presentation_value' => (float) $v->presentation_value,
+            ]);
+
         return Inertia::render('Production/Orders/Show', [
             'order' => $this->buildOrderData($productionOrder),
             'rawMaterials' => $rawMaterials,
+            'availableVariants' => $availableVariants,
         ]);
     }
 

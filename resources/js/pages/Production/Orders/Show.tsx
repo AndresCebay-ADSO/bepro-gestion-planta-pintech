@@ -16,6 +16,10 @@ import {
     destroy as destroyLineAdjustment,
 } from '@/actions/App/Http/Controllers/Production/LineAdjustmentController';
 import {
+    store as storePackagingPlan,
+    destroy as destroyPackagingPlan,
+} from '@/actions/App/Http/Controllers/Production/PackagingPlanController';
+import {
     complete as productionOrderComplete,
     exportExcel as productionOrderExportExcel,
     exportPdf as productionOrderExportPdf,
@@ -31,9 +35,12 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 
+type VariantOption = { id: number; sku: string; presentation_label: string; presentation_value: number };
+
 type Props = {
     order: any;
     rawMaterials: Array<{ id: number; label: string }>;
+    availableVariants: VariantOption[];
 };
 
 type PreviewCostData = {
@@ -44,7 +51,7 @@ type PreviewCostData = {
     total_equivalent: number;
 };
 
-export default function ProductionOrderShow({ order, rawMaterials }: Props) {
+export default function ProductionOrderShow({ order, rawMaterials, availableVariants }: Props) {
     const isCompleted = order.status === 'completed';
     const hasOrderData = order.details.length > 0 || order.packaging_plans.length > 0;
 
@@ -80,6 +87,30 @@ export default function ProductionOrderShow({ order, rawMaterials }: Props) {
 
     const [previewCosts, setPreviewCosts] = useState<PreviewCostData | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
+
+    // Re-sync packaging form data when plans are added/removed (after store/destroy redirects)
+    const packagingPlanIds = useMemo(
+        () => order.packaging_plans.map((p: any) => p.id).join(','),
+        [order.packaging_plans]
+    );
+
+    useEffect(() => {
+        setData('packaging', order.packaging_plans.map((pack: any) => {
+            // Buscamos si el usuario ya había escrito algo para este plan en el formulario actual
+            const existingFormItem = data.packaging.find((item: any) => item.id === pack.id);
+            
+            return {
+                id: pack.id,
+                presentation: pack.product_variant?.presentation_label ?? 'Unidad',
+                presentation_value: pack.product_variant?.presentation_value ?? 1,
+                planned_units: pack.planned_units,
+                // Si existía en el form, conservamos lo que el usuario escribió; si no, usamos el valor del backend
+                actual_units: existingFormItem ? existingFormItem.actual_units : (pack.actual_units ?? pack.planned_units),
+                cost_price: pack.cost_price ?? null,
+            };
+        }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [packagingPlanIds]);
 
     useEffect(() => {
         if (isCompleted) {
@@ -446,7 +477,12 @@ export default function ProductionOrderShow({ order, rawMaterials }: Props) {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <Label>Empaque Final (Unidades)</Label>
+                                    <div className="flex items-center justify-between">
+                                        <Label>Empaque Final (Unidades)</Label>
+                                        {!isCompleted && (
+                                            <span className="text-xs text-muted-foreground">Puedes agregar o eliminar presentaciones</span>
+                                        )}
+                                    </div>
                                     <div className="rounded-md border overflow-hidden">
                                         <table className="w-full text-sm">
                                             <thead className="bg-muted/50 border-b">
@@ -457,6 +493,7 @@ export default function ProductionOrderShow({ order, rawMaterials }: Props) {
                                                     <th className="p-3 text-right">Eq. Gal</th>
                                                     <th className="p-3 text-right">Costo Unit.</th>
                                                     <th className="p-3 text-right">Costo Total</th>
+                                                    {!isCompleted && <th className="p-3 w-12"></th>}
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -487,18 +524,40 @@ export default function ProductionOrderShow({ order, rawMaterials }: Props) {
                                                         <td className="p-3 text-right font-medium">
                                                             <FormattedNumber value={(Number(pack.actual_units) || 0) * (Number(pack.cost_price) || 0)} currency maxDecimals={2} />
                                                         </td>
+                                                        {!isCompleted && (
+                                                            <td className="p-3">
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-7 w-7 text-destructive hover:text-destructive"
+                                                                    onClick={() => {
+                                                                        if (confirm('¿Eliminar esta presentación del plan de envasado?')) {
+                                                                            router.delete(destroyPackagingPlan({ order: order.id, plan: pack.id }).url, {
+                                                                                preserveScroll: true,
+                                                                            });
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </Button>
+                                                            </td>
+                                                        )}
                                                     </tr>
                                                 ))}
                                                 {packagingRows.length === 0 && (
                                                     <tr>
-                                                        <td className="p-3 text-muted-foreground" colSpan={6}>
-                                                            Esta orden no tiene plan de empaque.
+                                                        <td className="p-3 text-muted-foreground" colSpan={isCompleted ? 6 : 7}>
+                                                            Esta orden no tiene plan de empaque. {!isCompleted && 'Agrega presentaciones abajo.'}
                                                         </td>
                                                     </tr>
                                                 )}
                                             </tbody>
                                         </table>
                                     </div>
+
+                                    {/* Formulario inline para agregar presentación */}
+                                    {!isCompleted && <PackagingPlanForm orderId={order.id} availableVariants={availableVariants} />}
                                 </div>
                             </CardContent>
                         </Card>
@@ -751,6 +810,96 @@ function LineAdjustmentForm({ orderId, rawMaterials }: { orderId: number; rawMat
             >
                 <Plus className="w-4 h-4 mr-1" />
                 {submitting ? 'Guardando...' : 'Agregar'}
+            </Button>
+        </div>
+    );
+}
+
+function PackagingPlanForm({ orderId, availableVariants }: { orderId: number; availableVariants: VariantOption[] }) {
+    const [variantId, setVariantId] = useState<number | null>(null);
+    const [plannedUnits, setPlannedUnits] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+    const comboboxOptions = availableVariants.map((v) => ({
+        id: v.id,
+        label: `${v.sku} — ${v.presentation_label} (${v.presentation_value} gal)`,
+    }));
+
+    const handleAdd = () => {
+        if (!variantId || !plannedUnits) {
+            const errors: Record<string, string> = {};
+
+            if (!variantId) {
+ errors.product_variant_id = 'Seleccione una presentación.'; 
+}
+
+            if (!plannedUnits) {
+ errors.planned_units = 'Ingrese unidades.'; 
+}
+
+            setFormErrors(errors);
+
+            return;
+        }
+
+        setSubmitting(true);
+        setFormErrors({});
+
+        router.post(storePackagingPlan({ order: orderId }).url, {
+            product_variant_id: variantId,
+            planned_units: Number(plannedUnits),
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setVariantId(null);
+                setPlannedUnits('');
+            },
+            onError: (errors) => {
+                setFormErrors(errors as Record<string, string>);
+            },
+            onFinish: () => setSubmitting(false),
+        });
+    };
+
+    return (
+        <div className="rounded-md border border-dashed border-blue-300 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/10 p-3 space-y-3">
+            <p className="text-xs font-medium text-blue-700 dark:text-blue-400">Agregar presentación al plan de envasado</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="sm:col-span-2 space-y-1">
+                    <Combobox
+                        options={comboboxOptions}
+                        value={variantId}
+                        onChange={(v) => setVariantId(Number(v))}
+                        placeholder="Presentación..."
+                        emptyText="Sin resultados"
+                    />
+                    {formErrors.product_variant_id && <p className="text-xs text-destructive">{formErrors.product_variant_id}</p>}
+                </div>
+                <div className="space-y-1">
+                    <Input
+                        type="number"
+                        step="1"
+                        min="1"
+                        placeholder="Unidades planeadas"
+                        className="h-9"
+                        value={plannedUnits}
+                        onChange={(e) => setPlannedUnits(e.target.value)}
+                    />
+                    {formErrors.planned_units && <p className="text-xs text-destructive">{formErrors.planned_units}</p>}
+                </div>
+            </div>
+            {formErrors.production_order && <p className="text-xs text-destructive">{formErrors.production_order}</p>}
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-950/30"
+                onClick={handleAdd}
+                disabled={submitting}
+            >
+                <Plus className="w-4 h-4 mr-1" />
+                {submitting ? 'Guardando...' : 'Agregar Presentación'}
             </Button>
         </div>
     );
