@@ -24,6 +24,7 @@ class RawMaterialFactory extends Factory
             'previous_price' => null,
             'minimum_stock' => $this->faker->randomFloat(4, 0, 100),
             'alert_days_before_expiry' => $this->faker->numberBetween(1, 90),
+            'tracks_inventory' => true,
             'is_active' => true,
         ];
     }
@@ -36,5 +37,14 @@ class RawMaterialFactory extends Factory
     public function withoutPrice(): static
     {
         return $this->state(fn (): array => ['current_price' => null]);
+    }
+
+    public function withoutInventoryTracking(): static
+    {
+        return $this->state(fn (): array => [
+            'minimum_stock' => 0,
+            'alert_days_before_expiry' => 0,
+            'tracks_inventory' => false,
+        ]);
     }
 }

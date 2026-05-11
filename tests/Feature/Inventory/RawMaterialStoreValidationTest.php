@@ -149,14 +149,18 @@ describe('Raw Material Store Validation', function (): void {
         $response->assertSessionHasErrors('minimum_stock');
     });
 
-    it('requires alert_days_before_expiry to be at least 1', function (): void {
+    it('allows zero alert days before expiry for materials without expiry tracking', function (): void {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
                 ...$this->validData,
                 'alert_days_before_expiry' => 0,
             ]);
 
-        $response->assertSessionHasErrors('alert_days_before_expiry');
+        $response->assertRedirect();
+        $this->assertDatabaseHas('raw_materials', [
+            'code' => 'MP001',
+            'alert_days_before_expiry' => 0,
+        ]);
     });
 
     it('allows null previous_price', function (): void {

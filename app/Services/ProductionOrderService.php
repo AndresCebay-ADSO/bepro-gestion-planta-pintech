@@ -71,19 +71,28 @@ class ProductionOrderService
             ->get(['raw_material_id', 'remaining_quantity', 'unit_price'])
             ->groupBy('raw_material_id');
 
-        $fallbackPrices = RawMaterial::query()
+        $rawMaterials = RawMaterial::query()
             ->whereIn('id', $materialIds)
-            ->pluck('current_price', 'id')
-            ->map(fn ($price) => (float) ($price ?? 0));
+            ->get(['id', 'current_price', 'tracks_inventory'])
+            ->keyBy('id');
 
         $estimatedUnitCosts = [];
 
         foreach ($requirements as $materialId => $requiredQuantity) {
+            /** @var RawMaterial|null $rawMaterial */
+            $rawMaterial = $rawMaterials->get($materialId);
+
+            if ($rawMaterial !== null && ! $rawMaterial->tracks_inventory) {
+                $estimatedUnitCosts[(int) $materialId] = (float) ($rawMaterial->current_price ?? 0);
+
+                continue;
+            }
+
             $batches = $batchesByMaterial->get($materialId, collect());
             $estimatedUnitCost = $this->estimateAverageUnitCostFromBatches($requiredQuantity, $batches);
 
             if ($estimatedUnitCost <= 0) {
-                $estimatedUnitCost = (float) ($fallbackPrices->get($materialId) ?? 0);
+                $estimatedUnitCost = (float) ($rawMaterial?->current_price ?? 0);
             }
 
             $estimatedUnitCosts[(int) $materialId] = $estimatedUnitCost;
@@ -298,7 +307,15 @@ class ProductionOrderService
             $requirements[$materialId] = ($requirements[$materialId] ?? 0.0) + ((float) $detail->quantity * $quantity);
         }
 
+        $tracksInventoryByMaterialId = RawMaterial::query()
+            ->whereIn('id', array_keys($requirements))
+            ->pluck('tracks_inventory', 'id');
+
         foreach ($requirements as $materialId => $required) {
+            if (! (bool) ($tracksInventoryByMaterialId->get($materialId) ?? true)) {
+                continue;
+            }
+
             $available = (float) InventoryBatch::where('raw_material_id', $materialId)
                 ->where('warehouse_id', $warehouseId)
                 ->sum('remaining_quantity');
@@ -663,6 +680,31 @@ class ProductionOrderService
         $remainingToConsume = $requiredQuantity;
         $totalConsumedCost = 0.0;
 
+        /** @var RawMaterial|null $rawMaterial */
+        $rawMaterial = RawMaterial::query()
+            ->select(['id', 'code', 'current_price', 'tracks_inventory'])
+            ->find($rawMaterialId);
+        $materialCode = $rawMaterial?->code ?? (string) $rawMaterialId;
+
+        if ($rawMaterial !== null && ! $rawMaterial->tracks_inventory) {
+            $unitPrice = (float) ($rawMaterial->current_price ?? 0);
+
+            InventoryMovement::create([
+                'raw_material_id' => $rawMaterialId,
+                'warehouse_id' => $order->warehouse_id,
+                'batch_id' => null,
+                'production_order_id' => $order->id,
+                'type' => InventoryMovementType::Exit,
+                'quantity' => $requiredQuantity,
+                'cost_price' => $unitPrice,
+                'movement_date' => now(),
+                'notes' => "Consumo sin control de inventario en OP #{$order->order_number}",
+                'created_by' => $userId,
+            ]);
+
+            return $requiredQuantity * $unitPrice;
+        }
+
         $batches = InventoryBatch::query()
             ->where('raw_material_id', $rawMaterialId)
             ->where('warehouse_id', $order->warehouse_id)
@@ -671,10 +713,6 @@ class ProductionOrderService
             ->orderBy('id')
             ->lockForUpdate()
             ->get();
-
-        /** @var RawMaterial|null $rawMaterial */
-        $rawMaterial = RawMaterial::query()->find($rawMaterialId);
-        $materialCode = $rawMaterial?->code ?? (string) $rawMaterialId;
 
         foreach ($batches as $batch) {
             if ($remainingToConsume <= 0) {

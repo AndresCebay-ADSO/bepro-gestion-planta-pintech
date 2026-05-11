@@ -139,6 +139,32 @@ test('it allows order creation if stock is sufficient', function () {
     ]);
 });
 
+test('it allows order creation for materials that do not track inventory without batches', function () {
+    $this->material->update([
+        'current_price' => 8,
+        'tracks_inventory' => false,
+    ]);
+
+    $response = $this->post(route('production-orders.store'), [
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'planned_date' => now()->addDay()->toDateString(),
+    ]);
+
+    $response->assertRedirect();
+    $this->assertDatabaseCount('production_orders', 1);
+    $this->assertDatabaseCount('inventory_batches', 0);
+    $this->assertDatabaseHas('production_order_details', [
+        'raw_material_id' => $this->material->id,
+        'planned_quantity' => 50,
+        'batch_id' => null,
+        'unit_cost' => 8,
+        'total_cost' => 400,
+    ]);
+});
+
 test('store delegates production order creation to the service', function () {
     InventoryBatch::create([
         'raw_material_id' => $this->material->id,
@@ -259,6 +285,60 @@ test('it completes order and updates inventory', function () {
         'product_id' => $order->product_id,
         'product_variant_id' => $variant->id,
         'quantity' => 19,
+    ]);
+});
+
+test('it completes order for materials that do not track inventory without consuming batches', function () {
+    $this->material->update([
+        'current_price' => 8,
+        'tracks_inventory' => false,
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-NON-TRACKED',
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => null,
+        'planned_quantity' => 50,
+        'unit_cost' => 8,
+        'total_cost' => 400,
+    ]);
+
+    $response = $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 100,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 52],
+        ],
+        'packaging' => [],
+    ]);
+
+    $response->assertRedirect();
+
+    $order->refresh();
+    $detail->refresh();
+
+    expect($order->status->value)->toBe('completed');
+    expect((float) $detail->unit_cost)->toBe(8.0);
+    expect((float) $detail->total_cost)->toBe(416.0);
+
+    $this->assertDatabaseCount('inventory_batches', 0);
+    $this->assertDatabaseHas('inventory_movements', [
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => null,
+        'type' => 'exit',
+        'quantity' => 52,
+        'cost_price' => 8,
     ]);
 });
 

@@ -136,7 +136,7 @@ class FormulaSeeder extends Seeder
                 $quantity = $ingredient[1];
 
                 if (strtoupper($rmCode) === 'AGUA') {
-                    $rmCode = 'AGUA DESTILADA';
+                    $rmCode = 'AGUA DE SERVICIO';
                 }
 
                 // Buscar la materia prima por código exacto o similar

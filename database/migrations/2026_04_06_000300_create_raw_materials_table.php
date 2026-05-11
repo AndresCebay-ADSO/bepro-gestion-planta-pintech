@@ -19,6 +19,7 @@ return new class extends Migration
             $table->decimal('previous_price', 18, 4)->nullable();
             $table->decimal('minimum_stock', 12, 4)->default(0);
             $table->integer('alert_days_before_expiry')->default(30);
+            $table->boolean('tracks_inventory')->default(true);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->index('is_active');

@@ -42,18 +42,25 @@ class UpdateRawMaterialRequest extends FormRequest
             'current_price' => ['bail', 'nullable', 'numeric', 'min:0', 'max:'.self::MAX_PRICE, 'decimal:0,4'],
             'previous_price' => ['nullable', 'numeric', 'min:0', 'max:'.self::MAX_PRICE, 'decimal:0,4'],
             'minimum_stock' => ['bail', 'required', 'numeric', 'min:0', 'decimal:0,4'],
-            'alert_days_before_expiry' => ['bail', 'required', 'integer', 'min:1'],
+            'alert_days_before_expiry' => ['bail', 'required', 'integer', 'min:0'],
+            'tracks_inventory' => ['sometimes', 'boolean'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
+        $prepared = [
             'category_id' => $this->input('category_id'),
             'minimum_stock' => $this->input('minimum_stock', 0),
             'alert_days_before_expiry' => $this->input('alert_days_before_expiry', 30),
             'is_active' => $this->boolean('is_active', true),
-        ]);
+        ];
+
+        if ($this->has('tracks_inventory')) {
+            $prepared['tracks_inventory'] = $this->boolean('tracks_inventory');
+        }
+
+        $this->merge($prepared);
     }
 }

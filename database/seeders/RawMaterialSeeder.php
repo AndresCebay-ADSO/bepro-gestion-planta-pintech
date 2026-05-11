@@ -238,6 +238,7 @@ class RawMaterialSeeder extends Seeder
             ['code' => 'O-2', 'unit' => 'kg'],
             ['code' => 'O-3', 'unit' => 'kg'],
             ['code' => 'AGUA DESTILADA', 'unit' => 'l'],
+            ['code' => 'AGUA DE SERVICIO', 'unit' => 'kg', 'tracks_inventory' => false, 'current_price' => 0, 'minimum_stock' => 0, 'alert_days_before_expiry' => 0],
 
             // Serie AP y Químicos Finales
             ['code' => 'AP-423', 'unit' => 'kg'],
@@ -264,10 +265,11 @@ class RawMaterialSeeder extends Seeder
                 [
                     'category_id' => $catQuimicos?->id,
                     'unit_of_measure_id' => $unit->id,
-                    'current_price' => null,
+                    'current_price' => $item['current_price'] ?? null,
                     'previous_price' => null,
-                    'minimum_stock' => 50,
-                    'alert_days_before_expiry' => 30,
+                    'minimum_stock' => $item['minimum_stock'] ?? 50,
+                    'alert_days_before_expiry' => $item['alert_days_before_expiry'] ?? 30,
+                    'tracks_inventory' => $item['tracks_inventory'] ?? true,
                     'is_active' => true,
                 ]
             );
