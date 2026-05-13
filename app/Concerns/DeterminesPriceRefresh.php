@@ -12,7 +12,11 @@ trait DeterminesPriceRefresh
             return true;
         }
 
-        if ($previousCost === null || $previousCost <= 0) {
+        if ($previousCost === null) {
+            return true;
+        }
+
+        if ($previousCost <= 0) {
             return false;
         }
 
