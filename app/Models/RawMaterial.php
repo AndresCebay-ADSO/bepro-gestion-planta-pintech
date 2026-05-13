@@ -36,7 +36,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read Collection|Alert[] $alerts
  */
 #[Fillable([
-    'code',
+    'code', // Sin name, por decision del usuario, ni siquiera como null
     'category_id',
     'unit_of_measure_id',
     'current_price',

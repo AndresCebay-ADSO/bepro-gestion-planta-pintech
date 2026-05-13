@@ -6,7 +6,6 @@ use App\Http\Requests\Inventory\StoreInventoryMovementRequest;
 use App\Http\Requests\Inventory\UpdateInventoryMovementRequest;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
-use App\Models\ProductionOrder;
 use App\Models\RawMaterial;
 use App\Models\Warehouse;
 use App\Services\InventoryService;
@@ -71,7 +70,6 @@ class InventoryMovementController extends Controller
                 ->select('id', 'raw_material_id', 'warehouse_id', 'lot_number', 'remaining_quantity')
                 ->orderByDesc('id')
                 ->get()),
-            'productionOrders' => Inertia::optional(fn () => ProductionOrder::query()->select('id', 'order_number', 'status')->orderByDesc('id')->get()),
             'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->get()),
             'currentWarehouseId' => $movementWarehouse?->id,
             'filters' => [
@@ -129,7 +127,6 @@ class InventoryMovementController extends Controller
                 ->select('id', 'raw_material_id', 'warehouse_id', 'lot_number', 'remaining_quantity')
                 ->orderByDesc('id')
                 ->get(),
-            'productionOrders' => ProductionOrder::query()->select('id', 'order_number', 'status')->orderByDesc('id')->get(),
         ]);
     }
 

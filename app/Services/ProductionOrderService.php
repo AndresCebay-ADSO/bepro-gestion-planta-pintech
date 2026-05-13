@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\InventoryMovementType;
 use App\Enums\ProductionOrderStatus;
+use App\Jobs\RecalculateRawMaterialReferencePrice;
 use App\Models\FinishedInventory;
 use App\Models\FinishedInventoryMovement;
 use App\Models\Formula;
@@ -454,9 +455,10 @@ class ProductionOrderService
             ]);
 
             // 2. Procesar consumo real de materias primas y costo real del granel
-            $lockedOrder->loadMissing(['details', 'packagingPlans', 'lineAdjustments']);
+            $lockedOrder->loadMissing(['details', 'packagingPlans.productVariant', 'lineAdjustments']);
             $detailsById = $lockedOrder->details->keyBy('id');
             $totalBulkCost = 0.0;
+            $consumedRawMaterialIds = [];
             foreach ($data['ingredients'] as $ingredientData) {
                 $detail = $detailsById->get((int) $ingredientData['id']);
                 if ($detail === null) {
@@ -466,6 +468,7 @@ class ProductionOrderService
                 }
 
                 $actualQuantity = (float) $ingredientData['actual_quantity'];
+                $consumedRawMaterialIds[] = (int) $detail->raw_material_id;
 
                 $consumedCost = $this->consumeRawMaterialFifo($lockedOrder, $detail, $actualQuantity, $userId);
                 $realUnitCost = $actualQuantity > 0 ? ($consumedCost / $actualQuantity) : 0.0;
@@ -481,6 +484,7 @@ class ProductionOrderService
 
             // 2.1. Procesar consumo de ajustes de línea (MPs fuera de fórmula)
             foreach ($lockedOrder->lineAdjustments as $adjustment) {
+                $consumedRawMaterialIds[] = (int) $adjustment->raw_material_id;
                 $adjustmentCost = $this->consumeRawMaterialFifoByMaterialId(
                     order: $lockedOrder,
                     rawMaterialId: (int) $adjustment->raw_material_id,
@@ -526,6 +530,7 @@ class ProductionOrderService
 
                     $packagingUnitCost = 0.0;
                     if ($variant?->package_raw_material_id !== null) {
+                        $consumedRawMaterialIds[] = (int) $variant->package_raw_material_id;
                         $packagingTotalCost = $this->consumeRawMaterialFifoByMaterialId(
                             order: $lockedOrder,
                             rawMaterialId: (int) $variant->package_raw_material_id,
@@ -614,6 +619,11 @@ class ProductionOrderService
                     ]
                 );
             }
+
+            // 5. Despachar recálculo de precio de referencia para cada MP consumida
+            collect($consumedRawMaterialIds)
+                ->unique()
+                ->each(fn (int $id) => RecalculateRawMaterialReferencePrice::dispatch($id)->afterCommit());
 
             return $lockedOrder->refresh();
         });
@@ -772,11 +782,9 @@ class ProductionOrderService
             $packagingDataMap[$packData['id']] = $packData;
         }
 
-        // Get all packaging plans with their variants first
-        $plans = ProductionOrderPackagingPlan::query()
-            ->where('production_order_id', $order->id)
-            ->with('productVariant')
-            ->get();
+        // Usar la relación ya cargada (loadMissing en completeOrder/previewOrderCosts)
+        $order->loadMissing('packagingPlans.productVariant');
+        $plans = $order->packagingPlans;
 
         // Calculate total rendimiento (sum of actual_units * presentation_value from all packaging plans)
         $totalRendimiento = 0;

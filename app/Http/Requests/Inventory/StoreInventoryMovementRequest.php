@@ -24,7 +24,7 @@ class StoreInventoryMovementRequest extends FormRequest
             ],
             'warehouse_id' => ['bail', 'required', 'integer', Rule::exists('warehouses', 'id')],
             'batch_id' => ['nullable', 'integer', Rule::exists('inventory_batches', 'id')],
-            'production_order_id' => ['nullable', 'integer', Rule::exists('production_orders', 'id')],
+            'production_order_id' => ['prohibited'],
             'type' => ['bail', 'required', Rule::in(['entry', 'exit'])],
             'quantity' => ['bail', 'required', 'numeric', 'gt:0', 'decimal:0,4', 'max:99999999.9999'],
             'cost_price' => [
@@ -37,6 +37,9 @@ class StoreInventoryMovementRequest extends FormRequest
                 'max:99999999.9999',
             ],
             'movement_date' => ['bail', 'required', 'date'],
+            'lot_number' => ['nullable', 'string', 'max:50'],
+            'supplier' => ['nullable', 'string', 'max:150'],
+            'expiry_date' => ['nullable', 'date', 'after_or_equal:movement_date'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'created_by' => ['prohibited'],
         ];
@@ -48,6 +51,14 @@ class StoreInventoryMovementRequest extends FormRequest
             function ($validator): void {
                 $batchId = $this->input('batch_id');
                 if ($batchId === null || $batchId === '') {
+                    if ($this->input('type') === 'entry') {
+                        $lotNumber = $this->input('lot_number');
+
+                        if ($lotNumber === null || trim((string) $lotNumber) === '') {
+                            $validator->errors()->add('lot_number', __('Debes indicar el número de lote para crear un lote nuevo.'));
+                        }
+                    }
+
                     return;
                 }
 
