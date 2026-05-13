@@ -18,7 +18,6 @@ type Option = {
     name?: string;
     code?: string;
     lot_number?: string;
-    order_number?: string;
     city?: string;
     type?: string;
     raw_material_id?: number | string;
@@ -32,7 +31,6 @@ type Props = {
     rawMaterials: Option[];
     batches: Option[];
     warehouses: Option[];
-    productionOrders: Option[];
     type: 'entry' | 'exit';
     children?: ReactNode;
 };
@@ -42,16 +40,16 @@ export function MovementFormBase({
     rawMaterials,
     batches,
     warehouses,
-    productionOrders,
     type,
     children,
 }: Props) {
     const filteredBatches = form.data.raw_material_id
         ? batches.filter(
-            (b) =>
-                Number(b.raw_material_id) === Number(form.data.raw_material_id)
-                && Number(b.warehouse_id) === Number(form.data.warehouse_id),
-        )
+              (b) =>
+                  Number(b.raw_material_id) ===
+                      Number(form.data.raw_material_id) &&
+                  Number(b.warehouse_id) === Number(form.data.warehouse_id),
+          )
         : [];
 
     return (
@@ -106,7 +104,8 @@ export function MovementFormBase({
                 )}
             </div>
 
-            {type === 'exit' || (type === 'entry' && filteredBatches.length > 0) ? (
+            {type === 'exit' ||
+            (type === 'entry' && filteredBatches.length > 0) ? (
                 <div className="space-y-2">
                     <Label htmlFor="batch_id">
                         Lote {type === 'entry' ? '(Opcional)' : ''}
@@ -122,7 +121,8 @@ export function MovementFormBase({
                             <SelectValue
                                 placeholder={
                                     form.data.raw_material_id
-                                        ? type === 'exit' && filteredBatches.length === 0
+                                        ? type === 'exit' &&
+                                          filteredBatches.length === 0
                                             ? 'No hay lotes disponibles'
                                             : 'Selecciona lote'
                                         : 'Selecciona MP primero'
@@ -132,7 +132,11 @@ export function MovementFormBase({
                         <SelectContent>
                             {filteredBatches.map((b) => (
                                 <SelectItem key={b.id} value={String(b.id)}>
-                                    {b.lot_number ?? `Auto #${b.id}`} (Disp: {formatNumber(b.remaining_quantity, { maxDecimals: 2 })})
+                                    {b.lot_number ?? `Auto #${b.id}`} (Disp:{' '}
+                                    {formatNumber(b.remaining_quantity, {
+                                        maxDecimals: 2,
+                                    })}
+                                    )
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -193,34 +197,6 @@ export function MovementFormBase({
                 )}
             </div>
 
-            <div className="space-y-2">
-                <Label htmlFor="production_order_id">
-                    Orden de Producción (Opcional)
-                </Label>
-                <Select
-                    value={form.data.production_order_id}
-                    onValueChange={(value) =>
-                        form.setData('production_order_id', value)
-                    }
-                >
-                    <SelectTrigger id="production_order_id">
-                        <SelectValue placeholder="Vincular a orden" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {productionOrders.map((po) => (
-                            <SelectItem key={po.id} value={String(po.id)}>
-                                {po.order_number} ({po.status})
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                {form.errors.production_order_id && (
-                    <p className="text-sm text-destructive">
-                        {form.errors.production_order_id}
-                    </p>
-                )}
-            </div>
-
             <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="notes">Notas / Observaciones</Label>
                 <Textarea
@@ -229,7 +205,11 @@ export function MovementFormBase({
                     onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                         form.setData('notes', e.target.value)
                     }
-                    placeholder={type === 'entry' ? "Detalles adicionales de la entrada..." : "Motivo de la salida (ej: merma, consumo producción...)"}
+                    placeholder={
+                        type === 'entry'
+                            ? 'Detalles adicionales de la entrada...'
+                            : 'Motivo de la salida (ej: merma, consumo producción...)'
+                    }
                     className="min-h-[80px]"
                 />
                 {form.errors.notes && (

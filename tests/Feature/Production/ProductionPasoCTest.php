@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Jobs\RecalculateRawMaterialReferencePrice;
 use App\Models\FinishedInventoryMovement;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
@@ -20,6 +21,7 @@ use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\ProductionOrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Role;
 
@@ -813,6 +815,8 @@ test('it consumes packaging raw material when finishing production by variant un
 });
 
 test('it calculates cost_price correctly for single variant with packaging', function () {
+    Queue::fake();
+
     $batch = InventoryBatch::create([
         'raw_material_id' => $this->material->id,
         'warehouse_id' => $this->factory->id,
@@ -880,6 +884,10 @@ test('it calculates cost_price correctly for single variant with packaging', fun
     $variant->refresh();
     expect((float) $variant->current_cost)->toBe(12.5);
     expect((float) $variant->current_price)->toBe(15.0);
+
+    Queue::assertPushed(RecalculateRawMaterialReferencePrice::class, function ($job) {
+        return $job->rawMaterialId === $this->material->id;
+    });
 });
 
 test('it distributes bulk cost across multiple variants by presentation_value', function () {
@@ -1178,6 +1186,8 @@ test('it updates existing production_cost record for the same order instead of f
 });
 
 test('it keeps production_costs history for multiple orders with the same formula', function () {
+    Queue::fake();
+
     $batch = InventoryBatch::create([
         'raw_material_id' => $this->material->id,
         'warehouse_id' => $this->factory->id,
@@ -1250,6 +1260,8 @@ test('it keeps production_costs history for multiple orders with the same formul
         'production_order_id' => $secondOrder->id,
         'cost' => 300,
     ]);
+
+    Queue::assertPushed(RecalculateRawMaterialReferencePrice::class);
 });
 
 test('it sets unit_cost and total_cost to zero when actual quantity is zero', function () {

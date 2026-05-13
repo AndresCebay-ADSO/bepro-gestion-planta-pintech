@@ -77,6 +77,48 @@ test('conservative policy keeps highest available cost reference when latest lot
     expect((float) $this->rawMaterial->previous_price)->toBe(3000.0);
 });
 
+test('conservative policy drops to next highest available lot when expensive stock is depleted', function () {
+    config(['production.raw_material_reference_price_policy' => 'conservative_max']);
+
+    InventoryBatch::create([
+        'raw_material_id' => $this->rawMaterial->id,
+        'warehouse_id' => $this->warehouse->id,
+        'initial_quantity' => 5,
+        'remaining_quantity' => 0,
+        'unit_price' => 10000,
+        'entry_date' => now()->subDays(2)->toDateString(),
+        'expiry_date' => null,
+        'supplier' => 'Proveedor Caro',
+        'lot_number' => 'LOT-EXP-01',
+    ]);
+
+    InventoryBatch::create([
+        'raw_material_id' => $this->rawMaterial->id,
+        'warehouse_id' => $this->warehouse->id,
+        'initial_quantity' => 400,
+        'remaining_quantity' => 400,
+        'unit_price' => 7000,
+        'entry_date' => now()->subDay()->toDateString(),
+        'expiry_date' => null,
+        'supplier' => 'Proveedor Disponible',
+        'lot_number' => 'LOT-AVL-02',
+    ]);
+
+    $this->rawMaterial->update([
+        'current_price' => 10000,
+        'previous_price' => 3000,
+    ]);
+
+    $changed = app(RawMaterialReferencePriceService::class)
+        ->syncRawMaterialCurrentPrice((int) $this->rawMaterial->id);
+
+    expect($changed)->toBeTrue();
+
+    $this->rawMaterial->refresh();
+    expect((float) $this->rawMaterial->current_price)->toBe(7000.0);
+    expect((float) $this->rawMaterial->previous_price)->toBe(10000.0);
+});
+
 test('weighted average policy uses weighted stock price as reference', function () {
     config(['production.raw_material_reference_price_policy' => 'weighted_average']);
 
@@ -127,6 +169,7 @@ test('inventory movements apply the same policy and keep conservative cost refer
         'type' => InventoryMovementType::Entry->value,
         'quantity' => 10,
         'cost_price' => 5000,
+        'lot_number' => 'LOT-POL-HIGH',
         'movement_date' => now()->toDateString(),
         'notes' => 'Lote alto',
     ], (int) $user->id);
@@ -139,6 +182,7 @@ test('inventory movements apply the same policy and keep conservative cost refer
         'type' => InventoryMovementType::Entry->value,
         'quantity' => 10,
         'cost_price' => 2000,
+        'lot_number' => 'LOT-POL-LOW',
         'movement_date' => now()->toDateString(),
         'notes' => 'Lote barato',
     ], (int) $user->id);
@@ -165,6 +209,7 @@ test('inventory movement correctly updates current_price for raw materials creat
         'type' => InventoryMovementType::Entry->value,
         'quantity' => 50,
         'cost_price' => 1500,
+        'lot_number' => 'LOT-FIRST-ENTRY',
         'movement_date' => now()->toDateString(),
         'notes' => 'First entry',
     ], (int) $user->id);

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Jobs\RecalculateRawMaterialReferencePrice;
 use App\Models\Formula;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
@@ -13,6 +14,7 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Role;
 
@@ -80,6 +82,48 @@ test('it rejects movements when batch belongs to another warehouse', function ()
     $response->assertRedirect(route('inventory-movements.index'));
     $response->assertSessionHasErrors('batch_id');
     expect(InventoryMovement::count())->toBe(0);
+});
+
+test('it dispatches reference price recalculation after storing a movement', function () {
+    Queue::fake();
+
+    $response = $this->from(route('inventory-movements.index'))
+        ->post(route('inventory-movements.store'), [
+            'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'batch_id' => null,
+            'type' => 'entry',
+            'quantity' => 10,
+            'cost_price' => 12,
+            'lot_number' => 'LOT-JOB-001',
+            'movement_date' => now()->toDateString(),
+        ]);
+
+    $response->assertRedirect(route('inventory-movements.index'));
+    $response->assertSessionHasNoErrors();
+
+    Queue::assertPushed(
+        RecalculateRawMaterialReferencePrice::class,
+        fn (RecalculateRawMaterialReferencePrice $job): bool => $job->rawMaterialId === (int) $this->rawMaterial->id
+    );
+});
+
+test('it requires a lot number when an entry creates a new batch', function () {
+    $response = $this->from(route('inventory-movements.index'))
+        ->post(route('inventory-movements.store'), [
+            'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'batch_id' => null,
+            'type' => 'entry',
+            'quantity' => 10,
+            'cost_price' => 12,
+            'movement_date' => now()->toDateString(),
+        ]);
+
+    $response->assertRedirect(route('inventory-movements.index'));
+    $response->assertSessionHasErrors('lot_number');
+    expect(InventoryMovement::count())->toBe(0);
+    expect(InventoryBatch::count())->toBe(0);
 });
 
 test('it prevents editing movements linked to production orders', function () {
@@ -238,6 +282,230 @@ test('it updates batch quantities and cost when editing an entry movement', func
     expect((float) $batch->remaining_quantity)->toBe(15.0);
     expect((float) $batch->unit_price)->toBe(25.0);
     expect((float) $this->rawMaterial->current_price)->toBe(25.0);
+});
+
+test('it does not duplicate quantities when editing an entry movement into a new batch', function () {
+    $oldBatch = InventoryBatch::create([
+        'raw_material_id' => $this->rawMaterial->id,
+        'warehouse_id' => $this->warehouseA->id,
+        'initial_quantity' => 10,
+        'remaining_quantity' => 10,
+        'unit_price' => 10,
+        'entry_date' => now()->subDay()->toDateString(),
+    ]);
+
+    $movement = InventoryMovement::create([
+        'raw_material_id' => $this->rawMaterial->id,
+        'warehouse_id' => $this->warehouseA->id,
+        'batch_id' => $oldBatch->id,
+        'type' => 'entry',
+        'quantity' => 10,
+        'cost_price' => 10,
+        'movement_date' => now()->subDay()->toDateString(),
+        'created_by' => $this->admin->id,
+    ]);
+
+    $response = $this->from(route('inventory-movements.index'))
+        ->put(route('inventory-movements.update', $movement), [
+            'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'batch_id' => null,
+            'type' => 'entry',
+            'quantity' => 15,
+            'cost_price' => 25,
+            'lot_number' => 'LOT-EDIT-NEW',
+            'movement_date' => now()->toDateString(),
+        ]);
+
+    $response->assertRedirect(route('inventory-movements.index'));
+    $response->assertSessionHasNoErrors();
+
+    $movement->refresh();
+    $newBatch = InventoryBatch::query()->findOrFail($movement->batch_id);
+
+    $this->assertDatabaseMissing('inventory_batches', ['id' => $oldBatch->id]);
+    expect((float) $newBatch->initial_quantity)->toBe(15.0);
+    expect((float) $newBatch->remaining_quantity)->toBe(15.0);
+    expect((float) $newBatch->unit_price)->toBe(25.0);
+});
+
+test('it rejects adding stock with a different cost to an existing batch', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->rawMaterial->id,
+        'warehouse_id' => $this->warehouseA->id,
+        'initial_quantity' => 10,
+        'remaining_quantity' => 10,
+        'unit_price' => 10,
+        'entry_date' => now()->toDateString(),
+    ]);
+
+    $response = $this->from(route('inventory-movements.index'))
+        ->post(route('inventory-movements.store'), [
+            'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'batch_id' => $batch->id,
+            'type' => 'entry',
+            'quantity' => 30,
+            'cost_price' => 30,
+            'movement_date' => now()->toDateString(),
+        ]);
+
+    $response->assertRedirect(route('inventory-movements.index'));
+    $response->assertSessionHasErrors('cost_price');
+
+    $batch->refresh();
+    expect((float) $batch->initial_quantity)->toBe(10.0);
+    expect((float) $batch->remaining_quantity)->toBe(10.0);
+    expect((float) $batch->unit_price)->toBe(10.0);
+});
+
+test('it allows adding stock to an existing batch when cost matches', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->rawMaterial->id,
+        'warehouse_id' => $this->warehouseA->id,
+        'initial_quantity' => 10,
+        'remaining_quantity' => 10,
+        'unit_price' => 10,
+        'entry_date' => now()->toDateString(),
+    ]);
+
+    $response = $this->from(route('inventory-movements.index'))
+        ->post(route('inventory-movements.store'), [
+            'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'batch_id' => $batch->id,
+            'type' => 'entry',
+            'quantity' => 30,
+            'cost_price' => 10,
+            'movement_date' => now()->toDateString(),
+        ]);
+
+    $response->assertRedirect(route('inventory-movements.index'));
+    $response->assertSessionHasNoErrors();
+
+    $batch->refresh();
+    expect((float) $batch->initial_quantity)->toBe(40.0);
+    expect((float) $batch->remaining_quantity)->toBe(40.0);
+    expect((float) $batch->unit_price)->toBe(10.0);
+});
+
+test('it ignores submitted cost price for exits and stores the batch cost', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->rawMaterial->id,
+        'warehouse_id' => $this->warehouseA->id,
+        'initial_quantity' => 20,
+        'remaining_quantity' => 20,
+        'unit_price' => 12,
+        'entry_date' => now()->toDateString(),
+    ]);
+
+    $response = $this->from(route('inventory-movements.index'))
+        ->post(route('inventory-movements.store'), [
+            'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'batch_id' => $batch->id,
+            'type' => 'exit',
+            'quantity' => 5,
+            'cost_price' => 999,
+            'movement_date' => now()->toDateString(),
+        ]);
+
+    $response->assertRedirect(route('inventory-movements.index'));
+    $response->assertSessionHasNoErrors();
+
+    $movement = InventoryMovement::query()->latest('id')->firstOrFail();
+    $batch->refresh();
+    expect((float) $movement->cost_price)->toBe(12.0);
+    expect((float) $batch->remaining_quantity)->toBe(15.0);
+});
+
+test('it rejects manual movements linked to production orders', function () {
+    $category = ProductCategory::create(['name' => 'General']);
+    $product = Product::create([
+        'code' => 'P-HARD-MANUAL-LINK',
+        'name' => 'Producto Manual Link',
+        'category_id' => $category->id,
+        'unit_of_measure_id' => $this->rawMaterial->unit_of_measure_id,
+        'current_cost' => 1,
+        'current_price' => 1,
+    ]);
+    $formula = Formula::create([
+        'product_id' => $product->id,
+        'version' => 1,
+        'is_active' => true,
+        'created_by' => $this->admin->id,
+    ]);
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-HARD-MANUAL-LINK',
+        'product_id' => $product->id,
+        'formula_id' => $formula->id,
+        'warehouse_id' => $this->warehouseA->id,
+        'quantity' => 10,
+        'status' => 'pending',
+        'planned_date' => now()->toDateString(),
+        'created_by' => $this->admin->id,
+    ]);
+
+    $response = $this->from(route('inventory-movements.index'))
+        ->post(route('inventory-movements.store'), [
+            'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'batch_id' => null,
+            'production_order_id' => $order->id,
+            'type' => 'entry',
+            'quantity' => 5,
+            'cost_price' => 10,
+            'lot_number' => 'LOT-MANUAL-LINK',
+            'movement_date' => now()->toDateString(),
+        ]);
+
+    $response->assertRedirect(route('inventory-movements.index'));
+    $response->assertSessionHasErrors('production_order_id');
+    expect(InventoryMovement::count())->toBe(0);
+});
+
+test('it allows metadata-only edits for consumed entry movements', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->rawMaterial->id,
+        'warehouse_id' => $this->warehouseA->id,
+        'initial_quantity' => 10,
+        'remaining_quantity' => 5,
+        'unit_price' => 10,
+        'entry_date' => now()->subDay()->toDateString(),
+    ]);
+
+    $movement = InventoryMovement::create([
+        'raw_material_id' => $this->rawMaterial->id,
+        'warehouse_id' => $this->warehouseA->id,
+        'batch_id' => $batch->id,
+        'type' => 'entry',
+        'quantity' => 10,
+        'cost_price' => 10,
+        'movement_date' => now()->subDay()->toDateString(),
+        'notes' => 'Nota original',
+        'created_by' => $this->admin->id,
+    ]);
+
+    $response = $this->from(route('inventory-movements.index'))
+        ->put(route('inventory-movements.update', $movement), [
+            'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'batch_id' => $batch->id,
+            'type' => 'entry',
+            'quantity' => 10,
+            'cost_price' => 10,
+            'movement_date' => now()->toDateString(),
+            'notes' => 'Nota corregida',
+        ]);
+
+    $response->assertRedirect(route('inventory-movements.index'));
+
+    $movement->refresh();
+    $batch->refresh();
+    expect($movement->notes)->toBe('Nota corregida');
+    expect($batch->entry_date->toDateString())->toBe(now()->toDateString());
+    expect((float) $batch->initial_quantity)->toBe(10.0);
+    expect((float) $batch->remaining_quantity)->toBe(5.0);
 });
 
 test('it removes orphaned batches when deleting their only entry movement', function () {

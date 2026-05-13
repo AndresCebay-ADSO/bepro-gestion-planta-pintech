@@ -1,7 +1,7 @@
 import { Head, useForm, router, usePage } from '@inertiajs/react';
 import { Search, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
-import {  useState, useEffect, useCallback, useRef } from 'react';
-import type {FormEvent} from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { FormEvent } from 'react';
 
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -27,7 +27,6 @@ type Option = {
     name?: string;
     code?: string;
     lot_number?: string;
-    order_number?: string;
     city?: string;
     type?: string;
     raw_material_id?: number | string;
@@ -50,7 +49,6 @@ type Props = {
     rawMaterials?: Option[];
     batches?: Option[];
     warehouses?: Option[];
-    productionOrders?: Option[];
     can: { create: boolean };
     currentWarehouseId?: number | null;
     filters: {
@@ -63,7 +61,6 @@ export default function InventoryMovementsIndex({
     rawMaterials,
     batches,
     warehouses,
-    productionOrders,
     can,
     currentWarehouseId,
     filters,
@@ -72,39 +69,48 @@ export default function InventoryMovementsIndex({
         search: filters.search ?? '',
     });
 
-    const [drawerState, setDrawerState] = useState<{ isOpen: boolean; mode: 'entry' | 'exit' }>({ isOpen: false, mode: 'entry' });
+    const [drawerState, setDrawerState] = useState<{
+        isOpen: boolean;
+        mode: 'entry' | 'exit';
+    }>({ isOpen: false, mode: 'entry' });
     const [isLoadingFormData, setIsLoadingFormData] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
-    const flash = usePage<{ flash?: { success?: string; error?: string } }>().props.flash;
+    const flash = usePage<{ flash?: { success?: string; error?: string } }>()
+        .props.flash;
 
-    const openDrawer = useCallback((mode: 'entry' | 'exit') => {
-        setDrawerState({ isOpen: true, mode });
-        setFetchError(null);
+    const openDrawer = useCallback(
+        (mode: 'entry' | 'exit') => {
+            setDrawerState({ isOpen: true, mode });
+            setFetchError(null);
 
-        // Lazy load form dependencies if missing
-        if (!rawMaterials || !batches || !warehouses || !productionOrders) {
-            setIsLoadingFormData(true);
-            router.reload({
-                only: ['rawMaterials', 'batches', 'warehouses', 'productionOrders'],
-                onSuccess: () => setIsLoadingFormData(false),
-                onError: () => {
-                    setIsLoadingFormData(false);
-                    setFetchError('Error de red al cargar los datos. Por favor, intente nuevamente.');
-                }
-            });
-        }
-    }, [rawMaterials, batches, warehouses, productionOrders]);
+            // Lazy load form dependencies if missing
+            if (!rawMaterials || !batches || !warehouses) {
+                setIsLoadingFormData(true);
+                router.reload({
+                    only: ['rawMaterials', 'batches', 'warehouses'],
+                    onSuccess: () => setIsLoadingFormData(false),
+                    onError: () => {
+                        setIsLoadingFormData(false);
+                        setFetchError(
+                            'Error de red al cargar los datos. Por favor, intente nuevamente.',
+                        );
+                    },
+                });
+            }
+        },
+        [rawMaterials, batches, warehouses],
+    );
 
     const hasOpenedFromUrl = useRef(false);
 
     useEffect(() => {
         if (hasOpenedFromUrl.current) {
-return;
-}
+            return;
+        }
 
         const params = new URLSearchParams(window.location.search);
         const openParam = params.get('open');
-        
+
         if (can.create && (openParam === 'entry' || openParam === 'exit')) {
             hasOpenedFromUrl.current = true;
             // Use setTimeout to avoid synchronous setState inside effect (cascading renders)
@@ -146,14 +152,14 @@ return;
                         <div className="flex items-center gap-2">
                             <Button
                                 onClick={() => openDrawer('entry')}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                className="bg-emerald-600 text-white hover:bg-emerald-700"
                             >
                                 <ArrowDownToLine className="mr-2 h-4 w-4" />
                                 Entrada
                             </Button>
                             <Button
                                 onClick={() => openDrawer('exit')}
-                                className="bg-amber-600 hover:bg-amber-700 text-white"
+                                className="bg-amber-600 text-white hover:bg-amber-700"
                             >
                                 <ArrowUpFromLine className="mr-2 h-4 w-4" />
                                 Salida
@@ -216,14 +222,17 @@ return;
                                     className="border-b border-border/50 transition-colors hover:bg-muted/30"
                                 >
                                     <td className="p-4">
-                                        <FormattedDate value={movement.movement_date} />
+                                        <FormattedDate
+                                            value={movement.movement_date}
+                                        />
                                     </td>
                                     <td className="p-4">
                                         <span
-                                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${movement.type === 'entry'
+                                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                                                movement.type === 'entry'
                                                     ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                                                     : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                                }`}
+                                            }`}
                                         >
                                             {movement.type === 'entry'
                                                 ? 'ENTRADA'
@@ -242,14 +251,21 @@ return;
                                         {movement.raw_material?.code ?? '-'}
                                     </td>
                                     <td className="p-4 text-right font-medium">
-                                        <FormattedNumber value={movement.quantity} maxDecimals={2} />
+                                        <FormattedNumber
+                                            value={movement.quantity}
+                                            maxDecimals={2}
+                                        />
                                     </td>
                                 </tr>
                             ))}
                             {movements.data.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                                        No hay movimientos registrados para los filtros seleccionados.
+                                    <td
+                                        colSpan={5}
+                                        className="p-8 text-center text-muted-foreground"
+                                    >
+                                        No hay movimientos registrados para los
+                                        filtros seleccionados.
                                     </td>
                                 </tr>
                             )}
@@ -262,8 +278,17 @@ return;
                 </div>
             </div>
 
-            <Sheet open={drawerState.isOpen} onOpenChange={(open) => setDrawerState(prev => ({ ...prev, isOpen: open }))} modal={false}>
-                <SheetContent side="right" className="w-full sm:max-w-2xl flex flex-col">
+            <Sheet
+                open={drawerState.isOpen}
+                onOpenChange={(open) =>
+                    setDrawerState((prev) => ({ ...prev, isOpen: open }))
+                }
+                modal={false}
+            >
+                <SheetContent
+                    side="right"
+                    className="flex w-full flex-col sm:max-w-2xl"
+                >
                     <SheetHeader className="mb-6 flex-shrink-0">
                         <SheetTitle className="flex items-center gap-2">
                             {drawerState.mode === 'entry' ? (
@@ -289,21 +314,41 @@ return;
                         </SheetDescription>
                     </SheetHeader>
 
-                    <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+                    <div className="-mr-2 flex-1 overflow-y-auto pr-2">
                         {isLoadingFormData ? (
                             <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-                                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-                                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-                                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
-                                    <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-10 w-full" /></div>
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-1/4" />
+                                        <Skeleton className="h-10 w-full" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-1/4" />
+                                        <Skeleton className="h-10 w-full" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-1/4" />
+                                        <Skeleton className="h-10 w-full" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-1/4" />
+                                        <Skeleton className="h-10 w-full" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-1/4" />
+                                        <Skeleton className="h-10 w-full" />
+                                    </div>
                                 </div>
-                                <div className="space-y-2"><Skeleton className="h-4 w-1/4" /><Skeleton className="h-24 w-full" /></div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-1/4" />
+                                    <Skeleton className="h-24 w-full" />
+                                </div>
                             </div>
                         ) : fetchError ? (
-                            <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-center mt-6">
-                                <p className="text-sm font-medium text-destructive">{fetchError}</p>
+                            <div className="mt-6 rounded-md border border-destructive/50 bg-destructive/10 p-4 text-center">
+                                <p className="text-sm font-medium text-destructive">
+                                    {fetchError}
+                                </p>
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -313,14 +358,15 @@ return;
                                     Reintentar
                                 </Button>
                             </div>
-                        ) : (rawMaterials && batches && warehouses && productionOrders) ? (
+                        ) : rawMaterials && batches && warehouses ? (
                             drawerState.mode === 'entry' ? (
                                 <EntryMovementForm
                                     rawMaterials={rawMaterials}
                                     batches={batches}
                                     warehouses={warehouses}
-                                    productionOrders={productionOrders}
-                                    defaultWarehouseId={currentWarehouseId ?? undefined}
+                                    defaultWarehouseId={
+                                        currentWarehouseId ?? undefined
+                                    }
                                     onSuccess={onSuccessForm}
                                 />
                             ) : (
@@ -328,13 +374,14 @@ return;
                                     rawMaterials={rawMaterials}
                                     batches={batches}
                                     warehouses={warehouses}
-                                    productionOrders={productionOrders}
-                                    defaultWarehouseId={currentWarehouseId ?? undefined}
+                                    defaultWarehouseId={
+                                        currentWarehouseId ?? undefined
+                                    }
                                     onSuccess={onSuccessForm}
                                 />
                             )
                         ) : (
-                            <div className="text-center py-8 text-muted-foreground">
+                            <div className="py-8 text-center text-muted-foreground">
                                 No se pudieron cargar los datos del formulario.
                             </div>
                         )}
