@@ -1,6 +1,6 @@
 <?php
 
-//declare(strict_types=1); Estudiar si es necesario para los modelos.
+// declare(strict_types=1); Estudiar si es necesario para los modelos.
 
 namespace App\Models;
 
