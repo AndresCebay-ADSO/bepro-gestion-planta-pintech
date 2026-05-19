@@ -86,7 +86,7 @@ function createPublicQrFixture(): array
 
     $productDocument = ProductDocument::create([
         'product_id' => $product->id,
-        'document_type' => QrDocumentType::HojaSeguridad,
+        'document_type' => QrDocumentType::SafetyDataSheet,
         'file_name' => 'Hoja de Seguridad.pdf',
         'file_path' => 'product-documents/safety.pdf',
         'file_size' => 512000,
@@ -97,7 +97,7 @@ function createPublicQrFixture(): array
     ]);
     $certificate = QrDocument::create([
         'qr_code_id' => $qrCode->id,
-        'document_type' => QrDocumentType::CertificadoCalidad,
+        'document_type' => QrDocumentType::QualityCertificate,
         'file_name' => 'Certificado de Calidad.pdf',
         'file_path' => 'quality-certificates/cert.pdf',
         'file_size' => 90000,

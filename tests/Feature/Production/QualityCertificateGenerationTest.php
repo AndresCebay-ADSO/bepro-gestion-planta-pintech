@@ -137,7 +137,7 @@ test('completing order generates qr code and quality certificate', function () {
 
     // Se genera un documento certificado de calidad
     $certificate = QrDocument::where('qr_code_id', $qrCode->id)
-        ->where('document_type', QrDocumentType::CertificadoCalidad->value)
+        ->where('document_type', QrDocumentType::QualityCertificate->value)
         ->where('is_current', true)
         ->first();
 
@@ -249,7 +249,7 @@ test('regenerating certificate does not duplicate current document', function ()
 
     // Debe haber 2 documentos totales pero solo 1 current
     $allCerts = QrDocument::where('qr_code_id', $qrCode->id)
-        ->where('document_type', QrDocumentType::CertificadoCalidad->value)
+        ->where('document_type', QrDocumentType::QualityCertificate->value)
         ->get();
 
     $currentCerts = $allCerts->where('is_current', true);

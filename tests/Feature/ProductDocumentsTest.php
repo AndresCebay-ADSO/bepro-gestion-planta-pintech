@@ -8,15 +8,16 @@ use App\Models\ProductCategory;
 use App\Models\ProductDocument;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
+use App\Services\ProductDocumentService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
-    Role::create(['name' => 'admin']);
-    Role::create(['name' => 'produccion']);
-    Role::create(['name' => 'comercial']);
+    Role::firstOrCreate(['name' => 'admin']);
+    Role::firstOrCreate(['name' => 'produccion']);
+    Role::firstOrCreate(['name' => 'comercial']);
 });
 
 function createProductDocumentFixture(): array
@@ -50,12 +51,12 @@ test('authorized users can upload and version product PDF documents', function (
     [$user, $product] = createProductDocumentFixture();
 
     $this->actingAs($user)->post(route('products.documents.store', $product), [
-        'document_type' => QrDocumentType::HojaSeguridad->value,
+        'document_type' => QrDocumentType::SafetyDataSheet->value,
         'document' => UploadedFile::fake()->createWithContent('seguridad.pdf', "%PDF-1.4\nfirst"),
     ])->assertRedirect();
 
     $this->actingAs($user)->post(route('products.documents.store', $product), [
-        'document_type' => QrDocumentType::HojaSeguridad->value,
+        'document_type' => QrDocumentType::SafetyDataSheet->value,
         'document' => UploadedFile::fake()->createWithContent('seguridad-v2.pdf', "%PDF-1.4\nsecond"),
     ])->assertRedirect();
 
@@ -69,7 +70,7 @@ test('product document upload validates PDF files', function () {
     [$user, $product] = createProductDocumentFixture();
 
     $this->actingAs($user)->post(route('products.documents.store', $product), [
-        'document_type' => QrDocumentType::HojaSeguridad->value,
+        'document_type' => QrDocumentType::SafetyDataSheet->value,
         'document' => UploadedFile::fake()->createWithContent('seguridad.txt', 'not a pdf'),
     ])->assertSessionHasErrors('document');
 });
@@ -78,13 +79,13 @@ test('guests cannot manage product documents', function () {
     [$user, $product] = createProductDocumentFixture();
 
     $this->post(route('products.documents.store', $product), [
-        'document_type' => QrDocumentType::HojaSeguridad->value,
+        'document_type' => QrDocumentType::SafetyDataSheet->value,
         'document' => UploadedFile::fake()->createWithContent('seguridad.pdf', "%PDF-1.4\ncontent"),
     ])->assertRedirect('/login');
 
     $document = ProductDocument::create([
         'product_id' => $product->id,
-        'document_type' => QrDocumentType::FichaTecnica,
+        'document_type' => QrDocumentType::TechnicalDataSheet,
         'file_name' => 'Ficha.pdf',
         'file_path' => 'product-documents/ficha.pdf',
         'file_size' => 100,
@@ -95,4 +96,27 @@ test('guests cannot manage product documents', function () {
     ]);
 
     $this->delete(route('products.documents.destroy', $document))->assertRedirect('/login');
+});
+
+test('it deletes physical file from storage if transaction fails', function () {
+    Storage::fake('local');
+    [$user, $product] = createProductDocumentFixture();
+
+    // Force an invalid user ID or database error to trigger transaction failure during service call
+    $service = new ProductDocumentService;
+
+    $file = UploadedFile::fake()->createWithContent('seguridad.pdf', "%PDF-1.4\ncontent");
+
+    try {
+        // userId 999999 will fail due to restrictOnDelete / foreign key constraint on users table
+        $service->storeDocument($product, QrDocumentType::SafetyDataSheet, $file, 999999);
+        $this->fail('Expected transaction to fail due to foreign key constraint on users table');
+    } catch (Throwable $e) {
+        // Assert transaction rolled back
+        expect(ProductDocument::query()->where('product_id', $product->id)->count())->toBe(0);
+
+        // Assert physical file was cleaned up from storage (no orphans)
+        $files = Storage::disk('local')->allFiles("product-documents/{$product->id}");
+        expect($files)->toBeEmpty();
+    }
 });

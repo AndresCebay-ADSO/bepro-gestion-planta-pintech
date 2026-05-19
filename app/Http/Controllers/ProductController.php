@@ -123,12 +123,12 @@ class ProductController extends Controller
             ],
             'documentTypes' => [
                 [
-                    'value' => QrDocumentType::FichaTecnica->value,
-                    'label' => QrDocumentType::FichaTecnica->label(),
+                    'value' => QrDocumentType::TechnicalDataSheet->value,
+                    'label' => QrDocumentType::TechnicalDataSheet->label(),
                 ],
                 [
-                    'value' => QrDocumentType::HojaSeguridad->value,
-                    'label' => QrDocumentType::HojaSeguridad->label(),
+                    'value' => QrDocumentType::SafetyDataSheet->value,
+                    'label' => QrDocumentType::SafetyDataSheet->label(),
                 ],
             ],
             'units' => UnitOfMeasure::query()

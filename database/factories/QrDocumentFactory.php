@@ -24,7 +24,7 @@ class QrDocumentFactory extends Factory
     {
         return [
             'qr_code_id' => QrCode::factory(),
-            'document_type' => QrDocumentType::CertificadoCalidad,
+            'document_type' => QrDocumentType::QualityCertificate,
             'file_name' => 'certificado-calidad.pdf',
             'file_path' => 'quality-certificates/test/certificado-calidad-v1.pdf',
             'file_size' => $this->faker->numberBetween(50000, 500000),
@@ -37,7 +37,7 @@ class QrDocumentFactory extends Factory
 
     public function certificate(): static
     {
-        return $this->state(['document_type' => QrDocumentType::CertificadoCalidad]);
+        return $this->state(['document_type' => QrDocumentType::QualityCertificate]);
     }
 
     public function previous(): static

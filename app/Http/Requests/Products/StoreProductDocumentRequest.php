@@ -30,8 +30,8 @@ class StoreProductDocumentRequest extends FormRequest
             'document_type' => [
                 'required',
                 Rule::in([
-                    QrDocumentType::FichaTecnica->value,
-                    QrDocumentType::HojaSeguridad->value,
+                    QrDocumentType::TechnicalDataSheet->value,
+                    QrDocumentType::SafetyDataSheet->value,
                 ]),
             ],
             'document' => [

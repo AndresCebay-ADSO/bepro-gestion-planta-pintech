@@ -421,7 +421,9 @@ class ProductionOrderService
      */
     public function completeOrder(ProductionOrder $order, array $data): ProductionOrder
     {
-        return DB::transaction(function () use ($order, $data) {
+        $userId = auth()->id() ?? throw new \RuntimeException('No authenticated user');
+
+        $completedOrder = DB::transaction(function () use ($order, $data, $userId) {
             $lockedOrder = ProductionOrder::query()
                 ->lockForUpdate()
                 ->findOrFail($order->id);
@@ -436,8 +438,6 @@ class ProductionOrderService
                     "No se puede completar una orden en estado '{$lockedOrder->status->label()}'."
                 );
             }
-
-            $userId = auth()->id() ?? throw new \RuntimeException('No authenticated user');
 
             // 1. Actualizar metadatos operacionales de la orden
             $lockedOrder->update([
@@ -627,10 +627,13 @@ class ProductionOrderService
                 ->unique()
                 ->each(fn (int $id) => RecalculateRawMaterialReferencePrice::dispatch($id)->afterCommit());
 
-            $this->qualityInspectionCertificateService->generateForCompletedOrder($lockedOrder->refresh(), $userId);
-
             return $lockedOrder->refresh();
         });
+
+        // Generate quality certificate outside the main transaction to optimize locks and avoid database rollback on storage/rendering failures.
+        $this->qualityInspectionCertificateService->generateForCompletedOrder($completedOrder, $userId);
+
+        return $completedOrder->refresh();
     }
 
     public function cancelOrder(ProductionOrder $order, ?string $reason = null): ProductionOrder

@@ -63,7 +63,7 @@ class QrDocument extends Model
     public function scopeCurrentCertificate(Builder $query): void
     {
         $query
-            ->where('document_type', QrDocumentType::CertificadoCalidad->value)
+            ->where('document_type', QrDocumentType::QualityCertificate->value)
             ->where('is_current', true);
     }
 

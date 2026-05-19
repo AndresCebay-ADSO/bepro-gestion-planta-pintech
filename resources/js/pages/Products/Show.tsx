@@ -83,7 +83,7 @@ type Props = {
         formulas?: FormulaItem[];
         product_documents?: Array<{
             id: number;
-            document_type: 'ficha_tecnica' | 'hoja_seguridad';
+            document_type: 'technical_data_sheet' | 'safety_data_sheet';
             file_name: string;
             file_size: number;
             version: number;
@@ -95,7 +95,7 @@ type Props = {
         delete: boolean;
     };
     documentTypes: Array<{
-        value: 'ficha_tecnica' | 'hoja_seguridad';
+        value: 'technical_data_sheet' | 'safety_data_sheet';
         label: string;
     }>;
     units: Array<{
@@ -157,7 +157,7 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
         is_active: true,
     });
     const documentForm = useForm({
-        document_type: documentTypes[0]?.value ?? 'ficha_tecnica',
+        document_type: documentTypes[0]?.value ?? 'technical_data_sheet',
         document: null as File | null,
     });
 
@@ -376,7 +376,7 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                                                 <Select
                                                     value={documentForm.data.document_type}
                                                     onValueChange={(value) =>
-                                                        documentForm.setData('document_type', value as 'ficha_tecnica' | 'hoja_seguridad')
+                                                        documentForm.setData('document_type', value as 'technical_data_sheet' | 'safety_data_sheet')
                                                     }
                                                 >
                                                     <SelectTrigger id="document_type">

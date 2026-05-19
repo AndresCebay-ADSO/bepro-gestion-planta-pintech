@@ -1,50 +1,35 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Enums\QrDocumentType;
 use App\Http\Requests\Products\StoreProductDocumentRequest;
 use App\Models\Product;
 use App\Models\ProductDocument;
+use App\Services\ProductDocumentService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProductDocumentController extends Controller
 {
+    public function __construct(
+        protected ProductDocumentService $productDocumentService
+    ) {}
+
     public function store(StoreProductDocumentRequest $request, Product $product): RedirectResponse
     {
         $validated = $request->validated();
         $documentType = QrDocumentType::from($validated['document_type']);
-        $file = $request->file('document');
-        $version = ((int) $product->productDocuments()
-            ->where('document_type', $documentType->value)
-            ->max('version')) + 1;
-        $fileName = $file->getClientOriginalName();
-        $storedName = Str::slug(pathinfo($fileName, PATHINFO_FILENAME))
-            ."-v{$version}-"
-            .Str::ulid()
-            .'.'.$file->getClientOriginalExtension();
-        $path = $file->storeAs("product-documents/{$product->id}", $storedName, 'local');
 
-        DB::transaction(function () use ($product, $documentType, $file, $fileName, $path, $version): void {
-            $product->productDocuments()
-                ->where('document_type', $documentType->value)
-                ->update(['is_current' => false]);
-
-            $product->productDocuments()->create([
-                'document_type' => $documentType,
-                'file_name' => $fileName,
-                'file_path' => $path,
-                'file_size' => (int) $file->getSize(),
-                'mime_type' => $file->getMimeType() ?: 'application/pdf',
-                'version' => $version,
-                'is_current' => true,
-                'uploaded_by' => (int) auth()->id(),
-            ]);
-        });
+        $this->productDocumentService->storeDocument(
+            product: $product,
+            documentType: $documentType,
+            file: $request->file('document'),
+            userId: (int) auth()->id()
+        );
 
         return back()->with('success', __('Documento del producto cargado correctamente.'));
     }

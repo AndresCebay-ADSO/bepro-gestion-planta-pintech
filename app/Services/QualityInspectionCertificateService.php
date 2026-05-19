@@ -10,6 +10,7 @@ use App\Models\ProductionOrder;
 use App\Models\QrCode;
 use App\Models\QrDocument;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -28,22 +29,25 @@ class QualityInspectionCertificateService
         $payload = $this->buildPayload($order);
         $storedPdf = $this->storePdf($order, $payload, $version);
 
-        QrDocument::query()
-            ->where('qr_code_id', $qrCode->id)
-            ->where('document_type', QrDocumentType::CertificadoCalidad->value)
-            ->update(['is_current' => false]);
+        return DB::transaction(function () use ($qrCode, $order, $storedPdf, $version, $userId): QrDocument {
+            QrDocument::query()
+                ->where('qr_code_id', $qrCode->id)
+                ->where('document_type', QrDocumentType::QualityCertificate->value)
+                ->update(['is_current' => false]);
 
-        return QrDocument::create([
-            'qr_code_id' => $qrCode->id,
-            'document_type' => QrDocumentType::CertificadoCalidad,
-            'file_name' => "certificado-calidad-{$order->order_number}.pdf",
-            'file_path' => $storedPdf['path'],
-            'file_size' => $storedPdf['size'],
-            'mime_type' => 'application/pdf',
-            'version' => $version,
-            'is_current' => true,
-            'uploaded_by' => $userId,
-        ]);
+            /** @var QrDocument */
+            return QrDocument::create([
+                'qr_code_id' => $qrCode->id,
+                'document_type' => QrDocumentType::QualityCertificate,
+                'file_name' => "certificado-calidad-{$order->order_number}.pdf",
+                'file_path' => $storedPdf['path'],
+                'file_size' => $storedPdf['size'],
+                'mime_type' => 'application/pdf',
+                'version' => $version,
+                'is_current' => true,
+                'uploaded_by' => $userId,
+            ]);
+        });
     }
 
     /**
@@ -146,7 +150,7 @@ class QualityInspectionCertificateService
     private function nextVersion(QrCode $qrCode): int
     {
         return ((int) $qrCode->documents()
-            ->where('document_type', QrDocumentType::CertificadoCalidad->value)
+            ->where('document_type', QrDocumentType::QualityCertificate->value)
             ->max('version')) + 1;
     }
 

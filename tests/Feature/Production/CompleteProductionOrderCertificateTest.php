@@ -137,7 +137,7 @@ test('completing an order stores quality solids and generates current certificat
 
     $document = QrDocument::query()
         ->where('qr_code_id', $order->qrCode->id)
-        ->where('document_type', QrDocumentType::CertificadoCalidad->value)
+        ->where('document_type', QrDocumentType::QualityCertificate->value)
         ->where('is_current', true)
         ->first();
 
@@ -169,7 +169,7 @@ test('regenerating a certificate keeps only one current certificate', function (
         ->and($second->version)->toBe(2)
         ->and(QrDocument::query()
             ->where('qr_code_id', $order->qrCode->id)
-            ->where('document_type', QrDocumentType::CertificadoCalidad->value)
+            ->where('document_type', QrDocumentType::QualityCertificate->value)
             ->where('is_current', true)
             ->count())->toBe(1);
 });
