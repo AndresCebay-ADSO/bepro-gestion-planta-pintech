@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('product_documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
-            $table->enum('document_type', ['ficha_tecnica', 'hoja_seguridad']);
+            $table->enum('document_type', ['technical_data_sheet', 'safety_data_sheet']);
             $table->string('file_name', 255);
             $table->string('file_path', 500);
             $table->unsignedBigInteger('file_size')->default(0);
