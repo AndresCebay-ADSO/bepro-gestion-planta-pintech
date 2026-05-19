@@ -9,15 +9,24 @@ use App\Http\Controllers\Inventory\RawMaterialController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductDocumentController;
 use App\Http\Controllers\Production\LineAdjustmentController;
 use App\Http\Controllers\Production\PackagingPlanController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProductVariantController;
+use App\Http\Controllers\PublicQrLandingController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login')->name('home');
+
+Route::get('/c/{token}', [PublicQrLandingController::class, 'show'])->name('qr.public.show');
+Route::get('/c/{token}/qr.png', [PublicQrLandingController::class, 'qrImage'])->name('qr.public.image');
+Route::get('/c/{token}/documents/{document}', [PublicQrLandingController::class, 'downloadDocument'])
+    ->name('qr.public.documents.download');
+Route::get('/c/{token}/product-documents/{document}', [PublicQrLandingController::class, 'downloadProductDocument'])
+    ->name('qr.public.product-documents.download');
 
 // Rutas autenticadas (todos los roles)
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -77,6 +86,9 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
 Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
     Route::resource('warehouses', WarehouseController::class)->only(['index']);
     Route::resource('products', ProductController::class);
+    Route::post('products/{product}/documents', [ProductDocumentController::class, 'store'])->name('products.documents.store');
+    Route::get('product-documents/{document}/download', [ProductDocumentController::class, 'download'])->name('products.documents.download');
+    Route::delete('product-documents/{document}', [ProductDocumentController::class, 'destroy'])->name('products.documents.destroy');
     Route::resource('inventory-movements', InventoryMovementController::class)
         ->except(['create'])
         ->where(['inventory_movement' => '[0-9]+']);

@@ -106,6 +106,8 @@ class User extends Authenticatable
             || DB::table('inventory_movements')->where('created_by', $this->id)->exists()
             || DB::table('finished_inventory_movements')->where('created_by', $this->id)->exists()
             || DB::table('qr_codes')->where('created_by', $this->id)->exists()
+            || DB::table('qr_documents')->where('uploaded_by', $this->id)->exists()
+            || DB::table('product_documents')->where('uploaded_by', $this->id)->exists()
             || Activity::where('causer_type', self::class)->where('causer_id', $this->id)->exists();
     }
 }

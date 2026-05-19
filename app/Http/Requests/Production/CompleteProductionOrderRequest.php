@@ -34,6 +34,7 @@ class CompleteProductionOrderRequest extends FormRequest
             'actual_yield_quantity' => 'nullable|numeric|min:0',
             'viscosity_ku' => 'nullable|numeric|min:0',
             'grinding_hg' => 'nullable|numeric|min:0',
+            'quality_solids' => 'nullable|numeric|min:0|max:100',
             'agitation_start_time' => 'nullable|date',
             'agitation_end_time' => 'nullable|date',
             'packaging_start_time' => 'nullable|date',

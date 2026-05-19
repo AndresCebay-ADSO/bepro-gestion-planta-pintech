@@ -26,7 +26,8 @@ use Illuminate\Validation\ValidationException;
 class ProductionOrderService
 {
     public function __construct(
-        private readonly VariantPricingService $variantPricingService
+        private readonly VariantPricingService $variantPricingService,
+        private readonly QualityInspectionCertificateService $qualityInspectionCertificateService
     ) {}
 
     /**
@@ -420,7 +421,9 @@ class ProductionOrderService
      */
     public function completeOrder(ProductionOrder $order, array $data): ProductionOrder
     {
-        return DB::transaction(function () use ($order, $data) {
+        $userId = auth()->id() ?? throw new \RuntimeException('No authenticated user');
+
+        $completedOrder = DB::transaction(function () use ($order, $data, $userId) {
             $lockedOrder = ProductionOrder::query()
                 ->lockForUpdate()
                 ->findOrFail($order->id);
@@ -436,8 +439,6 @@ class ProductionOrderService
                 );
             }
 
-            $userId = auth()->id() ?? throw new \RuntimeException('No authenticated user');
-
             // 1. Actualizar metadatos operacionales de la orden
             $lockedOrder->update([
                 'status' => ProductionOrderStatus::Completed,
@@ -445,6 +446,7 @@ class ProductionOrderService
                 'actual_quantity' => $data['actual_yield_quantity'] ?? $lockedOrder->quantity,
                 'viscosity_ku' => $data['viscosity_ku'] ?? null,
                 'grinding_hg' => $data['grinding_hg'] ?? null,
+                'quality_solids' => $data['quality_solids'] ?? null,
                 'agitation_start_time' => $data['agitation_start_time'] ?? null,
                 'agitation_end_time' => $data['agitation_end_time'] ?? null,
                 'packaging_start_time' => $data['packaging_start_time'] ?? null,
@@ -627,6 +629,11 @@ class ProductionOrderService
 
             return $lockedOrder->refresh();
         });
+
+        // Generate quality certificate outside the main transaction to optimize locks and avoid database rollback on storage/rendering failures.
+        $this->qualityInspectionCertificateService->generateForCompletedOrder($completedOrder, $userId);
+
+        return $completedOrder->refresh();
     }
 
     public function cancelOrder(ProductionOrder $order, ?string $reason = null): ProductionOrder

@@ -3,10 +3,8 @@
 namespace App\Models;
 
 use App\Enums\QrDocumentType;
-use Database\Factories\QrDocumentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -14,7 +12,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
- * @property int $qr_code_id
+ * @property int $product_id
  * @property QrDocumentType $document_type
  * @property string $file_name
  * @property string $file_path
@@ -26,11 +24,11 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
- * @property-read QrCode $qrCode
+ * @property-read Product $product
  * @property-read User $uploadedBy
  */
 #[Fillable([
-    'qr_code_id',
+    'product_id',
     'document_type',
     'file_name',
     'file_path',
@@ -40,10 +38,9 @@ use Illuminate\Support\Carbon;
     'is_current',
     'uploaded_by',
 ])]
-class QrDocument extends Model
+class ProductDocument extends Model
 {
-    /** @use HasFactory<QrDocumentFactory> */
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
     protected function casts(): array
     {
@@ -60,16 +57,9 @@ class QrDocument extends Model
         $query->where('is_current', true);
     }
 
-    public function scopeCurrentCertificate(Builder $query): void
+    public function product(): BelongsTo
     {
-        $query
-            ->where('document_type', QrDocumentType::QualityCertificate->value)
-            ->where('is_current', true);
-    }
-
-    public function qrCode(): BelongsTo
-    {
-        return $this->belongsTo(QrCode::class, 'qr_code_id');
+        return $this->belongsTo(Product::class, 'product_id');
     }
 
     public function uploadedBy(): BelongsTo

@@ -247,6 +247,7 @@ class ProductionOrderController extends Controller
     {
         $productionOrder->load([
             'product',
+            'qrCode',
             'formula.details.rawMaterial',
             'details.rawMaterial',
             'packagingPlans.productVariant.packageRawMaterial',
@@ -278,6 +279,14 @@ class ProductionOrderController extends Controller
 
         $pdfMaterials = $this->buildPdfMaterialsPayload($productionOrder);
 
+        $qrCode = $productionOrder->qrCode;
+        $qrLandingUrl = ($qrCode && $qrCode->is_active)
+            ? route('qr.public.show', ['token' => $qrCode->token], false)
+            : null;
+        $qrImageUrl = ($qrCode && $qrCode->is_active)
+            ? route('qr.public.image', ['token' => $qrCode->token], false)
+            : null;
+
         return [
             'id' => $productionOrder->id,
             'order_number' => $productionOrder->order_number,
@@ -292,6 +301,7 @@ class ProductionOrderController extends Controller
             'completion_date' => optional($productionOrder->completion_date)->toISOString(),
             'viscosity_ku' => $productionOrder->viscosity_ku !== null ? (float) $productionOrder->viscosity_ku : null,
             'grinding_hg' => $productionOrder->grinding_hg !== null ? (float) $productionOrder->grinding_hg : null,
+            'quality_solids' => $productionOrder->quality_solids !== null ? (float) $productionOrder->quality_solids : null,
             'agitation_start_time' => optional($productionOrder->agitation_start_time)->format('Y-m-d\TH:i'),
             'agitation_end_time' => optional($productionOrder->agitation_end_time)->format('Y-m-d\TH:i'),
             'packaging_start_time' => optional($productionOrder->packaging_start_time)->format('Y-m-d\TH:i'),
@@ -299,11 +309,19 @@ class ProductionOrderController extends Controller
             'responsible_name' => $productionOrder->responsible_name,
             'spillage_quantity' => (float) $productionOrder->spillage_quantity,
             'notes' => $productionOrder->notes,
+            'qr_landing_url' => $qrLandingUrl,
+            'qr_image_url' => $qrImageUrl,
             'product' => $productionOrder->product ? [
                 'id' => $productionOrder->product->id,
                 'name' => $productionOrder->product->name,
                 'code' => $productionOrder->product->code,
                 'profit_margin' => $productionOrder->product->profit_margin !== null ? (float) $productionOrder->product->profit_margin : null,
+                'quality_solids_lower' => $productionOrder->product->quality_solids_lower !== null
+                    ? (float) $productionOrder->product->quality_solids_lower
+                    : null,
+                'quality_solids_upper' => $productionOrder->product->quality_solids_upper !== null
+                    ? (float) $productionOrder->product->quality_solids_upper
+                    : null,
             ] : null,
             'formula' => $productionOrder->formula ? [
                 'id' => $productionOrder->formula->id,
