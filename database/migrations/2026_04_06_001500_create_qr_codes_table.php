@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('qr_codes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->unique()->constrained('products')->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->foreignId('production_order_id')->unique()->constrained('production_orders')->cascadeOnDelete();
             $table->string('token', 100)->unique();
             $table->string('url', 500);
             $table->boolean('is_active')->default(true);

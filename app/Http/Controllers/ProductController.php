@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QrDocumentType;
 use App\Http\Requests\Products\StoreProductRequest;
 use App\Http\Requests\Products\UpdateProductRequest;
 use App\Models\PriceList;
@@ -114,10 +115,21 @@ class ProductController extends Controller
                     ->with(['unitOfMeasure:id,name,symbol', 'packageRawMaterial:id,code,category_id'])
                     ->orderBy('sku'),
                 'formulas' => fn ($q) => $q->with('createdBy:id,name')->orderBy('version', 'desc'),
+                'productDocuments' => fn ($query) => $query->current()->latest('id'),
             ]),
             'can' => [
                 'update' => Gate::allows('update', $product),
                 'delete' => Gate::allows('delete', $product),
+            ],
+            'documentTypes' => [
+                [
+                    'value' => QrDocumentType::FichaTecnica->value,
+                    'label' => QrDocumentType::FichaTecnica->label(),
+                ],
+                [
+                    'value' => QrDocumentType::HojaSeguridad->value,
+                    'label' => QrDocumentType::HojaSeguridad->label(),
+                ],
             ],
             'units' => UnitOfMeasure::query()
                 ->select('id', 'name', 'symbol')

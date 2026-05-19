@@ -19,11 +19,33 @@ return new class extends Migration
             $table->foreignId('warehouse_id')->constrained('warehouses')->restrictOnDelete();
             $table->decimal('quantity', 12, 4);
             $table->decimal('actual_quantity', 12, 4)->nullable();
+
+            // Métricas de Rendimiento (Yield)
+            $table->decimal('yield_real_quantity', 12, 4)->nullable();
+            $table->decimal('yield_theoretical_quantity', 12, 4)->nullable();
+            $table->decimal('yield_variance_quantity', 12, 4)->nullable();
             $table->decimal('yield_percentage', 5, 2)->nullable();
+
             $table->enum('status', ['pending', 'in_progress', 'completed', 'cancelled'])->default('pending');
             $table->date('planned_date');
             $table->date('completion_date')->nullable();
             $table->text('notes')->nullable();
+
+            // Agitación y Mezcla
+            $table->dateTime('agitation_start_time')->nullable();
+            $table->dateTime('agitation_end_time')->nullable();
+
+            // Calidad
+            $table->decimal('viscosity_ku', 8, 2)->nullable()->comment('Viscosidad en unidades Krebs (KU)');
+            $table->decimal('grinding_hg', 8, 2)->nullable()->comment('Molienda en unidades Hegman (HG)');
+            $table->decimal('quality_solids', 5, 2)->nullable()->comment('Porcentaje de sólidos');
+
+            // Operación y Cierre
+            $table->string('responsible_name', 150)->nullable();
+            $table->dateTime('packaging_start_time')->nullable();
+            $table->dateTime('packaging_end_time')->nullable();
+            $table->decimal('spillage_quantity', 12, 4)->default(0)->comment('Cantidad de derrame detectado');
+
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
             $table->timestamps();
 

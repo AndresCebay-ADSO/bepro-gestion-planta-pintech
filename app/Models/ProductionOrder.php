@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ProductionOrderStatus;
+use Carbon\CarbonInterface;
 use Database\Factories\ProductionOrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -34,6 +36,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property Carbon|null $agitation_end_time
  * @property float|null $viscosity_ku
  * @property float|null $grinding_hg
+ * @property float|null $quality_solids
  * @property string|null $responsible_name
  * @property Carbon|null $packaging_start_time
  * @property Carbon|null $packaging_end_time
@@ -50,6 +53,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read Collection|FinishedInventoryMovement[] $finishedInventoryMovements
  * @property-read Collection|ProductionOrderPackagingPlan[] $packagingPlans
  * @property-read Collection|ProductionOrderLineAdjustment[] $lineAdjustments
+ * @property-read QrCode|null $qrCode
  */
 #[Fillable([
     'order_number',
@@ -70,6 +74,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'agitation_end_time',
     'viscosity_ku',
     'grinding_hg',
+    'quality_solids',
     'responsible_name',
     'packaging_start_time',
     'packaging_end_time',
@@ -118,6 +123,7 @@ class ProductionOrder extends Model
             'agitation_end_time' => 'datetime',
             'viscosity_ku' => 'decimal:2',
             'grinding_hg' => 'decimal:2',
+            'quality_solids' => 'decimal:2',
             'packaging_start_time' => 'datetime',
             'packaging_end_time' => 'datetime',
             'spillage_quantity' => 'decimal:4',
@@ -169,5 +175,20 @@ class ProductionOrder extends Model
     public function lineAdjustments(): HasMany
     {
         return $this->hasMany(ProductionOrderLineAdjustment::class, 'production_order_id');
+    }
+
+    public function qrCode(): HasOne
+    {
+        return $this->hasOne(QrCode::class, 'production_order_id');
+    }
+
+    public function getManufacturingDate(): ?CarbonInterface
+    {
+        return $this->created_at;
+    }
+
+    public function getVerificationDate(): ?CarbonInterface
+    {
+        return $this->created_at?->copy()->addYear()->subDay();
     }
 }

@@ -26,7 +26,8 @@ use Illuminate\Validation\ValidationException;
 class ProductionOrderService
 {
     public function __construct(
-        private readonly VariantPricingService $variantPricingService
+        private readonly VariantPricingService $variantPricingService,
+        private readonly QualityInspectionCertificateService $qualityInspectionCertificateService
     ) {}
 
     /**
@@ -445,6 +446,7 @@ class ProductionOrderService
                 'actual_quantity' => $data['actual_yield_quantity'] ?? $lockedOrder->quantity,
                 'viscosity_ku' => $data['viscosity_ku'] ?? null,
                 'grinding_hg' => $data['grinding_hg'] ?? null,
+                'quality_solids' => $data['quality_solids'] ?? null,
                 'agitation_start_time' => $data['agitation_start_time'] ?? null,
                 'agitation_end_time' => $data['agitation_end_time'] ?? null,
                 'packaging_start_time' => $data['packaging_start_time'] ?? null,
@@ -624,6 +626,8 @@ class ProductionOrderService
             collect($consumedRawMaterialIds)
                 ->unique()
                 ->each(fn (int $id) => RecalculateRawMaterialReferencePrice::dispatch($id)->afterCommit());
+
+            $this->qualityInspectionCertificateService->generateForCompletedOrder($lockedOrder->refresh(), $userId);
 
             return $lockedOrder->refresh();
         });

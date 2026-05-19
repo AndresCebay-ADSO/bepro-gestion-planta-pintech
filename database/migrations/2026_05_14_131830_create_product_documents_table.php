@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('qr_documents', function (Blueprint $table) {
+        Schema::create('product_documents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('qr_code_id')->constrained('qr_codes')->cascadeOnDelete();
-            $table->enum('document_type', ['ficha_tecnica', 'hoja_seguridad', 'certificado_calidad']);
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->enum('document_type', ['ficha_tecnica', 'hoja_seguridad']);
             $table->string('file_name', 255);
             $table->string('file_path', 500);
             $table->unsignedBigInteger('file_size')->default(0);
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index(['qr_code_id', 'document_type']);
+            $table->index(['product_id', 'document_type']);
             $table->index('is_current');
         });
     }
@@ -35,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('qr_documents');
+        Schema::dropIfExists('product_documents');
     }
 };

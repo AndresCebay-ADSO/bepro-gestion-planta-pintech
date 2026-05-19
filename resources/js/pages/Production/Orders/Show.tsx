@@ -2,11 +2,15 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
 import {
     Beaker,
-    Clock,
     CheckCircle2,
+    Clock,
+    Copy,
+    Download,
+    ExternalLink,
     FileSpreadsheet,
     FileText,
     Plus,
+    QrCode,
     Trash2,
     User as UserIcon,
 } from 'lucide-react';
@@ -52,13 +56,17 @@ type PreviewCostData = {
 };
 
 export default function ProductionOrderShow({ order, rawMaterials, availableVariants }: Props) {
+    const orderDetails = order.details ?? [];
+    const orderPackagingPlans = order.packaging_plans ?? [];
+
     const isCompleted = order.status === 'completed';
-    const hasOrderData = order.details.length > 0 || order.packaging_plans.length > 0;
+    const hasOrderData = orderDetails.length > 0 || orderPackagingPlans.length > 0;
 
     const { data, setData, post, processing, errors } = useForm({
         actual_yield_quantity: order.actual_quantity ?? order.quantity,
         viscosity_ku: order.viscosity_ku ?? '',
         grinding_hg: order.grinding_hg ?? '',
+        quality_solids: order.quality_solids ?? '',
         agitation_start_time: order.agitation_start_time ?? '',
         agitation_end_time: order.agitation_end_time ?? '',
         packaging_start_time: order.packaging_start_time ?? '',
@@ -66,7 +74,7 @@ export default function ProductionOrderShow({ order, rawMaterials, availableVari
         responsible_name: order.responsible_name ?? '',
         spillage_quantity: order.spillage_quantity ?? 0,
         notes: order.notes ?? '',
-        ingredients: order.details.map((detail: any) => ({
+        ingredients: orderDetails.map((detail: any) => ({
             id: detail.id,
             raw_material_name: detail.raw_material?.code,
             planned_quantity: detail.planned_quantity,
@@ -74,7 +82,7 @@ export default function ProductionOrderShow({ order, rawMaterials, availableVari
             unit_cost: detail.unit_cost ?? 0,
             total_cost: detail.total_cost ?? 0,
         })),
-        packaging: order.packaging_plans.map((pack: any) => ({
+        packaging: orderPackagingPlans.map((pack: any) => ({
             id: pack.id,
             presentation: pack.product_variant?.presentation_label ?? 'Unidad',
             presentation_value: pack.product_variant?.presentation_value ?? 1,
@@ -87,15 +95,47 @@ export default function ProductionOrderShow({ order, rawMaterials, availableVari
 
     const [previewCosts, setPreviewCosts] = useState<PreviewCostData | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
+    const [landingLinkCopied, setLandingLinkCopied] = useState(false);
+
+    const landingFullUrl = useMemo(() => {
+        if (!order.qr_landing_url) {
+            return '';
+        }
+
+        if (typeof window === 'undefined') {
+            return order.qr_landing_url;
+        }
+
+        return `${window.location.origin}${order.qr_landing_url}`;
+    }, [order.qr_landing_url]);
+
+    const solidsReferenceLabel = useMemo(() => {
+        const lower = order.product?.quality_solids_lower;
+        const upper = order.product?.quality_solids_upper;
+
+        if (lower == null && upper == null) {
+            return null;
+        }
+
+        if (lower != null && upper != null) {
+            return `${lower}% – ${upper}%`;
+        }
+
+        if (lower != null) {
+            return `≥ ${lower}%`;
+        }
+
+        return `≤ ${upper}%`;
+    }, [order.product?.quality_solids_lower, order.product?.quality_solids_upper]);
 
     // Re-sync packaging form data when plans are added/removed (after store/destroy redirects)
     const packagingPlanIds = useMemo(
-        () => order.packaging_plans.map((p: any) => p.id).join(','),
-        [order.packaging_plans]
+        () => orderPackagingPlans.map((p: any) => p.id).join(','),
+        [orderPackagingPlans]
     );
 
     useEffect(() => {
-        setData('packaging', order.packaging_plans.map((pack: any) => {
+        setData('packaging', orderPackagingPlans.map((pack: any) => {
             // Buscamos si el usuario ya había escrito algo para este plan en el formulario actual
             const existingFormItem = data.packaging.find((item: any) => item.id === pack.id);
             
@@ -194,7 +234,7 @@ export default function ProductionOrderShow({ order, rawMaterials, availableVari
     }, [previewCosts]);
 
     const ingredientRows = isCompleted
-        ? order.details.map((detail: any) => ({
+        ? orderDetails.map((detail: any) => ({
               id: detail.id,
               raw_material_name: detail.raw_material?.code,
               planned_quantity: detail.planned_quantity,
@@ -209,7 +249,7 @@ export default function ProductionOrderShow({ order, rawMaterials, availableVari
           }));
 
     const packagingRows = isCompleted
-        ? order.packaging_plans.map((pack: any) => ({
+        ? orderPackagingPlans.map((pack: any) => ({
               id: pack.id,
               presentation: pack.product_variant?.presentation_label ?? 'Unidad',
               presentation_value: pack.product_variant?.presentation_value ?? 1,
@@ -265,7 +305,7 @@ export default function ProductionOrderShow({ order, rawMaterials, availableVari
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        {isCompleted && (
+                        {isCompleted && order.completion_date && (
                             <div className="flex items-center gap-2 text-green-600 font-medium mr-4">
                                 <CheckCircle2 className="w-5 h-5" />
                                 Finalizada el {format(new Date(order.completion_date), 'dd/MM/yyyy HH:mm')}
@@ -330,32 +370,63 @@ export default function ProductionOrderShow({ order, rawMaterials, availableVari
                                             <p className="text-xs text-destructive">{errors.actual_yield_quantity}</p>
                                         )}
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="viscosity">Viscosidad (KU)</Label>
-                                        <Input
-                                            id="viscosity"
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="Ej: 105.5"
-                                            value={data.viscosity_ku}
-                                            onChange={e => setData('viscosity_ku', e.target.value)}
-                                            disabled={isCompleted}
-                                        />
-                                        {errors.viscosity_ku && <p className="text-xs text-destructive">{errors.viscosity_ku}</p>}
+                                <div className="rounded-lg border border-dashed border-border/80 bg-muted/25 p-4 space-y-4">
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-medium text-foreground">
+                                            Indicadores de laboratorio
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Viscosidad, molienda y sólidos se reflejan en el certificado de calidad del lote al completar la orden.
+                                        </p>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="grinding">Molienda (HG)</Label>
-                                        <Input
-                                            id="grinding"
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="Ej: 7.2"
-                                            value={data.grinding_hg}
-                                            onChange={e => setData('grinding_hg', e.target.value)}
-                                            disabled={isCompleted}
-                                        />
-                                        {errors.grinding_hg && <p className="text-xs text-destructive">{errors.grinding_hg}</p>}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="viscosity">Viscosidad (KU)</Label>
+                                            <Input
+                                                id="viscosity"
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Ej: 105.5"
+                                                value={data.viscosity_ku}
+                                                onChange={e => setData('viscosity_ku', e.target.value)}
+                                                disabled={isCompleted}
+                                            />
+                                            {errors.viscosity_ku && <p className="text-xs text-destructive">{errors.viscosity_ku}</p>}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="grinding">Molienda (HG)</Label>
+                                            <Input
+                                                id="grinding"
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Ej: 7.2"
+                                                value={data.grinding_hg}
+                                                onChange={e => setData('grinding_hg', e.target.value)}
+                                                disabled={isCompleted}
+                                            />
+                                            {errors.grinding_hg && <p className="text-xs text-destructive">{errors.grinding_hg}</p>}
+                                        </div>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <Label htmlFor="quality-solids">Sólidos (%)</Label>
+                                            <Input
+                                                id="quality-solids"
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Ej: 52.4"
+                                                value={data.quality_solids}
+                                                onChange={e => setData('quality_solids', e.target.value)}
+                                                disabled={isCompleted}
+                                            />
+                                            {solidsReferenceLabel && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    Referencia en ficha del producto:{' '}
+                                                    <span className="font-medium text-foreground">{solidsReferenceLabel}</span>
+                                                </p>
+                                            )}
+                                            {errors.quality_solids && <p className="text-xs text-destructive">{errors.quality_solids}</p>}
+                                        </div>
                                     </div>
+                                </div>
                                 </div>
 
                                 <Separator />
@@ -565,6 +636,79 @@ export default function ProductionOrderShow({ order, rawMaterials, availableVari
 
                     {/* Right Column: Times & Responsible */}
                     <div className="space-y-6">
+                        {isCompleted && order.qr_landing_url && (
+                            <Card className="border-primary/25 bg-gradient-to-b from-primary/5 to-card shadow-sm">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="flex items-center gap-2 text-base">
+                                        <QrCode className="h-5 w-5 text-primary" />
+                                        Documentación pública del lote
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Enlace seguro por orden. Muestra datos del lote, certificado de calidad y PDFs del
+                                        producto (ficha técnica, hoja de seguridad) cuando estén cargados.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    {order.qr_image_url && (
+                                        <div className="flex justify-center rounded-lg border border-border bg-white p-4">
+                                            <img
+                                                src={order.qr_image_url}
+                                                alt={`Código QR del lote ${order.order_number}`}
+                                                width={160}
+                                                height={160}
+                                                className="block"
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="rounded-md border border-border bg-background/80 px-3 py-2">
+                                        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                                            URL pública
+                                        </p>
+                                        <p className="truncate font-mono text-xs text-foreground" title={landingFullUrl}>
+                                            {landingFullUrl}
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        <Button variant="default" size="sm" asChild>
+                                            <a href={order.qr_landing_url} target="_blank" rel="noopener noreferrer">
+                                                <ExternalLink className="mr-1.5 h-4 w-4" />
+                                                Abrir landing
+                                            </a>
+                                        </Button>
+                                        {order.qr_image_url && (
+                                            <Button variant="outline" size="sm" asChild>
+                                                <a
+                                                    href={order.qr_image_url}
+                                                    download={`qr-lote-${order.order_number}.png`}
+                                                >
+                                                    <Download className="mr-1.5 h-4 w-4" />
+                                                    Descargar QR
+                                                </a>
+                                            </Button>
+                                        )}
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                if (!landingFullUrl) {
+                                                    return;
+                                                }
+
+                                                void navigator.clipboard.writeText(landingFullUrl).then(() => {
+                                                    setLandingLinkCopied(true);
+                                                    window.setTimeout(() => setLandingLinkCopied(false), 2000);
+                                                });
+                                            }}
+                                        >
+                                            <Copy className="mr-1.5 h-4 w-4" />
+                                            {landingLinkCopied ? 'Copiado' : 'Copiar enlace'}
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-base">
