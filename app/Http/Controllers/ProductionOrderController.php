@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Production\CancelProductionOrderAction;
+use App\Actions\Production\CompleteProductionOrderAction;
+use App\Actions\Production\CreateProductionOrderAction;
+use App\Actions\Production\PreviewProductionOrderCostsAction;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\WarehouseType;
 use App\Exports\ProductionOrderExport;
@@ -19,7 +23,7 @@ use App\Models\ProductionOrderPackagingPlan;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\Warehouse;
-use App\Services\ProductionOrderService;
+use App\Services\Inventory\FifoStockAllocatorService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -31,7 +35,11 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class ProductionOrderController extends Controller
 {
     public function __construct(
-        private readonly ProductionOrderService $productionOrderService
+        private readonly CreateProductionOrderAction $createProductionOrder,
+        private readonly CompleteProductionOrderAction $completeProductionOrder,
+        private readonly CancelProductionOrderAction $cancelProductionOrder,
+        private readonly PreviewProductionOrderCostsAction $previewProductionOrderCosts,
+        private readonly FifoStockAllocatorService $fifoStockAllocator
     ) {}
 
     /**
@@ -178,7 +186,10 @@ class ProductionOrderController extends Controller
     {
         $this->authorize('create', ProductionOrder::class);
 
-        $order = $this->productionOrderService->createOrder($request->validated());
+        $order = $this->createProductionOrder->execute(
+            data: $request->validated(),
+            userId: $this->authenticatedUserId()
+        );
 
         return redirect()->route('production-orders.show', $order)
             ->with('success', 'Orden de producción creada con éxito.');
@@ -194,7 +205,11 @@ class ProductionOrderController extends Controller
         $validated = $request->validated();
 
         try {
-            $this->productionOrderService->completeOrder($order, $validated);
+            $this->completeProductionOrder->execute(
+                order: $order,
+                data: $validated,
+                userId: $this->authenticatedUserId()
+            );
         } catch (\DomainException $exception) {
             return back()->with('error', $exception->getMessage());
         }
@@ -211,7 +226,7 @@ class ProductionOrderController extends Controller
         $this->authorize('delete', $order);
 
         try {
-            $this->productionOrderService->cancelOrder($order, $request->validated('reason'));
+            $this->cancelProductionOrder->execute($order, $request->validated('reason'));
 
             return redirect()->route('production-orders.show', $order)
                 ->with('success', 'Orden de producción cancelada con éxito.');
@@ -230,7 +245,7 @@ class ProductionOrderController extends Controller
         $validated = $request->validated();
 
         return response()->json(
-            $this->productionOrderService->previewOrderCosts(
+            $this->previewProductionOrderCosts->execute(
                 order: $order,
                 ingredients: $validated['ingredients'],
                 packaging: $validated['packaging'] ?? []
@@ -266,7 +281,7 @@ class ProductionOrderController extends Controller
             ->mapWithKeys(fn ($rawMaterialId) => [(int) $rawMaterialId => 1.0])
             ->all();
 
-        $packageUnitCostEstimates = $this->productionOrderService->estimateMaterialUnitCostsForPlanning(
+        $packageUnitCostEstimates = $this->fifoStockAllocator->estimateMaterialUnitCostsForPlanning(
             warehouseId: (int) $productionOrder->warehouse_id,
             requirementsByMaterialId: $packageRawMaterialRequirements
         );
@@ -435,5 +450,10 @@ class ProductionOrderController extends Controller
             'mode' => 'steps',
             'rows' => $rows,
         ];
+    }
+
+    private function authenticatedUserId(): int
+    {
+        return (int) (auth()->id() ?? throw new \RuntimeException('No authenticated user'));
     }
 }
