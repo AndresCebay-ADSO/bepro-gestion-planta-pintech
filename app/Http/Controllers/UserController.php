@@ -134,9 +134,26 @@ class UserController extends Controller
 
     /**
      * Eliminar usuario.
+     *
+     * Bloquea la eliminación si el usuario:
+     * - Es el mismo que está autenticado (auto-eliminación).
+     * - Tiene registros en tablas con FK created_by (órdenes, fórmulas, movimientos, etc.).
+     * - Tiene actividad registrada vía Spatie activity log.
      */
     public function destroy(User $user): RedirectResponse
     {
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'No puedes eliminar tu propia cuenta.');
+        }
+
+        if ($user->hasRole('admin')) {
+            return back()->with('error', 'No se puede eliminar un administrador. Desactiva su cuenta en su lugar.');
+        }
+
+        if ($user->hasActivity()) {
+            return back()->with('error', 'No se puede eliminar el usuario porque tiene actividad registrada en el sistema. Desactiva su cuenta en su lugar.');
+        }
+
         $user->delete();
 
         return redirect()->route('users.index')->with('message', 'Usuario eliminado exitosamente.');

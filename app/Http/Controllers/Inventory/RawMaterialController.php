@@ -8,35 +8,47 @@ use App\Http\Requests\RawMaterials\UpdateRawMaterialRequest;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
+use App\Services\ProductionCostRecalculationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class RawMaterialController extends Controller
 {
+    public function __construct(
+        private readonly ProductionCostRecalculationService $productionCostRecalculationService
+    ) {}
+
     public function index(Request $request): Response
     {
         $this->authorize('viewAny', RawMaterial::class);
 
         $search = strtolower(trim((string) $request->input('search')));
         $user = $request->user();
+        $status = $request->string('status')->toString();
+        $canViewCosts = $user?->hasAnyRole(['admin', 'produccion']) ?? false;
 
         $rawMaterials = RawMaterial::query()
             ->with(['category:id,name', 'unitOfMeasure:id,name,symbol'])
+            ->withSum('inventoryBatches as available_stock', 'remaining_quantity')
+            ->when($status === '' || $status === 'active', fn ($query) => $query->active())
+            ->when($status === 'inactive', fn ($query) => $query->where('is_active', false))
             ->when($search !== '', fn ($query) => $query->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"]))
             ->latest('id')
             ->paginate(15)
             ->onEachSide(1)
             ->withQueryString()
-            ->through(function (RawMaterial $rawMaterial) use ($user): array {
+            ->through(function (RawMaterial $rawMaterial) use ($user, $canViewCosts): array {
                 return [
                     'id' => $rawMaterial->id,
                     'code' => $rawMaterial->code,
-                    'current_price' => $rawMaterial->current_price,
-                    'previous_price' => $rawMaterial->previous_price,
+                    'current_price' => $canViewCosts ? $rawMaterial->current_price : null,
+                    'previous_price' => $canViewCosts ? $rawMaterial->previous_price : null,
                     'minimum_stock' => $rawMaterial->minimum_stock,
+                    'available_stock' => $rawMaterial->available_stock ?? 0,
                     'alert_days_before_expiry' => $rawMaterial->alert_days_before_expiry,
                     'is_active' => $rawMaterial->is_active,
                     'category' => $rawMaterial->category ? [
@@ -52,6 +64,7 @@ class RawMaterialController extends Controller
                         'view' => Gate::forUser($user)->allows('view', $rawMaterial),
                         'update' => Gate::forUser($user)->allows('update', $rawMaterial),
                         'delete' => Gate::forUser($user)->allows('delete', $rawMaterial),
+                        'reactivate' => Gate::forUser($user)->allows('update', $rawMaterial) && ! $rawMaterial->is_active,
                     ],
                 ];
             });
@@ -60,9 +73,11 @@ class RawMaterialController extends Controller
             'rawMaterials' => $rawMaterials,
             'filters' => [
                 'search' => $search,
+                'status' => $status === '' ? 'active' : $status,
             ],
             'can' => [
                 'create' => Gate::allows('create', RawMaterial::class),
+                'view_costs' => $canViewCosts,
             ],
         ]);
     }
@@ -122,6 +137,7 @@ class RawMaterialController extends Controller
             'can' => [
                 'update' => Gate::allows('update', $rawMaterial),
                 'delete' => Gate::allows('delete', $rawMaterial),
+                'reactivate' => Gate::allows('update', $rawMaterial) && ! $rawMaterial->is_active,
             ],
         ]);
     }
@@ -149,7 +165,26 @@ class RawMaterialController extends Controller
     {
         $this->authorize('update', $rawMaterial);
 
-        $rawMaterial->update($request->validated());
+        $validated = $request->validated();
+        $currentPriceChanged = array_key_exists('current_price', $validated)
+            && (
+                ($rawMaterial->current_price === null) !== ($validated['current_price'] === null)
+                || (
+                    $rawMaterial->current_price !== null
+                    && $validated['current_price'] !== null
+                    && abs((float) $rawMaterial->current_price - (float) $validated['current_price']) > 0.0001
+                )
+            );
+
+        if ($currentPriceChanged && ! array_key_exists('previous_price', $validated)) {
+            $validated['previous_price'] = $rawMaterial->current_price;
+        }
+
+        $rawMaterial->update($validated);
+
+        if ($currentPriceChanged) {
+            $this->productionCostRecalculationService->recalculateForRawMaterial((int) $rawMaterial->id);
+        }
 
         return redirect()
             ->route('raw-materials.index')
@@ -160,18 +195,57 @@ class RawMaterialController extends Controller
     {
         $this->authorize('delete', $rawMaterial);
 
-        $hasAvailableBatches = $rawMaterial->inventoryBatches()
-            ->where('remaining_quantity', '>', 0)
-            ->exists();
+        return DB::transaction(function () use ($rawMaterial): RedirectResponse {
+            /** @var RawMaterial $lockedRawMaterial */
+            $lockedRawMaterial = RawMaterial::query()
+                ->lockForUpdate()
+                ->findOrFail($rawMaterial->id);
 
-        if ($hasAvailableBatches) {
-            return back()->with('error', __('No se puede eliminar la materia prima porque tiene lotes activos con stock disponible.'));
+            if (! $lockedRawMaterial->is_active) {
+                return back()->with('error', __('La materia prima ya se encuentra inactiva.'));
+            }
+
+            $hasActivity = $lockedRawMaterial->inventoryBatches()->exists()
+                || $lockedRawMaterial->inventoryMovements()->exists()
+                || $lockedRawMaterial->formulaDetails()->exists()
+                || $lockedRawMaterial->productionOrderDetails()->exists();
+
+            if (! $hasActivity) {
+                $lockedRawMaterial->delete();
+
+                return redirect()
+                    ->route('raw-materials.index')
+                    ->with('success', __('Materia prima eliminada físicamente exitosamente.'));
+            }
+
+            $hasAvailableBatches = $lockedRawMaterial->inventoryBatches()
+                ->where('remaining_quantity', '>', 0)
+                ->exists();
+
+            if ($hasAvailableBatches) {
+                return back()->with('error', __('No se puede desactivar ni eliminar la materia prima porque tiene lotes activos con stock disponible.'));
+            }
+
+            $lockedRawMaterial->update(['is_active' => false]);
+
+            return redirect()
+                ->route('raw-materials.index')
+                ->with('success', __('Materia prima desactivada exitosamente (conserva historial).'));
+        }, attempts: 3);
+    }
+
+    public function reactivate(RawMaterial $rawMaterial): RedirectResponse
+    {
+        $this->authorize('update', $rawMaterial);
+
+        if ($rawMaterial->is_active) {
+            return back()->with('error', __('La materia prima ya se encuentra activa.'));
         }
 
-        $rawMaterial->delete();
+        $rawMaterial->update(['is_active' => true]);
 
         return redirect()
-            ->route('raw-materials.index')
-            ->with('success', __('Materia prima eliminada exitosamente.'));
+            ->route('raw-materials.index', ['status' => 'inactive'])
+            ->with('success', __('Materia prima reactivada exitosamente.'));
     }
 }

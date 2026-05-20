@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -20,14 +19,14 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string $code
  * @property int|null $category_id
  * @property int $unit_of_measure_id
- * @property float $current_price
+ * @property float|null $current_price
  * @property float $previous_price
  * @property float $minimum_stock
  * @property int $alert_days_before_expiry
+ * @property bool $tracks_inventory
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property Carbon|null $deleted_at
  * @property-read RawMaterialCategory|null $category
  * @property-read UnitOfMeasure $unitOfMeasure
  * @property-read Collection|InventoryBatch[] $inventoryBatches
@@ -37,19 +36,20 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read Collection|Alert[] $alerts
  */
 #[Fillable([
-    'code',
+    'code', // Sin name, por decision del usuario, ni siquiera como null
     'category_id',
     'unit_of_measure_id',
     'current_price',
     'previous_price',
     'minimum_stock',
     'alert_days_before_expiry',
+    'tracks_inventory',
     'is_active',
 ])]
 class RawMaterial extends Model
 {
     /** @use HasFactory<RawMaterialFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -68,6 +68,7 @@ class RawMaterial extends Model
             'previous_price' => 'decimal:4',
             'minimum_stock' => 'decimal:4',
             'alert_days_before_expiry' => 'integer',
+            'tracks_inventory' => 'boolean',
             'is_active' => 'boolean',
         ];
     }

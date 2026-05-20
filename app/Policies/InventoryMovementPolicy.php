@@ -24,11 +24,19 @@ class InventoryMovementPolicy
 
     public function update(User $user, InventoryMovement $inventoryMovement): bool
     {
+        if ($inventoryMovement->production_order_id !== null) {
+            return false;
+        }
+
         return $user->hasAnyRole(['admin', 'produccion']);
     }
 
     public function delete(User $user, InventoryMovement $inventoryMovement): bool
     {
+        if ($inventoryMovement->production_order_id !== null) {
+            return false;
+        }
+
         return $user->hasRole('admin');
     }
 

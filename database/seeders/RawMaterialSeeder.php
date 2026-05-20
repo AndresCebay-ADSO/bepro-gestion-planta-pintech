@@ -28,49 +28,234 @@ class RawMaterialSeeder extends Seeder
         $catQuimicos = RawMaterialCategory::where('code', 'QUIMICOS')->first();
         $catEnvMetal = RawMaterialCategory::where('code', 'ENV-METAL')->first();
         $catEnvPlast = RawMaterialCategory::where('code', 'ENV-PLAST')->first();
-        $catTapas = RawMaterialCategory::where('code', 'TAPAS')->first();
 
         // --- 1. QUÍMICOS Y MATERIAS PRIMAS BASE ---
         $quimicos = [
-            // Pigmentos
-            ['code' => 'PIG-BLA-01', 'unit' => 'kg', 'price' => 18.5000, 'name' => 'Pigmento Blanco (Dióxido de Titanio)'],
-            ['code' => 'PIG-NEG-01', 'unit' => 'kg', 'price' => 22.0000, 'name' => 'Pigmento Negro (Negro de Humo)'],
-            ['code' => 'PIG-AMA-01', 'unit' => 'kg', 'price' => 25.5000, 'name' => 'Pigmento Amarillo'],
-            ['code' => 'PIG-AMA-CAT', 'unit' => 'kg', 'price' => 28.0000, 'name' => 'Pigmento Amarillo Caterpillar'],
-            ['code' => 'PIG-AZU-01', 'unit' => 'kg', 'price' => 24.0000, 'name' => 'Pigmento Azul'],
-            ['code' => 'PIG-ROJ-01', 'unit' => 'kg', 'price' => 26.5000, 'name' => 'Pigmento Rojo'],
-            ['code' => 'PIG-VER-01', 'unit' => 'kg', 'price' => 23.5000, 'name' => 'Pigmento Verde'],
-            ['code' => 'PIG-GRI-CLA', 'unit' => 'kg', 'price' => 19.0000, 'name' => 'Pigmento Gris Claro'],
-            ['code' => 'PIG-GRI-OSC', 'unit' => 'kg', 'price' => 19.5000, 'name' => 'Pigmento Gris Oscuro'],
-            ['code' => 'PIG-OCR-01', 'unit' => 'kg', 'price' => 21.0000, 'name' => 'Pigmento Ocre'],
-            ['code' => 'PIG-ALU-01', 'unit' => 'kg', 'price' => 35.0000, 'name' => 'Pigmento Aluminio'],
 
-            // Resinas
-            ['code' => 'RES-ALQ-01', 'unit' => 'kg', 'price' => 12.5000, 'name' => 'Resina Alquídica'],
-            ['code' => 'RES-ACR-01', 'unit' => 'kg', 'price' => 24.9000, 'name' => 'Resina Acrílica'],
-            ['code' => 'RES-EPX-01', 'unit' => 'kg', 'price' => 32.0000, 'name' => 'Resina Epóxica Base'],
-            ['code' => 'RES-POL-01', 'unit' => 'kg', 'price' => 28.5000, 'name' => 'Resina Poliuretano'],
-            ['code' => 'RES-NOV-01', 'unit' => 'kg', 'price' => 38.0000, 'name' => 'Resina Novolac'],
+            // Aditivo
+            ['code' => 'A-1', 'unit' => 'kg'],
+            ['code' => 'A-2', 'unit' => 'kg'],
+            ['code' => 'A-3 A', 'unit' => 'kg'],
+            ['code' => 'A-3 C', 'unit' => 'kg'],
+            ['code' => 'A-4', 'unit' => 'kg'],
+            ['code' => 'A-5', 'unit' => 'kg'],
+            ['code' => 'A-6', 'unit' => 'kg'],
+            ['code' => 'A-7', 'unit' => 'kg'],
+            ['code' => 'A-8', 'unit' => 'kg'],
+            ['code' => 'A-9', 'unit' => 'kg'],
 
-            // Catalizadores
-            ['code' => 'CAT-SMR-01', 'unit' => 'l', 'price' => 45.0000, 'name' => 'Catalizador SMR'],
-            ['code' => 'CAT-ADX-01', 'unit' => 'l', 'price' => 52.0000, 'name' => 'Catalizador Aducto Amida'],
-            ['code' => 'CAT-POL-01', 'unit' => 'l', 'price' => 48.0000, 'name' => 'Catalizador Epoxi Pol'],
+            // Aditivo Base Agua
+            ['code' => 'ABA-1', 'unit' => 'kg'],
+            ['code' => 'ABA-1 PQ', 'unit' => 'kg'],
+            ['code' => 'ABA-2 A', 'unit' => 'kg'],
+            ['code' => 'ABA-2 P', 'unit' => 'kg'],
+            ['code' => 'ABA-3 P', 'unit' => 'kg'],
+            ['code' => 'ABA-3 QC', 'unit' => 'kg'],
+            ['code' => 'ABA-4 S', 'unit' => 'kg'],
+            ['code' => 'ABA-4', 'unit' => 'kg'],
+            ['code' => 'ABA-5', 'unit' => 'kg'],
+            ['code' => 'ABA-6', 'unit' => 'kg'],
+            ['code' => 'ABA-7', 'unit' => 'l'],
+            ['code' => 'ABA-7 B', 'unit' => 'l'],
+            ['code' => 'ABA-8', 'unit' => 'l'],
+            ['code' => 'ABA-9', 'unit' => 'l'],
+            ['code' => 'ABA-10', 'unit' => 'l'],
+            ['code' => 'ABA-10 P', 'unit' => 'l'],
+            ['code' => 'ABA-11', 'unit' => 'l'],
+            ['code' => 'ABA-12', 'unit' => 'l'],
+            ['code' => 'ABA-13', 'unit' => 'l'],
+            ['code' => 'ABA-14', 'unit' => 'l'],
 
-            // Solventes y Ajustadores
-            ['code' => 'SOL-MIN-01', 'unit' => 'l', 'price' => 8.5000, 'name' => 'Solvente Mineral'],
-            ['code' => 'AJ-AP100', 'unit' => 'l', 'price' => 12.7500, 'name' => 'Ajustador AP-100'],
-            ['code' => 'AJ-AP200', 'unit' => 'l', 'price' => 13.5000, 'name' => 'Ajustador AP-200'],
-            ['code' => 'AJ-AP150', 'unit' => 'l', 'price' => 14.0000, 'name' => 'Ajustador AP-150'],
-            ['code' => 'AJ-IP300', 'unit' => 'l', 'price' => 15.5000, 'name' => 'Ajustador IP-300'],
-            ['code' => 'AJ-IP350', 'unit' => 'l', 'price' => 16.0000, 'name' => 'Ajustador IP-350'],
-            ['code' => 'AJ-IE400', 'unit' => 'l', 'price' => 14.7500, 'name' => 'Ajustador IE-400'],
-            ['code' => 'AJ-IA500', 'unit' => 'l', 'price' => 13.2500, 'name' => 'Ajustador IA-500'],
+            // Aditivo Base Solvente
+            ['code' => 'ABS-1', 'unit' => 'kg'],
+            ['code' => 'ABS-1 PU', 'unit' => 'kg'],
+            ['code' => 'ABS-2', 'unit' => 'kg'],
+            ['code' => 'ABS-2 C', 'unit' => 'kg'],
+            ['code' => 'ABS-2 CC', 'unit' => 'kg'],
+            ['code' => 'ABS-3', 'unit' => 'kg'],
+            ['code' => 'ABS-3 PU', 'unit' => 'kg'],
+            ['code' => 'ABS-3 POL', 'unit' => 'kg'],
+            ['code' => 'ABS-4', 'unit' => 'kg'],
+            ['code' => 'ABS-4 C', 'unit' => 'kg'],
+            ['code' => 'ABS-4 P', 'unit' => 'kg'],
+            ['code' => 'ABS-4 R', 'unit' => 'kg'],
+            ['code' => 'ABS-4 E', 'unit' => 'kg'],
+            ['code' => 'ABS-4 POL', 'unit' => 'l'],
+            ['code' => 'ABS-5', 'unit' => 'l'],
+            ['code' => 'ABS-5 P', 'unit' => 'l'],
+            ['code' => 'ABS-6 ', 'unit' => 'l'],
+            ['code' => 'ABS-7', 'unit' => 'l'],
+            ['code' => 'ABS-7 ALQ', 'unit' => 'l'],
+            ['code' => 'ABS-8', 'unit' => 'l'],
+            ['code' => 'ABS-8 C', 'unit' => 'l'],
+            ['code' => 'ABS-9', 'unit' => 'l'],
+            ['code' => 'ABS-9 A', 'unit' => 'l'],
+            ['code' => 'ABS-9 P', 'unit' => 'kg'],
+            ['code' => 'ABS-9 QC', 'unit' => 'kg'],
+            ['code' => 'ABS-10', 'unit' => 'kg'],
+            ['code' => 'ABS-11 QC', 'unit' => 'kg'],
+            ['code' => 'ABS-11 P', 'unit' => 'kg'],
+            ['code' => 'ABS-12 A', 'unit' => 'kg'],
+            ['code' => 'ABS-12 QC', 'unit' => 'kg'],
+            ['code' => 'ABS-13', 'unit' => 'kg'],
+            ['code' => 'ABS-13 QC', 'unit' => 'kg'],
+            ['code' => 'ABS-14', 'unit' => 'kg'],
+            ['code' => 'ABS-14 C', 'unit' => 'l'],
+            ['code' => 'ABS-15', 'unit' => 'l'],
+            ['code' => 'ABS-16', 'unit' => 'l'],
+            ['code' => 'ABS-17', 'unit' => 'l'],
+            ['code' => 'ABS-18', 'unit' => 'l'],
+            ['code' => 'ABS-19', 'unit' => 'l'],
+            ['code' => 'ABS-20', 'unit' => 'l'],
 
-            // Aditivos
-            ['code' => 'ADI-SEC-01', 'unit' => 'kg', 'price' => 18.0000, 'name' => 'Aditivo Secado Rápido'],
-            ['code' => 'ADI-MAT-01', 'unit' => 'kg', 'price' => 15.5000, 'name' => 'Aditivo Mate'],
-            ['code' => 'ADI-ANT-01', 'unit' => 'kg', 'price' => 22.0000, 'name' => 'Aditivo Anticorrosivo'],
+            // Carga
+            ['code' => 'C-1', 'unit' => 'kg'],
+            ['code' => 'C-2', 'unit' => 'kg'],
+            ['code' => 'C-3', 'unit' => 'kg'],
+            ['code' => 'C-3 ROCSA P', 'unit' => 'kg'],
+            ['code' => 'C-3 POL', 'unit' => 'kg'],
+            ['code' => 'C-3 POL P', 'unit' => 'kg'],
+            ['code' => 'C-4', 'unit' => 'kg'],
+            ['code' => 'C-5', 'unit' => 'kg'],
+            ['code' => 'C-5 QC', 'unit' => 'kg'],
+            ['code' => 'C-6', 'unit' => 'kg'],
+            ['code' => 'C-6 1 HD', 'unit' => 'kg'],
+            ['code' => 'C-6 1 NT', 'unit' => 'kg'],
+            ['code' => 'C-7', 'unit' => 'kg'],
+            ['code' => 'C-7 QM', 'unit' => 'kg'],
+            ['code' => 'C-7 M', 'unit' => 'kg'],
+            ['code' => 'C-8', 'unit' => 'kg'],
+            ['code' => 'C-9', 'unit' => 'kg'],
+            ['code' => 'C-10', 'unit' => 'kg'],
+            ['code' => 'C-11', 'unit' => 'kg'],
+            ['code' => 'C-11 M', 'unit' => 'kg'],
+            ['code' => 'C-12', 'unit' => 'kg'],
+            ['code' => 'C-13', 'unit' => 'kg'],
+            ['code' => 'C-14', 'unit' => 'kg'],
+
+            // Serie P
+            ['code' => 'P-1', 'unit' => 'kg'],
+            ['code' => 'P-2', 'unit' => 'kg'],
+            ['code' => 'P-3', 'unit' => 'kg'],
+            ['code' => 'P-4', 'unit' => 'kg'],
+            ['code' => 'P-5', 'unit' => 'kg'],
+            ['code' => 'P-6', 'unit' => 'kg'],
+            ['code' => 'P-7', 'unit' => 'kg'],
+            ['code' => 'P-8', 'unit' => 'kg'],
+            ['code' => 'P-9', 'unit' => 'kg'],
+            ['code' => 'P-10', 'unit' => 'kg'],
+            ['code' => 'P-10 P', 'unit' => 'kg'],
+            ['code' => 'P-11', 'unit' => 'kg'],
+            ['code' => 'P-12', 'unit' => 'kg'],
+            ['code' => 'P-13', 'unit' => 'kg'],
+            ['code' => 'P-14', 'unit' => 'kg'],
+            ['code' => 'P-15', 'unit' => 'kg'],
+            ['code' => 'P-16', 'unit' => 'kg'],
+            ['code' => 'P-17', 'unit' => 'kg'],
+            ['code' => 'P-18', 'unit' => 'kg'],
+            ['code' => 'P-19', 'unit' => 'kg'],
+            ['code' => 'P-20', 'unit' => 'kg'],
+            ['code' => 'P-20B', 'unit' => 'kg'],
+            ['code' => 'P-20 C', 'unit' => 'kg'],
+            ['code' => 'P-21', 'unit' => 'kg'],
+            ['code' => 'P-21 QC', 'unit' => 'kg'],
+            ['code' => 'P-22', 'unit' => 'kg'],
+            ['code' => 'P-23', 'unit' => 'kg'],
+            ['code' => 'P-24', 'unit' => 'kg'],
+            ['code' => 'P-25', 'unit' => 'kg'],
+            ['code' => 'P-26', 'unit' => 'kg'],
+            ['code' => 'P-27', 'unit' => 'kg'],
+            ['code' => 'P-28', 'unit' => 'kg'],
+            ['code' => 'P-29', 'unit' => 'kg'],
+            ['code' => 'P-30', 'unit' => 'kg'],
+            ['code' => 'P-31', 'unit' => 'kg'],
+            ['code' => 'P-614', 'unit' => 'kg'],
+            ['code' => 'P-637', 'unit' => 'kg'],
+            ['code' => 'P-628', 'unit' => 'kg'],
+            ['code' => 'P-608', 'unit' => 'kg'],
+
+            // Serie R
+            ['code' => 'R-1 A', 'unit' => 'kg'],
+            ['code' => 'R-2', 'unit' => 'kg'],
+            ['code' => 'R-3', 'unit' => 'kg'],
+            ['code' => 'R-4', 'unit' => 'kg'],
+            ['code' => 'R-4 T', 'unit' => 'kg'],
+            ['code' => 'R-4 A', 'unit' => 'kg'],
+            ['code' => 'R-4 P', 'unit' => 'kg'],
+            ['code' => 'R-5 S', 'unit' => 'kg'],
+            ['code' => 'R-5 A', 'unit' => 'kg'],
+            ['code' => 'R-5 C', 'unit' => 'kg'],
+            ['code' => 'R-5', 'unit' => 'kg'],
+            ['code' => 'R-6 S', 'unit' => 'kg'],
+            ['code' => 'R-6 S 115', 'unit' => 'kg'],
+            ['code' => 'R-6 A', 'unit' => 'kg'],
+            ['code' => 'R-6 C', 'unit' => 'kg'],
+            ['code' => 'R-7 A', 'unit' => 'kg'],
+            ['code' => 'R-8 S', 'unit' => 'kg'],
+            ['code' => 'R-8 P', 'unit' => 'kg'],
+            ['code' => 'R-9', 'unit' => 'kg'],
+            ['code' => 'R-10', 'unit' => 'kg'],
+            ['code' => 'R-11', 'unit' => 'kg'],
+            ['code' => 'R-12', 'unit' => 'kg'],
+            ['code' => 'R-14', 'unit' => 'kg'],
+            ['code' => 'R-13', 'unit' => 'kg'],
+            ['code' => 'R-15', 'unit' => 'kg'],
+            ['code' => 'R-16', 'unit' => 'kg'],
+            ['code' => 'R-17', 'unit' => 'kg'],
+            ['code' => 'R-18', 'unit' => 'kg'],
+            ['code' => 'R-20', 'unit' => 'kg'],
+            ['code' => 'R-21', 'unit' => 'kg'],
+            ['code' => 'R-22', 'unit' => 'kg'],
+            ['code' => 'R-23', 'unit' => 'kg'],
+            ['code' => 'R-24', 'unit' => 'kg'],
+            ['code' => 'R-25', 'unit' => 'kg'],
+
+            // Serie S
+            ['code' => 'S-1', 'unit' => 'kg'],
+            ['code' => 'S-2', 'unit' => 'kg'],
+            ['code' => 'S-3', 'unit' => 'kg'],
+            ['code' => 'S-4', 'unit' => 'kg'],
+            ['code' => 'S-4 R', 'unit' => 'kg'],
+            ['code' => 'S-5', 'unit' => 'kg'],
+            ['code' => 'S-5 P', 'unit' => 'kg'],
+            ['code' => 'S-6', 'unit' => 'kg'],
+            ['code' => 'S-7 POL', 'unit' => 'kg'],
+            ['code' => 'S-7', 'unit' => 'kg'],
+            ['code' => 'S-7 DBBW', 'unit' => 'kg'],
+            ['code' => 'S-7 R', 'unit' => 'kg'],
+            ['code' => 'S-8 B', 'unit' => 'kg'],
+            ['code' => 'S-9', 'unit' => 'kg'],
+            ['code' => 'S-10', 'unit' => 'kg'],
+            ['code' => 'S-11', 'unit' => 'kg'],
+            ['code' => 'S-11 R', 'unit' => 'kg'],
+            ['code' => 'S-11 S', 'unit' => 'kg'],
+            ['code' => 'S-12', 'unit' => 'kg'],
+            ['code' => 'S-13', 'unit' => 'kg'],
+            ['code' => 'S-14', 'unit' => 'kg'],
+
+            // Serie O y otros
+            ['code' => 'O-1', 'unit' => 'kg'],
+            ['code' => 'O-2', 'unit' => 'kg'],
+            ['code' => 'O-3', 'unit' => 'kg'],
+            ['code' => 'AGUA DESTILADA', 'unit' => 'l'],
+            ['code' => 'AGUA DE SERVICIO', 'unit' => 'kg', 'tracks_inventory' => false, 'current_price' => 0, 'minimum_stock' => 0, 'alert_days_before_expiry' => 0],
+
+            // Serie AP y Químicos Finales
+            ['code' => 'AP-423', 'unit' => 'kg'],
+            ['code' => 'AP-425', 'unit' => 'kg'],
+            ['code' => 'AP-404', 'unit' => 'kg'],
+            ['code' => 'AP-405', 'unit' => 'kg'],
+            ['code' => 'AP-402', 'unit' => 'kg'],
+            ['code' => 'AP-415', 'unit' => 'kg'],
+            ['code' => 'AP-435', 'unit' => 'kg'],
+            ['code' => 'AP-DORADA', 'unit' => 'kg'],
+            ['code' => 'AP-419', 'unit' => 'kg'],
+            ['code' => 'AP-421', 'unit' => 'kg'],
+            ['code' => 'BENZ. S', 'unit' => 'kg'],
+            ['code' => 'BS', 'unit' => 'kg'],
+            ['code' => 'ETILE', 'unit' => 'kg'],
+            ['code' => 'FOSF. S', 'unit' => 'kg'],
+            ['code' => 'TEA', 'unit' => 'kg'],
         ];
 
         foreach ($quimicos as $item) {
@@ -80,10 +265,11 @@ class RawMaterialSeeder extends Seeder
                 [
                     'category_id' => $catQuimicos?->id,
                     'unit_of_measure_id' => $unit->id,
-                    'current_price' => $item['price'],
+                    'current_price' => $item['current_price'] ?? null,
                     'previous_price' => null,
-                    'minimum_stock' => 50,
-                    'alert_days_before_expiry' => 30,
+                    'minimum_stock' => $item['minimum_stock'] ?? 50,
+                    'alert_days_before_expiry' => $item['alert_days_before_expiry'] ?? 30,
+                    'tracks_inventory' => $item['tracks_inventory'] ?? true,
                     'is_active' => true,
                 ]
             );
@@ -91,15 +277,15 @@ class RawMaterialSeeder extends Seeder
 
         // --- 2. ENVASES METÁLICOS ---
         $envasesMetalicos = [
-            ['code' => 'ENV-M-CU20', 'price' => 8500, 'name' => 'Cuñete Metálico 20L (5GL)', 'capacity' => '20L / 5GL'],
-            ['code' => 'ENV-M-GL', 'price' => 3500, 'name' => 'Galón Metálico 3.785L', 'capacity' => '3.785L / 1GL'],
-            ['code' => 'ENV-M-3/4', 'price' => 2800, 'name' => 'Envase Metálico 3/4 GL', 'capacity' => '2.84L'],
-            ['code' => 'ENV-M-1/4-BA', 'price' => 1500, 'name' => 'Envase 1/4 Boca Ancha', 'capacity' => '0.946L'],
-            ['code' => 'ENV-M-1/4-TF', 'price' => 1400, 'name' => 'Envase 1/4 Tapa Flex', 'capacity' => '0.946L'],
-            ['code' => 'ENV-M-1/16', 'price' => 950, 'name' => 'Envase 1/16 Tapa Flex', 'capacity' => '0.237L'],
-            ['code' => 'ENV-M-T50', 'price' => 45000, 'name' => 'Tambor Metálico 50GL', 'capacity' => '189.25L'],
-            ['code' => 'ENV-M-CIN', 'price' => 12000, 'name' => 'Envase CIN 18.94L', 'capacity' => '18.94L'],
-            ['code' => 'ENV-M-GL5L', 'price' => 3200, 'name' => 'Galón Metálico 5L', 'capacity' => '5L'],
+            ['code' => 'ENV-M-CU20'],
+            ['code' => 'ENV-M-GL'],
+            ['code' => 'ENV-M-3/4'],
+            ['code' => 'ENV-M-1/4-BA'],
+            ['code' => 'ENV-M-1/4-TF'],
+            ['code' => 'ENV-M-1/16'],
+            ['code' => 'ENV-M-T50'],
+            ['code' => 'ENV-M-CIN'],
+            ['code' => 'ENV-M-GL5L'],
         ];
 
         foreach ($envasesMetalicos as $pack) {
@@ -108,7 +294,7 @@ class RawMaterialSeeder extends Seeder
                 [
                     'category_id' => $catEnvMetal?->id,
                     'unit_of_measure_id' => $unitUnit->id,
-                    'current_price' => $pack['price'],
+                    'current_price' => null,
                     'previous_price' => null,
                     'minimum_stock' => 100,
                     'alert_days_before_expiry' => 0,
@@ -119,10 +305,10 @@ class RawMaterialSeeder extends Seeder
 
         // --- 3. ENVASES PLÁSTICOS ---
         $envasesPlasticos = [
-            ['code' => 'ENV-P-CU20', 'price' => 6500, 'name' => 'Cuñete Plástico 20L', 'capacity' => '20L'],
-            ['code' => 'ENV-P-GL', 'price' => 2500, 'name' => 'Galón Plástico 3.785L', 'capacity' => '3.785L'],
-            ['code' => 'ENV-P-BI5', 'price' => 7500, 'name' => 'Bidón Plástico 5GL', 'capacity' => '18.927L'],
-            ['code' => 'ENV-P-T50', 'price' => 38000, 'name' => 'Tambor Plástico 50GL', 'capacity' => '189.27L'],
+            ['code' => 'ENV-P-CU20'],
+            ['code' => 'ENV-P-GL'],
+            ['code' => 'ENV-P-BI5'],
+            ['code' => 'ENV-P-T50'],
         ];
 
         foreach ($envasesPlasticos as $pack) {
@@ -131,7 +317,7 @@ class RawMaterialSeeder extends Seeder
                 [
                     'category_id' => $catEnvPlast?->id,
                     'unit_of_measure_id' => $unitUnit->id,
-                    'current_price' => $pack['price'],
+                    'current_price' => null,
                     'previous_price' => null,
                     'minimum_stock' => 100,
                     'alert_days_before_expiry' => 0,
@@ -140,59 +326,9 @@ class RawMaterialSeeder extends Seeder
             );
         }
 
-        // --- 4. TAPAS Y ACCESORIOS ---
-        $tapas = [
-            ['code' => 'TAP-TF-1/4', 'price' => 350, 'name' => 'Tapa Flex 1/4'],
-            ['code' => 'TAP-TF-1/16', 'price' => 280, 'name' => 'Tapa Flex 1/16'],
-            ['code' => 'TAP-RO-GL', 'price' => 450, 'name' => 'Tapa Rosca Galón'],
-            ['code' => 'TAP-RO-CU', 'price' => 650, 'name' => 'Tapa Rosca Cuñete'],
-            ['code' => 'ASA-CU-20', 'price' => 850, 'name' => 'Asa para Cuñete 20L'],
-        ];
-
-        foreach ($tapas as $tapa) {
-            RawMaterial::updateOrCreate(
-                ['code' => $tapa['code']],
-                [
-                    'category_id' => $catTapas?->id,
-                    'unit_of_measure_id' => $unitUnit->id,
-                    'current_price' => $tapa['price'],
-                    'previous_price' => null,
-                    'minimum_stock' => 200,
-                    'alert_days_before_expiry' => 0,
-                    'is_active' => true,
-                ]
-            );
-        }
-
-        // --- 5. Materiales adicionales para testing (químicos varios) ---
-        $units = ['kg', 'l'];
-
-        for ($i = 1; $i <= 30; $i++) {
-            $unitCode = $units[array_rand($units)];
-            $unitId = ($unitCode === 'kg') ? $kgUnit->id : $literUnit->id;
-
-            $code = 'MP-'.str_pad($i + 100, 4, '0', STR_PAD_LEFT);
-
-            RawMaterial::updateOrCreate(
-                ['code' => $code],
-                [
-                    'category_id' => $catQuimicos?->id,
-                    'unit_of_measure_id' => $unitId,
-                    'current_price' => fake()->randomFloat(4, 5, 150),
-                    'previous_price' => fake()->optional(0.3)->randomFloat(4, 5, 150),
-                    'minimum_stock' => fake()->numberBetween(0, 200),
-                    'alert_days_before_expiry' => fake()->numberBetween(15, 180),
-                    'is_active' => fake()->boolean(85),
-                    'created_at' => now()->subDays(rand(0, 60)),
-                    'updated_at' => now(),
-                ]
-            );
-        }
-
         $this->command->info('Created/Updated '.RawMaterial::count().' raw materials:');
         $this->command->info('  - Químicos: '.RawMaterial::where('category_id', $catQuimicos?->id)->count());
         $this->command->info('  - Envases Metálicos: '.RawMaterial::where('category_id', $catEnvMetal?->id)->count());
         $this->command->info('  - Envases Plásticos: '.RawMaterial::where('category_id', $catEnvPlast?->id)->count());
-        $this->command->info('  - Tapas y Accesorios: '.RawMaterial::where('category_id', $catTapas?->id)->count());
     }
 }

@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { route } from 'ziggy-js';
+import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
 
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -23,7 +23,7 @@ type Props = {
     rawMaterial: {
         id: number;
         code: string;
-        current_price: string;
+        current_price: string | null;
         previous_price: string | null;
         minimum_stock: string;
         alert_days_before_expiry: number;
@@ -34,6 +34,7 @@ type Props = {
     can: {
         update: boolean;
         delete: boolean;
+        reactivate: boolean;
     };
 };
 
@@ -41,12 +42,21 @@ type Props = {
  * Componente
  */
 export default function RawMaterialsShow({ rawMaterial, can }: Props) {
+    const totalAvailableQuantity = rawMaterial.inventory_batches.reduce(
+        (sum, batch) => sum + (Number(batch.remaining_quantity) || 0),
+        0,
+    );
+
     const handleDelete = () => {
-        if (!window.confirm('¿Estás seguro de eliminar esta materia prima?')) {
+        if (!window.confirm('¿Estás seguro de que quieres eliminar o desactivar esta materia prima? (El sistema determinará la acción según su historial)')) {
             return;
         }
 
-        router.delete(route('raw-materials.destroy', rawMaterial.code));
+        router.delete(RawMaterialController.destroy.url(rawMaterial.code));
+    };
+
+    const handleReactivate = () => {
+        router.patch(RawMaterialController.reactivate.url(rawMaterial.code));
     };
 
     return (
@@ -67,7 +77,7 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
 
                     <div className="flex flex-wrap gap-2">
                         <Button variant="outline" asChild>
-                            <Link href={route('raw-materials.index')}>
+                            <Link href={RawMaterialController.index.url()}>
                                 Volver
                             </Link>
                         </Button>
@@ -75,8 +85,7 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                         {can.update && (
                             <Button asChild>
                                 <Link
-                                    href={route(
-                                        'raw-materials.edit',
+                                    href={RawMaterialController.edit.url(
                                         rawMaterial.code,
                                     )}
                                 >
@@ -85,12 +94,21 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                             </Button>
                         )}
 
-                        {can.delete && (
+                        {can.delete && rawMaterial.is_active && (
                             <Button
                                 variant="destructive"
                                 onClick={handleDelete}
                             >
-                                Eliminar
+                                Desactivar / Eliminar
+                            </Button>
+                        )}
+
+                        {can.reactivate && (
+                            <Button
+                                variant="outline"
+                                onClick={handleReactivate}
+                            >
+                                Reactivar
                             </Button>
                         )}
                     </div>
@@ -132,6 +150,7 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                                 currency
                                 maxDecimals={4}
                                 trimTrailingZeros
+                                emptyValue="Sin precio de referencia"
                             />
                         }
                     />
@@ -164,6 +183,17 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                         label="Alerta por vencimiento"
                         value={`${rawMaterial.alert_days_before_expiry} días`}
                     />
+
+                    <InfoItem
+                        label="Total disponible (lotes)"
+                        value={
+                            <FormattedNumber
+                                value={totalAvailableQuantity}
+                                maxDecimals={4}
+                                trimTrailingZeros
+                            />
+                        }
+                    />
                 </div>
 
                 {/* Lotes */}
@@ -181,6 +211,9 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                                 <th className="p-3 text-left">Proveedor</th>
                                 <th className="p-3 text-left">Entrada</th>
                                 <th className="p-3 text-left">Vence</th>
+                                <th className="p-3 text-right">
+                                    Precio unitario
+                                </th>
                                 <th className="p-3 text-right">
                                     Cantidad inicial
                                 </th>
@@ -212,6 +245,15 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
 
                                     <td className="p-3 text-right">
                                         <FormattedNumber
+                                            value={batch.unit_price}
+                                            currency
+                                            maxDecimals={4}
+                                            trimTrailingZeros
+                                        />
+                                    </td>
+
+                                    <td className="p-3 text-right">
+                                        <FormattedNumber
                                             value={batch.initial_quantity}
                                             maxDecimals={2}
                                         />
@@ -231,7 +273,7 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                             {rawMaterial.inventory_batches.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={6}
+                                        colSpan={7}
                                         className="p-10 text-center text-sm text-muted-foreground"
                                     >
                                         No hay lotes registrados para esta
@@ -240,6 +282,27 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                                 </tr>
                             )}
                         </tbody>
+
+                        {rawMaterial.inventory_batches.length > 0 && (
+                            <tfoot>
+                                <tr className="border-t border-border bg-muted/30">
+                                    <td
+                                        colSpan={6}
+                                        className="p-3 text-right font-medium text-foreground"
+                                    >
+                                        Total Disponible
+                                    </td>
+                                    <td className="p-3 text-right font-medium text-foreground">
+                                        <FormattedNumber
+                                            value={totalAvailableQuantity}
+                                            maxDecimals={4}
+                                            trimTrailingZeros
+                                            bold
+                                        />
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        )}
                     </table>
                 </div>
             </div>

@@ -14,7 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -91,5 +93,21 @@ class User extends Authenticatable
         return $this->warehouses()
             ->wherePivot('is_default', true)
             ->first();
+    }
+
+    /**
+     * Check if the user has any activity or related records in the system.
+     */
+    public function hasActivity(): bool
+    {
+        return DB::table('production_orders')->where('created_by', $this->id)->exists()
+            || DB::table('formulas')->where('created_by', $this->id)->exists()
+            || DB::table('transfers')->where('created_by', $this->id)->exists()
+            || DB::table('inventory_movements')->where('created_by', $this->id)->exists()
+            || DB::table('finished_inventory_movements')->where('created_by', $this->id)->exists()
+            || DB::table('qr_codes')->where('created_by', $this->id)->exists()
+            || DB::table('qr_documents')->where('uploaded_by', $this->id)->exists()
+            || DB::table('product_documents')->where('uploaded_by', $this->id)->exists()
+            || Activity::where('causer_type', self::class)->where('causer_id', $this->id)->exists();
     }
 }

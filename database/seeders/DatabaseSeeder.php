@@ -18,21 +18,20 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UnitsOfMeasureSeeder::class,      // Unidades: gr, kg, l, gl, u
             RawMaterialCategorySeeder::class, // Categorías materia prima
+            RawMaterialSeeder::class,         // Materias primas
             ProductCategorySeeder::class,      // Categorías productos
             WarehouseSeeder::class,            // Bodegas
         ]);
 
-        // Seeders de usuarios y permisos
+        // Seeders de datos de negocio y operación
         $this->call([
             RolePermissionSeeder::class,
             UserSeeder::class,
             WarehouseUserSeeder::class,
+            ProductSeeder::class,
+            InventoryBatchSeeder::class,
+            ProductVariantSeeder::class,
+            FormulaSeeder::class,
         ]);
-
-        // NOTA: Los siguientes seeders deben ejecutarse manualmente cuando
-        // el usuario quiera crear datos de prueba:
-        // - RawMaterialSeeder::class      // Materias primas
-        // - ProductSeeder::class          // Productos base (unidad: galones)
-        // - InventoryBatchSeeder::class   // Lotes de inventario
     }
 }

@@ -20,7 +20,7 @@ type RawMaterial = {
     code: string;
     category_id: number | null;
     unit_of_measure_id: number;
-    current_price: string;
+    current_price: string | null;
     previous_price: string | null;
     minimum_stock: string;
     alert_days_before_expiry: number;
@@ -68,6 +68,7 @@ export default function RawMaterialsEdit({ rawMaterial, categories, units }: Pro
         form.transform((data) => ({
             ...data,
             unit_of_measure_id: Number(data.unit_of_measure_id),
+            current_price: data.current_price === '' ? null : data.current_price,
             previous_price:
                 data.previous_price === '' ? null : data.previous_price,
         }));

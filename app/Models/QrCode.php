@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $product_id
+ * @property int $production_order_id
  * @property string $token
  * @property string $url
  * @property bool $is_active
@@ -24,11 +25,13 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  * @property-read Product $product
+ * @property-read ProductionOrder $productionOrder
  * @property-read User $createdBy
  * @property-read Collection|QrDocument[] $documents
  */
 #[Fillable([
     'product_id',
+    'production_order_id',
     'token',
     'url',
     'is_active',
@@ -57,6 +60,11 @@ class QrCode extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function productionOrder(): BelongsTo
+    {
+        return $this->belongsTo(ProductionOrder::class, 'production_order_id');
     }
 
     public function createdBy(): BelongsTo

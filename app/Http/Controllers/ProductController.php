@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QrDocumentType;
 use App\Http\Requests\Products\StoreProductRequest;
 use App\Http\Requests\Products\UpdateProductRequest;
 use App\Models\PriceList;
@@ -9,6 +10,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
+use App\Services\ProductionCostRecalculationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -17,6 +19,10 @@ use Inertia\Response;
 
 class ProductController extends Controller
 {
+    public function __construct(
+        private readonly ProductionCostRecalculationService $productionCostRecalculationService
+    ) {}
+
     public function index(Request $request): Response
     {
         $this->authorize('viewAny', Product::class);
@@ -88,7 +94,7 @@ class ProductController extends Controller
 
         $validated = $request->validated();
 
-        if (array_key_exists('current_price', $validated) || array_key_exists('profit_margin', $validated)) {
+        if (array_key_exists('current_price', $validated)) {
             $this->authorize('create', PriceList::class);
         }
 
@@ -109,10 +115,21 @@ class ProductController extends Controller
                     ->with(['unitOfMeasure:id,name,symbol', 'packageRawMaterial:id,code,category_id'])
                     ->orderBy('sku'),
                 'formulas' => fn ($q) => $q->with('createdBy:id,name')->orderBy('version', 'desc'),
+                'productDocuments' => fn ($query) => $query->current()->latest('id'),
             ]),
             'can' => [
                 'update' => Gate::allows('update', $product),
                 'delete' => Gate::allows('delete', $product),
+            ],
+            'documentTypes' => [
+                [
+                    'value' => QrDocumentType::TechnicalDataSheet->value,
+                    'label' => QrDocumentType::TechnicalDataSheet->label(),
+                ],
+                [
+                    'value' => QrDocumentType::SafetyDataSheet->value,
+                    'label' => QrDocumentType::SafetyDataSheet->label(),
+                ],
             ],
             'units' => UnitOfMeasure::query()
                 ->select('id', 'name', 'symbol')
@@ -151,16 +168,44 @@ class ProductController extends Controller
         $this->authorize('update', $product);
 
         $validated = $request->validated();
+        $priceWasManuallyChanged = array_key_exists('current_price', $validated)
+            && (string) ($product->current_price ?? '') !== (string) ($validated['current_price'] ?? '');
 
-        $priceFields = ['current_cost', 'current_price', 'profit_margin', 'price_threshold'];
-        foreach ($priceFields as $field) {
-            if (array_key_exists($field, $validated) && (string) ($product->{$field} ?? '') !== (string) $validated[$field]) {
-                $this->authorize('create', PriceList::class);
-                break;
-            }
+        if ($priceWasManuallyChanged) {
+            $this->authorize('create', PriceList::class);
         }
 
         $product->update($validated);
+
+        if (
+            ($product->wasChanged('profit_margin') || $product->wasChanged('price_threshold') || $product->wasChanged('current_cost'))
+            && ! $priceWasManuallyChanged
+        ) {
+            $costRecord = $this->productionCostRecalculationService->recalculateForProduct(
+                (int) $product->id,
+                forcePriceRefresh: true
+            );
+
+            if ($costRecord === null) {
+                $cost = (float) ($product->current_cost ?? 0);
+                $margin = (float) ($product->profit_margin ?? 0);
+                $newPrice = $cost * (1 + ($margin / 100));
+
+                $product->updateQuietly(['current_price' => $newPrice]);
+
+                foreach ($product->variants()->with('packageRawMaterial')->get() as $variant) {
+                    $packageCost = (float) ($variant->packageRawMaterial?->current_price ?? 0);
+                    $presentation = (float) ($variant->presentation_value ?? 1);
+                    $newVariantCost = ($cost * $presentation) + $packageCost;
+                    $newVariantPrice = $newVariantCost * (1 + ($margin / 100));
+
+                    $variant->updateQuietly([
+                        'current_cost' => $newVariantCost,
+                        'current_price' => $newVariantPrice,
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('products.index')->with('success', __('Producto actualizado exitosamente.'));
     }

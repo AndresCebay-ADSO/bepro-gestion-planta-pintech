@@ -46,7 +46,9 @@ export default function RawMaterialsCreate({ categories, units }: Props) {
     const submit = () => {
         form.transform((data) => ({
             ...data,
+            category_id: Number(data.category_id),
             unit_of_measure_id: Number(data.unit_of_measure_id),
+            current_price: data.current_price === '' ? null : data.current_price,
             previous_price:
                 data.previous_price === '' ? null : data.previous_price,
         }));

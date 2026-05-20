@@ -41,6 +41,15 @@ test('reset password screen can be rendered', function () {
     });
 });
 
+test('reset password request is successful even for unknown emails', function () {
+    Notification::fake();
+
+    $response = $this->post(route('password.email'), ['email' => 'unknown@example.com']);
+
+    $response->assertSessionHas('status');
+    Notification::assertNothingSent();
+});
+
 test('password can be reset with valid token', function () {
     Notification::fake();
 

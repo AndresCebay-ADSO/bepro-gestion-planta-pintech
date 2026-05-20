@@ -2,13 +2,17 @@
 
 namespace App\Notifications;
 
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\URL;
 
-class ResetPasswordNotification extends Notification
+class ResetPasswordNotification extends Notification implements ShouldQueue
 {
+    use Queueable;
+
     /**
      * The password reset token.
      */
@@ -34,7 +38,7 @@ class ResetPasswordNotification extends Notification
         $resetUrl = URL::route('password.reset', [
             'token' => $this->token,
             'email' => $notifiable->getEmailForPasswordReset(),
-        ], false);
+        ]);
 
         $expireMinutes = config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
 

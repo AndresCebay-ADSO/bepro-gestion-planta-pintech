@@ -11,6 +11,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import {
     show as productsShow,
     index as productsIndex,
@@ -23,12 +24,20 @@ type Props = {
         id: number;
         code: string;
         name: string;
+        brand: string;
+        description: string | null;
         category_id: number | null;
         unit_of_measure_id: number | null;
         current_cost: string | null;
         profit_margin: string | null;
         current_price: string | null;
         price_threshold: string | null;
+        quality_viscosity_lower: number | string | null;
+        quality_viscosity_upper: number | string | null;
+        quality_fineness_lower: number | string | null;
+        quality_fineness_upper: number | string | null;
+        quality_solids_lower: number | string | null;
+        quality_solids_upper: number | string | null;
         is_active: boolean;
     };
     categories: Option[];
@@ -39,12 +48,20 @@ type Props = {
 type ProductForm = {
     code: string;
     name: string;
+    brand: string;
+    description: string;
     category_id: string;
     unit_of_measure_id: string;
     current_cost: string;
     profit_margin: string;
     current_price: string;
     price_threshold: string;
+    quality_viscosity_lower: string;
+    quality_viscosity_upper: string;
+    quality_fineness_lower: string;
+    quality_fineness_upper: string;
+    quality_solids_lower: string;
+    quality_solids_upper: string;
     is_active: boolean;
 };
 
@@ -54,17 +71,28 @@ export default function ProductsEdit({
     units,
     can,
 }: Props) {
+    const toInput = (value: number | string | null | undefined): string =>
+        value !== null && value !== undefined && value !== '' ? String(value) : '';
+
     const { data, setData, put, processing, errors } = useForm<ProductForm>({
         code: product.code,
         name: product.name,
+        brand: product.brand ?? 'BEPRO',
+        description: product.description ?? '',
         category_id: product.category_id ? String(product.category_id) : '',
         unit_of_measure_id: product.unit_of_measure_id
             ? String(product.unit_of_measure_id)
             : '',
         current_cost: product.current_cost ?? '',
-        profit_margin: product.profit_margin ?? '',
+        profit_margin: product.profit_margin ?? '0',
         current_price: product.current_price ?? '',
         price_threshold: product.price_threshold ?? '0',
+        quality_viscosity_lower: toInput(product.quality_viscosity_lower),
+        quality_viscosity_upper: toInput(product.quality_viscosity_upper),
+        quality_fineness_lower: toInput(product.quality_fineness_lower),
+        quality_fineness_upper: toInput(product.quality_fineness_upper),
+        quality_solids_lower: toInput(product.quality_solids_lower),
+        quality_solids_upper: toInput(product.quality_solids_upper),
         is_active: product.is_active,
     });
 
@@ -208,6 +236,33 @@ export default function ProductsEdit({
                             </div>
                         </div>
 
+                        <div className="space-y-2">
+                            <Label htmlFor="brand">Marca comercial *</Label>
+                            <Input
+                                id="brand"
+                                value={data.brand}
+                                onChange={(e) => setData('brand', e.target.value)}
+                                maxLength={100}
+                            />
+                            {errors.brand && (
+                                <p className="text-sm text-destructive">{errors.brand}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="description">Descripción</Label>
+                            <Textarea
+                                id="description"
+                                rows={4}
+                                value={data.description}
+                                onChange={(e) => setData('description', e.target.value)}
+                                className="min-h-[100px] resize-y"
+                            />
+                            {errors.description && (
+                                <p className="text-sm text-destructive">{errors.description}</p>
+                            )}
+                        </div>
+
                         <div className="flex items-center gap-3">
                             <input
                                 id="is_active"
@@ -219,6 +274,128 @@ export default function ProductsEdit({
                                 className="h-4 w-4 rounded border-input"
                             />
                             <Label htmlFor="is_active">Producto activo</Label>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+                        <h2 className="font-medium text-foreground">Rangos para certificado de calidad</h2>
+                        <p className="text-xs text-muted-foreground">
+                            Límites de referencia (KU, HG, %) comparados con el resultado al cerrar la orden.
+                        </p>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Viscosidad (KU)</Label>
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="quality_viscosity_lower" className="text-xs font-normal text-muted-foreground">
+                                            Mínimo
+                                        </Label>
+                                        <Input
+                                            id="quality_viscosity_lower"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={data.quality_viscosity_lower}
+                                            onChange={(e) => setData('quality_viscosity_lower', e.target.value)}
+                                        />
+                                        {errors.quality_viscosity_lower && (
+                                            <p className="text-xs text-destructive">{errors.quality_viscosity_lower}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="quality_viscosity_upper" className="text-xs font-normal text-muted-foreground">
+                                            Máximo
+                                        </Label>
+                                        <Input
+                                            id="quality_viscosity_upper"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={data.quality_viscosity_upper}
+                                            onChange={(e) => setData('quality_viscosity_upper', e.target.value)}
+                                        />
+                                        {errors.quality_viscosity_upper && (
+                                            <p className="text-xs text-destructive">{errors.quality_viscosity_upper}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Molienda (HG)</Label>
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="quality_fineness_lower" className="text-xs font-normal text-muted-foreground">
+                                            Mínimo
+                                        </Label>
+                                        <Input
+                                            id="quality_fineness_lower"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={data.quality_fineness_lower}
+                                            onChange={(e) => setData('quality_fineness_lower', e.target.value)}
+                                        />
+                                        {errors.quality_fineness_lower && (
+                                            <p className="text-xs text-destructive">{errors.quality_fineness_lower}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="quality_fineness_upper" className="text-xs font-normal text-muted-foreground">
+                                            Máximo
+                                        </Label>
+                                        <Input
+                                            id="quality_fineness_upper"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={data.quality_fineness_upper}
+                                            onChange={(e) => setData('quality_fineness_upper', e.target.value)}
+                                        />
+                                        {errors.quality_fineness_upper && (
+                                            <p className="text-xs text-destructive">{errors.quality_fineness_upper}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Sólidos (%)</Label>
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="quality_solids_lower" className="text-xs font-normal text-muted-foreground">
+                                            Mínimo
+                                        </Label>
+                                        <Input
+                                            id="quality_solids_lower"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            value={data.quality_solids_lower}
+                                            onChange={(e) => setData('quality_solids_lower', e.target.value)}
+                                        />
+                                        {errors.quality_solids_lower && (
+                                            <p className="text-xs text-destructive">{errors.quality_solids_lower}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="quality_solids_upper" className="text-xs font-normal text-muted-foreground">
+                                            Máximo
+                                        </Label>
+                                        <Input
+                                            id="quality_solids_upper"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            value={data.quality_solids_upper}
+                                            onChange={(e) => setData('quality_solids_upper', e.target.value)}
+                                        />
+                                        {errors.quality_solids_upper && (
+                                            <p className="text-xs text-destructive">{errors.quality_solids_upper}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -270,7 +447,7 @@ export default function ProductsEdit({
 
                                 <div className="space-y-2">
                                     <Label htmlFor="profit_margin">
-                                        Margen de ganancia (%)
+                                        Margen de ganancia (%) *
                                     </Label>
                                     <Input
                                         id="profit_margin"
@@ -278,6 +455,7 @@ export default function ProductsEdit({
                                         step="0.01"
                                         min="0"
                                         max="100"
+                                        required
                                         value={data.profit_margin}
                                         onChange={(e) =>
                                             setData(

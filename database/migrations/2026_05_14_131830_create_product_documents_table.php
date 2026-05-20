@@ -1,0 +1,40 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('product_documents', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->enum('document_type', ['technical_data_sheet', 'safety_data_sheet']);
+            $table->string('file_name', 255);
+            $table->string('file_path', 500);
+            $table->unsignedBigInteger('file_size')->default(0);
+            $table->string('mime_type', 100)->default('application/pdf');
+            $table->integer('version')->default(1);
+            $table->boolean('is_current')->default(true);
+            $table->foreignId('uploaded_by')->constrained('users')->restrictOnDelete();
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index(['product_id', 'document_type']);
+            $table->index('is_current');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('product_documents');
+    }
+};

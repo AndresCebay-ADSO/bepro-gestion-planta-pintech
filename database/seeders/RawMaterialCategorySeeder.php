@@ -39,6 +39,6 @@ class RawMaterialCategorySeeder extends Seeder
             );
         }
 
-        $this->command->info('Created/Updated ' . RawMaterialCategory::count() . ' raw material categories.');
+        $this->command->info('Created/Updated '.RawMaterialCategory::count().' raw material categories.');
     }
 }

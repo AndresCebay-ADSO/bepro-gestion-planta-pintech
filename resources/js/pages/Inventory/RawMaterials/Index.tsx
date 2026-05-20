@@ -16,9 +16,10 @@ import type { PaginationLink } from '@/types/ui';
 type RawMaterialRow = {
     id: number;
     code: string;
-    current_price: string;
+    current_price: string | null;
     previous_price: string | null;
     minimum_stock: string;
+    available_stock: string | number;
     alert_days_before_expiry: number;
     is_active: boolean;
     unit_of_measure: { id: number; name: string; symbol: string } | null;
@@ -26,6 +27,7 @@ type RawMaterialRow = {
         view: boolean;
         update: boolean;
         delete: boolean;
+        reactivate: boolean;
     };
 };
 
@@ -36,9 +38,11 @@ type Props = {
     };
     filters: {
         search: string;
+        status: 'active' | 'inactive' | 'all';
     };
     can: {
         create: boolean;
+        view_costs: boolean;
     };
 };
 
@@ -52,6 +56,7 @@ export default function RawMaterialsIndex({
 }: Props) {
     const { data, setData, get } = useForm({
         search: filters.search ?? '',
+        status: filters.status ?? 'active',
     });
 
     const flash = usePage<{
@@ -77,13 +82,19 @@ export default function RawMaterialsIndex({
     const handleDelete = (code: string) => {
         if (
             !window.confirm(
-                '¿Estás seguro de que quieres eliminar esta materia prima?',
+                '¿Estás seguro de que quieres eliminar o desactivar esta materia prima? (El sistema determinará la acción según su historial)',
             )
         ) {
             return;
         }
 
         router.delete(RawMaterialController.destroy.url(code), {
+            preserveScroll: true,
+        });
+    };
+
+    const handleReactivate = (code: string) => {
+        router.patch(RawMaterialController.reactivate.url(code), undefined, {
             preserveScroll: true,
         });
     };
@@ -140,6 +151,20 @@ export default function RawMaterialsIndex({
                     <Button type="submit" variant="outline">
                         Buscar
                     </Button>
+                    <select
+                        value={data.status}
+                        onChange={(e) =>
+                            setData(
+                                'status',
+                                e.target.value as 'active' | 'inactive' | 'all',
+                            )
+                        }
+                        className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                    >
+                        <option value="active">Activas</option>
+                        <option value="inactive">Inactivas</option>
+                        <option value="all">Todas</option>
+                    </select>
                 </form>
 
                 {/* Tabla */}
@@ -153,11 +178,13 @@ export default function RawMaterialsIndex({
                                 <th className="p-3 text-left font-medium">
                                     Unidad
                                 </th>
+                                {can.view_costs && (
+                                    <th className="p-3 text-right font-medium">
+                                        Precio
+                                    </th>
+                                )}
                                 <th className="p-3 text-right font-medium">
-                                    Precio
-                                </th>
-                                <th className="p-3 text-right font-medium">
-                                    Stock Mínimo
+                                    Stock Disponible
                                 </th>
                                 <th className="p-3 text-center font-medium">
                                     Estado
@@ -184,17 +211,19 @@ export default function RawMaterialsIndex({
                                             : '-'}
                                     </td>
 
-                                    <td className="p-3 text-right">
-                                        <FormattedNumber
-                                            value={item.current_price}
-                                            currency
-                                            maxDecimals={2}
-                                        />
-                                    </td>
+                                    {can.view_costs && (
+                                        <td className="p-3 text-right">
+                                            <FormattedNumber
+                                                value={item.current_price}
+                                                currency
+                                                maxDecimals={2}
+                                            />
+                                        </td>
+                                    )}
 
                                     <td className="p-3 text-right">
                                         <FormattedNumber
-                                            value={item.minimum_stock}
+                                            value={item.available_stock}
                                             maxDecimals={2}
                                         />
                                     </td>
@@ -214,30 +243,47 @@ export default function RawMaterialsIndex({
                                     </td>
 
                                     <td className="p-3 text-right">
-                                        <TableActions
-                                            permissions={{
-                                                view: item.can.view,
-                                                edit: item.can.update,
-                                                delete: item.can.delete,
-                                            }}
-                                            onView={() =>
-                                                router.get(
-                                                    RawMaterialController.show.url(
-                                                        item.code,
-                                                    ),
-                                                )
-                                            }
-                                            onEdit={() =>
-                                                router.get(
-                                                    RawMaterialController.edit.url(
-                                                        item.code,
-                                                    ),
-                                                )
-                                            }
-                                            onDelete={() =>
-                                                handleDelete(item.code)
-                                            }
-                                        />
+                                        <div className="flex justify-end gap-2">
+                                            <TableActions
+                                                permissions={{
+                                                    view: item.can.view,
+                                                    edit: item.can.update,
+                                                    delete: item.can.delete,
+                                                }}
+                                                onView={() =>
+                                                    router.get(
+                                                        RawMaterialController.show.url(
+                                                            item.code,
+                                                        ),
+                                                    )
+                                                }
+                                                onEdit={() =>
+                                                    router.get(
+                                                        RawMaterialController.edit.url(
+                                                            item.code,
+                                                        ),
+                                                    )
+                                                }
+                                                onDelete={() =>
+                                                    handleDelete(item.code)
+                                                }
+                                            />
+
+                                            {item.can.reactivate && (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        handleReactivate(
+                                                            item.code,
+                                                        )
+                                                    }
+                                                >
+                                                    Reactivar
+                                                </Button>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -246,7 +292,7 @@ export default function RawMaterialsIndex({
                             {rawMaterials.data.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={6}
+                                        colSpan={can.view_costs ? 6 : 5}
                                         className="p-10 text-center text-sm text-muted-foreground"
                                     >
                                         No se encontraron materias primas.

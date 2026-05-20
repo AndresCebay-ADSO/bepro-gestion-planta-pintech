@@ -1,5 +1,10 @@
 import { Head, Link, router } from '@inertiajs/react';
 
+import {
+    activate as formulasActivate,
+    destroy as formulasDestroy,
+    edit as formulasEdit,
+} from '@/actions/App/Http/Controllers/FormulaController';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +13,7 @@ import { show as productsShow } from '@/routes/products';
 
 type DetailItem = {
     id: number;
+    step_order: number;
     quantity: string;
     raw_material?: { id: number; code: string } | null;
     unit_of_measure?: { name: string; symbol: string } | null;
@@ -28,6 +34,7 @@ type Props = {
         } | null;
         details: DetailItem[];
         created_by?: { name: string } | null;
+        has_production_orders: boolean;
     };
     can: { update: boolean; delete: boolean };
 };
@@ -42,11 +49,11 @@ export default function FormulasShow({ formula, can }: Props) {
             return;
         }
 
-        router.delete(`/formulas/${formula.id}`);
+        router.delete(formulasDestroy(formula.id));
     };
 
     const handleActivate = () => {
-        router.post(`/formulas/${formula.id}/activate`);
+        router.post(formulasActivate(formula.id));
     };
 
     return (
@@ -110,6 +117,13 @@ export default function FormulasShow({ formula, can }: Props) {
                         <Button variant="outline" asChild>
                             <Link href={formulasIndex().url}>Volver</Link>
                         </Button>
+                        {can.update && !formula.has_production_orders && (
+                            <Button variant="outline" asChild>
+                                <Link href={formulasEdit(formula.id).url}>
+                                    Editar fórmula
+                                </Link>
+                            </Button>
+                        )}
                         {!formula.is_active && can.update && (
                             <Button variant="outline" onClick={handleActivate}>
                                 Activar esta versión
@@ -154,6 +168,13 @@ export default function FormulasShow({ formula, can }: Props) {
                     </div>
                 </div>
 
+                {formula.has_production_orders && (
+                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900">
+                        Esta fórmula ya fue usada en órdenes de producción. Por
+                        seguridad del histórico, ya no se puede editar.
+                    </div>
+                )}
+
                 {/* Ingredientes */}
                 <div className="rounded-lg border border-border bg-card">
                     <div className="border-b border-border px-6 py-4">
@@ -175,6 +196,9 @@ export default function FormulasShow({ formula, can }: Props) {
                     <table className="w-full text-sm">
                         <thead className="border-b border-border bg-muted/40">
                             <tr>
+                                <th className="w-14 p-4 text-center font-medium">
+                                    Paso
+                                </th>
                                 <th className="p-4 text-left font-medium">
                                     Código MP
                                 </th>
@@ -192,6 +216,9 @@ export default function FormulasShow({ formula, can }: Props) {
                                     key={detail.id}
                                     className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30"
                                 >
+                                    <td className="p-4 text-center tabular-nums text-muted-foreground">
+                                        {detail.step_order ?? '—'}
+                                    </td>
                                     <td className="p-4 font-mono font-medium text-foreground">
                                         {detail.raw_material?.code ?? '-'}
                                     </td>
@@ -208,7 +235,7 @@ export default function FormulasShow({ formula, can }: Props) {
                             {formula.details.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={3}
+                                        colSpan={4}
                                         className="p-8 text-center text-sm text-muted-foreground"
                                     >
                                         Esta fórmula no tiene ingredientes

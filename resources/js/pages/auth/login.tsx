@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,10 @@ type Props = {
 };
 
 export default function Login({ status, canResetPassword }: Props) {
+    const { flash } = usePage<{
+        flash: { error?: string; message?: string };
+    }>().props;
+
     return (
         <>
             <Head title="Iniciar sesión — Pintech" />
@@ -106,6 +110,13 @@ export default function Login({ status, canResetPassword }: Props) {
                         {status && (
                             <div className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-center text-sm font-medium text-primary">
                                 {status}
+                            </div>
+                        )}
+
+                        {/* Flash error — throttle, cuenta inactiva desde back()->with() */}
+                        {flash?.error && (
+                            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-center text-sm font-medium text-red-600 dark:text-red-400">
+                                {flash.error}
                             </div>
                         )}
 

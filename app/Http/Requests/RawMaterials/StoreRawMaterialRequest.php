@@ -22,11 +22,11 @@ class StoreRawMaterialRequest extends FormRequest
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('raw_materials', 'code')->whereNull('deleted_at'),
+                Rule::unique('raw_materials', 'code'),
             ],
             'category_id' => [
                 'bail',
-                'nullable',
+                'required',
                 'integer',
                 Rule::exists('raw_material_categories', 'id')->whereNull('deleted_at'),
             ],
@@ -36,20 +36,25 @@ class StoreRawMaterialRequest extends FormRequest
                 'integer',
                 Rule::exists('unit_of_measures', 'id')->whereNull('deleted_at'),
             ],
-            'current_price' => ['bail', 'required', 'numeric', 'min:0', 'max:'.self::MAX_PRICE, 'decimal:0,4'],
+            'current_price' => ['bail', 'nullable', 'numeric', 'min:0', 'max:'.self::MAX_PRICE, 'decimal:0,4'],
             'previous_price' => ['nullable', 'numeric', 'min:0', 'max:'.self::MAX_PRICE, 'decimal:0,4'],
             'minimum_stock' => ['bail', 'required', 'numeric', 'min:0', 'decimal:0,4'],
-            'alert_days_before_expiry' => ['bail', 'required', 'integer', 'min:1'],
+            'alert_days_before_expiry' => ['bail', 'required', 'integer', 'min:0'],
+            'tracks_inventory' => ['sometimes', 'boolean'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
 
     protected function prepareForValidation(): void
     {
+        $currentPrice = $this->input('current_price');
+
         $this->merge([
             'category_id' => $this->input('category_id'),
             'minimum_stock' => $this->input('minimum_stock', 0),
+            'current_price' => ($currentPrice === null || $currentPrice === '') ? null : $currentPrice,
             'alert_days_before_expiry' => $this->input('alert_days_before_expiry', 30),
+            'tracks_inventory' => $this->boolean('tracks_inventory', true),
             'is_active' => $this->boolean('is_active', true),
         ]);
     }

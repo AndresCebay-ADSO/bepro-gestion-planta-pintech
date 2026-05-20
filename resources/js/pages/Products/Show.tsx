@@ -1,13 +1,21 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Download, FileStack, FileText, Trash2, Upload } from 'lucide-react';
 import { useState } from 'react';
 
+import {
+    destroy as destroyProductDocument,
+    download as downloadProductDocument,
+    store as storeProductDocument,
+} from '@/actions/App/Http/Controllers/ProductDocumentController';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -21,6 +29,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
     create as formulasCreate,
     show as formulasShow,
@@ -47,6 +60,14 @@ type Props = {
         current_cost?: string | null;
         current_price?: string | null;
         profit_margin?: string | null;
+        brand?: string;
+        description?: string | null;
+        quality_viscosity_lower?: number | string | null;
+        quality_viscosity_upper?: number | string | null;
+        quality_fineness_lower?: number | string | null;
+        quality_fineness_upper?: number | string | null;
+        quality_solids_lower?: number | string | null;
+        quality_solids_upper?: number | string | null;
         variants?: Array<{
             id: number;
             sku: string;
@@ -60,11 +81,23 @@ type Props = {
             unit_of_measure?: { name: string; symbol: string } | null;
         }>;
         formulas?: FormulaItem[];
+        product_documents?: Array<{
+            id: number;
+            document_type: 'technical_data_sheet' | 'safety_data_sheet';
+            file_name: string;
+            file_size: number;
+            version: number;
+            created_at: string;
+        }>;
     };
     can: {
         update: boolean;
         delete: boolean;
     };
+    documentTypes: Array<{
+        value: 'technical_data_sheet' | 'safety_data_sheet';
+        label: string;
+    }>;
     units: Array<{
         id: number;
         name: string;
@@ -77,8 +110,37 @@ type Props = {
     }>;
 };
 
-export default function ProductsShow({ product, can, units, rawMaterials }: Props) {
+export default function ProductsShow({ product, can, documentTypes, units, rawMaterials }: Props) {
     const [isOpen, setIsOpen] = useState(false);
+    const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
+
+    const formatQualityRange = (
+        lower: number | string | null | undefined,
+        upper: number | string | null | undefined,
+    ): string | null => {
+        const hasLower = lower !== null && lower !== undefined && lower !== '';
+        const hasUpper = upper !== null && upper !== undefined && upper !== '';
+
+        if (!hasLower && !hasUpper) {
+            return null;
+        }
+
+        if (hasLower && hasUpper) {
+            return `${lower} – ${upper}`;
+        }
+
+        if (hasLower) {
+            return `≥ ${lower}`;
+        }
+
+        return `≤ ${upper}`;
+    };
+
+    const hasCertificateRanges = Boolean(
+        formatQualityRange(product.quality_viscosity_lower, product.quality_viscosity_upper)
+            || formatQualityRange(product.quality_fineness_lower, product.quality_fineness_upper)
+            || formatQualityRange(product.quality_solids_lower, product.quality_solids_upper),
+    );
 
     const form = useForm({
         sku: '',
@@ -93,6 +155,10 @@ export default function ProductsShow({ product, can, units, rawMaterials }: Prop
         current_price: '',
         package_raw_material_id: '',
         is_active: true,
+    });
+    const documentForm = useForm({
+        document_type: documentTypes[0]?.value ?? 'technical_data_sheet',
+        document: null as File | null,
     });
 
     const handleDelete = () => {
@@ -113,7 +179,21 @@ export default function ProductsShow({ product, can, units, rawMaterials }: Prop
         });
     };
 
+    const handleDocumentSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        documentForm.post(storeProductDocument({ product: product.id }).url, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsDocumentDialogOpen(false);
+                documentForm.reset();
+            },
+        });
+    };
+
     const activeFormula = product.formulas?.find((f) => f.is_active);
+    const documents = product.product_documents ?? [];
 
     return (
         <>
@@ -172,7 +252,15 @@ export default function ProductsShow({ product, can, units, rawMaterials }: Prop
                 </div>
 
                 {/* Info del producto */}
-                <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-3">
+                <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-2 lg:grid-cols-4">
+                    <div>
+                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
+                            Marca
+                        </p>
+                        <p className="text-sm font-medium text-foreground">
+                            {product.brand ?? '—'}
+                        </p>
+                    </div>
                     <div>
                         <p className="text-xs tracking-wide text-muted-foreground uppercase">
                             Categoría
@@ -202,6 +290,235 @@ export default function ProductsShow({ product, can, units, rawMaterials }: Prop
                         </p>
                     </div>
                 </div>
+
+                {(product.description || hasCertificateRanges) && (
+                    <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+                        {product.description && (
+                            <div>
+                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                    Descripción
+                                </p>
+                                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                                    {product.description}
+                                </p>
+                            </div>
+                        )}
+                        {hasCertificateRanges && (
+                            <div className={product.description ? 'border-t border-border pt-4' : ''}>
+                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                    Rangos certificado de calidad
+                                </p>
+                                <dl className="mt-3 grid gap-4 sm:grid-cols-3">
+                                    {formatQualityRange(product.quality_viscosity_lower, product.quality_viscosity_upper) && (
+                                        <div>
+                                            <dt className="text-xs text-muted-foreground">Viscosidad (KU)</dt>
+                                            <dd className="mt-0.5 font-mono text-sm font-medium">
+                                                {formatQualityRange(product.quality_viscosity_lower, product.quality_viscosity_upper)}
+                                            </dd>
+                                        </div>
+                                    )}
+                                    {formatQualityRange(product.quality_fineness_lower, product.quality_fineness_upper) && (
+                                        <div>
+                                            <dt className="text-xs text-muted-foreground">Molienda (HG)</dt>
+                                            <dd className="mt-0.5 font-mono text-sm font-medium">
+                                                {formatQualityRange(product.quality_fineness_lower, product.quality_fineness_upper)}
+                                            </dd>
+                                        </div>
+                                    )}
+                                    {formatQualityRange(product.quality_solids_lower, product.quality_solids_upper) && (
+                                        <div>
+                                            <dt className="text-xs text-muted-foreground">Sólidos (%)</dt>
+                                            <dd className="mt-0.5 font-mono text-sm font-medium">
+                                                {formatQualityRange(product.quality_solids_lower, product.quality_solids_upper)}
+                                            </dd>
+                                        </div>
+                                    )}
+                                </dl>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                <Card className="overflow-hidden border-border/80 shadow-sm">
+                    <CardHeader className="border-b border-border bg-muted/30 px-6 py-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                            <div className="space-y-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <CardTitle className="text-lg">Documentación técnica</CardTitle>
+                                    <Badge variant="secondary" className="font-normal">
+                                        QR por lote
+                                    </Badge>
+                                </div>
+                                <CardDescription className="text-sm leading-relaxed">
+                                    PDFs reutilizables vinculados a este producto. Aparecen automáticamente en la landing
+                                    pública de cada orden completada, junto al certificado de calidad del lote.
+                                </CardDescription>
+                            </div>
+                            {can.update && (
+                                <Dialog open={isDocumentDialogOpen} onOpenChange={setIsDocumentDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button size="sm" className="shrink-0">
+                                            <Upload className="mr-1.5 h-4 w-4" />
+                                            Subir PDF
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-md">
+                                        <DialogHeader>
+                                            <DialogTitle>Subir documento técnico</DialogTitle>
+                                            <DialogDescription>
+                                                Elige el tipo y adjunta un PDF. Si ya existe un documento del mismo tipo,
+                                                se archiva la versión anterior y queda vigente la nueva.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <form onSubmit={handleDocumentSubmit} className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="document_type">Tipo de documento</Label>
+                                                <Select
+                                                    value={documentForm.data.document_type}
+                                                    onValueChange={(value) =>
+                                                        documentForm.setData('document_type', value as 'technical_data_sheet' | 'safety_data_sheet')
+                                                    }
+                                                >
+                                                    <SelectTrigger id="document_type">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {documentTypes.map((type) => (
+                                                            <SelectItem key={type.value} value={type.value}>
+                                                                {type.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                {documentForm.errors.document_type && (
+                                                    <p className="text-xs text-destructive">{documentForm.errors.document_type}</p>
+                                                )}
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="document">Archivo PDF</Label>
+                                                <Input
+                                                    id="document"
+                                                    type="file"
+                                                    accept="application/pdf,.pdf"
+                                                    className="cursor-pointer file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-primary"
+                                                    onChange={(event) => documentForm.setData('document', event.target.files?.[0] ?? null)}
+                                                />
+                                                <p className="text-xs text-muted-foreground">
+                                                    Tamaño máximo 10 MB. Solo se aceptan archivos PDF.
+                                                </p>
+                                                {documentForm.errors.document && (
+                                                    <p className="text-xs text-destructive">{documentForm.errors.document}</p>
+                                                )}
+                                            </div>
+                                            <div className="flex justify-end gap-2 pt-2">
+                                                <Button type="button" variant="outline" onClick={() => setIsDocumentDialogOpen(false)}>
+                                                    Cancelar
+                                                </Button>
+                                                <Button type="submit" disabled={documentForm.processing}>
+                                                    {documentForm.processing ? 'Subiendo...' : 'Guardar'}
+                                                </Button>
+                                            </div>
+                                        </form>
+                                    </DialogContent>
+                                </Dialog>
+                            )}
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        {documents.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
+                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                                    <FileStack className="h-7 w-7 text-muted-foreground" />
+                                </div>
+                                <div className="max-w-sm space-y-1">
+                                    <p className="text-sm font-medium text-foreground">Sin documentos técnicos</p>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Carga la ficha técnica y la hoja de seguridad para que los lotes completados muestren
+                                        enlaces de descarga públicos coherentes con tu catálogo.
+                                    </p>
+                                </div>
+                                {can.update && (
+                                    <Button size="sm" variant="outline" onClick={() => setIsDocumentDialogOpen(true)}>
+                                        <Upload className="mr-1.5 h-4 w-4" />
+                                        Subir el primero
+                                    </Button>
+                                )}
+                            </div>
+                        ) : (
+                            <ul className="divide-y divide-border">
+                                {documents.map((document) => {
+                                    const typeLabel =
+                                        documentTypes.find((type) => type.value === document.document_type)?.label ??
+                                        document.document_type;
+
+                                    return (
+                                        <li
+                                            key={document.id}
+                                            className="flex flex-col gap-4 px-6 py-4 transition-colors hover:bg-muted/20 md:flex-row md:items-center md:justify-between"
+                                        >
+                                            <div className="flex min-w-0 flex-1 items-start gap-4">
+                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                                    <FileText className="h-5 w-5" />
+                                                </div>
+                                                <div className="min-w-0 space-y-1">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <p className="truncate font-medium text-foreground">{document.file_name}</p>
+                                                        <Badge variant="outline" className="shrink-0 text-[10px] uppercase tracking-wide">
+                                                            {typeLabel}
+                                                        </Badge>
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {formatBytes(document.file_size)}
+                                                        <span className="mx-1.5 text-border">·</span>
+                                                        Versión {document.version}
+                                                        <span className="mx-1.5 text-border">·</span>
+                                                        <FormattedDate value={document.created_at} format="date" />
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex shrink-0 items-center justify-end gap-1 md:pl-4">
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button variant="outline" size="icon" className="h-9 w-9" asChild>
+                                                            <a href={downloadProductDocument({ document: document.id }).url}>
+                                                                <Download className="h-4 w-4" />
+                                                                <span className="sr-only">Descargar PDF</span>
+                                                            </a>
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Descargar PDF</TooltipContent>
+                                                </Tooltip>
+                                                {can.update && (
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                                                onClick={() => {
+                                                                    if (window.confirm('¿Eliminar este documento técnico?')) {
+                                                                        router.delete(destroyProductDocument({ document: document.id }).url, {
+                                                                            preserveScroll: true,
+                                                                        });
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                                <span className="sr-only">Eliminar documento</span>
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>Eliminar</TooltipContent>
+                                                    </Tooltip>
+                                                )}
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        )}
+                    </CardContent>
+                </Card>
 
                 {/* Variantes */}
                 <div className="rounded-lg border border-border bg-card">
@@ -462,7 +779,7 @@ export default function ProductsShow({ product, can, units, rawMaterials }: Prop
                         <Button size="sm" asChild>
                             <Link
                                 href={
-                                    formulasCreate({ product_id: product.id })
+                                    formulasCreate({ query: { product_id: product.id } })
                                         .url
                                 }
                             >
@@ -561,4 +878,16 @@ export default function ProductsShow({ product, can, units, rawMaterials }: Prop
             </div>
         </>
     );
+}
+
+function formatBytes(bytes: number) {
+    if (bytes < 1024) {
+        return `${bytes} B`;
+    }
+
+    if (bytes < 1024 * 1024) {
+        return `${Math.round(bytes / 1024)} KB`;
+    }
+
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\WarehouseType;
 use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Database\Eloquent\Collection;
@@ -53,5 +54,19 @@ class WarehouseContextService
         }
 
         return $available->first();
+    }
+
+    /**
+     * Resolves the most appropriate warehouse for inventory movements (prefers factories).
+     */
+    public function resolveMovementWarehouse(?Warehouse $currentWarehouse): ?Warehouse
+    {
+        if ($currentWarehouse !== null && $currentWarehouse->isFactory()) {
+            return $currentWarehouse;
+        }
+
+        $factoryWarehouse = Warehouse::query()->where('type', WarehouseType::Factory->value)->where('is_active', true)->first();
+
+        return $factoryWarehouse ?? $currentWarehouse;
     }
 }

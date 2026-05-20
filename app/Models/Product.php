@@ -28,6 +28,12 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property float|null $profit_margin
  * @property float|null $current_price
  * @property float $price_threshold
+ * @property float|null $quality_viscosity_lower
+ * @property float|null $quality_viscosity_upper
+ * @property float|null $quality_fineness_lower
+ * @property float|null $quality_fineness_upper
+ * @property float|null $quality_solids_lower
+ * @property float|null $quality_solids_upper
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -40,7 +46,8 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read Collection|ProductionOrder[] $productionOrders
  * @property-read Collection|ProductionCost[] $productionCosts
  * @property-read Collection|PriceList[] $priceLists
- * @property-read QrCode|null $qrCode
+ * @property-read Collection|QrCode[] $qrCodes
+ * @property-read Collection|ProductDocument[] $productDocuments
  * @property-read Collection|ProductVariant[] $variants
  */
 #[Fillable([
@@ -54,6 +61,12 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'profit_margin',
     'current_price',
     'price_threshold',
+    'quality_viscosity_lower',
+    'quality_viscosity_upper',
+    'quality_fineness_lower',
+    'quality_fineness_upper',
+    'quality_solids_lower',
+    'quality_solids_upper',
     'is_active',
 ])]
 class Product extends Model
@@ -78,6 +91,12 @@ class Product extends Model
             'profit_margin' => 'decimal:2',
             'current_price' => 'decimal:4',
             'price_threshold' => 'decimal:2',
+            'quality_viscosity_lower' => 'decimal:2',
+            'quality_viscosity_upper' => 'decimal:2',
+            'quality_fineness_lower' => 'decimal:2',
+            'quality_fineness_upper' => 'decimal:2',
+            'quality_solids_lower' => 'decimal:2',
+            'quality_solids_upper' => 'decimal:2',
             'is_active' => 'boolean',
         ];
     }
@@ -136,9 +155,14 @@ class Product extends Model
         return $this->hasMany(PriceList::class, 'product_id');
     }
 
-    public function qrCode(): HasOne
+    public function qrCodes(): HasMany
     {
-        return $this->hasOne(QrCode::class, 'product_id');
+        return $this->hasMany(QrCode::class, 'product_id');
+    }
+
+    public function productDocuments(): HasMany
+    {
+        return $this->hasMany(ProductDocument::class, 'product_id');
     }
 
     public function variants(): HasMany

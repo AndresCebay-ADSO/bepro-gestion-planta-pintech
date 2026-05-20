@@ -14,9 +14,11 @@ return new class extends Migration
         Schema::create('qr_documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('qr_code_id')->constrained('qr_codes')->cascadeOnDelete();
-            $table->enum('document_type', ['ficha_tecnica', 'ficha_seguridad', 'certificado_calidad']);
+            $table->enum('document_type', ['technical_data_sheet', 'safety_data_sheet', 'quality_certificate']);
             $table->string('file_name', 255);
             $table->string('file_path', 500);
+            $table->unsignedBigInteger('file_size')->default(0);
+            $table->string('mime_type', 100)->default('application/pdf');
             $table->integer('version')->default(1);
             $table->boolean('is_current')->default(true);
             $table->foreignId('uploaded_by')->constrained('users')->restrictOnDelete();

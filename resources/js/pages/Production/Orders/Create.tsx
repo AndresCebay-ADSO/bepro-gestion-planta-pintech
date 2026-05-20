@@ -1,7 +1,9 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Plus, Trash2 } from 'lucide-react';
 
+import { store as productionOrderStore } from '@/actions/App/Http/Controllers/ProductionOrderController';
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -11,12 +13,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Combobox } from '@/components/ui/combobox';
 import { Textarea } from '@/components/ui/textarea';
 import {
     index as productionOrderIndex,
 } from '@/routes/production-orders';
-import { store as productionOrderStore } from '@/actions/App/Http/Controllers/ProductionOrderController';
 
 type FormulaOption = { id: number; version: number; is_active: boolean };
 type VariantOption = { id: number; sku: string; presentation_label: string; presentation_value: number };
@@ -90,6 +90,7 @@ export default function ProductionOrdersCreate({ products, warehouses }: Props) 
         const variant = availableVariants.find(v => v.id === Number(pack.product_variant_id));
         const units = parseFloat(pack.planned_units) || 0;
         const value = variant?.presentation_value || 0;
+
         return sum + (units * value);
     }, 0);
 

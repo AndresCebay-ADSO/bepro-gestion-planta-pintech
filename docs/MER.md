@@ -69,7 +69,7 @@ Materias primas.
 - `created_at`, `updated_at`
 - `deleted_at`
 
-Nota: La materia prima se identifica por un codigo interno unico (ej: AC4).
+Nota: Debido a la política de privacidad y seguridad industrial de Pintech (protección de propiedad intelectual), las materias primas NO incluyen nombres descriptivos. Se identifican y gestionan exclusivamente por su código interno técnico (ej: AC4).
 
 ### 2.5 inventory_batches
 Lotes de inventario de materia prima.

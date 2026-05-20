@@ -9,13 +9,24 @@ use App\Http\Controllers\Inventory\RawMaterialController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductDocumentController;
+use App\Http\Controllers\Production\LineAdjustmentController;
+use App\Http\Controllers\Production\PackagingPlanController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProductVariantController;
+use App\Http\Controllers\PublicQrLandingController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login')->name('home');
+
+Route::get('/c/{token}', [PublicQrLandingController::class, 'show'])->name('qr.public.show');
+Route::get('/c/{token}/qr.png', [PublicQrLandingController::class, 'qrImage'])->name('qr.public.image');
+Route::get('/c/{token}/documents/{document}', [PublicQrLandingController::class, 'downloadDocument'])
+    ->name('qr.public.documents.download');
+Route::get('/c/{token}/product-documents/{document}', [PublicQrLandingController::class, 'downloadProductDocument'])
+    ->name('qr.public.product-documents.download');
 
 // Rutas autenticadas (todos los roles)
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -30,6 +41,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::resource('users', UserController::class)->except(['show']);
     Route::resource('raw-materials', RawMaterialController::class)->except(['index', 'show']);
+    Route::patch('raw-materials/{raw_material}/reactivate', [RawMaterialController::class, 'reactivate'])->name('raw-materials.reactivate');
     Route::resource('warehouses', WarehouseController::class)->except(['index', 'show']);
     Route::get('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsersPage'])->name('warehouses.assign-users.form');
     Route::post('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsers'])->name('warehouses.assign-users');
@@ -67,21 +79,44 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
 });
 
 // ADMIN + PRODUCCIÓN + COMERCIAL: Consulta de catálogos e inventarios (según policy)
-Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
     Route::resource('raw-materials', RawMaterialController::class)->only(['index']);
+});
+
+Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
     Route::resource('warehouses', WarehouseController::class)->only(['index']);
     Route::resource('products', ProductController::class);
-    Route::resource('inventory-movements', InventoryMovementController::class);
+    Route::post('products/{product}/documents', [ProductDocumentController::class, 'store'])->name('products.documents.store');
+    Route::get('product-documents/{document}/download', [ProductDocumentController::class, 'download'])->name('products.documents.download');
+    Route::delete('product-documents/{document}', [ProductDocumentController::class, 'destroy'])->name('products.documents.destroy');
+    Route::resource('inventory-movements', InventoryMovementController::class)
+        ->except(['create'])
+        ->where(['inventory_movement' => '[0-9]+']);
 });
 
 // ADMIN + PRODUCCIÓN: Gestión de fórmulas y órdenes
 Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
-    Route::resource('formulas', FormulaController::class)->except(['edit', 'update']);
+    Route::resource('formulas', FormulaController::class);
     Route::post('formulas/{formula}/activate', [FormulaController::class, 'activate'])->name('formulas.activate');
 
-    // Órdenes de Producción
+    // Órdenes de Producción — exportaciones (antes del resource para Wayfinder)
+    Route::get('production-orders/{production_order}/export-pdf', [ProductionOrderController::class, 'exportPdf'])
+        ->name('production-orders.export-pdf');
+    Route::get('production-orders/{production_order}/export-excel', [ProductionOrderController::class, 'exportExcel'])
+        ->name('production-orders.export-excel');
+
     Route::resource('production-orders', ProductionOrderController::class);
     Route::post('production-orders/{order}/complete', [ProductionOrderController::class, 'complete'])->name('production-orders.complete');
+    Route::post('production-orders/{order}/cancel', [ProductionOrderController::class, 'cancel'])->name('production-orders.cancel');
+    Route::post('production-orders/{order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])->name('production-orders.preview-costs');
+
+    // Ajustes de línea
+    Route::post('production-orders/{order}/line-adjustments', [LineAdjustmentController::class, 'store'])->name('production-orders.line-adjustments.store');
+    Route::delete('production-orders/{order}/line-adjustments/{adjustment}', [LineAdjustmentController::class, 'destroy'])->name('production-orders.line-adjustments.destroy');
+
+    // Planes de envasado
+    Route::post('production-orders/{order}/packaging-plans', [PackagingPlanController::class, 'store'])->name('production-orders.packaging-plans.store');
+    Route::delete('production-orders/{order}/packaging-plans/{plan}', [PackagingPlanController::class, 'destroy'])->name('production-orders.packaging-plans.destroy');
 
     Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
     Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');

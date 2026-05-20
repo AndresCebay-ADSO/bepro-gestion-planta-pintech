@@ -11,6 +11,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import {
     index as productsIndex,
 } from '@/routes/products';
@@ -26,12 +27,20 @@ type Props = {
 type ProductForm = {
     code: string;
     name: string;
+    brand: string;
+    description: string;
     category_id: string;
     unit_of_measure_id: string;
     current_cost: string;
     profit_margin: string;
     current_price: string;
     price_threshold: string;
+    quality_viscosity_lower: string;
+    quality_viscosity_upper: string;
+    quality_fineness_lower: string;
+    quality_fineness_upper: string;
+    quality_solids_lower: string;
+    quality_solids_upper: string;
     is_active: boolean;
 };
 
@@ -39,12 +48,20 @@ export default function ProductsCreate({ categories, units, can }: Props) {
     const { data, setData, post, processing, errors } = useForm<ProductForm>({
         code: '',
         name: '',
+        brand: 'BEPRO',
+        description: '',
         category_id: '',
         unit_of_measure_id: '',
         current_cost: '',
-        profit_margin: '',
+        profit_margin: '0',
         current_price: '',
         price_threshold: '0',
+        quality_viscosity_lower: '',
+        quality_viscosity_upper: '',
+        quality_fineness_lower: '',
+        quality_fineness_upper: '',
+        quality_solids_lower: '',
+        quality_solids_upper: '',
         is_active: true,
     });
 
@@ -188,6 +205,169 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                         </div>
                     </div>
 
+                    <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+                        <div>
+                            <h2 className="font-medium text-foreground">Marca y descripción</h2>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                Marca comercial del catálogo. La descripción puede mostrarse en la ficha pública del QR.
+                            </p>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="brand">Marca comercial *</Label>
+                            <Input
+                                id="brand"
+                                value={data.brand}
+                                onChange={(e) => setData('brand', e.target.value)}
+                                placeholder="Ej: BEPRO"
+                                maxLength={100}
+                            />
+                            {errors.brand && (
+                                <p className="text-sm text-destructive">{errors.brand}</p>
+                            )}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="description">Descripción</Label>
+                            <Textarea
+                                id="description"
+                                rows={4}
+                                value={data.description}
+                                onChange={(e) => setData('description', e.target.value)}
+                                placeholder="Resumen del producto, usos recomendados, notas para comercial o calidad…"
+                                className="min-h-[100px] resize-y"
+                            />
+                            {errors.description && (
+                                <p className="text-sm text-destructive">{errors.description}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+                        <div>
+                            <h2 className="font-medium text-foreground">Rangos para certificado de calidad</h2>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                Límites de referencia comparados con viscosidad (KU), molienda (HG) y sólidos (%) al cerrar
+                                la orden. Dejar vacío si no aplica.
+                            </p>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Viscosidad (KU)</Label>
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="quality_viscosity_lower" className="text-xs font-normal text-muted-foreground">
+                                            Mínimo
+                                        </Label>
+                                        <Input
+                                            id="quality_viscosity_lower"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={data.quality_viscosity_lower}
+                                            onChange={(e) => setData('quality_viscosity_lower', e.target.value)}
+                                            placeholder="Ej: 90"
+                                        />
+                                        {errors.quality_viscosity_lower && (
+                                            <p className="text-xs text-destructive">{errors.quality_viscosity_lower}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="quality_viscosity_upper" className="text-xs font-normal text-muted-foreground">
+                                            Máximo
+                                        </Label>
+                                        <Input
+                                            id="quality_viscosity_upper"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={data.quality_viscosity_upper}
+                                            onChange={(e) => setData('quality_viscosity_upper', e.target.value)}
+                                            placeholder="Ej: 110"
+                                        />
+                                        {errors.quality_viscosity_upper && (
+                                            <p className="text-xs text-destructive">{errors.quality_viscosity_upper}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Molienda (HG)</Label>
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="quality_fineness_lower" className="text-xs font-normal text-muted-foreground">
+                                            Mínimo
+                                        </Label>
+                                        <Input
+                                            id="quality_fineness_lower"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={data.quality_fineness_lower}
+                                            onChange={(e) => setData('quality_fineness_lower', e.target.value)}
+                                        />
+                                        {errors.quality_fineness_lower && (
+                                            <p className="text-xs text-destructive">{errors.quality_fineness_lower}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="quality_fineness_upper" className="text-xs font-normal text-muted-foreground">
+                                            Máximo
+                                        </Label>
+                                        <Input
+                                            id="quality_fineness_upper"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={data.quality_fineness_upper}
+                                            onChange={(e) => setData('quality_fineness_upper', e.target.value)}
+                                        />
+                                        {errors.quality_fineness_upper && (
+                                            <p className="text-xs text-destructive">{errors.quality_fineness_upper}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Sólidos (%)</Label>
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="quality_solids_lower" className="text-xs font-normal text-muted-foreground">
+                                            Mínimo
+                                        </Label>
+                                        <Input
+                                            id="quality_solids_lower"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            value={data.quality_solids_lower}
+                                            onChange={(e) => setData('quality_solids_lower', e.target.value)}
+                                        />
+                                        {errors.quality_solids_lower && (
+                                            <p className="text-xs text-destructive">{errors.quality_solids_lower}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="quality_solids_upper" className="text-xs font-normal text-muted-foreground">
+                                            Máximo
+                                        </Label>
+                                        <Input
+                                            id="quality_solids_upper"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            value={data.quality_solids_upper}
+                                            onChange={(e) => setData('quality_solids_upper', e.target.value)}
+                                        />
+                                        {errors.quality_solids_upper && (
+                                            <p className="text-xs text-destructive">{errors.quality_solids_upper}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Precios (solo si tiene permiso) */}
                     {can.managePrices && (
                         <div className="space-y-4 rounded-lg border border-border bg-card p-6">
@@ -196,8 +376,7 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                     Precios y Costos
                                 </h2>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    Campos opcionales. Puedes completarlos más
-                                    adelante.
+                                    Define margen y umbral para cálculo automático de precios.
                                 </p>
                             </div>
 
@@ -254,7 +433,7 @@ export default function ProductsCreate({ categories, units, can }: Props) {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="profit_margin">
-                                        Margen de ganancia (%)
+                                        Margen de ganancia (%) *
                                     </Label>
                                     <Input
                                         id="profit_margin"
@@ -262,6 +441,7 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                         step="0.01"
                                         min="0"
                                         max="100"
+                                        required
                                         value={data.profit_margin}
                                         onChange={(e) =>
                                             setData(

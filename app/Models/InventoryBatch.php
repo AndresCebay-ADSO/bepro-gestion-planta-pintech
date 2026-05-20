@@ -1,5 +1,7 @@
 <?php
 
+// declare(strict_types=1); Estudiar si es necesario para los modelos.
+
 namespace App\Models;
 
 use Database\Factories\InventoryBatchFactory;

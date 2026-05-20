@@ -6,10 +6,10 @@ use App\Http\Requests\Inventory\StoreInventoryMovementRequest;
 use App\Http\Requests\Inventory\UpdateInventoryMovementRequest;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
-use App\Models\ProductionOrder;
 use App\Models\RawMaterial;
 use App\Models\Warehouse;
 use App\Services\InventoryService;
+use App\Services\WarehouseContextService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -18,13 +18,25 @@ use Inertia\Response;
 
 class InventoryMovementController extends Controller
 {
-    public function __construct(private readonly InventoryService $inventoryService) {}
+    public function __construct(
+        private readonly InventoryService $inventoryService,
+        private readonly WarehouseContextService $warehouseContextService
+    ) {}
 
     public function index(Request $request): Response
     {
         $this->authorize('viewAny', InventoryMovement::class);
 
         $search = strtolower((string) $request->input('search'));
+        $user = $request->user();
+        $currentWarehouse = $user !== null
+            ? $this->warehouseContextService->resolveCurrentWarehouse(
+                $user,
+                $request->session()->get('current_warehouse_id'),
+            )
+            : null;
+
+        $movementWarehouse = $this->warehouseContextService->resolveMovementWarehouse($currentWarehouse);
 
         $movements = InventoryMovement::query()
             ->with([
@@ -47,24 +59,25 @@ class InventoryMovementController extends Controller
 
         return Inertia::render('Inventory/Movements/Index', [
             'movements' => $movements,
+            'rawMaterials' => Inertia::optional(fn () => RawMaterial::query()->select('id', 'code')->where('is_active', true)->orderBy('code')->get()),
+            'batches' => Inertia::optional(fn () => InventoryBatch::query()
+                ->when(
+                    $movementWarehouse !== null,
+                    fn ($query) => $query->where('warehouse_id', $movementWarehouse->id),
+                    fn ($query) => $query->whereRaw('1 = 0')
+                )
+                ->where('remaining_quantity', '>', 0)
+                ->select('id', 'raw_material_id', 'warehouse_id', 'lot_number', 'remaining_quantity')
+                ->orderByDesc('id')
+                ->get()),
+            'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->get()),
+            'currentWarehouseId' => $movementWarehouse?->id,
             'filters' => [
                 'search' => $search,
             ],
             'can' => [
                 'create' => Gate::allows('create', InventoryMovement::class),
             ],
-        ]);
-    }
-
-    public function create(): Response
-    {
-        $this->authorize('create', InventoryMovement::class);
-
-        return Inertia::render('Inventory/Movements/Create', [
-            'rawMaterials' => RawMaterial::query()->select('id', 'code')->where('is_active', true)->orderBy('code')->get(),
-            'batches' => InventoryBatch::query()->select('id', 'raw_material_id', 'lot_number', 'remaining_quantity')->orderByDesc('id')->get(),
-            'productionOrders' => ProductionOrder::query()->select('id', 'order_number', 'status')->orderByDesc('id')->get(),
-            'warehouses' => Warehouse::query()->select('id', 'name', 'city', 'type')->get(),
         ]);
     }
 
@@ -102,8 +115,18 @@ class InventoryMovementController extends Controller
         return Inertia::render('Inventory/Movements/Edit', [
             'movement' => $inventoryMovement,
             'rawMaterials' => RawMaterial::query()->select('id', 'code')->where('is_active', true)->orderBy('code')->get(),
-            'batches' => InventoryBatch::query()->select('id', 'raw_material_id', 'lot_number', 'remaining_quantity')->orderByDesc('id')->get(),
-            'productionOrders' => ProductionOrder::query()->select('id', 'order_number', 'status')->orderByDesc('id')->get(),
+            'batches' => InventoryBatch::query()
+                ->where('warehouse_id', $inventoryMovement->warehouse_id)
+                ->where(function ($query) use ($inventoryMovement): void {
+                    $query->where('remaining_quantity', '>', 0);
+
+                    if ($inventoryMovement->batch_id !== null) {
+                        $query->orWhere('id', $inventoryMovement->batch_id);
+                    }
+                })
+                ->select('id', 'raw_material_id', 'warehouse_id', 'lot_number', 'remaining_quantity')
+                ->orderByDesc('id')
+                ->get(),
         ]);
     }
 

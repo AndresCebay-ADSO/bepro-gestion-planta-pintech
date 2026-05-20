@@ -35,21 +35,20 @@ ERP web para **Pintech Colombia S.A.S** (pinturas industriales, automotrices y a
 
 ## Funcionalidades principales
 
-- Gestion de materias primas y lotes (enfoque PEPS/FIFO)
-- Movimientos de inventario de MP y PT
-- Productos, categorias y unidades de medida
-- Formulas y detalle de formulacion
-- Ordenes de produccion y consumo por lote
-- Historial de costos y lista de precios
-- Alertas operativas
-- Codigos QR y documentos asociados
-- Control de acceso por rol
+- **Gestión de inventarios**: Control estricto de materias primas y lotes con enfoque PEPS/FIFO.
+- **Ciclo de vida e Integridad**: Manejo de eliminación lógica/activación (`is_active`) garantizando el historial referencial de costos.
+- **Producción y Consumos**: Formulación, órdenes de producción y consumo preciso por lote.
+- **Reportes Profesionales**: Motor de exportación robusto de Órdenes de Producción a formatos **PDF y Excel**.
+- **Gestión Financiera**: Historial de costos, cálculos de margen de ganancia y listas de precios automatizadas.
+- **Trazabilidad**: Alertas operativas, códigos QR, documentos asociados y un sistema profundo de auditoría.
+- **Seguridad**: Control de acceso granular por rol y permisos.
 
 ## Autenticacion y correo
 
 - Login con email/contrasena
 - Recuperacion de contrasena por email
 - Registro publico deshabilitado (creacion de usuarios por admin)
+- Protección robusta contra ataques de enumeración de usuarios y limitación de peticiones (Rate Limiting) optimizada para SPA.
 - 2FA deshabilitado actualmente
 - Notificacion de reset personalizada:
   - `app/Notifications/ResetPasswordNotification.php`
@@ -74,29 +73,47 @@ MAIL_FROM_NAME="Pintech OS"
 
 ## Requisitos
 
-- PHP 8.3+
+- PHP 8.3+ (con extensiones `pdo_pgsql`, `gd`, `zip` requeridas para BD y exportaciones)
 - Composer 2.x
-- Node.js 18+
+- Node.js 18+ o superior
 - PostgreSQL 16
 
-## Instalacion
+## Instalación Paso a Paso
 
-```bash
-git clone https://github.com/AndresCebay-ADSO/bepro-gestion-planta-pintech.git
-cd bepro-gestion-planta-pintech
-composer install
-npm install
-cp .env.example .env
-php artisan key:generate
-```
+1. **Clonar el repositorio e instalar dependencias:**
+   ```bash
+   git clone https://github.com/AndresCebay-ADSO/bepro-gestion-planta-pintech.git
+   cd bepro-gestion-planta-pintech
+   composer install
+   npm install
+   ```
 
-Configura `.env` (DB, mail, app) y luego:
+2. **Configurar el entorno:**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-```bash
-php artisan migrate
-# (Opcional) Para datos de prueba:
-php artisan db:seed
-```
+3. **Preparar la Base de Datos:**
+   - Crea una base de datos vacía en PostgreSQL (ej. `pintech_os`).
+   - Configura las credenciales en tu archivo `.env`:
+     ```env
+     DB_CONNECTION=pgsql
+     DB_HOST=127.0.0.1
+     DB_PORT=5432
+     DB_DATABASE=pintech_os
+     DB_USERNAME=tu_usuario
+     DB_PASSWORD=tu_contrasena
+     ```
+
+4. **Migrar la base de datos e inyectar datos iniciales:**
+   ```bash
+   php artisan migrate
+   
+   # ¡Recomendado en desarrollo! Poblar la base de datos con datos de prueba, roles y usuario admin:
+   php artisan db:seed
+   ```
+   > **Nota:** Al ejecutar los seeders, se generan usuarios de prueba según los roles (admin, produccion, comercial). Revisa la consola o `database/seeders/DatabaseSeeder.php` para las credenciales predeterminadas.
 
 ## Desarrollo local
 
@@ -163,7 +180,8 @@ Incluye tablas de negocio y tablas de soporte (cache, jobs, auth, permisos).
 
 Carpeta `docs/`:
 
-- `SOFTWARE_OVERVIEW.md` - **NUEVO** Mapa completo de capacidades del sistema (v1.2).
+- `SOFTWARE_OVERVIEW.md` - Mapa completo de capacidades del sistema (v1.2).
+- `production-exports.md` - **NUEVO** Guía técnica sobre el módulo de exportación a PDF y Excel.
 - `MER.md` - Modelo entidad relacion / diccionario de datos actualizado tras consolidacion.
 - `SISTEMA_AUDITORIA.md` - Guia técnica del registro de actividad y widgets de trazabilidad.
 - `COMPONENTES_UI.md` - Guía de uso de componentes reutilizables (FormattedNumber, FormattedDate, TableActions).

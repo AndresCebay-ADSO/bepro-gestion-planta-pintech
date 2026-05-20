@@ -48,6 +48,14 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        if ($user->hasRole('admin')) {
+            return back()->with('error', 'Como administrador, no puedes eliminar tu propia cuenta. Por favor, contacta con otro administrador o desactiva tu cuenta si es necesario.');
+        }
+
+        if ($user->hasActivity()) {
+            return back()->with('error', 'No puedes eliminar tu cuenta porque tienes actividad registrada en el sistema (movimientos, órdenes, etc.). Por favor, solicita a un administrador que desactive tu cuenta.');
+        }
+
         Auth::logout();
 
         $user->delete();

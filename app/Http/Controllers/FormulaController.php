@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Formulas\StoreFormulaRequest;
+use App\Http\Requests\Formulas\UpdateFormulaRequest;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\Product;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
+use App\Services\ProductionCostRecalculationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +19,10 @@ use Inertia\Response;
 
 class FormulaController extends Controller
 {
+    public function __construct(
+        private readonly ProductionCostRecalculationService $productionCostRecalculationService
+    ) {}
+
     public function index(Request $request): Response
     {
         $this->authorize('viewAny', Formula::class);
@@ -55,20 +61,7 @@ class FormulaController extends Controller
         $this->authorize('create', Formula::class);
 
         return Inertia::render('Formulas/Create', [
-            'products' => Product::query()
-                ->where('is_active', true)
-                ->select('id', 'code', 'name')
-                ->orderBy('code')
-                ->get(),
-            'rawMaterials' => RawMaterial::query()
-                ->where('is_active', true)
-                ->select('id', 'code')
-                ->orderBy('code')
-                ->get(),
-            'units' => UnitOfMeasure::query()
-                ->select('id', 'name', 'symbol')
-                ->orderBy('name')
-                ->get(),
+            ...$this->formulaFormOptions(),
             'selectedProductId' => $request->input('product_id'),
         ]);
     }
@@ -79,7 +72,7 @@ class FormulaController extends Controller
 
         $validated = $request->validated();
 
-        DB::transaction(function () use ($validated, $request) {
+        $formula = DB::transaction(function () use ($validated, $request): Formula {
             // Auto-increment version for this product
             $nextVersion = Formula::where('product_id', $validated['product_id'])
                 ->withTrashed()
@@ -98,15 +91,20 @@ class FormulaController extends Controller
                 'created_by' => $request->user()->id,
             ]);
 
-            foreach ($validated['details'] as $detail) {
+            foreach ($validated['details'] as $index => $detail) {
                 FormulaDetail::create([
                     'formula_id' => $formula->id,
                     'raw_material_id' => $detail['raw_material_id'],
                     'quantity' => $detail['quantity'],
                     'unit_of_measure_id' => $detail['unit_of_measure_id'],
+                    'step_order' => $index + 1,
                 ]);
             }
+
+            return $formula;
         });
+
+        $this->productionCostRecalculationService->recalculateForProduct((int) $formula->product_id);
 
         return redirect()->route('formulas.index')
             ->with('success', 'Fórmula creada exitosamente y marcada como versión activa.');
@@ -125,12 +123,75 @@ class FormulaController extends Controller
         ]);
 
         return Inertia::render('Formulas/Show', [
-            'formula' => $formula,
+            'formula' => [
+                ...$formula->toArray(),
+                'has_production_orders' => $formula->productionOrders()->exists(),
+            ],
             'can' => [
                 'update' => Gate::allows('update', $formula),
                 'delete' => Gate::allows('delete', $formula),
             ],
         ]);
+    }
+
+    public function edit(Formula $formula): Response|RedirectResponse
+    {
+        $this->authorize('update', $formula);
+
+        if ($formula->productionOrders()->exists()) {
+            return redirect()
+                ->route('formulas.show', $formula)
+                ->with('error', 'Esta fórmula ya fue usada en órdenes de producción y no se puede editar.');
+        }
+
+        $formula->load([
+            'product:id,code,name',
+            'details:id,formula_id,raw_material_id,quantity,unit_of_measure_id,step_order',
+        ]);
+
+        return Inertia::render('Formulas/Edit', [
+            'formula' => $formula,
+            ...$this->formulaFormOptions(),
+        ]);
+    }
+
+    public function update(UpdateFormulaRequest $request, Formula $formula): RedirectResponse
+    {
+        $this->authorize('update', $formula);
+
+        if ($formula->productionOrders()->exists()) {
+            return redirect()
+                ->route('formulas.show', $formula)
+                ->with('error', 'Esta fórmula ya fue usada en órdenes de producción y no se puede editar.');
+        }
+
+        $validated = $request->validated();
+
+        DB::transaction(function () use ($formula, $validated): void {
+            $formula->update([
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            $formula->details()->delete();
+
+            foreach ($validated['details'] as $index => $detail) {
+                FormulaDetail::create([
+                    'formula_id' => $formula->id,
+                    'raw_material_id' => $detail['raw_material_id'],
+                    'quantity' => $detail['quantity'],
+                    'unit_of_measure_id' => $detail['unit_of_measure_id'],
+                    'step_order' => $index + 1,
+                ]);
+            }
+        });
+
+        if ($formula->is_active) {
+            $this->productionCostRecalculationService->recalculateForProduct((int) $formula->product_id);
+        }
+
+        return redirect()
+            ->route('formulas.show', $formula)
+            ->with('success', 'Fórmula actualizada exitosamente.');
     }
 
     public function destroy(Formula $formula): RedirectResponse
@@ -158,7 +219,32 @@ class FormulaController extends Controller
             $formula->update(['is_active' => true]);
         });
 
+        $this->productionCostRecalculationService->recalculateForProduct((int) $formula->product_id);
+
         return redirect()->route('formulas.show', $formula)
             ->with('success', 'Fórmula v'.$formula->version.' activada correctamente.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formulaFormOptions(): array
+    {
+        return [
+            'products' => Product::query()
+                ->where('is_active', true)
+                ->select('id', 'code', 'name')
+                ->orderBy('code')
+                ->get(),
+            'rawMaterials' => RawMaterial::query()
+                ->where('is_active', true)
+                ->select('id', 'code')
+                ->orderBy('code')
+                ->get(),
+            'units' => UnitOfMeasure::query()
+                ->select('id', 'name', 'symbol')
+                ->orderBy('name')
+                ->get(),
+        ];
     }
 }

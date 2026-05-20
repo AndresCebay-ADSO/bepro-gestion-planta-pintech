@@ -6,18 +6,10 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
-/**
- * Seeder for User model.
- * Handles production users and demo accounts for pagination.
- */
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // --- Fixed Users (Original/Production) ---
         $admin = User::firstOrCreate(
             ['email' => 'pintech.sistemas@gmail.com'],
             [
@@ -54,33 +46,6 @@ class UserSeeder extends Seeder
         );
         $commercial->assignRole('comercial');
 
-        // --- Additional Demo Users (Local/Testing Environment Only) ---
-        if (app()->environment(['local', 'testing'])) {
-            $roles = ['admin', 'produccion', 'comercial'];
-
-            for ($i = 1; $i <= 97; $i++) {
-                $name = fake()->name();
-                $email = fake()->unique()->safeEmail();
-
-                $user = User::updateOrCreate(
-                    ['email' => $email],
-                    [
-                        'name' => $name,
-                        'password' => Hash::make('password'), // Generic password for local testing
-                        'email_verified_at' => now(),
-                        'is_active' => (bool) rand(0, 1),
-                        'last_login_at' => now()->subDays(rand(0, 30)),
-                        'created_at' => now()->subDays(rand(0, 60)),
-                        'updated_at' => now(),
-                    ]
-                );
-
-                // Correct random role assignment
-                $randomRole = $roles[array_rand($roles)];
-                $user->assignRole($randomRole);
-            }
-
-            $this->command->info('Created/Updated '.User::count().' users (including demo accounts).');
-        }
+        $this->command->info('Created/Updated 3 users.');
     }
 }
