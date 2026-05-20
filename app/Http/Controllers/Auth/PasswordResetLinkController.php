@@ -40,7 +40,7 @@ class PasswordResetLinkController extends FortifyController
                 app(SuccessfulPasswordResetLinkRequestResponse::class, [
                     'status' => Password::RESET_LINK_SENT,
                 ]),
-                fn () => $this->applyTimingDefense()
+                fn ($_) => $this->applyTimingDefense()
             ),
 
         };

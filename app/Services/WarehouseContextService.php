@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\WarehouseType;
 use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Database\Eloquent\Collection;
@@ -60,11 +61,11 @@ class WarehouseContextService
      */
     public function resolveMovementWarehouse(?Warehouse $currentWarehouse): ?Warehouse
     {
-        if ($currentWarehouse !== null && $currentWarehouse->type === 'factory') {
+        if ($currentWarehouse !== null && $currentWarehouse->isFactory()) {
             return $currentWarehouse;
         }
 
-        $factoryWarehouse = Warehouse::query()->where('type', 'factory')->where('is_active', true)->first();
+        $factoryWarehouse = Warehouse::query()->where('type', WarehouseType::Factory->value)->where('is_active', true)->first();
 
         return $factoryWarehouse ?? $currentWarehouse;
     }
