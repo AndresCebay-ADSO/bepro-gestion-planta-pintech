@@ -94,22 +94,19 @@ class CreateProductionOrderAction
 
     private function generateOrderNumber(): string
     {
-        $prefix = 'OP-'.now()->format('Y').'-';
+        $year = (int) now()->format('Y');
+        $prefix = "OP-{$year}-";
 
         if (DB::connection()->getDriverName() === 'pgsql') {
-            DB::statement('SELECT pg_advisory_xact_lock(?)', [crc32($prefix)]);
+            DB::statement('SELECT pg_advisory_xact_lock(?, ?)', [801337, $year]);
         }
 
-        $lastOrderNumber = ProductionOrder::query()
+        $lastSequence = ProductionOrder::query()
             ->where('order_number', 'like', $prefix.'%')
-            ->orderByDesc('order_number')
-            ->value('order_number');
+            ->pluck('order_number')
+            ->map(fn (string $orderNumber): int => (int) substr($orderNumber, strlen($prefix)))
+            ->max();
 
-        $nextSequence = 1;
-        if ($lastOrderNumber !== null) {
-            $nextSequence = ((int) substr($lastOrderNumber, strlen($prefix))) + 1;
-        }
-
-        return $prefix.str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
+        return $prefix.str_pad((string) (((int) $lastSequence) + 1), 4, '0', STR_PAD_LEFT);
     }
 }

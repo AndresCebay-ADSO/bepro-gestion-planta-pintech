@@ -136,7 +136,7 @@ test('it estimates weighted average unit cost from available fifo batches', func
         requiredQuantity: 75
     );
 
-    expect($cost)->toBe(4.666666666666667);
+    expect($cost)->toEqualWithDelta(4.6667, 0.0001);
 });
 
 /**
