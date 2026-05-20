@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\Production\CreateProductionOrderAction;
 use App\Jobs\RecalculateRawMaterialReferencePrice;
 use App\Models\FinishedInventoryMovement;
 use App\Models\Formula;
@@ -19,7 +20,6 @@ use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
-use App\Services\ProductionOrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia;
@@ -167,7 +167,7 @@ test('it allows order creation for materials that do not track inventory without
     ]);
 });
 
-test('store delegates production order creation to the service', function () {
+test('store delegates production order creation to the action', function () {
     InventoryBatch::create([
         'raw_material_id' => $this->material->id,
         'warehouse_id' => $this->factory->id,
@@ -189,20 +189,21 @@ test('store delegates production order creation to the service', function () {
         'created_by' => $this->user->id,
     ]);
 
-    $service = Mockery::mock(ProductionOrderService::class);
-    $service->shouldReceive('createOrder')
+    $action = Mockery::mock(CreateProductionOrderAction::class);
+    $action->shouldReceive('execute')
         ->once()
-        ->with(Mockery::on(function (array $payload) use ($variant): bool {
-            return $payload['product_id'] === $this->formula->product_id
+        ->withArgs(function (array $payload, int $userId) use ($variant): bool {
+            return $userId === $this->user->id
+                && $payload['product_id'] === $this->formula->product_id
                 && $payload['formula_id'] === $this->formula->id
                 && $payload['warehouse_id'] === $this->factory->id
                 && (float) $payload['quantity'] === 100.0
                 && $payload['packaging'][0]['product_variant_id'] === $variant->id
                 && (float) $payload['packaging'][0]['planned_units'] === 20.0;
-        }))
+        })
         ->andReturn($expectedOrder);
 
-    $this->app->instance(ProductionOrderService::class, $service);
+    $this->app->instance(CreateProductionOrderAction::class, $action);
 
     $response = $this->post(route('production-orders.store'), [
         'product_id' => $this->formula->product_id,
