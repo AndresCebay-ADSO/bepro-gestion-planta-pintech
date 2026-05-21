@@ -11,7 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { ProductionOrderLineAdjustment, RawMaterialOption } from '@/types/production-orders';
+import type {
+    ProductionOrderLineAdjustment,
+    RawMaterialOption,
+} from '@/types/production-orders';
 
 type LineAdjustmentsPanelProps = {
     orderId: number;
@@ -34,7 +37,9 @@ export function LineAdjustmentsPanel({
                     Ajustes de Línea
                 </Label>
                 {!isCompleted && (
-                    <span className="text-xs text-muted-foreground">MPs adicionales fuera de fórmula</span>
+                    <span className="text-xs text-muted-foreground">
+                        MPs adicionales fuera de fórmula
+                    </span>
                 )}
             </div>
 
@@ -44,22 +49,35 @@ export function LineAdjustmentsPanel({
                         <table className="w-full text-sm">
                             <thead className="border-b bg-orange-50 dark:bg-orange-950/20">
                                 <tr>
-                                    <th className="p-3 text-left">Materia Prima</th>
+                                    <th className="p-3 text-left">
+                                        Materia Prima
+                                    </th>
                                     <th className="p-3 text-right">Cantidad</th>
                                     <th className="p-3 text-left">Motivo</th>
-                                    {!isCompleted && <th className="w-12 p-3"></th>}
+                                    {!isCompleted && (
+                                        <th className="w-12 p-3"></th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody>
                                 {adjustments.map((adjustment) => (
-                                    <tr key={adjustment.id} className="border-b last:border-0">
+                                    <tr
+                                        key={adjustment.id}
+                                        className="border-b last:border-0"
+                                    >
                                         <td className="p-3 font-medium">
-                                            {adjustment.raw_material?.code ?? 'N/A'}
+                                            {adjustment.raw_material?.code ??
+                                                'N/A'}
                                         </td>
                                         <td className="p-3 text-right">
-                                            <FormattedNumber value={adjustment.quantity} maxDecimals={4} />
+                                            <FormattedNumber
+                                                value={adjustment.quantity}
+                                                maxDecimals={4}
+                                            />
                                         </td>
-                                        <td className="p-3 text-muted-foreground">{adjustment.reason}</td>
+                                        <td className="p-3 text-muted-foreground">
+                                            {adjustment.reason}
+                                        </td>
                                         {!isCompleted && (
                                             <td className="p-3">
                                                 <Button
@@ -68,13 +86,22 @@ export function LineAdjustmentsPanel({
                                                     size="icon"
                                                     className="h-7 w-7 text-destructive hover:text-destructive"
                                                     onClick={() => {
-                                                        if (confirm('¿Eliminar este ajuste de línea?')) {
+                                                        if (
+                                                            confirm(
+                                                                '¿Eliminar este ajuste de línea?',
+                                                            )
+                                                        ) {
                                                             router.delete(
-                                                                destroyLineAdjustment({
-                                                                    order: orderId,
-                                                                    adjustment: adjustment.id,
-                                                                }).url,
-                                                                { preserveScroll: true },
+                                                                destroyLineAdjustment(
+                                                                    {
+                                                                        order: orderId,
+                                                                        adjustment:
+                                                                            adjustment.id,
+                                                                    },
+                                                                ).url,
+                                                                {
+                                                                    preserveScroll: true,
+                                                                },
                                                             );
                                                         }
                                                     }}
@@ -91,7 +118,12 @@ export function LineAdjustmentsPanel({
                 </div>
             )}
 
-            {!isCompleted && <LineAdjustmentForm orderId={orderId} rawMaterials={rawMaterials} />}
+            {!isCompleted && (
+                <LineAdjustmentForm
+                    orderId={orderId}
+                    rawMaterials={rawMaterials}
+                />
+            )}
 
             {isCompleted && adjustments.length === 0 && (
                 <p className="text-xs text-muted-foreground">
@@ -102,7 +134,13 @@ export function LineAdjustmentsPanel({
     );
 }
 
-function LineAdjustmentForm({ orderId, rawMaterials }: { orderId: number; rawMaterials: RawMaterialOption[] }) {
+function LineAdjustmentForm({
+    orderId,
+    rawMaterials,
+}: {
+    orderId: number;
+    rawMaterials: RawMaterialOption[];
+}) {
     const [rawMaterialId, setRawMaterialId] = useState<number | null>(null);
     const [quantity, setQuantity] = useState('');
     const [reason, setReason] = useState('');
@@ -162,7 +200,9 @@ function LineAdjustmentForm({ orderId, rawMaterials }: { orderId: number; rawMat
 
     return (
         <div className="space-y-3 rounded-md border border-dashed border-orange-300 bg-orange-50/50 p-3 dark:border-orange-800 dark:bg-orange-950/10">
-            <p className="text-xs font-medium text-orange-700 dark:text-orange-400">Agregar ajuste de línea</p>
+            <p className="text-xs font-medium text-orange-700 dark:text-orange-400">
+                Agregar ajuste de línea
+            </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <div className="space-y-1">
                     <Combobox
@@ -173,7 +213,9 @@ function LineAdjustmentForm({ orderId, rawMaterials }: { orderId: number; rawMat
                         emptyText="Sin resultados"
                     />
                     {formErrors.raw_material_id && (
-                        <p className="text-xs text-destructive">{formErrors.raw_material_id}</p>
+                        <p className="text-xs text-destructive">
+                            {formErrors.raw_material_id}
+                        </p>
                     )}
                 </div>
                 <div className="space-y-1">
@@ -185,8 +227,15 @@ function LineAdjustmentForm({ orderId, rawMaterials }: { orderId: number; rawMat
                         className="h-9"
                         value={quantity}
                         onChange={(event) => setQuantity(event.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') e.preventDefault();
+                        }}
                     />
-                    {formErrors.quantity && <p className="text-xs text-destructive">{formErrors.quantity}</p>}
+                    {formErrors.quantity && (
+                        <p className="text-xs text-destructive">
+                            {formErrors.quantity}
+                        </p>
+                    )}
                 </div>
                 <div className="space-y-1">
                     <Input
@@ -195,12 +244,21 @@ function LineAdjustmentForm({ orderId, rawMaterials }: { orderId: number; rawMat
                         value={reason}
                         onChange={(event) => setReason(event.target.value)}
                         maxLength={500}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') e.preventDefault();
+                        }}
                     />
-                    {formErrors.reason && <p className="text-xs text-destructive">{formErrors.reason}</p>}
+                    {formErrors.reason && (
+                        <p className="text-xs text-destructive">
+                            {formErrors.reason}
+                        </p>
+                    )}
                 </div>
             </div>
             {formErrors.production_order && (
-                <p className="text-xs text-destructive">{formErrors.production_order}</p>
+                <p className="text-xs text-destructive">
+                    {formErrors.production_order}
+                </p>
             )}
             <Button
                 type="button"
