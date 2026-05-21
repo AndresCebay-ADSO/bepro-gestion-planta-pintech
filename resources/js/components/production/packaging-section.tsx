@@ -40,7 +40,9 @@ export function PackagingSection({
             <div className="flex items-center justify-between">
                 <Label>Empaque Final (Unidades)</Label>
                 {!isCompleted && (
-                    <span className="text-xs text-muted-foreground">Puedes agregar o eliminar presentaciones</span>
+                    <span className="text-xs text-muted-foreground">
+                        Puedes agregar o eliminar presentaciones
+                    </span>
                 )}
             </div>
             <div className="overflow-hidden rounded-md border">
@@ -50,7 +52,9 @@ export function PackagingSection({
                             <tr>
                                 <th className="p-3 text-left">Presentación</th>
                                 <th className="p-3 text-right">Planeado</th>
-                                <th className="w-32 p-3 text-right">Real Producido</th>
+                                <th className="w-32 p-3 text-right">
+                                    Real Producido
+                                </th>
                                 <th className="p-3 text-right">Eq. Gal</th>
                                 <th className="p-3 text-right">Costo Unit.</th>
                                 <th className="p-3 text-right">Costo Total</th>
@@ -59,10 +63,18 @@ export function PackagingSection({
                         </thead>
                         <tbody>
                             {rows.map((pack, index) => (
-                                <tr key={pack.id} className="border-b last:border-0">
-                                    <td className="p-3 font-medium">{pack.presentation}</td>
+                                <tr
+                                    key={pack.id}
+                                    className="border-b last:border-0"
+                                >
+                                    <td className="p-3 font-medium">
+                                        {pack.presentation}
+                                    </td>
                                     <td className="p-3 text-right text-muted-foreground">
-                                        <FormattedNumber value={pack.planned_units} maxDecimals={0} />
+                                        <FormattedNumber
+                                            value={pack.planned_units}
+                                            maxDecimals={0}
+                                        />
                                     </td>
                                     <td className="p-3">
                                         <Input
@@ -71,28 +83,48 @@ export function PackagingSection({
                                             step="1"
                                             value={pack.actual_units}
                                             onChange={(event) => {
-                                                const newPackaging = [...data.packaging];
+                                                const newPackaging = [
+                                                    ...data.packaging,
+                                                ];
                                                 newPackaging[index] = {
                                                     ...newPackaging[index],
-                                                    actual_units: event.target.value,
+                                                    actual_units:
+                                                        event.target.value,
                                                 };
-                                                setData('packaging', newPackaging);
+                                                setData(
+                                                    'packaging',
+                                                    newPackaging,
+                                                );
                                             }}
                                             disabled={isCompleted}
                                         />
                                     </td>
                                     <td className="p-3 text-right text-muted-foreground">
                                         <FormattedNumber
-                                            value={(Number(pack.actual_units) || 0) * (Number(pack.presentation_value) || 0)}
+                                            value={
+                                                (Number(pack.actual_units) ||
+                                                    0) *
+                                                (Number(
+                                                    pack.presentation_value,
+                                                ) || 0)
+                                            }
                                             maxDecimals={2}
                                         />
                                     </td>
                                     <td className="p-3 text-right text-muted-foreground">
-                                        <FormattedNumber value={pack.cost_price} currency maxDecimals={2} />
+                                        <FormattedNumber
+                                            value={pack.cost_price}
+                                            currency
+                                            maxDecimals={2}
+                                        />
                                     </td>
                                     <td className="p-3 text-right font-medium">
                                         <FormattedNumber
-                                            value={(Number(pack.actual_units) || 0) * (Number(pack.cost_price) || 0)}
+                                            value={
+                                                (Number(pack.actual_units) ||
+                                                    0) *
+                                                (Number(pack.cost_price) || 0)
+                                            }
                                             currency
                                             maxDecimals={2}
                                         />
@@ -105,13 +137,21 @@ export function PackagingSection({
                                                 size="icon"
                                                 className="h-7 w-7 text-destructive hover:text-destructive"
                                                 onClick={() => {
-                                                    if (confirm('¿Eliminar esta presentación del plan de envasado?')) {
+                                                    if (
+                                                        confirm(
+                                                            '¿Eliminar esta presentación del plan de envasado?',
+                                                        )
+                                                    ) {
                                                         router.delete(
-                                                            destroyPackagingPlan({
-                                                                order: orderId,
-                                                                plan: pack.id,
-                                                            }).url,
-                                                            { preserveScroll: true },
+                                                            destroyPackagingPlan(
+                                                                {
+                                                                    order: orderId,
+                                                                    plan: pack.id,
+                                                                },
+                                                            ).url,
+                                                            {
+                                                                preserveScroll: true,
+                                                            },
                                                         );
                                                     }
                                                 }}
@@ -124,8 +164,13 @@ export function PackagingSection({
                             ))}
                             {rows.length === 0 && (
                                 <tr>
-                                    <td className="p-3 text-muted-foreground" colSpan={isCompleted ? 6 : 7}>
-                                        Esta orden no tiene plan de empaque. {!isCompleted && 'Agrega presentaciones abajo.'}
+                                    <td
+                                        className="p-3 text-muted-foreground"
+                                        colSpan={isCompleted ? 6 : 7}
+                                    >
+                                        Esta orden no tiene plan de empaque.{' '}
+                                        {!isCompleted &&
+                                            'Agrega presentaciones abajo.'}
                                     </td>
                                 </tr>
                             )}
@@ -134,12 +179,23 @@ export function PackagingSection({
                 </div>
             </div>
 
-            {!isCompleted && <PackagingPlanForm orderId={orderId} availableVariants={availableVariants} />}
+            {!isCompleted && (
+                <PackagingPlanForm
+                    orderId={orderId}
+                    availableVariants={availableVariants}
+                />
+            )}
         </div>
     );
 }
 
-function PackagingPlanForm({ orderId, availableVariants }: { orderId: number; availableVariants: VariantOption[] }) {
+function PackagingPlanForm({
+    orderId,
+    availableVariants,
+}: {
+    orderId: number;
+    availableVariants: VariantOption[];
+}) {
     const [variantId, setVariantId] = useState<number | null>(null);
     const [plannedUnits, setPlannedUnits] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -205,7 +261,9 @@ function PackagingPlanForm({ orderId, availableVariants }: { orderId: number; av
                         emptyText="Sin resultados"
                     />
                     {formErrors.product_variant_id && (
-                        <p className="text-xs text-destructive">{formErrors.product_variant_id}</p>
+                        <p className="text-xs text-destructive">
+                            {formErrors.product_variant_id}
+                        </p>
                     )}
                 </div>
                 <div className="space-y-1">
@@ -216,15 +274,21 @@ function PackagingPlanForm({ orderId, availableVariants }: { orderId: number; av
                         placeholder="Unidades planeadas"
                         className="h-9"
                         value={plannedUnits}
-                        onChange={(event) => setPlannedUnits(event.target.value)}
+                        onChange={(event) =>
+                            setPlannedUnits(event.target.value)
+                        }
                     />
                     {formErrors.planned_units && (
-                        <p className="text-xs text-destructive">{formErrors.planned_units}</p>
+                        <p className="text-xs text-destructive">
+                            {formErrors.planned_units}
+                        </p>
                     )}
                 </div>
             </div>
             {formErrors.production_order && (
-                <p className="text-xs text-destructive">{formErrors.production_order}</p>
+                <p className="text-xs text-destructive">
+                    {formErrors.production_order}
+                </p>
             )}
             <Button
                 type="button"

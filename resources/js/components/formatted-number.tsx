@@ -72,7 +72,11 @@ export function FormattedNumber({
             trimTrailingZeros,
         });
     } else {
-        formatted = formatQuantity(value, { maxDecimals, emptyValue, trimTrailingZeros });
+        formatted = formatQuantity(value, {
+            maxDecimals,
+            emptyValue,
+            trimTrailingZeros,
+        });
     }
 
     // Determinar clases de alineación

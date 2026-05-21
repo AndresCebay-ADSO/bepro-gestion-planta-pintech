@@ -28,14 +28,19 @@ export function OrderHeader({ order, isCompleted }: OrderHeaderProps) {
                 </div>
                 <p className="mt-1 text-muted-foreground">
                     {order.product?.name} • Planta Cali •{' '}
-                    <FormattedNumber value={order.quantity} maxDecimals={2} /> gal Proyectados
+                    <FormattedNumber value={order.quantity} maxDecimals={2} />{' '}
+                    gal Proyectados
                 </p>
             </div>
             <div className="flex items-center gap-2">
                 {isCompleted && order.completion_date && (
                     <div className="mr-4 flex items-center gap-2 font-medium text-green-600">
                         <CheckCircle2 className="h-5 w-5" />
-                        Finalizada el {format(new Date(order.completion_date), 'dd/MM/yyyy HH:mm')}
+                        Finalizada el{' '}
+                        {format(
+                            new Date(order.completion_date),
+                            'dd/MM/yyyy HH:mm',
+                        )}
                     </div>
                 )}
                 <a

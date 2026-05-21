@@ -13,7 +13,12 @@ type IngredientsTableProps = {
     isCompleted: boolean;
 };
 
-export function IngredientsTable({ rows, data, setData, isCompleted }: IngredientsTableProps) {
+export function IngredientsTable({
+    rows,
+    data,
+    setData,
+    isCompleted,
+}: IngredientsTableProps) {
     return (
         <div className="overflow-hidden rounded-md border">
             <div className="overflow-x-auto">
@@ -22,17 +27,27 @@ export function IngredientsTable({ rows, data, setData, isCompleted }: Ingredien
                         <tr>
                             <th className="p-3 text-left">Materia Prima</th>
                             <th className="p-3 text-right">Planeado</th>
-                            <th className="w-32 p-3 text-right">Real Gastado</th>
+                            <th className="w-32 p-3 text-right">
+                                Real Gastado
+                            </th>
                             <th className="p-3 text-right">Costo Unit.</th>
                             <th className="p-3 text-right">Costo Total</th>
                         </tr>
                     </thead>
                     <tbody>
                         {rows.map((ingredient, index) => (
-                            <tr key={ingredient.id} className="border-b last:border-0">
-                                <td className="p-3 font-medium">{ingredient.raw_material_name}</td>
+                            <tr
+                                key={ingredient.id}
+                                className="border-b last:border-0"
+                            >
+                                <td className="p-3 font-medium">
+                                    {ingredient.raw_material_name}
+                                </td>
                                 <td className="p-3 text-right text-muted-foreground">
-                                    <FormattedNumber value={ingredient.planned_quantity} maxDecimals={2} />
+                                    <FormattedNumber
+                                        value={ingredient.planned_quantity}
+                                        maxDecimals={2}
+                                    />
                                 </td>
                                 <td className="p-3">
                                     <Input
@@ -41,27 +56,44 @@ export function IngredientsTable({ rows, data, setData, isCompleted }: Ingredien
                                         step="0.0001"
                                         value={ingredient.actual_quantity}
                                         onChange={(event) => {
-                                            const newIngredients = [...data.ingredients];
+                                            const newIngredients = [
+                                                ...data.ingredients,
+                                            ];
                                             newIngredients[index] = {
                                                 ...newIngredients[index],
-                                                actual_quantity: event.target.value,
+                                                actual_quantity:
+                                                    event.target.value,
                                             };
-                                            setData('ingredients', newIngredients);
+                                            setData(
+                                                'ingredients',
+                                                newIngredients,
+                                            );
                                         }}
                                         disabled={isCompleted}
                                     />
                                 </td>
                                 <td className="p-3 text-right text-muted-foreground">
-                                    <FormattedNumber value={ingredient.unit_cost} currency maxDecimals={2} />
+                                    <FormattedNumber
+                                        value={ingredient.unit_cost}
+                                        currency
+                                        maxDecimals={2}
+                                    />
                                 </td>
                                 <td className="p-3 text-right font-medium">
-                                    <FormattedNumber value={ingredient.total_cost} currency maxDecimals={2} />
+                                    <FormattedNumber
+                                        value={ingredient.total_cost}
+                                        currency
+                                        maxDecimals={2}
+                                    />
                                 </td>
                             </tr>
                         ))}
                         {rows.length === 0 && (
                             <tr>
-                                <td className="p-3 text-muted-foreground" colSpan={5}>
+                                <td
+                                    className="p-3 text-muted-foreground"
+                                    colSpan={5}
+                                >
                                     Esta orden no tiene insumos planificados.
                                 </td>
                             </tr>

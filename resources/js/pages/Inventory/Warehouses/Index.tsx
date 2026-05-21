@@ -69,7 +69,9 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
 
     const handleDelete = (id: number) => {
         if (
-            !window.confirm('¿Estás seguro de que quieres eliminar esta bodega?')
+            !window.confirm(
+                '¿Estás seguro de que quieres eliminar esta bodega?',
+            )
         ) {
             return;
         }

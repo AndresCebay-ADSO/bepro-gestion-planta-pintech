@@ -96,7 +96,13 @@ function sanitizeIntegerInput(rawValue: string, maxLength: number): string {
 /**
  * Componente reutilizable de formulario
  */
-export function RawMaterialForm({ form, categories, units, onSubmit, submitLabel }: Props) {
+export function RawMaterialForm({
+    form,
+    categories,
+    units,
+    onSubmit,
+    submitLabel,
+}: Props) {
     /**
      * Submit limpio
      */
@@ -149,7 +155,10 @@ export function RawMaterialForm({ form, categories, units, onSubmit, submitLabel
                                 form.setData('category_id', value)
                             }
                         >
-                            <SelectTrigger id="category" className="w-full min-w-0">
+                            <SelectTrigger
+                                id="category"
+                                className="w-full min-w-0"
+                            >
                                 <SelectValue placeholder="Seleccionar categoría" />
                             </SelectTrigger>
                             <SelectContent>
@@ -236,7 +245,8 @@ export function RawMaterialForm({ form, categories, units, onSubmit, submitLabel
                         )}
                         <InputError message={form.errors.current_price} />
                         <p className="min-w-0 text-xs break-all text-muted-foreground">
-                            Si lo dejas vacío, se actualizará automáticamente al registrar lotes.
+                            Si lo dejas vacío, se actualizará automáticamente al
+                            registrar lotes.
                         </p>
                     </div>
 

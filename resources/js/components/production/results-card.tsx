@@ -3,7 +3,13 @@ import { Beaker } from 'lucide-react';
 import { IngredientsTable } from '@/components/production/ingredients-table';
 import { LineAdjustmentsPanel } from '@/components/production/line-adjustments-panel';
 import { PackagingSection } from '@/components/production/packaging-section';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -56,7 +62,9 @@ export function ResultsCard({
                 </CardTitle>
                 <CardDescription>
                     Ingrese los datos reales obtenidos al finalizar el proceso.
-                    {!isCompleted ? ' Los costos se estiman en vivo desde servidor mientras editas.' : ''}
+                    {!isCompleted
+                        ? ' Los costos se estiman en vivo desde servidor mientras editas.'
+                        : ''}
                 </CardDescription>
                 {!isCompleted && (
                     <p className="h-5 text-xs text-muted-foreground">
@@ -67,44 +75,67 @@ export function ResultsCard({
             <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                        <Label htmlFor="actual-yield">Rendimiento Real (eq. gal)</Label>
+                        <Label htmlFor="actual-yield">
+                            Rendimiento Real (eq. gal)
+                        </Label>
                         <Input
                             id="actual-yield"
                             type="number"
                             step="0.0001"
                             placeholder="Ej: 19.7500"
                             value={data.actual_yield_quantity}
-                            onChange={(event) => setData('actual_yield_quantity', event.target.value)}
+                            onChange={(event) =>
+                                setData(
+                                    'actual_yield_quantity',
+                                    event.target.value,
+                                )
+                            }
                             disabled={isCompleted}
                         />
                         <p className="text-xs text-muted-foreground">
-                            Debe coincidir con el equivalente envasado dentro de la tolerancia.
+                            Debe coincidir con el equivalente envasado dentro de
+                            la tolerancia.
                         </p>
                         {errors.actual_yield_quantity && (
-                            <p className="text-xs text-destructive">{errors.actual_yield_quantity}</p>
+                            <p className="text-xs text-destructive">
+                                {errors.actual_yield_quantity}
+                            </p>
                         )}
                     </div>
                     <div className="space-y-4 rounded-lg border border-dashed border-border/80 bg-muted/25 p-4">
                         <div className="space-y-1">
-                            <p className="text-sm font-medium text-foreground">Indicadores de laboratorio</p>
+                            <p className="text-sm font-medium text-foreground">
+                                Indicadores de laboratorio
+                            </p>
                             <p className="text-xs text-muted-foreground">
-                                Viscosidad, molienda y sólidos se reflejan en el certificado de calidad del lote al completar la orden.
+                                Viscosidad, molienda y sólidos se reflejan en el
+                                certificado de calidad del lote al completar la
+                                orden.
                             </p>
                         </div>
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div className="space-y-2">
-                                <Label htmlFor="viscosity">Viscosidad (KU)</Label>
+                                <Label htmlFor="viscosity">
+                                    Viscosidad (KU)
+                                </Label>
                                 <Input
                                     id="viscosity"
                                     type="number"
                                     step="0.01"
                                     placeholder="Ej: 105.5"
                                     value={data.viscosity_ku}
-                                    onChange={(event) => setData('viscosity_ku', event.target.value)}
+                                    onChange={(event) =>
+                                        setData(
+                                            'viscosity_ku',
+                                            event.target.value,
+                                        )
+                                    }
                                     disabled={isCompleted}
                                 />
                                 {errors.viscosity_ku && (
-                                    <p className="text-xs text-destructive">{errors.viscosity_ku}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.viscosity_ku}
+                                    </p>
                                 )}
                             </div>
                             <div className="space-y-2">
@@ -115,32 +146,50 @@ export function ResultsCard({
                                     step="0.01"
                                     placeholder="Ej: 7.2"
                                     value={data.grinding_hg}
-                                    onChange={(event) => setData('grinding_hg', event.target.value)}
+                                    onChange={(event) =>
+                                        setData(
+                                            'grinding_hg',
+                                            event.target.value,
+                                        )
+                                    }
                                     disabled={isCompleted}
                                 />
                                 {errors.grinding_hg && (
-                                    <p className="text-xs text-destructive">{errors.grinding_hg}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.grinding_hg}
+                                    </p>
                                 )}
                             </div>
                             <div className="space-y-2 md:col-span-2">
-                                <Label htmlFor="quality-solids">Sólidos (%)</Label>
+                                <Label htmlFor="quality-solids">
+                                    Sólidos (%)
+                                </Label>
                                 <Input
                                     id="quality-solids"
                                     type="number"
                                     step="0.01"
                                     placeholder="Ej: 52.4"
                                     value={data.quality_solids}
-                                    onChange={(event) => setData('quality_solids', event.target.value)}
+                                    onChange={(event) =>
+                                        setData(
+                                            'quality_solids',
+                                            event.target.value,
+                                        )
+                                    }
                                     disabled={isCompleted}
                                 />
                                 {solidsReferenceLabel && (
                                     <p className="text-xs text-muted-foreground">
                                         Referencia en ficha del producto:{' '}
-                                        <span className="font-medium text-foreground">{solidsReferenceLabel}</span>
+                                        <span className="font-medium text-foreground">
+                                            {solidsReferenceLabel}
+                                        </span>
                                     </p>
                                 )}
                                 {errors.quality_solids && (
-                                    <p className="text-xs text-destructive">{errors.quality_solids}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.quality_solids}
+                                    </p>
                                 )}
                             </div>
                         </div>

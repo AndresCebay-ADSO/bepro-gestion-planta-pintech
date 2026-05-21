@@ -101,9 +101,7 @@ export function FormulaForm({
         setData(
             'details',
             data.details.map((detail, currentIndex) =>
-                currentIndex === index
-                    ? { ...detail, [field]: value }
-                    : detail,
+                currentIndex === index ? { ...detail, [field]: value } : detail,
             ),
         );
     };
@@ -189,7 +187,7 @@ export function FormulaForm({
                                         Paso
                                     </Label>
                                 )}
-                                <p className="py-2 text-center text-sm font-medium tabular-nums text-muted-foreground">
+                                <p className="py-2 text-center text-sm font-medium text-muted-foreground tabular-nums">
                                     {index + 1}
                                 </p>
                             </div>
@@ -285,7 +283,9 @@ export function FormulaForm({
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {errors[`details.${index}.unit_of_measure_id`] && (
+                                {errors[
+                                    `details.${index}.unit_of_measure_id`
+                                ] && (
                                     <p className="text-xs text-destructive">
                                         {
                                             errors[
