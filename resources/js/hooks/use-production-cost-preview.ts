@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
 
 import { previewCosts as productionOrderPreviewCosts } from '@/actions/App/Http/Controllers/ProductionOrderController';
-import type { PreviewCostData, ProductionOrderIngredientFormRow, ProductionOrderPackagingFormRow } from '@/types/production-orders';
+import type {
+    PreviewCostData,
+    ProductionOrderIngredientFormRow,
+    ProductionOrderLineAdjustment,
+    ProductionOrderPackagingFormRow,
+} from '@/types/production-orders';
 
 type UseProductionCostPreviewProps = {
     orderId: number;
     ingredients: ProductionOrderIngredientFormRow[];
     packaging: ProductionOrderPackagingFormRow[];
+    lineAdjustments: ProductionOrderLineAdjustment[];
     isCompleted: boolean;
 };
 
@@ -14,9 +20,12 @@ export function useProductionCostPreview({
     orderId,
     ingredients,
     packaging,
+    lineAdjustments,
     isCompleted,
 }: UseProductionCostPreviewProps) {
-    const [previewCosts, setPreviewCosts] = useState<PreviewCostData | null>(null);
+    const [previewCosts, setPreviewCosts] = useState<PreviewCostData | null>(
+        null,
+    );
     const [previewLoading, setPreviewLoading] = useState(false);
 
     useEffect(() => {
@@ -24,7 +33,12 @@ export function useProductionCostPreview({
             return;
         }
 
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        // Extraemos el XSRF-TOKEN de las cookies, ya que fetch no lo hace automáticamente como Axios.
+        const match = document.cookie.match(
+            new RegExp('(^| )XSRF-TOKEN=([^;]+)'),
+        );
+        const xsrfToken = match ? decodeURIComponent(match[2]) : '';
+
         const controller = new AbortController();
         let loadingIndicatorId: number | null = null;
 
@@ -34,25 +48,29 @@ export function useProductionCostPreview({
             }, 180);
 
             try {
-                const response = await fetch(productionOrderPreviewCosts({ order: orderId }).url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'X-Requested-With': 'XMLHttpRequest',
+                const response = await fetch(
+                    productionOrderPreviewCosts({ order: orderId }).url,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-XSRF-TOKEN': xsrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: JSON.stringify({
+                            ingredients: ingredients.map((ingredient) => ({
+                                id: ingredient.id,
+                                actual_quantity:
+                                    Number(ingredient.actual_quantity) || 0,
+                            })),
+                            packaging: packaging.map((pack) => ({
+                                id: pack.id,
+                                actual_units: Number(pack.actual_units) || 0,
+                            })),
+                        }),
+                        signal: controller.signal,
                     },
-                    body: JSON.stringify({
-                        ingredients: ingredients.map((ingredient) => ({
-                            id: ingredient.id,
-                            actual_quantity: Number(ingredient.actual_quantity) || 0,
-                        })),
-                        packaging: packaging.map((pack) => ({
-                            id: pack.id,
-                            actual_units: Number(pack.actual_units) || 0,
-                        })),
-                    }),
-                    signal: controller.signal,
-                });
+                );
 
                 if (!response.ok) {
                     return;
@@ -83,7 +101,7 @@ export function useProductionCostPreview({
             window.clearTimeout(timeoutId);
             setPreviewLoading(false);
         };
-    }, [ingredients, isCompleted, orderId, packaging]);
+    }, [ingredients, isCompleted, orderId, packaging, lineAdjustments]);
 
     return { previewCosts, previewLoading };
 }

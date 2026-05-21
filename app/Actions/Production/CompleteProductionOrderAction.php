@@ -17,6 +17,7 @@ use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\Pricing\ProductionCostCalculatorService;
 use App\Services\QualityInspectionCertificateService;
 use App\Services\VariantPricingService;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -57,10 +58,10 @@ class CompleteProductionOrderAction
                 'viscosity_ku' => $data['viscosity_ku'] ?? null,
                 'grinding_hg' => $data['grinding_hg'] ?? null,
                 'quality_solids' => $data['quality_solids'] ?? null,
-                'agitation_start_time' => $data['agitation_start_time'] ?? null,
-                'agitation_end_time' => $data['agitation_end_time'] ?? null,
-                'packaging_start_time' => $data['packaging_start_time'] ?? null,
-                'packaging_end_time' => $data['packaging_end_time'] ?? null,
+                'agitation_start_time' => isset($data['agitation_start_time']) ? Carbon::parse($data['agitation_start_time'], 'America/Bogota') : null,
+                'agitation_end_time' => isset($data['agitation_end_time']) ? Carbon::parse($data['agitation_end_time'], 'America/Bogota') : null,
+                'packaging_start_time' => isset($data['packaging_start_time']) ? Carbon::parse($data['packaging_start_time'], 'America/Bogota') : null,
+                'packaging_end_time' => isset($data['packaging_end_time']) ? Carbon::parse($data['packaging_end_time'], 'America/Bogota') : null,
                 'responsible_name' => $data['responsible_name'] ?? null,
                 'spillage_quantity' => $data['spillage_quantity'] ?? 0,
                 'notes' => $data['notes'] ?? $lockedOrder->notes,

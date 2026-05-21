@@ -1,7 +1,11 @@
 import type { FormDataErrors } from '@inertiajs/core';
 import type { SetDataAction } from '@inertiajs/react';
 
-export type ProductionOrderStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type ProductionOrderStatus =
+    | 'pending'
+    | 'in_progress'
+    | 'completed'
+    | 'cancelled';
 
 export type FormNumberValue = string | number;
 
