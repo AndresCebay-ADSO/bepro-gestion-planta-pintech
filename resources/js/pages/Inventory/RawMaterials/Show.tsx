@@ -52,11 +52,11 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
             return;
         }
 
-        router.delete(RawMaterialController.destroy.url(rawMaterial.code));
+        router.delete(RawMaterialController.destroy.url(rawMaterial.id));
     };
 
     const handleReactivate = () => {
-        router.patch(RawMaterialController.reactivate.url(rawMaterial.code));
+        router.patch(RawMaterialController.reactivate.url(rawMaterial.id));
     };
 
     return (
@@ -86,7 +86,7 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                             <Button asChild>
                                 <Link
                                     href={RawMaterialController.edit.url(
-                                        rawMaterial.code,
+                                        rawMaterial.id,
                                     )}
                                 >
                                     Editar

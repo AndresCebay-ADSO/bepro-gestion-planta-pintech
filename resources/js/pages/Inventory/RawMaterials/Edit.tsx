@@ -73,7 +73,7 @@ export default function RawMaterialsEdit({ rawMaterial, categories, units }: Pro
                 data.previous_price === '' ? null : data.previous_price,
         }));
 
-        form.put(route('raw-materials.update', rawMaterial.code));
+        form.put(route('raw-materials.update', rawMaterial.id));
     };
 
     return (
@@ -91,7 +91,7 @@ export default function RawMaterialsEdit({ rawMaterial, categories, units }: Pro
                         </Link>
                         <span>/</span>
                         <Link
-                            href={route('raw-materials.show', rawMaterial.code)}
+                            href={route('raw-materials.show', rawMaterial.id)}
                             className="font-mono hover:text-foreground"
                         >
                             {rawMaterial.code}

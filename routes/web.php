@@ -40,8 +40,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
     Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::resource('users', UserController::class)->except(['show']);
-    Route::resource('raw-materials', RawMaterialController::class)->except(['index', 'show']);
     Route::patch('raw-materials/{raw_material}/reactivate', [RawMaterialController::class, 'reactivate'])->name('raw-materials.reactivate');
+    Route::resource('raw-materials', RawMaterialController::class)->except(['index', 'show']);
     Route::resource('warehouses', WarehouseController::class)->except(['index', 'show']);
     Route::get('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsersPage'])->name('warehouses.assign-users.form');
     Route::post('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsers'])->name('warehouses.assign-users');

@@ -115,9 +115,4 @@ class RawMaterial extends Model
     {
         return $this->hasMany(Alert::class, 'raw_material_id');
     }
-
-    public function getRouteKeyName(): string
-    {
-        return 'code';
-    }
 }
