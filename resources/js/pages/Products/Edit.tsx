@@ -72,7 +72,9 @@ export default function ProductsEdit({
     can,
 }: Props) {
     const toInput = (value: number | string | null | undefined): string =>
-        value !== null && value !== undefined && value !== '' ? String(value) : '';
+        value !== null && value !== undefined && value !== ''
+            ? String(value)
+            : '';
 
     const { data, setData, put, processing, errors } = useForm<ProductForm>({
         code: product.code,
@@ -241,11 +243,15 @@ export default function ProductsEdit({
                             <Input
                                 id="brand"
                                 value={data.brand}
-                                onChange={(e) => setData('brand', e.target.value)}
+                                onChange={(e) =>
+                                    setData('brand', e.target.value)
+                                }
                                 maxLength={100}
                             />
                             {errors.brand && (
-                                <p className="text-sm text-destructive">{errors.brand}</p>
+                                <p className="text-sm text-destructive">
+                                    {errors.brand}
+                                </p>
                             )}
                         </div>
 
@@ -255,11 +261,15 @@ export default function ProductsEdit({
                                 id="description"
                                 rows={4}
                                 value={data.description}
-                                onChange={(e) => setData('description', e.target.value)}
+                                onChange={(e) =>
+                                    setData('description', e.target.value)
+                                }
                                 className="min-h-[100px] resize-y"
                             />
                             {errors.description && (
-                                <p className="text-sm text-destructive">{errors.description}</p>
+                                <p className="text-sm text-destructive">
+                                    {errors.description}
+                                </p>
                             )}
                         </div>
 
@@ -278,16 +288,22 @@ export default function ProductsEdit({
                     </div>
 
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                        <h2 className="font-medium text-foreground">Rangos para certificado de calidad</h2>
+                        <h2 className="font-medium text-foreground">
+                            Rangos para certificado de calidad
+                        </h2>
                         <p className="text-xs text-muted-foreground">
-                            Límites de referencia (KU, HG, %) comparados con el resultado al cerrar la orden.
+                            Límites de referencia (KU, HG, %) comparados con el
+                            resultado al cerrar la orden.
                         </p>
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <Label>Viscosidad (KU)</Label>
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <div className="space-y-1.5">
-                                        <Label htmlFor="quality_viscosity_lower" className="text-xs font-normal text-muted-foreground">
+                                        <Label
+                                            htmlFor="quality_viscosity_lower"
+                                            className="text-xs font-normal text-muted-foreground"
+                                        >
                                             Mínimo
                                         </Label>
                                         <Input
@@ -296,14 +312,24 @@ export default function ProductsEdit({
                                             step="0.01"
                                             min="0"
                                             value={data.quality_viscosity_lower}
-                                            onChange={(e) => setData('quality_viscosity_lower', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'quality_viscosity_lower',
+                                                    e.target.value,
+                                                )
+                                            }
                                         />
                                         {errors.quality_viscosity_lower && (
-                                            <p className="text-xs text-destructive">{errors.quality_viscosity_lower}</p>
+                                            <p className="text-xs text-destructive">
+                                                {errors.quality_viscosity_lower}
+                                            </p>
                                         )}
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label htmlFor="quality_viscosity_upper" className="text-xs font-normal text-muted-foreground">
+                                        <Label
+                                            htmlFor="quality_viscosity_upper"
+                                            className="text-xs font-normal text-muted-foreground"
+                                        >
                                             Máximo
                                         </Label>
                                         <Input
@@ -312,10 +338,17 @@ export default function ProductsEdit({
                                             step="0.01"
                                             min="0"
                                             value={data.quality_viscosity_upper}
-                                            onChange={(e) => setData('quality_viscosity_upper', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'quality_viscosity_upper',
+                                                    e.target.value,
+                                                )
+                                            }
                                         />
                                         {errors.quality_viscosity_upper && (
-                                            <p className="text-xs text-destructive">{errors.quality_viscosity_upper}</p>
+                                            <p className="text-xs text-destructive">
+                                                {errors.quality_viscosity_upper}
+                                            </p>
                                         )}
                                     </div>
                                 </div>
@@ -324,7 +357,10 @@ export default function ProductsEdit({
                                 <Label>Molienda (HG)</Label>
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <div className="space-y-1.5">
-                                        <Label htmlFor="quality_fineness_lower" className="text-xs font-normal text-muted-foreground">
+                                        <Label
+                                            htmlFor="quality_fineness_lower"
+                                            className="text-xs font-normal text-muted-foreground"
+                                        >
                                             Mínimo
                                         </Label>
                                         <Input
@@ -333,14 +369,24 @@ export default function ProductsEdit({
                                             step="0.01"
                                             min="0"
                                             value={data.quality_fineness_lower}
-                                            onChange={(e) => setData('quality_fineness_lower', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'quality_fineness_lower',
+                                                    e.target.value,
+                                                )
+                                            }
                                         />
                                         {errors.quality_fineness_lower && (
-                                            <p className="text-xs text-destructive">{errors.quality_fineness_lower}</p>
+                                            <p className="text-xs text-destructive">
+                                                {errors.quality_fineness_lower}
+                                            </p>
                                         )}
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label htmlFor="quality_fineness_upper" className="text-xs font-normal text-muted-foreground">
+                                        <Label
+                                            htmlFor="quality_fineness_upper"
+                                            className="text-xs font-normal text-muted-foreground"
+                                        >
                                             Máximo
                                         </Label>
                                         <Input
@@ -349,10 +395,17 @@ export default function ProductsEdit({
                                             step="0.01"
                                             min="0"
                                             value={data.quality_fineness_upper}
-                                            onChange={(e) => setData('quality_fineness_upper', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'quality_fineness_upper',
+                                                    e.target.value,
+                                                )
+                                            }
                                         />
                                         {errors.quality_fineness_upper && (
-                                            <p className="text-xs text-destructive">{errors.quality_fineness_upper}</p>
+                                            <p className="text-xs text-destructive">
+                                                {errors.quality_fineness_upper}
+                                            </p>
                                         )}
                                     </div>
                                 </div>
@@ -361,7 +414,10 @@ export default function ProductsEdit({
                                 <Label>Sólidos (%)</Label>
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <div className="space-y-1.5">
-                                        <Label htmlFor="quality_solids_lower" className="text-xs font-normal text-muted-foreground">
+                                        <Label
+                                            htmlFor="quality_solids_lower"
+                                            className="text-xs font-normal text-muted-foreground"
+                                        >
                                             Mínimo
                                         </Label>
                                         <Input
@@ -371,14 +427,24 @@ export default function ProductsEdit({
                                             min="0"
                                             max="100"
                                             value={data.quality_solids_lower}
-                                            onChange={(e) => setData('quality_solids_lower', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'quality_solids_lower',
+                                                    e.target.value,
+                                                )
+                                            }
                                         />
                                         {errors.quality_solids_lower && (
-                                            <p className="text-xs text-destructive">{errors.quality_solids_lower}</p>
+                                            <p className="text-xs text-destructive">
+                                                {errors.quality_solids_lower}
+                                            </p>
                                         )}
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label htmlFor="quality_solids_upper" className="text-xs font-normal text-muted-foreground">
+                                        <Label
+                                            htmlFor="quality_solids_upper"
+                                            className="text-xs font-normal text-muted-foreground"
+                                        >
                                             Máximo
                                         </Label>
                                         <Input
@@ -388,10 +454,17 @@ export default function ProductsEdit({
                                             min="0"
                                             max="100"
                                             value={data.quality_solids_upper}
-                                            onChange={(e) => setData('quality_solids_upper', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'quality_solids_upper',
+                                                    e.target.value,
+                                                )
+                                            }
                                         />
                                         {errors.quality_solids_upper && (
-                                            <p className="text-xs text-destructive">{errors.quality_solids_upper}</p>
+                                            <p className="text-xs text-destructive">
+                                                {errors.quality_solids_upper}
+                                            </p>
                                         )}
                                     </div>
                                 </div>

@@ -18,7 +18,4 @@ export default function AppLogoIcon(
             height={32}
         />
     );
-
-
 }
-

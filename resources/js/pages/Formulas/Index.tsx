@@ -140,7 +140,10 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                                         {formula.notes ?? '-'}
                                     </td>
                                     <td className="p-4 text-xs text-muted-foreground">
-                                        <FormattedDate value={formula.created_at} format="datetime" />
+                                        <FormattedDate
+                                            value={formula.created_at}
+                                            format="datetime"
+                                        />
                                     </td>
                                     <td className="p-4 text-right">
                                         <TableActions

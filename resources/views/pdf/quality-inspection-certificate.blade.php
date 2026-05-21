@@ -119,6 +119,10 @@
             text-align: center;
         }
 
+        table tr.row-stripe {
+            background-color: #D9E2F3;
+        }
+
         table td:first-child {
             text-align: left;
         }
@@ -212,7 +216,7 @@
             </thead>
             <tbody>
                 @foreach($certificate['tests'] as $test)
-                    <tr>
+                    <tr class="{{ $loop->odd ? 'row-stripe' : '' }}">
                         <td>{{ $test['name'] }}</td>
                         <td>{{ $test['unit'] ?? '—' }}</td>
                         <td>{{ $test['result'] ?? '—' }}</td>

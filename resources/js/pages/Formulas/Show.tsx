@@ -216,14 +216,17 @@ export default function FormulasShow({ formula, can }: Props) {
                                     key={detail.id}
                                     className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30"
                                 >
-                                    <td className="p-4 text-center tabular-nums text-muted-foreground">
+                                    <td className="p-4 text-center text-muted-foreground tabular-nums">
                                         {detail.step_order ?? '—'}
                                     </td>
                                     <td className="p-4 font-mono font-medium text-foreground">
                                         {detail.raw_material?.code ?? '-'}
                                     </td>
                                     <td className="p-4 text-right text-foreground tabular-nums">
-                                        <FormattedNumber value={detail.quantity} maxDecimals={2} />
+                                        <FormattedNumber
+                                            value={detail.quantity}
+                                            maxDecimals={2}
+                                        />
                                     </td>
                                     <td className="p-4 text-muted-foreground">
                                         {detail.unit_of_measure

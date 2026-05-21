@@ -29,7 +29,11 @@ type Props = {
     };
 };
 
-export default function ProductsIndex({ products: productsData, can, filters }: Props) {
+export default function ProductsIndex({
+    products: productsData,
+    can,
+    filters,
+}: Props) {
     const { data, setData, get } = useForm({
         search: filters.search ?? '',
     });
@@ -124,7 +128,10 @@ export default function ProductsIndex({ products: productsData, can, filters }: 
                                             asChild
                                         >
                                             <Link
-                                                href={products.show(product.id).url}
+                                                href={
+                                                    products.show(product.id)
+                                                        .url
+                                                }
                                             >
                                                 Ver
                                             </Link>
@@ -143,4 +150,3 @@ export default function ProductsIndex({ products: productsData, can, filters }: 
         </>
     );
 }
-

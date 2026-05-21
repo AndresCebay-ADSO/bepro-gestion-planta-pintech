@@ -52,10 +52,16 @@ const trimZeroes = (val: string | null | undefined): string => {
     return val.includes('.') ? val.replace(/0+$/, '').replace(/\.$/, '') : val;
 };
 
-export default function RawMaterialsEdit({ rawMaterial, categories, units }: Props) {
+export default function RawMaterialsEdit({
+    rawMaterial,
+    categories,
+    units,
+}: Props) {
     const form = useForm<RawMaterialFormData>({
         code: rawMaterial.code,
-        category_id: rawMaterial.category_id ? String(rawMaterial.category_id) : '',
+        category_id: rawMaterial.category_id
+            ? String(rawMaterial.category_id)
+            : '',
         unit_of_measure_id: String(rawMaterial.unit_of_measure_id),
         current_price: trimZeroes(rawMaterial.current_price),
         previous_price: trimZeroes(rawMaterial.previous_price),
@@ -68,12 +74,13 @@ export default function RawMaterialsEdit({ rawMaterial, categories, units }: Pro
         form.transform((data) => ({
             ...data,
             unit_of_measure_id: Number(data.unit_of_measure_id),
-            current_price: data.current_price === '' ? null : data.current_price,
+            current_price:
+                data.current_price === '' ? null : data.current_price,
             previous_price:
                 data.previous_price === '' ? null : data.previous_price,
         }));
 
-        form.put(route('raw-materials.update', rawMaterial.code));
+        form.put(route('raw-materials.update', rawMaterial.id));
     };
 
     return (
@@ -91,7 +98,7 @@ export default function RawMaterialsEdit({ rawMaterial, categories, units }: Pro
                         </Link>
                         <span>/</span>
                         <Link
-                            href={route('raw-materials.show', rawMaterial.code)}
+                            href={route('raw-materials.show', rawMaterial.id)}
                             className="font-mono hover:text-foreground"
                         >
                             {rawMaterial.code}

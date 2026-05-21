@@ -11,7 +11,13 @@ import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -110,7 +116,13 @@ type Props = {
     }>;
 };
 
-export default function ProductsShow({ product, can, documentTypes, units, rawMaterials }: Props) {
+export default function ProductsShow({
+    product,
+    can,
+    documentTypes,
+    units,
+    rawMaterials,
+}: Props) {
     const [isOpen, setIsOpen] = useState(false);
     const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
 
@@ -137,9 +149,18 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
     };
 
     const hasCertificateRanges = Boolean(
-        formatQualityRange(product.quality_viscosity_lower, product.quality_viscosity_upper)
-            || formatQualityRange(product.quality_fineness_lower, product.quality_fineness_upper)
-            || formatQualityRange(product.quality_solids_lower, product.quality_solids_upper),
+        formatQualityRange(
+            product.quality_viscosity_lower,
+            product.quality_viscosity_upper,
+        ) ||
+        formatQualityRange(
+            product.quality_fineness_lower,
+            product.quality_fineness_upper,
+        ) ||
+        formatQualityRange(
+            product.quality_solids_lower,
+            product.quality_solids_upper,
+        ),
     );
 
     const form = useForm({
@@ -284,9 +305,16 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                             Precio de Venta
                         </p>
                         <p className="text-sm font-medium text-foreground">
-                            {product.current_price
-                                ? <FormattedNumber value={product.current_price} currency maxDecimals={2} trimTrailingZeros />
-                                : 'No asignado'}
+                            {product.current_price ? (
+                                <FormattedNumber
+                                    value={product.current_price}
+                                    currency
+                                    maxDecimals={2}
+                                    trimTrailingZeros
+                                />
+                            ) : (
+                                'No asignado'
+                            )}
                         </p>
                     </div>
                 </div>
@@ -295,41 +323,71 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                         {product.description && (
                             <div>
-                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                                     Descripción
                                 </p>
-                                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                                <p className="mt-2 text-sm leading-relaxed whitespace-pre-wrap text-foreground">
                                     {product.description}
                                 </p>
                             </div>
                         )}
                         {hasCertificateRanges && (
-                            <div className={product.description ? 'border-t border-border pt-4' : ''}>
-                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            <div
+                                className={
+                                    product.description
+                                        ? 'border-t border-border pt-4'
+                                        : ''
+                                }
+                            >
+                                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                                     Rangos certificado de calidad
                                 </p>
                                 <dl className="mt-3 grid gap-4 sm:grid-cols-3">
-                                    {formatQualityRange(product.quality_viscosity_lower, product.quality_viscosity_upper) && (
+                                    {formatQualityRange(
+                                        product.quality_viscosity_lower,
+                                        product.quality_viscosity_upper,
+                                    ) && (
                                         <div>
-                                            <dt className="text-xs text-muted-foreground">Viscosidad (KU)</dt>
+                                            <dt className="text-xs text-muted-foreground">
+                                                Viscosidad (KU)
+                                            </dt>
                                             <dd className="mt-0.5 font-mono text-sm font-medium">
-                                                {formatQualityRange(product.quality_viscosity_lower, product.quality_viscosity_upper)}
+                                                {formatQualityRange(
+                                                    product.quality_viscosity_lower,
+                                                    product.quality_viscosity_upper,
+                                                )}
                                             </dd>
                                         </div>
                                     )}
-                                    {formatQualityRange(product.quality_fineness_lower, product.quality_fineness_upper) && (
+                                    {formatQualityRange(
+                                        product.quality_fineness_lower,
+                                        product.quality_fineness_upper,
+                                    ) && (
                                         <div>
-                                            <dt className="text-xs text-muted-foreground">Molienda (HG)</dt>
+                                            <dt className="text-xs text-muted-foreground">
+                                                Molienda (HG)
+                                            </dt>
                                             <dd className="mt-0.5 font-mono text-sm font-medium">
-                                                {formatQualityRange(product.quality_fineness_lower, product.quality_fineness_upper)}
+                                                {formatQualityRange(
+                                                    product.quality_fineness_lower,
+                                                    product.quality_fineness_upper,
+                                                )}
                                             </dd>
                                         </div>
                                     )}
-                                    {formatQualityRange(product.quality_solids_lower, product.quality_solids_upper) && (
+                                    {formatQualityRange(
+                                        product.quality_solids_lower,
+                                        product.quality_solids_upper,
+                                    ) && (
                                         <div>
-                                            <dt className="text-xs text-muted-foreground">Sólidos (%)</dt>
+                                            <dt className="text-xs text-muted-foreground">
+                                                Sólidos (%)
+                                            </dt>
                                             <dd className="mt-0.5 font-mono text-sm font-medium">
-                                                {formatQualityRange(product.quality_solids_lower, product.quality_solids_upper)}
+                                                {formatQualityRange(
+                                                    product.quality_solids_lower,
+                                                    product.quality_solids_upper,
+                                                )}
                                             </dd>
                                         </div>
                                     )}
@@ -344,18 +402,28 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                             <div className="space-y-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <CardTitle className="text-lg">Documentación técnica</CardTitle>
-                                    <Badge variant="secondary" className="font-normal">
+                                    <CardTitle className="text-lg">
+                                        Documentación técnica
+                                    </CardTitle>
+                                    <Badge
+                                        variant="secondary"
+                                        className="font-normal"
+                                    >
                                         QR por lote
                                     </Badge>
                                 </div>
                                 <CardDescription className="text-sm leading-relaxed">
-                                    PDFs reutilizables vinculados a este producto. Aparecen automáticamente en la landing
-                                    pública de cada orden completada, junto al certificado de calidad del lote.
+                                    PDFs reutilizables vinculados a este
+                                    producto. Aparecen automáticamente en la
+                                    landing pública de cada orden completada,
+                                    junto al certificado de calidad del lote.
                                 </CardDescription>
                             </div>
                             {can.update && (
-                                <Dialog open={isDocumentDialogOpen} onOpenChange={setIsDocumentDialogOpen}>
+                                <Dialog
+                                    open={isDocumentDialogOpen}
+                                    onOpenChange={setIsDocumentDialogOpen}
+                                >
                                     <DialogTrigger asChild>
                                         <Button size="sm" className="shrink-0">
                                             <Upload className="mr-1.5 h-4 w-4" />
@@ -364,58 +432,122 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                                     </DialogTrigger>
                                     <DialogContent className="max-w-md">
                                         <DialogHeader>
-                                            <DialogTitle>Subir documento técnico</DialogTitle>
+                                            <DialogTitle>
+                                                Subir documento técnico
+                                            </DialogTitle>
                                             <DialogDescription>
-                                                Elige el tipo y adjunta un PDF. Si ya existe un documento del mismo tipo,
-                                                se archiva la versión anterior y queda vigente la nueva.
+                                                Elige el tipo y adjunta un PDF.
+                                                Si ya existe un documento del
+                                                mismo tipo, se archiva la
+                                                versión anterior y queda vigente
+                                                la nueva.
                                             </DialogDescription>
                                         </DialogHeader>
-                                        <form onSubmit={handleDocumentSubmit} className="space-y-4">
+                                        <form
+                                            onSubmit={handleDocumentSubmit}
+                                            className="space-y-4"
+                                        >
                                             <div className="space-y-2">
-                                                <Label htmlFor="document_type">Tipo de documento</Label>
+                                                <Label htmlFor="document_type">
+                                                    Tipo de documento
+                                                </Label>
                                                 <Select
-                                                    value={documentForm.data.document_type}
+                                                    value={
+                                                        documentForm.data
+                                                            .document_type
+                                                    }
                                                     onValueChange={(value) =>
-                                                        documentForm.setData('document_type', value as 'technical_data_sheet' | 'safety_data_sheet')
+                                                        documentForm.setData(
+                                                            'document_type',
+                                                            value as
+                                                                | 'technical_data_sheet'
+                                                                | 'safety_data_sheet',
+                                                        )
                                                     }
                                                 >
                                                     <SelectTrigger id="document_type">
                                                         <SelectValue />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {documentTypes.map((type) => (
-                                                            <SelectItem key={type.value} value={type.value}>
-                                                                {type.label}
-                                                            </SelectItem>
-                                                        ))}
+                                                        {documentTypes.map(
+                                                            (type) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        type.value
+                                                                    }
+                                                                    value={
+                                                                        type.value
+                                                                    }
+                                                                >
+                                                                    {type.label}
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
                                                     </SelectContent>
                                                 </Select>
-                                                {documentForm.errors.document_type && (
-                                                    <p className="text-xs text-destructive">{documentForm.errors.document_type}</p>
+                                                {documentForm.errors
+                                                    .document_type && (
+                                                    <p className="text-xs text-destructive">
+                                                        {
+                                                            documentForm.errors
+                                                                .document_type
+                                                        }
+                                                    </p>
                                                 )}
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="document">Archivo PDF</Label>
+                                                <Label htmlFor="document">
+                                                    Archivo PDF
+                                                </Label>
                                                 <Input
                                                     id="document"
                                                     type="file"
                                                     accept="application/pdf,.pdf"
                                                     className="cursor-pointer file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-primary"
-                                                    onChange={(event) => documentForm.setData('document', event.target.files?.[0] ?? null)}
+                                                    onChange={(event) =>
+                                                        documentForm.setData(
+                                                            'document',
+                                                            event.target
+                                                                .files?.[0] ??
+                                                                null,
+                                                        )
+                                                    }
                                                 />
                                                 <p className="text-xs text-muted-foreground">
-                                                    Tamaño máximo 10 MB. Solo se aceptan archivos PDF.
+                                                    Tamaño máximo 10 MB. Solo se
+                                                    aceptan archivos PDF.
                                                 </p>
-                                                {documentForm.errors.document && (
-                                                    <p className="text-xs text-destructive">{documentForm.errors.document}</p>
+                                                {documentForm.errors
+                                                    .document && (
+                                                    <p className="text-xs text-destructive">
+                                                        {
+                                                            documentForm.errors
+                                                                .document
+                                                        }
+                                                    </p>
                                                 )}
                                             </div>
                                             <div className="flex justify-end gap-2 pt-2">
-                                                <Button type="button" variant="outline" onClick={() => setIsDocumentDialogOpen(false)}>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        setIsDocumentDialogOpen(
+                                                            false,
+                                                        )
+                                                    }
+                                                >
                                                     Cancelar
                                                 </Button>
-                                                <Button type="submit" disabled={documentForm.processing}>
-                                                    {documentForm.processing ? 'Subiendo...' : 'Guardar'}
+                                                <Button
+                                                    type="submit"
+                                                    disabled={
+                                                        documentForm.processing
+                                                    }
+                                                >
+                                                    {documentForm.processing
+                                                        ? 'Subiendo...'
+                                                        : 'Guardar'}
                                                 </Button>
                                             </div>
                                         </form>
@@ -431,14 +563,24 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                                     <FileStack className="h-7 w-7 text-muted-foreground" />
                                 </div>
                                 <div className="max-w-sm space-y-1">
-                                    <p className="text-sm font-medium text-foreground">Sin documentos técnicos</p>
-                                    <p className="text-xs text-muted-foreground leading-relaxed">
-                                        Carga la ficha técnica y la hoja de seguridad para que los lotes completados muestren
-                                        enlaces de descarga públicos coherentes con tu catálogo.
+                                    <p className="text-sm font-medium text-foreground">
+                                        Sin documentos técnicos
+                                    </p>
+                                    <p className="text-xs leading-relaxed text-muted-foreground">
+                                        Carga la ficha técnica y la hoja de
+                                        seguridad para que los lotes completados
+                                        muestren enlaces de descarga públicos
+                                        coherentes con tu catálogo.
                                     </p>
                                 </div>
                                 {can.update && (
-                                    <Button size="sm" variant="outline" onClick={() => setIsDocumentDialogOpen(true)}>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() =>
+                                            setIsDocumentDialogOpen(true)
+                                        }
+                                    >
                                         <Upload className="mr-1.5 h-4 w-4" />
                                         Subir el primero
                                     </Button>
@@ -448,8 +590,11 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                             <ul className="divide-y divide-border">
                                 {documents.map((document) => {
                                     const typeLabel =
-                                        documentTypes.find((type) => type.value === document.document_type)?.label ??
-                                        document.document_type;
+                                        documentTypes.find(
+                                            (type) =>
+                                                type.value ===
+                                                document.document_type,
+                                        )?.label ?? document.document_type;
 
                                     return (
                                         <li
@@ -462,31 +607,67 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                                                 </div>
                                                 <div className="min-w-0 space-y-1">
                                                     <div className="flex flex-wrap items-center gap-2">
-                                                        <p className="truncate font-medium text-foreground">{document.file_name}</p>
-                                                        <Badge variant="outline" className="shrink-0 text-[10px] uppercase tracking-wide">
+                                                        <p className="truncate font-medium text-foreground">
+                                                            {document.file_name}
+                                                        </p>
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="shrink-0 text-[10px] tracking-wide uppercase"
+                                                        >
                                                             {typeLabel}
                                                         </Badge>
                                                     </div>
                                                     <p className="text-xs text-muted-foreground">
-                                                        {formatBytes(document.file_size)}
-                                                        <span className="mx-1.5 text-border">·</span>
-                                                        Versión {document.version}
-                                                        <span className="mx-1.5 text-border">·</span>
-                                                        <FormattedDate value={document.created_at} format="date" />
+                                                        {formatBytes(
+                                                            document.file_size,
+                                                        )}
+                                                        <span className="mx-1.5 text-border">
+                                                            ·
+                                                        </span>
+                                                        Versión{' '}
+                                                        {document.version}
+                                                        <span className="mx-1.5 text-border">
+                                                            ·
+                                                        </span>
+                                                        <FormattedDate
+                                                            value={
+                                                                document.created_at
+                                                            }
+                                                            format="date"
+                                                        />
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="flex shrink-0 items-center justify-end gap-1 md:pl-4">
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
-                                                        <Button variant="outline" size="icon" className="h-9 w-9" asChild>
-                                                            <a href={downloadProductDocument({ document: document.id }).url}>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="h-9 w-9"
+                                                            asChild
+                                                        >
+                                                            <a
+                                                                href={
+                                                                    downloadProductDocument(
+                                                                        {
+                                                                            document:
+                                                                                document.id,
+                                                                        },
+                                                                    ).url
+                                                                }
+                                                            >
                                                                 <Download className="h-4 w-4" />
-                                                                <span className="sr-only">Descargar PDF</span>
+                                                                <span className="sr-only">
+                                                                    Descargar
+                                                                    PDF
+                                                                </span>
                                                             </a>
                                                         </Button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Descargar PDF</TooltipContent>
+                                                    <TooltipContent>
+                                                        Descargar PDF
+                                                    </TooltipContent>
                                                 </Tooltip>
                                                 {can.update && (
                                                     <Tooltip>
@@ -497,18 +678,36 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                                                                 size="icon"
                                                                 className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
                                                                 onClick={() => {
-                                                                    if (window.confirm('¿Eliminar este documento técnico?')) {
-                                                                        router.delete(destroyProductDocument({ document: document.id }).url, {
-                                                                            preserveScroll: true,
-                                                                        });
+                                                                    if (
+                                                                        window.confirm(
+                                                                            '¿Eliminar este documento técnico?',
+                                                                        )
+                                                                    ) {
+                                                                        router.delete(
+                                                                            destroyProductDocument(
+                                                                                {
+                                                                                    document:
+                                                                                        document.id,
+                                                                                },
+                                                                            )
+                                                                                .url,
+                                                                            {
+                                                                                preserveScroll: true,
+                                                                            },
+                                                                        );
                                                                     }
                                                                 }}
                                                             >
                                                                 <Trash2 className="h-4 w-4" />
-                                                                <span className="sr-only">Eliminar documento</span>
+                                                                <span className="sr-only">
+                                                                    Eliminar
+                                                                    documento
+                                                                </span>
                                                             </Button>
                                                         </TooltipTrigger>
-                                                        <TooltipContent>Eliminar</TooltipContent>
+                                                        <TooltipContent>
+                                                            Eliminar
+                                                        </TooltipContent>
                                                     </Tooltip>
                                                 )}
                                             </div>
@@ -528,7 +727,8 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                                 Variantes / SKU
                             </h2>
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                                Presentaciones de venta: galón, bidón, tambor, etc. El valor se define en galones.
+                                Presentaciones de venta: galón, bidón, tambor,
+                                etc. El valor se define en galones.
                             </p>
                         </div>
                         {can.update && (
@@ -538,66 +738,123 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                                 </DialogTrigger>
                                 <DialogContent className="max-w-lg">
                                     <DialogHeader>
-                                        <DialogTitle>Nueva Variante</DialogTitle>
+                                        <DialogTitle>
+                                            Nueva Variante
+                                        </DialogTitle>
                                     </DialogHeader>
-                                    <form onSubmit={handleSubmit} className="space-y-4">
+                                    <form
+                                        onSubmit={handleSubmit}
+                                        className="space-y-4"
+                                    >
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
                                                 <Label htmlFor="sku">SKU</Label>
                                                 <Input
                                                     id="sku"
                                                     value={form.data.sku}
-                                                    onChange={(e) => form.setData('sku', e.target.value)}
+                                                    onChange={(e) =>
+                                                        form.setData(
+                                                            'sku',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     placeholder="Ej: ESM-BLA-01-GL"
                                                 />
                                                 {form.errors.sku && (
-                                                    <p className="text-xs text-destructive">{form.errors.sku}</p>
+                                                    <p className="text-xs text-destructive">
+                                                        {form.errors.sku}
+                                                    </p>
                                                 )}
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="unit_of_measure_id">Unidad de Medida</Label>
+                                                <Label htmlFor="unit_of_measure_id">
+                                                    Unidad de Medida
+                                                </Label>
                                                 <Select
-                                                    value={form.data.unit_of_measure_id}
-                                                    onValueChange={(v) => form.setData('unit_of_measure_id', v)}
+                                                    value={
+                                                        form.data
+                                                            .unit_of_measure_id
+                                                    }
+                                                    onValueChange={(v) =>
+                                                        form.setData(
+                                                            'unit_of_measure_id',
+                                                            v,
+                                                        )
+                                                    }
                                                 >
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Selecciona..." />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {units.map((u) => (
-                                                            <SelectItem key={u.id} value={String(u.id)}>
-                                                                {u.name} ({u.symbol})
+                                                            <SelectItem
+                                                                key={u.id}
+                                                                value={String(
+                                                                    u.id,
+                                                                )}
+                                                            >
+                                                                {u.name} (
+                                                                {u.symbol})
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
-                                                {form.errors.unit_of_measure_id && (
-                                                    <p className="text-xs text-destructive">{form.errors.unit_of_measure_id}</p>
+                                                {form.errors
+                                                    .unit_of_measure_id && (
+                                                    <p className="text-xs text-destructive">
+                                                        {
+                                                            form.errors
+                                                                .unit_of_measure_id
+                                                        }
+                                                    </p>
                                                 )}
                                             </div>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="presentation_value">Valor Presentación (en galones)</Label>
+                                                <Label htmlFor="presentation_value">
+                                                    Valor Presentación (en
+                                                    galones)
+                                                </Label>
                                                 <Input
                                                     id="presentation_value"
                                                     type="number"
                                                     step="0.0001"
-                                                    value={form.data.presentation_value}
-                                                    onChange={(e) => form.setData('presentation_value', e.target.value)}
+                                                    value={
+                                                        form.data
+                                                            .presentation_value
+                                                    }
+                                                    onChange={(e) =>
+                                                        form.setData(
+                                                            'presentation_value',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     placeholder="Ej: 1, 5, 0.75, 50"
                                                 />
                                                 <p className="text-xs text-muted-foreground">
-                                                    Ejemplos: 1 = Galón, 5 = Bidón 5gal, 0.75 = 3/4 galón, 50 = Tambor
+                                                    Ejemplos: 1 = Galón, 5 =
+                                                    Bidón 5gal, 0.75 = 3/4
+                                                    galón, 50 = Tambor
                                                 </p>
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="presentation_label">Label Presentación</Label>
+                                                <Label htmlFor="presentation_label">
+                                                    Label Presentación
+                                                </Label>
                                                 <Input
                                                     id="presentation_label"
-                                                    value={form.data.presentation_label}
-                                                    onChange={(e) => form.setData('presentation_label', e.target.value)}
+                                                    value={
+                                                        form.data
+                                                            .presentation_label
+                                                    }
+                                                    onChange={(e) =>
+                                                        form.setData(
+                                                            'presentation_label',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     placeholder="Ej: Galón 3.785L, Bidón 5 Gal"
                                                 />
                                             </div>
@@ -605,20 +862,34 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="color">Color</Label>
+                                                <Label htmlFor="color">
+                                                    Color
+                                                </Label>
                                                 <Input
                                                     id="color"
                                                     value={form.data.color}
-                                                    onChange={(e) => form.setData('color', e.target.value)}
+                                                    onChange={(e) =>
+                                                        form.setData(
+                                                            'color',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     placeholder="Ej: Blanco"
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="finish">Acabado</Label>
+                                                <Label htmlFor="finish">
+                                                    Acabado
+                                                </Label>
                                                 <Input
                                                     id="finish"
                                                     value={form.data.finish}
-                                                    onChange={(e) => form.setData('finish', e.target.value)}
+                                                    onChange={(e) =>
+                                                        form.setData(
+                                                            'finish',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     placeholder="Ej: Brillante"
                                                 />
                                             </div>
@@ -626,27 +897,53 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="base_type">Tipo Base</Label>
+                                                <Label htmlFor="base_type">
+                                                    Tipo Base
+                                                </Label>
                                                 <Input
                                                     id="base_type"
                                                     value={form.data.base_type}
-                                                    onChange={(e) => form.setData('base_type', e.target.value)}
+                                                    onChange={(e) =>
+                                                        form.setData(
+                                                            'base_type',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     placeholder="Ej: Agua / Solvente"
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="component_system">Sistema</Label>
+                                                <Label htmlFor="component_system">
+                                                    Sistema
+                                                </Label>
                                                 <Select
-                                                    value={form.data.component_system}
-                                                    onValueChange={(v) => form.setData('component_system', v as '1K' | '2K' | 'KIT')}
+                                                    value={
+                                                        form.data
+                                                            .component_system
+                                                    }
+                                                    onValueChange={(v) =>
+                                                        form.setData(
+                                                            'component_system',
+                                                            v as
+                                                                | '1K'
+                                                                | '2K'
+                                                                | 'KIT',
+                                                        )
+                                                    }
                                                 >
                                                     <SelectTrigger>
                                                         <SelectValue />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        <SelectItem value="1K">1K (Un componente)</SelectItem>
-                                                        <SelectItem value="2K">2K (Dos componentes)</SelectItem>
-                                                        <SelectItem value="KIT">KIT (Kit completo)</SelectItem>
+                                                        <SelectItem value="1K">
+                                                            1K (Un componente)
+                                                        </SelectItem>
+                                                        <SelectItem value="2K">
+                                                            2K (Dos componentes)
+                                                        </SelectItem>
+                                                        <SelectItem value="KIT">
+                                                            KIT (Kit completo)
+                                                        </SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
@@ -654,57 +951,102 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="current_cost">Costo Actual</Label>
+                                                <Label htmlFor="current_cost">
+                                                    Costo Actual
+                                                </Label>
                                                 <Input
                                                     id="current_cost"
                                                     type="number"
                                                     step="0.0001"
-                                                    value={form.data.current_cost}
-                                                    onChange={(e) => form.setData('current_cost', e.target.value)}
+                                                    value={
+                                                        form.data.current_cost
+                                                    }
+                                                    onChange={(e) =>
+                                                        form.setData(
+                                                            'current_cost',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     placeholder="0.00"
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="current_price">Precio Venta</Label>
+                                                <Label htmlFor="current_price">
+                                                    Precio Venta
+                                                </Label>
                                                 <Input
                                                     id="current_price"
                                                     type="number"
                                                     step="0.0001"
-                                                    value={form.data.current_price}
-                                                    onChange={(e) => form.setData('current_price', e.target.value)}
+                                                    value={
+                                                        form.data.current_price
+                                                    }
+                                                    onChange={(e) =>
+                                                        form.setData(
+                                                            'current_price',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     placeholder="0.00"
                                                 />
                                             </div>
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="package_raw_material_id">Envase / Contenedor</Label>
+                                            <Label htmlFor="package_raw_material_id">
+                                                Envase / Contenedor
+                                            </Label>
                                             <Select
-                                                value={form.data.package_raw_material_id}
-                                                onValueChange={(v) => form.setData('package_raw_material_id', v)}
+                                                value={
+                                                    form.data
+                                                        .package_raw_material_id
+                                                }
+                                                onValueChange={(v) =>
+                                                    form.setData(
+                                                        'package_raw_material_id',
+                                                        v,
+                                                    )
+                                                }
                                             >
                                                 <SelectTrigger id="package_raw_material_id">
                                                     <SelectValue placeholder="Selecciona el envase (opcional)" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {rawMaterials?.map((rm: any) => (
-                                                        <SelectItem key={rm.id} value={String(rm.id)}>
-                                                            {rm.code}
-                                                        </SelectItem>
-                                                    ))}
+                                                    {rawMaterials?.map(
+                                                        (rm: any) => (
+                                                            <SelectItem
+                                                                key={rm.id}
+                                                                value={String(
+                                                                    rm.id,
+                                                                )}
+                                                            >
+                                                                {rm.code}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
                                                 </SelectContent>
                                             </Select>
                                             <p className="text-xs text-muted-foreground">
-                                                Se descontará del inventario al completar la orden de producción
+                                                Se descontará del inventario al
+                                                completar la orden de producción
                                             </p>
                                         </div>
 
                                         <div className="flex justify-end gap-2 pt-4">
-                                            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => setIsOpen(false)}
+                                            >
                                                 Cancelar
                                             </Button>
-                                            <Button type="submit" disabled={form.processing}>
-                                                {form.processing ? 'Guardando...' : 'Guardar Variante'}
+                                            <Button
+                                                type="submit"
+                                                disabled={form.processing}
+                                            >
+                                                {form.processing
+                                                    ? 'Guardando...'
+                                                    : 'Guardar Variante'}
                                             </Button>
                                         </div>
                                     </form>
@@ -716,13 +1058,27 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                     <table className="w-full text-sm">
                         <thead className="border-b border-border bg-muted/40">
                             <tr>
-                                <th className="p-4 text-left font-medium">SKU</th>
-                                <th className="p-4 text-left font-medium">Presentación</th>
-                                <th className="p-4 text-left font-medium">Color</th>
-                                <th className="p-4 text-left font-medium">Acabado</th>
-                                <th className="p-4 text-left font-medium">Sistema</th>
-                                <th className="p-4 text-left font-medium">Precio</th>
-                                <th className="p-4 text-left font-medium">Estado</th>
+                                <th className="p-4 text-left font-medium">
+                                    SKU
+                                </th>
+                                <th className="p-4 text-left font-medium">
+                                    Presentación
+                                </th>
+                                <th className="p-4 text-left font-medium">
+                                    Color
+                                </th>
+                                <th className="p-4 text-left font-medium">
+                                    Acabado
+                                </th>
+                                <th className="p-4 text-left font-medium">
+                                    Sistema
+                                </th>
+                                <th className="p-4 text-left font-medium">
+                                    Precio
+                                </th>
+                                <th className="p-4 text-left font-medium">
+                                    Estado
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -731,32 +1087,60 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                                     key={variant.id}
                                     className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30"
                                 >
-                                    <td className="p-4 font-mono font-medium">{variant.sku}</td>
+                                    <td className="p-4 font-mono font-medium">
+                                        {variant.sku}
+                                    </td>
                                     <td className="p-4 text-muted-foreground">
                                         {variant.presentation_label ?? '-'}
                                         {variant.unit_of_measure
                                             ? ` (${variant.unit_of_measure.symbol})`
                                             : ''}
                                     </td>
-                                    <td className="p-4 text-muted-foreground">{variant.color ?? '-'}</td>
-                                    <td className="p-4 text-muted-foreground">{variant.finish ?? '-'}</td>
-                                    <td className="p-4">
-                                        <Badge variant="secondary">{variant.component_system}</Badge>
+                                    <td className="p-4 text-muted-foreground">
+                                        {variant.color ?? '-'}
                                     </td>
                                     <td className="p-4 text-muted-foreground">
-                                        {variant.current_price ? <FormattedNumber value={variant.current_price} currency maxDecimals={2} /> : '-'}
+                                        {variant.finish ?? '-'}
                                     </td>
                                     <td className="p-4">
-                                        <Badge variant={variant.is_active ? 'default' : 'secondary'}>
-                                            {variant.is_active ? 'Activa' : 'Inactiva'}
+                                        <Badge variant="secondary">
+                                            {variant.component_system}
+                                        </Badge>
+                                    </td>
+                                    <td className="p-4 text-muted-foreground">
+                                        {variant.current_price ? (
+                                            <FormattedNumber
+                                                value={variant.current_price}
+                                                currency
+                                                maxDecimals={2}
+                                            />
+                                        ) : (
+                                            '-'
+                                        )}
+                                    </td>
+                                    <td className="p-4">
+                                        <Badge
+                                            variant={
+                                                variant.is_active
+                                                    ? 'default'
+                                                    : 'secondary'
+                                            }
+                                        >
+                                            {variant.is_active
+                                                ? 'Activa'
+                                                : 'Inactiva'}
                                         </Badge>
                                     </td>
                                 </tr>
                             ))}
                             {(product.variants ?? []).length === 0 && (
                                 <tr>
-                                    <td colSpan={7} className="p-8 text-center text-sm text-muted-foreground">
-                                        Este producto aún no tiene variantes registradas.
+                                    <td
+                                        colSpan={7}
+                                        className="p-8 text-center text-sm text-muted-foreground"
+                                    >
+                                        Este producto aún no tiene variantes
+                                        registradas.
                                     </td>
                                 </tr>
                             )}
@@ -779,8 +1163,9 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                         <Button size="sm" asChild>
                             <Link
                                 href={
-                                    formulasCreate({ query: { product_id: product.id } })
-                                        .url
+                                    formulasCreate({
+                                        query: { product_id: product.id },
+                                    }).url
                                 }
                             >
                                 Nueva Fórmula
@@ -840,7 +1225,10 @@ export default function ProductsShow({ product, can, documentTypes, units, rawMa
                                         {formula.created_by?.name ?? '-'}
                                     </td>
                                     <td className="p-4 text-xs text-muted-foreground">
-                                        <FormattedDate value={formula.created_at} format="datetime" />
+                                        <FormattedDate
+                                            value={formula.created_at}
+                                            format="datetime"
+                                        />
                                     </td>
                                     <td className="p-4 text-right">
                                         <Button

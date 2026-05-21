@@ -48,15 +48,19 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
     );
 
     const handleDelete = () => {
-        if (!window.confirm('¿Estás seguro de que quieres eliminar o desactivar esta materia prima? (El sistema determinará la acción según su historial)')) {
+        if (
+            !window.confirm(
+                '¿Estás seguro de que quieres eliminar o desactivar esta materia prima? (El sistema determinará la acción según su historial)',
+            )
+        ) {
             return;
         }
 
-        router.delete(RawMaterialController.destroy.url(rawMaterial.code));
+        router.delete(RawMaterialController.destroy.url(rawMaterial.id));
     };
 
     const handleReactivate = () => {
-        router.patch(RawMaterialController.reactivate.url(rawMaterial.code));
+        router.patch(RawMaterialController.reactivate.url(rawMaterial.id));
     };
 
     return (
@@ -86,7 +90,7 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                             <Button asChild>
                                 <Link
                                     href={RawMaterialController.edit.url(
-                                        rawMaterial.code,
+                                        rawMaterial.id,
                                     )}
                                 >
                                     Editar
@@ -236,11 +240,15 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
                                     </td>
 
                                     <td className="p-3 text-muted-foreground">
-                                        <FormattedDate value={batch.entry_date} />
+                                        <FormattedDate
+                                            value={batch.entry_date}
+                                        />
                                     </td>
 
                                     <td className="p-3 text-muted-foreground">
-                                        <FormattedDate value={batch.expiry_date} />
+                                        <FormattedDate
+                                            value={batch.expiry_date}
+                                        />
                                     </td>
 
                                     <td className="p-3 text-right">

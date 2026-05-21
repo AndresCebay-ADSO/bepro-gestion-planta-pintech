@@ -33,21 +33,31 @@ type Props = {
 export default function ProductionOrdersIndex({ orders }: Props) {
     const getStatusVariant = (status: ProductionOrderItem['status']) => {
         switch (status) {
-            case 'pending': return 'secondary';
-            case 'in_progress': return 'default';
-            case 'completed': return 'default'; // In a real system, maybe success/green if available
-            case 'cancelled': return 'destructive';
-            default: return 'secondary';
+            case 'pending':
+                return 'secondary';
+            case 'in_progress':
+                return 'default';
+            case 'completed':
+                return 'default'; // In a real system, maybe success/green if available
+            case 'cancelled':
+                return 'destructive';
+            default:
+                return 'secondary';
         }
     };
 
     const getStatusLabel = (status: ProductionOrderItem['status']) => {
         switch (status) {
-            case 'pending': return 'Pendiente';
-            case 'in_progress': return 'En Proceso';
-            case 'completed': return 'Completada';
-            case 'cancelled': return 'Cancelada';
-            default: return status;
+            case 'pending':
+                return 'Pendiente';
+            case 'in_progress':
+                return 'En Proceso';
+            case 'completed':
+                return 'Completada';
+            case 'cancelled':
+                return 'Cancelada';
+            default:
+                return status;
         }
     };
 
@@ -61,7 +71,8 @@ export default function ProductionOrdersIndex({ orders }: Props) {
                             Órdenes de Producción
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Gestión y seguimiento de la fabricación de pinturas en Planta Cali.
+                            Gestión y seguimiento de la fabricación de pinturas
+                            en Planta Cali.
                         </p>
                     </div>
                     <Button asChild>
@@ -72,16 +83,28 @@ export default function ProductionOrdersIndex({ orders }: Props) {
                     </Button>
                 </div>
 
-                <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                     <table className="w-full text-sm">
                         <thead className="border-b border-border bg-muted/50">
                             <tr>
-                                <th className="p-4 text-left font-medium">Orden #</th>
-                                <th className="p-4 text-left font-medium">Producto</th>
-                                <th className="p-4 text-left font-medium">Planificado</th>
-                                <th className="p-4 text-left font-medium">Estado</th>
-                                <th className="p-4 text-left font-medium">Fecha Plan</th>
-                                <th className="p-4 text-right font-medium">Acciones</th>
+                                <th className="p-4 text-left font-medium">
+                                    Orden #
+                                </th>
+                                <th className="p-4 text-left font-medium">
+                                    Producto
+                                </th>
+                                <th className="p-4 text-left font-medium">
+                                    Planificado
+                                </th>
+                                <th className="p-4 text-left font-medium">
+                                    Estado
+                                </th>
+                                <th className="p-4 text-left font-medium">
+                                    Fecha Plan
+                                </th>
+                                <th className="p-4 text-right font-medium">
+                                    Acciones
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -98,14 +121,19 @@ export default function ProductionOrdersIndex({ orders }: Props) {
                                             {order.product?.name ?? 'S/N'}
                                         </div>
                                         <div className="text-xs text-muted-foreground">
-                                            {order.product?.code} (v{order.formula?.version})
+                                            {order.product?.code} (v
+                                            {order.formula?.version})
                                         </div>
                                     </td>
                                     <td className="p-4">
                                         {order.quantity} gal
                                     </td>
                                     <td className="p-4">
-                                        <Badge variant={getStatusVariant(order.status)}>
+                                        <Badge
+                                            variant={getStatusVariant(
+                                                order.status,
+                                            )}
+                                        >
                                             {getStatusLabel(order.status)}
                                         </Badge>
                                     </td>
@@ -122,7 +150,8 @@ export default function ProductionOrdersIndex({ orders }: Props) {
                                             onView={() =>
                                                 router.get(
                                                     productionOrderShow({
-                                                        production_order: order.id,
+                                                        production_order:
+                                                            order.id,
                                                     }).url,
                                                 )
                                             }
@@ -136,7 +165,8 @@ export default function ProductionOrdersIndex({ orders }: Props) {
                                         colSpan={6}
                                         className="p-8 text-center text-sm text-muted-foreground"
                                     >
-                                        No hay órdenes de producción registradas.
+                                        No hay órdenes de producción
+                                        registradas.
                                     </td>
                                 </tr>
                             )}

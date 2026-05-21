@@ -79,7 +79,7 @@ export default function RawMaterialsIndex({
     /**
      * Delete
      */
-    const handleDelete = (code: string) => {
+    const handleDelete = (id: number) => {
         if (
             !window.confirm(
                 '¿Estás seguro de que quieres eliminar o desactivar esta materia prima? (El sistema determinará la acción según su historial)',
@@ -88,13 +88,13 @@ export default function RawMaterialsIndex({
             return;
         }
 
-        router.delete(RawMaterialController.destroy.url(code), {
+        router.delete(RawMaterialController.destroy.url(id), {
             preserveScroll: true,
         });
     };
 
-    const handleReactivate = (code: string) => {
-        router.patch(RawMaterialController.reactivate.url(code), undefined, {
+    const handleReactivate = (id: number) => {
+        router.patch(RawMaterialController.reactivate.url(id), undefined, {
             preserveScroll: true,
         });
     };
@@ -253,19 +253,19 @@ export default function RawMaterialsIndex({
                                                 onView={() =>
                                                     router.get(
                                                         RawMaterialController.show.url(
-                                                            item.code,
+                                                            item.id,
                                                         ),
                                                     )
                                                 }
                                                 onEdit={() =>
                                                     router.get(
                                                         RawMaterialController.edit.url(
-                                                            item.code,
+                                                            item.id,
                                                         ),
                                                     )
                                                 }
                                                 onDelete={() =>
-                                                    handleDelete(item.code)
+                                                    handleDelete(item.id)
                                                 }
                                             />
 
@@ -276,7 +276,7 @@ export default function RawMaterialsIndex({
                                                     size="sm"
                                                     onClick={() =>
                                                         handleReactivate(
-                                                            item.code,
+                                                            item.id,
                                                         )
                                                     }
                                                 >
