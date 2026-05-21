@@ -131,7 +131,6 @@ export type ProductionOrderFormData = {
     notes: string;
     ingredients: ProductionOrderIngredientFormRow[];
     packaging: ProductionOrderPackagingFormRow[];
-    line_adjustments: never[];
 };
 
 export type ProductionOrderSetData = SetDataAction<ProductionOrderFormData>;

@@ -157,11 +157,6 @@ export function ControlCard({
                                 {errors.ingredients}
                             </p>
                         )}
-                        {errors.line_adjustments && (
-                            <p className="text-xs text-destructive">
-                                {errors.line_adjustments}
-                            </p>
-                        )}
                     </>
                 )}
 
