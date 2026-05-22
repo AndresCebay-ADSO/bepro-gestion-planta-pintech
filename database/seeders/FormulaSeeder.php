@@ -28,7 +28,7 @@ class FormulaSeeder extends Seeder
             'BP ESMALTE POLIURETANO BLANCO' => [
                 ['R-7 A', 1.45],
                 ['ABS-1 PU', 0.03],
-                ['ABA-3 P', 0.01],
+                ['ABS-3 PU', 0.01],
                 ['C-3', 0.45],
                 ['C-3 POL P', 0.45],
                 ['S-11 S', 0.095],
@@ -47,7 +47,7 @@ class FormulaSeeder extends Seeder
             'BP ANTICORROSIVO BASE AGUA ROJO' => [
                 ['AGUA', 1.2],
                 ['ABA-1', 0.06],
-                ['ABA-2 A', 0.01],
+                ['ABA-2', 0.01],
                 ['ABS-7', 0.06],
                 ['C-10', 0.35],
                 ['R-10', 0.55],
@@ -79,7 +79,7 @@ class FormulaSeeder extends Seeder
             'BP ANTICORROSIVO BASE AGUA GRIS CLARO' => [
                 ['AGUA', 1.2],
                 ['ABA-1', 0.06],
-                ['ABA-2 P', 0.01],
+                ['ABA-2', 0.01],
                 ['ABS-7', 0.06],
                 ['C-3', 0.4],
                 ['R-10', 0.55],
@@ -122,7 +122,7 @@ class FormulaSeeder extends Seeder
                 ['S-6', 0.105],
             ],
             'BP AJUSTADOR IP-300' => [
-                ['S-9', 2.85],
+                ['S-9 R', 2.85],
                 ['S-6', 0.17],
                 ['S-7', 0.34],
             ],
