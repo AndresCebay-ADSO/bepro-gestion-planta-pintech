@@ -18,7 +18,8 @@ class ProductionOrderExport implements FromView, ShouldAutoSize, WithColumnWidth
      * @param  array<string, mixed>  $orderData
      */
     public function __construct(
-        private readonly array $orderData
+        private readonly array $orderData,
+        private readonly ?string $logoPath = null
     ) {}
 
     public function columnWidths(): array
@@ -44,10 +45,16 @@ class ProductionOrderExport implements FromView, ShouldAutoSize, WithColumnWidth
 
     public function drawings()
     {
+        $logoPath = $this->logoPath ?? public_path('images/logo-pintech.png');
+
+        if (! file_exists($logoPath)) {
+            return [];
+        }
+
         $drawing = new Drawing;
         $drawing->setName('Pintech Logo');
         $drawing->setDescription('Logo Corporativo');
-        $drawing->setPath(public_path('images/logo-pintech.png'));
+        $drawing->setPath($logoPath);
         $drawing->setHeight(60);
         $drawing->setCoordinates('A1');
 

@@ -16,6 +16,11 @@ type UseProductionCostPreviewProps = {
     isCompleted: boolean;
 };
 
+type PreviewCostPayload = {
+    ingredients: Array<{ id: number; actual_quantity: number }>;
+    packaging: Array<{ id: number; actual_units: number }>;
+};
+
 export function useProductionCostPreview({
     orderId,
     ingredients,
@@ -27,6 +32,20 @@ export function useProductionCostPreview({
         null,
     );
     const [previewLoading, setPreviewLoading] = useState(false);
+
+    const ingredientsSignature = JSON.stringify(
+        ingredients.map((ingredient) => ({
+            id: ingredient.id,
+            actual_quantity: Number(ingredient.actual_quantity) || 0,
+        })),
+    );
+
+    const packagingSignature = JSON.stringify(
+        packaging.map((pack) => ({
+            id: pack.id,
+            actual_units: Number(pack.actual_units) || 0,
+        })),
+    );
 
     useEffect(() => {
         if (isCompleted) {
@@ -43,6 +62,15 @@ export function useProductionCostPreview({
         let loadingIndicatorId: number | null = null;
 
         const timeoutId = window.setTimeout(async () => {
+            const previewPayload: PreviewCostPayload = {
+                ingredients: JSON.parse(
+                    ingredientsSignature,
+                ) as PreviewCostPayload['ingredients'],
+                packaging: JSON.parse(
+                    packagingSignature,
+                ) as PreviewCostPayload['packaging'],
+            };
+
             loadingIndicatorId = window.setTimeout(() => {
                 setPreviewLoading(true);
             }, 180);
@@ -57,17 +85,7 @@ export function useProductionCostPreview({
                             'X-XSRF-TOKEN': xsrfToken,
                             'X-Requested-With': 'XMLHttpRequest',
                         },
-                        body: JSON.stringify({
-                            ingredients: ingredients.map((ingredient) => ({
-                                id: ingredient.id,
-                                actual_quantity:
-                                    Number(ingredient.actual_quantity) || 0,
-                            })),
-                            packaging: packaging.map((pack) => ({
-                                id: pack.id,
-                                actual_units: Number(pack.actual_units) || 0,
-                            })),
-                        }),
+                        body: JSON.stringify(previewPayload),
                         signal: controller.signal,
                     },
                 );
@@ -89,7 +107,7 @@ export function useProductionCostPreview({
 
                 setPreviewLoading(false);
             }
-        }, 250);
+        }, 1000);
 
         return () => {
             controller.abort();
@@ -101,7 +119,7 @@ export function useProductionCostPreview({
             window.clearTimeout(timeoutId);
             setPreviewLoading(false);
         };
-    }, [ingredients, isCompleted, orderId, packaging, lineAdjustments]);
+    }, [ingredientsSignature, isCompleted, orderId, packagingSignature]);
 
     return { previewCosts, previewLoading };
 }
