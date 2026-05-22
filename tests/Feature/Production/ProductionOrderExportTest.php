@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Exports\ProductionOrderExport;
 use App\Http\Controllers\ProductionOrderController;
 use App\Models\Formula;
 use App\Models\Product;
@@ -132,6 +133,15 @@ test('exportExcel returns an Excel download for an authenticated user', function
     } else {
         expect(strlen($response->getContent()))->toBeGreaterThan(0);
     }
+});
+
+test('production order excel export skips missing logo drawing', function () {
+    $export = new ProductionOrderExport(
+        orderData: ['order_number' => 'OP-NO-LOGO'],
+        logoPath: base_path('missing-logo-pintech.png')
+    );
+
+    expect($export->drawings())->toBe([]);
 });
 
 test('export routes require authentication', function () {

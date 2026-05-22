@@ -3,6 +3,11 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { complete as productionOrderComplete } from '@/actions/App/Http/Controllers/ProductionOrderController';
+import { ControlCard } from '@/components/production/control-card';
+import { OrderHeader } from '@/components/production/order-header';
+import { OrderInfoCard } from '@/components/production/order-info-card';
+import { QrCard } from '@/components/production/qr-card';
+import { ResultsCard } from '@/components/production/results-card';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -13,11 +18,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ControlCard } from '@/components/production/control-card';
-import { OrderHeader } from '@/components/production/order-header';
-import { OrderInfoCard } from '@/components/production/order-info-card';
-import { QrCard } from '@/components/production/qr-card';
-import { ResultsCard } from '@/components/production/results-card';
 import { usePackagingSync } from '@/hooks/use-packaging-sync';
 import { useProductionCostPreview } from '@/hooks/use-production-cost-preview';
 import type {
@@ -77,7 +77,7 @@ export default function ProductionOrderShow({
         orderId: order.id,
         ingredients: data.ingredients,
         packaging: data.packaging,
-        lineAdjustments: lineAdjustments,
+        lineAdjustments,
         isCompleted,
     });
 

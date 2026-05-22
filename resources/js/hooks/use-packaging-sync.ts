@@ -53,7 +53,11 @@ export function usePackagingSync({
                 const currentItem = currentPackagingRef.current.find(
                     (item) => item.id === nextItem.id,
                 );
-                if (!currentItem) return false;
+
+                if (!currentItem) {
+return false;
+}
+
                 return (
                     currentItem.presentation === nextItem.presentation &&
                     currentItem.presentation_value ===

@@ -105,10 +105,13 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
     Route::get('production-orders/{production_order}/export-excel', [ProductionOrderController::class, 'exportExcel'])
         ->name('production-orders.export-excel');
 
-    Route::resource('production-orders', ProductionOrderController::class);
+    Route::resource('production-orders', ProductionOrderController::class)
+        ->only(['index', 'create', 'store', 'show']);
     Route::post('production-orders/{order}/complete', [ProductionOrderController::class, 'complete'])->name('production-orders.complete');
     Route::post('production-orders/{order}/cancel', [ProductionOrderController::class, 'cancel'])->name('production-orders.cancel');
-    Route::post('production-orders/{order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])->name('production-orders.preview-costs');
+    Route::post('production-orders/{order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])
+        ->middleware('throttle:production-preview-costs')
+        ->name('production-orders.preview-costs');
 
     // Ajustes de línea
     Route::post('production-orders/{order}/line-adjustments', [LineAdjustmentController::class, 'store'])->name('production-orders.line-adjustments.store');
