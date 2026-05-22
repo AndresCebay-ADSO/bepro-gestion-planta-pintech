@@ -94,9 +94,11 @@ class AppServiceProvider extends ServiceProvider
     private function configureRateLimiting(): void
     {
         RateLimiter::for('production-preview-costs', function (Request $request): Limit {
+            $user = $request->user();
+
             return Limit::perMinute(30)->by(
-                $request->user()?->id !== null
-                    ? 'user:'.$request->user()->id
+                $user?->id !== null
+                    ? 'user:'.$user->id
                     : 'ip:'.$request->ip()
             );
         });

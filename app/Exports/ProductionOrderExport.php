@@ -43,7 +43,7 @@ class ProductionOrderExport implements FromView, ShouldAutoSize, WithColumnWidth
         return 'Orden de Producción '.$this->orderData['order_number'];
     }
 
-    public function drawings()
+    public function drawings(): Drawing|array
     {
         $logoPath = $this->logoPath ?? public_path('images/logo-pintech.png');
 
