@@ -47,6 +47,21 @@ export function useProductionCostPreview({
         })),
     );
 
+    const lineAdjustmentsSignature = JSON.stringify(
+        lineAdjustments.map((adjustment) => ({
+            id: adjustment.id,
+            quantity: Number(adjustment.quantity) || 0,
+        })),
+    );
+
+    const previewSignature = JSON.stringify({
+        orderId,
+        isCompleted,
+        ingredients: ingredientsSignature,
+        packaging: packagingSignature,
+        lineAdjustmentsSignature,
+    });
+
     useEffect(() => {
         if (isCompleted) {
             return;
@@ -119,7 +134,13 @@ export function useProductionCostPreview({
             window.clearTimeout(timeoutId);
             setPreviewLoading(false);
         };
-    }, [ingredientsSignature, isCompleted, orderId, packagingSignature]);
+    }, [
+        ingredientsSignature,
+        isCompleted,
+        orderId,
+        packagingSignature,
+        previewSignature,
+    ]);
 
     return { previewCosts, previewLoading };
 }
