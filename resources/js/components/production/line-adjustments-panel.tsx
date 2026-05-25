@@ -229,8 +229,8 @@ function LineAdjustmentForm({
                         onChange={(event) => setQuantity(event.target.value)}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
-e.preventDefault();
-}
+                                e.preventDefault();
+                            }
                         }}
                     />
                     {formErrors.quantity && (
@@ -248,8 +248,8 @@ e.preventDefault();
                         maxLength={500}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
-e.preventDefault();
-}
+                                e.preventDefault();
+                            }
                         }}
                     />
                     {formErrors.reason && (

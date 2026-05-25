@@ -55,8 +55,8 @@ export function usePackagingSync({
                 );
 
                 if (!currentItem) {
-return false;
-}
+                    return false;
+                }
 
                 return (
                     currentItem.presentation === nextItem.presentation &&
