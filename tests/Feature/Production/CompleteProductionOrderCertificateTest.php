@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\QrDocumentType;
+use App\Jobs\GenerateQualityInspectionCertificateJob;
 use App\Models\Formula;
 use App\Models\InventoryBatch;
 use App\Models\Product;
@@ -130,22 +131,11 @@ test('completing an order stores quality solids and generates current certificat
     $response->assertRedirect(route('production-orders.show', $order));
 
     $order->refresh();
-    expect((float) $order->quality_solids)->toBe(50.0)
-        ->and($order->qrCode)->not->toBeNull()
-        ->and($order->qrCode->product_id)->toBe($order->product_id)
-        ->and($order->qrCode->url)->toContain('/c/');
+    expect((float) $order->quality_solids)->toBe(50.0);
 
-    $document = QrDocument::query()
-        ->where('qr_code_id', $order->qrCode->id)
-        ->where('document_type', QrDocumentType::QualityCertificate->value)
-        ->where('is_current', true)
-        ->first();
-
-    expect($document)->not->toBeNull()
-        ->and($document->version)->toBe(1)
-        ->and($document->file_size)->toBeGreaterThan(0);
-
-    Storage::disk('local')->assertExists($document->file_path);
+    Queue::assertPushed(GenerateQualityInspectionCertificateJob::class, function ($job) use ($order) {
+        return $job->order->id === $order->id;
+    });
 });
 
 test('regenerating a certificate keeps only one current certificate', function () {

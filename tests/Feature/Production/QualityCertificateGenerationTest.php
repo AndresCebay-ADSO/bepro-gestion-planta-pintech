@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\QrDocumentType;
+use App\Jobs\GenerateQualityInspectionCertificateJob;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
@@ -18,6 +19,7 @@ use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\QualityInspectionCertificateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 
@@ -109,6 +111,8 @@ test('completing order generates qr code and quality certificate', function () {
         'total_cost' => 250,
     ]);
 
+    Queue::fake();
+
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 98,
         'viscosity_ku' => 105,
@@ -128,26 +132,9 @@ test('completing order generates qr code and quality certificate', function () {
     // quality_solids se guarda en la orden
     expect((float) $order->quality_solids)->toBe(52.50);
 
-    // Se genera un QR code para la orden
-    $qrCode = QrCode::where('production_order_id', $order->id)->first();
-    expect($qrCode)->not->toBeNull()
-        ->and($qrCode->product_id)->toBe($this->product->id)
-        ->and($qrCode->is_active)->toBeTrue()
-        ->and($qrCode->token)->toHaveLength(40);
-
-    // Se genera un documento certificado de calidad
-    $certificate = QrDocument::where('qr_code_id', $qrCode->id)
-        ->where('document_type', QrDocumentType::QualityCertificate->value)
-        ->where('is_current', true)
-        ->first();
-
-    expect($certificate)->not->toBeNull()
-        ->and($certificate->version)->toBe(1)
-        ->and($certificate->mime_type)->toBe('application/pdf')
-        ->and($certificate->file_size)->toBeGreaterThan(0);
-
-    // El PDF se guardó en storage
-    Storage::disk('local')->assertExists($certificate->file_path);
+    Queue::assertPushed(GenerateQualityInspectionCertificateJob::class, function ($job) use ($order) {
+        return $job->order->id === $order->id;
+    });
 });
 
 test('completing order saves quality solids alongside viscosity and grinding', function () {
@@ -228,17 +215,18 @@ test('regenerating certificate does not duplicate current document', function ()
         'total_cost' => 250,
     ]);
 
-    // Completar la orden (genera certificado v1)
-    $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 100,
+    // Completar la orden (no genera el certificado porque interceptamos la ejecución con el servicio)
+    $order->update([
+        'status' => 'completed',
+        'completion_date' => now(),
+        'actual_quantity' => 100,
         'viscosity_ku' => 105,
         'grinding_hg' => 7,
         'responsible_name' => 'QC 1',
-        'ingredients' => [
-            ['id' => $detail->id, 'actual_quantity' => 50],
-        ],
-        'packaging' => [],
-    ])->assertRedirect();
+    ]);
+
+    $service = app(QualityInspectionCertificateService::class);
+    $service->generateForCompletedOrder($order, $this->user->id);
 
     $order->refresh();
     $qrCode = QrCode::where('production_order_id', $order->id)->firstOrFail();

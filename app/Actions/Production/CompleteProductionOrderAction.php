@@ -6,6 +6,7 @@ namespace App\Actions\Production;
 
 use App\Enums\InventoryMovementType;
 use App\Enums\ProductionOrderStatus;
+use App\Jobs\GenerateQualityInspectionCertificateJob;
 use App\Jobs\RecalculateRawMaterialReferencePrice;
 use App\Models\FinishedInventory;
 use App\Models\FinishedInventoryMovement;
@@ -15,7 +16,6 @@ use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
 use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\Pricing\ProductionCostCalculatorService;
-use App\Services\QualityInspectionCertificateService;
 use App\Services\VariantPricingService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -26,8 +26,7 @@ class CompleteProductionOrderAction
     public function __construct(
         private readonly FifoStockAllocatorService $fifoStockAllocator,
         private readonly ProductionCostCalculatorService $productionCostCalculator,
-        private readonly VariantPricingService $variantPricingService,
-        private readonly QualityInspectionCertificateService $qualityInspectionCertificateService
+        private readonly VariantPricingService $variantPricingService
     ) {}
 
     /**
@@ -244,8 +243,8 @@ class CompleteProductionOrderAction
             return $lockedOrder->refresh();
         }, attempts: 3);
 
-        $this->qualityInspectionCertificateService->generateForCompletedOrder($completedOrder, $userId);
+        GenerateQualityInspectionCertificateJob::dispatch($completedOrder, $userId)->afterCommit();
 
-        return $completedOrder->refresh();
+        return $completedOrder;
     }
 }
