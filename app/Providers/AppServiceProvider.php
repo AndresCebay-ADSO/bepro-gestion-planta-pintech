@@ -14,6 +14,7 @@ use App\Policies\PriceListPolicy;
 use App\Policies\ProductionOrderPolicy;
 use App\Policies\RawMaterialPolicy;
 use App\Policies\WarehousePolicy;
+use App\Services\DecimalCalculator;
 use App\Services\FormulaService;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Failed;
@@ -35,8 +36,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(DecimalCalculator::class, function ($app) {
+            return new DecimalCalculator;
+        });
+
         $this->app->singleton(FormulaService::class, function ($app) {
-            return new FormulaService;
+            return new FormulaService($app->make(DecimalCalculator::class));
         });
     }
 
