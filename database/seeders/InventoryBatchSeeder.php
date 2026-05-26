@@ -207,7 +207,7 @@ class InventoryBatchSeeder extends Seeder
                 ['qty' => 100, 'price' => 35200],
             ],
             'ABS-14' => [
-                ['qty' => 100, 'price' => 226300],
+                ['qty' => 100, 'price' => 56500],
             ],
             'ABS-14 C' => [
                 ['qty' => 100, 'price' => 21900],
@@ -612,7 +612,7 @@ class InventoryBatchSeeder extends Seeder
                 ['qty' => 100, 'price' => 6800],
             ],
             'S-11 S' => [
-                ['qty' => 100, 'price' => 8300],
+                ['qty' => 100, 'price' => 7300],
             ],
             'S-12' => [
                 ['qty' => 100, 'price' => 8300],
