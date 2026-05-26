@@ -5,19 +5,25 @@ declare(strict_types=1);
 namespace App\Services\Pricing;
 
 use App\Models\ProductionOrder;
+use App\Services\DecimalCalculator;
 
 class ProductionCostCalculatorService
 {
+    public function __construct(
+        private readonly DecimalCalculator $calculator
+    ) {}
+
     /**
      * @param  array<int, array{id:int,actual_units:float|int}>  $packagingData
-     * @return array<int, float>
+     * @return array<int, string>
      */
-    public function calculateDistributedBulkCosts(ProductionOrder $order, array $packagingData, float $totalBulkCost): array
+    public function calculateDistributedBulkCosts(ProductionOrder $order, array $packagingData, string|float $totalBulkCost): array
     {
-        if ($packagingData === [] || $totalBulkCost <= 0) {
+        if ($packagingData === [] || $this->calculator->isZero($totalBulkCost)) {
             return [];
         }
 
+        $totalBulkCostStr = (string) $totalBulkCost;
         $packagingDataByPlanId = [];
 
         foreach ($packagingData as $packData) {
@@ -27,7 +33,7 @@ class ProductionCostCalculatorService
         $order->loadMissing('packagingPlans.productVariant');
         $plans = $order->packagingPlans;
 
-        $totalEquivalentYield = 0.0;
+        $totalEquivalentYield = '0';
 
         foreach ($plans as $plan) {
             if (! isset($packagingDataByPlanId[$plan->id])) {
@@ -39,20 +45,21 @@ class ProductionCostCalculatorService
                 continue;
             }
 
-            $actualUnits = (float) ($packagingDataByPlanId[$plan->id]['actual_units'] ?? 0);
-            if ($actualUnits <= 0) {
+            $actualUnits = (string) ($packagingDataByPlanId[$plan->id]['actual_units'] ?? 0);
+            if ($this->calculator->isZero($actualUnits)) {
                 continue;
             }
 
-            $presentationValue = (float) ($variant->presentation_value ?? 1);
-            $totalEquivalentYield += $actualUnits * $presentationValue;
+            $presentationValue = (string) ($variant->presentation_value ?? 1);
+            $yieldFromVariant = $this->calculator->mul($actualUnits, $presentationValue, 4);
+            $totalEquivalentYield = $this->calculator->add($totalEquivalentYield, $yieldFromVariant, 4);
         }
 
-        if ($totalEquivalentYield <= 0) {
+        if ($this->calculator->isZero($totalEquivalentYield)) {
             return [];
         }
 
-        $bulkCostPerEquivalentUnit = $totalBulkCost / $totalEquivalentYield;
+        $bulkCostPerEquivalentUnit = $this->calculator->div($totalBulkCostStr, $totalEquivalentYield, 4);
         $distributedCosts = [];
 
         foreach ($plans as $plan) {
@@ -65,13 +72,14 @@ class ProductionCostCalculatorService
                 continue;
             }
 
-            $actualUnits = (float) ($packagingDataByPlanId[$plan->id]['actual_units'] ?? 0);
-            if ($actualUnits <= 0) {
+            $actualUnits = (string) ($packagingDataByPlanId[$plan->id]['actual_units'] ?? 0);
+            if ($this->calculator->isZero($actualUnits)) {
                 continue;
             }
 
-            $presentationValue = (float) ($variant->presentation_value ?? 1);
-            $distributedCosts[(int) $variant->id] = $bulkCostPerEquivalentUnit * $presentationValue;
+            $presentationValue = (string) ($variant->presentation_value ?? 1);
+            $distributedCost = $this->calculator->mul($bulkCostPerEquivalentUnit, $presentationValue, 4);
+            $distributedCosts[(int) $variant->id] = $distributedCost;
         }
 
         return $distributedCosts;

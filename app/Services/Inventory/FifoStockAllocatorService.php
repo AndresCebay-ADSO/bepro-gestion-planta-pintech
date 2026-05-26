@@ -10,28 +10,30 @@ use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\RawMaterial;
 use App\Models\Warehouse;
+use App\Services\DecimalCalculator;
 use Illuminate\Validation\ValidationException;
 
 class FifoStockAllocatorService
 {
     public function __construct(
         private readonly InventoryBatchService $inventoryBatchService,
-        private readonly InventoryMovementService $inventoryMovementService
+        private readonly InventoryMovementService $inventoryMovementService,
+        private readonly DecimalCalculator $calculator
     ) {}
 
-    public function estimateMaterialUnitCostForPlanning(int $rawMaterialId, int $warehouseId, float $requiredQuantity): float
+    public function estimateMaterialUnitCostForPlanning(int $rawMaterialId, int $warehouseId, float|string $requiredQuantity): string
     {
         $unitCosts = $this->estimateMaterialUnitCostsForPlanning(
             warehouseId: $warehouseId,
             requirementsByMaterialId: [$rawMaterialId => $requiredQuantity]
         );
 
-        return (float) ($unitCosts[$rawMaterialId] ?? 0.0);
+        return (string) ($unitCosts[$rawMaterialId] ?? '0');
     }
 
     /**
-     * @param  array<int, float|int>  $requirementsByMaterialId
-     * @return array<int, float>
+     * @param  array<int, float|int|string>  $requirementsByMaterialId
+     * @return array<int, string>
      */
     public function estimateMaterialUnitCostsForPlanning(int $warehouseId, array $requirementsByMaterialId): array
     {
@@ -40,8 +42,8 @@ class FifoStockAllocatorService
         }
 
         $requirements = collect($requirementsByMaterialId)
-            ->mapWithKeys(fn (mixed $requiredQuantity, mixed $materialId): array => [(int) $materialId => (float) $requiredQuantity])
-            ->filter(fn (float $requiredQuantity): bool => $requiredQuantity > 0);
+            ->mapWithKeys(fn (mixed $requiredQuantity, mixed $materialId): array => [(int) $materialId => (string) $requiredQuantity])
+            ->filter(fn (string $requiredQuantity): bool => ! $this->calculator->isZero($requiredQuantity));
 
         if ($requirements->isEmpty()) {
             return [];
@@ -68,16 +70,16 @@ class FifoStockAllocatorService
             $rawMaterial = $rawMaterials->get($materialId);
 
             if ($rawMaterial !== null && ! $rawMaterial->tracks_inventory) {
-                $estimatedUnitCosts[(int) $materialId] = (float) ($rawMaterial->current_price ?? 0);
+                $estimatedUnitCosts[(int) $materialId] = (string) ($rawMaterial->current_price ?? '0');
 
                 continue;
             }
 
             $batches = $batchesByMaterial->get($materialId, collect());
-            $estimatedUnitCost = $this->estimateAverageUnitCostFromBatches((float) $requiredQuantity, $batches);
+            $estimatedUnitCost = $this->estimateAverageUnitCostFromBatches($requiredQuantity, $batches);
 
-            if ($estimatedUnitCost <= 0) {
-                $estimatedUnitCost = (float) ($rawMaterial?->current_price ?? 0);
+            if ($this->calculator->cmp($estimatedUnitCost, '0') <= 0) {
+                $estimatedUnitCost = (string) ($rawMaterial?->current_price ?? '0');
             }
 
             $estimatedUnitCosts[(int) $materialId] = $estimatedUnitCost;
@@ -133,9 +135,9 @@ class FifoStockAllocatorService
     public function consumeProductionOrderDetail(
         ProductionOrder $order,
         ProductionOrderDetail $detail,
-        float $requiredQuantity,
+        float|string $requiredQuantity,
         int $userId
-    ): float {
+    ): string {
         return $this->consumeRawMaterialForProduction(
             order: $order,
             rawMaterialId: (int) $detail->raw_material_id,
@@ -148,17 +150,19 @@ class FifoStockAllocatorService
     public function consumeRawMaterialForProduction(
         ProductionOrder $order,
         int $rawMaterialId,
-        float $requiredQuantity,
+        float|string $requiredQuantity,
         int $userId,
         string $errorKey,
         string $contextLabel = 'materia prima'
-    ): float {
-        if ($requiredQuantity <= 0) {
-            return 0.0;
+    ): string {
+        $requiredQtyStr = (string) $requiredQuantity;
+
+        if ($this->calculator->cmp($requiredQtyStr, '0') <= 0) {
+            return '0';
         }
 
-        $remainingToConsume = $requiredQuantity;
-        $totalConsumedCost = 0.0;
+        $remainingToConsume = $requiredQtyStr;
+        $totalConsumedCost = '0';
 
         /** @var RawMaterial|null $rawMaterial */
         $rawMaterial = RawMaterial::query()
@@ -167,19 +171,19 @@ class FifoStockAllocatorService
         $materialCode = $rawMaterial?->code ?? (string) $rawMaterialId;
 
         if ($rawMaterial !== null && ! $rawMaterial->tracks_inventory) {
-            $unitPrice = (float) ($rawMaterial->current_price ?? 0);
+            $unitPrice = (string) ($rawMaterial->current_price ?? '0');
 
             $this->inventoryMovementService->recordProductionRawMaterialConsumption(
                 order: $order,
                 rawMaterialId: $rawMaterialId,
                 batchId: null,
-                quantity: $requiredQuantity,
-                unitPrice: $unitPrice,
+                quantity: (float) $requiredQtyStr,
+                unitPrice: (float) $unitPrice,
                 userId: $userId,
                 notes: "Consumo sin control de inventario en OP #{$order->order_number}"
             );
 
-            return $requiredQuantity * $unitPrice;
+            return $this->calculator->mul($requiredQtyStr, $unitPrice, 4);
         }
 
         $batches = $this->inventoryBatchService->availableForRawMaterial(
@@ -189,36 +193,37 @@ class FifoStockAllocatorService
         );
 
         foreach ($batches as $batch) {
-            if ($remainingToConsume <= 0) {
+            if ($this->calculator->cmp($remainingToConsume, '0') <= 0) {
                 break;
             }
 
-            $availableInBatch = (float) $batch->remaining_quantity;
-            if ($availableInBatch <= 0) {
+            $availableInBatch = (string) $batch->remaining_quantity;
+            if ($this->calculator->cmp($availableInBatch, '0') <= 0) {
                 continue;
             }
 
-            $consumedQuantity = min($availableInBatch, $remainingToConsume);
-            $unitPrice = (float) $batch->unit_price;
+            $consumedQuantity = $this->calculator->min($availableInBatch, $remainingToConsume, 4);
+            $unitPrice = (string) $batch->unit_price;
 
             $this->inventoryMovementService->recordProductionRawMaterialConsumption(
                 order: $order,
                 rawMaterialId: $rawMaterialId,
                 batchId: (int) $batch->id,
-                quantity: $consumedQuantity,
-                unitPrice: $unitPrice,
+                quantity: (float) $consumedQuantity,
+                unitPrice: (float) $unitPrice,
                 userId: $userId,
                 notes: "Consumo FIFO en OP #{$order->order_number}"
             );
 
-            $this->inventoryBatchService->decrementRemainingQuantity($batch, $consumedQuantity);
-            $remainingToConsume -= $consumedQuantity;
-            $totalConsumedCost += ($consumedQuantity * $unitPrice);
+            $this->inventoryBatchService->decrementRemainingQuantity($batch, (float) $consumedQuantity);
+            $remainingToConsume = $this->calculator->sub($remainingToConsume, $consumedQuantity, 4);
+            $batchCost = $this->calculator->mul($consumedQuantity, $unitPrice, 4);
+            $totalConsumedCost = $this->calculator->add($totalConsumedCost, $batchCost, 4);
         }
 
-        if ($remainingToConsume > 0) {
+        if ($this->calculator->cmp($remainingToConsume, '0') > 0) {
             throw ValidationException::withMessages([
-                $errorKey => "Stock insuficiente de {$contextLabel} '{$materialCode}' en finalización. Requerido: {$requiredQuantity}, faltante: {$remainingToConsume}.",
+                $errorKey => "Stock insuficiente de {$contextLabel} '{$materialCode}' en finalización. Requerido: {$requiredQtyStr}, faltante: {$remainingToConsume}.",
             ]);
         }
 
@@ -228,38 +233,41 @@ class FifoStockAllocatorService
     /**
      * @param  iterable<int, InventoryBatch>  $batches
      */
-    private function estimateAverageUnitCostFromBatches(float $requiredQuantity, iterable $batches): float
+    private function estimateAverageUnitCostFromBatches(string|float $requiredQuantity, iterable $batches): string
     {
-        if ($requiredQuantity <= 0) {
-            return 0.0;
+        $requiredQtyStr = (string) $requiredQuantity;
+
+        if ($this->calculator->cmp($requiredQtyStr, '0') <= 0) {
+            return '0';
         }
 
-        $remainingToEstimate = $requiredQuantity;
-        $estimatedCost = 0.0;
-        $estimatedQuantity = 0.0;
+        $remainingToEstimate = $this->calculator->round($requiredQtyStr, 4);
+        $estimatedCost = '0';
+        $estimatedQuantity = '0';
 
         foreach ($batches as $batch) {
-            if ($remainingToEstimate <= 0) {
+            if ($this->calculator->isZero($remainingToEstimate)) {
                 break;
             }
 
-            $availableInBatch = (float) $batch->remaining_quantity;
-            if ($availableInBatch <= 0) {
+            $availableInBatch = (string) $batch->remaining_quantity;
+            if ($this->calculator->isZero($availableInBatch)) {
                 continue;
             }
 
-            $quantityToEstimate = min($availableInBatch, $remainingToEstimate);
-            $unitPrice = (float) $batch->unit_price;
+            $quantityToEstimate = $this->calculator->min($availableInBatch, $remainingToEstimate, 4);
+            $unitPrice = (string) $batch->unit_price;
 
-            $estimatedCost += ($quantityToEstimate * $unitPrice);
-            $estimatedQuantity += $quantityToEstimate;
-            $remainingToEstimate -= $quantityToEstimate;
+            $itemCost = $this->calculator->mul($quantityToEstimate, $unitPrice, 4);
+            $estimatedCost = $this->calculator->add($estimatedCost, $itemCost, 4);
+            $estimatedQuantity = $this->calculator->add($estimatedQuantity, $quantityToEstimate, 4);
+            $remainingToEstimate = $this->calculator->sub($remainingToEstimate, $quantityToEstimate, 4);
         }
 
-        if ($estimatedQuantity > 0) {
-            return $estimatedCost / $estimatedQuantity;
+        if (! $this->calculator->isZero($estimatedQuantity)) {
+            return $this->calculator->div($estimatedCost, $estimatedQuantity, 4);
         }
 
-        return 0.0;
+        return '0';
     }
 }

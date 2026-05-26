@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\DB;
 
 class RawMaterialReferencePriceService
 {
+    public function __construct(
+        private readonly DecimalCalculator $calculator
+    ) {}
+
     public function syncRawMaterialCurrentPrice(int $rawMaterialId): bool
     {
         return DB::transaction(function () use ($rawMaterialId): bool {
@@ -22,7 +26,7 @@ class RawMaterialReferencePriceService
                 return false;
             }
 
-            $currentPrice = $rawMaterial->current_price !== null ? (float) $rawMaterial->current_price : null;
+            $currentPrice = $rawMaterial->current_price !== null ? (string) $rawMaterial->current_price : null;
             $referencePrice = $this->calculateReferencePrice($rawMaterialId, $currentPrice);
 
             if ($referencePrice === null) {
@@ -42,7 +46,7 @@ class RawMaterialReferencePriceService
         }, attempts: 3);
     }
 
-    public function calculateReferencePrice(int $rawMaterialId, ?float $currentPrice = null): ?float
+    public function calculateReferencePrice(int $rawMaterialId, ?string $currentPrice = null): ?string
     {
         $latestLotPrice = InventoryBatch::query()
             ->where('raw_material_id', $rawMaterialId)
@@ -60,8 +64,12 @@ class RawMaterialReferencePriceService
             ->first();
 
         $weightedAveragePrice = null;
-        if ($availableStats !== null && (float) $availableStats->total_quantity > 0) {
-            $weightedAveragePrice = (float) $availableStats->weighted_total / (float) $availableStats->total_quantity;
+        if ($availableStats !== null && $availableStats->total_quantity !== null && ! $this->calculator->isZero((string) $availableStats->total_quantity)) {
+            $weightedAveragePrice = $this->calculator->div(
+                (string) $availableStats->weighted_total,
+                (string) $availableStats->total_quantity,
+                4
+            );
         }
 
         $highestAvailableLotPrice = $availableStats?->highest_unit_price;
@@ -74,29 +82,29 @@ class RawMaterialReferencePriceService
             default => $this->firstAvailableNumericValue([$highestAvailableLotPrice, $currentPrice, $latestLotPrice]),
         };
 
-        return $referencePrice !== null ? round($referencePrice, 4) : null;
+        return $referencePrice !== null ? $this->calculator->round($referencePrice, 4) : null;
     }
 
     /**
      * @param  array<int, float|int|string|null>  $values
      */
-    private function firstAvailableNumericValue(array $values): ?float
+    private function firstAvailableNumericValue(array $values): ?string
     {
         foreach ($values as $value) {
             if ($value !== null && is_numeric($value)) {
-                return (float) $value;
+                return (string) $value;
             }
         }
 
         return null;
     }
 
-    private function pricesAreEqual(?float $priceA, ?float $priceB): bool
+    private function pricesAreEqual(?string $priceA, ?string $priceB): bool
     {
         if ($priceA === null || $priceB === null) {
             return $priceA === $priceB;
         }
 
-        return number_format($priceA, 4, '.', '') === number_format($priceB, 4, '.', '');
+        return $this->calculator->cmp($priceA, $priceB, 4) === 0;
     }
 }
