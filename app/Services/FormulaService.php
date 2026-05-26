@@ -34,7 +34,13 @@ class FormulaService
             $factor = $this->getConversionFactor($detail->unitOfMeasure, $productBaseUnit);
 
             $detailQty = (string) $detail->quantity;
-            $plannedQuantity = $this->calculator->mul($this->calculator->mul($detailQty, $baseQuantity, 4), $factor, 4);
+
+            // Calculamos con 10 decimales para evitar errores de truncamiento intermedio
+            $innerCalc = $this->calculator->mul($detailQty, $baseQuantity, 10);
+            $fullPrecisionResult = $this->calculator->mul($innerCalc, $factor, 10);
+
+            // Solo al final redondeamos el resultado a los 4 decimales de la base de datos
+            $plannedQuantity = $this->calculator->round($fullPrecisionResult, 4);
 
             $materials->push([
                 'raw_material_id' => $detail->raw_material_id,
