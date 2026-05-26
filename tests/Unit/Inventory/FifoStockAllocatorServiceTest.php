@@ -81,7 +81,7 @@ test('it consumes tracked raw material across fifo batches', function () {
         errorKey: 'ingredients'
     );
 
-    expect($cost)->toBe(350.0)
+    expect((float) $cost)->toBe(350.0)
         ->and((float) $oldestBatch->refresh()->remaining_quantity)->toBe(0.0)
         ->and((float) $newestBatch->refresh()->remaining_quantity)->toBe(25.0);
 
@@ -103,7 +103,7 @@ test('it consumes untracked raw material without requiring batches', function ()
         errorKey: 'ingredients'
     );
 
-    expect($cost)->toBe(100.0);
+    expect((float) $cost)->toBe(100.0);
 
     $movement = InventoryMovement::query()->where('raw_material_id', $rawMaterial->id)->sole();
 
@@ -136,7 +136,7 @@ test('it estimates weighted average unit cost from available fifo batches', func
         requiredQuantity: 75
     );
 
-    expect($cost)->toEqualWithDelta(4.6667, 0.0001);
+    expect((float) $cost)->toEqualWithDelta(4.6667, 0.0001);
 });
 
 /**

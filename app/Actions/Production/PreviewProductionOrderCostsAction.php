@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Production;
 
 use App\Models\ProductionOrder;
+use App\Services\DecimalCalculator;
 use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\Pricing\ProductionCostCalculatorService;
 
@@ -12,7 +13,8 @@ class PreviewProductionOrderCostsAction
 {
     public function __construct(
         private readonly FifoStockAllocatorService $fifoStockAllocator,
-        private readonly ProductionCostCalculatorService $productionCostCalculator
+        private readonly ProductionCostCalculatorService $productionCostCalculator,
+        private readonly DecimalCalculator $calculator
     ) {}
 
     /**
@@ -33,7 +35,7 @@ class PreviewProductionOrderCostsAction
         $detailsById = $order->details->keyBy('id');
         $ingredientRequirements = [];
         $ingredientRows = [];
-        $totalBulkCost = 0.0;
+        $totalBulkCost = '0';
 
         foreach ($ingredients as $ingredientData) {
             $detailId = (int) ($ingredientData['id'] ?? 0);
@@ -62,14 +64,15 @@ class PreviewProductionOrderCostsAction
         $ingredientResults = [];
 
         foreach ($ingredientRows as $row) {
-            $unitCost = (float) ($ingredientUnitCosts[$row['raw_material_id']] ?? 0.0);
-            $totalCost = $row['actual_quantity'] * $unitCost;
-            $totalBulkCost += $totalCost;
+            $unitCost = (string) ($ingredientUnitCosts[$row['raw_material_id']] ?? '0');
+            $totalCostStr = $this->calculator->mul((string) $row['actual_quantity'], $unitCost, 4);
+            $totalCost = (float) $totalCostStr;
+            $totalBulkCost = $this->calculator->add($totalBulkCost, $totalCostStr, 4);
 
             $ingredientResults[] = [
                 'id' => $row['id'],
                 'actual_quantity' => $row['actual_quantity'],
-                'unit_cost' => $unitCost,
+                'unit_cost' => (float) $unitCost,
                 'total_cost' => $totalCost,
             ];
         }
@@ -90,8 +93,9 @@ class PreviewProductionOrderCostsAction
             );
 
             foreach ($adjustmentRequirements as $materialId => $quantity) {
-                $unitCost = (float) ($adjustmentUnitCosts[$materialId] ?? 0.0);
-                $totalBulkCost += $quantity * $unitCost;
+                $unitCost = (string) ($adjustmentUnitCosts[$materialId] ?? '0');
+                $adjustmentCostStr = $this->calculator->mul((string) $quantity, $unitCost, 4);
+                $totalBulkCost = $this->calculator->add($totalBulkCost, $adjustmentCostStr, 4);
             }
         }
 
@@ -135,37 +139,37 @@ class PreviewProductionOrderCostsAction
         );
 
         $packagingResults = [];
-        $totalFinishedCost = 0.0;
-        $totalEquivalent = 0.0;
+        $totalFinishedCost = '0';
+        $totalEquivalent = '0';
 
         foreach ($packagingRows as $row) {
-            $bulkCostPerUnit = (float) ($distributedBulkCosts[$row['product_variant_id']] ?? 0.0);
+            $bulkCostPerUnit = (string) ($distributedBulkCosts[$row['product_variant_id']] ?? '0');
             $packagingUnitCost = $row['package_raw_material_id'] !== null
-                ? (float) ($packagingUnitCosts[$row['package_raw_material_id']] ?? 0.0)
-                : 0.0;
+                ? (string) ($packagingUnitCosts[$row['package_raw_material_id']] ?? '0')
+                : '0';
 
-            $costPrice = $bulkCostPerUnit + $packagingUnitCost;
-            $totalCost = $row['actual_units'] * $costPrice;
-            $equivalent = $row['actual_units'] * $row['presentation_value'];
+            $costPrice = $this->calculator->add($bulkCostPerUnit, $packagingUnitCost, 4);
+            $totalCostStr = $this->calculator->mul((string) $row['actual_units'], $costPrice, 4);
+            $equivalentStr = $this->calculator->mul((string) $row['actual_units'], (string) $row['presentation_value'], 4);
 
-            $totalFinishedCost += $totalCost;
-            $totalEquivalent += $equivalent;
+            $totalFinishedCost = $this->calculator->add($totalFinishedCost, $totalCostStr, 4);
+            $totalEquivalent = $this->calculator->add($totalEquivalent, $equivalentStr, 4);
 
             $packagingResults[] = [
                 'id' => $row['id'],
                 'actual_units' => $row['actual_units'],
-                'cost_price' => $costPrice,
-                'total_cost' => $totalCost,
-                'equivalent' => $equivalent,
+                'cost_price' => (float) $costPrice,
+                'total_cost' => (float) $totalCostStr,
+                'equivalent' => (float) $equivalentStr,
             ];
         }
 
         return [
             'ingredients' => $ingredientResults,
             'packaging' => $packagingResults,
-            'total_bulk_cost' => $totalBulkCost,
-            'total_finished_cost' => $totalFinishedCost,
-            'total_equivalent' => $totalEquivalent,
+            'total_bulk_cost' => (float) $totalBulkCost,
+            'total_finished_cost' => (float) $totalFinishedCost,
+            'total_equivalent' => (float) $totalEquivalent,
         ];
     }
 }

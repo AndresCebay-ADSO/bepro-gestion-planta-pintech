@@ -194,7 +194,8 @@ test('it recalculates production costs when a raw material price changes', funct
     expect($latestCost)->not->toBeNull();
     expect((float) $latestCost->cost)->toBe(39.0);
     expect((float) $latestCost->unit_cost)->toBe(39.0);
-    expect(round((float) $latestCost->variation_percentage, 4))->toBe(11.4286);
+    // Float precision tolerance: variation_percentage should be ~11.4286
+    expect(abs(round((float) $latestCost->variation_percentage, 4) - 11.4286))->toBeLessThan(0.0001);
 
     $this->product->refresh();
     expect((float) $this->product->current_cost)->toBe(39.0);

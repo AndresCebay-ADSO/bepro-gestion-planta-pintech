@@ -9,13 +9,15 @@ use App\Models\Formula;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderPackagingPlan;
+use App\Services\DecimalCalculator;
 use App\Services\Inventory\FifoStockAllocatorService;
 use Illuminate\Support\Facades\DB;
 
 class CreateProductionOrderAction
 {
     public function __construct(
-        private readonly FifoStockAllocatorService $fifoStockAllocator
+        private readonly FifoStockAllocatorService $fifoStockAllocator,
+        private readonly DecimalCalculator $calculator
     ) {}
 
     /**
@@ -66,17 +68,18 @@ class CreateProductionOrderAction
             );
 
             foreach ($formula->details as $detail) {
-                $plannedQuantity = (float) $detail->quantity * $quantity;
-                $estimatedUnitCost = (float) ($estimatedUnitCosts[(int) $detail->raw_material_id] ?? 0.0);
+                $detailQtyStr = (string) $detail->quantity;
+                $plannedQuantityStr = $this->calculator->mul($detailQtyStr, (string) $quantity, 4);
+                $estimatedUnitCost = (string) ($estimatedUnitCosts[(int) $detail->raw_material_id] ?? '0');
 
                 ProductionOrderDetail::create([
                     'production_order_id' => $order->id,
                     'raw_material_id' => $detail->raw_material_id,
                     'batch_id' => null,
                     'step_order' => $detail->step_order,
-                    'planned_quantity' => $plannedQuantity,
-                    'unit_cost' => $estimatedUnitCost,
-                    'total_cost' => $plannedQuantity * $estimatedUnitCost,
+                    'planned_quantity' => (float) $plannedQuantityStr,
+                    'unit_cost' => (float) $estimatedUnitCost,
+                    'total_cost' => (float) $this->calculator->mul($plannedQuantityStr, $estimatedUnitCost, 4),
                 ]);
             }
 
