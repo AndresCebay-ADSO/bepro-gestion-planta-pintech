@@ -21,6 +21,13 @@ class DecimalCalculator
 {
     private const DEFAULT_SCALE = 4;
 
+    /**
+     * Extra decimal places used internally in mul() and div() before rounding.
+     * Prevents truncation errors inherent to BCMath (e.g. 1/6 with scale 4
+     * truncates to 0.1666 instead of the correct rounded 0.1667).
+     */
+    private const INTERNAL_EXTRA_SCALE = 4;
+
     public function __construct()
     {
         if (! extension_loaded('bcmath')) {
@@ -67,7 +74,11 @@ class DecimalCalculator
      */
     public function mul(string|int|float $a, string|int|float $b, int $scale = self::DEFAULT_SCALE): string
     {
-        return bcmul((string) $a, (string) $b, $scale);
+        // Calculate with extra precision to avoid truncation, then round half-up.
+        // e.g. mul('1.5', '10.1234', 4) internally computes at scale 8, then rounds to 4.
+        $internalScale = $scale + self::INTERNAL_EXTRA_SCALE;
+
+        return $this->round(bcmul((string) $a, (string) $b, $internalScale), $scale);
     }
 
     /**
@@ -89,7 +100,11 @@ class DecimalCalculator
             throw new RuntimeException('Division by zero');
         }
 
-        return bcdiv((string) $a, $divisor, $scale);
+        // Calculate with extra precision to avoid truncation, then round half-up.
+        // e.g. div('1', '6', 4) internally computes at scale 8 → '0.16666666' → rounds to '0.1667'.
+        $internalScale = $scale + self::INTERNAL_EXTRA_SCALE;
+
+        return $this->round(bcdiv((string) $a, $divisor, $internalScale), $scale);
     }
 
     /**
