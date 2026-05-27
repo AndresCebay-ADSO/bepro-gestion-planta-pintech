@@ -58,8 +58,10 @@ class CreateProductionOrderAction
             $requirementsByMaterialId = [];
             foreach ($formula->details as $detail) {
                 $materialId = (int) $detail->raw_material_id;
-                $requirementsByMaterialId[$materialId] = ($requirementsByMaterialId[$materialId] ?? 0.0)
-                    + ((float) $detail->quantity * $quantity);
+                $detailTotal = $this->calculator->mul((string) $detail->quantity, (string) $quantity, 4);
+                $requirementsByMaterialId[$materialId] = isset($requirementsByMaterialId[$materialId])
+                    ? $this->calculator->add($requirementsByMaterialId[$materialId], $detailTotal, 4)
+                    : $detailTotal;
             }
 
             $estimatedUnitCosts = $this->fifoStockAllocator->estimateMaterialUnitCostsForPlanning(

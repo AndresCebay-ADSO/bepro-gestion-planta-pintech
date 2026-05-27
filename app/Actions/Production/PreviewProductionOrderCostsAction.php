@@ -46,8 +46,12 @@ class PreviewProductionOrderCostsAction
                 continue;
             }
 
-            $ingredientRequirements[(int) $detail->raw_material_id] =
-                ($ingredientRequirements[(int) $detail->raw_material_id] ?? 0.0) + $actualQuantity;
+            $ingredientMaterialId = (int) $detail->raw_material_id;
+            $ingredientRequirements[$ingredientMaterialId] = $this->calculator->add(
+                $ingredientRequirements[$ingredientMaterialId] ?? '0',
+                (string) $actualQuantity,
+                4
+            );
 
             $ingredientRows[] = [
                 'id' => $detailId,
@@ -81,9 +85,12 @@ class PreviewProductionOrderCostsAction
         $adjustmentRequirements = [];
 
         foreach ($order->lineAdjustments as $adjustment) {
-            $materialId = (int) $adjustment->raw_material_id;
-            $adjustmentRequirements[$materialId] = ($adjustmentRequirements[$materialId] ?? 0.0)
-                + (float) $adjustment->quantity;
+            $adjustmentMaterialId = (int) $adjustment->raw_material_id;
+            $adjustmentRequirements[$adjustmentMaterialId] = $this->calculator->add(
+                $adjustmentRequirements[$adjustmentMaterialId] ?? '0',
+                (string) $adjustment->quantity,
+                4
+            );
         }
 
         if ($adjustmentRequirements !== []) {
@@ -120,8 +127,12 @@ class PreviewProductionOrderCostsAction
 
             $packageRawMaterialId = $plan->productVariant?->package_raw_material_id;
             if ($packageRawMaterialId !== null) {
-                $packagingRequirements[(int) $packageRawMaterialId] =
-                    ($packagingRequirements[(int) $packageRawMaterialId] ?? 0.0) + $actualUnits;
+                $pkgMaterialId = (int) $packageRawMaterialId;
+                $packagingRequirements[$pkgMaterialId] = $this->calculator->add(
+                    $packagingRequirements[$pkgMaterialId] ?? '0',
+                    (string) $actualUnits,
+                    4
+                );
             }
 
             $packagingRows[] = [

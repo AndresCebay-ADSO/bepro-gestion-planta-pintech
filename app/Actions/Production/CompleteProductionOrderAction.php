@@ -14,6 +14,7 @@ use App\Models\Product;
 use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
+use App\Services\DecimalCalculator;
 use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\Pricing\ProductionCostCalculatorService;
 use App\Services\VariantPricingService;
@@ -26,7 +27,8 @@ class CompleteProductionOrderAction
     public function __construct(
         private readonly FifoStockAllocatorService $fifoStockAllocator,
         private readonly ProductionCostCalculatorService $productionCostCalculator,
-        private readonly VariantPricingService $variantPricingService
+        private readonly VariantPricingService $variantPricingService,
+        private readonly DecimalCalculator $calculator
     ) {}
 
     /**
@@ -68,7 +70,7 @@ class CompleteProductionOrderAction
 
             $lockedOrder->loadMissing(['details', 'packagingPlans.productVariant', 'lineAdjustments']);
             $detailsById = $lockedOrder->details->keyBy('id');
-            $totalBulkCost = 0.0;
+            $totalBulkCost = '0';
             $consumedRawMaterialIds = [];
 
             foreach ($data['ingredients'] as $ingredientData) {
@@ -88,7 +90,7 @@ class CompleteProductionOrderAction
                     requiredQuantity: $actualQuantity,
                     userId: $userId
                 );
-                $realUnitCost = $actualQuantity > 0 ? ($consumedCost / $actualQuantity) : 0.0;
+                $realUnitCost = $actualQuantity > 0 ? $this->calculator->div($consumedCost, (string) $actualQuantity, 4) : '0';
 
                 $detail->update([
                     'actual_quantity' => $actualQuantity,
@@ -96,20 +98,20 @@ class CompleteProductionOrderAction
                     'total_cost' => $consumedCost,
                 ]);
 
-                $totalBulkCost += $consumedCost;
+                $totalBulkCost = $this->calculator->add($totalBulkCost, $consumedCost, 4);
             }
 
             foreach ($lockedOrder->lineAdjustments as $adjustment) {
                 $consumedRawMaterialIds[] = (int) $adjustment->raw_material_id;
 
-                $totalBulkCost += $this->fifoStockAllocator->consumeRawMaterialForProduction(
+                $totalBulkCost = $this->calculator->add($totalBulkCost, (string) $this->fifoStockAllocator->consumeRawMaterialForProduction(
                     order: $lockedOrder,
                     rawMaterialId: (int) $adjustment->raw_material_id,
                     requiredQuantity: (float) $adjustment->quantity,
                     userId: $userId,
                     errorKey: 'line_adjustments',
                     contextLabel: 'ajuste de línea'
-                );
+                ), 4);
             }
 
             $distributedBulkCosts = $this->productionCostCalculator->calculateDistributedBulkCosts(
@@ -148,7 +150,7 @@ class CompleteProductionOrderAction
                     ->select(['id', 'presentation_value', 'package_raw_material_id', 'current_cost', 'current_price'])
                     ->find($plan->product_variant_id);
 
-                $packagingUnitCost = 0.0;
+                $packagingUnitCost = '0';
                 if ($variant?->package_raw_material_id !== null) {
                     $consumedRawMaterialIds[] = (int) $variant->package_raw_material_id;
 
@@ -161,11 +163,11 @@ class CompleteProductionOrderAction
                         contextLabel: 'envase'
                     );
 
-                    $packagingUnitCost = $packagingTotalCost / $actualUnits;
+                    $packagingUnitCost = $this->calculator->div((string) $packagingTotalCost, (string) $actualUnits, 4);
                 }
 
-                $bulkCostForVariant = (float) ($distributedBulkCosts[$plan->product_variant_id] ?? 0.0);
-                $costPriceForVariant = $bulkCostForVariant + $packagingUnitCost;
+                $bulkCostForVariant = (string) ($distributedBulkCosts[$plan->product_variant_id] ?? '0');
+                $costPriceForVariant = $this->calculator->add($bulkCostForVariant, $packagingUnitCost, 4);
 
                 FinishedInventoryMovement::create([
                     'product_id' => $lockedOrder->product_id,
@@ -181,8 +183,8 @@ class CompleteProductionOrderAction
                 ]);
 
                 if ($variant !== null) {
-                    $presentationValue = (float) ($variant->presentation_value ?? 1);
-                    $bulkCost = $presentationValue > 0 ? ($bulkCostForVariant / $presentationValue) : 0.0;
+                    $presentationValue = (string) ($variant->presentation_value ?? 1);
+                    $bulkCost = $this->calculator->cmp($presentationValue, '0', 4) > 0 ? $this->calculator->div($bulkCostForVariant, $presentationValue, 4) : '0';
 
                     $this->variantPricingService->updateVariantCostAndPrice(
                         variant: $variant,
@@ -203,15 +205,15 @@ class CompleteProductionOrderAction
                         'warehouse_id' => $lockedOrder->warehouse_id,
                     ]);
 
-                $inventory->quantity = ($inventory->quantity ?? 0) + $actualUnits;
+                $inventory->quantity = $this->calculator->add((string) ($inventory->quantity ?? '0'), (string) $actualUnits, 4);
                 $inventory->save();
             }
 
             $yieldRealQuantity = (float) ($data['actual_yield_quantity'] ?? $lockedOrder->quantity);
             $yieldTheoreticalQuantity = (float) $lockedOrder->quantity;
-            $yieldVarianceQuantity = $yieldRealQuantity - $yieldTheoreticalQuantity;
-            $yieldPercentage = $yieldTheoreticalQuantity > 0
-                ? (($yieldRealQuantity / $yieldTheoreticalQuantity) * 100)
+            $yieldVarianceQuantity = $this->calculator->sub((string) $yieldRealQuantity, (string) $yieldTheoreticalQuantity, 4);
+            $yieldPercentage = $this->calculator->cmp((string) $yieldTheoreticalQuantity, '0', 4) > 0
+                ? $this->calculator->mul($this->calculator->div((string) $yieldRealQuantity, (string) $yieldTheoreticalQuantity, 4), '100', 4)
                 : null;
 
             $lockedOrder->update([
@@ -221,8 +223,10 @@ class CompleteProductionOrderAction
                 'yield_percentage' => $yieldPercentage,
             ]);
 
-            if ($totalBulkCost > 0) {
-                $costPerYieldUnit = $yieldRealQuantity > 0 ? ($totalBulkCost / $yieldRealQuantity) : null;
+            // TODO: Revisar si estas comparaciones con scale 4 deberían usar
+            // una escala mayor para evitar tratar valores < 0.0001 como cero.
+            if ($this->calculator->isPositive($totalBulkCost)) {
+                $costPerYieldUnit = $this->calculator->cmp((string) $yieldRealQuantity, '0', 4) > 0 ? $this->calculator->div((string) $totalBulkCost, (string) $yieldRealQuantity, 4) : null;
 
                 ProductionCost::updateOrCreate(
                     ['production_order_id' => $lockedOrder->id],
