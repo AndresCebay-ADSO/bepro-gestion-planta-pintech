@@ -42,7 +42,7 @@ class FormulaSeeder extends Seeder
                 ['S-6', 0.0124],
                 ['ABS-4', 0.015],
                 ['ABS-5', 0.015],
-                ['ABS-6', 0.15],//organizar para trabajarlo con gramo = 0.15, kg = 0,00015
+                ['ABS-6', 0.15], // organizar para trabajarlo con gramo = 0.15, kg = 0,00015
             ],
             'BP ANTICORROSIVO BASE AGUA ROJO' => [
                 ['AGUA', 1.2],
