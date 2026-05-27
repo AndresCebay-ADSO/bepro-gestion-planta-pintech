@@ -103,7 +103,7 @@ class PublicQrLandingController extends Controller
 
         $logoPath = public_path('images/beprologoqr.png');
         $logo = file_exists($logoPath)
-            ? new Logo(path: $logoPath, resizeToWidth: 80, punchoutBackground: true)
+            ? new Logo(path: $logoPath, resizeToWidth: 130, punchoutBackground: false)
             : null;
 
         $png = (new PngWriter)->write($image, $logo)->getString();
