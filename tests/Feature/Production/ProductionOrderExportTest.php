@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Actions\Production\BuildProductionOrderExportDataAction;
+use App\Actions\Production\BuildProductionOrderPdfMaterialsAction;
+use App\Actions\Production\BuildProductionOrderShowDataAction;
 use App\Exports\ProductionOrderExport;
-use App\Http\Controllers\ProductionOrderController;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -157,14 +159,53 @@ test('export routes require authentication', function () {
 test('pdf payload uses raw material code when name is unavailable', function () {
     [$order, $user] = createExportTestDependencies();
 
-    $controller = app(ProductionOrderController::class);
-    $method = new ReflectionMethod($controller, 'buildPdfMaterialsPayload');
-    $method->setAccessible(true);
+    $this->actingAs($user);
+    $materialsPayload = app(BuildProductionOrderPdfMaterialsAction::class)->execute($order);
+
+    expect($materialsPayload)->toBeArray();
+    expect($materialsPayload['rows'][0]['raw_material_code'])->toBe('RM-EXP-01');
+    expect($materialsPayload['rows'][0]['raw_material_name'])->toBe('RM-EXP-01');
+});
+
+test('pdf materials payload provides decimal totals for export views', function () {
+    [$order, $user] = createExportTestDependencies();
+    $rawMaterial = RawMaterial::query()->where('code', 'RM-EXP-01')->firstOrFail();
+
+    ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $rawMaterial->id,
+        'step_order' => 2,
+        'planned_quantity' => '0.0375',
+        'unit_cost' => '10',
+        'total_cost' => '0.3750',
+    ]);
 
     $this->actingAs($user);
-    $payload = $method->invoke($controller, $order);
+    $materialsPayload = app(BuildProductionOrderPdfMaterialsAction::class)->execute($order->refresh());
 
-    expect($payload)->toBeArray();
-    expect($payload['rows'][0]['raw_material_code'])->toBe('RM-EXP-01');
-    expect($payload['rows'][0]['raw_material_name'])->toBe('RM-EXP-01');
+    expect($materialsPayload['totals']['planned_quantity'])->toBe('100.0375');
+    expect($materialsPayload['totals']['kg'])->toBe('100.0000');
+    expect($materialsPayload['totals']['grams'])->toBe('37.5000');
+    expect($materialsPayload['rows'][1]['display_grams'])->toBe('37.5000');
+});
+
+test('production order payload keeps calculated costs as decimal strings', function () {
+    [$order, $user] = createExportTestDependencies();
+
+    $this->actingAs($user);
+    $payload = app(BuildProductionOrderExportDataAction::class)->execute($order);
+
+    expect($payload['total_bulk_cost'])->toBe('1000.0000');
+    expect($payload['details'][0]['unit_cost'])->toBe('10.0000');
+    expect($payload['details'][0]['total_cost'])->toBe('1000.0000');
+    expect($payload)->toHaveKey('pdf_materials');
+});
+
+test('show payload does not include export materials', function () {
+    [$order, $user] = createExportTestDependencies();
+
+    $this->actingAs($user);
+    $payload = app(BuildProductionOrderShowDataAction::class)->execute($order);
+
+    expect($payload)->not->toHaveKey('pdf_materials');
 });

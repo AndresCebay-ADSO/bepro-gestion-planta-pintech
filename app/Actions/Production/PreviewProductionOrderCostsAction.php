@@ -21,11 +21,11 @@ class PreviewProductionOrderCostsAction
      * @param  array<int, array{id:int,actual_quantity:float|int}>  $ingredients
      * @param  array<int, array{id:int,actual_units:float|int}>  $packaging
      * @return array{
-     *   ingredients: array<int, array{id:int,unit_cost:float,total_cost:float,actual_quantity:float}>,
-     *   packaging: array<int, array{id:int,cost_price:float,total_cost:float,equivalent:float,actual_units:float}>,
-     *   total_bulk_cost: float,
-     *   total_finished_cost: float,
-     *   total_equivalent: float
+     *   ingredients: array<int, array{id:int,unit_cost:string,total_cost:string,actual_quantity:float}>,
+     *   packaging: array<int, array{id:int,cost_price:string,total_cost:string,equivalent:string,actual_units:float}>,
+     *   total_bulk_cost: string,
+     *   total_finished_cost: string,
+     *   total_equivalent: string
      * }
      */
     public function execute(ProductionOrder $order, array $ingredients, array $packaging): array
@@ -70,14 +70,13 @@ class PreviewProductionOrderCostsAction
         foreach ($ingredientRows as $row) {
             $unitCost = (string) ($ingredientUnitCosts[$row['raw_material_id']] ?? '0');
             $totalCostStr = $this->calculator->mul((string) $row['actual_quantity'], $unitCost, 4);
-            $totalCost = (float) $totalCostStr;
             $totalBulkCost = $this->calculator->add($totalBulkCost, $totalCostStr, 4);
 
             $ingredientResults[] = [
                 'id' => $row['id'],
                 'actual_quantity' => $row['actual_quantity'],
-                'unit_cost' => (float) $unitCost,
-                'total_cost' => $totalCost,
+                'unit_cost' => $unitCost,
+                'total_cost' => $totalCostStr,
             ];
         }
 
@@ -169,18 +168,18 @@ class PreviewProductionOrderCostsAction
             $packagingResults[] = [
                 'id' => $row['id'],
                 'actual_units' => $row['actual_units'],
-                'cost_price' => (float) $costPrice,
-                'total_cost' => (float) $totalCostStr,
-                'equivalent' => (float) $equivalentStr,
+                'cost_price' => $costPrice,
+                'total_cost' => $totalCostStr,
+                'equivalent' => $equivalentStr,
             ];
         }
 
         return [
             'ingredients' => $ingredientResults,
             'packaging' => $packagingResults,
-            'total_bulk_cost' => (float) $totalBulkCost,
-            'total_finished_cost' => (float) $totalFinishedCost,
-            'total_equivalent' => (float) $totalEquivalent,
+            'total_bulk_cost' => $totalBulkCost,
+            'total_finished_cost' => $totalFinishedCost,
+            'total_equivalent' => $totalEquivalent,
         ];
     }
 }

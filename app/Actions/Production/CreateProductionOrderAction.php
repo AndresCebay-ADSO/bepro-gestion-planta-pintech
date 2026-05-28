@@ -25,7 +25,7 @@ class CreateProductionOrderAction
      *   product_id:int,
      *   formula_id:int,
      *   warehouse_id:int,
-     *   quantity:float|int,
+     *   quantity:float|int|string,
      *   planned_date:mixed,
      *   notes?:string|null,
      *   packaging?:array<int, array{product_variant_id:int, planned_units:float|int}>
@@ -38,7 +38,7 @@ class CreateProductionOrderAction
             ->findOrFail($data['formula_id']);
 
         return DB::transaction(function () use ($data, $formula, $userId): ProductionOrder {
-            $quantity = (float) $data['quantity'];
+            $quantity = (string) $data['quantity'];
             $warehouseId = (int) $data['warehouse_id'];
 
             $this->fifoStockAllocator->validateStockForOrder($formula, $quantity, $warehouseId);
@@ -79,9 +79,9 @@ class CreateProductionOrderAction
                     'raw_material_id' => $detail->raw_material_id,
                     'batch_id' => null,
                     'step_order' => $detail->step_order,
-                    'planned_quantity' => (float) $plannedQuantityStr,
-                    'unit_cost' => (float) $estimatedUnitCost,
-                    'total_cost' => (float) $this->calculator->mul($plannedQuantityStr, $estimatedUnitCost, 4),
+                    'planned_quantity' => $plannedQuantityStr,
+                    'unit_cost' => $estimatedUnitCost,
+                    'total_cost' => $this->calculator->mul($plannedQuantityStr, $estimatedUnitCost, 4),
                 ]);
             }
 

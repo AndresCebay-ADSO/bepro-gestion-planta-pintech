@@ -14,8 +14,8 @@ class InventoryMovementService
         ProductionOrder $order,
         int $rawMaterialId,
         ?int $batchId,
-        float $quantity,
-        float $unitPrice,
+        float|string $quantity,
+        float|string $unitPrice,
         int $userId,
         string $notes
     ): InventoryMovement {

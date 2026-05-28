@@ -30,8 +30,8 @@ export type ProductionOrderDetail = {
     raw_material?: ProductionOrderRawMaterial | null;
     planned_quantity: FormNumberValue;
     actual_quantity?: FormNumberValue | null;
-    unit_cost?: number | null;
-    total_cost?: number | null;
+    unit_cost?: FormNumberValue | null;
+    total_cost?: FormNumberValue | null;
 };
 
 export type ProductionOrderProductVariant = {
@@ -44,7 +44,7 @@ export type ProductionOrderPackagingPlan = {
     product_variant?: ProductionOrderProductVariant | null;
     planned_units: FormNumberValue;
     actual_units?: FormNumberValue | null;
-    cost_price?: number | null;
+    cost_price?: FormNumberValue | null;
 };
 
 export type ProductionOrderLineAdjustment = {
@@ -104,8 +104,8 @@ export type ProductionOrderIngredientFormRow = {
     raw_material_name?: string | null;
     planned_quantity: FormNumberValue;
     actual_quantity: FormNumberValue;
-    unit_cost: number;
-    total_cost: number;
+    unit_cost: FormNumberValue;
+    total_cost: FormNumberValue;
 };
 
 export type ProductionOrderPackagingFormRow = {
@@ -114,7 +114,7 @@ export type ProductionOrderPackagingFormRow = {
     presentation_value: number;
     planned_units: FormNumberValue;
     actual_units: FormNumberValue;
-    cost_price: number | null;
+    cost_price: FormNumberValue | null;
 };
 
 export type ProductionOrderFormData = {
@@ -140,18 +140,18 @@ export type ProductionOrderErrors = FormDataErrors<ProductionOrderFormData>;
 export type PreviewCostData = {
     ingredients: Array<{
         id: number;
-        unit_cost: number;
-        total_cost: number;
+        unit_cost: FormNumberValue;
+        total_cost: FormNumberValue;
         actual_quantity: number;
     }>;
     packaging: Array<{
         id: number;
-        cost_price: number;
-        total_cost: number;
-        equivalent: number;
+        cost_price: FormNumberValue;
+        total_cost: FormNumberValue;
+        equivalent: FormNumberValue;
         actual_units: number;
     }>;
-    total_bulk_cost: number;
-    total_finished_cost: number;
-    total_equivalent: number;
+    total_bulk_cost: FormNumberValue;
+    total_finished_cost: FormNumberValue;
+    total_equivalent: FormNumberValue;
 };

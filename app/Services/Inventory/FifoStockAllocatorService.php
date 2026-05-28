@@ -180,8 +180,8 @@ class FifoStockAllocatorService
                 order: $order,
                 rawMaterialId: $rawMaterialId,
                 batchId: null,
-                quantity: (float) $requiredQtyStr,
-                unitPrice: (float) $unitPrice,
+                quantity: $requiredQtyStr,
+                unitPrice: $unitPrice,
                 userId: $userId,
                 notes: "Consumo sin control de inventario en OP #{$order->order_number}"
             );
@@ -212,8 +212,8 @@ class FifoStockAllocatorService
                 order: $order,
                 rawMaterialId: $rawMaterialId,
                 batchId: (int) $batch->id,
-                quantity: (float) $consumedQuantity,
-                unitPrice: (float) $unitPrice,
+                quantity: $consumedQuantity,
+                unitPrice: $unitPrice,
                 userId: $userId,
                 notes: "Consumo FIFO en OP #{$order->order_number}"
             );

@@ -7,7 +7,7 @@ import type {
 
 type OrderInfoCardProps = {
     order: ProductionOrder;
-    totalEquivalent: number;
+    totalEquivalent: FormNumberValue;
     bulkCost: FormNumberValue;
     finishedCost: FormNumberValue;
     marginPercentage: number;

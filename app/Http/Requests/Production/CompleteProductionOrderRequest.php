@@ -132,7 +132,7 @@ class CompleteProductionOrderRequest extends FormRequest
 
                 $validator->errors()->add(
                     'actual_yield_quantity',
-                    "El rendimiento real debe coincidir con el envasado equivalente. Registrado: {$actualYield}, esperado: ".(float) $expectedYield.' (tolerancia: '.(float) $yieldTolerance.').'
+                    "El rendimiento real debe coincidir con el envasado equivalente. Registrado: {$actualYield}, esperado: {$expectedYield} (tolerancia: {$yieldTolerance})."
                 );
             },
         ];
