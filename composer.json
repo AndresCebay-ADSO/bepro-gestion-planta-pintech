@@ -9,6 +9,7 @@
     ],
     "license": "MIT",
     "require": {
+        "ext-bcmath": "*",
         "php": "^8.3",
         "barryvdh/laravel-dompdf": "^3.1",
         "endroid/qr-code": "^6.0",
