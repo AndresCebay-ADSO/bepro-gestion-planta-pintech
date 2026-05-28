@@ -91,12 +91,12 @@ class Product extends Model
             'profit_margin' => 'decimal:2',
             'current_price' => 'decimal:4',
             'price_threshold' => 'decimal:2',
-            'quality_viscosity_lower' => 'decimal:2',
-            'quality_viscosity_upper' => 'decimal:2',
-            'quality_fineness_lower' => 'decimal:2',
-            'quality_fineness_upper' => 'decimal:2',
-            'quality_solids_lower' => 'decimal:2',
-            'quality_solids_upper' => 'decimal:2',
+            'quality_viscosity_lower' => 'decimal:1',
+            'quality_viscosity_upper' => 'decimal:1',
+            'quality_fineness_lower' => 'decimal:1',
+            'quality_fineness_upper' => 'decimal:1',
+            'quality_solids_lower' => 'decimal:1',
+            'quality_solids_upper' => 'decimal:1',
             'is_active' => 'boolean',
         ];
     }
