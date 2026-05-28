@@ -13,6 +13,10 @@ use Illuminate\Validation\ValidationException;
 
 class InventoryService
 {
+    public function __construct(
+        private readonly DecimalCalculator $calculator
+    ) {}
+
     public function storeMovement(array $data, int $userId): InventoryMovement
     {
         return DB::transaction(function () use ($data, $userId) {
@@ -52,7 +56,7 @@ class InventoryService
             $this->applyMovement(
                 type: $movementData['type'],
                 quantity: $movementData['quantity'],
-                costPrice: $movementData['cost_price'] !== null ? (float) $movementData['cost_price'] : null,
+                costPrice: $movementData['cost_price'],
                 lockedBatch: $lockedBatch,
             );
 
@@ -125,7 +129,7 @@ class InventoryService
             $this->applyMovement(
                 type: $movementData['type'],
                 quantity: $movementData['quantity'],
-                costPrice: $movementData['cost_price'] !== null ? (float) $movementData['cost_price'] : null,
+                costPrice: $movementData['cost_price'],
                 lockedBatch: $lockedBatch,
             );
 
@@ -166,13 +170,10 @@ class InventoryService
         RecalculateRawMaterialReferencePrice::dispatch($rawMaterialId)->afterCommit();
     }
 
-    // TODO: [Deuda técnica] Reemplazar aritmética (float) con BCMath via un DecimalComparator
-    //       centralizado para evitar errores de redondeo en cantidades y precios.
-    //       Afecta: applyMovement(), reverseMovement(), decimalValuesAreEqual().
     private function applyMovement(
         string|InventoryMovementType $type,
         string|float $quantity,
-        ?float $costPrice = null,
+        ?string $costPrice = null,
         ?InventoryBatch $lockedBatch = null,
     ): void {
         $typeValue = $type instanceof InventoryMovementType ? $type->value : $type;
@@ -188,20 +189,19 @@ class InventoryService
         }
 
         $batch = $lockedBatch;
-
-        $quantity = (float) $quantity;
+        $quantity = (string) $quantity;
 
         if ($typeValue === InventoryMovementType::Entry->value) {
-            $previousInitialQuantity = (float) $batch->initial_quantity;
-            $previousRemainingQuantity = (float) $batch->remaining_quantity;
+            $previousInitialQuantity = (string) $batch->initial_quantity;
+            $previousRemainingQuantity = (string) $batch->remaining_quantity;
 
-            $batch->initial_quantity = (float) $batch->initial_quantity + $quantity;
-            $batch->remaining_quantity = (float) $batch->remaining_quantity + $quantity;
+            $batch->initial_quantity = $this->calculator->add($batch->initial_quantity, $quantity);
+            $batch->remaining_quantity = $this->calculator->add($batch->remaining_quantity, $quantity);
 
             if ($this->shouldSyncBatchUnitPrice($type, $quantity, $costPrice)) {
                 // Regla: un lote mantiene un solo costo; si el costo cambia, debe crearse otro lote.
                 if (
-                    ($previousInitialQuantity > 0 || $previousRemainingQuantity > 0)
+                    ($this->calculator->isPositive($previousInitialQuantity) || $this->calculator->isPositive($previousRemainingQuantity))
                     && ! $this->decimalValuesAreEqual($batch->unit_price, $costPrice)
                 ) {
                     throw ValidationException::withMessages([
@@ -217,13 +217,13 @@ class InventoryService
             return;
         }
 
-        if ((float) $batch->remaining_quantity < $quantity) {
+        if ($this->calculator->cmp($batch->remaining_quantity, $quantity) < 0) {
             throw ValidationException::withMessages([
                 'quantity' => __('La cantidad supera el stock disponible del lote seleccionado.'),
             ]);
         }
 
-        $batch->remaining_quantity = (float) $batch->remaining_quantity - $quantity;
+        $batch->remaining_quantity = $this->calculator->sub($batch->remaining_quantity, $quantity);
         $batch->save();
     }
 
@@ -238,23 +238,23 @@ class InventoryService
             warehouseId: (int) $movement->warehouse_id,
             batchId: (int) $movement->batch_id
         );
-        $quantity = (float) $movement->quantity;
+        $quantity = (string) $movement->quantity;
 
         if ($movement->type === InventoryMovementType::Entry) {
-            if ((float) $batch->remaining_quantity < $quantity) {
+            if ($this->calculator->cmp($batch->remaining_quantity, $quantity) < 0) {
                 throw ValidationException::withMessages([
                     'batch_id' => __('No es posible revertir el movimiento porque el lote no tiene stock suficiente.'),
                 ]);
             }
 
-            $batch->initial_quantity = (float) $batch->initial_quantity - $quantity;
-            $batch->remaining_quantity = (float) $batch->remaining_quantity - $quantity;
+            $batch->initial_quantity = $this->calculator->sub($batch->initial_quantity, $quantity);
+            $batch->remaining_quantity = $this->calculator->sub($batch->remaining_quantity, $quantity);
             $batch->save();
 
             return;
         }
 
-        $batch->remaining_quantity = (float) $batch->remaining_quantity + $quantity;
+        $batch->remaining_quantity = $this->calculator->add($batch->remaining_quantity, $quantity);
         $batch->save();
     }
 
@@ -292,16 +292,16 @@ class InventoryService
         string $typeValue,
         float|int|string|null $requestedCostPrice,
         ?InventoryBatch $lockedBatch = null,
-    ): ?float {
+    ): ?string {
         if ($lockedBatch === null) {
-            return $requestedCostPrice !== null ? (float) $requestedCostPrice : null;
+            return $requestedCostPrice !== null ? (string) $requestedCostPrice : null;
         }
 
         if ($typeValue === InventoryMovementType::Exit->value || $requestedCostPrice === null) {
-            return (float) $lockedBatch->unit_price;
+            return (string) $lockedBatch->unit_price;
         }
 
-        return (float) $requestedCostPrice;
+        return (string) $requestedCostPrice;
     }
 
     private function syncBatchEntryDateForSoleEntryMovement(InventoryMovement $movement): void
@@ -371,7 +371,7 @@ class InventoryService
             return false;
         }
 
-        return number_format((float) $valueA, 4, '.', '') === number_format((float) $valueB, 4, '.', '');
+        return $this->calculator->cmp($valueA, $valueB) === 0;
     }
 
     // TODO: [Deuda arquitectónica] Extraer resolveBatchIdForEntry(), deleteBatchIfOrphaned(),
@@ -422,19 +422,19 @@ class InventoryService
 
         if (
             ! $hasMovements
-            && (float) $batch->initial_quantity <= 0
-            && (float) $batch->remaining_quantity <= 0
+            && ! $this->calculator->isPositive($batch->initial_quantity)
+            && ! $this->calculator->isPositive($batch->remaining_quantity)
         ) {
             $batch->delete();
         }
     }
 
-    private function shouldSyncBatchUnitPrice(string|InventoryMovementType $type, float $quantity, ?float $costPrice): bool
+    private function shouldSyncBatchUnitPrice(string|InventoryMovementType $type, string $quantity, ?string $costPrice): bool
     {
         $typeValue = $type instanceof InventoryMovementType ? $type->value : $type;
 
         return $typeValue === InventoryMovementType::Entry->value
-            && $quantity > 0
+            && $this->calculator->isPositive($quantity)
             && $costPrice !== null;
     }
 }

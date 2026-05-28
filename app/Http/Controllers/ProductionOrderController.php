@@ -23,6 +23,7 @@ use App\Models\ProductionOrderPackagingPlan;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\Warehouse;
+use App\Services\DecimalCalculator;
 use App\Services\Inventory\FifoStockAllocatorService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -39,7 +40,8 @@ class ProductionOrderController extends Controller
         private readonly CompleteProductionOrderAction $completeProductionOrder,
         private readonly CancelProductionOrderAction $cancelProductionOrder,
         private readonly PreviewProductionOrderCostsAction $previewProductionOrderCosts,
-        private readonly FifoStockAllocatorService $fifoStockAllocator
+        private readonly FifoStockAllocatorService $fifoStockAllocator,
+        private readonly DecimalCalculator $calculator
     ) {}
 
     /**
@@ -286,11 +288,23 @@ class ProductionOrderController extends Controller
             requirementsByMaterialId: $packageRawMaterialRequirements
         );
 
-        $totalFinishedCost = (float) $productionOrder->finishedInventoryMovements
-            ->sum(fn ($movement) => (float) $movement->quantity * (float) ($movement->cost_price ?? 0));
+        $totalFinishedCostStr = $productionOrder->finishedInventoryMovements
+            ->reduce(function ($carry, $movement) {
+                $qty = (string) $movement->quantity;
+                $costPrice = (string) ($movement->cost_price ?? '0');
+                $itemTotal = $this->calculator->mul($qty, $costPrice, 4);
 
-        $totalBulkCost = (float) $productionOrder->details
-            ->sum(fn (ProductionOrderDetail $detail) => (float) $detail->total_cost);
+                return $this->calculator->add((string) $carry, $itemTotal, 4);
+            }, '0');
+        $totalFinishedCost = (float) $totalFinishedCostStr;
+
+        $totalBulkCostStr = $productionOrder->details
+            ->reduce(function ($carry, ProductionOrderDetail $detail) {
+                $detailCost = (string) ($detail->total_cost ?? '0');
+
+                return $this->calculator->add((string) $carry, $detailCost, 4);
+            }, '0');
+        $totalBulkCost = (float) $totalBulkCostStr;
 
         $pdfMaterials = $this->buildPdfMaterialsPayload($productionOrder);
 
@@ -414,11 +428,14 @@ class ProductionOrderController extends Controller
                     /** @var ProductionOrderDetail $first */
                     $first = $group->first();
 
+                    $plannedArray = $group->map(fn (ProductionOrderDetail $d) => (string) $d->planned_quantity)->all();
+                    $actualArray = $group->map(fn (ProductionOrderDetail $d) => (string) ($d->actual_quantity ?? '0'))->all();
+
                     return [
                         'raw_material_code' => $first->rawMaterial->code ?? 'N/A',
                         'raw_material_name' => $first->rawMaterial->code ?? 'N/A',
-                        'planned_quantity' => round((float) $group->sum(fn (ProductionOrderDetail $d) => (float) $d->planned_quantity), 4),
-                        'actual_quantity' => round((float) $group->sum(fn (ProductionOrderDetail $d) => (float) ($d->actual_quantity ?? 0)), 4),
+                        'planned_quantity' => (float) $this->calculator->sum($plannedArray, 4),
+                        'actual_quantity' => (float) $this->calculator->sum($actualArray, 4),
                     ];
                 })
                 ->values()

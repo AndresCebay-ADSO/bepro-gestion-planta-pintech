@@ -5,10 +5,15 @@ declare(strict_types=1);
 namespace App\Services\Inventory;
 
 use App\Models\InventoryBatch;
+use App\Services\DecimalCalculator;
 use Illuminate\Database\Eloquent\Collection;
 
 class InventoryBatchService
 {
+    public function __construct(
+        private readonly DecimalCalculator $calculator
+    ) {}
+
     /**
      * @return Collection<int, InventoryBatch>
      */
@@ -50,7 +55,7 @@ class InventoryBatchService
 
     /**
      * @param  array<int, int>  $rawMaterialIds
-     * @return array<int, float>
+     * @return array<int, string>
      */
     public function availableQuantitiesByMaterial(int $warehouseId, array $rawMaterialIds): array
     {
@@ -64,16 +69,20 @@ class InventoryBatchService
             ->selectRaw('raw_material_id, COALESCE(SUM(remaining_quantity), 0) as available_quantity')
             ->groupBy('raw_material_id')
             ->pluck('available_quantity', 'raw_material_id')
-            ->map(fn (mixed $availableQuantity): float => (float) $availableQuantity)
+            ->map(fn (mixed $availableQuantity): string => $this->calculator->round((string) $availableQuantity, 4))
             ->all();
     }
 
-    public function decrementRemainingQuantity(InventoryBatch $batch, float $quantity): void
+    public function decrementRemainingQuantity(InventoryBatch $batch, float|string $quantity): void
     {
-        if ($quantity <= 0) {
+        $quantityStr = (string) $quantity;
+
+        if (! $this->calculator->isPositive($quantityStr)) {
             return;
         }
 
-        $batch->decrement('remaining_quantity', $quantity);
+        $batch->update([
+            'remaining_quantity' => $this->calculator->sub($batch->remaining_quantity, $quantityStr),
+        ]);
     }
 }

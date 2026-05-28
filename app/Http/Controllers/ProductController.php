@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
+use App\Services\DecimalCalculator;
 use App\Services\ProductionCostRecalculationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,8 @@ use Inertia\Response;
 class ProductController extends Controller
 {
     public function __construct(
-        private readonly ProductionCostRecalculationService $productionCostRecalculationService
+        private readonly ProductionCostRecalculationService $productionCostRecalculationService,
+        private readonly DecimalCalculator $calculator
     ) {}
 
     public function index(Request $request): Response
@@ -187,17 +189,21 @@ class ProductController extends Controller
             );
 
             if ($costRecord === null) {
-                $cost = (float) ($product->current_cost ?? 0);
-                $margin = (float) ($product->profit_margin ?? 0);
-                $newPrice = $cost * (1 + ($margin / 100));
+                $costStr = (string) ($product->current_cost ?? '0');
+                $marginStr = (string) ($product->profit_margin ?? '0');
+                $marginRatio = $this->calculator->div($marginStr, '100', 4);
+                $marginFactor = $this->calculator->add('1', $marginRatio, 4);
+                $newPrice = $this->calculator->mul($costStr, $marginFactor, 4);
 
                 $product->updateQuietly(['current_price' => $newPrice]);
 
                 foreach ($product->variants()->with('packageRawMaterial')->get() as $variant) {
-                    $packageCost = (float) ($variant->packageRawMaterial?->current_price ?? 0);
-                    $presentation = (float) ($variant->presentation_value ?? 1);
-                    $newVariantCost = ($cost * $presentation) + $packageCost;
-                    $newVariantPrice = $newVariantCost * (1 + ($margin / 100));
+                    $packageCostStr = (string) ($variant->packageRawMaterial?->current_price ?? '0');
+                    $presentationStr = (string) ($variant->presentation_value ?? '1');
+
+                    $costTimesPresentation = $this->calculator->mul($costStr, $presentationStr, 4);
+                    $newVariantCost = $this->calculator->add($costTimesPresentation, $packageCostStr, 4);
+                    $newVariantPrice = $this->calculator->mul($newVariantCost, $marginFactor, 4);
 
                     $variant->updateQuietly([
                         'current_cost' => $newVariantCost,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Production;
 
 use App\Models\ProductionOrderPackagingPlan;
+use App\Services\DecimalCalculator;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -74,6 +75,8 @@ class CompleteProductionOrderRequest extends FormRequest
                     return;
                 }
 
+                $calculator = app(DecimalCalculator::class);
+
                 $actualYield = $this->input('actual_yield_quantity');
                 if ($actualYield === null) {
                     return;
@@ -101,7 +104,7 @@ class CompleteProductionOrderRequest extends FormRequest
                     ->get()
                     ->keyBy('id');
 
-                $expectedYield = 0.0;
+                $expectedYield = '0';
                 foreach ($packaging as $packagingData) {
                     $planId = (int) ($packagingData['id'] ?? 0);
                     $plan = $plans->get($planId);
@@ -109,25 +112,27 @@ class CompleteProductionOrderRequest extends FormRequest
                         continue;
                     }
 
-                    $actualUnits = (float) ($packagingData['actual_units'] ?? 0);
-                    if ($actualUnits <= 0) {
+                    $actualUnits = (string) ($packagingData['actual_units'] ?? '0');
+                    if ($calculator->cmp($actualUnits, '0', 4) <= 0) {
                         continue;
                     }
 
-                    $presentationValue = (float) ($plan->productVariant?->presentation_value ?? 1);
-                    $expectedYield += ($actualUnits * $presentationValue);
+                    $presentationValue = (string) ($plan->productVariant?->presentation_value ?? '1');
+                    $yieldAddition = $calculator->mul($actualUnits, $presentationValue, 4);
+                    $expectedYield = $calculator->add($expectedYield, $yieldAddition, 4);
                 }
 
-                $difference = abs((float) $actualYield - $expectedYield);
-                $yieldTolerance = (float) config('production.yield_tolerance', 0.01);
+                $actualYieldStr = (string) $actualYield;
+                $difference = $calculator->abs($calculator->sub($actualYieldStr, $expectedYield, 4), 4);
+                $yieldTolerance = (string) config('production.yield_tolerance', '0.01');
 
-                if ($difference <= $yieldTolerance) {
+                if ($calculator->cmp($difference, $yieldTolerance, 4) <= 0) {
                     return;
                 }
 
                 $validator->errors()->add(
                     'actual_yield_quantity',
-                    "El rendimiento real debe coincidir con el envasado equivalente. Registrado: {$actualYield}, esperado: {$expectedYield} (tolerancia: {$yieldTolerance})."
+                    "El rendimiento real debe coincidir con el envasado equivalente. Registrado: {$actualYield}, esperado: ".(float) $expectedYield.' (tolerancia: '.(float) $yieldTolerance.').'
                 );
             },
         ];

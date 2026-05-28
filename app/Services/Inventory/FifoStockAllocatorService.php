@@ -88,14 +88,17 @@ class FifoStockAllocatorService
         return $estimatedUnitCosts;
     }
 
-    public function validateStockForOrder(Formula $formula, float $quantity, int $warehouseId): void
+    public function validateStockForOrder(Formula $formula, float|string $quantity, int $warehouseId): void
     {
         $warehouse = Warehouse::findOrFail($warehouseId);
+        $qty = (string) $quantity;
 
         $requirements = [];
         foreach ($formula->details as $detail) {
             $materialId = (int) $detail->raw_material_id;
-            $requirements[$materialId] = ($requirements[$materialId] ?? 0.0) + ((float) $detail->quantity * $quantity);
+            $product = $this->calculator->mul((string) $detail->quantity, $qty, 4);
+            $current = (string) ($requirements[$materialId] ?? '0');
+            $requirements[$materialId] = $this->calculator->add($current, $product, 4);
         }
 
         if ($requirements === []) {
@@ -117,10 +120,10 @@ class FifoStockAllocatorService
         );
 
         foreach ($trackedMaterialIds as $materialId) {
-            $required = (float) $requirements[$materialId];
-            $available = (float) ($availableByMaterialId[$materialId] ?? 0.0);
+            $required = $requirements[$materialId];
+            $available = (string) ($availableByMaterialId[$materialId] ?? '0');
 
-            if ($available >= $required) {
+            if ($this->calculator->cmp($available, $required) >= 0) {
                 continue;
             }
 
@@ -215,7 +218,7 @@ class FifoStockAllocatorService
                 notes: "Consumo FIFO en OP #{$order->order_number}"
             );
 
-            $this->inventoryBatchService->decrementRemainingQuantity($batch, (float) $consumedQuantity);
+            $this->inventoryBatchService->decrementRemainingQuantity($batch, $consumedQuantity);
             $remainingToConsume = $this->calculator->sub($remainingToConsume, $consumedQuantity, 4);
             $batchCost = $this->calculator->mul($consumedQuantity, $unitPrice, 4);
             $totalConsumedCost = $this->calculator->add($totalConsumedCost, $batchCost, 4);
