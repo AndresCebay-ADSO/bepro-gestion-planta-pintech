@@ -23,12 +23,12 @@ return new class extends Migration
             $table->decimal('profit_margin', 5, 2)->nullable();
             $table->decimal('current_price', 12, 4)->nullable();
             $table->decimal('price_threshold', 5, 2)->default(3.00);
-            $table->decimal('quality_viscosity_lower', 4, 2)->nullable();
-            $table->decimal('quality_viscosity_upper', 4, 2)->nullable();
-            $table->decimal('quality_fineness_lower', 4, 2)->nullable();
-            $table->decimal('quality_fineness_upper', 4, 2)->nullable();
-            $table->decimal('quality_solids_lower', 4, 2)->nullable();
-            $table->decimal('quality_solids_upper', 4, 2)->nullable();
+            $table->decimal('quality_viscosity_lower', 5, 2)->nullable();
+            $table->decimal('quality_viscosity_upper', 5, 2)->nullable();
+            $table->decimal('quality_fineness_lower', 5, 2)->nullable();
+            $table->decimal('quality_fineness_upper', 5, 2)->nullable();
+            $table->decimal('quality_solids_lower', 5, 2)->nullable();
+            $table->decimal('quality_solids_upper', 5, 2)->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();

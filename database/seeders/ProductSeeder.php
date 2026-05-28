@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\UnitOfMeasure;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Arr;
 
 /**
  * Seeder for Product model.
@@ -33,9 +34,12 @@ class ProductSeeder extends Seeder
             'BP AJUSTADOR INDUSTRIAL SS100',
             'BP AJUSTADOR SS-100',
             // Esmalte Poliuretano
-            'BP ESMALTE POLIURETANO BLANCO',
-            'BP ESMALTE PU GRIS RAL 7047',
+            ['name' => 'BP ESMALTE POLIURETANO BLANCO',
+                'quality_viscosity_lower' => 95, 'quality_viscosity_upper' => 100,
+                'quality_fineness_lower' => 6, 'quality_fineness_upper' => 8,
+                'quality_solids_lower' => 39, 'quality_solids_upper' => 44],
 
+            'BP ESMALTE PU GRIS RAL 7047',
             'BP ESMALTE PU DTM BLANCO',
             'BP ESMALTE POLIURETANO ALUMINIO',
             'BP ESMALTE POLIURETANO AMARILLO RAL 1003',
@@ -51,7 +55,10 @@ class ProductSeeder extends Seeder
             'BP ESMALTE POLIURETANO PARA MEZCLAS BLANCO',
             'BP ESMALTE POLIURETANO VERDE RAL 6016 COMP. A',
             'BP ESMALTE ACRILICO AMARILLO',
-            'BP ESMALTE ALQUIDICO INDUSTRIAL NEGRO SEMI BRILLANTE',
+            ['name' => 'BP ESMALTE ALQUIDICO INDUSTRIAL NEGRO SEMI BRILLANTE',
+                'quality_viscosity_lower' => 85, 'quality_viscosity_upper' => 95,
+                'quality_fineness_lower' => 8, 'quality_fineness_upper' => 8,
+                'quality_solids_lower' => 33, 'quality_solids_upper' => 37],
             'BP ESMALTE ALQUIDICO ROJO OXIDO',
             'BP ESMALTE ALQUIDICO INDUSTIAL NEGRO MATE',
             'BP ESMALTE EPOXICO 2K AMARILLO',
@@ -61,7 +68,10 @@ class ProductSeeder extends Seeder
             'BP ESMALTE EPOXICO 2K GRIS RAL 7011',
             'BP ESMALTE EPOXICO 2K NEGRO MATE',
             'BP ESMALTE EPOXICO 2K ROJO',
-            'BP ESMALTE SINTETICO 2 EN 1 NEGRO SEMIMATE', // SI
+            ['name' => 'BP ESMALTE SINTETICO 2 EN 1 NEGRO SEMIMATE',
+                'quality_viscosity_lower' => 85, 'quality_viscosity_upper' => 95,
+                'quality_fineness_lower' => 7, 'quality_fineness_upper' => 8,
+                'quality_solids_lower' => 33, 'quality_solids_upper' => 37],
             'BP ESMALTE INDUSTRIAL 2 EN 1 TINTEABLE',
             'BP ESMALTE INDUSTRIAL 2 EN 1 VERDE ESMERALDA',
             'BP ESMALTE INDUSTRIAL 2 EN 1 ALUMINIO',
@@ -115,7 +125,10 @@ class ProductSeeder extends Seeder
             'BP ANTICORROSIVO BLANCO INDUSTRIAL',
             'BP ANTICORROSIVO BASE AGUA CAOBA / CHOCOLATE',
             'BP ANTICORROSIVO BASE AGUA GRIS',
-            'BP ANTICORROSIVO BASE AGUA GRIS CLARO',
+            ['name' => 'BP ANTICORROSIVO BASE AGUA GRIS CLARO',
+                'quality_viscosity_lower' => 120, 'quality_viscosity_upper' => 125,
+                'quality_fineness_lower' => 5, 'quality_fineness_upper' => 6,
+                'quality_solids_lower' => 45, 'quality_solids_upper' => 47],
             'BP ANTICORROSIVO BASE AGUA ROJO',
             'BP ANTICORROSIVO BASE AGUA ROJO CLARO',
             'BP ANTICORROSIVO BLANCO INDUSTRIAL',
@@ -194,7 +207,7 @@ class ProductSeeder extends Seeder
             'BP PRIMER EPOXI POLIAMIDA HS 2K CREMA',
             'BP PRIMER EPÓXICO ESTRUCTURAL GRIS',
             'BP PRIMER EPÓXICO ESTRUCTURAL 60% SÓLIDOS GRIS CLARO',
-            'BP PRIMER EPOXICO HS 2K BASE GRIS',
+            ['name' => 'BP PRIMER EPOXICO HS 2K BASE GRIS', 'quality_viscosity_lower' => 85, 'quality_viscosity_upper' => 95, 'quality_fineness_lower' => 4, 'quality_fineness_upper' => 6, 'quality_solids_lower' => 70, 'quality_solids_upper' => 80],
             'BP PRIMER EPOXICO HS 2K BASE BLANCA',
             'BP PRIMER EPOXICO HS 2K GRIS CLARO',
             'BP PRIMER EPOXICO HS 2K BARRERA GRIS',
@@ -244,10 +257,16 @@ class ProductSeeder extends Seeder
         ];
 
         $count = 0;
-        foreach ($products as $name) {
-            $name = trim($name);
-            // Reemplazar espacios múltiples o raros
-            $name = preg_replace('/\s+/', ' ', $name);
+        foreach ($products as $item) {
+            if (is_string($item)) {
+                $name = trim($item);
+                $name = preg_replace('/\s+/', ' ', $name);
+                $extra = [];
+            } else {
+                $name = trim($item['name']);
+                $name = preg_replace('/\s+/', ' ', $name);
+                $extra = Arr::except($item, 'name');
+            }
 
             if (empty($name)) {
                 continue;
@@ -261,6 +280,7 @@ class ProductSeeder extends Seeder
                     'description' => $name,
                     'profit_margin' => 15,
                     'is_active' => true,
+                    ...$extra,
                 ]
             );
             $count++;
