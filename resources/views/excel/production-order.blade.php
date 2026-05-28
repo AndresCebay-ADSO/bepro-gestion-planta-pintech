@@ -119,6 +119,7 @@
             $pdfMaterials = $order['pdf_materials'] ?? ['mode' => 'steps', 'rows' => []];
             $pdfMode = $pdfMaterials['mode'] ?? 'steps';
             $pdfRows = $pdfMaterials['rows'] ?? [];
+            $pdfTotals = $pdfMaterials['totals'] ?? ['planned_quantity' => '0'];
         @endphp
         <tr>
             <th colspan="15"
@@ -150,7 +151,7 @@
             <tr style="font-weight: bold;">
                 <td colspan="3" style="border: 1px solid #000000; text-align: right; background-color: #f2f2f2;">TOTAL</td>
                 <td colspan="3" style="border: 1px solid #000000; text-align: center;">
-                    {{ number_format(collect($pdfRows)->sum('planned_quantity'), 2) }}
+                    {{ number_format((float) ($pdfTotals['planned_quantity'] ?? 0), 2) }}
                     kg
                 </td>
                 <td colspan="9" style="border: 1px solid #000000; background-color: #f2f2f2;"></td>
@@ -171,7 +172,7 @@
             <tr style="font-weight: bold;">
                 <td colspan="3" style="border: 1px solid #000000; text-align: right; background-color: #f2f2f2;">TOTAL</td>
                 <td colspan="3" style="border: 1px solid #000000; text-align: center;">
-                    {{ number_format(collect($pdfRows)->sum('planned_quantity'), 2) }}
+                    {{ number_format((float) ($pdfTotals['planned_quantity'] ?? 0), 2) }}
                     kg
                 </td>
                 <td colspan="9" style="border: 1px solid #000000; background-color: #f2f2f2;"></td>

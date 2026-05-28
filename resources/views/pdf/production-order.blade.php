@@ -266,6 +266,7 @@
         $pdfMaterials = $order['pdf_materials'] ?? ['mode' => 'steps', 'rows' => []];
         $pdfMode = $pdfMaterials['mode'] ?? 'steps';
         $pdfRows = $pdfMaterials['rows'] ?? [];
+        $pdfTotals = $pdfMaterials['totals'] ?? ['kg' => '0', 'grams' => '0'];
     @endphp
     <table style="margin-top: 8px;">
         <tr>
@@ -279,17 +280,10 @@
                 <th class="label text-center" style="width: 34%;">OBSERVACIONES</th>
                 <th class="label text-center" style="width: 15%;">AGREGADO</th>
             </tr>
-            @php
-                $totalKg = 0;
-                $totalGrams = 0;
-            @endphp
             @foreach($pdfRows as $row)
                 @php
-                    $qty = $row['planned_quantity'];
-                    $kg = $qty >= 1 ? $qty : 0;
-                    $grams = $qty < 1 ? $qty * 1000 : 0;
-                    $totalKg += $kg;
-                    $totalGrams += $grams;
+                    $kg = $row['display_kg'] ?? '0';
+                    $grams = $row['display_grams'] ?? '0';
                 @endphp
                 <tr>
                     <td class="text-center">{{ $row['raw_material_code'] }}</td>
@@ -303,8 +297,8 @@
             @endforeach
             <tr class="text-bold">
                 <td class="text-center label">TOTAL</td>
-                <td class="text-center">{{ number_format($totalKg, 2) }}</td>
-                <td class="text-center">{{ $totalGrams > 0 ? number_format($totalGrams, 0) : '0' }}</td>
+                <td class="text-center">{{ number_format((float) ($pdfTotals['kg'] ?? 0), 2) }}</td>
+                <td class="text-center">{{ (float) ($pdfTotals['grams'] ?? 0) > 0 ? number_format((float) $pdfTotals['grams'], 0) : '0' }}</td>
                 <td></td>
                 <td></td>
             </tr>
@@ -317,17 +311,10 @@
                 <th class="label text-center" style="width: 29%;">OBSERVACIONES</th>
                 <th class="label text-center" style="width: 15%;">AGREGADO</th>
             </tr>
-            @php
-                $totalKg = 0;
-                $totalGrams = 0;
-            @endphp
             @foreach($pdfRows as $row)
                 @php
-                    $qty = $row['planned_quantity'];
-                    $kg = $qty >= 1 ? $qty : 0;
-                    $grams = $qty < 1 ? $qty * 1000 : 0;
-                    $totalKg += $kg;
-                    $totalGrams += $grams;
+                    $kg = $row['display_kg'] ?? '0';
+                    $grams = $row['display_grams'] ?? '0';
                 @endphp
                 <tr>
                     <td class="text-center">{{ $row['step_order'] }}</td>
@@ -342,8 +329,8 @@
             @endforeach
             <tr class="text-bold">
                 <td class="text-center label" colspan="2">TOTAL</td>
-                <td class="text-center">{{ number_format($totalKg, 2) }}</td>
-                <td class="text-center">{{ $totalGrams > 0 ? number_format($totalGrams, 0) : '0' }}</td>
+                <td class="text-center">{{ number_format((float) ($pdfTotals['kg'] ?? 0), 2) }}</td>
+                <td class="text-center">{{ (float) ($pdfTotals['grams'] ?? 0) > 0 ? number_format((float) $pdfTotals['grams'], 0) : '0' }}</td>
                 <td colspan="2"></td>
             </tr>
         @endif
