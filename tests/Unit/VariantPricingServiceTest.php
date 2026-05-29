@@ -95,3 +95,167 @@ test('it updates variant cost without changing price when auto refresh is disabl
     expect((float) $variant->current_cost)->toBe(11.5);
     expect((float) $variant->current_price)->toBe(14.0);
 });
+
+test('it refreshes price when previous cost and current price are zero', function () {
+    $category = ProductCategory::create(['name' => 'Impermeabilizantes']);
+    $unit = UnitOfMeasure::create(['code' => 'GL0', 'name' => 'Galón cero', 'symbol' => 'gl']);
+
+    $product = Product::create([
+        'code' => 'P-PRICING-ZERO-01',
+        'name' => 'Producto Costo Cero',
+        'category_id' => $category->id,
+        'unit_of_measure_id' => $unit->id,
+        'current_cost' => 0,
+        'profit_margin' => 25,
+        'current_price' => 0,
+        'price_threshold' => 5,
+    ]);
+
+    $variant = ProductVariant::create([
+        'product_id' => $product->id,
+        'sku' => 'VAR-PRICE-ZERO-01',
+        'unit_of_measure_id' => $unit->id,
+        'presentation_value' => 1,
+        'current_cost' => 0,
+        'current_price' => 0,
+        'is_active' => true,
+    ]);
+
+    app(VariantPricingService::class)->updateVariantCostAndPrice(
+        variant: $variant,
+        bulkCost: 18.5,
+        profitMargin: 25,
+        priceThreshold: 5,
+        packageUnitCost: 0,
+        autoUpdatePrice: true,
+        forceRefresh: false,
+    );
+
+    $variant->refresh();
+
+    expect((float) $variant->current_cost)->toBe(18.5);
+    expect((float) $variant->current_price)->toBe(23.125);
+});
+
+test('it refreshes price when previous cost is zero and current price exists', function () {
+    $category = ProductCategory::create(['name' => 'Selladores']);
+    $unit = UnitOfMeasure::create(['code' => 'GL1', 'name' => 'Galón uno', 'symbol' => 'gl']);
+
+    $product = Product::create([
+        'code' => 'P-PRICING-ZERO-02',
+        'name' => 'Producto Sin Historial',
+        'category_id' => $category->id,
+        'unit_of_measure_id' => $unit->id,
+        'current_cost' => 0,
+        'profit_margin' => 20,
+        'current_price' => 12,
+        'price_threshold' => 50,
+    ]);
+
+    $variant = ProductVariant::create([
+        'product_id' => $product->id,
+        'sku' => 'VAR-PRICE-ZERO-02',
+        'unit_of_measure_id' => $unit->id,
+        'presentation_value' => 1,
+        'current_cost' => 0,
+        'current_price' => 12,
+        'is_active' => true,
+    ]);
+
+    app(VariantPricingService::class)->updateVariantCostAndPrice(
+        variant: $variant,
+        bulkCost: 18.5,
+        profitMargin: 20,
+        priceThreshold: 50,
+        packageUnitCost: 0,
+        autoUpdatePrice: true,
+        forceRefresh: false,
+    );
+
+    $variant->refresh();
+
+    expect((float) $variant->current_cost)->toBe(18.5);
+    expect((float) $variant->current_price)->toBe(22.2);
+});
+
+test('it refreshes price when current price is zero even below threshold', function () {
+    $category = ProductCategory::create(['name' => 'Esmaltes']);
+    $unit = UnitOfMeasure::create(['code' => 'GL2', 'name' => 'Galón dos', 'symbol' => 'gl']);
+
+    $product = Product::create([
+        'code' => 'P-PRICING-ZERO-03',
+        'name' => 'Producto Precio Cero',
+        'category_id' => $category->id,
+        'unit_of_measure_id' => $unit->id,
+        'current_cost' => 10,
+        'profit_margin' => 20,
+        'current_price' => 0,
+        'price_threshold' => 5,
+    ]);
+
+    $variant = ProductVariant::create([
+        'product_id' => $product->id,
+        'sku' => 'VAR-PRICE-ZERO-03',
+        'unit_of_measure_id' => $unit->id,
+        'presentation_value' => 1,
+        'current_cost' => 10,
+        'current_price' => 0,
+        'is_active' => true,
+    ]);
+
+    app(VariantPricingService::class)->updateVariantCostAndPrice(
+        variant: $variant,
+        bulkCost: 10.2,
+        profitMargin: 20,
+        priceThreshold: 5,
+        packageUnitCost: 0,
+        autoUpdatePrice: true,
+        forceRefresh: false,
+    );
+
+    $variant->refresh();
+
+    expect((float) $variant->current_cost)->toBe(10.2);
+    expect((float) $variant->current_price)->toBe(12.24);
+});
+
+test('it keeps valid price when cost variation is below threshold', function () {
+    $category = ProductCategory::create(['name' => 'Barnices']);
+    $unit = UnitOfMeasure::create(['code' => 'GL3', 'name' => 'Galón tres', 'symbol' => 'gl']);
+
+    $product = Product::create([
+        'code' => 'P-PRICING-THRESHOLD-01',
+        'name' => 'Producto Umbral',
+        'category_id' => $category->id,
+        'unit_of_measure_id' => $unit->id,
+        'current_cost' => 10,
+        'profit_margin' => 20,
+        'current_price' => 12,
+        'price_threshold' => 5,
+    ]);
+
+    $variant = ProductVariant::create([
+        'product_id' => $product->id,
+        'sku' => 'VAR-PRICE-THRESHOLD-01',
+        'unit_of_measure_id' => $unit->id,
+        'presentation_value' => 1,
+        'current_cost' => 10,
+        'current_price' => 12,
+        'is_active' => true,
+    ]);
+
+    app(VariantPricingService::class)->updateVariantCostAndPrice(
+        variant: $variant,
+        bulkCost: 10.2,
+        profitMargin: 20,
+        priceThreshold: 5,
+        packageUnitCost: 0,
+        autoUpdatePrice: true,
+        forceRefresh: false,
+    );
+
+    $variant->refresh();
+
+    expect((float) $variant->current_cost)->toBe(10.2);
+    expect((float) $variant->current_price)->toBe(12.0);
+});

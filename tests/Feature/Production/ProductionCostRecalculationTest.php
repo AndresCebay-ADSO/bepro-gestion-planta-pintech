@@ -146,6 +146,62 @@ test('it recalculates and stores production cost when a formula is created', fun
     expect((float) $variantFive->current_price)->toBe(218.75);
 });
 
+test('it refreshes product price when current price is zero and there is no previous cost', function () {
+    $this->product->update([
+        'current_cost' => 0,
+        'current_price' => 0,
+    ]);
+
+    $this->post(route('formulas.store'), [
+        'product_id' => $this->product->id,
+        'details' => [
+            [
+                'raw_material_id' => $this->rawMaterialOne->id,
+                'quantity' => 2,
+                'unit_of_measure_id' => $this->unit->id,
+            ],
+            [
+                'raw_material_id' => $this->rawMaterialTwo->id,
+                'quantity' => 3,
+                'unit_of_measure_id' => $this->unit->id,
+            ],
+        ],
+    ])->assertRedirect(route('formulas.index'));
+
+    $this->product->refresh();
+
+    expect((float) $this->product->current_cost)->toBe(35.0);
+    expect((float) $this->product->current_price)->toBe(43.75);
+});
+
+test('it refreshes product price when current price is negative', function () {
+    $this->product->update([
+        'current_cost' => 0,
+        'current_price' => -1,
+    ]);
+
+    $this->post(route('formulas.store'), [
+        'product_id' => $this->product->id,
+        'details' => [
+            [
+                'raw_material_id' => $this->rawMaterialOne->id,
+                'quantity' => 2,
+                'unit_of_measure_id' => $this->unit->id,
+            ],
+            [
+                'raw_material_id' => $this->rawMaterialTwo->id,
+                'quantity' => 3,
+                'unit_of_measure_id' => $this->unit->id,
+            ],
+        ],
+    ])->assertRedirect(route('formulas.index'));
+
+    $this->product->refresh();
+
+    expect((float) $this->product->current_cost)->toBe(35.0);
+    expect((float) $this->product->current_price)->toBe(43.75);
+});
+
 test('it recalculates production costs when a raw material price changes', function () {
     $variant = ProductVariant::create([
         'product_id' => $this->product->id,

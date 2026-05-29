@@ -65,6 +65,7 @@ class ProductionCostRecalculationService
 
                 $shouldUpdatePrice = $forcePriceRefresh
                     || $product->current_price === null
+                    || $this->calculator->cmp((string) $product->current_price, '0', 4) <= 0
                     || ($variationPercentage !== null && $this->calculator->cmp(
                         $this->calculator->abs($variationPercentage, 4),
                         $priceThreshold,

@@ -10,18 +10,14 @@ trait DeterminesPriceRefresh
 {
     private function shouldUpdatePriceFromCostChange(?string $currentPrice, ?string $previousCost, string $newCost, string $threshold): bool
     {
-        if ($currentPrice === null) {
-            return true;
-        }
-
-        if ($previousCost === null) {
-            return true;
-        }
-
         $calculator = app(DecimalCalculator::class);
 
-        if ($calculator->cmp($previousCost, '0', 4) <= 0) {
-            return false;
+        if ($currentPrice === null || $calculator->cmp($currentPrice, '0', 4) <= 0) {
+            return true;
+        }
+
+        if ($previousCost === null || $calculator->cmp($previousCost, '0', 4) <= 0) {
+            return true;
         }
 
         $difference = $calculator->sub($newCost, $previousCost, 4);
