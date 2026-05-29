@@ -49,6 +49,30 @@ npm run build        # Production build
 npm run build:ssr    # Build with SSR
 ```
 
+### Docker
+
+```bash
+# Development (loads docker-compose.override.yml automatically)
+docker compose up -d --build            # Build and start all services
+docker compose ps                       # Check service status
+docker compose logs -f app              # Follow app logs
+docker compose exec app bash            # Shell into app container
+docker compose down                     # Stop all services
+
+# Production / Staging (only docker-compose.yml, no override)
+docker compose -f docker-compose.yml up -d --build
+docker compose -f docker-compose.yml exec app php artisan migrate --force
+docker compose -f docker-compose.yml exec app php artisan config:cache
+docker compose -f docker-compose.yml exec app php artisan route:cache
+
+# Run artisan/pest inside Docker
+docker compose exec app php artisan <command>
+docker compose exec app ./vendor/bin/pest
+docker compose exec app ./vendor/bin/pint --dirty
+```
+
+> **Note**: Docker dev uses `target: development` (with Xdebug), prod uses `target: production` (optimized, no debug tools). The `docker-compose.override.yml` is loaded automatically in dev and adds bind-mounts, Vite dev server, and Xdebug.
+
 ## Architecture
 
 ### Tech Stack

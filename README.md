@@ -73,12 +73,68 @@ MAIL_FROM_NAME="Pintech OS"
 
 ## Requisitos
 
+### Opción A: Local (Homebrew / sistema)
+
 - PHP 8.3+ (con extensiones `pdo_pgsql`, `gd`, `zip` requeridas para BD y exportaciones)
 - Composer 2.x
 - Node.js 18+ o superior
 - PostgreSQL 16
 
-## Instalación Paso a Paso
+### Opción B: Docker (recomendado para equipos)
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (incluye Docker Compose)
+- Git
+
+> Con Docker no necesitas instalar PHP, Composer, Node ni PostgreSQL en tu máquina.
+
+## Instalación con Docker (recomendado)
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/AndresCebay-ADSO/bepro-gestion-planta-pintech.git
+cd bepro-gestion-planta-pintech
+
+# 2. Configurar variables de entorno
+cp .env.docker .env
+# Edita .env → Ajusta DB_PASSWORD y las variables de tu app Laravel
+
+# 3. Levantar todo (el entrypoint configura todo automáticamente)
+docker compose up -d --build
+
+# 4. Verificar que todo está corriendo
+docker compose ps
+
+# 5. (Primera vez) Ejecutar seeders
+docker compose exec app php artisan db:seed
+```
+
+**¿Qué pasa automáticamente?** Al levantar, el entrypoint de desarrollo:
+- Instala dependencias de Composer
+- Genera `APP_KEY` si falta
+- Ejecuta migraciones
+- Limpia caches
+- Inicia PHP-FPM con Xdebug activado
+
+**Servicios disponibles:**
+| Servicio | URL | Puerto |
+|----------|-----|--------|
+| App (Nginx) | http://localhost:8000 | 8000 |
+| Vite (HMR) | http://localhost:5173 | 5173 |
+| PostgreSQL | localhost | 5432 |
+
+**Comandos Docker frecuentes:**
+```bash
+docker compose exec app php artisan <comando>   # Ejecutar artisan
+docker compose exec app php artisan tinker       # Tinker
+docker compose exec app ./vendor/bin/pest        # Tests
+docker compose logs -f app                       # Ver logs
+docker compose down                              # Detener todo
+docker compose up -d --build                     # Rebuild
+```
+
+> **Nota:** Si tienes PostgreSQL local (Homebrew) corriendo en el puerto 5432, detenlo antes de usar Docker o cambia `DB_PORT` en tu `.env`.
+
+## Instalación sin Docker (manual)
 
 1. **Clonar el repositorio e instalar dependencias:**
    ```bash
@@ -117,13 +173,21 @@ MAIL_FROM_NAME="Pintech OS"
 
 ## Desarrollo local
 
-### Opcion recomendada
+### Con Docker (recomendado)
 
 ```bash
-composer dev
+docker compose up -d          # Levanta todo
+docker compose logs -f app    # Ver logs
+docker compose down           # Detener
 ```
 
-### Opcion manual
+### Sin Docker
+
+```bash
+composer dev                  # Opción rápida (levanta todo)
+```
+
+O manualmente:
 
 ```bash
 # Terminal 1
