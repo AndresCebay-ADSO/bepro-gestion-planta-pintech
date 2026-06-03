@@ -9,8 +9,8 @@
     ],
     "license": "MIT",
     "require": {
-        "ext-bcmath": "*",
         "php": "^8.3",
+        "ext-bcmath": "*",
         "barryvdh/laravel-dompdf": "^3.1",
         "endroid/qr-code": "^6.0",
         "inertiajs/inertia-laravel": "^3.0",
@@ -21,6 +21,7 @@
         "maatwebsite/excel": "^3.1",
         "spatie/laravel-activitylog": "^4.0",
         "spatie/laravel-permission": "^7.2",
+        "symfony/filesystem": "^7.4 || ^8.0",
         "tightenco/ziggy": "^2.6"
     },
     "require-dev": {
