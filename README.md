@@ -95,17 +95,17 @@ git clone https://github.com/AndresCebay-ADSO/bepro-gestion-planta-pintech.git
 cd bepro-gestion-planta-pintech
 
 # 2. Configurar variables de entorno
-cp .env.docker .env
+cp .env.example .env
 # Edita .env → Ajusta DB_PASSWORD y las variables de tu app Laravel
 
 # 3. Levantar todo (el entrypoint configura todo automáticamente)
-docker compose up -d --build
+docker compose -f compose.dev.yaml up -d --build
 
 # 4. Verificar que todo está corriendo
-docker compose ps
+docker compose -f compose.dev.yaml ps
 
 # 5. (Primera vez) Ejecutar seeders
-docker compose exec app php artisan db:seed
+docker compose -f compose.dev.yaml exec php-fpm php artisan db:seed
 ```
 
 **¿Qué pasa automáticamente?** Al levantar, el entrypoint de desarrollo:
@@ -124,12 +124,12 @@ docker compose exec app php artisan db:seed
 
 **Comandos Docker frecuentes:**
 ```bash
-docker compose exec app php artisan <comando>   # Ejecutar artisan
-docker compose exec app php artisan tinker       # Tinker
-docker compose exec app ./vendor/bin/pest        # Tests
-docker compose logs -f app                       # Ver logs
-docker compose down                              # Detener todo
-docker compose up -d --build                     # Rebuild
+docker compose -f compose.dev.yaml exec php-fpm php artisan <comando>  # Ejecutar artisan
+docker compose -f compose.dev.yaml exec php-fpm php artisan tinker      # Tinker
+docker compose -f compose.dev.yaml exec php-fpm ./vendor/bin/pest       # Tests
+docker compose -f compose.dev.yaml logs -f web php-fpm                  # Ver logs
+docker compose -f compose.dev.yaml down                                 # Detener todo
+docker compose -f compose.dev.yaml up -d --build                        # Rebuild
 ```
 
 > **Nota:** Si tienes PostgreSQL local (Homebrew) corriendo en el puerto 5432, detenlo antes de usar Docker o cambia `DB_PORT` en tu `.env`.
@@ -176,9 +176,9 @@ docker compose up -d --build                     # Rebuild
 ### Con Docker (recomendado)
 
 ```bash
-docker compose up -d          # Levanta todo
-docker compose logs -f app    # Ver logs
-docker compose down           # Detener
+docker compose -f compose.dev.yaml up -d          # Levanta todo
+docker compose -f compose.dev.yaml logs -f        # Ver logs
+docker compose -f compose.dev.yaml down           # Detener
 ```
 
 ### Sin Docker
