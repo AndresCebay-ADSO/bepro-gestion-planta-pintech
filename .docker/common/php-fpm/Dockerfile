@@ -55,8 +55,8 @@ WORKDIR /var/www
 COPY . /var/www
 
 # Install Composer and dependencies
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
+COPY --from=composer:2.9 --link /usr/bin/composer /usr/local/bin/composer
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
 
 RUN php artisan route:clear \
     && npm ci --ignore-scripts=false \
@@ -77,12 +77,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfreetype6-dev \
     libfcgi-bin \
     procps \
+    gosu \
     && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Download and install php-fpm health check script
-RUN curl -o /usr/local/bin/php-fpm-healthcheck \
-    https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
-    && chmod +x /usr/local/bin/php-fpm-healthcheck
+# Copy php-fpm health check script locally
+COPY ./.docker/common/php-fpm/php-fpm-healthcheck /usr/local/bin/php-fpm-healthcheck
+RUN chmod +x /usr/local/bin/php-fpm-healthcheck
 
 # Copy the initialization script
 COPY ./.docker/production/php-fpm/entrypoint.sh /usr/local/bin/entrypoint.sh
@@ -118,9 +118,6 @@ WORKDIR /var/www
 
 # Ensure correct permissions
 RUN chown -R www-data:www-data /var/www
-
-# Switch to the non-privileged user to run the application
-USER www-data
 
 # Change the default command to run the entrypoint script
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
@@ -187,6 +184,9 @@ WORKDIR /var/www
 # Copy the entrypoint script
 COPY ./.docker/development/php-fpm/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Ensure writable directories are owned by the dev user
+RUN chown -R www:www /var/www
 
 # Switch back to the non-privileged user to run the application
 USER www

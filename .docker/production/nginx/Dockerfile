@@ -33,8 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- \
-    --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:2.9 --link /usr/bin/composer /usr/local/bin/composer
 
 # Copy Laravel application code
 COPY . /var/www

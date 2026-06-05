@@ -54,7 +54,7 @@ services:
   queue:
     image: pintech-os-php-fpm:production
     restart: unless-stopped
-    command: php artisan queue:work --sleep=3 --tries=3 --timeout=90
+    command: php artisan queue:work --sleep=3 --tries=3 --timeout=60
     volumes:
       - laravel-storage-production:/var/www/storage
     env_file:

@@ -26,8 +26,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bcmath \
     && pecl install redis \
     && docker-php-ext-enable redis \
-    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
     && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Install Composer
+COPY --from=composer:2.9 --link /usr/bin/composer /usr/local/bin/composer
 
 # Use ARG to define environment variables passed from the Docker build command or Docker Compose.
 ARG XDEBUG_ENABLED
