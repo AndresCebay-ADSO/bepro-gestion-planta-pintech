@@ -1,3 +1,6 @@
+ARG NODE_VERSION=22.13.0
+FROM node:${NODE_VERSION}-bookworm-slim AS node_base
+
 # Stage 1: Build assets
 # -----------------------------------------------------------
 # PHP + Composer are needed here because the Wayfinder Vite plugin
@@ -7,8 +10,7 @@
 # -----------------------------------------------------------
 FROM php:8.3-cli AS builder
 
-ARG NODE_VERSION=22.13.0
-COPY --from=node:${NODE_VERSION}-bookworm-slim /usr/local/ /usr/local/
+COPY --from=node_base /usr/local/ /usr/local/
 
 # Set working directory
 WORKDIR /var/www

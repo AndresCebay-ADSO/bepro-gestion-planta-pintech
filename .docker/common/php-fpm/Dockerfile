@@ -1,3 +1,6 @@
+ARG NODE_VERSION=22.13.0
+FROM node:${NODE_VERSION}-bookworm-slim AS node_base
+
 # Stage 1: Build environment and Composer dependencies
 FROM php:8.3-fpm AS builder
 
@@ -6,8 +9,7 @@ FROM php:8.3-fpm AS builder
 # Node.js is copied in this stage so PHP-FPM has the same Vite manifest as Nginx.
 # && pecl install redis \
 # && docker-php-ext-enable redis \
-ARG NODE_VERSION=22.13.0
-COPY --from=node:${NODE_VERSION}-bookworm-slim /usr/local/ /usr/local/
+COPY --from=node_base /usr/local/ /usr/local/
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
