@@ -104,15 +104,14 @@ docker compose -f compose.dev.yaml up -d --build
 # 4. Verificar que todo está corriendo
 docker compose -f compose.dev.yaml ps
 
-# 5. (Primera vez) Ejecutar seeders
+# 5. (Primera vez) Generar key, migrar y seedear
+docker compose -f compose.dev.yaml exec php-fpm php artisan key:generate
+docker compose -f compose.dev.yaml exec php-fpm php artisan migrate
 docker compose -f compose.dev.yaml exec php-fpm php artisan db:seed
 ```
 
 **¿Qué pasa automáticamente?** Al levantar, el entrypoint de desarrollo:
-- Instala dependencias de Composer
-- Genera `APP_KEY` si falta
-- Ejecuta migraciones
-- Limpia caches
+- Limpia caches y enlaza storage
 - Inicia PHP-FPM con Xdebug activado
 
 **Servicios disponibles:**

@@ -83,8 +83,8 @@ services:
     image: postgres:16
     restart: unless-stopped
     user: postgres
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+    # No port exposed to host — only accessible via Docker internal network
+    # php-fpm, queue and scheduler connect using service name "postgres"
     environment:
       - POSTGRES_DB=${DB_DATABASE:-pintech_erp}
       - POSTGRES_USER=${DB_USERNAME:-postgres}

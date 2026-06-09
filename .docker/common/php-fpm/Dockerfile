@@ -6,7 +6,8 @@ FROM php:8.3-fpm AS builder
 # Node.js is copied in this stage so PHP-FPM has the same Vite manifest as Nginx.
 # && pecl install redis \
 # && docker-php-ext-enable redis \
-COPY --from=node:22.13.0-bookworm-slim /usr/local/ /usr/local/
+ARG NODE_VERSION=22.13.0
+COPY --from=node:${NODE_VERSION}-bookworm-slim /usr/local/ /usr/local/
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
@@ -155,8 +156,8 @@ RUN if [ "${XDEBUG_ENABLED}" = "true" ]; then \
     echo "xdebug.idekey=${XDEBUG_IDE_KEY}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
     echo "xdebug.log=${XDEBUG_LOG}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
     echo "xdebug.log_level=${XDEBUG_LOG_LEVEL}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
-    echo "xdebug.client_host=${XDEBUG_HOST}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini ; \
-    echo "xdebug.start_with_request=yes" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini ; \
+    echo "xdebug.client_host=${XDEBUG_HOST}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
+    echo "xdebug.start_with_request=yes" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 fi
 
 # Add ARGs for syncing permissions

@@ -8,6 +8,8 @@ ARG GID=1000
 ARG NODE_VERSION=22.13.0
 
 # Install system dependencies and build libraries
+# && pecl install redis \
+# && docker-php-ext-enable redis \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     unzip \
@@ -24,8 +26,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     intl \
     zip \
     bcmath \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
     && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install Composer
@@ -47,8 +47,8 @@ RUN if [ "${XDEBUG_ENABLED}" = "true" ]; then \
     echo "xdebug.idekey=${XDEBUG_IDE_KEY}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
     echo "xdebug.log=${XDEBUG_LOG}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
     echo "xdebug.log_level=${XDEBUG_LOG_LEVEL}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
-    echo "xdebug.client_host=${XDEBUG_HOST}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini ; \
-    echo "xdebug.start_with_request=yes" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini ; \
+    echo "xdebug.client_host=${XDEBUG_HOST}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
+    echo "xdebug.start_with_request=yes" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 fi
 
 # If the group already exists, use it; otherwise, create the 'www' group
