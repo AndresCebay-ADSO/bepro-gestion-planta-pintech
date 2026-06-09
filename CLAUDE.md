@@ -49,6 +49,31 @@ npm run build        # Production build
 npm run build:ssr    # Build with SSR
 ```
 
+### Docker
+
+```bash
+# Development (uses compose.dev.yaml)
+docker compose -f compose.dev.yaml up -d --build            # Build and start all services
+docker compose -f compose.dev.yaml ps                       # Check service status
+docker compose -f compose.dev.yaml logs -f php-fpm          # Follow PHP logs
+docker compose -f compose.dev.yaml exec php-fpm bash        # Shell into PHP container
+docker compose -f compose.dev.yaml exec workspace bash      # Shell into Node/CLI container
+docker compose -f compose.dev.yaml down                     # Stop all services
+
+# Production / Staging (uses compose.prod.yaml)
+docker compose -f compose.prod.yaml up -d --build
+docker compose -f compose.prod.yaml exec php-fpm php artisan migrate --force
+docker compose -f compose.prod.yaml exec php-fpm php artisan config:cache
+docker compose -f compose.prod.yaml exec php-fpm php artisan route:cache
+
+# Run artisan/pest inside Docker (Development)
+docker compose -f compose.dev.yaml exec php-fpm php artisan <command>
+docker compose -f compose.dev.yaml exec php-fpm ./vendor/bin/pest
+docker compose -f compose.dev.yaml exec php-fpm ./vendor/bin/pint --dirty
+```
+
+> **Note**: Docker dev uses `compose.dev.yaml` (`target: development`, Xdebug enabled, dynamic permissions). Prod uses `compose.prod.yaml` (`target: production`, optimized, no debug tools, uses `gosu` for privilege dropping and graceful queue shutdown).
+
 ## Architecture
 
 ### Tech Stack

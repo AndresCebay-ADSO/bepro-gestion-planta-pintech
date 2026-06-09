@@ -1,0 +1,43 @@
+.git
+node_modules
+.env
+.vite
+vendor
+public/hot
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+*.md
+
+# User uploaded files - sensitive data, not for Docker images
+storage/app/**
+
+# Test and CI files - not needed in production images
+tests/
+.github/
+coverage/
+.phpunit.*
+phpunit.xml
+
+# Documentation and assets
+docs/
+imagenes/
+
+# AI agent configs
+.agents/
+.claude/
+.codex/
+.cursor/
+
+# Dev IDE/editor configs
+.vscode/
+.idea/
+.editorconfig
+.prettierignore
+.prettierrc
+eslint.config.js
+
+# Docker compose orchestration files
+compose.dev.yaml
+compose.prod.yaml

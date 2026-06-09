@@ -28,6 +28,11 @@ jobs:
         with:
           php-version: '8.3'
 
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.13.0'
+
       - name: Install Dependencies
         run: |
           composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
