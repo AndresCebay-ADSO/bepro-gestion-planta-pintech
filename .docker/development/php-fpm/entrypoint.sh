@@ -17,5 +17,8 @@ mkdir -p \
 
 php artisan storage:link --relative --force
 
+# Run pending migrations (idempotent — only runs new ones)
+php artisan migrate --force
+
 # Run the default command (e.g., php-fpm or bash)
 exec "$@"

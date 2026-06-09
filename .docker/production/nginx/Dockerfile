@@ -7,7 +7,8 @@
 # -----------------------------------------------------------
 FROM php:8.3-cli AS builder
 
-COPY --from=node:22.13.0-bookworm-slim /usr/local/ /usr/local/
+ARG NODE_VERSION=22.13.0
+COPY --from=node:${NODE_VERSION}-bookworm-slim /usr/local/ /usr/local/
 
 # Set working directory
 WORKDIR /var/www

@@ -96,7 +96,7 @@ cd bepro-gestion-planta-pintech
 
 # 2. Configurar variables de entorno
 cp .env.example .env
-# Edita .env → Ajusta DB_PASSWORD y las variables de tu app Laravel
+# Edita .env → Ajusta DB_PASSWORD y las variables de tu app Laravel como APP_KEY
 
 # 3. Levantar todo (el entrypoint configura todo automáticamente)
 docker compose -f compose.dev.yaml up -d --build
@@ -109,10 +109,8 @@ docker compose -f compose.dev.yaml exec php-fpm php artisan db:seed
 ```
 
 **¿Qué pasa automáticamente?** Al levantar, el entrypoint de desarrollo:
-- Instala dependencias de Composer
-- Genera `APP_KEY` si falta
 - Ejecuta migraciones
-- Limpia caches
+- Limpia caches y enlaza storage
 - Inicia PHP-FPM con Xdebug activado
 
 **Servicios disponibles:**

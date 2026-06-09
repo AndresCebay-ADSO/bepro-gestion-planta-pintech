@@ -29,6 +29,8 @@ if [ "$(id -u)" = "0" ]; then
   # Cache configurations as www-data
   gosu www-data php artisan config:cache
   gosu www-data php artisan route:cache
+  gosu www-data php artisan view:cache
+  gosu www-data php artisan event:cache
   gosu www-data php artisan storage:link --relative --force
 
   # Drop privileges and run the default command (e.g., php-fpm, queue:work)
@@ -42,6 +44,8 @@ else
 
   php artisan config:cache
   php artisan route:cache
+  php artisan view:cache
+  php artisan event:cache
   php artisan storage:link --relative --force
 
   exec "$@"
