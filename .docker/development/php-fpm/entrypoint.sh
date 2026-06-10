@@ -3,9 +3,10 @@ set -e
 
 # Automatically generate APP_KEY if missing or empty
 if [ -z "${APP_KEY:-}" ]; then
-  echo "Generating APP_KEY..."
   php artisan key:generate --force
 fi
+export APP_KEY=$(grep '^APP_KEY=' /var/www/.env | cut -d= -f2-)
+exec "$@"
 
 # Clear configurations to avoid caching issues in development
 echo "Clearing configurations..."
