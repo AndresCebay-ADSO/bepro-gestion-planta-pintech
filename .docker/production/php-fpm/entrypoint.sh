@@ -7,7 +7,6 @@ if [ "$(id -u)" = "0" ]; then
   if [ ! "$(ls -A /var/www/storage)" ]; then
     echo "Initializing storage directory..."
     cp -R /var/www/storage-init/. /var/www/storage
-    chown -R www-data:www-data /var/www/storage
   fi
 
   mkdir -p \
@@ -17,6 +16,8 @@ if [ "$(id -u)" = "0" ]; then
     /var/www/storage/framework/sessions \
     /var/www/storage/framework/views \
     /var/www/storage/logs
+
+  chown -R www-data:www-data /var/www/storage
 
   # Remove storage-init directory
   rm -rf /var/www/storage-init
