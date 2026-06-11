@@ -6,6 +6,7 @@ use App\Enums\AlertSeverity;
 use App\Enums\AlertType;
 use Database\Factories\AlertFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -53,6 +54,14 @@ class Alert extends Model
             'is_resolved' => 'boolean',
             'resolved_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @param  Builder<Alert>  $query
+     */
+    public function scopeUnresolved(Builder $query): void
+    {
+        $query->where('is_resolved', false);
     }
 
     public function rawMaterial(): BelongsTo
