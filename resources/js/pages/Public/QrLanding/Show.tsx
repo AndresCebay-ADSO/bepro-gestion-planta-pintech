@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
-import { Download, FileText, FileBadge, FileWarning, ShieldCheck, Mail, Globe, MessageCircle } from 'lucide-react';
+import { FileText, FileBadge, FileWarning, ShieldCheck, Mail, Globe, MessageCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 type Product = {
     name: string;
@@ -216,6 +216,7 @@ export default function PublicQrLandingShow({
                             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                                 {documents.map((document) => {
                                     const docStyle = getDocTypeStyles(document.type);
+
                                     return (
                                         <div
                                             key={`${document.type}-${document.id}`}
