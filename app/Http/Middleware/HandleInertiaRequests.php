@@ -2,13 +2,17 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\AlertService;
 use App\Services\WarehouseContextService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    public function __construct(private readonly WarehouseContextService $warehouseContextService) {}
+    public function __construct(
+        private readonly WarehouseContextService $warehouseContextService,
+        private readonly AlertService $alertService,
+    ) {}
 
     /**
      * The root template that's loaded on the first page visit.
@@ -80,10 +84,18 @@ class HandleInertiaRequests extends Middleware
             ],
             'flash' => [
                 'message' => $request->session()->get('message'),
+                'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
+                'new_alerts' => $request->session()->pull('new_alerts', []),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'warehouseContext' => $warehouseContext,
+            'unresolvedAlertsCount' => $user?->hasAnyRole(['admin', 'produccion'])
+                ? $this->alertService->unresolvedCount()
+                : 0,
+            'recentAlerts' => $user?->hasAnyRole(['admin', 'produccion'])
+                ? $this->alertService->recentUnresolved(5)
+                : [],
         ];
     }
 }

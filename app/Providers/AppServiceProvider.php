@@ -3,12 +3,14 @@
 namespace App\Providers;
 
 use App\Listeners\LogFailedLoginAttempt;
+use App\Models\Alert;
 use App\Models\Formula;
 use App\Models\PriceList;
 use App\Models\ProductionOrder;
 use App\Models\RawMaterial;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Policies\AlertPolicy;
 use App\Policies\FormulaPolicy;
 use App\Policies\PriceListPolicy;
 use App\Policies\ProductionOrderPolicy;
@@ -75,6 +77,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Date::use(CarbonImmutable::class);
 
+        Gate::policy(Alert::class, AlertPolicy::class);
         Gate::policy(Formula::class, FormulaPolicy::class);
         Gate::policy(PriceList::class, PriceListPolicy::class);
         Gate::policy(ProductionOrder::class, ProductionOrderPolicy::class);

@@ -2,6 +2,7 @@ import { AppContent } from '@/components/app-content';
 import { AppShell } from '@/components/app-shell';
 import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
+import { AlertToastNotifier } from '@/components/alert-toast-notifier';
 import { FlashMessages } from '@/components/flash-messages';
 import type { AppLayoutProps } from '@/types';
 
@@ -19,6 +20,7 @@ export default function AppSidebarLayout({
                 </div>
                 {children}
             </AppContent>
+            <AlertToastNotifier />
         </AppShell>
     );
 }

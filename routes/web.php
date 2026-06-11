@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AlertController;
 use App\Http\Controllers\ComercialController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormulaController;
@@ -61,6 +62,12 @@ Route::middleware(['auth', 'verified', 'role:comercial'])->group(function () {
     Route::get('/availability', [ComercialController::class, 'index'])->name('availability.index');
     // Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     // Route::get('/quotes', [QuoteController::class, 'index'])->name('quotes.index');
+});
+
+// ADMIN + PRODUCCIÓN: Alertas del sistema
+Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
+    Route::get('alerts', [AlertController::class, 'index'])->name('alerts.index');
+    Route::patch('alerts/{alert}/resolve', [AlertController::class, 'resolve'])->name('alerts.resolve');
 });
 
 // ADMIN + PRODUCCIÓN: Consulta detallada de materias primas

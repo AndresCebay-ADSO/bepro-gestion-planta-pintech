@@ -10,12 +10,14 @@ export function FlashMessages() {
     );
 
     // Derivamos el mensaje directamente del prop (Single Source of Truth)
-    const currentFlash = flash.message || flash.error || null;
+    const currentFlash = flash.message || flash.success || flash.error || null;
     const message = flash.message
         ? { type: 'success' as const, text: flash.message }
-        : flash.error
-          ? { type: 'error' as const, text: flash.error }
-          : null;
+        : flash.success
+          ? { type: 'success' as const, text: flash.success }
+          : flash.error
+            ? { type: 'error' as const, text: flash.error }
+            : null;
 
     // Si el mensaje actual es el mismo que el usuario ya cerró, no mostramos nada
     if (!message || dismissedMessage === currentFlash) {

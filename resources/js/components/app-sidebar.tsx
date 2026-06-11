@@ -25,6 +25,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { index as alertsIndex } from '@/routes/alerts';
 import { dashboard } from '@/routes';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import { index as formulasIndex } from '@/routes/formulas';
@@ -122,13 +123,10 @@ const navigationGroups: NavGroup[] = [
         items: [
             {
                 title: 'Alertas',
-                href: '/alerts',
+                href: alertsIndex().url,
                 icon: BellRing,
-                badge: 3,
                 allowedRoles: ['admin', 'produccion'],
                 unauthorizedBehavior: 'disable',
-                disabled: true,
-                disabledLabel: 'Módulo en desarrollo',
             },
             {
                 title: 'Códigos QR',
@@ -255,9 +253,26 @@ function buildSidebarGroups(userRoles: UserRole[]): NavGroup[] {
 }
 
 export function AppSidebar() {
-    const { auth } = usePage().props;
+    const { auth, unresolvedAlertsCount = 0 } = usePage<{
+        unresolvedAlertsCount?: number;
+    }>().props;
     const userRoles = extractUserRoles(auth.user);
-    const filteredGroups = buildSidebarGroups(userRoles);
+    const filteredGroups = buildSidebarGroups(userRoles).map((group) => ({
+        ...group,
+        items: group.items.map((item) => {
+            if (item.title !== 'Alertas') {
+                return item;
+            }
+
+            return {
+                ...item,
+                badge:
+                    unresolvedAlertsCount > 0
+                        ? unresolvedAlertsCount
+                        : undefined,
+            };
+        }),
+    }));
 
     return (
         <Sidebar collapsible="icon" variant="inset">
