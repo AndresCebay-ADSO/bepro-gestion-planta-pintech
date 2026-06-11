@@ -121,6 +121,15 @@ services:
   #     timeout: 5s
   #     retries: 3
 
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - laravel-production
+    depends_on:
+      - web
+
 networks:
   # Attach the service to the 'laravel' network.
   # -----------------------------------------------------------
