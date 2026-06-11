@@ -14,7 +14,8 @@ use Illuminate\Validation\ValidationException;
 class InventoryService
 {
     public function __construct(
-        private readonly DecimalCalculator $calculator
+        private readonly DecimalCalculator $calculator,
+        private readonly AlertService $alertService,
     ) {}
 
     public function storeMovement(array $data, int $userId): InventoryMovement
@@ -62,7 +63,9 @@ class InventoryService
 
             $movement = InventoryMovement::create($movementData);
 
-            $this->dispatchReferencePriceAndDependentCosts((int) $movementData['raw_material_id']);
+            $rawMaterialId = (int) $movementData['raw_material_id'];
+            $this->dispatchReferencePriceAndDependentCosts($rawMaterialId);
+            $this->evaluateAlertsAfterMovement($rawMaterialId, $batchId);
 
             return $movement;
         });
@@ -140,7 +143,14 @@ class InventoryService
             $updatedRawMaterialId = (int) $movementData['raw_material_id'];
             collect([$previousRawMaterialId, $updatedRawMaterialId])
                 ->unique()
-                ->each(fn (int $rawMaterialId) => $this->dispatchReferencePriceAndDependentCosts($rawMaterialId));
+                ->each(function (int $rawMaterialId) use ($batchId, $previousBatchId): void {
+                    $this->dispatchReferencePriceAndDependentCosts($rawMaterialId);
+                    $this->evaluateAlertsAfterMovement($rawMaterialId, $batchId);
+
+                    if ($previousBatchId !== null && (int) $previousBatchId !== (int) ($batchId ?? 0)) {
+                        $this->alertService->evaluateBatchExpiry((int) $previousBatchId);
+                    }
+                });
 
             return $movement->refresh();
         });
@@ -162,7 +172,17 @@ class InventoryService
             $this->deleteBatchIfOrphaned($movement->batch_id);
 
             $this->dispatchReferencePriceAndDependentCosts($rawMaterialId);
+            $this->evaluateAlertsAfterMovement($rawMaterialId, $movement->batch_id);
         });
+    }
+
+    private function evaluateAlertsAfterMovement(int $rawMaterialId, int|string|null $batchId): void
+    {
+        $this->alertService->evaluateLowStock($rawMaterialId);
+
+        if ($batchId !== null && $batchId !== '') {
+            $this->alertService->evaluateBatchExpiry((int) $batchId);
+        }
     }
 
     private function dispatchReferencePriceAndDependentCosts(int $rawMaterialId): void

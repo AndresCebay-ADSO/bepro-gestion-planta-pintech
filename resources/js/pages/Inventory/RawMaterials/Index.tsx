@@ -1,5 +1,7 @@
 import { Head, useForm, Link, router, usePage } from '@inertiajs/react';
+import { BellRing } from 'lucide-react';
 import type { FormEvent } from 'react';
+import { index as alertsIndex } from '@/routes/alerts';
 
 import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
 
@@ -21,6 +23,8 @@ type RawMaterialRow = {
     minimum_stock: string;
     available_stock: string | number;
     alert_days_before_expiry: number;
+    active_alerts_count: number;
+    has_critical_alert: boolean;
     is_active: boolean;
     unit_of_measure: { id: number; name: string; symbol: string } | null;
     can: {
@@ -187,6 +191,9 @@ export default function RawMaterialsIndex({
                                     Stock Disponible
                                 </th>
                                 <th className="p-3 text-center font-medium">
+                                    Alertas
+                                </th>
+                                <th className="p-3 text-center font-medium">
                                     Estado
                                 </th>
                                 <th className="p-3 text-right font-medium">
@@ -226,6 +233,27 @@ export default function RawMaterialsIndex({
                                             value={item.available_stock}
                                             maxDecimals={2}
                                         />
+                                    </td>
+
+                                    <td className="p-3 text-center">
+                                        {item.active_alerts_count > 0 ? (
+                                            <Link
+                                                href={`${alertsIndex().url}?status=active`}
+                                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                                                    item.has_critical_alert
+                                                        ? 'bg-red-500/15 text-red-700 dark:text-red-300'
+                                                        : 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
+                                                }`}
+                                                title="Ver alertas activas"
+                                            >
+                                                <BellRing className="h-3.5 w-3.5" />
+                                                {item.active_alerts_count}
+                                            </Link>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground">
+                                                —
+                                            </span>
+                                        )}
                                     </td>
 
                                     <td className="p-3 text-center">
@@ -292,7 +320,7 @@ export default function RawMaterialsIndex({
                             {rawMaterials.data.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={can.view_costs ? 6 : 5}
+                                        colSpan={can.view_costs ? 7 : 6}
                                         className="p-10 text-center text-sm text-muted-foreground"
                                     >
                                         No se encontraron materias primas.

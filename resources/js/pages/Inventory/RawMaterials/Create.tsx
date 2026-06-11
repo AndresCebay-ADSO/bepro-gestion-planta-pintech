@@ -28,6 +28,7 @@ type RawMaterialFormData = {
     previous_price: string;
     minimum_stock: string;
     alert_days_before_expiry: string;
+    price_variation_threshold: string;
     is_active: boolean;
 };
 
@@ -40,6 +41,7 @@ export default function RawMaterialsCreate({ categories, units }: Props) {
         previous_price: '',
         minimum_stock: '0',
         alert_days_before_expiry: '30',
+        price_variation_threshold: '',
         is_active: true,
     });
 
@@ -52,6 +54,10 @@ export default function RawMaterialsCreate({ categories, units }: Props) {
                 data.current_price === '' ? null : data.current_price,
             previous_price:
                 data.previous_price === '' ? null : data.previous_price,
+            price_variation_threshold:
+                data.price_variation_threshold === ''
+                    ? null
+                    : data.price_variation_threshold,
         }));
 
         form.post(route('raw-materials.store'));

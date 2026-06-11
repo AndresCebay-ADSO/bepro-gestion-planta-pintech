@@ -24,6 +24,7 @@ type RawMaterial = {
     previous_price: string | null;
     minimum_stock: string;
     alert_days_before_expiry: number;
+    price_variation_threshold: string | null;
     is_active: boolean;
 };
 
@@ -41,6 +42,7 @@ type RawMaterialFormData = {
     previous_price: string;
     minimum_stock: string;
     alert_days_before_expiry: string;
+    price_variation_threshold: string;
     is_active: boolean;
 };
 
@@ -67,6 +69,9 @@ export default function RawMaterialsEdit({
         previous_price: trimZeroes(rawMaterial.previous_price),
         minimum_stock: trimZeroes(rawMaterial.minimum_stock),
         alert_days_before_expiry: String(rawMaterial.alert_days_before_expiry),
+        price_variation_threshold: trimZeroes(
+            rawMaterial.price_variation_threshold,
+        ),
         is_active: rawMaterial.is_active,
     });
 
@@ -78,6 +83,10 @@ export default function RawMaterialsEdit({
                 data.current_price === '' ? null : data.current_price,
             previous_price:
                 data.previous_price === '' ? null : data.previous_price,
+            price_variation_threshold:
+                data.price_variation_threshold === ''
+                    ? null
+                    : data.price_variation_threshold,
         }));
 
         form.put(route('raw-materials.update', rawMaterial.id));

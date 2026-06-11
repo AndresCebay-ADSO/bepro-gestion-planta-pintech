@@ -38,6 +38,7 @@ type RawMaterialFormData = {
     previous_price: string;
     minimum_stock: string;
     alert_days_before_expiry: string;
+    price_variation_threshold: string;
     is_active: boolean;
 };
 
@@ -343,6 +344,34 @@ export function RawMaterialForm({
                         />
                         <InputError
                             message={form.errors.alert_days_before_expiry}
+                        />
+                    </div>
+
+                    <div className="grid min-w-0 gap-2">
+                        <Label htmlFor="price_variation_threshold">
+                            Umbral de alerta por variación de precio (%)
+                        </Label>
+                        <Input
+                            id="price_variation_threshold"
+                            type="text"
+                            inputMode="decimal"
+                            maxLength={6}
+                            value={form.data.price_variation_threshold}
+                            onChange={(event) =>
+                                form.setData(
+                                    'price_variation_threshold',
+                                    sanitizeDecimalInput(event.target.value),
+                                )
+                            }
+                            className="w-full min-w-0"
+                            placeholder="Vacío = sin alerta"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Solo las materias primas con umbral configurado
+                            generan alertas de variación de precio.
+                        </p>
+                        <InputError
+                            message={form.errors.price_variation_threshold}
                         />
                     </div>
                 </div>

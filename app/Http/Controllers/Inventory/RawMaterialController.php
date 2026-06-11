@@ -8,6 +8,7 @@ use App\Http\Requests\RawMaterials\UpdateRawMaterialRequest;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
+use App\Services\AlertService;
 use App\Services\ProductionCostRecalculationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,8 @@ use Inertia\Response;
 class RawMaterialController extends Controller
 {
     public function __construct(
-        private readonly ProductionCostRecalculationService $productionCostRecalculationService
+        private readonly ProductionCostRecalculationService $productionCostRecalculationService,
+        private readonly AlertService $alertService,
     ) {}
 
     public function index(Request $request): Response
@@ -34,6 +36,10 @@ class RawMaterialController extends Controller
         $rawMaterials = RawMaterial::query()
             ->with(['category:id,name', 'unitOfMeasure:id,name,symbol'])
             ->withSum('inventoryBatches as available_stock', 'remaining_quantity')
+            ->withCount(['alerts as active_alerts_count' => fn ($query) => $query->where('is_resolved', false)])
+            ->withExists(['alerts as has_critical_alert' => fn ($query) => $query
+                ->where('is_resolved', false)
+                ->where('severity', 'alta')])
             ->when($status === '' || $status === 'active', fn ($query) => $query->active())
             ->when($status === 'inactive', fn ($query) => $query->where('is_active', false))
             ->when($search !== '', fn ($query) => $query->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"]))
@@ -50,6 +56,8 @@ class RawMaterialController extends Controller
                     'minimum_stock' => $rawMaterial->minimum_stock,
                     'available_stock' => $rawMaterial->available_stock ?? 0,
                     'alert_days_before_expiry' => $rawMaterial->alert_days_before_expiry,
+                    'active_alerts_count' => (int) ($rawMaterial->active_alerts_count ?? 0),
+                    'has_critical_alert' => (bool) ($rawMaterial->has_critical_alert ?? false),
                     'is_active' => $rawMaterial->is_active,
                     'category' => $rawMaterial->category ? [
                         'id' => $rawMaterial->category->id,
@@ -176,6 +184,10 @@ class RawMaterialController extends Controller
                 )
             );
 
+        $previousPriceForAlert = $rawMaterial->current_price !== null
+            ? (string) $rawMaterial->current_price
+            : null;
+
         if ($currentPriceChanged && ! array_key_exists('previous_price', $validated)) {
             $validated['previous_price'] = $rawMaterial->current_price;
         }
@@ -183,6 +195,16 @@ class RawMaterialController extends Controller
         $rawMaterial->update($validated);
 
         if ($currentPriceChanged) {
+            $newPrice = $rawMaterial->current_price !== null
+                ? (string) $rawMaterial->current_price
+                : null;
+
+            $this->alertService->evaluatePriceVariation(
+                rawMaterial: $rawMaterial->refresh(),
+                previousPrice: $previousPriceForAlert,
+                newPrice: $newPrice,
+            );
+
             $this->productionCostRecalculationService->recalculateForRawMaterial((int) $rawMaterial->id);
         }
 

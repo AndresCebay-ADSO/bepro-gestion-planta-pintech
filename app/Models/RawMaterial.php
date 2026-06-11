@@ -23,6 +23,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property float $previous_price
  * @property float $minimum_stock
  * @property int $alert_days_before_expiry
+ * @property float|null $price_variation_threshold
  * @property bool $tracks_inventory
  * @property bool $is_active
  * @property Carbon|null $created_at
@@ -43,6 +44,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'previous_price',
     'minimum_stock',
     'alert_days_before_expiry',
+    'price_variation_threshold',
     'tracks_inventory',
     'is_active',
 ])]
@@ -68,6 +70,7 @@ class RawMaterial extends Model
             'previous_price' => 'decimal:4',
             'minimum_stock' => 'decimal:4',
             'alert_days_before_expiry' => 'integer',
+            'price_variation_threshold' => 'decimal:2',
             'tracks_inventory' => 'boolean',
             'is_active' => 'boolean',
         ];
