@@ -2,23 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ProductionDashboardService;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class ProductionController extends Controller
 {
+    public function __construct(
+        private readonly ProductionDashboardService $productionDashboardService,
+    ) {}
+
     /**
      * Mostrar panel de producción.
      */
-    public function index()
+    public function index(): Response
     {
+        $user = auth()->user();
+
         return Inertia::render('Production/Dashboard', [
-            'role' => auth()->user()->getRoleNames()->first(),
-            'userName' => auth()->user()->name,
-            'stats' => [
-                'pendingOrders' => 0,
-                'activeOrders' => 0,
-                'completedToday' => 0,
-            ],
+            'role' => $user->getRoleNames()->first(),
+            'userName' => $user->name,
+            ...$this->productionDashboardService->build(),
         ]);
     }
 }

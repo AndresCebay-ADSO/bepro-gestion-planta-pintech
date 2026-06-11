@@ -14,6 +14,7 @@ use App\Models\Product;
 use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
+use App\Services\AlertService;
 use App\Services\DecimalCalculator;
 use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\Pricing\ProductionCostCalculatorService;
@@ -28,7 +29,8 @@ class CompleteProductionOrderAction
         private readonly FifoStockAllocatorService $fifoStockAllocator,
         private readonly ProductionCostCalculatorService $productionCostCalculator,
         private readonly VariantPricingService $variantPricingService,
-        private readonly DecimalCalculator $calculator
+        private readonly DecimalCalculator $calculator,
+        private readonly AlertService $alertService,
     ) {}
 
     /**
@@ -244,9 +246,13 @@ class CompleteProductionOrderAction
                 );
             }
 
-            collect($consumedRawMaterialIds)
-                ->unique()
+            $uniqueConsumedRawMaterialIds = collect($consumedRawMaterialIds)->unique()->values();
+
+            $uniqueConsumedRawMaterialIds
                 ->each(fn (int $id) => RecalculateRawMaterialReferencePrice::dispatch($id)->afterCommit());
+
+            $uniqueConsumedRawMaterialIds
+                ->each(fn (int $id) => $this->alertService->evaluateLowStock($id));
 
             return $lockedOrder->refresh();
         }, attempts: 3);
