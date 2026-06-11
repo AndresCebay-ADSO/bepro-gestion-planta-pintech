@@ -75,7 +75,11 @@ class PublicQrLandingController extends Controller
         abort_unless($document->qr_code_id === $qrCode->id && $document->is_current, 404);
         abort_unless(Storage::disk('local')->exists($document->file_path), 404);
 
-        return Storage::disk('local')->download($document->file_path, $document->file_name);
+        return Storage::disk('local')->response(
+            $document->file_path,
+            $document->file_name,
+            ['Content-Type' => $document->mime_type ?? 'application/pdf']
+        );
     }
 
     public function downloadProductDocument(string $token, ProductDocument $document): StreamedResponse
@@ -85,7 +89,11 @@ class PublicQrLandingController extends Controller
         abort_unless($document->product_id === $qrCode->product_id && $document->is_current, 404);
         abort_unless(Storage::disk('local')->exists($document->file_path), 404);
 
-        return Storage::disk('local')->download($document->file_path, $document->file_name);
+        return Storage::disk('local')->response(
+            $document->file_path,
+            $document->file_name,
+            ['Content-Type' => $document->mime_type ?? 'application/pdf']
+        );
     }
 
     public function qrImage(string $token): Response

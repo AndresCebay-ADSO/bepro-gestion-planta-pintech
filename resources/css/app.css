@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;900&family=JetBrains+Mono:wght@700&display=swap');
 @import 'tailwindcss';
 
 @import 'tw-animate-css';
@@ -8,10 +9,29 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+    /* BePro Industrial brand palette */
+    --color-bepro-primary: #002c42;
+    --color-bepro-action: #d63384;
+    --color-bepro-action-hover: #e45ea4;
+    --color-bepro-accent: #00aeef;
+    --color-bepro-bg: #f8f9fa;
+    --color-bepro-text: #4a4f55;
+    --color-bepro-cert: #155724;
+    --color-bepro-cert-bg: #d4edda;
+    --color-bepro-safety: #856404;
+    --color-bepro-safety-bg: #fff3cd;
+    --color-bepro-tech: #0090c8;
+    --color-bepro-tech-bg: #e8f7fd;
+
     --font-sans:
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
+
+    --font-bepro-sans: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+    --font-bepro-mono:
+        'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        monospace;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
