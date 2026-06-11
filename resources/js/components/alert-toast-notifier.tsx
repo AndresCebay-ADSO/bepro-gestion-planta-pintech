@@ -1,8 +1,8 @@
 import { Link, usePage } from '@inertiajs/react';
 import { BellRing, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { index as alertsIndex } from '@/routes/alerts';
 import { cn } from '@/lib/utils';
+import { index as alertsIndex } from '@/routes/alerts';
 
 type AlertToast = {
     id: number;
@@ -28,6 +28,7 @@ function severityAccent(severity: string): string {
 function readSeenAlertIds(): Set<number> {
     try {
         const raw = sessionStorage.getItem(STORAGE_KEY);
+
         if (!raw) {
             return new Set();
         }
@@ -73,7 +74,9 @@ export function AlertToastNotifier() {
             writeSeenAlertIds(seenIds);
 
             if (flashAlerts.length > 0) {
-                setToasts(flashAlerts);
+                setTimeout(() => {
+                    setToasts(flashAlerts);
+                }, 0);
             }
 
             return;
@@ -93,14 +96,16 @@ export function AlertToastNotifier() {
             return;
         }
 
-        setToasts((current) => {
-            const existingIds = new Set(current.map((toast) => toast.id));
-            const next = uniqueIncoming.filter(
-                (alert) => !existingIds.has(alert.id),
-            );
+        setTimeout(() => {
+            setToasts((current) => {
+                const existingIds = new Set(current.map((toast) => toast.id));
+                const next = uniqueIncoming.filter(
+                    (alert) => !existingIds.has(alert.id),
+                );
 
-            return [...current, ...next];
-        });
+                return [...current, ...next];
+            });
+        }, 0);
 
         uniqueIncoming.forEach((alert) => seenIds.add(alert.id));
         writeSeenAlertIds(seenIds);
