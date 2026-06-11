@@ -34,7 +34,11 @@ if [ "$(id -u)" = "0" ]; then
   gosu www-data php artisan storage:link --relative --force
 
   # Drop privileges and run the default command (e.g., php-fpm, queue:work)
-  exec gosu www-data "$@"
+  if [ "$1" = "php-fpm" ]; then
+    exec "$@"
+  else
+    exec gosu www-data "$@"
+  fi
 else
   # Container is already running as a non-privileged user
   if [ "${APP_ENV:-production}" = "production" ] && [ -z "${APP_KEY:-}" ]; then
