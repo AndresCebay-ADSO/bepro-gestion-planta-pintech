@@ -5,6 +5,7 @@ import type { FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { withReturnTo } from '@/lib/navigation';
 import products from '@/routes/products';
 import type { PaginationLink } from '@/types/ui';
 
@@ -128,10 +129,10 @@ export default function ProductsIndex({
                                             asChild
                                         >
                                             <Link
-                                                href={
+                                                href={withReturnTo(
                                                     products.show(product.id)
-                                                        .url
-                                                }
+                                                        .url,
+                                                )}
                                             >
                                                 Ver
                                             </Link>

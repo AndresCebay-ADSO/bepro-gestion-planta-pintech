@@ -7,6 +7,7 @@ import {
     download as downloadProductDocument,
     store as storeProductDocument,
 } from '@/actions/App/Http/Controllers/ProductDocumentController';
+import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
@@ -40,11 +41,12 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { withReturnTo } from '@/lib/navigation';
 import {
     create as formulasCreate,
     show as formulasShow,
 } from '@/routes/formulas';
-import { index as productsIndex } from '@/routes/products';
+import { index as productsIndex, show as productsShow } from '@/routes/products';
 
 type FormulaItem = {
     id: number;
@@ -56,6 +58,7 @@ type FormulaItem = {
 };
 
 type Props = {
+    returnTo?: string | null;
     product: {
         id: number;
         code: string;
@@ -117,6 +120,7 @@ type Props = {
 };
 
 export default function ProductsShow({
+    returnTo,
     product,
     can,
     documentTypes,
@@ -220,57 +224,50 @@ export default function ProductsShow({
         <>
             <Head title={`Producto ${product.code}`} />
             <div className="space-y-6 p-6">
-                {/* Header */}
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Link
-                                href={productsIndex().url}
-                                className="hover:text-foreground"
-                            >
-                                Productos
-                            </Link>
-                            <span>/</span>
-                            <span className="font-mono">{product.code}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-semibold text-foreground">
-                                {product.name}
-                            </h1>
-                            <Badge
-                                variant={
-                                    product.is_active ? 'default' : 'secondary'
-                                }
-                            >
-                                {product.is_active ? 'Activo' : 'Inactivo'}
-                            </Badge>
-                        </div>
-                        <p className="font-mono text-sm text-muted-foreground">
-                            {product.code}
-                        </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" asChild>
-                            <Link href={productsIndex().url}>Volver</Link>
-                        </Button>
-                        {can.update && (
-                            <Button variant="outline" asChild>
-                                <Link href={`/products/${product.id}/edit`}>
-                                    Editar
-                                </Link>
-                            </Button>
-                        )}
-                        {can.delete && (
-                            <Button
-                                variant="destructive"
-                                onClick={handleDelete}
-                            >
-                                Eliminar
-                            </Button>
-                        )}
-                    </div>
-                </div>
+                <DetailPageHeader
+                    breadcrumbs={[
+                        {
+                            title: 'Productos',
+                            href: returnTo ?? productsIndex().url,
+                        },
+                        { title: product.code, href: '#' },
+                    ]}
+                    title={product.name}
+                    subtitle={
+                        <span className="font-mono">{product.code}</span>
+                    }
+                    badge={
+                        <Badge
+                            variant={
+                                product.is_active ? 'default' : 'secondary'
+                            }
+                        >
+                            {product.is_active ? 'Activo' : 'Inactivo'}
+                        </Badge>
+                    }
+                    returnTo={returnTo}
+                    defaultReturnHref={productsIndex().url}
+                    defaultReturnLabel="Productos"
+                    actions={
+                        <>
+                            {can.update && (
+                                <Button variant="outline" asChild>
+                                    <Link href={`/products/${product.id}/edit`}>
+                                        Editar
+                                    </Link>
+                                </Button>
+                            )}
+                            {can.delete && (
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleDelete}
+                                >
+                                    Eliminar
+                                </Button>
+                            )}
+                        </>
+                    }
+                />
 
                 {/* Info del producto */}
                 <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-2 lg:grid-cols-4">
@@ -1164,7 +1161,15 @@ export default function ProductsShow({
                             <Link
                                 href={
                                     formulasCreate({
-                                        query: { product_id: product.id },
+                                        query: {
+                                            product_id: product.id,
+                                            return_to: withReturnTo(
+                                                productsShow({
+                                                    product: product.id,
+                                                }).url,
+                                                returnTo,
+                                            ),
+                                        },
                                     }).url
                                 }
                             >
