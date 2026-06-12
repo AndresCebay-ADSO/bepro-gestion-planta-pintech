@@ -51,7 +51,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 });
 
 // PRODUCCIÓN: Acceso a inventario, órdenes, formulaciones
-Route::middleware(['auth', 'verified', 'role:produccion'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
     Route::get('/production', [ProductionController::class, 'index'])->name('production.index');
     // Route::resource('production-orders', ProductionOrderController::class);
     // Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
