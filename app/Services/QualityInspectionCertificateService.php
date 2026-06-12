@@ -58,10 +58,12 @@ class QualityInspectionCertificateService
         $order->loadMissing('product');
         $product = $order->product;
 
+        $lot = $order->lot_number ?? $order->order_number;
+
         return [
-            'certificate_number' => "CC-{$order->order_number}",
+            'certificate_number' => "CC-{$lot}",
             'product_name' => $product->name,
-            'lot' => $order->order_number,
+            'lot' => $lot,
             'manufacturing_date' => $order->getManufacturingDate()?->format('d/m/Y'),
             'verification_date' => $order->getVerificationDate()?->format('d/m/Y'),
             'responsible_name' => $order->responsible_name, // Organizar un campo en la tabla extra para el responsable de calidad

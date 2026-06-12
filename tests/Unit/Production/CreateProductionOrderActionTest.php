@@ -92,6 +92,43 @@ test('it uses numeric order when production order sequence exceeds four digits',
 
     expect($order->order_number)->toBe('OP-2026-10001');
 });
+test('it starts the lot number sequence at the configured start value', function () {
+    config(['production.lot_start_number' => 1620]);
+
+    $order = createActionProductionOrder($this);
+
+    expect($order->lot_number)->toBe(1620);
+});
+
+test('it increments the lot number sequence historically', function () {
+    config(['production.lot_start_number' => 1620]);
+    createExistingProductionOrder($this, 'OP-2026-0001', 1620);
+
+    $order = createActionProductionOrder($this);
+
+    expect($order->lot_number)->toBe(1621);
+});
+
+test('it does not restart the lot number sequence every year', function () {
+    config(['production.lot_start_number' => 1620]);
+    createExistingProductionOrder($this, 'OP-2026-0001', 1620);
+
+    // Cambiar de año
+    Carbon::setTestNow('2027-01-01 08:00:00');
+
+    $order = createActionProductionOrder($this);
+
+    expect($order->lot_number)->toBe(1621);
+});
+
+test('it respects the configured start value even if historical records have lower numbers', function () {
+    config(['production.lot_start_number' => 2000]);
+    createExistingProductionOrder($this, 'OP-2026-0001', 500);
+
+    $order = createActionProductionOrder($this);
+
+    expect($order->lot_number)->toBe(2000);
+});
 
 function createActionProductionOrder(object $context): ProductionOrder
 {
@@ -104,10 +141,11 @@ function createActionProductionOrder(object $context): ProductionOrder
     ], $context->user->id);
 }
 
-function createExistingProductionOrder(object $context, string $orderNumber): ProductionOrder
+function createExistingProductionOrder(object $context, string $orderNumber, ?int $lotNumber = null): ProductionOrder
 {
     return ProductionOrder::create([
         'order_number' => $orderNumber,
+        'lot_number' => $lotNumber,
         'product_id' => $context->product->id,
         'formula_id' => $context->formula->id,
         'warehouse_id' => $context->warehouse->id,

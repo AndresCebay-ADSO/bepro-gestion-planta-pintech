@@ -152,7 +152,7 @@
             </td>
             <td class="label">Lote</td>
             <td colspan="2" class="value">
-                {{ $order['planned_date'] ? \Carbon\Carbon::parse($order['planned_date'])->format('d-M-y') : 'N/A' }}
+                {{ $order['lot_number'] ?? $order['order_number'] }}{{ $order['planned_date'] ? ' del ' . \Carbon\Carbon::parse($order['planned_date'])->translatedFormat('d \d\e F Y') : '' }}
             </td>
         </tr>
         <tr>

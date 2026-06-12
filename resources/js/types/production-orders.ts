@@ -57,6 +57,7 @@ export type ProductionOrderLineAdjustment = {
 export type ProductionOrder = {
     id: number;
     order_number: string;
+    lot_number?: number | null;
     status: ProductionOrderStatus;
     quantity: FormNumberValue;
     actual_quantity?: FormNumberValue | null;

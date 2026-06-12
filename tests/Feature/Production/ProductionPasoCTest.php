@@ -1454,3 +1454,40 @@ test('it rejects preview when packaging ids are duplicated', function () {
     $response->assertUnprocessable();
     $response->assertJsonValidationErrors('packaging.1.id');
 });
+
+test('it generates sequential lot numbers starting from config value', function () {
+    config(['production.lot_start_number' => 1620]);
+
+    InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $response = $this->post(route('production-orders.store'), [
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 10,
+        'planned_date' => now()->addDay()->toDateString(),
+    ]);
+
+    $response->assertRedirect();
+    $firstOrder = ProductionOrder::orderBy('id', 'desc')->first();
+    expect($firstOrder->lot_number)->toBe(1620);
+
+    $response2 = $this->post(route('production-orders.store'), [
+        'product_id' => $this->formula->product_id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 10,
+        'planned_date' => now()->addDay()->toDateString(),
+    ]);
+
+    $response2->assertRedirect();
+    $secondOrder = ProductionOrder::orderBy('id', 'desc')->first();
+    expect($secondOrder->lot_number)->toBe(1621);
+});

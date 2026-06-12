@@ -51,6 +51,7 @@ class CreateProductionOrderAction
                 'planned_date' => $data['planned_date'],
                 'notes' => $data['notes'] ?? null,
                 'order_number' => $this->generateOrderNumber(),
+                'lot_number' => $this->generateLotNumber(),
                 'status' => ProductionOrderStatus::Pending,
                 'created_by' => $userId,
             ]);
@@ -113,5 +114,21 @@ class CreateProductionOrderAction
             ->max();
 
         return $prefix.str_pad((string) (((int) $lastSequence) + 1), 4, '0', STR_PAD_LEFT);
+    }
+
+    private function generateLotNumber(): int
+    {
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement('SELECT pg_advisory_xact_lock(?, ?)', [801338, 0]);
+        }
+
+        $startLot = (int) config('production.lot_start_number', 1);
+        $maxLot = ProductionOrder::query()->max('lot_number');
+
+        if ($maxLot === null) {
+            return $startLot;
+        }
+
+        return max((int) $maxLot + 1, $startLot);
     }
 }

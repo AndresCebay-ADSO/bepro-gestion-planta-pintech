@@ -8,4 +8,5 @@ return [
     // Policies: conservative_max | weighted_average | last_lot
     // conservative_max is default to protect margin with volatile purchases.
     'raw_material_reference_price_policy' => env('RAW_MATERIAL_REFERENCE_PRICE_POLICY', 'conservative_max'),
+    'lot_start_number' => (int) env('PRODUCTION_ORDER_LOT_START', 1),
 ];

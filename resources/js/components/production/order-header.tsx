@@ -20,7 +20,8 @@ export function OrderHeader({ order, isCompleted }: OrderHeaderProps) {
             <div>
                 <div className="flex items-center gap-2">
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                        Orden {order.order_number}
+                        Orden {order.order_number}{' '}
+                        {order.lot_number && `(Lote ${order.lot_number})`}
                     </h1>
                     <Badge variant={isCompleted ? 'default' : 'secondary'}>
                         {isCompleted ? 'Completada' : 'En Proceso'}

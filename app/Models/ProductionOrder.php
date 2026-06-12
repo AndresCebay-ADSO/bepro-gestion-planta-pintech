@@ -41,6 +41,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property Carbon|null $packaging_start_time
  * @property Carbon|null $packaging_end_time
  * @property float $spillage_quantity
+ * @property int|null $lot_number
  * @property int $created_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -57,6 +58,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  */
 #[Fillable([
     'order_number',
+    'lot_number',
     'product_id',
     'formula_id',
     'warehouse_id',
@@ -102,7 +104,7 @@ class ProductionOrder extends Model
         return LogOptions::defaults()
             ->useLogName('ordenes_produccion')
             ->setDescriptionForEvent(fn (string $eventName) => "Orden de producción {$eventName}")
-            ->logOnly(['order_number', 'actual_quantity', 'yield_percentage', 'status', 'completion_date'])
+            ->logOnly(['order_number', 'lot_number', 'actual_quantity', 'yield_percentage', 'status', 'completion_date'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -111,6 +113,7 @@ class ProductionOrder extends Model
     {
         return [
             'status' => ProductionOrderStatus::class,
+            'lot_number' => 'integer',
             'quantity' => 'decimal:4',
             'actual_quantity' => 'decimal:4',
             'yield_real_quantity' => 'decimal:4',

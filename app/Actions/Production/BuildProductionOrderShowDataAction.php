@@ -77,6 +77,7 @@ class BuildProductionOrderShowDataAction
         return [
             'id' => $productionOrder->id,
             'order_number' => $productionOrder->order_number,
+            'lot_number' => $productionOrder->lot_number,
             'status' => $productionOrder->status->value,
             'quantity' => (float) $productionOrder->quantity,
             'actual_quantity' => $productionOrder->actual_quantity !== null ? (float) $productionOrder->actual_quantity : null,
