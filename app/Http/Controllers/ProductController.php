@@ -105,11 +105,12 @@ class ProductController extends Controller
         return redirect()->route('products.index')->with('success', __('Producto creado exitosamente.'));
     }
 
-    public function show(Product $product): Response
+    public function show(Request $request, Product $product): Response
     {
         $this->authorize('view', $product);
 
         return Inertia::render('Products/Show', [
+            'returnTo' => $this->resolveReturnTo($request),
             'product' => $product->load([
                 'category:id,name',
                 'unitOfMeasure:id,name,symbol',

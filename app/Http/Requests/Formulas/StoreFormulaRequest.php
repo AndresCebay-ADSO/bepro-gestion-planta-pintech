@@ -53,6 +53,7 @@ class StoreFormulaRequest extends FormRequest
                 'integer',
                 Rule::exists('unit_of_measures', 'id'),
             ],
+            'return_to' => ['nullable', 'string', 'max:2048'],
         ];
     }
 

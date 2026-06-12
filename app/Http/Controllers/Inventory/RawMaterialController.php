@@ -119,11 +119,12 @@ class RawMaterialController extends Controller
             ->with('success', __('Materia prima registrada exitosamente.'));
     }
 
-    public function show(RawMaterial $rawMaterial): Response
+    public function show(Request $request, RawMaterial $rawMaterial): Response
     {
         $this->authorize('view', $rawMaterial);
 
         return Inertia::render('Inventory/RawMaterials/Show', [
+            'returnTo' => $this->resolveReturnTo($request),
             'rawMaterial' => $rawMaterial->load([
                 'category:id,name,code',
                 'unitOfMeasure:id,name,symbol',

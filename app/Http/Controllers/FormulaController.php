@@ -63,6 +63,7 @@ class FormulaController extends Controller
         return Inertia::render('Formulas/Create', [
             ...$this->formulaFormOptions(),
             'selectedProductId' => $request->input('product_id'),
+            'returnTo' => $this->resolveReturnTo($request),
         ]);
     }
 
@@ -106,11 +107,16 @@ class FormulaController extends Controller
 
         $this->productionCostRecalculationService->recalculateForProduct((int) $formula->product_id);
 
-        return redirect()->route('formulas.index')
-            ->with('success', 'Fórmula creada exitosamente y marcada como versión activa.');
+        return $this->redirectWithContext(
+            $request,
+            'formulas.index',
+            [],
+            'success',
+            'Fórmula creada exitosamente y marcada como versión activa.',
+        );
     }
 
-    public function show(Formula $formula): Response
+    public function show(Request $request, Formula $formula): Response
     {
         $this->authorize('view', $formula);
 
@@ -127,6 +133,7 @@ class FormulaController extends Controller
                 ...$formula->toArray(),
                 'has_production_orders' => $formula->productionOrders()->exists(),
             ],
+            'returnTo' => $this->resolveReturnTo($request),
             'can' => [
                 'update' => Gate::allows('update', $formula),
                 'delete' => Gate::allows('delete', $formula),

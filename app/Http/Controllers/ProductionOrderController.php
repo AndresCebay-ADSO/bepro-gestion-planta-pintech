@@ -24,6 +24,7 @@ use App\Models\Warehouse;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
@@ -61,7 +62,7 @@ class ProductionOrderController extends Controller
     /**
      * Detalle de una orden para consulta o cierre.
      */
-    public function show(ProductionOrder $productionOrder): Response
+    public function show(Request $request, ProductionOrder $productionOrder): Response
     {
         $this->authorize('view', $productionOrder);
 
@@ -89,6 +90,7 @@ class ProductionOrderController extends Controller
             'order' => $this->buildProductionOrderShowData->execute($productionOrder),
             'rawMaterials' => $rawMaterials,
             'availableVariants' => $availableVariants,
+            'returnTo' => $this->resolveReturnTo($request),
         ]);
     }
 
