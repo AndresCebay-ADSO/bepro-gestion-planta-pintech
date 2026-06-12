@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
 
+import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ type InventoryBatch = {
 };
 
 type Props = {
+    returnTo?: string | null;
     rawMaterial: {
         id: number;
         code: string;
@@ -41,7 +43,11 @@ type Props = {
 /**
  * Componente
  */
-export default function RawMaterialsShow({ rawMaterial, can }: Props) {
+export default function RawMaterialsShow({
+    returnTo,
+    rawMaterial,
+    can,
+}: Props) {
     const totalAvailableQuantity = rawMaterial.inventory_batches.reduce(
         (sum, batch) => sum + (Number(batch.remaining_quantity) || 0),
         0,
@@ -68,55 +74,55 @@ export default function RawMaterialsShow({ rawMaterial, can }: Props) {
             <Head title={`Materia Prima ${rawMaterial.code}`} />
 
             <div className="space-y-6 p-6">
-                {/* Header */}
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            {rawMaterial.code}
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Detalle de materia prima y lotes asociados.
-                        </p>
-                    </div>
+                <DetailPageHeader
+                    breadcrumbs={[
+                        {
+                            title: 'Materias Primas',
+                            href:
+                                returnTo ??
+                                RawMaterialController.index.url(),
+                        },
+                        { title: rawMaterial.code, href: '#' },
+                    ]}
+                    title={rawMaterial.code}
+                    subtitle="Detalle de materia prima y lotes asociados."
+                    returnTo={returnTo}
+                    defaultReturnHref={RawMaterialController.index.url()}
+                    defaultReturnLabel="Materias Primas"
+                    actions={
+                        <>
+                            {can.update && (
+                                <Button asChild>
+                                    <Link
+                                        href={RawMaterialController.edit.url(
+                                            rawMaterial.id,
+                                        )}
+                                    >
+                                        Editar
+                                    </Link>
+                                </Button>
+                            )}
 
-                    <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" asChild>
-                            <Link href={RawMaterialController.index.url()}>
-                                Volver
-                            </Link>
-                        </Button>
-
-                        {can.update && (
-                            <Button asChild>
-                                <Link
-                                    href={RawMaterialController.edit.url(
-                                        rawMaterial.id,
-                                    )}
+                            {can.delete && rawMaterial.is_active && (
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleDelete}
                                 >
-                                    Editar
-                                </Link>
-                            </Button>
-                        )}
+                                    Desactivar / Eliminar
+                                </Button>
+                            )}
 
-                        {can.delete && rawMaterial.is_active && (
-                            <Button
-                                variant="destructive"
-                                onClick={handleDelete}
-                            >
-                                Desactivar / Eliminar
-                            </Button>
-                        )}
-
-                        {can.reactivate && (
-                            <Button
-                                variant="outline"
-                                onClick={handleReactivate}
-                            >
-                                Reactivar
-                            </Button>
-                        )}
-                    </div>
-                </div>
+                            {can.reactivate && (
+                                <Button
+                                    variant="outline"
+                                    onClick={handleReactivate}
+                                >
+                                    Reactivar
+                                </Button>
+                            )}
+                        </>
+                    }
+                />
 
                 {/* Información general */}
                 <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-2">

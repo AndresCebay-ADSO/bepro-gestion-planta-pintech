@@ -9,6 +9,7 @@ import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { withReturnTo } from '@/lib/navigation';
 import { index as alertsIndex } from '@/routes/alerts';
 import type { PaginationLink } from '@/types/ui';
 
@@ -280,8 +281,10 @@ export default function RawMaterialsIndex({
                                                 }}
                                                 onView={() =>
                                                     router.get(
-                                                        RawMaterialController.show.url(
-                                                            item.id,
+                                                        withReturnTo(
+                                                            RawMaterialController.show.url(
+                                                                item.id,
+                                                            ),
                                                         ),
                                                     )
                                                 }
