@@ -32,7 +32,7 @@ export type FormulaFormData = {
 
 type FormulaFormProps = {
     data: FormulaFormData;
-    errors: Record<string, string>;
+    errors: Partial<Record<string, string>>;
     processing: boolean;
     products: ProductOption[];
     rawMaterials: RawMaterial[];

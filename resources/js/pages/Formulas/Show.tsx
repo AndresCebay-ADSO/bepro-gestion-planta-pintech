@@ -5,9 +5,11 @@ import {
     destroy as formulasDestroy,
     edit as formulasEdit,
 } from '@/actions/App/Http/Controllers/FormulaController';
+import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { resolveModuleListHref } from '@/lib/navigation';
 import { index as formulasIndex } from '@/routes/formulas';
 import { show as productsShow } from '@/routes/products';
 
@@ -20,6 +22,7 @@ type DetailItem = {
 };
 
 type Props = {
+    returnTo?: string | null;
     formula: {
         id: number;
         version: number;
@@ -39,7 +42,13 @@ type Props = {
     can: { update: boolean; delete: boolean };
 };
 
-export default function FormulasShow({ formula, can }: Props) {
+export default function FormulasShow({ returnTo, formula, can }: Props) {
+    const formulasListHref = resolveModuleListHref(
+        returnTo,
+        '/formulas',
+        formulasIndex().url,
+    );
+
     const handleDelete = () => {
         if (
             !window.confirm(
@@ -62,83 +71,76 @@ export default function FormulasShow({ formula, can }: Props) {
                 title={`Fórmula v${formula.version} — ${formula.product?.code}`}
             />
             <div className="space-y-6 p-6">
-                {/* Header */}
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Link
-                                href={formulasIndex().url}
-                                className="hover:text-foreground"
-                            >
-                                Fórmulas
-                            </Link>
-                            <span>/</span>
-                            {formula.product && (
-                                <>
-                                    <Link
-                                        href={
-                                            productsShow({
-                                                product: formula.product.id,
-                                            }).url
-                                        }
-                                        className="font-mono hover:text-foreground"
-                                    >
-                                        {formula.product.code}
-                                    </Link>
-                                    <span>/</span>
-                                </>
-                            )}
-                            <span>v{formula.version}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-semibold text-foreground">
-                                Fórmula v{formula.version}
-                            </h1>
-                            <Badge
-                                variant={
-                                    formula.is_active ? 'default' : 'secondary'
-                                }
-                            >
-                                {formula.is_active
-                                    ? 'Versión activa'
-                                    : 'Inactiva'}
-                            </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
+                <DetailPageHeader
+                    breadcrumbs={[
+                        {
+                            title: 'Fórmulas',
+                            href: formulasListHref,
+                        },
+                        ...(formula.product
+                            ? [
+                                  {
+                                      title: formula.product.code,
+                                      href: productsShow({
+                                          product: formula.product.id,
+                                      }).url,
+                                  },
+                              ]
+                            : []),
+                        { title: `v${formula.version}`, href: '#' },
+                    ]}
+                    title={`Fórmula v${formula.version}`}
+                    subtitle={
+                        <>
                             Producto:{' '}
                             <span className="font-mono font-medium text-foreground">
                                 {formula.product?.code}
                             </span>{' '}
                             — {formula.product?.name}
-                        </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" asChild>
-                            <Link href={formulasIndex().url}>Volver</Link>
-                        </Button>
-                        {can.update && !formula.has_production_orders && (
-                            <Button variant="outline" asChild>
-                                <Link href={formulasEdit(formula.id).url}>
-                                    Editar fórmula
-                                </Link>
-                            </Button>
-                        )}
-                        {!formula.is_active && can.update && (
-                            <Button variant="outline" onClick={handleActivate}>
-                                Activar esta versión
-                            </Button>
-                        )}
-                        {can.delete && (
-                            <Button
-                                variant="destructive"
-                                onClick={handleDelete}
-                            >
-                                Eliminar
-                            </Button>
-                        )}
-                    </div>
-                </div>
+                        </>
+                    }
+                    badge={
+                        <Badge
+                            variant={
+                                formula.is_active ? 'default' : 'secondary'
+                            }
+                        >
+                            {formula.is_active
+                                ? 'Versión activa'
+                                : 'Inactiva'}
+                        </Badge>
+                    }
+                    returnTo={returnTo}
+                    defaultReturnHref={formulasListHref}
+                    defaultReturnLabel="Fórmulas"
+                    actions={
+                        <>
+                            {can.update && !formula.has_production_orders && (
+                                <Button variant="outline" asChild>
+                                    <Link href={formulasEdit(formula.id).url}>
+                                        Editar fórmula
+                                    </Link>
+                                </Button>
+                            )}
+                            {!formula.is_active && can.update && (
+                                <Button
+                                    variant="outline"
+                                    onClick={handleActivate}
+                                >
+                                    Activar esta versión
+                                </Button>
+                            )}
+                            {can.delete && (
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleDelete}
+                                >
+                                    Eliminar
+                                </Button>
+                            )}
+                        </>
+                    }
+                />
 
                 {/* Metadata */}
                 <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-3">

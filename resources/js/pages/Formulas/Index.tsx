@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { withReturnTo } from '@/lib/navigation';
 import {
     index as formulasIndex,
     create as formulasCreate,
@@ -63,7 +64,7 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                     </div>
                     {can.create && (
                         <Button asChild>
-                            <Link href={formulasCreate().url}>
+                            <Link href={withReturnTo(formulasCreate().url)}>
                                 Nueva Fórmula
                             </Link>
                         </Button>
@@ -154,9 +155,11 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                                             }}
                                             onView={() =>
                                                 router.get(
-                                                    formulasShow({
-                                                        formula: formula.id,
-                                                    }).url,
+                                                    withReturnTo(
+                                                        formulasShow({
+                                                            formula: formula.id,
+                                                        }).url,
+                                                    ),
                                                 )
                                             }
                                             onDelete={() => {
