@@ -9,13 +9,15 @@ let appName = import.meta.env.VITE_APP_NAME || 'Pintech Colombia S.A.S';
 
 if (typeof window !== 'undefined') {
     const el = document.getElementById('app');
+
     if (el && el.dataset.page) {
         try {
             const page = JSON.parse(el.dataset.page);
+
             if (page?.props?.name) {
                 appName = page.props.name;
             }
-        } catch (e) {
+        } catch {
             // Fallback silencioso
         }
     }
