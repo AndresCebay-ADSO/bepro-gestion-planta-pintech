@@ -98,6 +98,7 @@ export type ProductionOrderShowProps = {
     order: ProductionOrder;
     rawMaterials: RawMaterialOption[];
     availableVariants: VariantOption[];
+    returnTo?: string | null;
 };
 
 export type ProductionOrderIngredientFormRow = {

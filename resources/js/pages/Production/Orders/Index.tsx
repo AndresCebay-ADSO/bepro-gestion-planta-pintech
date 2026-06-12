@@ -4,6 +4,7 @@ import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
+import { withReturnTo } from '@/lib/navigation';
 import {
     show as productionOrderShow,
     create as productionOrderCreate,
@@ -149,10 +150,12 @@ export default function ProductionOrdersIndex({ orders }: Props) {
                                             }}
                                             onView={() =>
                                                 router.get(
-                                                    productionOrderShow({
-                                                        production_order:
-                                                            order.id,
-                                                    }).url,
+                                                    withReturnTo(
+                                                        productionOrderShow({
+                                                            production_order:
+                                                                order.id,
+                                                        }).url,
+                                                    ),
                                                 )
                                             }
                                         />

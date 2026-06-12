@@ -1,8 +1,10 @@
 import { Head, useForm } from '@inertiajs/react';
+
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { complete as productionOrderComplete } from '@/actions/App/Http/Controllers/ProductionOrderController';
+import { DetailPageNav } from '@/components/detail-page-nav';
 import { ControlCard } from '@/components/production/control-card';
 import { OrderHeader } from '@/components/production/order-header';
 import { OrderInfoCard } from '@/components/production/order-info-card';
@@ -20,6 +22,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { usePackagingSync } from '@/hooks/use-packaging-sync';
 import { useProductionCostPreview } from '@/hooks/use-production-cost-preview';
+import { index as productionOrdersIndex } from '@/routes/production-orders';
 import type {
     PreviewCostData,
     ProductionOrderDetail,
@@ -32,6 +35,7 @@ export default function ProductionOrderShow({
     order,
     rawMaterials,
     availableVariants,
+    returnTo,
 }: ProductionOrderShowProps) {
     const orderDetails = useMemo(() => order.details ?? [], [order.details]);
     const orderPackagingPlans = useMemo(
@@ -206,6 +210,19 @@ export default function ProductionOrderShow({
         <>
             <Head title={`Orden ${order.order_number}`} />
             <div className="mx-auto max-w-7xl space-y-6 p-6">
+                <DetailPageNav
+                    breadcrumbs={[
+                        {
+                            title: 'Órdenes de Producción',
+                            href:
+                                returnTo ?? productionOrdersIndex().url,
+                        },
+                        { title: order.order_number, href: '#' },
+                    ]}
+                    returnTo={returnTo}
+                    defaultReturnHref={productionOrdersIndex().url}
+                    defaultReturnLabel="Órdenes de Producción"
+                />
                 <OrderHeader order={order} isCompleted={isCompleted} />
 
                 <form
