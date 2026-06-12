@@ -13,15 +13,15 @@ import {
     Timer,
     TrendingUp,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { index as alertsIndex } from '@/routes/alerts';
 import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
 import { index as productionOrdersIndex } from '@/routes/production-orders';
 import { show as productionOrderShow } from '@/routes/production-orders';
 import { index as rawMaterialsIndex } from '@/routes/raw-materials';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 type DashboardStats = {
     pending_orders: number;

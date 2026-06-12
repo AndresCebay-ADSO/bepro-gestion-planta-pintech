@@ -25,8 +25,8 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { index as alertsIndex } from '@/routes/alerts';
 import { dashboard } from '@/routes';
+import { index as alertsIndex } from '@/routes/alerts';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import { index as formulasIndex } from '@/routes/formulas';
 import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';

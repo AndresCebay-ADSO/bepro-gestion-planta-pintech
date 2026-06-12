@@ -2,24 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Services\AdminDashboardService;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class AdminController extends Controller
 {
-    /**
-     * Mostrar panel de administración.
-     */
-    public function index()
+    public function __construct(
+        private readonly AdminDashboardService $adminDashboardService,
+    ) {}
+
+    public function index(): Response
     {
+        $user = auth()->user();
+
         return Inertia::render('Admin/Dashboard', [
-            'role' => auth()->user()->getRoleNames()->first(),
-            'userName' => auth()->user()->name,
-            'stats' => [
-                'totalUsers' => User::count(),
-                'totalProducts' => 0, // Se llenará con datos reales
-                'totalWarehouses' => 0,
-            ],
+            'role' => $user->getRoleNames()->first(),
+            'userName' => $user->name,
+            ...$this->adminDashboardService->build(),
         ]);
     }
 }

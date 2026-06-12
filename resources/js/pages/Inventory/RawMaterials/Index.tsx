@@ -1,7 +1,6 @@
 import { Head, useForm, Link, router, usePage } from '@inertiajs/react';
 import { BellRing } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { index as alertsIndex } from '@/routes/alerts';
 
 import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
 
@@ -10,6 +9,7 @@ import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { index as alertsIndex } from '@/routes/alerts';
 import type { PaginationLink } from '@/types/ui';
 
 /**
