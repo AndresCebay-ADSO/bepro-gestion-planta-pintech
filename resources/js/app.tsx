@@ -5,7 +5,21 @@ import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+let appName = import.meta.env.VITE_APP_NAME || 'Pintech Colombia S.A.S';
+
+if (typeof window !== 'undefined') {
+    const el = document.getElementById('app');
+    if (el && el.dataset.page) {
+        try {
+            const page = JSON.parse(el.dataset.page);
+            if (page?.props?.name) {
+                appName = page.props.name;
+            }
+        } catch (e) {
+            // Fallback silencioso
+        }
+    }
+}
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
