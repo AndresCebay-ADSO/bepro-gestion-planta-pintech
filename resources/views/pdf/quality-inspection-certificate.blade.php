@@ -120,7 +120,7 @@
         }
 
         table tr.row-stripe {
-            background-color: #D9E2F3;
+            background-color: #a2a4a9;
         }
 
         table td:first-child {
@@ -181,8 +181,8 @@
                     <div>NIT. 901123507-9</div>
                     <div>Palmira – Valle del Cauca</div>
                     <div>Calle 0 Transversal No. 7 – 8</div>
-                    <div><a href="mailto:proyectos@pintech.com.co">proyectos@pintech.com.co</a></div>
-                    <div>www.pintech.com.co</div>
+                    <div><a href="mailto:proyectos@pintech.com.co">info@pintech.com.co</a></div>
+                    <div>www.beprocoatings.com</div>
                 </td>
                 <td class="header-right">
                     @if($logoBase64)

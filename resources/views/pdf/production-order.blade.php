@@ -147,8 +147,6 @@
             <td colspan="2" class="label">ORDEN DE PRODUCCION N°</td>
             <td colspan="3" class="value">
                 {{ $order['order_number'] }}
-                del
-                {{ $order['planned_date'] ? \Carbon\Carbon::parse($order['planned_date'])->translatedFormat('d \\d\\e F Y') : 'N/A' }}
             </td>
             <td class="label">Lote</td>
             <td colspan="2" class="value">
@@ -166,8 +164,8 @@
                 $plannedDate = $order['planned_date'] ? \Carbon\Carbon::parse($order['planned_date']) : null;
             @endphp
             <td class="value text-center">{{ $plannedDate?->format('d') ?? '__' }}</td>
-            <td class="value text-center">{{ $plannedDate?->format('m') ?? '__' }} /
-                {{ $plannedDate?->format('Y') ?? '____' }}</td>
+            <td class="value text-center">{{ $plannedDate?->format('m') ?? '__' }}</td>
+            <td class="value text-center">{{ $plannedDate?->format('Y') ?? '__' }}</td>
         </tr>
         <tr>
             <td colspan="2" class="label">CANTIDAD PROYECTADA A FABRICAR</td>
