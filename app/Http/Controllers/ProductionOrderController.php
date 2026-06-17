@@ -10,12 +10,16 @@ use App\Actions\Production\CancelProductionOrderAction;
 use App\Actions\Production\CompleteProductionOrderAction;
 use App\Actions\Production\CreateProductionOrderAction;
 use App\Actions\Production\PreviewProductionOrderCostsAction;
+use App\Actions\Production\RejectProductionOrderReviewAction;
+use App\Actions\Production\SubmitProductionOrderForReviewAction;
 use App\Enums\WarehouseType;
 use App\Exports\ProductionOrderExport;
 use App\Http\Requests\Production\CancelProductionOrderRequest;
 use App\Http\Requests\Production\CompleteProductionOrderRequest;
 use App\Http\Requests\Production\PreviewProductionOrderCostsRequest;
+use App\Http\Requests\Production\RejectProductionOrderReviewRequest;
 use App\Http\Requests\Production\StoreProductionOrderRequest;
+use App\Http\Requests\Production\SubmitProductionOrderForReviewRequest;
 use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
@@ -38,7 +42,9 @@ class ProductionOrderController extends Controller
         private readonly CancelProductionOrderAction $cancelProductionOrder,
         private readonly PreviewProductionOrderCostsAction $previewProductionOrderCosts,
         private readonly BuildProductionOrderShowDataAction $buildProductionOrderShowData,
-        private readonly BuildProductionOrderExportDataAction $buildProductionOrderExportData
+        private readonly BuildProductionOrderExportDataAction $buildProductionOrderExportData,
+        private readonly SubmitProductionOrderForReviewAction $submitProductionOrderForReview,
+        private readonly RejectProductionOrderReviewAction $rejectProductionOrderReview,
     ) {}
 
     /**
@@ -86,11 +92,19 @@ class ProductionOrderController extends Controller
                 'presentation_value' => (float) $v->presentation_value,
             ]);
 
+        $user = auth()->user();
+
         return Inertia::render('Production/Orders/Show', [
             'order' => $this->buildProductionOrderShowData->execute($productionOrder),
             'rawMaterials' => $rawMaterials,
             'availableVariants' => $availableVariants,
             'returnTo' => $this->resolveReturnTo($request),
+            'can' => [
+                'submitForReview' => $user?->can('submitForReview', $productionOrder) ?? false,
+                'complete' => $user?->can('complete', $productionOrder) ?? false,
+                'rejectReview' => $user?->can('rejectReview', $productionOrder) ?? false,
+                'previewCosts' => $user?->can('previewCosts', $productionOrder) ?? false,
+            ],
         ]);
     }
 
@@ -200,7 +214,7 @@ class ProductionOrderController extends Controller
      */
     public function complete(CompleteProductionOrderRequest $request, ProductionOrder $order): RedirectResponse
     {
-        $this->authorize('update', $order);
+        $this->authorize('complete', $order);
 
         $validated = $request->validated();
 
@@ -216,6 +230,50 @@ class ProductionOrderController extends Controller
 
         return redirect()->route('production-orders.show', $order)
             ->with('success', 'Producción finalizada e inventario actualizado.');
+    }
+
+    /**
+     * Enviar orden a revisión (precierre por operador de planta).
+     */
+    public function submitForReview(SubmitProductionOrderForReviewRequest $request, ProductionOrder $order): RedirectResponse
+    {
+        $this->authorize('submitForReview', $order);
+
+        $validated = $request->validated();
+
+        try {
+            $this->submitProductionOrderForReview->execute(
+                order: $order,
+                data: $validated,
+                userId: $this->authenticatedUserId()
+            );
+        } catch (\DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return redirect()->route('production-orders.show', $order)
+            ->with('success', 'Orden enviada a revisión. Producción validará el cierre definitivo.');
+    }
+
+    /**
+     * Devolver una orden de producción a planta (rechazo de revisión).
+     */
+    public function rejectReview(RejectProductionOrderReviewRequest $request, ProductionOrder $order): RedirectResponse
+    {
+        $this->authorize('rejectReview', $order);
+
+        try {
+            $this->rejectProductionOrderReview->execute(
+                order: $order,
+                reason: $request->validated('reason'),
+                userId: $this->authenticatedUserId()
+            );
+        } catch (\DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return redirect()->route('production-orders.show', $order)
+            ->with('success', 'Orden devuelta a planta para correcciones.');
     }
 
     /**
@@ -240,7 +298,7 @@ class ProductionOrderController extends Controller
      */
     public function previewCosts(PreviewProductionOrderCostsRequest $request, ProductionOrder $order): JsonResponse
     {
-        $this->authorize('view', $order);
+        $this->authorize('previewCosts', $order);
 
         $validated = $request->validated();
 

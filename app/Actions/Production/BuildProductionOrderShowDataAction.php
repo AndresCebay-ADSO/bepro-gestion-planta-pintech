@@ -34,6 +34,8 @@ class BuildProductionOrderShowDataAction
             'finishedInventoryMovements',
             'warehouse',
             'lineAdjustments.rawMaterial',
+            'submittedBy:id,name',
+            'reviewedBy:id,name',
         ]);
 
         $finishedCostByVariant = $productionOrder->finishedInventoryMovements
@@ -97,6 +99,17 @@ class BuildProductionOrderShowDataAction
             'responsible_name' => $productionOrder->responsible_name,
             'spillage_quantity' => (float) $productionOrder->spillage_quantity,
             'notes' => $productionOrder->notes,
+            'submitted_at' => $productionOrder->submitted_at?->toISOString(),
+            'reviewed_at' => $productionOrder->reviewed_at?->toISOString(),
+            'rejection_reason' => $productionOrder->rejection_reason,
+            'submitted_by' => $productionOrder->submittedBy ? [
+                'id' => $productionOrder->submittedBy->id,
+                'name' => $productionOrder->submittedBy->name,
+            ] : null,
+            'reviewed_by' => $productionOrder->reviewedBy ? [
+                'id' => $productionOrder->reviewedBy->id,
+                'name' => $productionOrder->reviewedBy->name,
+            ] : null,
             'qr_landing_url' => $qrLandingUrl,
             'qr_image_url' => $qrImageUrl,
             'product' => $productionOrder->product ? [
