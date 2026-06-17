@@ -43,6 +43,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property float $spillage_quantity
  * @property int|null $lot_number
  * @property int $created_by
+ * @property int|null $submitted_by
+ * @property CarbonInterface|null $submitted_at
+ * @property int|null $reviewed_by
+ * @property CarbonInterface|null $reviewed_at
+ * @property string|null $rejection_reason
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Product $product
@@ -82,6 +87,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'packaging_end_time',
     'spillage_quantity',
     'created_by',
+    'submitted_by',
+    'submitted_at',
+    'reviewed_by',
+    'reviewed_at',
+    'rejection_reason',
 ])]
 class ProductionOrder extends Model
 {
@@ -130,6 +140,8 @@ class ProductionOrder extends Model
             'packaging_start_time' => 'datetime',
             'packaging_end_time' => 'datetime',
             'spillage_quantity' => 'decimal:4',
+            'submitted_at' => 'datetime',
+            'reviewed_at' => 'datetime',
         ];
     }
 
@@ -151,6 +163,16 @@ class ProductionOrder extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function submittedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'submitted_by');
+    }
+
+    public function reviewedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
     }
 
     public function details(): HasMany

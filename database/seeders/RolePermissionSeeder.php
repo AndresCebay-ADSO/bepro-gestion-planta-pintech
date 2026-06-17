@@ -28,6 +28,11 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'comercial', 'guard_name' => 'web']
         );
 
+        Role::firstOrCreate(
+            ['name' => 'operador', 'guard_name' => 'web'],
+            ['name' => 'operador', 'guard_name' => 'web']
+        );
+
         // Nota: Los permisos específicos se definen por operación en Controllers/Middleware
         // Por ahora solo se crean los roles base
     }
