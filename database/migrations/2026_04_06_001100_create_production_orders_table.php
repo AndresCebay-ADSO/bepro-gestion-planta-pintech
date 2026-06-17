@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('production_orders', function (Blueprint $table) {
             $table->id();
             $table->string('order_number', 20)->unique();
+            $table->integer('lot_number')->nullable()->index();
             $table->foreignId('product_id')->constrained('products')->restrictOnDelete();
             $table->foreignId('formula_id')->constrained('formulas')->restrictOnDelete();
             $table->foreignId('warehouse_id')->constrained('warehouses')->restrictOnDelete();
@@ -47,6 +48,11 @@ return new class extends Migration
             $table->decimal('spillage_quantity', 12, 4)->default(0)->comment('Cantidad de derrame detectado');
 
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
+            $table->foreignId('submitted_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('submitted_at')->nullable();
+            $table->foreignId('reviewed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('reviewed_at')->nullable();
+            $table->text('rejection_reason')->nullable();
             $table->timestamps();
 
             $table->index('status');
