@@ -28,7 +28,7 @@ class CompleteProductionOrderRequest extends FormRequest
      */
     public function rules(): array
     {
-        $order = $this->route('order');
+        $order = $this->route('production_order');
         $orderId = is_object($order) ? $order->id : null;
 
         return [

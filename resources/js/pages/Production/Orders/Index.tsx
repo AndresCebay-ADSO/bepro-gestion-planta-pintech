@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
+import { FormattedDate } from '@/components/formatted-date';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { withReturnTo } from '@/lib/navigation';
@@ -139,7 +140,9 @@ export default function ProductionOrdersIndex({ orders }: Props) {
                                         </Badge>
                                     </td>
                                     <td className="p-4 text-xs text-muted-foreground">
-                                        {order.planned_date}
+                                        <FormattedDate
+                                            value={order.planned_date}
+                                        />
                                     </td>
                                     <td className="p-4 text-right">
                                         <TableActions

@@ -16,46 +16,46 @@ class PackagingPlanController extends Controller
     /**
      * Agregar un plan de envasado a una orden de producción.
      */
-    public function store(StorePackagingPlanRequest $request, ProductionOrder $order): RedirectResponse
+    public function store(StorePackagingPlanRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
-        $this->authorize('update', $order);
+        $this->authorize('update', $productionOrder);
 
         $validated = $request->validated();
 
         ProductionOrderPackagingPlan::create([
-            'production_order_id' => $order->id,
+            'production_order_id' => $productionOrder->id,
             'product_variant_id' => $validated['product_variant_id'],
             'planned_units' => $validated['planned_units'],
         ]);
 
-        return redirect()->route('production-orders.show', $order)
+        return redirect()->route('production-orders.show', $productionOrder)
             ->with('success', 'Plan de envasado agregado.');
     }
 
     /**
      * Eliminar un plan de envasado (solo si la orden no está cerrada).
      */
-    public function destroy(ProductionOrder $order, ProductionOrderPackagingPlan $plan): RedirectResponse
+    public function destroy(ProductionOrder $productionOrder, ProductionOrderPackagingPlan $plan): RedirectResponse
     {
-        $this->authorize('update', $order);
+        $this->authorize('update', $productionOrder);
 
         $blockedStatuses = [
             ProductionOrderStatus::Completed,
             ProductionOrderStatus::Cancelled,
         ];
 
-        if (in_array($order->status, $blockedStatuses, true)) {
-            return redirect()->route('production-orders.show', $order)
+        if (in_array($productionOrder->status, $blockedStatuses, true)) {
+            return redirect()->route('production-orders.show', $productionOrder)
                 ->with('error', 'No se pueden eliminar planes de envasado de una orden completada o cancelada.');
         }
 
-        if ((int) $plan->production_order_id !== $order->id) {
+        if ((int) $plan->production_order_id !== $productionOrder->id) {
             abort(404);
         }
 
         $plan->delete();
 
-        return redirect()->route('production-orders.show', $order)
+        return redirect()->route('production-orders.show', $productionOrder)
             ->with('success', 'Plan de envasado eliminado.');
     }
 }

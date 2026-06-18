@@ -92,7 +92,7 @@ export function useProductionCostPreview({
 
             try {
                 const response = await fetch(
-                    productionOrderPreviewCosts({ order: orderId }).url,
+                    productionOrderPreviewCosts({ production_order: orderId }).url,
                     {
                         method: 'POST',
                         headers: {

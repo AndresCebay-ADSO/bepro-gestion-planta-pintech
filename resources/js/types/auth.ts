@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'produccion' | 'comercial';
+export type UserRole = 'admin' | 'produccion' | 'comercial' | 'operador';
 
 export type UserRoleRecord = {
     name: UserRole | string;

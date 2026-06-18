@@ -190,7 +190,7 @@ export default function ProductionOrderShow({
 
     const confirmCompletion = () => {
         setIsConfirmOpen(false);
-        post(productionOrderComplete({ order: order.id }).url, {
+        post(productionOrderComplete({ production_order: order.id }).url, {
             preserveScroll: true,
         });
     };

@@ -27,7 +27,7 @@ class StorePackagingPlanRequest extends FormRequest
      */
     public function rules(): array
     {
-        $order = $this->route('order');
+        $order = $this->route('production_order');
         $productId = is_object($order) ? $order->product_id : null;
 
         return [
@@ -50,7 +50,7 @@ class StorePackagingPlanRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
-                $order = $this->route('order');
+                $order = $this->route('production_order');
                 if (! is_object($order)) {
                     return;
                 }

@@ -47,7 +47,7 @@ class StoreLineAdjustmentRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
-                $order = $this->route('order');
+                $order = $this->route('production_order');
                 if (! is_object($order)) {
                     return;
                 }

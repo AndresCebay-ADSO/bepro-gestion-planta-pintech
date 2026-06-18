@@ -212,15 +212,15 @@ class ProductionOrderController extends Controller
     /**
      * Finalizar orden con datos reales de planta.
      */
-    public function complete(CompleteProductionOrderRequest $request, ProductionOrder $order): RedirectResponse
+    public function complete(CompleteProductionOrderRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
-        $this->authorize('complete', $order);
+        $this->authorize('complete', $productionOrder);
 
         $validated = $request->validated();
 
         try {
             $this->completeProductionOrder->execute(
-                order: $order,
+                order: $productionOrder,
                 data: $validated,
                 userId: $this->authenticatedUserId()
             );
@@ -228,22 +228,22 @@ class ProductionOrderController extends Controller
             return back()->with('error', $exception->getMessage());
         }
 
-        return redirect()->route('production-orders.show', $order)
+        return redirect()->route('production-orders.show', $productionOrder)
             ->with('success', 'Producción finalizada e inventario actualizado.');
     }
 
     /**
      * Enviar orden a revisión (precierre por operador de planta).
      */
-    public function submitForReview(SubmitProductionOrderForReviewRequest $request, ProductionOrder $order): RedirectResponse
+    public function submitForReview(SubmitProductionOrderForReviewRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
-        $this->authorize('submitForReview', $order);
+        $this->authorize('submitForReview', $productionOrder);
 
         $validated = $request->validated();
 
         try {
             $this->submitProductionOrderForReview->execute(
-                order: $order,
+                order: $productionOrder,
                 data: $validated,
                 userId: $this->authenticatedUserId()
             );
@@ -251,20 +251,20 @@ class ProductionOrderController extends Controller
             return back()->with('error', $exception->getMessage());
         }
 
-        return redirect()->route('production-orders.show', $order)
+        return redirect()->route('production-orders.show', $productionOrder)
             ->with('success', 'Orden enviada a revisión. Producción validará el cierre definitivo.');
     }
 
     /**
      * Devolver una orden de producción a planta (rechazo de revisión).
      */
-    public function rejectReview(RejectProductionOrderReviewRequest $request, ProductionOrder $order): RedirectResponse
+    public function rejectReview(RejectProductionOrderReviewRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
-        $this->authorize('rejectReview', $order);
+        $this->authorize('rejectReview', $productionOrder);
 
         try {
             $this->rejectProductionOrderReview->execute(
-                order: $order,
+                order: $productionOrder,
                 reason: $request->validated('reason'),
                 userId: $this->authenticatedUserId()
             );
@@ -272,21 +272,21 @@ class ProductionOrderController extends Controller
             return back()->with('error', $exception->getMessage());
         }
 
-        return redirect()->route('production-orders.show', $order)
+        return redirect()->route('production-orders.show', $productionOrder)
             ->with('success', 'Orden devuelta a planta para correcciones.');
     }
 
     /**
      * Cancelar una orden de producción.
      */
-    public function cancel(CancelProductionOrderRequest $request, ProductionOrder $order): RedirectResponse
+    public function cancel(CancelProductionOrderRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
-        $this->authorize('delete', $order);
+        $this->authorize('delete', $productionOrder);
 
         try {
-            $this->cancelProductionOrder->execute($order, $request->validated('reason'));
+            $this->cancelProductionOrder->execute($productionOrder, $request->validated('reason'));
 
-            return redirect()->route('production-orders.show', $order)
+            return redirect()->route('production-orders.show', $productionOrder)
                 ->with('success', 'Orden de producción cancelada con éxito.');
         } catch (\DomainException $exception) {
             return back()->with('error', $exception->getMessage());
@@ -296,15 +296,15 @@ class ProductionOrderController extends Controller
     /**
      * Vista previa de costos estimados durante el cierre de la orden.
      */
-    public function previewCosts(PreviewProductionOrderCostsRequest $request, ProductionOrder $order): JsonResponse
+    public function previewCosts(PreviewProductionOrderCostsRequest $request, ProductionOrder $productionOrder): JsonResponse
     {
-        $this->authorize('previewCosts', $order);
+        $this->authorize('previewCosts', $productionOrder);
 
         $validated = $request->validated();
 
         return response()->json(
             $this->previewProductionOrderCosts->execute(
-                order: $order,
+                order: $productionOrder,
                 ingredients: $validated['ingredients'],
                 packaging: $validated['packaging'] ?? []
             )

@@ -92,10 +92,10 @@ export function LineAdjustmentsPanel({
                                                             )
                                                         ) {
                                                             router.delete(
-                                                                destroyLineAdjustment(
-                                                                    {
-                                                                        order: orderId,
-                                                                        adjustment:
+destroyLineAdjustment(
+    {
+        production_order: orderId,
+        adjustment:
                                                                             adjustment.id,
                                                                     },
                                                                 ).url,
@@ -177,7 +177,7 @@ function LineAdjustmentForm({
         setFormErrors({});
 
         router.post(
-            storeLineAdjustment({ order: orderId }).url,
+            storeLineAdjustment({ production_order: orderId }).url,
             {
                 raw_material_id: rawMaterialId,
                 quantity: Number(quantity),

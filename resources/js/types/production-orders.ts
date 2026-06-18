@@ -4,6 +4,7 @@ import type { SetDataAction } from '@inertiajs/react';
 export type ProductionOrderStatus =
     | 'pending'
     | 'in_progress'
+    | 'pending_review'
     | 'completed'
     | 'cancelled';
 

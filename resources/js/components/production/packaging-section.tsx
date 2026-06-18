@@ -143,10 +143,10 @@ export function PackagingSection({
                                                         )
                                                     ) {
                                                         router.delete(
-                                                            destroyPackagingPlan(
-                                                                {
-                                                                    order: orderId,
-                                                                    plan: pack.id,
+destroyPackagingPlan(
+    {
+        production_order: orderId,
+        plan: pack.id,
                                                                 },
                                                             ).url,
                                                             {
@@ -227,7 +227,7 @@ function PackagingPlanForm({
         setFormErrors({});
 
         router.post(
-            storePackagingPlan({ order: orderId }).url,
+            storePackagingPlan({ production_order: orderId }).url,
             {
                 product_variant_id: variantId,
                 planned_units: Number(plannedUnits),
