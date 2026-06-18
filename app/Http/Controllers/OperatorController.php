@@ -4,14 +4,24 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Services\OperatorDashboardService;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class OperatorController extends Controller
 {
-    public function index(Request $request): Response
+    public function __construct(
+        private readonly OperatorDashboardService $operatorDashboardService,
+    ) {}
+
+    public function index(): Response
     {
-        return Inertia::render('Operator/Dashboard');
+        $user = auth()->user();
+
+        return Inertia::render('Operator/Dashboard', [
+            'role' => $user->getRoleNames()->first(),
+            'userName' => $user->name,
+            ...$this->operatorDashboardService->build(),
+        ]);
     }
 }
