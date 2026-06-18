@@ -10,6 +10,7 @@ import {
     ClipboardList,
     Factory,
     PackageX,
+    Send,
     Timer,
     TrendingUp,
 } from 'lucide-react';
@@ -26,6 +27,7 @@ import { index as rawMaterialsIndex } from '@/routes/raw-materials';
 type DashboardStats = {
     pending_orders: number;
     active_orders: number;
+    pending_review_orders: number;
     completed_today: number;
     unresolved_alerts: number;
     low_stock_materials: number;
@@ -74,6 +76,8 @@ function orderStatusClass(status: string): string {
             return 'bg-slate-500/15 text-slate-700 dark:text-slate-300';
         case 'in_progress':
             return 'bg-orange-500/15 text-orange-700 dark:text-orange-300';
+        case 'pending_review':
+            return 'bg-blue-500/15 text-blue-700 dark:text-blue-300';
         case 'completed':
             return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
         default:
@@ -130,7 +134,7 @@ export default function ProductionDashboard({
             </div>
 
             <div className="mx-auto -mt-6 max-w-6xl space-y-8 px-8 pb-12">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <Card className="border-none shadow-lg">
                         <CardContent className="flex items-center gap-4 p-5">
                             <div className="rounded-full bg-slate-100 p-3 text-slate-600 dark:bg-slate-900">
@@ -174,6 +178,22 @@ export default function ProductionDashboard({
                                 </p>
                                 <p className="text-3xl font-bold">
                                     {stats.completed_today}
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-none shadow-lg">
+                        <CardContent className="flex items-center gap-4 p-5">
+                            <div className="rounded-full bg-blue-100 p-3 text-blue-600">
+                                <Send className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                    OP en revisión
+                                </p>
+                                <p className="text-3xl font-bold">
+                                    {stats.pending_review_orders}
                                 </p>
                             </div>
                         </CardContent>

@@ -10,14 +10,16 @@ type IngredientsTableProps = {
     rows: ProductionOrderIngredientFormRow[];
     data: ProductionOrderFormData;
     setData: ProductionOrderSetData;
-    isCompleted: boolean;
+    isReadOnly: boolean;
+    showCosts?: boolean;
 };
 
 export function IngredientsTable({
     rows,
     data,
     setData,
-    isCompleted,
+    isReadOnly,
+    showCosts = true,
 }: IngredientsTableProps) {
     return (
         <div className="overflow-hidden rounded-md border">
@@ -30,8 +32,16 @@ export function IngredientsTable({
                             <th className="w-32 p-3 text-right">
                                 Real Gastado
                             </th>
-                            <th className="p-3 text-right">Costo Unit.</th>
-                            <th className="p-3 text-right">Costo Total</th>
+                            {showCosts && (
+                                <>
+                                    <th className="p-3 text-right">
+                                        Costo Unit.
+                                    </th>
+                                    <th className="p-3 text-right">
+                                        Costo Total
+                                    </th>
+                                </>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
@@ -69,30 +79,34 @@ export function IngredientsTable({
                                                 newIngredients,
                                             );
                                         }}
-                                        disabled={isCompleted}
+                                        disabled={isReadOnly}
                                     />
                                 </td>
-                                <td className="p-3 text-right text-muted-foreground">
-                                    <FormattedNumber
-                                        value={ingredient.unit_cost}
-                                        currency
-                                        maxDecimals={2}
-                                    />
-                                </td>
-                                <td className="p-3 text-right font-medium">
-                                    <FormattedNumber
-                                        value={ingredient.total_cost}
-                                        currency
-                                        maxDecimals={2}
-                                    />
-                                </td>
+                                {showCosts && (
+                                    <>
+                                        <td className="p-3 text-right text-muted-foreground">
+                                            <FormattedNumber
+                                                value={ingredient.unit_cost}
+                                                currency
+                                                maxDecimals={2}
+                                            />
+                                        </td>
+                                        <td className="p-3 text-right font-medium">
+                                            <FormattedNumber
+                                                value={ingredient.total_cost}
+                                                currency
+                                                maxDecimals={2}
+                                            />
+                                        </td>
+                                    </>
+                                )}
                             </tr>
                         ))}
                         {rows.length === 0 && (
                             <tr>
                                 <td
                                     className="p-3 text-muted-foreground"
-                                    colSpan={5}
+                                    colSpan={showCosts ? 5 : 3}
                                 >
                                     Esta orden no tiene insumos planificados.
                                 </td>

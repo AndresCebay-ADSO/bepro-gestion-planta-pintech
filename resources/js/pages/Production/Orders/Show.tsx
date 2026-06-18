@@ -3,7 +3,11 @@ import { Head, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
-import { complete as productionOrderComplete } from '@/actions/App/Http/Controllers/ProductionOrderController';
+import {
+    complete as productionOrderComplete,
+    rejectReview as productionOrderRejectReview,
+    submitForReview as productionOrderSubmitForReview,
+} from '@/actions/App/Http/Controllers/ProductionOrderController';
 import { DetailPageNav } from '@/components/detail-page-nav';
 import { ControlCard } from '@/components/production/control-card';
 import { OrderHeader } from '@/components/production/order-header';
@@ -20,6 +24,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { usePackagingSync } from '@/hooks/use-packaging-sync';
 import { useProductionCostPreview } from '@/hooks/use-production-cost-preview';
 import { index as productionOrdersIndex } from '@/routes/production-orders';
@@ -36,6 +42,7 @@ export default function ProductionOrderShow({
     rawMaterials,
     availableVariants,
     returnTo,
+    can,
 }: ProductionOrderShowProps) {
     const orderDetails = useMemo(() => order.details ?? [], [order.details]);
     const orderPackagingPlans = useMemo(
@@ -48,8 +55,34 @@ export default function ProductionOrderShow({
     );
 
     const isCompleted = order.status === 'completed';
+    const isPendingReview = order.status === 'pending_review';
+    const isFormReadOnly = isCompleted || (isPendingReview && !can.complete);
     const hasOrderData =
         orderDetails.length > 0 || orderPackagingPlans.length > 0;
+
+    const submitMode = can.submitForReview && !isPendingReview ? 'review' : 'complete';
+
+    const submitLabel =
+        submitMode === 'review'
+            ? 'Enviar a revisión'
+            : isPendingReview
+              ? 'Aprobar y cerrar'
+              : 'Finalizar producción';
+
+    const processingLabel =
+        submitMode === 'review' ? 'Enviando...' : 'Finalizando...';
+
+    const confirmTitle =
+        submitMode === 'review'
+            ? '¿Enviar orden a revisión?'
+            : isPendingReview
+              ? '¿Aprobar y cerrar la orden?'
+              : '¿Finalizar orden de producción?';
+
+    const confirmDescription =
+        submitMode === 'review'
+            ? 'Los datos quedarán registrados y producción deberá validar el cierre definitivo. No se moverá inventario todavía.'
+            : 'Esta acción actualizará los inventarios de forma irreversible. Una vez finalizada, no se podrán realizar más ajustes a la orden.';
 
     const { data, setData, post, processing, errors } =
         useForm<ProductionOrderFormData>({
@@ -68,8 +101,18 @@ export default function ProductionOrderShow({
             packaging: orderPackagingPlans.map(mapPackagingPlanToFormRow),
         });
 
+    const {
+        data: rejectData,
+        setData: setRejectData,
+        post: postReject,
+        processing: rejectProcessing,
+        errors: rejectErrors,
+        reset: resetRejectForm,
+    } = useForm({ reason: '' });
+
     const [landingLinkCopied, setLandingLinkCopied] = useState(false);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [isRejectOpen, setIsRejectOpen] = useState(false);
 
     usePackagingSync({
         packagingPlans: orderPackagingPlans,
@@ -83,6 +126,7 @@ export default function ProductionOrderShow({
         packaging: data.packaging,
         lineAdjustments,
         isCompleted,
+        enabled: can.previewCosts,
     });
 
     const landingFullUrl = useMemo(() => {
@@ -140,7 +184,7 @@ export default function ProductionOrderShow({
         return new Map(previewCosts.packaging.map((pack) => [pack.id, pack]));
     }, [previewCosts]);
 
-    const ingredientRows = isCompleted
+    const ingredientRows = isFormReadOnly
         ? orderDetails.map(mapDetailToIngredientFormRow)
         : data.ingredients.map((ingredient) => ({
               ...ingredient,
@@ -154,7 +198,7 @@ export default function ProductionOrderShow({
                   0,
           }));
 
-    const packagingRows = isCompleted
+    const packagingRows = isFormReadOnly
         ? orderPackagingPlans.map(mapPackagingPlanToFormRow)
         : data.packaging.map((pack) => ({
               ...pack,
@@ -164,7 +208,7 @@ export default function ProductionOrderShow({
                   0,
           }));
 
-    const totalEquivalent = isCompleted
+    const totalEquivalent = isFormReadOnly
         ? packagingRows.reduce((sum, pack) => {
               return (
                   sum +
@@ -183,15 +227,34 @@ export default function ProductionOrderShow({
     const estimatedMarginValue = activeFinishedCost * (marginPercentage / 100);
     const estimatedTargetValue = activeFinishedCost + estimatedMarginValue;
 
+    const showSubmit = can.submitForReview || can.complete;
+    const showReject = can.rejectReview && isPendingReview;
+
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsConfirmOpen(true);
     };
 
-    const confirmCompletion = () => {
+    const confirmAction = () => {
         setIsConfirmOpen(false);
-        post(productionOrderComplete({ production_order: order.id }).url, {
+
+        const action =
+            submitMode === 'review'
+                ? productionOrderSubmitForReview({ production_order: order.id })
+                : productionOrderComplete({ production_order: order.id });
+
+        post(action.url, {
             preserveScroll: true,
+        });
+    };
+
+    const confirmReject = () => {
+        postReject(productionOrderRejectReview({ production_order: order.id }).url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsRejectOpen(false);
+                resetRejectForm();
+            },
         });
     };
 
@@ -223,7 +286,7 @@ export default function ProductionOrderShow({
                     defaultReturnHref={productionOrdersIndex().url}
                     defaultReturnLabel="Órdenes de Producción"
                 />
-                <OrderHeader order={order} isCompleted={isCompleted} />
+                <OrderHeader order={order} />
 
                 <form
                     onSubmit={handleSubmit}
@@ -241,8 +304,10 @@ export default function ProductionOrderShow({
                             rawMaterials={rawMaterials}
                             availableVariants={availableVariants}
                             isCompleted={isCompleted}
+                            isReadOnly={isFormReadOnly}
                             previewLoading={previewLoading}
                             solidsReferenceLabel={solidsReferenceLabel}
+                            showCosts={can.previewCosts}
                         />
                     </div>
 
@@ -260,9 +325,14 @@ export default function ProductionOrderShow({
                             data={data}
                             setData={setData}
                             errors={errors}
-                            isCompleted={isCompleted}
+                            isReadOnly={isFormReadOnly}
                             processing={processing}
                             hasOrderData={hasOrderData}
+                            showSubmit={showSubmit}
+                            submitLabel={submitLabel}
+                            processingLabel={processingLabel}
+                            showReject={showReject}
+                            onReject={() => setIsRejectOpen(true)}
                         />
 
                         <OrderInfoCard
@@ -281,6 +351,7 @@ export default function ProductionOrderShow({
                             marginPercentage={marginPercentage}
                             estimatedMarginValue={estimatedMarginValue}
                             estimatedTargetValue={estimatedTargetValue}
+                            showCosts={can.previewCosts}
                         />
                     </div>
                 </form>
@@ -292,12 +363,10 @@ export default function ProductionOrderShow({
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>
-                                ¿Finalizar orden de producción?
+                                {confirmTitle}
                             </AlertDialogTitle>
                             <AlertDialogDescription>
-                                Esta acción actualizará los inventarios de forma
-                                irreversible. Una vez finalizada, no se podrán
-                                realizar más ajustes a la orden.
+                                {confirmDescription}
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -305,12 +374,70 @@ export default function ProductionOrderShow({
                                 Cancelar
                             </AlertDialogCancel>
                             <AlertDialogAction
-                                onClick={confirmCompletion}
+                                onClick={confirmAction}
                                 disabled={processing}
                             >
-                                {processing ? 'Finalizando...' : 'Confirmar'}
+                                {processing ? processingLabel : 'Confirmar'}
                             </AlertDialogAction>
                         </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                <AlertDialog
+                    open={isRejectOpen}
+                    onOpenChange={setIsRejectOpen}
+                >
+                    <AlertDialogContent>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                confirmReject();
+                            }}
+                        >
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                    ¿Devolver orden a planta?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Indica el motivo del rechazo para que el
+                                    operador pueda corregirlo.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <div className="py-4">
+                                <Label htmlFor="reject-reason">
+                                    Motivo del rechazo
+                                </Label>
+                                <Textarea
+                                    id="reject-reason"
+                                    className="mt-2"
+                                    placeholder="Describe qué debe corregirse..."
+                                    value={rejectData.reason}
+                                    onChange={(e) =>
+                                        setRejectData('reason', e.target.value)
+                                    }
+                                />
+                                {rejectErrors.reason && (
+                                    <p className="mt-1 text-sm text-destructive">
+                                        {rejectErrors.reason}
+                                    </p>
+                                )}
+                            </div>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel
+                                    disabled={rejectProcessing}
+                                >
+                                    Cancelar
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                    type="submit"
+                                    disabled={rejectProcessing}
+                                >
+                                    {rejectProcessing
+                                        ? 'Devolviendo...'
+                                        : 'Devolver a planta'}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </form>
                     </AlertDialogContent>
                 </AlertDialog>
             </div>

@@ -62,6 +62,9 @@ class ProductionOrderController extends Controller
 
         return Inertia::render('Production/Orders/Index', [
             'orders' => $orders,
+            'can' => [
+                'create' => auth()->user()?->can('create', ProductionOrder::class) ?? false,
+            ],
         ]);
     }
 

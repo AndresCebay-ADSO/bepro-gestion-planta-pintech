@@ -14,6 +14,7 @@ type UseProductionCostPreviewProps = {
     packaging: ProductionOrderPackagingFormRow[];
     lineAdjustments: ProductionOrderLineAdjustment[];
     isCompleted: boolean;
+    enabled?: boolean;
 };
 
 type PreviewCostPayload = {
@@ -27,6 +28,7 @@ export function useProductionCostPreview({
     packaging,
     lineAdjustments,
     isCompleted,
+    enabled = true,
 }: UseProductionCostPreviewProps) {
     const [previewCosts, setPreviewCosts] = useState<PreviewCostData | null>(
         null,
@@ -57,13 +59,14 @@ export function useProductionCostPreview({
     const previewSignature = JSON.stringify({
         orderId,
         isCompleted,
+        enabled,
         ingredients: ingredientsSignature,
         packaging: packagingSignature,
         lineAdjustmentsSignature,
     });
 
     useEffect(() => {
-        if (isCompleted) {
+        if (isCompleted || !enabled) {
             return;
         }
 
@@ -137,6 +140,7 @@ export function useProductionCostPreview({
     }, [
         ingredientsSignature,
         isCompleted,
+        enabled,
         orderId,
         packagingSignature,
         previewSignature,

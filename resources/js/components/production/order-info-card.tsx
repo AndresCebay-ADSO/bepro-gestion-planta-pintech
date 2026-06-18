@@ -13,6 +13,7 @@ type OrderInfoCardProps = {
     marginPercentage: number;
     estimatedMarginValue: number;
     estimatedTargetValue: number;
+    showCosts?: boolean;
 };
 
 export function OrderInfoCard({
@@ -23,6 +24,7 @@ export function OrderInfoCard({
     marginPercentage,
     estimatedMarginValue,
     estimatedTargetValue,
+    showCosts = true,
 }: OrderInfoCardProps) {
     return (
         <Card className="bg-muted/40">
@@ -52,66 +54,70 @@ export function OrderInfoCard({
                         />
                     </span>
                 </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                        Costo granel acumulado:
-                    </span>
-                    <span className="font-medium">
-                        <FormattedNumber
-                            value={bulkCost}
-                            currency
-                            maxDecimals={2}
-                        />
-                    </span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                        Costo terminado total:
-                    </span>
-                    <span className="font-medium">
-                        <FormattedNumber
-                            value={finishedCost}
-                            currency
-                            maxDecimals={2}
-                        />
-                    </span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                        Margen producto (%):
-                    </span>
-                    <span className="font-medium">
-                        <FormattedNumber
-                            value={marginPercentage}
-                            maxDecimals={2}
-                        />
-                        %
-                    </span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                        Margen estimado:
-                    </span>
-                    <span className="font-medium">
-                        <FormattedNumber
-                            value={estimatedMarginValue}
-                            currency
-                            maxDecimals={2}
-                        />
-                    </span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                        Valor objetivo c/margen:
-                    </span>
-                    <span className="font-medium">
-                        <FormattedNumber
-                            value={estimatedTargetValue}
-                            currency
-                            maxDecimals={2}
-                        />
-                    </span>
-                </div>
+                {showCosts && (
+                    <>
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                                Costo granel acumulado:
+                            </span>
+                            <span className="font-medium">
+                                <FormattedNumber
+                                    value={bulkCost}
+                                    currency
+                                    maxDecimals={2}
+                                />
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                                Costo terminado total:
+                            </span>
+                            <span className="font-medium">
+                                <FormattedNumber
+                                    value={finishedCost}
+                                    currency
+                                    maxDecimals={2}
+                                />
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                                Margen producto (%):
+                            </span>
+                            <span className="font-medium">
+                                <FormattedNumber
+                                    value={marginPercentage}
+                                    maxDecimals={2}
+                                />
+                                %
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                                Margen estimado:
+                            </span>
+                            <span className="font-medium">
+                                <FormattedNumber
+                                    value={estimatedMarginValue}
+                                    currency
+                                    maxDecimals={2}
+                                />
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                                Valor objetivo c/margen:
+                            </span>
+                            <span className="font-medium">
+                                <FormattedNumber
+                                    value={estimatedTargetValue}
+                                    currency
+                                    maxDecimals={2}
+                                />
+                            </span>
+                        </div>
+                    </>
+                )}
             </CardContent>
         </Card>
     );

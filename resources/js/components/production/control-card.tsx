@@ -16,18 +16,28 @@ type ControlCardProps = {
     data: ProductionOrderFormData;
     setData: ProductionOrderSetData;
     errors: ProductionOrderErrors;
-    isCompleted: boolean;
+    isReadOnly: boolean;
     processing: boolean;
     hasOrderData: boolean;
+    showSubmit: boolean;
+    submitLabel: string;
+    processingLabel: string;
+    showReject?: boolean;
+    onReject?: () => void;
 };
 
 export function ControlCard({
     data,
     setData,
     errors,
-    isCompleted,
+    isReadOnly,
     processing,
     hasOrderData,
+    showSubmit,
+    submitLabel,
+    processingLabel,
+    showReject = false,
+    onReject,
 }: ControlCardProps) {
     return (
         <Card>
@@ -52,7 +62,7 @@ export function ControlCard({
                         onChange={(event) =>
                             setData('responsible_name', event.target.value)
                         }
-                        disabled={isCompleted}
+                        disabled={isReadOnly}
                     />
                 </div>
                 <div className="space-y-2">
@@ -65,7 +75,7 @@ export function ControlCard({
                         onChange={(event) =>
                             setData('spillage_quantity', event.target.value)
                         }
-                        disabled={isCompleted}
+                        disabled={isReadOnly}
                     />
                 </div>
                 <Separator />
@@ -82,7 +92,7 @@ export function ControlCard({
                                     event.target.value,
                                 )
                             }
-                            disabled={isCompleted}
+                            disabled={isReadOnly}
                         />
                     </div>
                     <div className="space-y-2">
@@ -97,7 +107,7 @@ export function ControlCard({
                                     event.target.value,
                                 )
                             }
-                            disabled={isCompleted}
+                            disabled={isReadOnly}
                         />
                     </div>
                     <div className="space-y-2">
@@ -112,7 +122,7 @@ export function ControlCard({
                                     event.target.value,
                                 )
                             }
-                            disabled={isCompleted}
+                            disabled={isReadOnly}
                         />
                     </div>
                     <div className="space-y-2">
@@ -127,7 +137,7 @@ export function ControlCard({
                                     event.target.value,
                                 )
                             }
-                            disabled={isCompleted}
+                            disabled={isReadOnly}
                         />
                     </div>
                 </div>
@@ -141,11 +151,11 @@ export function ControlCard({
                         onChange={(event) =>
                             setData('notes', event.target.value)
                         }
-                        disabled={isCompleted}
+                        disabled={isReadOnly}
                     />
                 </div>
 
-                {!isCompleted && (
+                {!isReadOnly && (
                     <>
                         {errors.packaging && (
                             <p className="text-xs text-destructive">
@@ -160,17 +170,30 @@ export function ControlCard({
                     </>
                 )}
 
-                {!isCompleted && (
+                {showSubmit && (
                     <Button
                         type="submit"
                         className="mt-4 w-full"
                         size="lg"
                         disabled={processing || !hasOrderData}
                     >
-                        {processing ? 'Finalizando...' : 'Finalizar Producción'}
+                        {processing ? processingLabel : submitLabel}
                     </Button>
                 )}
-                {!isCompleted && !hasOrderData && (
+
+                {showReject && onReject && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-2 w-full"
+                        onClick={onReject}
+                        disabled={processing}
+                    >
+                        Devolver a planta
+                    </Button>
+                )}
+
+                {!isReadOnly && !hasOrderData && (
                     <p className="text-xs text-destructive">
                         La orden no tiene detalle de insumos ni plan de empaque.
                         Revise la fórmula y vuelva a crearla.
