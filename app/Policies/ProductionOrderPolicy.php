@@ -12,12 +12,12 @@ class ProductionOrderPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'produccion', 'comercial']);
+        return $user->hasAnyRole(['admin', 'produccion', 'comercial', 'operador']);
     }
 
     public function view(User $user, ProductionOrder $productionOrder): bool
     {
-        return $user->hasAnyRole(['admin', 'produccion', 'comercial']);
+        return $user->hasAnyRole(['admin', 'produccion', 'comercial', 'operador']);
     }
 
     public function create(User $user): bool
@@ -27,7 +27,7 @@ class ProductionOrderPolicy
 
     public function update(User $user, ProductionOrder $productionOrder): bool
     {
-        return $user->hasAnyRole(['admin', 'produccion']);
+        return $user->hasAnyRole(['admin', 'produccion', 'operador']);
     }
 
     public function complete(User $user, ProductionOrder $productionOrder): bool

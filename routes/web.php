@@ -9,6 +9,7 @@ use App\Http\Controllers\FormulaController;
 use App\Http\Controllers\Inventory\RawMaterialController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
+use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductDocumentController;
 use App\Http\Controllers\Production\LineAdjustmentController;
@@ -106,7 +107,7 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
     Route::resource('formulas', FormulaController::class);
     Route::post('formulas/{formula}/activate', [FormulaController::class, 'activate'])->name('formulas.activate');
 
-    // Órdenes de Producción — mutaciones
+    // Órdenes de Producción — mutaciones exclusivas de producción
     Route::get('production-orders/create', [ProductionOrderController::class, 'create'])->name('production-orders.create');
     Route::post('production-orders', [ProductionOrderController::class, 'store'])->name('production-orders.store');
     Route::post('production-orders/{production_order}/complete', [ProductionOrderController::class, 'complete'])->name('production-orders.complete');
@@ -116,6 +117,13 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
         ->name('production-orders.preview-costs');
     Route::post('production-orders/{production_order}/reject-review', [ProductionOrderController::class, 'rejectReview'])->name('production-orders.reject-review');
 
+    Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
+    Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
+    Route::delete('products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
+});
+
+// ADMIN + PRODUCCIÓN + OPERADOR: Datos operativos de órdenes (ajustes de línea + envasado)
+Route::middleware(['auth', 'verified', 'role:admin,produccion,operador'])->group(function () {
     // Ajustes de línea
     Route::post('production-orders/{production_order}/line-adjustments', [LineAdjustmentController::class, 'store'])->name('production-orders.line-adjustments.store');
     Route::delete('production-orders/{production_order}/line-adjustments/{adjustment}', [LineAdjustmentController::class, 'destroy'])->name('production-orders.line-adjustments.destroy');
@@ -123,10 +131,6 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
     // Planes de envasado
     Route::post('production-orders/{production_order}/packaging-plans', [PackagingPlanController::class, 'store'])->name('production-orders.packaging-plans.store');
     Route::delete('production-orders/{production_order}/packaging-plans/{plan}', [PackagingPlanController::class, 'destroy'])->name('production-orders.packaging-plans.destroy');
-
-    Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
-    Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
-    Route::delete('products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
 });
 
 // ADMIN + PRODUCCIÓN + OPERADOR: Órdenes de Producción (lectura + submit)

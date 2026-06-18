@@ -47,7 +47,7 @@ const navigationGroups: NavGroup[] = [
                 title: 'Dashboard',
                 href: dashboard(),
                 icon: LayoutGrid,
-                allowedRoles: ['admin', 'produccion', 'comercial'],
+                allowedRoles: ['admin', 'produccion', 'comercial', 'operador'],
             },
             {
                 title: 'Materias Primas',
@@ -78,21 +78,20 @@ const navigationGroups: NavGroup[] = [
                 href: formulasIndex().url,
                 icon: FlaskConical,
                 allowedRoles: ['admin', 'produccion'],
-                unauthorizedBehavior: 'disable',
+                unauthorizedBehavior: 'hide',
             },
             {
                 title: 'Centro de Producción',
                 href: productionIndex().url,
                 icon: Factory,
                 allowedRoles: ['admin', 'produccion'],
-                unauthorizedBehavior: 'disable',
+                unauthorizedBehavior: 'hide',
             },
             {
                 title: 'Órdenes de Producción',
                 href: productionOrdersIndex().url,
                 icon: ClipboardList,
-                allowedRoles: ['admin', 'produccion'],
-                unauthorizedBehavior: 'disable',
+                allowedRoles: ['admin', 'produccion', 'operador'],
             },
         ],
     },
@@ -126,14 +125,14 @@ const navigationGroups: NavGroup[] = [
                 href: alertsIndex().url,
                 icon: BellRing,
                 allowedRoles: ['admin', 'produccion'],
-                unauthorizedBehavior: 'disable',
+                unauthorizedBehavior: 'hide',
             },
             {
                 title: 'Códigos QR',
                 href: '/qr-codes',
                 icon: QrCode,
                 allowedRoles: ['admin', 'produccion'],
-                unauthorizedBehavior: 'disable',
+                unauthorizedBehavior: 'hide',
                 disabled: true,
                 disabledLabel: 'Módulo en desarrollo',
             },
@@ -142,7 +141,7 @@ const navigationGroups: NavGroup[] = [
                 href: '/reports',
                 icon: LayoutGrid,
                 allowedRoles: ['admin', 'produccion'],
-                unauthorizedBehavior: 'disable',
+                unauthorizedBehavior: 'hide',
                 disabled: true,
                 disabledLabel: 'Módulo en desarrollo',
             },
@@ -169,7 +168,7 @@ const navigationGroups: NavGroup[] = [
                 title: 'Configuración',
                 href: '/settings/appearance',
                 icon: Settings,
-                allowedRoles: ['admin'],
+                allowedRoles: ['admin', 'operador'],
                 unauthorizedBehavior: 'hide',
             },
         ],
@@ -206,7 +205,7 @@ function extractUserRoles(user: User | null): UserRole[] {
     }
 
     return Array.from(roleCandidates).filter((role): role is UserRole =>
-        ['admin', 'produccion', 'comercial'].includes(role),
+        ['admin', 'produccion', 'comercial', 'operador'].includes(role),
     );
 }
 

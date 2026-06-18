@@ -160,7 +160,7 @@ test('can delete a packaging plan from a pending order', function () {
     ]);
 
     $response = $this->delete(route('production-orders.packaging-plans.destroy', [
-        'order' => $this->productionOrder->id,
+        'production_order' => $this->productionOrder->id,
         'plan' => $plan->id,
     ]));
 
@@ -178,7 +178,7 @@ test('cannot delete a packaging plan from a completed order', function () {
     $this->productionOrder->update(['status' => ProductionOrderStatus::Completed]);
 
     $response = $this->delete(route('production-orders.packaging-plans.destroy', [
-        'order' => $this->productionOrder->id,
+        'production_order' => $this->productionOrder->id,
         'plan' => $plan->id,
     ]));
 

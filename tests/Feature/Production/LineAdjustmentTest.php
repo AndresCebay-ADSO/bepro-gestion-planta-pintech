@@ -128,7 +128,7 @@ test('can delete a line adjustment from a pending order', function () {
     ]);
 
     $response = $this->delete(route('production-orders.line-adjustments.destroy', [
-        'order' => $this->productionOrder->id,
+        'production_order' => $this->productionOrder->id,
         'adjustment' => $adjustment->id,
     ]));
 
@@ -148,7 +148,7 @@ test('cannot delete a line adjustment from a completed order', function () {
     $this->productionOrder->update(['status' => ProductionOrderStatus::Completed]);
 
     $response = $this->delete(route('production-orders.line-adjustments.destroy', [
-        'order' => $this->productionOrder->id,
+        'production_order' => $this->productionOrder->id,
         'adjustment' => $adjustment->id,
     ]));
 
