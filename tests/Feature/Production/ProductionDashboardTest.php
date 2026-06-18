@@ -100,6 +100,17 @@ beforeEach(function (): void {
         'created_by' => $this->productionUser->id,
     ]);
 
+    ProductionOrder::create([
+        'order_number' => 'OP-2026-0003',
+        'product_id' => $this->product->id,
+        'formula_id' => $formula->id,
+        'warehouse_id' => $this->warehouse->id,
+        'quantity' => 200,
+        'status' => ProductionOrderStatus::PendingReview,
+        'planned_date' => now()->addDay()->toDateString(),
+        'created_by' => $this->productionUser->id,
+    ]);
+
     Alert::factory()->create([
         'type' => AlertType::StockBajo,
         'raw_material_id' => $rawMaterial->id,
@@ -116,8 +127,9 @@ test('production dashboard exposes real operational stats', function (): void {
             ->component('Production/Dashboard')
             ->where('stats.pending_orders', 1)
             ->where('stats.active_orders', 1)
+            ->where('stats.pending_review_orders', 1)
             ->where('stats.unresolved_alerts', 1)
-            ->has('recent_orders', 2)
+            ->has('recent_orders', 3)
             ->has('recent_alerts', 1)
             ->where('alert_breakdown.stock_bajo', 1));
 });

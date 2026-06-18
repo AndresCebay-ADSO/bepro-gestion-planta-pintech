@@ -19,9 +19,10 @@ class ProductionDashboardService
     /**
      * @return array{
      *     stats: array{
-     *         pending_orders: int,
-     *         active_orders: int,
-     *         completed_today: int,
+     *     pending_orders: int,
+     *     active_orders: int,
+     *     pending_review_orders: int,
+     *     completed_today: int,
      *         unresolved_alerts: int,
      *         low_stock_materials: int,
      *         expiring_batches: int
@@ -64,6 +65,10 @@ class ProductionDashboardService
             ->where('status', ProductionOrderStatus::InProgress)
             ->count();
 
+        $pendingReviewOrders = ProductionOrder::query()
+            ->where('status', ProductionOrderStatus::PendingReview)
+            ->count();
+
         $completedToday = ProductionOrder::query()
             ->where('status', ProductionOrderStatus::Completed)
             ->whereDate('completion_date', $today)
@@ -104,6 +109,7 @@ class ProductionDashboardService
             'stats' => [
                 'pending_orders' => $pendingOrders,
                 'active_orders' => $activeOrders,
+                'pending_review_orders' => $pendingReviewOrders,
                 'completed_today' => $completedToday,
                 'unresolved_alerts' => $this->alertService->unresolvedCount(),
                 'low_stock_materials' => $lowStockMaterials,

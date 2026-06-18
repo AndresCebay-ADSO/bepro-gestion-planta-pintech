@@ -27,7 +27,7 @@ return new class extends Migration
             $table->decimal('yield_variance_quantity', 12, 4)->nullable();
             $table->decimal('yield_percentage', 5, 2)->nullable();
 
-            $table->enum('status', ['pending', 'in_progress', 'completed', 'cancelled'])->default('pending');
+            $table->enum('status', ['pending', 'in_progress', 'pending_review', 'completed', 'cancelled'])->default('pending');
             $table->date('planned_date');
             $table->date('completion_date')->nullable();
             $table->text('notes')->nullable();
