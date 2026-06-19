@@ -14,7 +14,7 @@ class RejectProductionOrderReviewRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('rejectReview', $this->route('production_order')) ?? false;
     }
 
     /**

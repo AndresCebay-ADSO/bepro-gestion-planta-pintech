@@ -15,7 +15,7 @@ class SubmitProductionOrderForReviewRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('submitForReview', $this->route('production_order')) ?? false;
     }
 
     /**

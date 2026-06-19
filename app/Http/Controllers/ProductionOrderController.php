@@ -201,8 +201,6 @@ class ProductionOrderController extends Controller
      */
     public function store(StoreProductionOrderRequest $request): RedirectResponse
     {
-        $this->authorize('create', ProductionOrder::class);
-
         $order = $this->createProductionOrder->execute(
             data: $request->validated(),
             userId: $this->authenticatedUserId()
@@ -217,8 +215,6 @@ class ProductionOrderController extends Controller
      */
     public function complete(CompleteProductionOrderRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
-        $this->authorize('complete', $productionOrder);
-
         $validated = $request->validated();
 
         try {
@@ -240,8 +236,6 @@ class ProductionOrderController extends Controller
      */
     public function submitForReview(SubmitProductionOrderForReviewRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
-        $this->authorize('submitForReview', $productionOrder);
-
         $validated = $request->validated();
 
         try {
@@ -263,8 +257,6 @@ class ProductionOrderController extends Controller
      */
     public function rejectReview(RejectProductionOrderReviewRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
-        $this->authorize('rejectReview', $productionOrder);
-
         try {
             $this->rejectProductionOrderReview->execute(
                 order: $productionOrder,
@@ -283,8 +275,6 @@ class ProductionOrderController extends Controller
      */
     public function cancel(CancelProductionOrderRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
-        $this->authorize('delete', $productionOrder);
-
         try {
             $this->cancelProductionOrder->execute($productionOrder, $request->validated('reason'));
 
@@ -300,8 +290,6 @@ class ProductionOrderController extends Controller
      */
     public function previewCosts(PreviewProductionOrderCostsRequest $request, ProductionOrder $productionOrder): JsonResponse
     {
-        $this->authorize('previewCosts', $productionOrder);
-
         $validated = $request->validated();
 
         return response()->json(

@@ -18,8 +18,6 @@ class PackagingPlanController extends Controller
      */
     public function store(StorePackagingPlanRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
-        $this->authorize('update', $productionOrder);
-
         $validated = $request->validated();
 
         ProductionOrderPackagingPlan::create([

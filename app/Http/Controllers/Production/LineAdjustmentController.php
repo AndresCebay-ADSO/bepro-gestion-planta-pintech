@@ -18,8 +18,6 @@ class LineAdjustmentController extends Controller
      */
     public function store(StoreLineAdjustmentRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
-        $this->authorize('update', $productionOrder);
-
         $validated = $request->validated();
 
         ProductionOrderLineAdjustment::create([
