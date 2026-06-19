@@ -120,7 +120,7 @@
         }
 
         table tr.row-stripe {
-            background-color: #D9E2F3;
+            background-color: #d3d3d3;
         }
 
         table td:first-child {
@@ -180,9 +180,8 @@
                     <div class="company-name">Pintech Colombia SAS</div>
                     <div>NIT. 901123507-9</div>
                     <div>Palmira – Valle del Cauca</div>
-                    <div>Calle 0 Transversal No. 7 – 8</div>
-                    <div><a href="mailto:proyectos@pintech.com.co">proyectos@pintech.com.co</a></div>
-                    <div>www.pintech.com.co</div>
+                    <div><a href="mailto:info@pintech.com.co">info@pintech.com.co</a></div>
+                    <div>www.beprocoatings.com</div>
                 </td>
                 <td class="header-right">
                     @if($logoBase64)
@@ -200,7 +199,7 @@
         {{-- ── INFO FIELDS ── --}}
         <div class="fields">
             <div class="field"><strong>PRODUCTO:</strong> {{ $certificate['product_name'] }}</div>
-            <div class="field"><strong>LOTE:</strong> {{ $certificate['lot'] }}</div>
+            <div class="field"><strong>LOTE:</strong> {{ $certificate['lot'] }} del {{ $certificate['manufacturing_date'] ?? 'N/A' }}</div>
         </div>
 
         {{-- ── TESTS TABLE ── --}}
@@ -239,7 +238,7 @@
             @if($signatureBase64)
                 <img src="{{ $signatureBase64 }}" alt="Firma">
             @endif
-            <div class="name">{{ $certificate['responsible_name'] ?? 'N/A' }}</div>
+            <div class="name">{{ $certificate['responsible_name'] ?? 'N/A Carlos Alberto Muñoz' }}</div>
             <div class="role">{{ $certificate['responsible_role'] ?? 'Analista de producción.' }}</div>
         </div>
 

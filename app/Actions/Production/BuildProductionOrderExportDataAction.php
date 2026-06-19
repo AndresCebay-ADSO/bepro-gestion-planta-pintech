@@ -16,9 +16,9 @@ class BuildProductionOrderExportDataAction
     /**
      * @return array<string, mixed>
      */
-    public function execute(ProductionOrder $productionOrder): array
+    public function execute(ProductionOrder $productionOrder, bool $includeCosts = true): array
     {
-        $orderData = $this->buildShowData->execute($productionOrder);
+        $orderData = $this->buildShowData->execute($productionOrder, $includeCosts);
         $orderData['pdf_materials'] = $this->buildPdfMaterials->execute($productionOrder);
 
         return $orderData;

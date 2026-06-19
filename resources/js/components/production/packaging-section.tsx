@@ -24,7 +24,8 @@ type PackagingSectionProps = {
     data: ProductionOrderFormData;
     setData: ProductionOrderSetData;
     availableVariants: VariantOption[];
-    isCompleted: boolean;
+    isReadOnly: boolean;
+    showCosts?: boolean;
 };
 
 export function PackagingSection({
@@ -33,13 +34,14 @@ export function PackagingSection({
     data,
     setData,
     availableVariants,
-    isCompleted,
+    isReadOnly,
+    showCosts = true,
 }: PackagingSectionProps) {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <Label>Empaque Final (Unidades)</Label>
-                {!isCompleted && (
+                {!isReadOnly && (
                     <span className="text-xs text-muted-foreground">
                         Puedes agregar o eliminar presentaciones
                     </span>
@@ -56,9 +58,17 @@ export function PackagingSection({
                                     Real Producido
                                 </th>
                                 <th className="p-3 text-right">Eq. Gal</th>
-                                <th className="p-3 text-right">Costo Unit.</th>
-                                <th className="p-3 text-right">Costo Total</th>
-                                {!isCompleted && <th className="w-12 p-3"></th>}
+                                {showCosts && (
+                                    <>
+                                        <th className="p-3 text-right">
+                                            Costo Unit.
+                                        </th>
+                                        <th className="p-3 text-right">
+                                            Costo Total
+                                        </th>
+                                    </>
+                                )}
+                                {!isReadOnly && <th className="w-12 p-3"></th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -96,7 +106,7 @@ export function PackagingSection({
                                                     newPackaging,
                                                 );
                                             }}
-                                            disabled={isCompleted}
+                                            disabled={isReadOnly}
                                         />
                                     </td>
                                     <td className="p-3 text-right text-muted-foreground">
@@ -111,25 +121,32 @@ export function PackagingSection({
                                             maxDecimals={2}
                                         />
                                     </td>
-                                    <td className="p-3 text-right text-muted-foreground">
-                                        <FormattedNumber
-                                            value={pack.cost_price}
-                                            currency
-                                            maxDecimals={2}
-                                        />
-                                    </td>
-                                    <td className="p-3 text-right font-medium">
-                                        <FormattedNumber
-                                            value={
-                                                (Number(pack.actual_units) ||
-                                                    0) *
-                                                (Number(pack.cost_price) || 0)
-                                            }
-                                            currency
-                                            maxDecimals={2}
-                                        />
-                                    </td>
-                                    {!isCompleted && (
+                                    {showCosts && (
+                                        <>
+                                            <td className="p-3 text-right text-muted-foreground">
+                                                <FormattedNumber
+                                                    value={pack.cost_price}
+                                                    currency
+                                                    maxDecimals={2}
+                                                />
+                                            </td>
+                                            <td className="p-3 text-right font-medium">
+                                                <FormattedNumber
+                                                    value={
+                                                        (Number(
+                                                            pack.actual_units,
+                                                        ) || 0) *
+                                                        (Number(
+                                                            pack.cost_price,
+                                                        ) || 0)
+                                                    }
+                                                    currency
+                                                    maxDecimals={2}
+                                                />
+                                            </td>
+                                        </>
+                                    )}
+                                    {!isReadOnly && (
                                         <td className="p-3">
                                             <Button
                                                 type="button"
@@ -143,10 +160,10 @@ export function PackagingSection({
                                                         )
                                                     ) {
                                                         router.delete(
-                                                            destroyPackagingPlan(
-                                                                {
-                                                                    order: orderId,
-                                                                    plan: pack.id,
+destroyPackagingPlan(
+    {
+        production_order: orderId,
+        plan: pack.id,
                                                                 },
                                                             ).url,
                                                             {
@@ -166,10 +183,13 @@ export function PackagingSection({
                                 <tr>
                                     <td
                                         className="p-3 text-muted-foreground"
-                                        colSpan={isCompleted ? 6 : 7}
+                                        colSpan={
+                                            (showCosts ? 6 : 4) +
+                                            (isReadOnly ? 0 : 1)
+                                        }
                                     >
                                         Esta orden no tiene plan de empaque.{' '}
-                                        {!isCompleted &&
+                                        {!isReadOnly &&
                                             'Agrega presentaciones abajo.'}
                                     </td>
                                 </tr>
@@ -179,7 +199,7 @@ export function PackagingSection({
                 </div>
             </div>
 
-            {!isCompleted && (
+            {!isReadOnly && (
                 <PackagingPlanForm
                     orderId={orderId}
                     availableVariants={availableVariants}
@@ -227,7 +247,7 @@ function PackagingPlanForm({
         setFormErrors({});
 
         router.post(
-            storePackagingPlan({ order: orderId }).url,
+            storePackagingPlan({ production_order: orderId }).url,
             {
                 product_variant_id: variantId,
                 planned_units: Number(plannedUnits),

@@ -22,6 +22,7 @@ beforeEach(function () {
         Role::create(['name' => 'admin']);
         Role::create(['name' => 'produccion']);
         Role::create(['name' => 'comercial']);
+        Role::create(['name' => 'operador']);
     }
 
     $this->user = User::factory()->create([
@@ -134,7 +135,7 @@ test('cannot add a packaging plan to a completed order', function () {
 
     $response = $this->post(route('production-orders.packaging-plans.store', $this->productionOrder), $data);
 
-    $response->assertSessionHasErrors(['production_order']);
+    $response->assertForbidden();
     $this->assertDatabaseEmpty('production_order_packaging_plan');
 });
 
@@ -148,8 +149,43 @@ test('cannot add a packaging plan to a cancelled order', function () {
 
     $response = $this->post(route('production-orders.packaging-plans.store', $this->productionOrder), $data);
 
-    $response->assertSessionHasErrors(['production_order']);
+    $response->assertForbidden();
     $this->assertDatabaseEmpty('production_order_packaging_plan');
+});
+
+test('operator cannot add a packaging plan to a pending review order', function () {
+    $operator = User::factory()->create(['email_verified_at' => now()]);
+    $operator->assignRole('operador');
+    $this->actingAs($operator);
+
+    $this->productionOrder->update(['status' => ProductionOrderStatus::PendingReview]);
+
+    $data = [
+        'product_variant_id' => $this->variant->id,
+        'planned_units' => 10,
+    ];
+
+    $response = $this->post(route('production-orders.packaging-plans.store', $this->productionOrder), $data);
+
+    $response->assertForbidden();
+    $this->assertDatabaseEmpty('production_order_packaging_plan');
+});
+
+test('admin can add a packaging plan to a pending review order', function () {
+    $this->productionOrder->update(['status' => ProductionOrderStatus::PendingReview]);
+
+    $data = [
+        'product_variant_id' => $this->variant->id,
+        'planned_units' => 10,
+    ];
+
+    $response = $this->post(route('production-orders.packaging-plans.store', $this->productionOrder), $data);
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('production_order_packaging_plan', [
+        'production_order_id' => $this->productionOrder->id,
+        'product_variant_id' => $this->variant->id,
+    ]);
 });
 
 test('can delete a packaging plan from a pending order', function () {
@@ -160,7 +196,7 @@ test('can delete a packaging plan from a pending order', function () {
     ]);
 
     $response = $this->delete(route('production-orders.packaging-plans.destroy', [
-        'order' => $this->productionOrder->id,
+        'production_order' => $this->productionOrder->id,
         'plan' => $plan->id,
     ]));
 
@@ -178,11 +214,33 @@ test('cannot delete a packaging plan from a completed order', function () {
     $this->productionOrder->update(['status' => ProductionOrderStatus::Completed]);
 
     $response = $this->delete(route('production-orders.packaging-plans.destroy', [
-        'order' => $this->productionOrder->id,
+        'production_order' => $this->productionOrder->id,
         'plan' => $plan->id,
     ]));
 
-    $response->assertRedirect();
+    $response->assertForbidden();
+    $this->assertDatabaseHas('production_order_packaging_plan', ['id' => $plan->id]);
+});
+
+test('operator cannot delete a packaging plan from a pending review order', function () {
+    $plan = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $this->productionOrder->id,
+        'product_variant_id' => $this->variant->id,
+        'planned_units' => 10,
+    ]);
+
+    $this->productionOrder->update(['status' => ProductionOrderStatus::PendingReview]);
+
+    $operator = User::factory()->create(['email_verified_at' => now()]);
+    $operator->assignRole('operador');
+    $this->actingAs($operator);
+
+    $response = $this->delete(route('production-orders.packaging-plans.destroy', [
+        'production_order' => $this->productionOrder->id,
+        'plan' => $plan->id,
+    ]));
+
+    $response->assertForbidden();
     $this->assertDatabaseHas('production_order_packaging_plan', ['id' => $plan->id]);
 });
 

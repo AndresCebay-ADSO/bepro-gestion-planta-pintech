@@ -9,6 +9,7 @@ use App\Http\Controllers\FormulaController;
 use App\Http\Controllers\Inventory\RawMaterialController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
+use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductDocumentController;
 use App\Http\Controllers\Production\LineAdjustmentController;
@@ -101,36 +102,49 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
         ->where(['inventory_movement' => '[0-9]+']);
 });
 
-// ADMIN + PRODUCCIÓN: Gestión de fórmulas y órdenes
+// ADMIN + PRODUCCIÓN: Gestión de fórmulas y órdenes (escritura)
 Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
     Route::resource('formulas', FormulaController::class);
     Route::post('formulas/{formula}/activate', [FormulaController::class, 'activate'])->name('formulas.activate');
 
-    // Órdenes de Producción — exportaciones (antes del resource para Wayfinder)
-    Route::get('production-orders/{production_order}/export-pdf', [ProductionOrderController::class, 'exportPdf'])
-        ->name('production-orders.export-pdf');
-    Route::get('production-orders/{production_order}/export-excel', [ProductionOrderController::class, 'exportExcel'])
-        ->name('production-orders.export-excel');
-
-    Route::resource('production-orders', ProductionOrderController::class)
-        ->only(['index', 'create', 'store', 'show']);
-    Route::post('production-orders/{order}/complete', [ProductionOrderController::class, 'complete'])->name('production-orders.complete');
-    Route::post('production-orders/{order}/cancel', [ProductionOrderController::class, 'cancel'])->name('production-orders.cancel');
-    Route::post('production-orders/{order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])
+    // Órdenes de Producción — mutaciones exclusivas de producción
+    Route::get('production-orders/create', [ProductionOrderController::class, 'create'])->name('production-orders.create');
+    Route::post('production-orders', [ProductionOrderController::class, 'store'])->name('production-orders.store');
+    Route::post('production-orders/{production_order}/complete', [ProductionOrderController::class, 'complete'])->name('production-orders.complete');
+    Route::post('production-orders/{production_order}/cancel', [ProductionOrderController::class, 'cancel'])->name('production-orders.cancel');
+    Route::post('production-orders/{production_order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])
         ->middleware('throttle:production-preview-costs')
         ->name('production-orders.preview-costs');
-
-    // Ajustes de línea
-    Route::post('production-orders/{order}/line-adjustments', [LineAdjustmentController::class, 'store'])->name('production-orders.line-adjustments.store');
-    Route::delete('production-orders/{order}/line-adjustments/{adjustment}', [LineAdjustmentController::class, 'destroy'])->name('production-orders.line-adjustments.destroy');
-
-    // Planes de envasado
-    Route::post('production-orders/{order}/packaging-plans', [PackagingPlanController::class, 'store'])->name('production-orders.packaging-plans.store');
-    Route::delete('production-orders/{order}/packaging-plans/{plan}', [PackagingPlanController::class, 'destroy'])->name('production-orders.packaging-plans.destroy');
+    Route::post('production-orders/{production_order}/reject-review', [ProductionOrderController::class, 'rejectReview'])->name('production-orders.reject-review');
 
     Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
     Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
     Route::delete('products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
+});
+
+// ADMIN + PRODUCCIÓN + OPERADOR: Datos operativos de órdenes (ajustes de línea + envasado)
+Route::middleware(['auth', 'verified', 'role:admin,produccion,operador'])->group(function () {
+    // Ajustes de línea
+    Route::post('production-orders/{production_order}/line-adjustments', [LineAdjustmentController::class, 'store'])->name('production-orders.line-adjustments.store');
+    Route::delete('production-orders/{production_order}/line-adjustments/{adjustment}', [LineAdjustmentController::class, 'destroy'])->name('production-orders.line-adjustments.destroy');
+
+    // Planes de envasado
+    Route::post('production-orders/{production_order}/packaging-plans', [PackagingPlanController::class, 'store'])->name('production-orders.packaging-plans.store');
+    Route::delete('production-orders/{production_order}/packaging-plans/{plan}', [PackagingPlanController::class, 'destroy'])->name('production-orders.packaging-plans.destroy');
+});
+
+// ADMIN + PRODUCCIÓN + OPERADOR: Órdenes de Producción (lectura + submit)
+Route::middleware(['auth', 'verified', 'role:admin,produccion,operador'])->group(function () {
+    Route::get('production-orders', [ProductionOrderController::class, 'index'])->name('production-orders.index');
+    Route::get('production-orders/{production_order}', [ProductionOrderController::class, 'show'])->name('production-orders.show')->whereNumber('production_order');
+    Route::get('production-orders/{production_order}/export-pdf', [ProductionOrderController::class, 'exportPdf'])->name('production-orders.export-pdf');
+    Route::get('production-orders/{production_order}/export-excel', [ProductionOrderController::class, 'exportExcel'])->name('production-orders.export-excel');
+    Route::post('production-orders/{production_order}/submit-for-review', [ProductionOrderController::class, 'submitForReview'])->name('production-orders.submit-for-review');
+});
+
+// OPERADOR: Dashboard del operador
+Route::middleware(['auth', 'verified', 'role:operador'])->group(function () {
+    Route::get('/operator', [OperatorController::class, 'index'])->name('operator.index');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

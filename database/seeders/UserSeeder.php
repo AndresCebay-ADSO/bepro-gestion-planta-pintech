@@ -46,6 +46,18 @@ class UserSeeder extends Seeder
         );
         $commercial->assignRole('comercial');
 
-        $this->command->info('Created/Updated 3 users.');
+        $operator = User::firstOrCreate(
+            ['email' => 'pintech.operador@gmail.com'],
+            [
+                'name' => 'Operador Planta',
+                'password' => Hash::make('Pintech_2026'),
+                'email_verified_at' => now(),
+                'is_active' => true,
+                'last_login_at' => now()->subHours(1),
+            ]
+        );
+        $operator->assignRole('operador');
+
+        $this->command->info('Created/Updated 4 users.');
     }
 }

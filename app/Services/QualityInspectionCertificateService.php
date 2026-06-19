@@ -91,7 +91,7 @@ class QualityInspectionCertificateService
                     upper: $product->quality_solids_upper !== null ? (float) $product->quality_solids_upper : null
                 ),
                 [
-                    'name' => 'Apariencia',
+                    'name' => 'APARIENCIA',
                     'unit' => 'CUALITATIVA',
                     'result' => 'OK',
                     'lower_limit' => 'NO SEPARACIÓN',

@@ -21,6 +21,8 @@ type LineAdjustmentsPanelProps = {
     adjustments: ProductionOrderLineAdjustment[];
     rawMaterials: RawMaterialOption[];
     isCompleted: boolean;
+    isReadOnly: boolean;
+    showCosts?: boolean;
 };
 
 export function LineAdjustmentsPanel({
@@ -28,6 +30,7 @@ export function LineAdjustmentsPanel({
     adjustments,
     rawMaterials,
     isCompleted,
+    isReadOnly,
 }: LineAdjustmentsPanelProps) {
     return (
         <div className="space-y-4">
@@ -36,7 +39,7 @@ export function LineAdjustmentsPanel({
                     <Plus className="h-4 w-4 text-orange-500" />
                     Ajustes de Línea
                 </Label>
-                {!isCompleted && (
+                {!isReadOnly && (
                     <span className="text-xs text-muted-foreground">
                         MPs adicionales fuera de fórmula
                     </span>
@@ -54,7 +57,7 @@ export function LineAdjustmentsPanel({
                                     </th>
                                     <th className="p-3 text-right">Cantidad</th>
                                     <th className="p-3 text-left">Motivo</th>
-                                    {!isCompleted && (
+                                    {!isReadOnly && (
                                         <th className="w-12 p-3"></th>
                                     )}
                                 </tr>
@@ -78,7 +81,7 @@ export function LineAdjustmentsPanel({
                                         <td className="p-3 text-muted-foreground">
                                             {adjustment.reason}
                                         </td>
-                                        {!isCompleted && (
+                                        {!isReadOnly && (
                                             <td className="p-3">
                                                 <Button
                                                     type="button"
@@ -92,10 +95,10 @@ export function LineAdjustmentsPanel({
                                                             )
                                                         ) {
                                                             router.delete(
-                                                                destroyLineAdjustment(
-                                                                    {
-                                                                        order: orderId,
-                                                                        adjustment:
+destroyLineAdjustment(
+    {
+        production_order: orderId,
+        adjustment:
                                                                             adjustment.id,
                                                                     },
                                                                 ).url,
@@ -118,7 +121,7 @@ export function LineAdjustmentsPanel({
                 </div>
             )}
 
-            {!isCompleted && (
+            {!isReadOnly && (
                 <LineAdjustmentForm
                     orderId={orderId}
                     rawMaterials={rawMaterials}
@@ -177,7 +180,7 @@ function LineAdjustmentForm({
         setFormErrors({});
 
         router.post(
-            storeLineAdjustment({ order: orderId }).url,
+            storeLineAdjustment({ production_order: orderId }).url,
             {
                 raw_material_id: rawMaterialId,
                 quantity: Number(quantity),

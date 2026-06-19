@@ -19,7 +19,6 @@ use App\Services\DecimalCalculator;
 use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\Pricing\ProductionCostCalculatorService;
 use App\Services\VariantPricingService;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -31,6 +30,7 @@ class CompleteProductionOrderAction
         private readonly VariantPricingService $variantPricingService,
         private readonly DecimalCalculator $calculator,
         private readonly AlertService $alertService,
+        private readonly SaveProductionOrderOperationalDataAction $saveOperationalData,
     ) {}
 
     /**
@@ -46,6 +46,7 @@ class CompleteProductionOrderAction
             $allowedForCompletion = [
                 ProductionOrderStatus::Pending,
                 ProductionOrderStatus::InProgress,
+                ProductionOrderStatus::PendingReview,
             ];
 
             if (! in_array($lockedOrder->status, $allowedForCompletion, true)) {
@@ -54,21 +55,21 @@ class CompleteProductionOrderAction
                 );
             }
 
-            $lockedOrder->update([
+            $wasPendingReview = $lockedOrder->status === ProductionOrderStatus::PendingReview;
+
+            $this->saveOperationalData->execute($lockedOrder, $data);
+
+            $updateData = [
                 'status' => ProductionOrderStatus::Completed,
                 'completion_date' => now(),
-                'actual_quantity' => $data['actual_yield_quantity'] ?? $lockedOrder->quantity,
-                'viscosity_ku' => $data['viscosity_ku'] ?? null,
-                'grinding_hg' => $data['grinding_hg'] ?? null,
-                'quality_solids' => $data['quality_solids'] ?? null,
-                'agitation_start_time' => isset($data['agitation_start_time']) ? Carbon::parse($data['agitation_start_time'], 'America/Bogota') : null,
-                'agitation_end_time' => isset($data['agitation_end_time']) ? Carbon::parse($data['agitation_end_time'], 'America/Bogota') : null,
-                'packaging_start_time' => isset($data['packaging_start_time']) ? Carbon::parse($data['packaging_start_time'], 'America/Bogota') : null,
-                'packaging_end_time' => isset($data['packaging_end_time']) ? Carbon::parse($data['packaging_end_time'], 'America/Bogota') : null,
-                'responsible_name' => $data['responsible_name'] ?? null,
-                'spillage_quantity' => $data['spillage_quantity'] ?? 0,
-                'notes' => $data['notes'] ?? $lockedOrder->notes,
-            ]);
+            ];
+
+            if ($wasPendingReview) {
+                $updateData['reviewed_by'] = $userId;
+                $updateData['reviewed_at'] = now();
+            }
+
+            $lockedOrder->update($updateData);
 
             $lockedOrder->loadMissing(['details', 'packagingPlans.productVariant', 'lineAdjustments']);
             $detailsById = $lockedOrder->details->keyBy('id');

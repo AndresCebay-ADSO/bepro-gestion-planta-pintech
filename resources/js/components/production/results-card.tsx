@@ -35,8 +35,10 @@ type ResultsCardProps = {
     rawMaterials: RawMaterialOption[];
     availableVariants: VariantOption[];
     isCompleted: boolean;
+    isReadOnly: boolean;
     previewLoading: boolean;
     solidsReferenceLabel: string | null;
+    showCosts?: boolean;
 };
 
 export function ResultsCard({
@@ -50,8 +52,10 @@ export function ResultsCard({
     rawMaterials,
     availableVariants,
     isCompleted,
+    isReadOnly,
     previewLoading,
     solidsReferenceLabel,
+    showCosts = true,
 }: ResultsCardProps) {
     return (
         <Card className={isCompleted ? 'opacity-90 shadow-none' : ''}>
@@ -62,11 +66,11 @@ export function ResultsCard({
                 </CardTitle>
                 <CardDescription>
                     Ingrese los datos reales obtenidos al finalizar el proceso.
-                    {!isCompleted
+                    {!isCompleted && showCosts
                         ? ' Los costos se estiman en vivo desde servidor mientras editas.'
                         : ''}
                 </CardDescription>
-                {!isCompleted && (
+                {!isCompleted && showCosts && (
                     <p className="h-5 text-xs text-muted-foreground">
                         {previewLoading ? 'Recalculando costos...' : ''}
                     </p>
@@ -90,7 +94,7 @@ export function ResultsCard({
                                     event.target.value,
                                 )
                             }
-                            disabled={isCompleted}
+                            disabled={isReadOnly}
                         />
                         <p className="text-xs text-muted-foreground">
                             Debe coincidir con el equivalente envasado dentro de
@@ -130,7 +134,7 @@ export function ResultsCard({
                                             event.target.value,
                                         )
                                     }
-                                    disabled={isCompleted}
+                                    disabled={isReadOnly}
                                 />
                                 {errors.viscosity_ku && (
                                     <p className="text-xs text-destructive">
@@ -152,7 +156,7 @@ export function ResultsCard({
                                             event.target.value,
                                         )
                                     }
-                                    disabled={isCompleted}
+                                    disabled={isReadOnly}
                                 />
                                 {errors.grinding_hg && (
                                     <p className="text-xs text-destructive">
@@ -176,7 +180,7 @@ export function ResultsCard({
                                             event.target.value,
                                         )
                                     }
-                                    disabled={isCompleted}
+                                    disabled={isReadOnly}
                                 />
                                 {solidsReferenceLabel && (
                                     <p className="text-xs text-muted-foreground">
@@ -204,7 +208,8 @@ export function ResultsCard({
                         rows={ingredientRows}
                         data={data}
                         setData={setData}
-                        isCompleted={isCompleted}
+                        isReadOnly={isReadOnly}
+                        showCosts={showCosts}
                     />
                 </div>
 
@@ -213,6 +218,8 @@ export function ResultsCard({
                     adjustments={lineAdjustments}
                     rawMaterials={rawMaterials}
                     isCompleted={isCompleted}
+                    isReadOnly={isReadOnly}
+                    showCosts={showCosts}
                 />
 
                 <PackagingSection
@@ -221,7 +228,8 @@ export function ResultsCard({
                     data={data}
                     setData={setData}
                     availableVariants={availableVariants}
-                    isCompleted={isCompleted}
+                    isReadOnly={isReadOnly}
+                    showCosts={showCosts}
                 />
             </CardContent>
         </Card>

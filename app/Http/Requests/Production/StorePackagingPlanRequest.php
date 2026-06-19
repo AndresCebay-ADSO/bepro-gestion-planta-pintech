@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Production;
 
-use App\Enums\ProductionOrderStatus;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Validator;
 
 class StorePackagingPlanRequest extends FormRequest
 {
@@ -17,7 +15,7 @@ class StorePackagingPlanRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('updateOperationalData', $this->route('production_order')) ?? false;
     }
 
     /**
@@ -27,7 +25,7 @@ class StorePackagingPlanRequest extends FormRequest
      */
     public function rules(): array
     {
-        $order = $this->route('order');
+        $order = $this->route('production_order');
         $productId = is_object($order) ? $order->product_id : null;
 
         return [
@@ -38,35 +36,6 @@ class StorePackagingPlanRequest extends FormRequest
                     ->when($productId !== null, fn ($query) => $query->where('product_id', $productId)),
             ],
             'planned_units' => 'required|numeric|min:1',
-        ];
-    }
-
-    /**
-     * Get the "after" validation callables for the request.
-     *
-     * @return array<callable(Validator): void>
-     */
-    public function after(): array
-    {
-        return [
-            function (Validator $validator): void {
-                $order = $this->route('order');
-                if (! is_object($order)) {
-                    return;
-                }
-
-                $blockedStatuses = [
-                    ProductionOrderStatus::Completed,
-                    ProductionOrderStatus::Cancelled,
-                ];
-
-                if (in_array($order->status, $blockedStatuses, true)) {
-                    $validator->errors()->add(
-                        'production_order',
-                        'No se pueden agregar planes de envasado a una orden completada o cancelada.'
-                    );
-                }
-            },
         ];
     }
 }

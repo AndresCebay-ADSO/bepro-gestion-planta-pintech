@@ -18,7 +18,7 @@ class CompleteProductionOrderRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('complete', $this->route('production_order')) ?? false;
     }
 
     /**
@@ -28,7 +28,7 @@ class CompleteProductionOrderRequest extends FormRequest
      */
     public function rules(): array
     {
-        $order = $this->route('order');
+        $order = $this->route('production_order');
         $orderId = is_object($order) ? $order->id : null;
 
         return [

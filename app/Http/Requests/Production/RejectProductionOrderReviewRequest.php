@@ -6,16 +6,15 @@ namespace App\Http\Requests\Production;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class StoreLineAdjustmentRequest extends FormRequest
+class RejectProductionOrderReviewRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('updateOperationalData', $this->route('production_order')) ?? false;
+        return $this->user()?->can('rejectReview', $this->route('production_order')) ?? false;
     }
 
     /**
@@ -26,13 +25,7 @@ class StoreLineAdjustmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'raw_material_id' => [
-                'required',
-                Rule::exists('raw_materials', 'id')->where('is_active', true),
-            ],
-            'quantity' => 'required|numeric|min:0.0001',
-            'reason' => 'required|string|max:500',
-            'notes' => 'nullable|string|max:1000',
+            'reason' => 'required|string|min:10',
         ];
     }
 }

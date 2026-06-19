@@ -10,12 +10,16 @@ use App\Actions\Production\CancelProductionOrderAction;
 use App\Actions\Production\CompleteProductionOrderAction;
 use App\Actions\Production\CreateProductionOrderAction;
 use App\Actions\Production\PreviewProductionOrderCostsAction;
+use App\Actions\Production\RejectProductionOrderReviewAction;
+use App\Actions\Production\SubmitProductionOrderForReviewAction;
 use App\Enums\WarehouseType;
 use App\Exports\ProductionOrderExport;
 use App\Http\Requests\Production\CancelProductionOrderRequest;
 use App\Http\Requests\Production\CompleteProductionOrderRequest;
 use App\Http\Requests\Production\PreviewProductionOrderCostsRequest;
+use App\Http\Requests\Production\RejectProductionOrderReviewRequest;
 use App\Http\Requests\Production\StoreProductionOrderRequest;
+use App\Http\Requests\Production\SubmitProductionOrderForReviewRequest;
 use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
@@ -38,7 +42,9 @@ class ProductionOrderController extends Controller
         private readonly CancelProductionOrderAction $cancelProductionOrder,
         private readonly PreviewProductionOrderCostsAction $previewProductionOrderCosts,
         private readonly BuildProductionOrderShowDataAction $buildProductionOrderShowData,
-        private readonly BuildProductionOrderExportDataAction $buildProductionOrderExportData
+        private readonly BuildProductionOrderExportDataAction $buildProductionOrderExportData,
+        private readonly SubmitProductionOrderForReviewAction $submitProductionOrderForReview,
+        private readonly RejectProductionOrderReviewAction $rejectProductionOrderReview,
     ) {}
 
     /**
@@ -56,6 +62,9 @@ class ProductionOrderController extends Controller
 
         return Inertia::render('Production/Orders/Index', [
             'orders' => $orders,
+            'can' => [
+                'create' => auth()->user()?->can('create', ProductionOrder::class) ?? false,
+            ],
         ]);
     }
 
@@ -86,11 +95,20 @@ class ProductionOrderController extends Controller
                 'presentation_value' => (float) $v->presentation_value,
             ]);
 
+        $user = auth()->user();
+        $includeCosts = $user?->can('previewCosts', $productionOrder) ?? false;
+
         return Inertia::render('Production/Orders/Show', [
-            'order' => $this->buildProductionOrderShowData->execute($productionOrder),
+            'order' => $this->buildProductionOrderShowData->execute($productionOrder, $includeCosts),
             'rawMaterials' => $rawMaterials,
             'availableVariants' => $availableVariants,
             'returnTo' => $this->resolveReturnTo($request),
+            'can' => [
+                'submitForReview' => $user?->can('submitForReview', $productionOrder) ?? false,
+                'complete' => $user?->can('complete', $productionOrder) ?? false,
+                'rejectReview' => $user?->can('rejectReview', $productionOrder) ?? false,
+                'previewCosts' => $user?->can('previewCosts', $productionOrder) ?? false,
+            ],
         ]);
     }
 
@@ -101,7 +119,8 @@ class ProductionOrderController extends Controller
     {
         $this->authorize('view', $productionOrder);
 
-        $orderData = $this->buildProductionOrderExportData->execute($productionOrder);
+        $includeCosts = auth()->user()?->can('previewCosts', $productionOrder) ?? false;
+        $orderData = $this->buildProductionOrderExportData->execute($productionOrder, $includeCosts);
         $filename = "orden-produccion-{$orderData['order_number']}.pdf";
 
         $logoPath = public_path('images/logo-pintech.png');
@@ -131,7 +150,8 @@ class ProductionOrderController extends Controller
     {
         $this->authorize('view', $productionOrder);
 
-        $orderData = $this->buildProductionOrderExportData->execute($productionOrder);
+        $includeCosts = auth()->user()?->can('previewCosts', $productionOrder) ?? false;
+        $orderData = $this->buildProductionOrderExportData->execute($productionOrder, $includeCosts);
         $filename = "orden-produccion-{$orderData['order_number']}.xlsx";
 
         return Excel::download(new ProductionOrderExport($orderData), $filename);
@@ -184,8 +204,6 @@ class ProductionOrderController extends Controller
      */
     public function store(StoreProductionOrderRequest $request): RedirectResponse
     {
-        $this->authorize('create', ProductionOrder::class);
-
         $order = $this->createProductionOrder->execute(
             data: $request->validated(),
             userId: $this->authenticatedUserId()
@@ -198,15 +216,13 @@ class ProductionOrderController extends Controller
     /**
      * Finalizar orden con datos reales de planta.
      */
-    public function complete(CompleteProductionOrderRequest $request, ProductionOrder $order): RedirectResponse
+    public function complete(CompleteProductionOrderRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
-        $this->authorize('update', $order);
-
         $validated = $request->validated();
 
         try {
             $this->completeProductionOrder->execute(
-                order: $order,
+                order: $productionOrder,
                 data: $validated,
                 userId: $this->authenticatedUserId()
             );
@@ -214,21 +230,58 @@ class ProductionOrderController extends Controller
             return back()->with('error', $exception->getMessage());
         }
 
-        return redirect()->route('production-orders.show', $order)
+        return redirect()->route('production-orders.show', $productionOrder)
             ->with('success', 'Producción finalizada e inventario actualizado.');
+    }
+
+    /**
+     * Enviar orden a revisión (precierre por operador de planta).
+     */
+    public function submitForReview(SubmitProductionOrderForReviewRequest $request, ProductionOrder $productionOrder): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        try {
+            $this->submitProductionOrderForReview->execute(
+                order: $productionOrder,
+                data: $validated,
+                userId: $this->authenticatedUserId()
+            );
+        } catch (\DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return redirect()->route('production-orders.show', $productionOrder)
+            ->with('success', 'Orden enviada a revisión. Producción validará el cierre definitivo.');
+    }
+
+    /**
+     * Devolver una orden de producción a planta (rechazo de revisión).
+     */
+    public function rejectReview(RejectProductionOrderReviewRequest $request, ProductionOrder $productionOrder): RedirectResponse
+    {
+        try {
+            $this->rejectProductionOrderReview->execute(
+                order: $productionOrder,
+                reason: $request->validated('reason'),
+            );
+        } catch (\DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return redirect()->route('production-orders.show', $productionOrder)
+            ->with('success', 'Orden devuelta a planta para correcciones.');
     }
 
     /**
      * Cancelar una orden de producción.
      */
-    public function cancel(CancelProductionOrderRequest $request, ProductionOrder $order): RedirectResponse
+    public function cancel(CancelProductionOrderRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
-        $this->authorize('delete', $order);
-
         try {
-            $this->cancelProductionOrder->execute($order, $request->validated('reason'));
+            $this->cancelProductionOrder->execute($productionOrder, $request->validated('reason'));
 
-            return redirect()->route('production-orders.show', $order)
+            return redirect()->route('production-orders.show', $productionOrder)
                 ->with('success', 'Orden de producción cancelada con éxito.');
         } catch (\DomainException $exception) {
             return back()->with('error', $exception->getMessage());
@@ -238,15 +291,13 @@ class ProductionOrderController extends Controller
     /**
      * Vista previa de costos estimados durante el cierre de la orden.
      */
-    public function previewCosts(PreviewProductionOrderCostsRequest $request, ProductionOrder $order): JsonResponse
+    public function previewCosts(PreviewProductionOrderCostsRequest $request, ProductionOrder $productionOrder): JsonResponse
     {
-        $this->authorize('view', $order);
-
         $validated = $request->validated();
 
         return response()->json(
             $this->previewProductionOrderCosts->execute(
-                order: $order,
+                order: $productionOrder,
                 ingredients: $validated['ingredients'],
                 packaging: $validated['packaging'] ?? []
             )

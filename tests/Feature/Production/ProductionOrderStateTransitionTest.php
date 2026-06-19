@@ -178,3 +178,67 @@ test('it rejects completing an already completed order', function () {
     $response->assertRedirect(route('production-orders.show', $order));
     $response->assertSessionHas('error', "No se puede completar una orden en estado 'Completada'.");
 });
+
+test('it records final approver after submit reject resubmit complete cycle', function () {
+    Role::findOrCreate('operador', 'web');
+    Role::findOrCreate('produccion', 'web');
+
+    $operator = User::factory()->create(['email_verified_at' => now()]);
+    $operator->assignRole('operador');
+
+    $reviewer = User::factory()->create(['email_verified_at' => now()]);
+    $reviewer->assignRole('produccion');
+
+    [$order, $detail] = createOrderInState($this, ProductionOrderStatus::InProgress);
+
+    $operationalPayload = [
+        'actual_yield_quantity' => 100,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [],
+    ];
+
+    $this->actingAs($operator)
+        ->post(route('production-orders.submit-for-review', $order), $operationalPayload)
+        ->assertRedirect();
+
+    $order->refresh();
+    expect($order->status)->toBe(ProductionOrderStatus::PendingReview)
+        ->and($order->reviewed_by)->toBeNull()
+        ->and($order->reviewed_at)->toBeNull()
+        ->and($order->submitted_by)->toBe($operator->id);
+
+    $rejectionReason = 'Cantidad real incorrecta en mezcla';
+
+    $this->actingAs($reviewer)
+        ->post(route('production-orders.reject-review', $order), [
+            'reason' => $rejectionReason,
+        ])
+        ->assertRedirect();
+
+    $order->refresh();
+    expect($order->status)->toBe(ProductionOrderStatus::InProgress)
+        ->and($order->reviewed_by)->toBeNull()
+        ->and($order->reviewed_at)->toBeNull()
+        ->and($order->rejection_reason)->toBe($rejectionReason);
+
+    $this->actingAs($operator)
+        ->post(route('production-orders.submit-for-review', $order), $operationalPayload)
+        ->assertRedirect();
+
+    $order->refresh();
+    expect($order->status)->toBe(ProductionOrderStatus::PendingReview)
+        ->and($order->reviewed_by)->toBeNull()
+        ->and($order->reviewed_at)->toBeNull()
+        ->and($order->rejection_reason)->toBeNull();
+
+    $this->actingAs($reviewer)
+        ->post(route('production-orders.complete', $order), $operationalPayload)
+        ->assertRedirect();
+
+    $order->refresh();
+    expect($order->status)->toBe(ProductionOrderStatus::Completed)
+        ->and($order->reviewed_by)->toBe($reviewer->id)
+        ->and($order->reviewed_at)->not->toBeNull();
+});

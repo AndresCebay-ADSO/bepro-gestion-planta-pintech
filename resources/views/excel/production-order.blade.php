@@ -237,14 +237,16 @@
             <td colspan="4" style="border: 1px solid #000000; text-align: center;">{{ $order['grinding_hg'] ?? '---' }}
             </td>
         </tr>
-        <tr>
-            <th colspan="4"
-                style="font-weight: bold; border: 1px solid #000000; background-color: #ffffff; text-align: left;">COSTO
-                TOTAL GRANEL</th>
-            <td colspan="11" style="border: 1px solid #000000; font-weight: bold;">$
-                {{ number_format($order['total_bulk_cost'], 2) }}
-            </td>
-        </tr>
+        @if(isset($order['total_bulk_cost']))
+            <tr>
+                <th colspan="4"
+                    style="font-weight: bold; border: 1px solid #000000; background-color: #ffffff; text-align: left;">COSTO
+                    TOTAL GRANEL</th>
+                <td colspan="11" style="border: 1px solid #000000; font-weight: bold;">$
+                    {{ number_format($order['total_bulk_cost'], 2) }}
+                </td>
+            </tr>
+        @endif
 
         <tr>
             <td colspan="15" style="height: 10px;"></td>

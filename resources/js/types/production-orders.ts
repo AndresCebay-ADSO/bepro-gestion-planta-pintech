@@ -4,6 +4,7 @@ import type { SetDataAction } from '@inertiajs/react';
 export type ProductionOrderStatus =
     | 'pending'
     | 'in_progress'
+    | 'pending_review'
     | 'completed'
     | 'cancelled';
 
@@ -76,6 +77,11 @@ export type ProductionOrder = {
     total_finished_cost?: FormNumberValue | null;
     qr_landing_url?: string | null;
     qr_image_url?: string | null;
+    submitted_at?: string | null;
+    reviewed_at?: string | null;
+    rejection_reason?: string | null;
+    submitted_by?: { id: number; name: string } | null;
+    reviewed_by?: { id: number; name: string } | null;
     product?: {
         name?: string | null;
         profit_margin?: FormNumberValue | null;
@@ -94,11 +100,19 @@ export type ProductionOrder = {
     line_adjustments?: ProductionOrderLineAdjustment[];
 };
 
+export type ProductionOrderCan = {
+    submitForReview: boolean;
+    complete: boolean;
+    rejectReview: boolean;
+    previewCosts: boolean;
+};
+
 export type ProductionOrderShowProps = {
     order: ProductionOrder;
     rawMaterials: RawMaterialOption[];
     availableVariants: VariantOption[];
     returnTo?: string | null;
+    can: ProductionOrderCan;
 };
 
 export type ProductionOrderIngredientFormRow = {

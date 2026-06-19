@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
+import { FormattedDate } from '@/components/formatted-date';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,7 @@ type ProductionOrderItem = {
     formula?: { version: number } | null;
     warehouse?: { name: string } | null;
     quantity: string | number;
-    status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+    status: 'pending' | 'in_progress' | 'pending_review' | 'completed' | 'cancelled';
     planned_date: string;
     completion_date: string | null;
     created_at: string;
@@ -29,17 +30,22 @@ type Props = {
         data: ProductionOrderItem[];
         links: PaginationLink[];
     };
+    can: {
+        create: boolean;
+    };
 };
 
-export default function ProductionOrdersIndex({ orders }: Props) {
+export default function ProductionOrdersIndex({ orders, can }: Props) {
     const getStatusVariant = (status: ProductionOrderItem['status']) => {
         switch (status) {
             case 'pending':
                 return 'secondary';
             case 'in_progress':
                 return 'default';
+            case 'pending_review':
+                return 'outline';
             case 'completed':
-                return 'default'; // In a real system, maybe success/green if available
+                return 'default';
             case 'cancelled':
                 return 'destructive';
             default:
@@ -53,6 +59,8 @@ export default function ProductionOrdersIndex({ orders }: Props) {
                 return 'Pendiente';
             case 'in_progress':
                 return 'En Proceso';
+            case 'pending_review':
+                return 'Pendiente de revisión';
             case 'completed':
                 return 'Completada';
             case 'cancelled':
@@ -76,12 +84,14 @@ export default function ProductionOrdersIndex({ orders }: Props) {
                             en Planta Cali.
                         </p>
                     </div>
-                    <Button asChild>
-                        <Link href={productionOrderCreate().url}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nueva Orden
-                        </Link>
-                    </Button>
+                    {can.create && (
+                        <Button asChild>
+                            <Link href={productionOrderCreate().url}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Nueva Orden
+                            </Link>
+                        </Button>
+                    )}
                 </div>
 
                 <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
@@ -139,7 +149,9 @@ export default function ProductionOrdersIndex({ orders }: Props) {
                                         </Badge>
                                     </td>
                                     <td className="p-4 text-xs text-muted-foreground">
-                                        {order.planned_date}
+                                        <FormattedDate
+                                            value={order.planned_date}
+                                        />
                                     </td>
                                     <td className="p-4 text-right">
                                         <TableActions

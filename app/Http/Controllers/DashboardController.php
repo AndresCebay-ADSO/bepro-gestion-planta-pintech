@@ -17,6 +17,7 @@ class DashboardController extends Controller
             'admin' => Redirect::route('admin.index'),
             'produccion' => Redirect::route('production.index'),
             'comercial' => Redirect::route('availability.index'),
+            'operador' => Redirect::route('operator.index'),
             default => Redirect::route('admin.index'), // fallback
         };
     }

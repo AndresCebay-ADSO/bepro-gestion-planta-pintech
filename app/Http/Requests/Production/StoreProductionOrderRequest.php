@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Production;
 
 use App\Enums\WarehouseType;
+use App\Models\ProductionOrder;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -16,7 +17,7 @@ class StoreProductionOrderRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; // Gates handle this in controller or middleware
+        return $this->user()?->can('create', ProductionOrder::class) ?? false;
     }
 
     /**

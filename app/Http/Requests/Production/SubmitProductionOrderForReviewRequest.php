@@ -8,14 +8,14 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class PreviewProductionOrderCostsRequest extends FormRequest
+class SubmitProductionOrderForReviewRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('previewCosts', $this->route('production_order')) ?? false;
+        return $this->user()?->can('submitForReview', $this->route('production_order')) ?? false;
     }
 
     /**
@@ -29,6 +29,16 @@ class PreviewProductionOrderCostsRequest extends FormRequest
         $orderId = is_object($order) ? $order->id : null;
 
         return [
+            'actual_yield_quantity' => 'nullable|numeric|min:0',
+            'viscosity_ku' => 'nullable|numeric|min:0',
+            'grinding_hg' => 'nullable|numeric|min:0',
+            'quality_solids' => 'nullable|numeric|min:0|max:100',
+            'agitation_start_time' => 'nullable|date',
+            'agitation_end_time' => 'nullable|date',
+            'packaging_start_time' => 'nullable|date',
+            'packaging_end_time' => 'nullable|date',
+            'responsible_name' => 'nullable|string|max:255',
+            'spillage_quantity' => 'nullable|numeric|min:0',
             'ingredients' => 'required|array',
             'ingredients.*.id' => [
                 'required',
@@ -45,6 +55,7 @@ class PreviewProductionOrderCostsRequest extends FormRequest
                     ->where('production_order_id', $orderId),
             ],
             'packaging.*.actual_units' => 'required|numeric|min:0',
+            'notes' => 'nullable|string',
         ];
     }
 }
