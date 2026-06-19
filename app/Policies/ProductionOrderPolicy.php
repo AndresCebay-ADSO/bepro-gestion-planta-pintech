@@ -30,6 +30,26 @@ class ProductionOrderPolicy
         return $user->hasAnyRole(['admin', 'produccion', 'operador']);
     }
 
+    public function updateOperationalData(User $user, ProductionOrder $productionOrder): bool
+    {
+        if (! $user->hasAnyRole(['admin', 'produccion', 'operador'])) {
+            return false;
+        }
+
+        if (in_array($productionOrder->status, [
+            ProductionOrderStatus::Completed,
+            ProductionOrderStatus::Cancelled,
+        ], true)) {
+            return false;
+        }
+
+        if ($productionOrder->status === ProductionOrderStatus::PendingReview && $user->hasRole('operador')) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function complete(User $user, ProductionOrder $productionOrder): bool
     {
         return $user->hasAnyRole(['admin', 'produccion']);

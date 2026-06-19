@@ -23,6 +23,7 @@ beforeEach(function () {
         Role::create(['name' => 'admin']);
         Role::create(['name' => 'produccion']);
         Role::create(['name' => 'comercial']);
+        Role::create(['name' => 'operador']);
     }
 
     $this->user = User::factory()->create([
@@ -114,8 +115,45 @@ test('cannot add a line adjustment to a completed order', function () {
 
     $response = $this->post(route('production-orders.line-adjustments.store', $this->productionOrder), $data);
 
-    $response->assertSessionHasErrors(['production_order']);
+    $response->assertForbidden();
     $this->assertDatabaseEmpty('production_order_line_adjustments');
+});
+
+test('operator cannot add a line adjustment to a pending review order', function () {
+    $operator = User::factory()->create(['email_verified_at' => now()]);
+    $operator->assignRole('operador');
+    $this->actingAs($operator);
+
+    $this->productionOrder->update(['status' => ProductionOrderStatus::PendingReview]);
+
+    $data = [
+        'raw_material_id' => $this->rawMaterial->id,
+        'quantity' => 5.5,
+        'reason' => 'Viscosity correction',
+    ];
+
+    $response = $this->post(route('production-orders.line-adjustments.store', $this->productionOrder), $data);
+
+    $response->assertForbidden();
+    $this->assertDatabaseEmpty('production_order_line_adjustments');
+});
+
+test('admin can add a line adjustment to a pending review order', function () {
+    $this->productionOrder->update(['status' => ProductionOrderStatus::PendingReview]);
+
+    $data = [
+        'raw_material_id' => $this->rawMaterial->id,
+        'quantity' => 5.5,
+        'reason' => 'Viscosity correction',
+    ];
+
+    $response = $this->post(route('production-orders.line-adjustments.store', $this->productionOrder), $data);
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('production_order_line_adjustments', [
+        'production_order_id' => $this->productionOrder->id,
+        'raw_material_id' => $this->rawMaterial->id,
+    ]);
 });
 
 test('can delete a line adjustment from a pending order', function () {
@@ -152,7 +190,31 @@ test('cannot delete a line adjustment from a completed order', function () {
         'adjustment' => $adjustment->id,
     ]));
 
-    $response->assertRedirect();
+    $response->assertForbidden();
+    $this->assertDatabaseHas('production_order_line_adjustments', ['id' => $adjustment->id]);
+});
+
+test('operator cannot delete a line adjustment from a pending review order', function () {
+    $adjustment = ProductionOrderLineAdjustment::create([
+        'production_order_id' => $this->productionOrder->id,
+        'raw_material_id' => $this->rawMaterial->id,
+        'quantity' => 5.5,
+        'reason' => 'Test',
+        'created_by' => $this->user->id,
+    ]);
+
+    $this->productionOrder->update(['status' => ProductionOrderStatus::PendingReview]);
+
+    $operator = User::factory()->create(['email_verified_at' => now()]);
+    $operator->assignRole('operador');
+    $this->actingAs($operator);
+
+    $response = $this->delete(route('production-orders.line-adjustments.destroy', [
+        'production_order' => $this->productionOrder->id,
+        'adjustment' => $adjustment->id,
+    ]));
+
+    $response->assertForbidden();
     $this->assertDatabaseHas('production_order_line_adjustments', ['id' => $adjustment->id]);
 });
 

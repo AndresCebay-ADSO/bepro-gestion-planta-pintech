@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Production;
 
-use App\Enums\ProductionOrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Production\StorePackagingPlanRequest;
 use App\Models\ProductionOrder;
@@ -35,17 +34,7 @@ class PackagingPlanController extends Controller
      */
     public function destroy(ProductionOrder $productionOrder, ProductionOrderPackagingPlan $plan): RedirectResponse
     {
-        $this->authorize('update', $productionOrder);
-
-        $blockedStatuses = [
-            ProductionOrderStatus::Completed,
-            ProductionOrderStatus::Cancelled,
-        ];
-
-        if (in_array($productionOrder->status, $blockedStatuses, true)) {
-            return redirect()->route('production-orders.show', $productionOrder)
-                ->with('error', 'No se pueden eliminar planes de envasado de una orden completada o cancelada.');
-        }
+        $this->authorize('updateOperationalData', $productionOrder);
 
         if ((int) $plan->production_order_id !== $productionOrder->id) {
             abort(404);
