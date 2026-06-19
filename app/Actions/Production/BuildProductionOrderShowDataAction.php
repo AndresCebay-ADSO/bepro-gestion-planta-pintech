@@ -23,7 +23,7 @@ class BuildProductionOrderShowDataAction
      *
      * @return array<string, mixed>
      */
-    public function execute(ProductionOrder $productionOrder): array
+    public function execute(ProductionOrder $productionOrder, bool $includeCosts = true): array
     {
         $productionOrder->load([
             'product',
@@ -38,35 +38,45 @@ class BuildProductionOrderShowDataAction
             'reviewedBy:id,name',
         ]);
 
-        $finishedCostByVariant = $productionOrder->finishedInventoryMovements
-            ->keyBy('product_variant_id');
+        $finishedCostByVariant = $includeCosts
+            ? $productionOrder->finishedInventoryMovements->keyBy('product_variant_id')
+            : collect();
 
-        $packageRawMaterialRequirements = $productionOrder->packagingPlans
-            ->map(fn (ProductionOrderPackagingPlan $plan) => $plan->productVariant?->package_raw_material_id)
-            ->filter()
-            ->unique()
-            ->mapWithKeys(fn ($rawMaterialId) => [(int) $rawMaterialId => 1.0])
-            ->all();
+        $packageUnitCostEstimates = [];
 
-        $packageUnitCostEstimates = $this->fifoStockAllocator->estimateMaterialUnitCostsForPlanning(
-            warehouseId: (int) $productionOrder->warehouse_id,
-            requirementsByMaterialId: $packageRawMaterialRequirements
-        );
+        if ($includeCosts) {
+            $packageRawMaterialRequirements = $productionOrder->packagingPlans
+                ->map(fn (ProductionOrderPackagingPlan $plan) => $plan->productVariant?->package_raw_material_id)
+                ->filter()
+                ->unique()
+                ->mapWithKeys(fn ($rawMaterialId) => [(int) $rawMaterialId => 1.0])
+                ->all();
 
-        $totalFinishedCostStr = $productionOrder->finishedInventoryMovements
-            ->reduce(function ($carry, $movement) {
-                $qty = (string) $movement->quantity;
-                $costPrice = (string) ($movement->cost_price ?? '0');
-                $itemTotal = $this->calculator->mul($qty, $costPrice, 4);
+            $packageUnitCostEstimates = $this->fifoStockAllocator->estimateMaterialUnitCostsForPlanning(
+                warehouseId: (int) $productionOrder->warehouse_id,
+                requirementsByMaterialId: $packageRawMaterialRequirements
+            );
+        }
 
-                return $this->calculator->add((string) $carry, $itemTotal, 4);
-            }, '0');
-        $totalBulkCostStr = $productionOrder->details
-            ->reduce(function ($carry, ProductionOrderDetail $detail) {
-                $detailCost = (string) ($detail->total_cost ?? '0');
+        $totalFinishedCostStr = '0';
+        $totalBulkCostStr = '0';
 
-                return $this->calculator->add((string) $carry, $detailCost, 4);
-            }, '0');
+        if ($includeCosts) {
+            $totalFinishedCostStr = $productionOrder->finishedInventoryMovements
+                ->reduce(function ($carry, $movement) {
+                    $qty = (string) $movement->quantity;
+                    $costPrice = (string) ($movement->cost_price ?? '0');
+                    $itemTotal = $this->calculator->mul($qty, $costPrice, 4);
+
+                    return $this->calculator->add((string) $carry, $itemTotal, 4);
+                }, '0');
+            $totalBulkCostStr = $productionOrder->details
+                ->reduce(function ($carry, ProductionOrderDetail $detail) {
+                    $detailCost = (string) ($detail->total_cost ?? '0');
+
+                    return $this->calculator->add((string) $carry, $detailCost, 4);
+                }, '0');
+        }
 
         $qrCode = $productionOrder->qrCode;
         $qrLandingUrl = ($qrCode && $qrCode->is_active)
@@ -132,41 +142,56 @@ class BuildProductionOrderShowDataAction
                 'id' => $productionOrder->warehouse->id,
                 'name' => $productionOrder->warehouse->name,
             ] : null,
-            'total_bulk_cost' => $totalBulkCostStr,
-            'total_finished_cost' => $totalFinishedCostStr,
-            'details' => $productionOrder->details->map(fn (ProductionOrderDetail $detail) => [
-                'id' => $detail->id,
-                'raw_material_id' => (int) $detail->raw_material_id,
-                'step_order' => (int) $detail->step_order,
-                'planned_quantity' => (float) $detail->planned_quantity,
-                'actual_quantity' => $detail->actual_quantity !== null ? (float) $detail->actual_quantity : null,
-                'unit_cost' => (string) $detail->unit_cost,
-                'total_cost' => (string) $detail->total_cost,
-                'raw_material' => $detail->rawMaterial ? [
-                    'id' => $detail->rawMaterial->id,
-                    'code' => $detail->rawMaterial->code,
-                ] : null,
-            ])->values(),
-            'packaging_plans' => $productionOrder->packagingPlans->map(function (ProductionOrderPackagingPlan $plan) use ($finishedCostByVariant, $packageUnitCostEstimates) {
-                $presentationValue = (float) ($plan->productVariant?->presentation_value ?? 1);
-                $costMovement = $finishedCostByVariant->get($plan->product_variant_id);
-                $packageRawMaterialId = $plan->productVariant?->package_raw_material_id;
-                $packageUnitCostEstimate = $packageRawMaterialId !== null
-                    ? (string) ($packageUnitCostEstimates[(int) $packageRawMaterialId] ?? '0')
-                    : null;
+            ...($includeCosts ? [
+                'total_bulk_cost' => $totalBulkCostStr,
+                'total_finished_cost' => $totalFinishedCostStr,
+            ] : []),
+            'details' => $productionOrder->details->map(function (ProductionOrderDetail $detail) use ($includeCosts) {
+                $row = [
+                    'id' => $detail->id,
+                    'raw_material_id' => (int) $detail->raw_material_id,
+                    'step_order' => (int) $detail->step_order,
+                    'planned_quantity' => (float) $detail->planned_quantity,
+                    'actual_quantity' => $detail->actual_quantity !== null ? (float) $detail->actual_quantity : null,
+                    'raw_material' => $detail->rawMaterial ? [
+                        'id' => $detail->rawMaterial->id,
+                        'code' => $detail->rawMaterial->code,
+                    ] : null,
+                ];
 
-                return [
+                if ($includeCosts) {
+                    $row['unit_cost'] = (string) $detail->unit_cost;
+                    $row['total_cost'] = (string) $detail->total_cost;
+                }
+
+                return $row;
+            })->values(),
+            'packaging_plans' => $productionOrder->packagingPlans->map(function (ProductionOrderPackagingPlan $plan) use ($finishedCostByVariant, $packageUnitCostEstimates, $includeCosts) {
+                $presentationValue = (float) ($plan->productVariant?->presentation_value ?? 1);
+
+                $row = [
                     'id' => $plan->id,
                     'planned_units' => (float) $plan->planned_units,
                     'actual_units' => $plan->actual_units !== null ? (float) $plan->actual_units : null,
-                    'cost_price' => $costMovement?->cost_price !== null ? (string) $costMovement->cost_price : null,
-                    'package_unit_cost_estimate' => $packageUnitCostEstimate,
                     'product_variant' => $plan->productVariant ? [
                         'id' => $plan->productVariant->id,
                         'presentation_label' => $plan->productVariant->presentation_label,
                         'presentation_value' => $presentationValue,
                     ] : null,
                 ];
+
+                if ($includeCosts) {
+                    $costMovement = $finishedCostByVariant->get($plan->product_variant_id);
+                    $packageRawMaterialId = $plan->productVariant?->package_raw_material_id;
+                    $packageUnitCostEstimate = $packageRawMaterialId !== null
+                        ? (string) ($packageUnitCostEstimates[(int) $packageRawMaterialId] ?? '0')
+                        : null;
+
+                    $row['cost_price'] = $costMovement?->cost_price !== null ? (string) $costMovement->cost_price : null;
+                    $row['package_unit_cost_estimate'] = $packageUnitCostEstimate;
+                }
+
+                return $row;
             })->values(),
             'line_adjustments' => $productionOrder->lineAdjustments->map(fn (ProductionOrderLineAdjustment $adj) => [
                 'id' => $adj->id,

@@ -423,8 +423,8 @@
         </tr>
     </table>
 
-    {{-- RESUMEN FINANCIERO (solo si la orden está completada) --}}
-    @if($order['status'] === 'completed')
+    {{-- RESUMEN FINANCIERO (solo si la orden está completada y el usuario puede ver costos) --}}
+    @if($order['status'] === 'completed' && isset($order['total_bulk_cost']))
         <table style="margin-top: 8px;">
             <tr>
                 <td colspan="4" class="section-header">RESUMEN FINANCIERO</td>

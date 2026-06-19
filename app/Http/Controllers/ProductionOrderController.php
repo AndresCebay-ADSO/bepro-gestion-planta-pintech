@@ -96,9 +96,10 @@ class ProductionOrderController extends Controller
             ]);
 
         $user = auth()->user();
+        $includeCosts = $user?->can('previewCosts', $productionOrder) ?? false;
 
         return Inertia::render('Production/Orders/Show', [
-            'order' => $this->buildProductionOrderShowData->execute($productionOrder),
+            'order' => $this->buildProductionOrderShowData->execute($productionOrder, $includeCosts),
             'rawMaterials' => $rawMaterials,
             'availableVariants' => $availableVariants,
             'returnTo' => $this->resolveReturnTo($request),
@@ -118,7 +119,8 @@ class ProductionOrderController extends Controller
     {
         $this->authorize('view', $productionOrder);
 
-        $orderData = $this->buildProductionOrderExportData->execute($productionOrder);
+        $includeCosts = auth()->user()?->can('previewCosts', $productionOrder) ?? false;
+        $orderData = $this->buildProductionOrderExportData->execute($productionOrder, $includeCosts);
         $filename = "orden-produccion-{$orderData['order_number']}.pdf";
 
         $logoPath = public_path('images/logo-pintech.png');
@@ -148,7 +150,8 @@ class ProductionOrderController extends Controller
     {
         $this->authorize('view', $productionOrder);
 
-        $orderData = $this->buildProductionOrderExportData->execute($productionOrder);
+        $includeCosts = auth()->user()?->can('previewCosts', $productionOrder) ?? false;
+        $orderData = $this->buildProductionOrderExportData->execute($productionOrder, $includeCosts);
         $filename = "orden-produccion-{$orderData['order_number']}.xlsx";
 
         return Excel::download(new ProductionOrderExport($orderData), $filename);
