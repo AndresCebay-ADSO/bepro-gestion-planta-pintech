@@ -269,7 +269,6 @@ class ProductionOrderController extends Controller
             $this->rejectProductionOrderReview->execute(
                 order: $productionOrder,
                 reason: $request->validated('reason'),
-                userId: $this->authenticatedUserId()
             );
         } catch (\DomainException $exception) {
             return back()->with('error', $exception->getMessage());

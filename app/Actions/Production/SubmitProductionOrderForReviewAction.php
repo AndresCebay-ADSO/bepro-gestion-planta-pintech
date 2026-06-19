@@ -41,6 +41,8 @@ class SubmitProductionOrderForReviewAction
                 'status' => ProductionOrderStatus::PendingReview,
                 'submitted_by' => $userId,
                 'submitted_at' => now(),
+                'reviewed_by' => null,
+                'reviewed_at' => null,
                 'rejection_reason' => null,
             ]);
 

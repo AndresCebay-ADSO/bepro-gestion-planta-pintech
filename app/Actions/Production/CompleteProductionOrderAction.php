@@ -64,9 +64,7 @@ class CompleteProductionOrderAction
                 'completion_date' => now(),
             ];
 
-            // Si fue rechazada antes, preserve reviewed_by/reviewed_at del rechazo
-            // Si es la primera revisión (directamente Pending o InProgress → Completed), establece nuevos valores
-            if ($wasPendingReview && ! $lockedOrder->reviewed_by) {
+            if ($wasPendingReview) {
                 $updateData['reviewed_by'] = $userId;
                 $updateData['reviewed_at'] = now();
             }

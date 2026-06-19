@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\DB;
 
 class RejectProductionOrderReviewAction
 {
-    public function execute(ProductionOrder $order, string $reason, int $userId): ProductionOrder
+    public function execute(ProductionOrder $order, string $reason): ProductionOrder
     {
-        return DB::transaction(function () use ($order, $reason, $userId): ProductionOrder {
+        return DB::transaction(function () use ($order, $reason): ProductionOrder {
             $lockedOrder = ProductionOrder::query()
                 ->lockForUpdate()
                 ->findOrFail($order->id);
@@ -25,8 +25,6 @@ class RejectProductionOrderReviewAction
 
             $lockedOrder->update([
                 'status' => ProductionOrderStatus::InProgress,
-                'reviewed_by' => $userId,
-                'reviewed_at' => now(),
                 'rejection_reason' => $reason,
             ]);
 

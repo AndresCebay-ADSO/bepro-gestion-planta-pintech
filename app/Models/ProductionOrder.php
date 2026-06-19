@@ -114,7 +114,7 @@ class ProductionOrder extends Model
         return LogOptions::defaults()
             ->useLogName('ordenes_produccion')
             ->setDescriptionForEvent(fn (string $eventName) => "Orden de producción {$eventName}")
-            ->logOnly(['order_number', 'lot_number', 'actual_quantity', 'yield_percentage', 'status', 'completion_date'])
+            ->logOnly(['order_number', 'lot_number', 'actual_quantity', 'yield_percentage', 'status', 'completion_date', 'rejection_reason'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
