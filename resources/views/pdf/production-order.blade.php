@@ -141,7 +141,7 @@
     {{-- ② DATOS GENERALES DEL PRODUCTO A FABRICAR --}}
     <table style="margin-top: 8px;">
         <tr>
-            <td colspan="8" class="section-header">DATOS GENERALES DEL PRODUCTO A FABRICAR</td>
+            <td colspan="9" class="section-header">DATOS GENERALES DEL PRODUCTO A FABRICAR</td>
         </tr>
         <tr>
             <td colspan="2" class="label">ORDEN DE PRODUCCION N°</td>
@@ -149,7 +149,7 @@
                 {{ $order['order_number'] }}
             </td>
             <td class="label">Lote</td>
-            <td colspan="2" class="value">
+            <td colspan="3" class="value">
                 {{ $order['lot_number'] ?? $order['order_number'] }}{{ $order['planned_date'] ? ' del ' . \Carbon\Carbon::parse($order['planned_date'])->translatedFormat('d \d\e F Y') : '' }}
             </td>
         </tr>
@@ -171,7 +171,7 @@
             <td colspan="2" class="label">CANTIDAD PROYECTADA A FABRICAR</td>
             <td class="value text-center">{{ number_format($order['quantity'], 2) }}</td>
             <td class="label">ENVASES A USAR</td>
-            <td colspan="4" class="value">
+            <td colspan="5" class="value">
                 @if(count($order['packaging_plans']) > 0)
                     @foreach($order['packaging_plans'] as $plan)
                         {{ number_format($plan['planned_units'], 0) }}
@@ -187,7 +187,7 @@
             <td class="value text-center">
                 {{ $order['actual_quantity'] !== null ? number_format($order['actual_quantity'], 2) : '' }}</td>
             <td class="label">ENVASES A USAR</td>
-            <td colspan="4" class="value">
+            <td colspan="5" class="value">
                 @if(count($order['packaging_plans']) > 0)
                     @foreach($order['packaging_plans'] as $plan)
                         @if($plan['actual_units'] !== null)
