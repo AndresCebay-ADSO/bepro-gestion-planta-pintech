@@ -114,6 +114,8 @@ test('completing an order stores quality solids and generates current certificat
     Queue::fake();
     [$user, $order, $detail] = createCertificateCompletionFixture();
 
+    $this->actingAs($user)->post(route('production-orders.start', $order));
+
     $response = $this->actingAs($user)->post(route('production-orders.complete', $order), [
         'viscosity_ku' => 100,
         'grinding_hg' => 7,

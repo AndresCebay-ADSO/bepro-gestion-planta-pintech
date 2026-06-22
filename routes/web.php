@@ -139,6 +139,7 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,operador'])->group
     Route::get('production-orders/{production_order}', [ProductionOrderController::class, 'show'])->name('production-orders.show')->whereNumber('production_order');
     Route::get('production-orders/{production_order}/export-pdf', [ProductionOrderController::class, 'exportPdf'])->name('production-orders.export-pdf');
     Route::get('production-orders/{production_order}/export-excel', [ProductionOrderController::class, 'exportExcel'])->name('production-orders.export-excel');
+    Route::post('production-orders/{production_order}/start', [ProductionOrderController::class, 'startProduction'])->name('production-orders.start')->whereNumber('production_order');
     Route::post('production-orders/{production_order}/submit-for-review', [ProductionOrderController::class, 'submitForReview'])->name('production-orders.submit-for-review');
 });
 

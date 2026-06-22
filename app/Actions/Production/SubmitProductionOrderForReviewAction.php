@@ -25,7 +25,6 @@ class SubmitProductionOrderForReviewAction
                 ->findOrFail($order->id);
 
             $allowedForSubmission = [
-                ProductionOrderStatus::Pending,
                 ProductionOrderStatus::InProgress,
             ];
 

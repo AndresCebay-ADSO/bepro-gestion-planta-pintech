@@ -112,7 +112,7 @@ function createOrderInState(object $context, ProductionOrderStatus $status): arr
     return [$order, $detail];
 }
 
-test('it allows completing a pending order', function () {
+test('it rejects completing a pending order', function () {
     [$order, $detail] = createOrderInState($this, ProductionOrderStatus::Pending);
 
     $response = $this->post(route('production-orders.complete', $order), [
@@ -123,9 +123,9 @@ test('it allows completing a pending order', function () {
         'packaging' => [],
     ]);
 
-    $response->assertRedirect();
+    $response->assertForbidden();
     $order->refresh();
-    expect($order->status)->toBe(ProductionOrderStatus::Completed);
+    expect($order->status)->toBe(ProductionOrderStatus::Pending);
 });
 
 test('it allows completing an in_progress order', function () {
@@ -156,9 +156,7 @@ test('it rejects completing a cancelled order', function () {
             'packaging' => [],
         ]);
 
-    $response->assertRedirect(route('production-orders.show', $order));
-    $response->assertSessionHas('error', "No se puede completar una orden en estado 'Cancelada'.");
-
+    $response->assertForbidden();
     $order->refresh();
     expect($order->status)->toBe(ProductionOrderStatus::Cancelled);
 });
@@ -175,8 +173,7 @@ test('it rejects completing an already completed order', function () {
             'packaging' => [],
         ]);
 
-    $response->assertRedirect(route('production-orders.show', $order));
-    $response->assertSessionHas('error', "No se puede completar una orden en estado 'Completada'.");
+    $response->assertForbidden();
 });
 
 test('it records final approver after submit reject resubmit complete cycle', function () {

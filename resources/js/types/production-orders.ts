@@ -101,6 +101,7 @@ export type ProductionOrder = {
 };
 
 export type ProductionOrderCan = {
+    startProduction: boolean;
     submitForReview: boolean;
     complete: boolean;
     rejectReview: boolean;

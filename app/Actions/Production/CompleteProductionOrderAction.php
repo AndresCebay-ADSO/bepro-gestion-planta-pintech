@@ -44,7 +44,6 @@ class CompleteProductionOrderAction
                 ->findOrFail($order->id);
 
             $allowedForCompletion = [
-                ProductionOrderStatus::Pending,
                 ProductionOrderStatus::InProgress,
                 ProductionOrderStatus::PendingReview,
             ];

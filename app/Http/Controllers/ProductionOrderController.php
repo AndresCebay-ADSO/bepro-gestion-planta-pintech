@@ -11,6 +11,7 @@ use App\Actions\Production\CompleteProductionOrderAction;
 use App\Actions\Production\CreateProductionOrderAction;
 use App\Actions\Production\PreviewProductionOrderCostsAction;
 use App\Actions\Production\RejectProductionOrderReviewAction;
+use App\Actions\Production\StartProductionOrderAction;
 use App\Actions\Production\SubmitProductionOrderForReviewAction;
 use App\Enums\WarehouseType;
 use App\Exports\ProductionOrderExport;
@@ -18,6 +19,7 @@ use App\Http\Requests\Production\CancelProductionOrderRequest;
 use App\Http\Requests\Production\CompleteProductionOrderRequest;
 use App\Http\Requests\Production\PreviewProductionOrderCostsRequest;
 use App\Http\Requests\Production\RejectProductionOrderReviewRequest;
+use App\Http\Requests\Production\StartProductionOrderRequest;
 use App\Http\Requests\Production\StoreProductionOrderRequest;
 use App\Http\Requests\Production\SubmitProductionOrderForReviewRequest;
 use App\Models\Product;
@@ -44,6 +46,7 @@ class ProductionOrderController extends Controller
         private readonly BuildProductionOrderShowDataAction $buildProductionOrderShowData,
         private readonly BuildProductionOrderExportDataAction $buildProductionOrderExportData,
         private readonly SubmitProductionOrderForReviewAction $submitProductionOrderForReview,
+        private readonly StartProductionOrderAction $startProductionOrder,
         private readonly RejectProductionOrderReviewAction $rejectProductionOrderReview,
     ) {}
 
@@ -104,6 +107,7 @@ class ProductionOrderController extends Controller
             'availableVariants' => $availableVariants,
             'returnTo' => $this->resolveReturnTo($request),
             'can' => [
+                'startProduction' => $user?->can('startProduction', $productionOrder) ?? false,
                 'submitForReview' => $user?->can('submitForReview', $productionOrder) ?? false,
                 'complete' => $user?->can('complete', $productionOrder) ?? false,
                 'rejectReview' => $user?->can('rejectReview', $productionOrder) ?? false,
@@ -232,6 +236,23 @@ class ProductionOrderController extends Controller
 
         return redirect()->route('production-orders.show', $productionOrder)
             ->with('success', 'Producción finalizada e inventario actualizado.');
+    }
+
+    /**
+     * Iniciar producción en planta (pending → in_progress).
+     */
+    public function startProduction(StartProductionOrderRequest $request, ProductionOrder $productionOrder): RedirectResponse
+    {
+        try {
+            $this->startProductionOrder->execute(
+                order: $productionOrder,
+            );
+        } catch (\DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return redirect()->route('production-orders.show', $productionOrder)
+            ->with('success', 'Producción iniciada. Ya puedes registrar los datos de planta.');
     }
 
     /**

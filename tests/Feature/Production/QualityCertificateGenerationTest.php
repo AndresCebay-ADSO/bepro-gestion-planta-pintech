@@ -113,6 +113,8 @@ test('completing order generates qr code and quality certificate', function () {
 
     Queue::fake();
 
+    $this->post(route('production-orders.start', $order));
+
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 98,
         'viscosity_ku' => 105,
@@ -166,6 +168,8 @@ test('completing order saves quality solids alongside viscosity and grinding', f
         'unit_cost' => 5,
         'total_cost' => 250,
     ]);
+
+    $this->post(route('production-orders.start', $order));
 
     $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 100,

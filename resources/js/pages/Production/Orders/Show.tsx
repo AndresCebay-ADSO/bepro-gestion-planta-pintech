@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -6,6 +6,7 @@ import type { FormEvent } from 'react';
 import {
     complete as productionOrderComplete,
     rejectReview as productionOrderRejectReview,
+    startProduction as productionOrderStartProduction,
     submitForReview as productionOrderSubmitForReview,
 } from '@/actions/App/Http/Controllers/ProductionOrderController';
 import { DetailPageNav } from '@/components/detail-page-nav';
@@ -24,6 +25,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { usePackagingSync } from '@/hooks/use-packaging-sync';
@@ -55,6 +57,7 @@ export default function ProductionOrderShow({
     );
 
     const isCompleted = order.status === 'completed';
+    const isPending = order.status === 'pending';
     const isPendingReview = order.status === 'pending_review';
     const isFormReadOnly = isCompleted || (isPendingReview && !can.complete);
     const hasOrderData =
@@ -112,6 +115,8 @@ export default function ProductionOrderShow({
 
     const [landingLinkCopied, setLandingLinkCopied] = useState(false);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [isStartConfirmOpen, setIsStartConfirmOpen] = useState(false);
+    const [isStartingProduction, setIsStartingProduction] = useState(false);
     const [isRejectOpen, setIsRejectOpen] = useState(false);
 
     usePackagingSync({
@@ -258,6 +263,20 @@ export default function ProductionOrderShow({
         });
     };
 
+    const confirmStartProduction = () => {
+        setIsStartConfirmOpen(false);
+        setIsStartingProduction(true);
+
+        router.post(
+            productionOrderStartProduction({ production_order: order.id }).url,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setIsStartingProduction(false),
+            },
+        );
+    };
+
     const handleCopyLandingLink = () => {
         if (!landingFullUrl) {
             return;
@@ -287,6 +306,31 @@ export default function ProductionOrderShow({
                     defaultReturnLabel="Órdenes de Producción"
                 />
                 <OrderHeader order={order} />
+
+                {can.startProduction && isPending && (
+                    <div className="flex flex-col gap-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="font-medium text-amber-900 dark:text-amber-100">
+                                Orden planificada
+                            </p>
+                            <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
+                                Confirma el inicio cuando la mezcla comience en
+                                planta para registrar datos operativos y enviar
+                                a revisión.
+                            </p>
+                        </div>
+                        <Button
+                            type="button"
+                            onClick={() => setIsStartConfirmOpen(true)}
+                            disabled={isStartingProduction}
+                            className="shrink-0"
+                        >
+                            {isStartingProduction
+                                ? 'Iniciando...'
+                                : 'Iniciar producción'}
+                        </Button>
+                    </div>
+                )}
 
                 <form
                     onSubmit={handleSubmit}
@@ -378,6 +422,37 @@ export default function ProductionOrderShow({
                                 disabled={processing}
                             >
                                 {processing ? processingLabel : 'Confirmar'}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                <AlertDialog
+                    open={isStartConfirmOpen}
+                    onOpenChange={setIsStartConfirmOpen}
+                >
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                ¿Iniciar producción?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                                La orden {order.order_number} pasará a estado En
+                                proceso. Podrás registrar datos de planta y
+                                enviarla a revisión cuando esté lista.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel disabled={isStartingProduction}>
+                                Cancelar
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={confirmStartProduction}
+                                disabled={isStartingProduction}
+                            >
+                                {isStartingProduction
+                                    ? 'Iniciando...'
+                                    : 'Iniciar producción'}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>

@@ -256,6 +256,8 @@ test('it completes order and updates inventory', function () {
         'planned_units' => 20,
     ]);
 
+    $this->post(route('production-orders.start', $order));
+
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 19,
         'viscosity_ku' => 105,
@@ -317,6 +319,8 @@ test('it completes order for materials that do not track inventory without consu
         'total_cost' => 400,
     ]);
 
+    $this->post(route('production-orders.start', $order));
+
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 100,
         'ingredients' => [
@@ -375,6 +379,8 @@ test('it prevents completing the same production order twice', function () {
         'total_cost' => 250,
     ]);
 
+    $this->post(route('production-orders.start', $order));
+
     $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 100,
         'ingredients' => [
@@ -392,8 +398,7 @@ test('it prevents completing the same production order twice', function () {
             'packaging' => [],
         ]);
 
-    $secondResponse->assertRedirect(route('production-orders.show', $order));
-    $secondResponse->assertSessionHas('error', "No se puede completar una orden en estado 'Completada'.");
+    $secondResponse->assertForbidden();
     expect(InventoryMovement::where('production_order_id', $order->id)->count())->toBe(1);
 });
 
@@ -426,6 +431,8 @@ test('it completes order even when there is no packaging plan', function () {
         'unit_cost' => 5,
         'total_cost' => 250,
     ]);
+
+    $this->post(route('production-orders.start', $order));
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 98,
@@ -480,6 +487,8 @@ test('it rejects completion when actual yield does not match packaging equivalen
         'planned_units' => 2,
     ]);
 
+    $this->post(route('production-orders.start', $order));
+
     $response = $this->from(route('production-orders.show', $order))
         ->post(route('production-orders.complete', $order), [
             'actual_yield_quantity' => 9.98,
@@ -494,7 +503,7 @@ test('it rejects completion when actual yield does not match packaging equivalen
     $response->assertRedirect(route('production-orders.show', $order));
     $response->assertSessionHasErrors('actual_yield_quantity');
     $order->refresh();
-    expect($order->status->value)->toBe('pending');
+    expect($order->status->value)->toBe('in_progress');
 });
 
 test('it rejects creating order in non-factory warehouse', function () {
@@ -625,6 +634,8 @@ test('it creates separate finished inventory records per variant when packaging 
         'planned_units' => 10,
     ]);
 
+    $this->post(route('production-orders.start', $order));
+
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 20,
         'ingredients' => [
@@ -702,6 +713,8 @@ test('it consumes raw material using fifo across multiple batches', function () 
         'unit_cost' => 5,
         'total_cost' => 500,
     ]);
+
+    $this->post(route('production-orders.start', $order));
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 150,
@@ -791,6 +804,8 @@ test('it consumes packaging raw material when finishing production by variant un
         'planned_units' => 20,
     ]);
 
+    $this->post(route('production-orders.start', $order));
+
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 20,
         'ingredients' => [
@@ -859,6 +874,8 @@ test('it calculates cost_price correctly for single variant with packaging', fun
         'product_variant_id' => $variant->id,
         'planned_units' => 20,
     ]);
+
+    $this->post(route('production-orders.start', $order));
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 20,
@@ -946,6 +963,8 @@ test('it distributes bulk cost across multiple variants by presentation_value', 
         'product_variant_id' => $variant2->id,
         'planned_units' => 2,
     ]);
+
+    $this->post(route('production-orders.start', $order));
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 30,
@@ -1038,6 +1057,8 @@ test('it includes packaging material cost in cost_price', function () {
         'planned_units' => 20,
     ]);
 
+    $this->post(route('production-orders.start', $order));
+
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 20,
         'ingredients' => [
@@ -1097,6 +1118,8 @@ test('it creates production_costs record for historical tracking', function () {
         'product_variant_id' => $variant->id,
         'planned_units' => 20,
     ]);
+
+    $this->post(route('production-orders.start', $order));
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 20,
@@ -1166,6 +1189,8 @@ test('it updates existing production_cost record for the same order instead of f
         'planned_units' => 20,
     ]);
 
+    $this->post(route('production-orders.start', $order));
+
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 20,
         'ingredients' => [
@@ -1218,6 +1243,8 @@ test('it keeps production_costs history for multiple orders with the same formul
         'total_cost' => 250,
     ]);
 
+    $this->post(route('production-orders.start', $firstOrder));
+
     $this->post(route('production-orders.complete', $firstOrder), [
         'ingredients' => [
             ['id' => $firstDetail->id, 'actual_quantity' => 50],
@@ -1244,6 +1271,8 @@ test('it keeps production_costs history for multiple orders with the same formul
         'unit_cost' => 5,
         'total_cost' => 300,
     ]);
+
+    $this->post(route('production-orders.start', $secondOrder));
 
     $this->post(route('production-orders.complete', $secondOrder), [
         'ingredients' => [
@@ -1294,6 +1323,8 @@ test('it sets unit_cost and total_cost to zero when actual quantity is zero', fu
         'unit_cost' => 5,
         'total_cost' => 250,
     ]);
+
+    $this->post(route('production-orders.start', $order));
 
     $this->post(route('production-orders.complete', $order), [
         'ingredients' => [
@@ -1389,6 +1420,8 @@ test('it rejects completion when ingredient detail ids are duplicated', function
         'unit_cost' => 5,
         'total_cost' => 250,
     ]);
+
+    $this->post(route('production-orders.start', $order));
 
     $response = $this->from(route('production-orders.show', $order))
         ->post(route('production-orders.complete', $order), [
