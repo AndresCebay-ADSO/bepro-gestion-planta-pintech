@@ -31,6 +31,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
@@ -208,10 +209,16 @@ class ProductionOrderController extends Controller
      */
     public function store(StoreProductionOrderRequest $request): RedirectResponse
     {
-        $order = $this->createProductionOrder->execute(
-            data: $request->validated(),
-            userId: $this->authenticatedUserId()
-        );
+        try {
+            $order = $this->createProductionOrder->execute(
+                data: $request->validated(),
+                userId: $this->authenticatedUserId()
+            );
+        } catch (\DomainException $exception) {
+            throw ValidationException::withMessages([
+                'formula_id' => $exception->getMessage(),
+            ]);
+        }
 
         return redirect()->route('production-orders.show', $order)
             ->with('success', 'Orden de producción creada con éxito.');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\ProductionOrder;
+use App\Models\UnitOfMeasure;
 use Illuminate\Support\Collection;
 
 class FormulaService
@@ -20,18 +21,16 @@ class FormulaService
      */
     public function calculatePlannedMaterials(ProductionOrder $order): Collection
     {
+        $order->loadMissing(['formula.details.unitOfMeasure', 'formula.details.rawMaterial.unitOfMeasure']);
         $formula = $order->formula;
         $baseQuantity = (string) $order->quantity; // Cantidad total a producir en la unidad base del producto
-
-        // Obtenemos la unidad base del producto (kg, L, etc.)
-        $productBaseUnit = $order->product->unitOfMeasure;
 
         $materials = collect();
 
         foreach ($formula->details as $detail) {
             // La cantidad en la fórmula está expresada en la unidad del detalle
-            // Necesitamos convertir a la unidad base si son diferentes
-            $factor = $this->getConversionFactor($detail->unitOfMeasure, $productBaseUnit);
+            // Necesitamos convertir a la unidad base de la materia prima si son diferentes
+            $factor = $this->getConversionFactor($detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
 
             $detailQty = (string) $detail->quantity;
 
@@ -45,7 +44,7 @@ class FormulaService
             $materials->push([
                 'raw_material_id' => $detail->raw_material_id,
                 'planned_quantity' => (float) $plannedQuantity,
-                'unit_of_measure_id' => $detail->unit_of_measure_id, // Mantenemos la unidad del detalle
+                'unit_of_measure_id' => $detail->rawMaterial?->unit_of_measure_id, // Mantenemos la unidad base de la materia prima
             ]);
         }
 
@@ -56,7 +55,7 @@ class FormulaService
      * Obtiene el factor de conversión entre dos unidades de medida.
      * Utiliza las equivalencias a KG o Litros definidas en la base de datos.
      */
-    protected function getConversionFactor($fromUnit, $toUnit): string
+    public function getConversionFactor(UnitOfMeasure $fromUnit, UnitOfMeasure $toUnit): string
     {
         if ($fromUnit->id === $toUnit->id) {
             return '1.0000';

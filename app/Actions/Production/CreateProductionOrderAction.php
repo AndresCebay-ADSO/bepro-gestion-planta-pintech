@@ -10,6 +10,7 @@ use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderPackagingPlan;
 use App\Services\DecimalCalculator;
+use App\Services\FormulaService;
 use App\Services\Inventory\FifoStockAllocatorService;
 use Illuminate\Support\Facades\DB;
 
@@ -17,6 +18,7 @@ class CreateProductionOrderAction
 {
     public function __construct(
         private readonly FifoStockAllocatorService $fifoStockAllocator,
+        private readonly FormulaService $formulaService,
         private readonly DecimalCalculator $calculator
     ) {}
 
@@ -34,7 +36,7 @@ class CreateProductionOrderAction
     public function execute(array $data, int $userId): ProductionOrder
     {
         $formula = Formula::query()
-            ->with('details')
+            ->with(['details.unitOfMeasure', 'details.rawMaterial.unitOfMeasure'])
             ->findOrFail($data['formula_id']);
 
         return DB::transaction(function () use ($data, $formula, $userId): ProductionOrder {
@@ -57,12 +59,23 @@ class CreateProductionOrderAction
             ]);
 
             $requirementsByMaterialId = [];
+            $computedDetails = [];
+
             foreach ($formula->details as $detail) {
                 $materialId = (int) $detail->raw_material_id;
-                $detailTotal = $this->calculator->mul((string) $detail->quantity, (string) $quantity, 4);
+                $factor = $this->formulaService->getConversionFactor($detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
+                $normalizedDetailQty = $this->calculator->mul((string) $detail->quantity, $factor, 10);
+                $detailTotal = $this->calculator->mul($normalizedDetailQty, (string) $quantity, 10);
+                $detailTotal = $this->calculator->round($detailTotal, 4);
+
                 $requirementsByMaterialId[$materialId] = isset($requirementsByMaterialId[$materialId])
                     ? $this->calculator->add($requirementsByMaterialId[$materialId], $detailTotal, 4)
                     : $detailTotal;
+
+                $computedDetails[] = [
+                    'detail' => $detail,
+                    'planned_quantity' => $detailTotal,
+                ];
             }
 
             $estimatedUnitCosts = $this->fifoStockAllocator->estimateMaterialUnitCostsForPlanning(
@@ -70,9 +83,9 @@ class CreateProductionOrderAction
                 requirementsByMaterialId: $requirementsByMaterialId
             );
 
-            foreach ($formula->details as $detail) {
-                $detailQtyStr = (string) $detail->quantity;
-                $plannedQuantityStr = $this->calculator->mul($detailQtyStr, (string) $quantity, 4);
+            foreach ($computedDetails as $computed) {
+                $detail = $computed['detail'];
+                $plannedQuantityStr = $computed['planned_quantity'];
                 $estimatedUnitCost = (string) ($estimatedUnitCosts[(int) $detail->raw_material_id] ?? '0');
 
                 ProductionOrderDetail::create([

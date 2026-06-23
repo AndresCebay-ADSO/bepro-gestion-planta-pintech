@@ -11,6 +11,7 @@ use App\Models\ProductionOrderDetail;
 use App\Models\RawMaterial;
 use App\Models\Warehouse;
 use App\Services\DecimalCalculator;
+use App\Services\FormulaService;
 use Illuminate\Validation\ValidationException;
 
 class FifoStockAllocatorService
@@ -18,6 +19,7 @@ class FifoStockAllocatorService
     public function __construct(
         private readonly InventoryBatchService $inventoryBatchService,
         private readonly InventoryMovementService $inventoryMovementService,
+        private readonly FormulaService $formulaService,
         private readonly DecimalCalculator $calculator
     ) {}
 
@@ -93,10 +95,16 @@ class FifoStockAllocatorService
         $warehouse = Warehouse::findOrFail($warehouseId);
         $qty = (string) $quantity;
 
+        $formula->loadMissing(['details.unitOfMeasure', 'details.rawMaterial.unitOfMeasure']);
+
         $requirements = [];
         foreach ($formula->details as $detail) {
             $materialId = (int) $detail->raw_material_id;
-            $product = $this->calculator->mul((string) $detail->quantity, $qty, 4);
+            $factor = $this->formulaService->getConversionFactor($detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
+            $normalizedDetailQty = $this->calculator->mul((string) $detail->quantity, $factor, 10);
+            $product = $this->calculator->mul($normalizedDetailQty, $qty, 10);
+            $product = $this->calculator->round($product, 4);
+
             $current = (string) ($requirements[$materialId] ?? '0');
             $requirements[$materialId] = $this->calculator->add($current, $product, 4);
         }

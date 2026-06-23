@@ -9,13 +9,15 @@ use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderLineAdjustment;
 use App\Models\ProductionOrderPackagingPlan;
 use App\Services\DecimalCalculator;
+use App\Services\FormulaService;
 use App\Services\Inventory\FifoStockAllocatorService;
 
 class BuildProductionOrderShowDataAction
 {
     public function __construct(
         private readonly FifoStockAllocatorService $fifoStockAllocator,
-        private readonly DecimalCalculator $calculator
+        private readonly DecimalCalculator $calculator,
+        private readonly FormulaService $formulaService
     ) {}
 
     /**
@@ -29,7 +31,8 @@ class BuildProductionOrderShowDataAction
             'product',
             'qrCode',
             'formula.details.rawMaterial',
-            'details.rawMaterial',
+            'formula.details.unitOfMeasure',
+            'details.rawMaterial.unitOfMeasure',
             'packagingPlans.productVariant.packageRawMaterial',
             'finishedInventoryMovements',
             'warehouse',
@@ -37,6 +40,12 @@ class BuildProductionOrderShowDataAction
             'submittedBy:id,name',
             'reviewedBy:id,name',
         ]);
+
+        $formulaDetailsByKey = collect();
+        if ($productionOrder->formula) {
+            $formulaDetailsByKey = $productionOrder->formula->details
+                ->mapWithKeys(fn ($fd) => [$fd->step_order.'-'.$fd->raw_material_id => $fd]);
+        }
 
         $finishedCostByVariant = $includeCosts
             ? $productionOrder->finishedInventoryMovements->keyBy('product_variant_id')
@@ -146,16 +155,47 @@ class BuildProductionOrderShowDataAction
                 'total_bulk_cost' => $totalBulkCostStr,
                 'total_finished_cost' => $totalFinishedCostStr,
             ] : []),
-            'details' => $productionOrder->details->map(function (ProductionOrderDetail $detail) use ($includeCosts) {
+            'details' => $productionOrder->details->map(function (ProductionOrderDetail $detail) use ($formulaDetailsByKey, $productionOrder, $includeCosts) {
+                $formulaDetail = $formulaDetailsByKey->get($detail->step_order.'-'.$detail->raw_material_id);
+
+                $displayQuantity = null;
+                $displayUnit = null;
+                $conversionFactor = null;
+                if ($formulaDetail && $formulaDetail->unitOfMeasure) {
+                    $rawMaterialUnit = $detail->rawMaterial?->unitOfMeasure;
+
+                    if ($rawMaterialUnit !== null) {
+                        try {
+                            $conversionFactor = (float) $this->formulaService->getConversionFactor(
+                                $formulaDetail->unitOfMeasure,
+                                $rawMaterialUnit
+                            );
+
+                            $displayQuantity = (float) $this->calculator->mul(
+                                (string) $formulaDetail->quantity,
+                                (string) $productionOrder->quantity,
+                                4
+                            );
+                            $displayUnit = $formulaDetail->unitOfMeasure->symbol;
+                        } catch (\DomainException) {
+                            $conversionFactor = null;
+                        }
+                    }
+                }
+
                 $row = [
                     'id' => $detail->id,
                     'raw_material_id' => (int) $detail->raw_material_id,
                     'step_order' => (int) $detail->step_order,
                     'planned_quantity' => (float) $detail->planned_quantity,
+                    'display_quantity' => $displayQuantity,
+                    'display_unit' => $displayUnit,
+                    'conversion_factor' => $conversionFactor,
                     'actual_quantity' => $detail->actual_quantity !== null ? (float) $detail->actual_quantity : null,
                     'raw_material' => $detail->rawMaterial ? [
                         'id' => $detail->rawMaterial->id,
                         'code' => $detail->rawMaterial->code,
+                        'unit_symbol' => $detail->rawMaterial->unitOfMeasure?->symbol,
                     ] : null,
                 ];
 
