@@ -38,7 +38,9 @@ export function useProductionCostPreview({
     const ingredientsSignature = JSON.stringify(
         ingredients.map((ingredient) => ({
             id: ingredient.id,
-            actual_quantity: Number(ingredient.actual_quantity) || 0,
+            actual_quantity: ingredient.conversion_factor
+                ? (Number(ingredient.actual_quantity) || 0) * ingredient.conversion_factor
+                : (Number(ingredient.actual_quantity) || 0),
         })),
     );
 

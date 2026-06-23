@@ -29,7 +29,7 @@ export function IngredientsTable({
                         <tr>
                             <th className="p-3 text-left">Materia Prima</th>
                             <th className="p-3 text-right">Planeado</th>
-                            <th className="w-32 p-3 text-right">
+                            <th className="w-40 p-3 text-right">
                                 Real Gastado
                             </th>
                             {showCosts && (
@@ -53,34 +53,51 @@ export function IngredientsTable({
                                 <td className="p-3 font-medium">
                                     {ingredient.raw_material_name}
                                 </td>
-                                <td className="p-3 text-right text-muted-foreground">
+                                <td className="p-3 text-right whitespace-nowrap text-muted-foreground">
                                     <FormattedNumber
-                                        value={ingredient.planned_quantity}
-                                        maxDecimals={2}
+                                        value={
+                                            ingredient.display_quantity ??
+                                            ingredient.planned_quantity
+                                        }
+                                        maxDecimals={4}
                                     />
+                                    {ingredient.display_unit
+                                        ? ` ${ingredient.display_unit}`
+                                        : ingredient.raw_material_unit
+                                          ? ` ${ingredient.raw_material_unit}`
+                                          : ''}
                                 </td>
                                 <td className="p-3">
-                                    <Input
-                                        className="h-8 text-right"
-                                        type="number"
-                                        step="0.0001"
-                                        value={ingredient.actual_quantity}
-                                        onChange={(event) => {
-                                            const newIngredients = [
-                                                ...data.ingredients,
-                                            ];
-                                            newIngredients[index] = {
-                                                ...newIngredients[index],
-                                                actual_quantity:
-                                                    event.target.value,
-                                            };
-                                            setData(
-                                                'ingredients',
-                                                newIngredients,
-                                            );
-                                        }}
-                                        disabled={isReadOnly}
-                                    />
+                                    <div className="flex items-center justify-end gap-1.5">
+                                        <Input
+                                            className="h-8 w-28 text-right"
+                                            type="number"
+                                            step="0.0001"
+                                            value={ingredient.actual_quantity}
+                                            onChange={(event) => {
+                                                const newIngredients = [
+                                                    ...data.ingredients,
+                                                ];
+                                                newIngredients[index] = {
+                                                    ...newIngredients[index],
+                                                    actual_quantity:
+                                                        event.target.value,
+                                                };
+                                                setData(
+                                                    'ingredients',
+                                                    newIngredients,
+                                                );
+                                            }}
+                                            disabled={isReadOnly}
+                                        />
+                                        {(ingredient.display_unit ||
+                                            ingredient.raw_material_unit) && (
+                                            <span className="w-6 shrink-0 text-left text-xs text-muted-foreground">
+                                                {ingredient.display_unit ||
+                                                    ingredient.raw_material_unit}
+                                            </span>
+                                        )}
+                                    </div>
                                 </td>
                                 {showCosts && (
                                     <>

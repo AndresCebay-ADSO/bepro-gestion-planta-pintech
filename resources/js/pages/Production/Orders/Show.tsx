@@ -63,7 +63,8 @@ export default function ProductionOrderShow({
     const hasOrderData =
         orderDetails.length > 0 || orderPackagingPlans.length > 0;
 
-    const submitMode = can.submitForReview && !isPendingReview ? 'review' : 'complete';
+    const submitMode =
+        can.submitForReview && !isPendingReview ? 'review' : 'complete';
 
     const submitLabel =
         submitMode === 'review'
@@ -87,7 +88,7 @@ export default function ProductionOrderShow({
             ? 'Los datos quedarán registrados y producción deberá validar el cierre definitivo. No se moverá inventario todavía.'
             : 'Esta acción actualizará los inventarios de forma irreversible. Una vez finalizada, no se podrán realizar más ajustes a la orden.';
 
-    const { data, setData, post, processing, errors } =
+    const { data, setData, post, processing, errors, transform } =
         useForm<ProductionOrderFormData>({
             actual_yield_quantity: order.actual_quantity ?? order.quantity,
             viscosity_ku: order.viscosity_ku ?? '',
@@ -248,19 +249,23 @@ export default function ProductionOrderShow({
                 ? productionOrderSubmitForReview({ production_order: order.id })
                 : productionOrderComplete({ production_order: order.id });
 
+        transform(normalizeProductionOrderFormData);
         post(action.url, {
             preserveScroll: true,
         });
     };
 
     const confirmReject = () => {
-        postReject(productionOrderRejectReview({ production_order: order.id }).url, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setIsRejectOpen(false);
-                resetRejectForm();
+        postReject(
+            productionOrderRejectReview({ production_order: order.id }).url,
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsRejectOpen(false);
+                    resetRejectForm();
+                },
             },
-        });
+        );
     };
 
     const confirmStartProduction = () => {
@@ -296,8 +301,7 @@ export default function ProductionOrderShow({
                     breadcrumbs={[
                         {
                             title: 'Órdenes de Producción',
-                            href:
-                                returnTo ?? productionOrdersIndex().url,
+                            href: returnTo ?? productionOrdersIndex().url,
                         },
                         { title: order.order_number, href: '#' },
                     ]}
@@ -308,7 +312,7 @@ export default function ProductionOrderShow({
                 <OrderHeader order={order} />
 
                 {can.startProduction && isPending && (
-                    <div className="flex flex-col gap-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-4 rounded-lg border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-amber-900/50 dark:bg-amber-950/30">
                         <div>
                             <p className="font-medium text-amber-900 dark:text-amber-100">
                                 Orden planificada
@@ -406,9 +410,7 @@ export default function ProductionOrderShow({
                 >
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>
-                                {confirmTitle}
-                            </AlertDialogTitle>
+                            <AlertDialogTitle>{confirmTitle}</AlertDialogTitle>
                             <AlertDialogDescription>
                                 {confirmDescription}
                             </AlertDialogDescription>
@@ -458,10 +460,7 @@ export default function ProductionOrderShow({
                     </AlertDialogContent>
                 </AlertDialog>
 
-                <AlertDialog
-                    open={isRejectOpen}
-                    onOpenChange={setIsRejectOpen}
-                >
+                <AlertDialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
                     <AlertDialogContent>
                         <form
                             onSubmit={(e) => {
@@ -498,9 +497,7 @@ export default function ProductionOrderShow({
                                 )}
                             </div>
                             <AlertDialogFooter>
-                                <AlertDialogCancel
-                                    disabled={rejectProcessing}
-                                >
+                                <AlertDialogCancel disabled={rejectProcessing}>
                                     Cancelar
                                 </AlertDialogCancel>
                                 <AlertDialogAction
@@ -524,11 +521,58 @@ function mapDetailToIngredientFormRow(detail: ProductionOrderDetail) {
     return {
         id: detail.id,
         raw_material_name: detail.raw_material?.code,
+        raw_material_unit: detail.raw_material?.unit_symbol,
         planned_quantity: detail.planned_quantity,
-        actual_quantity: detail.actual_quantity ?? detail.planned_quantity,
+        display_quantity: detail.display_quantity ?? null,
+        display_unit: detail.display_unit ?? null,
+        conversion_factor: detail.conversion_factor ?? null,
+        actual_quantity:
+            detail.actual_quantity != null
+                ? detail.conversion_factor
+                    ? Number(detail.actual_quantity) / detail.conversion_factor
+                    : detail.actual_quantity
+                : (detail.display_quantity ?? detail.planned_quantity),
         unit_cost: detail.unit_cost ?? 0,
         total_cost: detail.total_cost ?? 0,
     };
+}
+
+function normalizeProductionOrderFormData(data: ProductionOrderFormData) {
+    return {
+        ...data,
+        ingredients: data.ingredients.map((ingredient) => ({
+            id: ingredient.id,
+            actual_quantity: normalizeIngredientActualQuantity(
+                ingredient.actual_quantity,
+                ingredient.conversion_factor,
+            ),
+        })),
+        packaging: data.packaging.map((pack) => ({
+            id: pack.id,
+            actual_units: pack.actual_units,
+        })),
+    };
+}
+
+function normalizeIngredientActualQuantity(
+    actualQuantity: string | number,
+    conversionFactor?: number | null,
+) {
+    if (actualQuantity === '') {
+        return actualQuantity;
+    }
+
+    const numericActualQuantity = Number(actualQuantity);
+
+    if (!Number.isFinite(numericActualQuantity)) {
+        return actualQuantity;
+    }
+
+    if (!conversionFactor) {
+        return actualQuantity;
+    }
+
+    return (numericActualQuantity * conversionFactor).toString();
 }
 
 function mapPackagingPlanToFormRow(pack: ProductionOrderPackagingPlan) {

@@ -24,12 +24,16 @@ export type RawMaterialOption = {
 
 export type ProductionOrderRawMaterial = {
     code?: string | null;
+    unit_symbol?: string | null;
 };
 
 export type ProductionOrderDetail = {
     id: number;
     raw_material?: ProductionOrderRawMaterial | null;
     planned_quantity: FormNumberValue;
+    display_quantity?: FormNumberValue | null;
+    display_unit?: string | null;
+    conversion_factor?: number | null;
     actual_quantity?: FormNumberValue | null;
     unit_cost?: FormNumberValue | null;
     total_cost?: FormNumberValue | null;
@@ -119,7 +123,11 @@ export type ProductionOrderShowProps = {
 export type ProductionOrderIngredientFormRow = {
     id: number;
     raw_material_name?: string | null;
+    raw_material_unit?: string | null;
     planned_quantity: FormNumberValue;
+    display_quantity?: FormNumberValue | null;
+    display_unit?: string | null;
+    conversion_factor?: number | null;
     actual_quantity: FormNumberValue;
     unit_cost: FormNumberValue;
     total_cost: FormNumberValue;
