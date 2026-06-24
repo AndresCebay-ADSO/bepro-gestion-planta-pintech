@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Warehouses\AssignUsersRequest;
+use App\Http\Requests\Warehouses\SetCurrentWarehouseRequest;
 use App\Http\Requests\Warehouses\StoreWarehouseRequest;
 use App\Http\Requests\Warehouses\UpdateWarehouseRequest;
 use App\Models\User;
@@ -232,11 +233,9 @@ class WarehouseController extends Controller
             ->with('success', __('Usuarios asignados correctamente.'));
     }
 
-    public function setCurrentWarehouse(Request $request): RedirectResponse
+    public function setCurrentWarehouse(SetCurrentWarehouseRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'warehouse_id' => ['bail', 'required', 'integer', 'exists:warehouses,id'],
-        ]);
+        $validated = $request->validated();
 
         $user = $request->user();
         $warehouse = Warehouse::query()->findOrFail($validated['warehouse_id']);

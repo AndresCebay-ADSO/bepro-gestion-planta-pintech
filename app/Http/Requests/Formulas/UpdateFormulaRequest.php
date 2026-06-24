@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Formulas;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -15,7 +17,7 @@ class UpdateFormulaRequest extends FormRequest
             $this->merge([
                 'details' => array_map(function ($detail) {
                     if (is_array($detail) && isset($detail['quantity'])) {
-                        $detail['quantity'] = str_replace(',', '.', $detail['quantity']);
+                        $detail['quantity'] = str_replace(',', '.', (string) $detail['quantity']);
                     }
 
                     return $detail;
