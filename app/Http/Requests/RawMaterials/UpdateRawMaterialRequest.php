@@ -9,8 +9,6 @@ use Illuminate\Validation\Rule;
 
 class UpdateRawMaterialRequest extends FormRequest
 {
-    private const MAX_PRICE = '99999999999999.9999';
-
     public function authorize(): bool
     {
         return $this->user()?->hasRole('admin') ?? false;
@@ -41,8 +39,6 @@ class UpdateRawMaterialRequest extends FormRequest
                 'integer',
                 Rule::exists('unit_of_measures', 'id')->whereNull('deleted_at'),
             ],
-            'current_price' => ['bail', 'nullable', 'numeric', 'min:0', 'max:'.self::MAX_PRICE, 'decimal:0,4'],
-            'previous_price' => ['nullable', 'numeric', 'min:0', 'max:'.self::MAX_PRICE, 'decimal:0,4'],
             'minimum_stock' => ['bail', 'required', 'numeric', 'min:0', 'decimal:0,4'],
             'alert_days_before_expiry' => ['bail', 'required', 'integer', 'min:0'],
             'price_variation_threshold' => ['bail', 'nullable', 'numeric', 'min:0.01', 'max:100', 'decimal:0,2'],

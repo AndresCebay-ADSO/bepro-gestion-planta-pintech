@@ -8,8 +8,6 @@ use App\Http\Requests\RawMaterials\UpdateRawMaterialRequest;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
-use App\Services\AlertService;
-use App\Services\ProductionCostRecalculationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,11 +17,6 @@ use Inertia\Response;
 
 class RawMaterialController extends Controller
 {
-    public function __construct(
-        private readonly ProductionCostRecalculationService $productionCostRecalculationService,
-        private readonly AlertService $alertService,
-    ) {}
-
     public function index(Request $request): Response
     {
         $this->authorize('viewAny', RawMaterial::class);
@@ -174,40 +167,7 @@ class RawMaterialController extends Controller
     {
         $this->authorize('update', $rawMaterial);
 
-        $validated = $request->validated();
-        $currentPriceChanged = array_key_exists('current_price', $validated)
-            && (
-                ($rawMaterial->current_price === null) !== ($validated['current_price'] === null)
-                || (
-                    $rawMaterial->current_price !== null
-                    && $validated['current_price'] !== null
-                    && abs((float) $rawMaterial->current_price - (float) $validated['current_price']) > 0.0001
-                )
-            );
-
-        $previousPriceForAlert = $rawMaterial->current_price !== null
-            ? (string) $rawMaterial->current_price
-            : null;
-
-        if ($currentPriceChanged && ! array_key_exists('previous_price', $validated)) {
-            $validated['previous_price'] = $rawMaterial->current_price;
-        }
-
-        $rawMaterial->update($validated);
-
-        if ($currentPriceChanged) {
-            $newPrice = $rawMaterial->current_price !== null
-                ? (string) $rawMaterial->current_price
-                : null;
-
-            $this->alertService->evaluatePriceVariation(
-                rawMaterial: $rawMaterial->refresh(),
-                previousPrice: $previousPriceForAlert,
-                newPrice: $newPrice,
-            );
-
-            $this->productionCostRecalculationService->recalculateForRawMaterial((int) $rawMaterial->id);
-        }
+        $rawMaterial->update($request->validated());
 
         return redirect()
             ->route('raw-materials.index')
