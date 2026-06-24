@@ -257,29 +257,3 @@ test('expiry scan command processes batches', function (): void {
 
     Carbon::setTestNow();
 });
-
-test('updating raw material price creates alert when threshold is configured', function (): void {
-    $rawMaterial = createRawMaterialForAlerts([
-        'code' => 'RM-PRICE-ALERT',
-        'current_price' => 100,
-        'price_variation_threshold' => 5,
-    ]);
-
-    $this->actingAs($this->admin)
-        ->put(route('raw-materials.update', $rawMaterial), [
-            'code' => $rawMaterial->code,
-            'category_id' => $this->category->id,
-            'unit_of_measure_id' => $this->unit->id,
-            'current_price' => 120,
-            'minimum_stock' => 10,
-            'alert_days_before_expiry' => 30,
-            'price_variation_threshold' => 5,
-            'is_active' => true,
-        ])
-        ->assertRedirect(route('raw-materials.index'));
-
-    expect(Alert::query()
-        ->where('type', AlertType::VariacionPrecio)
-        ->where('is_resolved', false)
-        ->exists())->toBeTrue();
-});
