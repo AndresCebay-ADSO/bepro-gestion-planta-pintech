@@ -20,8 +20,6 @@ type RawMaterial = {
     code: string;
     category_id: number | null;
     unit_of_measure_id: number;
-    current_price: string | null;
-    previous_price: string | null;
     minimum_stock: string;
     alert_days_before_expiry: number;
     price_variation_threshold: string | null;
@@ -38,8 +36,6 @@ type RawMaterialFormData = {
     code: string;
     category_id: string;
     unit_of_measure_id: string;
-    current_price: string;
-    previous_price: string;
     minimum_stock: string;
     alert_days_before_expiry: string;
     price_variation_threshold: string;
@@ -65,8 +61,6 @@ export default function RawMaterialsEdit({
             ? String(rawMaterial.category_id)
             : '',
         unit_of_measure_id: String(rawMaterial.unit_of_measure_id),
-        current_price: trimZeroes(rawMaterial.current_price),
-        previous_price: trimZeroes(rawMaterial.previous_price),
         minimum_stock: trimZeroes(rawMaterial.minimum_stock),
         alert_days_before_expiry: String(rawMaterial.alert_days_before_expiry),
         price_variation_threshold: trimZeroes(
@@ -79,10 +73,6 @@ export default function RawMaterialsEdit({
         form.transform((data) => ({
             ...data,
             unit_of_measure_id: Number(data.unit_of_measure_id),
-            current_price:
-                data.current_price === '' ? null : data.current_price,
-            previous_price:
-                data.previous_price === '' ? null : data.previous_price,
             price_variation_threshold:
                 data.price_variation_threshold === ''
                     ? null
