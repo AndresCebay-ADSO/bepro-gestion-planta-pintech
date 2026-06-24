@@ -17,7 +17,7 @@ class UpdateFormulaRequest extends FormRequest
             $this->merge([
                 'details' => array_map(function ($detail) {
                     if (is_array($detail) && isset($detail['quantity'])) {
-                        $detail['quantity'] = str_replace(',', '.', $detail['quantity']);
+                        $detail['quantity'] = str_replace(',', '.', (string) $detail['quantity']);
                     }
 
                     return $detail;
