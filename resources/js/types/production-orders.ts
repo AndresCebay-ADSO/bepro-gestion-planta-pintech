@@ -12,7 +12,7 @@ export type FormNumberValue = string | number;
 
 export type VariantOption = {
     id: number;
-    sku: string;
+    name: string;
     presentation_label: string;
     presentation_value: number;
 };

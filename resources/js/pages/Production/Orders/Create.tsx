@@ -19,7 +19,7 @@ import { index as productionOrderIndex } from '@/routes/production-orders';
 type FormulaOption = { id: number; version: number; is_active: boolean };
 type VariantOption = {
     id: number;
-    sku: string;
+    name: string;
     presentation_label: string;
     presentation_value: number;
 };
@@ -70,7 +70,7 @@ export default function ProductionOrdersCreate({
 
     const variantOptions = availableVariants.map((v) => ({
         id: String(v.id),
-        label: `${v.sku} — ${v.presentation_label} (${v.presentation_value} gal)`,
+        label: `${v.name} — ${v.presentation_label} (${v.presentation_value} gal)`,
     }));
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -373,7 +373,7 @@ export default function ProductionOrdersCreate({
                                         <div className="col-span-6 space-y-1">
                                             {index === 0 && (
                                                 <Label className="text-xs text-muted-foreground">
-                                                    Presentación (SKU)
+                                                    Presentación
                                                 </Label>
                                             )}
                                             <Combobox
