@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Models\RawMaterial;
+use App\Services\AlertService;
 use App\Services\ProductionCostRecalculationService;
 use App\Services\RawMaterialReferencePriceService;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
@@ -56,12 +58,31 @@ class RecalculateRawMaterialReferencePrice implements ShouldBeUniqueUntilProcess
     public function handle(
         RawMaterialReferencePriceService $rawMaterialReferencePriceService,
         ProductionCostRecalculationService $productionCostRecalculationService,
+        AlertService $alertService,
     ): void {
         $currentPriceChanged = $rawMaterialReferencePriceService
             ->syncRawMaterialCurrentPrice($this->rawMaterialId);
 
         if ($currentPriceChanged) {
+            $this->evaluatePriceVariationAlert($alertService);
             $productionCostRecalculationService->recalculateForRawMaterial($this->rawMaterialId);
         }
+    }
+
+    private function evaluatePriceVariationAlert(AlertService $alertService): void
+    {
+        $rawMaterial = RawMaterial::query()
+            ->select(['id', 'code', 'current_price', 'previous_price', 'price_variation_threshold'])
+            ->find($this->rawMaterialId);
+
+        if ($rawMaterial === null) {
+            return;
+        }
+
+        $alertService->evaluatePriceVariation(
+            rawMaterial: $rawMaterial,
+            previousPrice: $rawMaterial->previous_price !== null ? (string) $rawMaterial->previous_price : null,
+            newPrice: $rawMaterial->current_price !== null ? (string) $rawMaterial->current_price : null,
+        );
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\AlertSeverity;
 use App\Enums\AlertType;
+use App\Jobs\RecalculateRawMaterialReferencePrice;
 use App\Models\Alert;
 use App\Models\InventoryBatch;
 use App\Models\RawMaterial;
@@ -13,6 +14,8 @@ use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\AlertService;
 use App\Services\InventoryService;
+use App\Services\ProductionCostRecalculationService;
+use App\Services\RawMaterialReferencePriceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia;
@@ -170,6 +173,45 @@ test('it creates price variation alert only for materials with configured thresh
         ->and($alert->type)->toBe(AlertType::VariacionPrecio)
         ->and($alert->message)->toContain('+')
         ->and($alert->message)->toContain($rawMaterial->code);
+});
+
+test('it creates price variation alert via async job when reference price changes', function (): void {
+    $rawMaterial = createRawMaterialForAlerts([
+        'price_variation_threshold' => 5,
+        'current_price' => 100,
+        'previous_price' => null,
+        'tracks_inventory' => true,
+    ]);
+
+    InventoryBatch::create([
+        'raw_material_id' => $rawMaterial->id,
+        'warehouse_id' => $this->warehouse->id,
+        'initial_quantity' => 10,
+        'remaining_quantity' => 10,
+        'unit_price' => 100,
+        'entry_date' => now()->toDateString(),
+    ]);
+
+    InventoryBatch::create([
+        'raw_material_id' => $rawMaterial->id,
+        'warehouse_id' => $this->warehouse->id,
+        'initial_quantity' => 10,
+        'remaining_quantity' => 10,
+        'unit_price' => 150,
+        'entry_date' => now()->toDateString(),
+    ]);
+
+    $job = new RecalculateRawMaterialReferencePrice((int) $rawMaterial->id);
+    $job->handle(
+        app(RawMaterialReferencePriceService::class),
+        app(ProductionCostRecalculationService::class),
+        app(AlertService::class),
+    );
+
+    expect(Alert::query()
+        ->where('type', AlertType::VariacionPrecio)
+        ->where('is_resolved', false)
+        ->exists())->toBeTrue();
 });
 
 test('it generates low stock alert after inventory exit movement', function (): void {
