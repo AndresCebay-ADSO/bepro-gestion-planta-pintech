@@ -77,7 +77,8 @@ beforeEach(function () {
 
     ProductVariant::create([
         'product_id' => $product->id,
-        'sku' => 'VAR-001',
+        'code' => 'VAR-001',
+        'name' => 'Pintura Test - Galón',
         'unit_of_measure_id' => $uom->id,
         'presentation_label' => 'Galón',
         'is_active' => true,
@@ -616,7 +617,8 @@ test('it creates separate finished inventory records per variant when packaging 
     $firstVariant = ProductVariant::where('product_id', $order->product_id)->first();
     $secondVariant = ProductVariant::create([
         'product_id' => $order->product_id,
-        'sku' => 'VAR-002',
+        'code' => 'VAR-002',
+        'name' => 'Pintura Test - Cuarto',
         'unit_of_measure_id' => $firstVariant->unit_of_measure_id,
         'presentation_label' => 'Cuarto',
         'is_active' => true,
@@ -940,11 +942,12 @@ test('it distributes bulk cost across multiple variants by presentation_value', 
 
     // Create two variants with different presentation_values
     $variant1 = ProductVariant::where('product_id', $order->product_id)->first();
-    $variant1->update(['presentation_value' => 1, 'sku' => 'VAR-GALON']); // Galón = 1
+    $variant1->update(['presentation_value' => 1, 'code' => 'VAR-GALON']); // Galón = 1
 
     $variant2 = ProductVariant::create([
         'product_id' => $order->product_id,
-        'sku' => 'VAR-BIDON',
+        'code' => 'VAR-BIDON',
+        'name' => 'Pintura Test - Bidón 5G',
         'unit_of_measure_id' => $variant1->unit_of_measure_id,
         'presentation_value' => 5,
         'presentation_label' => 'Bidon 5 Galones',

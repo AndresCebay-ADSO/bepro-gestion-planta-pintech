@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Enums\ComponentSystem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
@@ -25,14 +24,11 @@ class ProductVariantFactory extends Factory
     {
         return [
             'product_id' => Product::factory(),
-            'sku' => $this->faker->unique()->numerify('SKU-#####'),
+            'code' => $this->faker->unique()->numerify('########'),
+            'name' => $this->faker->unique()->word(),
             'unit_of_measure_id' => UnitOfMeasure::where('symbol', 'gl')->first()?->id ?? UnitOfMeasure::factory(),
             'presentation_value' => $this->faker->randomElement([1, 5, 20, 0.25]),
             'presentation_label' => $this->faker->randomElement(['Galón', 'Cubeta', 'Tambor', 'Cuarto']),
-            'color' => $this->faker->colorName(),
-            'finish' => $this->faker->randomElement(['Brillante', 'Mate', 'Satinado']),
-            'base_type' => $this->faker->randomElement(['Agua', 'Solvente']),
-            'component_system' => $this->faker->randomElement(ComponentSystem::cases()),
             'current_cost' => $this->faker->randomFloat(4, 10, 100),
             'current_price' => $this->faker->randomFloat(4, 15, 150),
             'package_raw_material_id' => RawMaterial::whereHas('category', function ($query) {

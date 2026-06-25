@@ -94,17 +94,17 @@ beforeEach(function () {
 test('it recalculates and stores production cost when a formula is created', function () {
     $variantOne = ProductVariant::create([
         'product_id' => $this->product->id,
-        'sku' => 'P-RECALC-01-1GL',
+        'code' => '12345678',
+        'name' => 'P-RECALC-01-1GL',
         'unit_of_measure_id' => $this->unit->id,
-        'component_system' => '1K',
         'presentation_value' => 1,
         'current_cost' => null,
     ]);
     $variantFive = ProductVariant::create([
         'product_id' => $this->product->id,
-        'sku' => 'P-RECALC-01-5GL',
+        'code' => '123458789',
+        'name' => 'P-RECALC-01-5GL',
         'unit_of_measure_id' => $this->unit->id,
-        'component_system' => '1K',
         'presentation_value' => 5,
         'current_cost' => null,
     ]);
@@ -206,9 +206,9 @@ test('it refreshes product price when current price is negative', function () {
 test('it recalculates production costs when a raw material price changes', function () {
     $variant = ProductVariant::create([
         'product_id' => $this->product->id,
-        'sku' => 'P-RECALC-01-1GL-RAW-UPD',
+        'code' => '12345678',
+        'name' => 'P-RECALC-01-1GL-RAW-UP',
         'unit_of_measure_id' => $this->unit->id,
-        'component_system' => '1K',
         'presentation_value' => 1,
         'current_cost' => null,
         'current_price' => null,
@@ -259,9 +259,9 @@ test('it recalculates production costs when a raw material price changes', funct
 test('it keeps current price when cost variation is below threshold', function () {
     $variant = ProductVariant::create([
         'product_id' => $this->product->id,
-        'sku' => 'P-RECALC-01-1GL-BELOW-THRESHOLD',
+        'code' => 'P-RECALC-01-1GL-BELOW-THRESHOLD',
+        'name' => 'P-RECALC-01-1GL-BELOW-THRESHOLD',
         'unit_of_measure_id' => $this->unit->id,
-        'component_system' => '1K',
         'presentation_value' => 1,
         'current_cost' => null,
         'current_price' => null,
@@ -305,9 +305,9 @@ test('it keeps current price when cost variation is below threshold', function (
 test('it includes package cost in variant cost and auto price on recalculation', function () {
     ProductVariant::create([
         'product_id' => $this->product->id,
-        'sku' => 'P-RECALC-01-ENV',
+        'code' => 'P-RECALC-01-ENV',
+        'name' => 'P-RECALC-01-ENV',
         'unit_of_measure_id' => $this->unit->id,
-        'component_system' => '1K',
         'presentation_value' => 1,
         'package_raw_material_id' => $this->packagingMaterial->id,
         'current_cost' => null,
@@ -331,7 +331,7 @@ test('it includes package cost in variant cost and auto price on recalculation',
     ])->assertRedirect(route('formulas.index'));
 
     $variant = ProductVariant::query()
-        ->where('sku', 'P-RECALC-01-ENV')
+        ->where('code', 'P-RECALC-01-ENV')
         ->first();
 
     expect($variant)->not->toBeNull();
@@ -342,9 +342,9 @@ test('it includes package cost in variant cost and auto price on recalculation',
 test('it refreshes product and variant prices when profit margin is updated', function () {
     $variant = ProductVariant::create([
         'product_id' => $this->product->id,
-        'sku' => 'P-RECALC-01-1GL-MARGIN-UPD',
+        'code' => 'P-RECALC-01-1GL-MARGIN-UPD',
+        'name' => 'P-RECALC-01-1GL-MARGIN-UPD',
         'unit_of_measure_id' => $this->unit->id,
-        'component_system' => '1K',
         'presentation_value' => 1,
         'current_cost' => null,
         'current_price' => null,

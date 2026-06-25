@@ -35,12 +35,13 @@ export default function FormulasCreate({
     selectedProductId,
     returnTo,
 }: Props) {
-    const { data, setData, processing, errors } = useForm<FormulaCreateFormData>({
-        product_id: selectedProductId ?? '',
-        notes: '',
-        details: [createEmptyFormulaDetail()],
-        return_to: returnTo ?? '',
-    });
+    const { data, setData, processing, errors } =
+        useForm<FormulaCreateFormData>({
+            product_id: selectedProductId ?? '',
+            notes: '',
+            details: [createEmptyFormulaDetail()],
+            return_to: returnTo ?? '',
+        });
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();

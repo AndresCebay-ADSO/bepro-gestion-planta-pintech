@@ -19,7 +19,12 @@ type ProductionOrderItem = {
     formula?: { version: number } | null;
     warehouse?: { name: string } | null;
     quantity: string | number;
-    status: 'pending' | 'in_progress' | 'pending_review' | 'completed' | 'cancelled';
+    status:
+        | 'pending'
+        | 'in_progress'
+        | 'pending_review'
+        | 'completed'
+        | 'cancelled';
     planned_date: string;
     completion_date: string | null;
     created_at: string;

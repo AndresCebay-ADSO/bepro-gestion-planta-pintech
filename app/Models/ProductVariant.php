@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\ComponentSystem;
 use Database\Factories\ProductVariantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,14 +18,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
 /**
  * @property int $id
  * @property int $product_id
- * @property string $sku
+ * @property string $code
+ * @property string $name
  * @property int $unit_of_measure_id
  * @property float|null $presentation_value
  * @property string|null $presentation_label
- * @property string|null $color
- * @property string|null $finish
- * @property string|null $base_type
- * @property ComponentSystem $component_system
  * @property float|null $current_cost
  * @property float|null $current_price
  * @property bool $is_active
@@ -42,14 +38,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
  */
 #[Fillable([
     'product_id',
-    'sku',
+    'code',
+    'name',
     'unit_of_measure_id',
     'presentation_value',
     'presentation_label',
-    'color',
-    'finish',
-    'base_type',
-    'component_system',
     'current_cost',
     'current_price',
     'package_raw_material_id',
@@ -67,13 +60,10 @@ class ProductVariant extends Model
             ->setDescriptionForEvent(fn (string $eventName) => "Variante de producto {$eventName}")
             ->logOnly([
                 'product_id',
-                'sku',
+                'code',
+                'name',
                 'presentation_value',
                 'presentation_label',
-                'color',
-                'finish',
-                'base_type',
-                'component_system',
                 'current_cost',
                 'current_price',
                 'package_raw_material_id',
@@ -86,7 +76,6 @@ class ProductVariant extends Model
     protected function casts(): array
     {
         return [
-            'component_system' => ComponentSystem::class,
             'presentation_value' => 'decimal:4',
             'current_cost' => 'decimal:4',
             'current_price' => 'decimal:4',

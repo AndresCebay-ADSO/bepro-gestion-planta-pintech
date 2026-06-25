@@ -95,10 +95,11 @@ export function LineAdjustmentsPanel({
                                                             )
                                                         ) {
                                                             router.delete(
-destroyLineAdjustment(
-    {
-        production_order: orderId,
-        adjustment:
+                                                                destroyLineAdjustment(
+                                                                    {
+                                                                        production_order:
+                                                                            orderId,
+                                                                        adjustment:
                                                                             adjustment.id,
                                                                     },
                                                                 ).url,

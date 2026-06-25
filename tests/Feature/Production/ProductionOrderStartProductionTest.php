@@ -72,7 +72,8 @@ beforeEach(function () {
 
     ProductVariant::create([
         'product_id' => $product->id,
-        'sku' => 'VAR-START',
+        'code' => 'VAR-START',
+        'name' => 'Producto Start Test - Galón',
         'unit_of_measure_id' => $uom->id,
         'presentation_label' => 'Galón',
         'is_active' => true,

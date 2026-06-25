@@ -15,14 +15,9 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { index as productionOrderIndex } from '@/routes/production-orders';
+import type { VariantOption } from '@/types/production-orders';
 
 type FormulaOption = { id: number; version: number; is_active: boolean };
-type VariantOption = {
-    id: number;
-    sku: string;
-    presentation_label: string;
-    presentation_value: number;
-};
 type WarehouseOption = { id: number; name: string };
 type ProductOption = {
     id: number;
@@ -70,7 +65,7 @@ export default function ProductionOrdersCreate({
 
     const variantOptions = availableVariants.map((v) => ({
         id: String(v.id),
-        label: `${v.sku} — ${v.presentation_label} (${v.presentation_value} gal)`,
+        label: `${v.name} — ${v.presentation_label} (${v.presentation_value} gal)`,
     }));
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -373,7 +368,7 @@ export default function ProductionOrdersCreate({
                                         <div className="col-span-6 space-y-1">
                                             {index === 0 && (
                                                 <Label className="text-xs text-muted-foreground">
-                                                    Presentación (SKU)
+                                                    Presentación
                                                 </Label>
                                             )}
                                             <Combobox

@@ -36,11 +36,11 @@ function setupPriceListDependencies(): array
 
     $variant = ProductVariant::create([
         'product_id' => $product->id,
-        'sku' => 'PINT-001-1GAL',
+        'code' => '12345678',
+        'name' => 'Pintura Blanco - 1 Galón',
         'unit_of_measure_id' => $uom->id,
         'presentation_value' => 1,
         'presentation_label' => '1 gal',
-        'component_system' => '1K',
     ]);
 
     return [$product, $variant, $user];

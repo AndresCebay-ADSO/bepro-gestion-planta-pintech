@@ -14,14 +14,11 @@ return new class extends Migration
         Schema::create('product_variants', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
-            $table->string('sku', 80)->unique();
+            $table->string('code', 80)->unique();
+            $table->string('name', 100);
             $table->foreignId('unit_of_measure_id')->constrained('unit_of_measures')->restrictOnDelete();
             $table->decimal('presentation_value', 12, 4)->nullable();
-            $table->string('presentation_label', 50)->nullable(); // 1 gal, 5 gal, Kit 7.3 gal
-            $table->string('color', 100)->nullable();
-            $table->string('finish', 50)->nullable(); // Mate, Brillante, Semi brillante
-            $table->string('base_type', 50)->nullable(); // Agua, Solvente, etc.
-            $table->enum('component_system', ['1K', '2K', 'KIT'])->default('1K');
+            $table->string('presentation_label', 50)->nullable();
             $table->decimal('current_cost', 12, 4)->nullable();
             $table->decimal('current_price', 12, 4)->nullable();
             $table->foreignId('package_raw_material_id')
@@ -33,8 +30,7 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index(['product_id', 'is_active']);
-            $table->index('color');
-            $table->index('finish');
+            $table->index('name');
         });
     }
 

@@ -20,7 +20,8 @@ class UpdateProductVariantRequest extends FormRequest
         $variantId = is_object($variant) ? $variant->id : $variant;
 
         return [
-            'sku' => ['bail', 'required', 'string', 'max:80', Rule::unique('product_variants', 'sku')->ignore($variantId)],
+            'code' => ['bail', 'required', 'string', 'max:80', Rule::unique('product_variants', 'code')->ignore($variantId)],
+            'name' => ['bail', 'required', 'string', 'max:100'],
             'unit_of_measure_id' => [
                 'bail',
                 'required',
@@ -29,10 +30,6 @@ class UpdateProductVariantRequest extends FormRequest
             ],
             'presentation_value' => ['nullable', 'numeric', 'gt:0', 'decimal:0,4'],
             'presentation_label' => ['nullable', 'string', 'max:50'],
-            'color' => ['nullable', 'string', 'max:100'],
-            'finish' => ['nullable', 'string', 'max:50'],
-            'base_type' => ['nullable', 'string', 'max:50'],
-            'component_system' => ['bail', 'required', Rule::in(['1K', '2K', 'KIT'])],
             'current_cost' => ['nullable', 'numeric', 'min:0', 'decimal:0,4'],
             'current_price' => ['nullable', 'numeric', 'min:0', 'decimal:0,4'],
             'package_raw_material_id' => [

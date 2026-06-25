@@ -284,10 +284,7 @@ export default function AlertsIndex({
                                                 alert.resolved_by && (
                                                     <p className="mt-1 text-xs text-muted-foreground">
                                                         Resuelta por{' '}
-                                                        {
-                                                            alert.resolved_by
-                                                                .name
-                                                        }
+                                                        {alert.resolved_by.name}
                                                     </p>
                                                 )}
                                         </td>
@@ -315,9 +312,7 @@ export default function AlertsIndex({
                                                     size="sm"
                                                     variant="outline"
                                                     onClick={() =>
-                                                        handleResolve(
-                                                            alert.id,
-                                                        )
+                                                        handleResolve(alert.id)
                                                     }
                                                 >
                                                     Resolver

@@ -42,14 +42,11 @@ test('admin can create a product variant', function () {
 
     actingAs($user)
         ->post(route('products.variants.store', $product), [
-            'sku' => 'VINIL-BASE-1GAL',
+            'code' => '12345678',
+            'name' => 'Vinil Base - 1 Galón',
             'unit_of_measure_id' => $uom->id,
             'presentation_value' => 1,
             'presentation_label' => '1 gal',
-            'color' => 'Blanco',
-            'finish' => 'Mate',
-            'base_type' => 'Agua',
-            'component_system' => '1K',
             'current_cost' => 100,
             'current_price' => 140,
             'is_active' => true,
@@ -58,7 +55,8 @@ test('admin can create a product variant', function () {
 
     $this->assertDatabaseHas('product_variants', [
         'product_id' => $product->id,
-        'sku' => 'VINIL-BASE-1GAL',
+        'code' => '12345678',
+        'name' => 'Vinil Base - 1 Galón',
     ]);
 });
 
@@ -67,21 +65,18 @@ test('admin can update a product variant', function () {
 
     $variant = ProductVariant::create([
         'product_id' => $product->id,
-        'sku' => 'VINIL-BASE-1GAL',
+        'code' => '12345678',
+        'name' => 'Vinil Base - 1 Galón',
         'unit_of_measure_id' => $uom->id,
-        'component_system' => '1K',
     ]);
 
     actingAs($user)
         ->patch(route('products.variants.update', [$product, $variant]), [
-            'sku' => 'VINIL-BASE-1GAL-V2',
+            'code' => '87654321',
+            'name' => 'Vinil Base - 1 Galón',
             'unit_of_measure_id' => $uom->id,
             'presentation_value' => 1,
             'presentation_label' => '1 gal',
-            'color' => 'Blanco',
-            'finish' => 'Semi mate',
-            'base_type' => 'Agua',
-            'component_system' => '1K',
             'current_cost' => 105,
             'current_price' => 145,
             'is_active' => true,
@@ -90,7 +85,7 @@ test('admin can update a product variant', function () {
 
     $variant->refresh();
 
-    expect($variant->sku)->toBe('VINIL-BASE-1GAL-V2');
+    expect($variant->code)->toBe('87654321');
 });
 
 test('admin can delete a product variant', function () {
@@ -98,9 +93,9 @@ test('admin can delete a product variant', function () {
 
     $variant = ProductVariant::create([
         'product_id' => $product->id,
-        'sku' => 'VINIL-BASE-1GAL',
+        'code' => '12345678',
+        'name' => 'Vinil Base - 1 Galón',
         'unit_of_measure_id' => $uom->id,
-        'component_system' => '1K',
     ]);
 
     actingAs($user)

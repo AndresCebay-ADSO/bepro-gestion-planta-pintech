@@ -46,7 +46,10 @@ import {
     create as formulasCreate,
     show as formulasShow,
 } from '@/routes/formulas';
-import { index as productsIndex, show as productsShow } from '@/routes/products';
+import {
+    index as productsIndex,
+    show as productsShow,
+} from '@/routes/products';
 
 type FormulaItem = {
     id: number;
@@ -79,12 +82,9 @@ type Props = {
         quality_solids_upper?: number | string | null;
         variants?: Array<{
             id: number;
-            sku: string;
+            code: string;
+            name: string;
             presentation_label?: string | null;
-            color?: string | null;
-            finish?: string | null;
-            base_type?: string | null;
-            component_system: '1K' | '2K' | 'KIT';
             current_price?: string | null;
             is_active: boolean;
             unit_of_measure?: { name: string; symbol: string } | null;
@@ -168,14 +168,11 @@ export default function ProductsShow({
     );
 
     const form = useForm({
-        sku: '',
+        code: '',
+        name: '',
         unit_of_measure_id: '',
         presentation_value: '',
         presentation_label: '',
-        color: '',
-        finish: '',
-        base_type: '',
-        component_system: '1K',
         current_cost: '',
         current_price: '',
         package_raw_material_id: '',
@@ -233,9 +230,7 @@ export default function ProductsShow({
                         { title: product.code, href: '#' },
                     ]}
                     title={product.name}
-                    subtitle={
-                        <span className="font-mono">{product.code}</span>
-                    }
+                    subtitle={<span className="font-mono">{product.code}</span>}
                     badge={
                         <Badge
                             variant={
@@ -721,10 +716,10 @@ export default function ProductsShow({
                     <div className="flex items-center justify-between border-b border-border px-6 py-4">
                         <div>
                             <h2 className="font-medium text-foreground">
-                                Variantes / SKU
+                                Variantes
                             </h2>
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                                Presentaciones de venta: galón, bidón, tambor,
+                                Presentaciones de venta: galón, bidón, Cuñete,
                                 etc. El valor se define en galones.
                             </p>
                         </div>
@@ -745,21 +740,44 @@ export default function ProductsShow({
                                     >
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="sku">SKU</Label>
+                                                <Label htmlFor="name">
+                                                    Nombre
+                                                </Label>
                                                 <Input
-                                                    id="sku"
-                                                    value={form.data.sku}
+                                                    id="name"
+                                                    value={form.data.name}
                                                     onChange={(e) =>
                                                         form.setData(
-                                                            'sku',
+                                                            'name',
                                                             e.target.value,
                                                         )
                                                     }
-                                                    placeholder="Ej: ESM-BLA-01-GL"
+                                                    placeholder="Ej: Vinil Base - Galón"
                                                 />
-                                                {form.errors.sku && (
+                                                {form.errors.name && (
                                                     <p className="text-xs text-destructive">
-                                                        {form.errors.sku}
+                                                        {form.errors.name}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="code">
+                                                    Código
+                                                </Label>
+                                                <Input
+                                                    id="code"
+                                                    value={form.data.code}
+                                                    onChange={(e) =>
+                                                        form.setData(
+                                                            'code',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Ej: 77709808"
+                                                />
+                                                {form.errors.code && (
+                                                    <p className="text-xs text-destructive">
+                                                        {form.errors.code}
                                                     </p>
                                                 )}
                                             </div>
@@ -828,17 +846,17 @@ export default function ProductsShow({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    placeholder="Ej: 1, 5, 0.75, 50"
+                                                    placeholder="Ej: 1 , 3, 5, 0.25"
                                                 />
                                                 <p className="text-xs text-muted-foreground">
-                                                    Ejemplos: 1 = Galón, 5 =
-                                                    Bidón 5gal, 0.75 = 3/4
-                                                    galón, 50 = Tambor
+                                                    Ejemplos: 1 = Galón, 3 =
+                                                    Bidón 3gal, 5 = Cuñete 5gal,
+                                                    0.25 = 1/4 galón
                                                 </p>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="presentation_label">
-                                                    Label Presentación
+                                                    Nombre Presentación
                                                 </Label>
                                                 <Input
                                                     id="presentation_label"
@@ -854,95 +872,6 @@ export default function ProductsShow({
                                                     }
                                                     placeholder="Ej: Galón 3.785L, Bidón 5 Gal"
                                                 />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="color">
-                                                    Color
-                                                </Label>
-                                                <Input
-                                                    id="color"
-                                                    value={form.data.color}
-                                                    onChange={(e) =>
-                                                        form.setData(
-                                                            'color',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="Ej: Blanco"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="finish">
-                                                    Acabado
-                                                </Label>
-                                                <Input
-                                                    id="finish"
-                                                    value={form.data.finish}
-                                                    onChange={(e) =>
-                                                        form.setData(
-                                                            'finish',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="Ej: Brillante"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="base_type">
-                                                    Tipo Base
-                                                </Label>
-                                                <Input
-                                                    id="base_type"
-                                                    value={form.data.base_type}
-                                                    onChange={(e) =>
-                                                        form.setData(
-                                                            'base_type',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="Ej: Agua / Solvente"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="component_system">
-                                                    Sistema
-                                                </Label>
-                                                <Select
-                                                    value={
-                                                        form.data
-                                                            .component_system
-                                                    }
-                                                    onValueChange={(v) =>
-                                                        form.setData(
-                                                            'component_system',
-                                                            v as
-                                                                | '1K'
-                                                                | '2K'
-                                                                | 'KIT',
-                                                        )
-                                                    }
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="1K">
-                                                            1K (Un componente)
-                                                        </SelectItem>
-                                                        <SelectItem value="2K">
-                                                            2K (Dos componentes)
-                                                        </SelectItem>
-                                                        <SelectItem value="KIT">
-                                                            KIT (Kit completo)
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
                                             </div>
                                         </div>
 
@@ -1056,19 +985,13 @@ export default function ProductsShow({
                         <thead className="border-b border-border bg-muted/40">
                             <tr>
                                 <th className="p-4 text-left font-medium">
-                                    SKU
+                                    Nombre
+                                </th>
+                                <th className="p-4 text-left font-medium">
+                                    Código
                                 </th>
                                 <th className="p-4 text-left font-medium">
                                     Presentación
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Color
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Acabado
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Sistema
                                 </th>
                                 <th className="p-4 text-left font-medium">
                                     Precio
@@ -1084,25 +1007,17 @@ export default function ProductsShow({
                                     key={variant.id}
                                     className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30"
                                 >
-                                    <td className="p-4 font-mono font-medium">
-                                        {variant.sku}
+                                    <td className="p-4 font-medium">
+                                        {variant.name ?? '-'}
+                                    </td>
+                                    <td className="p-4 font-mono text-muted-foreground">
+                                        {variant.code}
                                     </td>
                                     <td className="p-4 text-muted-foreground">
                                         {variant.presentation_label ?? '-'}
                                         {variant.unit_of_measure
                                             ? ` (${variant.unit_of_measure.symbol})`
                                             : ''}
-                                    </td>
-                                    <td className="p-4 text-muted-foreground">
-                                        {variant.color ?? '-'}
-                                    </td>
-                                    <td className="p-4 text-muted-foreground">
-                                        {variant.finish ?? '-'}
-                                    </td>
-                                    <td className="p-4">
-                                        <Badge variant="secondary">
-                                            {variant.component_system}
-                                        </Badge>
                                     </td>
                                     <td className="p-4 text-muted-foreground">
                                         {variant.current_price ? (
@@ -1133,7 +1048,7 @@ export default function ProductsShow({
                             {(product.variants ?? []).length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={7}
+                                        colSpan={5}
                                         className="p-8 text-center text-sm text-muted-foreground"
                                     >
                                         Este producto aún no tiene variantes

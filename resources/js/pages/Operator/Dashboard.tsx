@@ -185,7 +185,8 @@ export default function OperatorDashboard({
                                             {order.order_number}
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                            {order.product_code ?? 'Sin producto'}{' '}
+                                            {order.product_code ??
+                                                'Sin producto'}{' '}
                                             • Plan:{' '}
                                             {order.planned_date
                                                 ? format(
@@ -199,7 +200,9 @@ export default function OperatorDashboard({
                                         </p>
                                     </div>
                                     <Badge
-                                        className={orderStatusClass(order.status)}
+                                        className={orderStatusClass(
+                                            order.status,
+                                        )}
                                     >
                                         {order.status_label}
                                     </Badge>

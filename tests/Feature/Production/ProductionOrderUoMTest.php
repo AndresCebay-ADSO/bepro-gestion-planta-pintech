@@ -89,7 +89,8 @@ beforeEach(function () {
 
     $this->variant = ProductVariant::create([
         'product_id' => $this->product->id,
-        'sku' => 'VAR-UOM-001',
+        'code' => 'VAR-UOM-001',
+        'name' => 'Producto UoM - Galón',
         'unit_of_measure_id' => $this->liter->id,
         'presentation_label' => 'Galón',
         'presentation_value' => 1,

@@ -46,7 +46,11 @@ function writeSeenAlertIds(ids: Set<number>): void {
 }
 
 export function AlertToastNotifier() {
-    const { auth, recentAlerts = [], flash } = usePage<{
+    const {
+        auth,
+        recentAlerts = [],
+        flash,
+    } = usePage<{
         auth: { user: { role_names?: string[] } | null };
         recentAlerts?: AlertToast[];
         flash?: {
@@ -139,7 +143,7 @@ export function AlertToastNotifier() {
                 <div
                     key={toast.id}
                     className={cn(
-                        'pointer-events-auto overflow-hidden rounded-lg border border-border border-l-4 bg-card text-foreground shadow-lg',
+                        'pointer-events-auto overflow-hidden rounded-lg border border-l-4 border-border bg-card text-foreground shadow-lg',
                         severityAccent(toast.severity),
                     )}
                 >

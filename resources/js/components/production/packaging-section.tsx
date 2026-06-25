@@ -160,10 +160,11 @@ export function PackagingSection({
                                                         )
                                                     ) {
                                                         router.delete(
-destroyPackagingPlan(
-    {
-        production_order: orderId,
-        plan: pack.id,
+                                                            destroyPackagingPlan(
+                                                                {
+                                                                    production_order:
+                                                                        orderId,
+                                                                    plan: pack.id,
                                                                 },
                                                             ).url,
                                                             {
@@ -223,7 +224,7 @@ function PackagingPlanForm({
 
     const comboboxOptions = availableVariants.map((variant) => ({
         id: variant.id,
-        label: `${variant.sku} — ${variant.presentation_label} (${variant.presentation_value} gal)`,
+        label: `${variant.name} — ${variant.presentation_label} (${variant.presentation_value} gal)`,
     }));
 
     const handleAdd = () => {

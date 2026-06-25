@@ -27,7 +27,6 @@ import { index as rawMaterialsIndex } from '@/routes/raw-materials';
 import { index as usersIndex } from '@/routes/users';
 import { index as warehousesIndex } from '@/routes/warehouses';
 
-
 type DashboardStats = {
     total_users: number;
     total_products: number;
@@ -274,9 +273,7 @@ export default function AdminDashboard({
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <CardTitle>Órdenes recientes</CardTitle>
                                 <Button variant="ghost" size="sm" asChild>
-                                    <Link
-                                        href={productionOrdersIndex().url}
-                                    >
+                                    <Link href={productionOrdersIndex().url}>
                                         Ver todas
                                         <ArrowRight className="ml-1 h-4 w-4" />
                                     </Link>
@@ -370,9 +367,7 @@ export default function AdminDashboard({
                                     variant="outline"
                                     className="h-auto justify-start py-4"
                                 >
-                                    <Link
-                                        href={productionOrdersIndex().url}
-                                    >
+                                    <Link href={productionOrdersIndex().url}>
                                         <ClipboardList className="mr-2 h-4 w-4" />
                                         Órdenes
                                     </Link>
@@ -425,9 +420,7 @@ export default function AdminDashboard({
                                         <p className="text-2xl font-bold">
                                             {alert_breakdown.stock_bajo}
                                         </p>
-                                        <p className="text-slate-400">
-                                            Stock
-                                        </p>
+                                        <p className="text-slate-400">Stock</p>
                                     </div>
                                     <div className="rounded-lg bg-white/5 p-2">
                                         <p className="text-2xl font-bold">
@@ -435,17 +428,13 @@ export default function AdminDashboard({
                                                 alert_breakdown.vencimiento_proximo
                                             }
                                         </p>
-                                        <p className="text-slate-400">
-                                            Vence
-                                        </p>
+                                        <p className="text-slate-400">Vence</p>
                                     </div>
                                     <div className="rounded-lg bg-white/5 p-2">
                                         <p className="text-2xl font-bold">
                                             {alert_breakdown.variacion_precio}
                                         </p>
-                                        <p className="text-slate-400">
-                                            Precio
-                                        </p>
+                                        <p className="text-slate-400">Precio</p>
                                     </div>
                                 </div>
 

@@ -39,8 +39,9 @@ export function useProductionCostPreview({
         ingredients.map((ingredient) => ({
             id: ingredient.id,
             actual_quantity: ingredient.conversion_factor
-                ? (Number(ingredient.actual_quantity) || 0) * ingredient.conversion_factor
-                : (Number(ingredient.actual_quantity) || 0),
+                ? (Number(ingredient.actual_quantity) || 0) *
+                  ingredient.conversion_factor
+                : Number(ingredient.actual_quantity) || 0,
         })),
     );
 
@@ -97,7 +98,8 @@ export function useProductionCostPreview({
 
             try {
                 const response = await fetch(
-                    productionOrderPreviewCosts({ production_order: orderId }).url,
+                    productionOrderPreviewCosts({ production_order: orderId })
+                        .url,
                     {
                         method: 'POST',
                         headers: {
