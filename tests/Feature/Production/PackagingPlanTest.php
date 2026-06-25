@@ -63,7 +63,8 @@ beforeEach(function () {
 
     $this->variant = ProductVariant::create([
         'product_id' => $product->id,
-        'sku' => 'P-01-GAL',
+        'code' => 'P-01-GAL',
+        'name' => 'Pintura - Galón',
         'unit_of_measure_id' => $unit->id,
         'presentation_value' => 1,
         'presentation_label' => 'Galón',
@@ -72,7 +73,8 @@ beforeEach(function () {
 
     $this->variantCunete = ProductVariant::create([
         'product_id' => $product->id,
-        'sku' => 'P-01-CUN',
+        'code' => 'P-01-CUN',
+        'name' => 'Pintura - Cuñete',
         'unit_of_measure_id' => $unit->id,
         'presentation_value' => 5,
         'presentation_label' => 'Cuñete',
@@ -267,7 +269,8 @@ test('validates product_variant_id must belong to order product', function () {
 
     $otherVariant = ProductVariant::create([
         'product_id' => $otherProduct->id,
-        'sku' => 'P-99-GAL',
+        'code' => 'P-99-GAL',
+        'name' => 'Otro Producto - Galón',
         'unit_of_measure_id' => $unit->id,
         'presentation_value' => 1,
         'presentation_label' => 'Galón',

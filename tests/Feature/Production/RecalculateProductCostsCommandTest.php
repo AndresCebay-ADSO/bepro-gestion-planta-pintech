@@ -73,10 +73,10 @@ test('it recalculates one product and updates variant prices from command', func
 
     $variant = ProductVariant::create([
         'product_id' => $product->id,
-        'sku' => 'P-CMD-001-5GL',
+        'code' => 'P-CMD-001-5GL',
+        'name' => 'Producto Cmd - Cuñete 5G',
         'unit_of_measure_id' => $unit->id,
         'presentation_value' => 5,
-        'component_system' => '1K',
         'package_raw_material_id' => $packageMaterial->id,
         'current_cost' => null,
         'current_price' => null,

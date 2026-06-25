@@ -13,14 +13,11 @@ test('el esquema incluye tabla de variantes de producto', function () {
     expect(Schema::hasColumns('product_variants', [
         'id',
         'product_id',
-        'sku',
+        'code',
+        'name',
         'unit_of_measure_id',
         'presentation_value',
         'presentation_label',
-        'color',
-        'finish',
-        'base_type',
-        'component_system',
     ]))->toBeTrue();
 });
 
