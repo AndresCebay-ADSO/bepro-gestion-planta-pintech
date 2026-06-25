@@ -116,7 +116,7 @@ class ProductController extends Controller
                 'unitOfMeasure:id,name,symbol',
                 'variants' => fn ($query) => $query
                     ->with(['unitOfMeasure:id,name,symbol', 'packageRawMaterial:id,code,category_id'])
-                    ->orderBy('sku'),
+                    ->orderBy('code'),
                 'formulas' => fn ($q) => $q->with('createdBy:id,name')->orderBy('version', 'desc'),
                 'productDocuments' => fn ($query) => $query->current()->latest('id'),
             ]),

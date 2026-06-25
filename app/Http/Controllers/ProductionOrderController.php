@@ -91,10 +91,10 @@ class ProductionOrderController extends Controller
         $availableVariants = ProductVariant::query()
             ->where('product_id', $productionOrder->product_id)
             ->where('is_active', true)
-            ->get(['id', 'sku', 'presentation_label', 'presentation_value'])
+            ->get(['id', 'name', 'presentation_label', 'presentation_value'])
             ->map(fn (ProductVariant $v) => [
                 'id' => $v->id,
-                'sku' => $v->sku,
+                'name' => $v->name,
                 'presentation_label' => $v->presentation_label,
                 'presentation_value' => (float) $v->presentation_value,
             ]);
@@ -187,7 +187,7 @@ class ProductionOrderController extends Controller
                 ]),
                 'variants' => $p->variants->map(fn ($v) => [
                     'id' => $v->id,
-                    'sku' => $v->sku,
+                    'name' => $v->name,
                     'presentation_label' => $v->presentation_label,
                     'presentation_value' => $v->presentation_value,
                 ]),
