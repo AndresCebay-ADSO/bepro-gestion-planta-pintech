@@ -11,6 +11,7 @@ use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
+use App\Services\ProductionCostRecalculationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 
@@ -229,17 +230,10 @@ test('it recalculates production costs when a raw material price changes', funct
         ],
     ])->assertRedirect(route('formulas.index'));
 
-    $response = $this->patch(route('raw-materials.update', $this->rawMaterialOne), [
-        'code' => $this->rawMaterialOne->code,
-        'category_id' => $this->rawMaterialCategory->id,
-        'unit_of_measure_id' => $this->unit->id,
-        'current_price' => 12,
-        'minimum_stock' => 0,
-        'alert_days_before_expiry' => 30,
-        'is_active' => true,
-    ]);
-
-    $response->assertRedirect(route('raw-materials.index'));
+    $this->rawMaterialOne->update(['current_price' => 12]);
+    $recalculated = app(ProductionCostRecalculationService::class)
+        ->recalculateForRawMaterial((int) $this->rawMaterialOne->id);
+    expect($recalculated)->toBe(1);
 
     $latestCost = ProductionCost::query()
         ->where('product_id', $this->product->id)
@@ -294,17 +288,10 @@ test('it keeps current price when cost variation is below threshold', function (
     $variant->refresh();
     expect((float) $variant->current_price)->toBe(43.75);
 
-    $response = $this->patch(route('raw-materials.update', $this->rawMaterialOne), [
-        'code' => $this->rawMaterialOne->code,
-        'category_id' => $this->rawMaterialCategory->id,
-        'unit_of_measure_id' => $this->unit->id,
-        'current_price' => 10.1,
-        'minimum_stock' => 0,
-        'alert_days_before_expiry' => 30,
-        'is_active' => true,
-    ]);
-
-    $response->assertRedirect(route('raw-materials.index'));
+    $this->rawMaterialOne->update(['current_price' => 10.1]);
+    $recalculated = app(ProductionCostRecalculationService::class)
+        ->recalculateForRawMaterial((int) $this->rawMaterialOne->id);
+    expect($recalculated)->toBe(1);
 
     $this->product->refresh();
     expect((float) $this->product->current_cost)->toBe(35.2);

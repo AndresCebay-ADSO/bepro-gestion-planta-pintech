@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\AlertSeverity;
 use App\Enums\AlertType;
+use App\Jobs\RecalculateRawMaterialReferencePrice;
 use App\Models\Alert;
 use App\Models\InventoryBatch;
 use App\Models\RawMaterial;
@@ -13,6 +14,8 @@ use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\AlertService;
 use App\Services\InventoryService;
+use App\Services\ProductionCostRecalculationService;
+use App\Services\RawMaterialReferencePriceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia;
@@ -172,6 +175,45 @@ test('it creates price variation alert only for materials with configured thresh
         ->and($alert->message)->toContain($rawMaterial->code);
 });
 
+test('it creates price variation alert via async job when reference price changes', function (): void {
+    $rawMaterial = createRawMaterialForAlerts([
+        'price_variation_threshold' => 5,
+        'current_price' => 100,
+        'previous_price' => null,
+        'tracks_inventory' => true,
+    ]);
+
+    InventoryBatch::create([
+        'raw_material_id' => $rawMaterial->id,
+        'warehouse_id' => $this->warehouse->id,
+        'initial_quantity' => 10,
+        'remaining_quantity' => 10,
+        'unit_price' => 100,
+        'entry_date' => now()->toDateString(),
+    ]);
+
+    InventoryBatch::create([
+        'raw_material_id' => $rawMaterial->id,
+        'warehouse_id' => $this->warehouse->id,
+        'initial_quantity' => 10,
+        'remaining_quantity' => 10,
+        'unit_price' => 150,
+        'entry_date' => now()->toDateString(),
+    ]);
+
+    $job = new RecalculateRawMaterialReferencePrice((int) $rawMaterial->id);
+    $job->handle(
+        app(RawMaterialReferencePriceService::class),
+        app(ProductionCostRecalculationService::class),
+        app(AlertService::class),
+    );
+
+    expect(Alert::query()
+        ->where('type', AlertType::VariacionPrecio)
+        ->where('is_resolved', false)
+        ->exists())->toBeTrue();
+});
+
 test('it generates low stock alert after inventory exit movement', function (): void {
     $rawMaterial = createRawMaterialForAlerts(['minimum_stock' => 10]);
 
@@ -256,30 +298,4 @@ test('expiry scan command processes batches', function (): void {
     expect(Alert::query()->where('type', AlertType::VencimientoProximo)->count())->toBe(1);
 
     Carbon::setTestNow();
-});
-
-test('updating raw material price creates alert when threshold is configured', function (): void {
-    $rawMaterial = createRawMaterialForAlerts([
-        'code' => 'RM-PRICE-ALERT',
-        'current_price' => 100,
-        'price_variation_threshold' => 5,
-    ]);
-
-    $this->actingAs($this->admin)
-        ->put(route('raw-materials.update', $rawMaterial), [
-            'code' => $rawMaterial->code,
-            'category_id' => $this->category->id,
-            'unit_of_measure_id' => $this->unit->id,
-            'current_price' => 120,
-            'minimum_stock' => 10,
-            'alert_days_before_expiry' => 30,
-            'price_variation_threshold' => 5,
-            'is_active' => true,
-        ])
-        ->assertRedirect(route('raw-materials.index'));
-
-    expect(Alert::query()
-        ->where('type', AlertType::VariacionPrecio)
-        ->where('is_resolved', false)
-        ->exists())->toBeTrue();
 });

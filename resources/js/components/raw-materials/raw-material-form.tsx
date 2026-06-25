@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 
 /**
- * Tipos
+ * Types
  */
 type UnitOption = {
     id: number;
@@ -34,8 +34,6 @@ type RawMaterialFormData = {
     code: string;
     category_id: string;
     unit_of_measure_id: string;
-    current_price: string;
-    previous_price: string;
     minimum_stock: string;
     alert_days_before_expiry: string;
     price_variation_threshold: string;
@@ -43,7 +41,7 @@ type RawMaterialFormData = {
 };
 
 /**
- * 🔥 SOLO campos string (clave de la solución)
+ * Only string fields of RawMaterialFormData
  */
 type StringFields = {
     [K in keyof RawMaterialFormData]: RawMaterialFormData[K] extends string
@@ -52,7 +50,7 @@ type StringFields = {
 }[keyof RawMaterialFormData];
 
 /**
- * Tipo fuerte para Inertia Form
+ * Strongly-typed Inertia form helper
  */
 type InertiaForm<T> = {
     data: T;
@@ -95,7 +93,7 @@ function sanitizeIntegerInput(rawValue: string, maxLength: number): string {
 }
 
 /**
- * Componente reutilizable de formulario
+ * Reusable raw material form
  */
 export function RawMaterialForm({
     form,
@@ -105,7 +103,7 @@ export function RawMaterialForm({
     submitLabel,
 }: Props) {
     /**
-     * Submit limpio
+     * Clean submit handler
      */
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -113,7 +111,7 @@ export function RawMaterialForm({
     };
 
     /**
-     * 🔥 Handler SOLO para campos string
+     * Handler for string fields only
      */
     const handleChange =
         <K extends StringFields>(key: K) =>
@@ -123,11 +121,11 @@ export function RawMaterialForm({
 
     return (
         <form onSubmit={handleSubmit} className="grid min-w-0 gap-6">
-            {/* Bloque 1: Identificación */}
+            {/* Block 1: Identification */}
             <div className="space-y-4 rounded-lg border border-border bg-card p-6 shadow-sm">
                 <h2 className="font-medium text-foreground">Identificación</h2>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    {/* Código */}
+                    {/* Code */}
                     <div className="grid min-w-0 gap-2">
                         <Label htmlFor="code">
                             Código de Referencia{' '}
@@ -144,7 +142,7 @@ export function RawMaterialForm({
                         <InputError message={form.errors.code} />
                     </div>
 
-                    {/* Categoría */}
+                    {/* Category */}
                     <div className="grid min-w-0 gap-2">
                         <Label htmlFor="category">
                             Categoría{' '}
@@ -176,7 +174,7 @@ export function RawMaterialForm({
                         <InputError message={form.errors.category_id} />
                     </div>
 
-                    {/* Unidad */}
+                    {/* Unit */}
                     <div className="grid min-w-0 gap-2">
                         <Label htmlFor="unit">
                             Unidad de Media{' '}
@@ -207,83 +205,12 @@ export function RawMaterialForm({
                 </div>
             </div>
 
-            {/* Bloque 2: Precios e Inventario */}
+            {/* Block 2: Inventory Control */}
             <div className="space-y-4 rounded-lg border border-border bg-card p-6 shadow-sm">
                 <h2 className="font-medium text-foreground">
-                    Precios y Control de Inventario
+                    Control de Inventario
                 </h2>
                 <div className="grid min-w-0 gap-4 md:grid-cols-2">
-                    {/* Precios */}
-                    <div className="grid min-w-0 gap-2">
-                        <Label htmlFor="current_price">
-                            Precio de compra actual (opcional)
-                        </Label>
-                        <Input
-                            id="current_price"
-                            type="text"
-                            inputMode="decimal"
-                            maxLength={MAX_DECIMAL_INPUT_LENGTH}
-                            value={form.data.current_price}
-                            onChange={(event) =>
-                                form.setData(
-                                    'current_price',
-                                    sanitizeDecimalInput(event.target.value),
-                                )
-                            }
-                            className="w-full min-w-0 font-mono"
-                            placeholder="0.00"
-                        />
-                        {form.data.current_price && (
-                            <p className="min-w-0 text-xs break-all text-muted-foreground">
-                                <FormattedNumber
-                                    value={form.data.current_price.replace(
-                                        /\.$/,
-                                        '',
-                                    )}
-                                    currency
-                                />
-                            </p>
-                        )}
-                        <InputError message={form.errors.current_price} />
-                        <p className="min-w-0 text-xs break-all text-muted-foreground">
-                            Si lo dejas vacío, se actualizará automáticamente al
-                            registrar lotes.
-                        </p>
-                    </div>
-
-                    <div className="grid min-w-0 gap-2">
-                        <Label htmlFor="previous_price">
-                            Precio de compra anterior
-                        </Label>
-                        <Input
-                            id="previous_price"
-                            type="text"
-                            inputMode="decimal"
-                            maxLength={MAX_DECIMAL_INPUT_LENGTH}
-                            value={form.data.previous_price}
-                            onChange={(event) =>
-                                form.setData(
-                                    'previous_price',
-                                    sanitizeDecimalInput(event.target.value),
-                                )
-                            }
-                            className="w-full min-w-0 font-mono text-muted-foreground"
-                            placeholder="0.00"
-                        />
-                        {form.data.previous_price && (
-                            <p className="min-w-0 text-xs break-all text-muted-foreground italic">
-                                <FormattedNumber
-                                    value={form.data.previous_price.replace(
-                                        /\.$/,
-                                        '',
-                                    )}
-                                    currency
-                                />
-                            </p>
-                        )}
-                        <InputError message={form.errors.previous_price} />
-                    </div>
-
                     {/* Stock */}
                     <div className="grid min-w-0 gap-2">
                         <Label htmlFor="minimum_stock">
@@ -376,7 +303,7 @@ export function RawMaterialForm({
                     </div>
                 </div>
 
-                {/* Estado */}
+                {/* Status */}
                 <div className="mt-4 flex items-center gap-3">
                     <Checkbox
                         id="is_active"
@@ -391,7 +318,7 @@ export function RawMaterialForm({
                 </div>
             </div>
 
-            {/* Botón */}
+            {/* Button */}
             <div className="flex justify-end gap-3 pt-2">
                 <Button type="submit" disabled={form.processing}>
                     {form.processing ? 'Procesando...' : submitLabel}

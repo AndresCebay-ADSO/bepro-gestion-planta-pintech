@@ -35,8 +35,6 @@ describe('Raw Material Store Validation', function (): void {
             'code' => 'MP001',
             'category_id' => $this->category->id,
             'unit_of_measure_id' => $this->unit->id,
-            'current_price' => 100.00,
-            'previous_price' => null,
             'minimum_stock' => 10,
             'alert_days_before_expiry' => 30,
             'is_active' => true,
@@ -75,70 +73,6 @@ describe('Raw Material Store Validation', function (): void {
         $response->assertSessionHasErrors('unit_of_measure_id');
     });
 
-    it('validates current_price to be positive when provided', function (): void {
-        $response = $this->actingAs($this->admin)
-            ->post(route('raw-materials.store'), [
-                ...$this->validData,
-                'current_price' => -10,
-            ]);
-
-        $response->assertSessionHasErrors('current_price');
-    });
-
-    it('validates current_price to be numeric when provided', function (): void {
-        $response = $this->actingAs($this->admin)
-            ->post(route('raw-materials.store'), [
-                ...$this->validData,
-                'current_price' => 'not-a-number',
-            ]);
-
-        $response->assertSessionHasErrors('current_price');
-    });
-
-    it('accepts valid current_price with decimals', function (): void {
-        $response = $this->actingAs($this->admin)
-            ->post(route('raw-materials.store'), [
-                ...$this->validData,
-                'current_price' => 123.4567,
-            ]);
-
-        $response->assertRedirect();
-        $this->assertDatabaseHas('raw_materials', [
-            'code' => 'MP001',
-            'current_price' => 123.4567,
-        ]);
-    });
-
-    it('accepts billion-scale current_price values', function (): void {
-        $response = $this->actingAs($this->admin)
-            ->post(route('raw-materials.store'), [
-                ...$this->validData,
-                'code' => 'MP002',
-                'current_price' => '1000000000.1234',
-            ]);
-
-        $response->assertRedirect();
-        $this->assertDatabaseHas('raw_materials', [
-            'code' => 'MP002',
-            'current_price' => '1000000000.1234',
-        ]);
-    });
-
-    it('defaults current_price to null when omitted', function (): void {
-        $response = $this->actingAs($this->admin)
-            ->post(route('raw-materials.store'), [
-                ...$this->validData,
-                'code' => 'MP003',
-                'current_price' => null,
-            ]);
-
-        $response->assertRedirect();
-        $this->assertDatabaseHas('raw_materials', [
-            'code' => 'MP003',
-            'current_price' => null,
-        ]);
-    });
-
     it('requires minimum_stock to be non-negative', function (): void {
         $response = $this->actingAs($this->admin)
             ->post(route('raw-materials.store'), [
@@ -161,16 +95,6 @@ describe('Raw Material Store Validation', function (): void {
             'code' => 'MP001',
             'alert_days_before_expiry' => 0,
         ]);
-    });
-
-    it('allows null previous_price', function (): void {
-        $response = $this->actingAs($this->admin)
-            ->post(route('raw-materials.store'), [
-                ...$this->validData,
-                'previous_price' => null,
-            ]);
-
-        $response->assertRedirect();
     });
 
     it('requires category_id to exist', function (): void {

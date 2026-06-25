@@ -24,8 +24,6 @@ type RawMaterialFormData = {
     code: string;
     category_id: string;
     unit_of_measure_id: string;
-    current_price: string;
-    previous_price: string;
     minimum_stock: string;
     alert_days_before_expiry: string;
     price_variation_threshold: string;
@@ -37,8 +35,6 @@ export default function RawMaterialsCreate({ categories, units }: Props) {
         code: '',
         category_id: '',
         unit_of_measure_id: '',
-        current_price: '',
-        previous_price: '',
         minimum_stock: '0',
         alert_days_before_expiry: '30',
         price_variation_threshold: '',
@@ -50,10 +46,6 @@ export default function RawMaterialsCreate({ categories, units }: Props) {
             ...data,
             category_id: Number(data.category_id),
             unit_of_measure_id: Number(data.unit_of_measure_id),
-            current_price:
-                data.current_price === '' ? null : data.current_price,
-            previous_price:
-                data.previous_price === '' ? null : data.previous_price,
             price_variation_threshold:
                 data.price_variation_threshold === ''
                     ? null
