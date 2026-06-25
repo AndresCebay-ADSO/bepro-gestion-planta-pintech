@@ -15,14 +15,9 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { index as productionOrderIndex } from '@/routes/production-orders';
+import type { VariantOption } from '@/types/production-orders';
 
 type FormulaOption = { id: number; version: number; is_active: boolean };
-type VariantOption = {
-    id: number;
-    name: string;
-    presentation_label: string;
-    presentation_value: number;
-};
 type WarehouseOption = { id: number; name: string };
 type ProductOption = {
     id: number;

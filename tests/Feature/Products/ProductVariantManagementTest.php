@@ -56,6 +56,7 @@ test('admin can create a product variant', function () {
     $this->assertDatabaseHas('product_variants', [
         'product_id' => $product->id,
         'code' => '12345678',
+        'name' => 'Vinil Base - 1 Galón',
     ]);
 });
 
