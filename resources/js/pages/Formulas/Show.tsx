@@ -105,9 +105,7 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                                 formula.is_active ? 'default' : 'secondary'
                             }
                         >
-                            {formula.is_active
-                                ? 'Versión activa'
-                                : 'Inactiva'}
+                            {formula.is_active ? 'Versión activa' : 'Inactiva'}
                         </Badge>
                     }
                     returnTo={returnTo}

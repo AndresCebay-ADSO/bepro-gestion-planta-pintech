@@ -1,5 +1,13 @@
 import { Head } from '@inertiajs/react';
-import { FileText, FileBadge, FileWarning, ShieldCheck, Mail, Globe, MessageCircle } from 'lucide-react';
+import {
+    FileText,
+    FileBadge,
+    FileWarning,
+    ShieldCheck,
+    Mail,
+    Globe,
+    MessageCircle,
+} from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 type Product = {
@@ -32,7 +40,11 @@ type Props = {
 const getDocTypeStyles = (type: string) => {
     const lower = type.toLowerCase();
 
-    if (lower.includes('seguridad') || lower.includes('msds') || lower.includes('sds')) {
+    if (
+        lower.includes('seguridad') ||
+        lower.includes('msds') ||
+        lower.includes('sds')
+    ) {
         return {
             border: 'border-l-bepro-safety',
             bg: 'bg-bepro-safety-bg',
@@ -42,7 +54,11 @@ const getDocTypeStyles = (type: string) => {
         };
     }
 
-    if (lower.includes('certificado') || lower.includes('calidad') || lower.includes('coa')) {
+    if (
+        lower.includes('certificado') ||
+        lower.includes('calidad') ||
+        lower.includes('coa')
+    ) {
         return {
             border: 'border-l-bepro-cert',
             bg: 'bg-bepro-cert-bg',
@@ -66,8 +82,10 @@ export default function PublicQrLandingShow({
     lot,
     documents,
 }: Props) {
-    const whatsappNumber = "+573188757659";
-    const whatsappMessage = encodeURIComponent(`Hola, necesito asesoría sobre el producto ${product.name} (Lote: ${lot.number}).`);
+    const whatsappNumber = '+573188757659';
+    const whatsappMessage = encodeURIComponent(
+        `Hola, necesito asesoría sobre el producto ${product.name} (Lote: ${lot.number}).`,
+    );
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
     // Header scroll contraction effect (mobile only)
@@ -95,8 +113,7 @@ export default function PublicQrLandingShow({
     return (
         <>
             <Head title={`${product.name} - Documentación`} />
-            <main className="min-h-screen font-bepro-sans antialiased text-bepro-text">
-
+            <main className="min-h-screen font-bepro-sans text-bepro-text antialiased">
                 {/* ── HEADER ─────────────────────────────────────── */}
                 <header
                     className="sticky top-0 z-40 border-b border-gray-100 bg-white transition-all duration-300 ease-in-out"
@@ -129,15 +146,14 @@ export default function PublicQrLandingShow({
                 {/* ── HERO ────────────────────────────────────────── */}
                 <div className="border-b border-gray-100 bg-white">
                     <div className="mx-auto max-w-3xl px-6 py-14">
-
                         {/* Authenticity Badge */}
-                        <div className="mb-6 inline-flex items-center gap-1.5 rounded-md bg-bepro-tech-bg px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-bepro-tech">
+                        <div className="mb-6 inline-flex items-center gap-1.5 rounded-md bg-bepro-tech-bg px-3 py-1 text-[10px] font-bold tracking-wider text-bepro-tech uppercase">
                             <ShieldCheck className="h-3.5 w-3.5 animate-pulse" />
                             Garantía de Autenticidad
                         </div>
 
                         {/* Product Name — largest, boldest element */}
-                        <h1 className="mb-4 text-4xl font-black leading-[1.1] tracking-tight text-bepro-primary sm:text-5xl">
+                        <h1 className="mb-4 text-4xl leading-[1.1] font-black tracking-tight text-bepro-primary sm:text-5xl">
                             {product.name}
                         </h1>
 
@@ -152,10 +168,10 @@ export default function PublicQrLandingShow({
                         <div className="relative max-w-xl overflow-hidden rounded-xl border border-bepro-primary/15 bg-slate-50/80 shadow-[inset_0_1px_3px_rgba(0,44,66,0.06)]">
                             {/* Top bar — high-security label feel */}
                             <div className="flex items-center justify-between border-b border-dashed border-bepro-primary/10 bg-bepro-primary/[0.03] px-5 py-3">
-                                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-bepro-primary/50">
+                                <span className="text-[10px] font-bold tracking-[0.25em] text-bepro-primary/50 uppercase">
                                     Pasaporte de Lote
                                 </span>
-                                <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-bepro-accent/70">
+                                <div className="flex items-center gap-1.5 text-[9px] font-bold tracking-wider text-bepro-accent/70 uppercase">
                                     <ShieldCheck className="h-3 w-3" />
                                     Verificado
                                 </div>
@@ -165,7 +181,7 @@ export default function PublicQrLandingShow({
                             <div className="px-5 py-6">
                                 {/* Lot Number — most prominent element in the passport */}
                                 <div className="mb-5">
-                                    <span className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                    <span className="mb-2 block text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                                         N.° de Lote
                                     </span>
                                     <span className="inline-block rounded-lg border-2 border-bepro-primary/20 bg-white px-4 py-2 font-bepro-mono text-2xl font-black tracking-widest text-bepro-primary shadow-sm sm:text-3xl">
@@ -176,18 +192,18 @@ export default function PublicQrLandingShow({
                                 {/* Dates row */}
                                 <div className="grid grid-cols-2 gap-6 border-t border-dashed border-slate-200 pt-5">
                                     <div>
-                                        <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                        <span className="mb-1.5 block text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                                             Fabricación
                                         </span>
-                                        <span className="font-bepro-mono text-sm font-semibold tabular-nums text-bepro-primary">
+                                        <span className="font-bepro-mono text-sm font-semibold text-bepro-primary tabular-nums">
                                             {lot.manufacturing_date ?? '—'}
                                         </span>
                                     </div>
                                     <div>
-                                        <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                        <span className="mb-1.5 block text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                                             Verificación
                                         </span>
-                                        <span className="font-bepro-mono text-sm font-semibold tabular-nums text-bepro-primary">
+                                        <span className="font-bepro-mono text-sm font-semibold text-bepro-primary tabular-nums">
                                             {lot.verification_date ?? '—'}
                                         </span>
                                     </div>
@@ -200,46 +216,54 @@ export default function PublicQrLandingShow({
                 {/* ── CONTENT ─────────────────────────────────────── */}
                 <div className="min-h-screen bg-bepro-bg pb-16">
                     <div className="mx-auto max-w-3xl space-y-14 px-6 py-12">
-
                         {/* Documents Section */}
                         <section id="documentos" className="space-y-6">
                             <div>
-                                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-bepro-primary">
+                                <h2 className="flex items-center gap-2 text-sm font-bold tracking-widest text-bepro-primary uppercase">
                                     <span className="inline-block h-5 w-1 rounded-full bg-bepro-accent" />
                                     Documentos de Calidad
                                 </h2>
                                 <p className="mt-2 text-sm text-bepro-text/70">
-                                    Descarga los certificados y fichas de seguridad oficiales de este lote.
+                                    Descarga los certificados y fichas de
+                                    seguridad oficiales de este lote.
                                 </p>
                             </div>
 
                             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                                 {documents.map((document) => {
-                                    const docStyle = getDocTypeStyles(document.type);
+                                    const docStyle = getDocTypeStyles(
+                                        document.type,
+                                    );
 
                                     return (
                                         <div
                                             key={`${document.type}-${document.id}`}
-                                            className={`group flex flex-col justify-between rounded-xl border border-slate-200/60 border-l-4 ${docStyle.border} bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg`}
+                                            className={`group flex flex-col justify-between rounded-xl border border-l-4 border-slate-200/60 ${docStyle.border} bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg`}
                                         >
                                             <div>
                                                 {/* Type badge + icon */}
                                                 <div className="mb-4 flex items-start justify-between">
-                                                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${docStyle.bg} ${docStyle.text}`}>
+                                                    <div
+                                                        className={`flex h-10 w-10 items-center justify-center rounded-lg ${docStyle.bg} ${docStyle.text}`}
+                                                    >
                                                         {docStyle.icon}
                                                     </div>
-                                                    <span className={`rounded px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider ${docStyle.bg} ${docStyle.text}`}>
+                                                    <span
+                                                        className={`rounded px-2 py-0.5 text-[9px] font-extrabold tracking-wider uppercase ${docStyle.bg} ${docStyle.text}`}
+                                                    >
                                                         {docStyle.label}
                                                     </span>
                                                 </div>
 
                                                 <h3
-                                                    className="mb-1 line-clamp-2 text-sm font-bold leading-snug text-bepro-primary"
+                                                    className="mb-1 line-clamp-2 text-sm leading-snug font-bold text-bepro-primary"
                                                     title={document.name}
                                                 >
                                                     {document.name}
                                                 </h3>
-                                                <p className="text-xs text-slate-400">PDF · {document.size}</p>
+                                                <p className="text-xs text-slate-400">
+                                                    PDF · {document.size}
+                                                </p>
                                             </div>
 
                                             <a
@@ -257,26 +281,36 @@ export default function PublicQrLandingShow({
                                 {documents.length === 0 && (
                                     <div className="col-span-full rounded-xl border border-dashed border-slate-200 bg-white p-14 text-center">
                                         <FileText className="mx-auto mb-3 h-8 w-8 text-slate-300" />
-                                        <p className="text-sm font-bold text-bepro-primary">Sin archivos cargados</p>
-                                        <p className="mt-1 text-xs text-slate-400">Este lote aún no cuenta con documentos publicados.</p>
+                                        <p className="text-sm font-bold text-bepro-primary">
+                                            Sin archivos cargados
+                                        </p>
+                                        <p className="mt-1 text-xs text-slate-400">
+                                            Este lote aún no cuenta con
+                                            documentos publicados.
+                                        </p>
                                     </div>
                                 )}
                             </div>
                         </section>
 
                         {/* Contact Section */}
-                        <section id="contacto" className="grid gap-5 md:grid-cols-2">
+                        <section
+                            id="contacto"
+                            className="grid gap-5 md:grid-cols-2"
+                        >
                             {/* WhatsApp CTA */}
                             <div className="flex flex-col justify-between rounded-xl bg-white p-8 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
                                 <div>
-                                    <p className="mb-2 text-[13px] font-bold uppercase tracking-widest text-bepro-accent">
+                                    <p className="mb-2 text-[13px] font-bold tracking-widest text-bepro-accent uppercase">
                                         Soporte Técnico
                                     </p>
-                                    <h3 className="mb-3 text-xl font-bold leading-snug text-bepro-primary">
+                                    <h3 className="mb-3 text-xl leading-snug font-bold text-bepro-primary">
                                         ¿Dudas con la aplicación?
                                     </h3>
                                     <p className="mb-7 max-w-xs text-xs leading-relaxed text-bepro-text/80">
-                                        Habla directamente con nuestro departamento técnico para recibir asesoría de uso y rendimiento en obra.
+                                        Habla directamente con nuestro
+                                        departamento técnico para recibir
+                                        asesoría de uso y rendimiento en obra.
                                     </p>
                                 </div>
                                 <a
@@ -293,7 +327,7 @@ export default function PublicQrLandingShow({
                             {/* Direct contact */}
                             <div className="flex flex-col justify-between rounded-xl border border-slate-200/60 bg-white p-8 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
                                 <div>
-                                    <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                    <p className="mb-4 text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                                         Contacto Comercial
                                     </p>
                                     <div className="space-y-2.5">
@@ -324,8 +358,12 @@ export default function PublicQrLandingShow({
                 <footer className="border-t border-gray-100 bg-white px-6 py-10">
                     <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-4 text-[10px] font-semibold text-slate-400 sm:flex-row">
                         <div className="flex flex-col gap-1 text-center sm:text-left">
-                            <span className="font-bold text-bepro-primary">PINTECH COLOMBIA S.A.S.</span>
-                            <span>NIT 901123507-9 · Palmira, Valle del Cauca</span>
+                            <span className="font-bold text-bepro-primary">
+                                PINTECH COLOMBIA S.A.S.
+                            </span>
+                            <span>
+                                NIT 901123507-9 · Palmira, Valle del Cauca
+                            </span>
                         </div>
                         <div className="flex flex-col items-center gap-1 sm:items-end">
                             <div className="flex gap-3 text-slate-400">
@@ -347,11 +385,13 @@ export default function PublicQrLandingShow({
                                     Términos y Condiciones
                                 </a>
                             </div>
-                            <span>© {new Date().getFullYear()} · Todos los derechos reservados</span>
+                            <span>
+                                © {new Date().getFullYear()} · Todos los
+                                derechos reservados
+                            </span>
                         </div>
                     </div>
                 </footer>
-
             </main>
         </>
     );

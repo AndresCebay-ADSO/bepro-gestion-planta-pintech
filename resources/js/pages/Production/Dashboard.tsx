@@ -23,7 +23,6 @@ import { index as productionOrdersIndex } from '@/routes/production-orders';
 import { show as productionOrderShow } from '@/routes/production-orders';
 import { index as rawMaterialsIndex } from '@/routes/raw-materials';
 
-
 type DashboardStats = {
     pending_orders: number;
     active_orders: number;
@@ -263,7 +262,8 @@ export default function ProductionDashboard({
                             <CardContent className="space-y-3">
                                 {recent_orders.length === 0 ? (
                                     <p className="py-6 text-center text-sm text-muted-foreground">
-                                        No hay órdenes de producción registradas.
+                                        No hay órdenes de producción
+                                        registradas.
                                     </p>
                                 ) : (
                                     recent_orders.map((order) => (
@@ -279,7 +279,8 @@ export default function ProductionDashboard({
                                                     {order.order_number}
                                                 </p>
                                                 <p className="text-sm text-muted-foreground">
-                                                    {order.product_code ?? 'Sin producto'}
+                                                    {order.product_code ??
+                                                        'Sin producto'}
                                                     {order.planned_date
                                                         ? ` · Plan ${order.planned_date}`
                                                         : ''}
@@ -326,9 +327,7 @@ export default function ProductionDashboard({
                                     variant="outline"
                                     className="h-auto justify-start py-4"
                                 >
-                                    <Link
-                                        href={inventoryMovementsIndex().url}
-                                    >
+                                    <Link href={inventoryMovementsIndex().url}>
                                         <TrendingUp className="mr-2 h-4 w-4" />
                                         Movimientos
                                     </Link>
@@ -369,17 +368,13 @@ export default function ProductionDashboard({
                                                 alert_breakdown.vencimiento_proximo
                                             }
                                         </p>
-                                        <p className="text-slate-400">
-                                            Vence
-                                        </p>
+                                        <p className="text-slate-400">Vence</p>
                                     </div>
                                     <div className="rounded-lg bg-white/5 p-2">
                                         <p className="text-2xl font-bold">
                                             {alert_breakdown.variacion_precio}
                                         </p>
-                                        <p className="text-slate-400">
-                                            Precio
-                                        </p>
+                                        <p className="text-slate-400">Precio</p>
                                     </div>
                                 </div>
 

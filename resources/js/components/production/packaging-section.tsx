@@ -160,10 +160,11 @@ export function PackagingSection({
                                                         )
                                                     ) {
                                                         router.delete(
-destroyPackagingPlan(
-    {
-        production_order: orderId,
-        plan: pack.id,
+                                                            destroyPackagingPlan(
+                                                                {
+                                                                    production_order:
+                                                                        orderId,
+                                                                    plan: pack.id,
                                                                 },
                                                             ).url,
                                                             {

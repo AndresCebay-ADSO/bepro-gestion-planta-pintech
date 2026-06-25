@@ -46,7 +46,10 @@ import {
     create as formulasCreate,
     show as formulasShow,
 } from '@/routes/formulas';
-import { index as productsIndex, show as productsShow } from '@/routes/products';
+import {
+    index as productsIndex,
+    show as productsShow,
+} from '@/routes/products';
 
 type FormulaItem = {
     id: number;
@@ -227,9 +230,7 @@ export default function ProductsShow({
                         { title: product.code, href: '#' },
                     ]}
                     title={product.name}
-                    subtitle={
-                        <span className="font-mono">{product.code}</span>
-                    }
+                    subtitle={<span className="font-mono">{product.code}</span>}
                     badge={
                         <Badge
                             variant={
@@ -849,9 +850,8 @@ export default function ProductsShow({
                                                 />
                                                 <p className="text-xs text-muted-foreground">
                                                     Ejemplos: 1 = Galón, 3 =
-                                                    Bidón 3gal, 5 =
-                                                    Cuñete 5gal, 0.25 = 1/4
-                                                    galón
+                                                    Bidón 3gal, 5 = Cuñete 5gal,
+                                                    0.25 = 1/4 galón
                                                 </p>
                                             </div>
                                             <div className="space-y-2">

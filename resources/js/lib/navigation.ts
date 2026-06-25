@@ -16,10 +16,7 @@ export function stripReturnToParam(href: string): string {
     return query ? `${url.pathname}?${query}` : url.pathname;
 }
 
-export function withReturnTo(
-    href: string,
-    returnTo?: string | null,
-): string {
+export function withReturnTo(href: string, returnTo?: string | null): string {
     const resolved = returnTo ?? currentReturnTo();
 
     if (!resolved || resolved === '/') {

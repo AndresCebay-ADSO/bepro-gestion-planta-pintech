@@ -78,9 +78,7 @@ export default function RawMaterialsShow({
                     breadcrumbs={[
                         {
                             title: 'Materias Primas',
-                            href:
-                                returnTo ??
-                                RawMaterialController.index.url(),
+                            href: returnTo ?? RawMaterialController.index.url(),
                         },
                         { title: rawMaterial.code, href: '#' },
                     ]}
