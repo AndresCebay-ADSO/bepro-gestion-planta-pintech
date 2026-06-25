@@ -2,13 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Enums\ComponentSystem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
+use Faker\Factory;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class ProductVariantSeeder extends Seeder
 {
@@ -31,30 +30,27 @@ class ProductVariantSeeder extends Seeder
         }
 
         $count = 0;
+        $faker = Factory::create();
+
         foreach ($products as $product) {
-            // Create a few variants for each product
             $presentations = [
-                ['value' => 1, 'label' => 'Galón', 'sku_suffix' => 'GL'],
-                ['value' => 5, 'label' => 'Cubeta', 'sku_suffix' => 'CU'],
-                ['value' => 0.25, 'label' => 'Cuarto', 'sku_suffix' => 'Q'],
+                ['value' => 1, 'label' => 'Galón'],
+                ['value' => 3, 'label' => 'Cuñete 3G'],
+                ['value' => 4, 'label' => 'Cuñete 4G'],
+                ['value' => 5, 'label' => 'Cuñete 5G'],
             ];
 
             foreach ($presentations as $presentation) {
-                $sku = $product->id.'-'.$presentation['sku_suffix'].'-'.strtoupper(Str::random(4));
-
-                ProductVariant::updateOrCreate(
+                ProductVariant::firstOrCreate(
                     [
                         'product_id' => $product->id,
-                        'sku' => $sku,
+                        'presentation_label' => $presentation['label'],
                     ],
                     [
+                        'code' => $faker->unique()->numerify('########'),
+                        'name' => "{$product->name} - {$presentation['label']}",
                         'unit_of_measure_id' => $unitGl?->id ?? 1,
                         'presentation_value' => $presentation['value'],
-                        'presentation_label' => $presentation['label'],
-                        'color' => 'Blanco', // Defaulting to Blanco for seeding
-                        'finish' => 'Brillante',
-                        'base_type' => 'Solvente',
-                        'component_system' => ComponentSystem::OneK,
                         'package_raw_material_id' => $packagingMaterials->random()->id ?? null,
                         'is_active' => true,
                     ]
