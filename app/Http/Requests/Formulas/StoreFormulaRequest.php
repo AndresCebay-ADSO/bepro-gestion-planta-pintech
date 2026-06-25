@@ -43,6 +43,7 @@ class StoreFormulaRequest extends FormRequest
                 Rule::exists('products', 'id')->whereNull('deleted_at'),
             ],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'is_active' => ['boolean'],
             'details' => ['required', 'array', 'min:1'],
             'details.*.raw_material_id' => [
                 'required',

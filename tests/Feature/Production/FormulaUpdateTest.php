@@ -97,6 +97,7 @@ beforeEach(function () {
 test('it updates an unused formula and replaces its details', function () {
     $response = $this->put(route('formulas.update', $this->formula), [
         'notes' => 'Versión corregida',
+        'is_active' => true,
         'details' => [
             [
                 'raw_material_id' => $this->rawMaterialTwo->id,
@@ -121,6 +122,7 @@ test('it updates an unused formula and replaces its details', function () {
 test('it accepts comma decimal quantities when updating a formula', function () {
     $response = $this->put(route('formulas.update', $this->formula), [
         'notes' => 'Versión corregida con coma',
+        'is_active' => true,
         'details' => [
             [
                 'raw_material_id' => $this->rawMaterialTwo->id,
@@ -162,6 +164,7 @@ test('it does not allow updating a formula already used in production orders', f
 
     $response = $this->put(route('formulas.update', $this->formula), [
         'notes' => 'No debería guardar',
+        'is_active' => true,
         'details' => [
             [
                 'raw_material_id' => $this->rawMaterialTwo->id,

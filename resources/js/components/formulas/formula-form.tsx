@@ -2,6 +2,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import type { FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +28,7 @@ export type DetailRow = {
 export type FormulaFormData = {
     product_id: string;
     notes: string;
+    is_active: boolean;
     details: DetailRow[];
 };
 
@@ -46,6 +48,7 @@ type FormulaFormProps = {
         value: FormulaFormData[K],
     ) => void;
     lockProduct?: boolean;
+    showActiveToggle?: boolean;
 };
 
 const emptyDetail = (): DetailRow => ({
@@ -71,6 +74,7 @@ export function FormulaForm({
     onSubmit,
     setData,
     lockProduct = false,
+    showActiveToggle = false,
 }: FormulaFormProps) {
     const productOptions = products.map((product) => ({
         id: String(product.id),
@@ -152,6 +156,21 @@ export function FormulaForm({
                         </p>
                     )}
                 </div>
+
+                {showActiveToggle && (
+                    <div className="flex items-center gap-3">
+                        <Checkbox
+                            id="is_active"
+                            checked={data.is_active}
+                            onCheckedChange={(checked) =>
+                                setData('is_active', checked === true)
+                            }
+                        />
+                        <Label htmlFor="is_active" className="cursor-pointer">
+                            Fórmula activa
+                        </Label>
+                    </div>
+                )}
             </div>
 
             <div className="rounded-lg border border-border bg-card">

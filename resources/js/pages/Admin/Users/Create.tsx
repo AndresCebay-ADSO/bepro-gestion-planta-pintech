@@ -2,9 +2,9 @@ import { useForm, Link } from '@inertiajs/react';
 import type { FC, FormEvent } from 'react';
 import { route } from 'ziggy-js';
 
+import PasswordInput from '@/components/password-input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import PasswordInput from '@/components/password-input';
 
 interface Role {
     id: number;

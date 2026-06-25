@@ -18,13 +18,18 @@ class ProductionCostRecalculationService
         private readonly DecimalCalculator $calculator
     ) {}
 
-    public function recalculateForProduct(int $productId, bool $forcePriceRefresh = false): ?ProductionCost
+    public function recalculateForProduct(int $productId, bool $forcePriceRefresh = false, ?int $formulaId = null): ?ProductionCost
     {
-        $activeFormula = Formula::query()
+        $query = Formula::query()
             ->where('product_id', $productId)
             ->where('is_active', true)
-            ->with(['details.rawMaterial:id,current_price'])
-            ->first();
+            ->with(['details.rawMaterial:id,current_price']);
+
+        if ($formulaId !== null) {
+            $query->where('id', $formulaId);
+        }
+
+        $activeFormula = $query->first();
 
         if ($activeFormula === null) {
             return null;

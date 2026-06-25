@@ -38,6 +38,7 @@ class UpdateFormulaRequest extends FormRequest
     {
         return [
             'notes' => ['nullable', 'string', 'max:1000'],
+            'is_active' => ['required', 'boolean'],
             'details' => ['required', 'array', 'min:1'],
             'details.*.raw_material_id' => [
                 'required',

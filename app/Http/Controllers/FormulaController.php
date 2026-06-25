@@ -79,11 +79,6 @@ class FormulaController extends Controller
                 ->withTrashed()
                 ->max('version') + 1;
 
-            // Deactivate all existing formulas for this product
-            Formula::where('product_id', $validated['product_id'])
-                ->where('is_active', true)
-                ->update(['is_active' => false]);
-
             $formula = Formula::create([
                 'product_id' => $validated['product_id'],
                 'version' => $nextVersion,
@@ -105,7 +100,11 @@ class FormulaController extends Controller
             return $formula;
         });
 
-        $this->productionCostRecalculationService->recalculateForProduct((int) $formula->product_id);
+        $this->productionCostRecalculationService->recalculateForProduct(
+            (int) $formula->product_id,
+            false,
+            (int) $formula->id,
+        );
 
         return $this->redirectWithContext(
             $request,
@@ -177,6 +176,7 @@ class FormulaController extends Controller
         DB::transaction(function () use ($formula, $validated): void {
             $formula->update([
                 'notes' => $validated['notes'] ?? null,
+                'is_active' => $validated['is_active'],
             ]);
 
             $formula->details()->delete();
@@ -193,7 +193,11 @@ class FormulaController extends Controller
         });
 
         if ($formula->is_active) {
-            $this->productionCostRecalculationService->recalculateForProduct((int) $formula->product_id);
+            $this->productionCostRecalculationService->recalculateForProduct(
+                (int) $formula->product_id,
+                false,
+                (int) $formula->id
+            );
         }
 
         return redirect()
