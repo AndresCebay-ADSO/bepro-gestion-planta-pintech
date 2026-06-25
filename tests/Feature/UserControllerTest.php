@@ -94,3 +94,101 @@ test('admin can delete a user with no activity', function () {
 
     $this->assertDatabaseMissing('users', ['id' => $target->id]);
 });
+
+// ──────────────────────────────────────────────
+// store() + update() is_active
+// ──────────────────────────────────────────────
+
+test('admin can create user with is_active = true', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $this->actingAs($admin)
+        ->post(route('users.store'), [
+            'name' => 'Usuario Activo',
+            'email' => 'activo@test.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'role' => 'operador',
+            'is_active' => true,
+        ])
+        ->assertRedirect(route('users.index'))
+        ->assertSessionHas('message');
+
+    $this->assertDatabaseHas('users', [
+        'email' => 'activo@test.com',
+        'is_active' => true,
+    ]);
+});
+
+test('admin can create user with is_active = false', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $this->actingAs($admin)
+        ->post(route('users.store'), [
+            'name' => 'Usuario Inactivo',
+            'email' => 'inactivo@test.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'role' => 'operador',
+            'is_active' => false,
+        ])
+        ->assertRedirect(route('users.index'))
+        ->assertSessionHas('message');
+
+    $this->assertDatabaseHas('users', [
+        'email' => 'inactivo@test.com',
+        'is_active' => false,
+    ]);
+});
+
+test('admin can update user is_active from true to false', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $target = User::factory()->create([
+        'is_active' => true,
+    ]);
+    $target->assignRole('operador');
+
+    $this->actingAs($admin)
+        ->put(route('users.update', $target), [
+            'name' => $target->name,
+            'email' => $target->email,
+            'role' => 'operador',
+            'is_active' => false,
+        ])
+        ->assertRedirect(route('users.index'))
+        ->assertSessionHas('message');
+
+    $this->assertDatabaseHas('users', [
+        'id' => $target->id,
+        'is_active' => false,
+    ]);
+});
+
+test('admin can update user is_active from false to true', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $target = User::factory()->create([
+        'is_active' => false,
+    ]);
+    $target->assignRole('operador');
+
+    $this->actingAs($admin)
+        ->put(route('users.update', $target), [
+            'name' => $target->name,
+            'email' => $target->email,
+            'role' => 'operador',
+            'is_active' => true,
+        ])
+        ->assertRedirect(route('users.index'))
+        ->assertSessionHas('message');
+
+    $this->assertDatabaseHas('users', [
+        'id' => $target->id,
+        'is_active' => true,
+    ]);
+});

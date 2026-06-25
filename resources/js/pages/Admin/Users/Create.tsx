@@ -2,6 +2,8 @@ import { useForm, Link } from '@inertiajs/react';
 import type { FC, FormEvent } from 'react';
 import { route } from 'ziggy-js';
 
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import PasswordInput from '@/components/password-input';
 
 interface Role {
@@ -20,6 +22,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
         password: '',
         password_confirmation: '',
         role: roles.find((r) => r.name === 'produccion')?.name || 'produccion',
+        is_active: true,
     });
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -116,6 +119,20 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                                 {errors.role}
                             </p>
                         )}
+                    </div>
+
+                    {/* Status */}
+                    <div className="flex items-center gap-3">
+                        <Checkbox
+                            id="is_active"
+                            checked={data.is_active}
+                            onCheckedChange={(checked) =>
+                                setData('is_active', checked === true)
+                            }
+                        />
+                        <Label htmlFor="is_active" className="cursor-pointer">
+                            Usuario activo
+                        </Label>
                     </div>
 
                     {/* Password */}

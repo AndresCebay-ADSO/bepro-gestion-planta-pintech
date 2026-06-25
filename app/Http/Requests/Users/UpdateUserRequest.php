@@ -23,6 +23,7 @@ class UpdateUserRequest extends FormRequest
             'name' => ['bail', 'required', 'string', 'max:255'],
             'email' => ['bail', 'required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($userId)],
             'role' => ['bail', 'required', 'string', Rule::exists('roles', 'name')],
+            'is_active' => ['bail', 'required', 'boolean'],
         ];
     }
 }

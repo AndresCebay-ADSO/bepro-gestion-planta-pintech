@@ -2,10 +2,14 @@ import { useForm, Link } from '@inertiajs/react';
 import type { FC, FormEvent } from 'react';
 import { route } from 'ziggy-js';
 
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+
 interface User {
     id: number;
     name: string;
     email: string;
+    is_active: boolean;
     roles: { name: string }[];
 }
 
@@ -24,6 +28,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
         name: user.name,
         email: user.email,
         role: user.roles[0]?.name || 'produccion',
+        is_active: user.is_active,
     });
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -116,6 +121,20 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                                 {errors.role}
                             </p>
                         )}
+                    </div>
+
+                    {/* Status */}
+                    <div className="flex items-center gap-3">
+                        <Checkbox
+                            id="is_active"
+                            checked={data.is_active}
+                            onCheckedChange={(checked) =>
+                                setData('is_active', checked === true)
+                            }
+                        />
+                        <Label htmlFor="is_active" className="cursor-pointer">
+                            Usuario activo
+                        </Label>
                     </div>
 
                     {/* Info */}

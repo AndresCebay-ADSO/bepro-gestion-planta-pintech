@@ -22,6 +22,7 @@ class StoreUserRequest extends FormRequest
             'email' => ['bail', 'required', 'string', 'email', 'max:255', Rule::unique('users')],
             'password' => ['bail', 'required', 'string', Password::default(), 'confirmed'],
             'role' => ['bail', 'required', 'string', Rule::exists('roles', 'name')],
+            'is_active' => ['bail', 'required', 'boolean'],
         ];
     }
 }

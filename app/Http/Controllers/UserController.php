@@ -74,6 +74,7 @@ class UserController extends Controller
             'email' => $validated['email'],
             'password' => bcrypt($validated['password']),
             'email_verified_at' => now(),
+            'is_active' => $validated['is_active'],
         ]);
 
         $user->assignRole($validated['role']);
@@ -106,6 +107,7 @@ class UserController extends Controller
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'is_active' => $validated['is_active'],
         ]);
 
         $user->syncRoles([$validated['role']]);
