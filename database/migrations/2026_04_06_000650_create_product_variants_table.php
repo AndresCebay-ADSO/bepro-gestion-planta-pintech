@@ -31,7 +31,6 @@ return new class extends Migration
 
             $table->index(['product_id', 'is_active']);
             $table->index('name');
-            $table->index('code');
         });
     }
 

@@ -51,7 +51,9 @@ class ProductVariantSeeder extends Seeder
                         'name' => "{$product->name} - {$presentation['label']}",
                         'unit_of_measure_id' => $unitGl?->id ?? 1,
                         'presentation_value' => $presentation['value'],
-                        'package_raw_material_id' => $packagingMaterials->random()->id ?? null,
+                        'package_raw_material_id' => $packagingMaterials->isNotEmpty()
+                            ? $packagingMaterials->random()->id
+                            : null,
                         'is_active' => true,
                     ]
                 );
