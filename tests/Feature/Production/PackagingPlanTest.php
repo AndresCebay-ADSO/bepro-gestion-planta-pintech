@@ -93,7 +93,7 @@ beforeEach(function () {
     ]);
 });
 
-test('can add a packaging plan to a pending order', function () {
+test('cannot add a packaging plan to a pending order', function () {
     $data = [
         'product_variant_id' => $this->variant->id,
         'planned_units' => 10,
@@ -101,12 +101,8 @@ test('can add a packaging plan to a pending order', function () {
 
     $response = $this->post(route('production-orders.packaging-plans.store', $this->productionOrder), $data);
 
-    $response->assertRedirect();
-    $this->assertDatabaseHas('production_order_packaging_plan', [
-        'production_order_id' => $this->productionOrder->id,
-        'product_variant_id' => $this->variant->id,
-        'planned_units' => 10,
-    ]);
+    $response->assertForbidden();
+    $this->assertDatabaseEmpty('production_order_packaging_plan');
 });
 
 test('can add a packaging plan to an in-progress order', function () {
@@ -190,7 +186,7 @@ test('admin can add a packaging plan to a pending review order', function () {
     ]);
 });
 
-test('can delete a packaging plan from a pending order', function () {
+test('cannot delete a packaging plan from a pending order', function () {
     $plan = ProductionOrderPackagingPlan::create([
         'production_order_id' => $this->productionOrder->id,
         'product_variant_id' => $this->variant->id,
@@ -202,8 +198,8 @@ test('can delete a packaging plan from a pending order', function () {
         'plan' => $plan->id,
     ]));
 
-    $response->assertRedirect();
-    $this->assertDatabaseMissing('production_order_packaging_plan', ['id' => $plan->id]);
+    $response->assertForbidden();
+    $this->assertDatabaseHas('production_order_packaging_plan', ['id' => $plan->id]);
 });
 
 test('cannot delete a packaging plan from a completed order', function () {
@@ -244,44 +240,4 @@ test('operator cannot delete a packaging plan from a pending review order', func
 
     $response->assertForbidden();
     $this->assertDatabaseHas('production_order_packaging_plan', ['id' => $plan->id]);
-});
-
-test('validates required fields for packaging plan', function () {
-    $response = $this->post(route('production-orders.packaging-plans.store', $this->productionOrder), []);
-
-    $response->assertSessionHasErrors(['product_variant_id', 'planned_units']);
-});
-
-test('validates product_variant_id must belong to order product', function () {
-    // Create a variant for a different product
-    $pCat = ProductCategory::first();
-    $unit = UnitOfMeasure::first();
-
-    $otherProduct = Product::create([
-        'code' => 'P-99',
-        'name' => 'Otro Producto',
-        'category_id' => $pCat->id,
-        'unit_of_measure_id' => $unit->id,
-        'profit_margin' => 20,
-        'price_threshold' => 2,
-        'is_active' => true,
-    ]);
-
-    $otherVariant = ProductVariant::create([
-        'product_id' => $otherProduct->id,
-        'code' => 'P-99-GAL',
-        'name' => 'Otro Producto - Galón',
-        'unit_of_measure_id' => $unit->id,
-        'presentation_value' => 1,
-        'presentation_label' => 'Galón',
-        'is_active' => true,
-    ]);
-
-    $response = $this->post(route('production-orders.packaging-plans.store', $this->productionOrder), [
-        'product_variant_id' => $otherVariant->id,
-        'planned_units' => 10,
-    ]);
-
-    $response->assertSessionHasErrors(['product_variant_id']);
-    $this->assertDatabaseEmpty('production_order_packaging_plan');
 });

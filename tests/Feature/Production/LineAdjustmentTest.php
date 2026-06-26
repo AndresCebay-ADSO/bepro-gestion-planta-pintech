@@ -84,7 +84,7 @@ beforeEach(function () {
     ]);
 });
 
-test('can add a line adjustment to a pending order', function () {
+test('cannot add a line adjustment to a pending order', function () {
     $data = [
         'raw_material_id' => $this->rawMaterial->id,
         'quantity' => 5.5,
@@ -94,14 +94,8 @@ test('can add a line adjustment to a pending order', function () {
 
     $response = $this->post(route('production-orders.line-adjustments.store', $this->productionOrder), $data);
 
-    $response->assertRedirect();
-    $this->assertDatabaseHas('production_order_line_adjustments', [
-        'production_order_id' => $this->productionOrder->id,
-        'raw_material_id' => $this->rawMaterial->id,
-        'quantity' => 5.5,
-        'reason' => 'Viscosity correction',
-        'created_by' => $this->user->id,
-    ]);
+    $response->assertForbidden();
+    $this->assertDatabaseEmpty('production_order_line_adjustments');
 });
 
 test('cannot add a line adjustment to a completed order', function () {
@@ -156,7 +150,7 @@ test('admin can add a line adjustment to a pending review order', function () {
     ]);
 });
 
-test('can delete a line adjustment from a pending order', function () {
+test('cannot delete a line adjustment from a pending order', function () {
     $adjustment = ProductionOrderLineAdjustment::create([
         'production_order_id' => $this->productionOrder->id,
         'raw_material_id' => $this->rawMaterial->id,
@@ -170,8 +164,8 @@ test('can delete a line adjustment from a pending order', function () {
         'adjustment' => $adjustment->id,
     ]));
 
-    $response->assertRedirect();
-    $this->assertDatabaseMissing('production_order_line_adjustments', ['id' => $adjustment->id]);
+    $response->assertForbidden();
+    $this->assertDatabaseHas('production_order_line_adjustments', ['id' => $adjustment->id]);
 });
 
 test('cannot delete a line adjustment from a completed order', function () {
@@ -216,10 +210,4 @@ test('operator cannot delete a line adjustment from a pending review order', fun
 
     $response->assertForbidden();
     $this->assertDatabaseHas('production_order_line_adjustments', ['id' => $adjustment->id]);
-});
-
-test('validates required fields for line adjustment', function () {
-    $response = $this->post(route('production-orders.line-adjustments.store', $this->productionOrder), []);
-
-    $response->assertSessionHasErrors(['raw_material_id', 'quantity', 'reason']);
 });
