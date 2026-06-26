@@ -37,6 +37,7 @@ class ProductionOrderPolicy
         }
 
         if (in_array($productionOrder->status, [
+            ProductionOrderStatus::Pending,
             ProductionOrderStatus::Completed,
             ProductionOrderStatus::Cancelled,
         ], true)) {
