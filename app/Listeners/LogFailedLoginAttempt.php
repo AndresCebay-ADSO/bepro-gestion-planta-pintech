@@ -28,6 +28,6 @@ class LogFailedLoginAttempt
                 'ip' => $this->request->ip(),
                 'user_agent' => $this->request->userAgent(),
             ])
-            ->log("Failed login attempt for email: {$email}");
+            ->log("Intento de inicio de sesión fallido: {$email}");
     }
 }
