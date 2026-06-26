@@ -96,28 +96,111 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
         }
     };
 
+    const getEventLabel = (event: string) => {
+        switch (event) {
+            case 'created':
+                return 'Creado';
+            case 'updated':
+                return 'Actualizado';
+            case 'deleted':
+                return 'Eliminado';
+            case 'failed_login':
+                return 'Inicio de sesión fallido';
+            case 'role_changed':
+                return 'Rol cambiado';
+            default:
+                return event || 'default';
+        }
+    };
+
     const formatProperties = (properties: Record<string, any>) => {
         if (!properties || Object.keys(properties).length === 0) {
             return '-';
         }
 
-        // Truncating to avoid breaking UI
-        const jsonStr = JSON.stringify(properties);
+        const attributes = properties.attributes;
+        const old = properties.old;
 
-        if (jsonStr.length > 50) {
+        if (!attributes && !old) {
+            // Not standard Spatie format, fallback to JSON
+            const jsonStr = JSON.stringify(properties);
+            if (jsonStr.length > 50) {
+                return (
+                    <div className="group relative cursor-help">
+                        <span className="inline-block max-w-[150px] truncate text-muted-foreground">
+                            {jsonStr}
+                        </span>
+                        <div className="absolute bottom-full left-0 z-10 mb-1 hidden max-w-sm rounded-md border bg-popover p-2 text-xs whitespace-pre-wrap text-popover-foreground shadow-md group-hover:block">
+                            {JSON.stringify(properties, null, 2)}
+                        </div>
+                    </div>
+                );
+            }
+            return <span className="text-muted-foreground">{jsonStr}</span>;
+        }
+
+        const keys = attributes ? Object.keys(attributes) : Object.keys(old || {});
+        if (keys.length === 0) return '-';
+
+        const formatVal = (val: any) => {
+            if (val === null) return <span className="text-muted-foreground italic">null</span>;
+            if (typeof val === 'boolean') return val ? 'Sí' : 'No';
+            if (typeof val === 'object') {
+                const jsonStr = JSON.stringify(val);
+                if (jsonStr.length > 30) {
+                    return <span className="text-xs font-mono text-muted-foreground cursor-help" title={jsonStr}>[Objeto]</span>;
+                }
+                return <span className="text-xs font-mono text-muted-foreground">{jsonStr}</span>;
+            }
+            return String(val);
+        };
+
+        const renderChangeList = () => (
+            <ul className="space-y-1.5 text-xs">
+                {keys.map((key) => {
+                    const newVal = attributes ? attributes[key] : undefined;
+                    const oldVal = old ? old[key] : undefined;
+                    const hasOld = old && key in old;
+                    const hasNew = attributes && key in attributes;
+
+                    if (hasOld && hasNew && newVal === oldVal) return null;
+
+                    return (
+                        <li key={key} className="flex flex-col gap-0.5 md:flex-row md:items-start md:gap-1.5">
+                            <span className="font-semibold text-foreground/80 md:w-1/3 shrink-0">{key}:</span>
+                            <div className="flex flex-wrap items-center gap-1.5 md:w-2/3">
+                                {hasOld && hasNew ? (
+                                    <>
+                                        <span className="text-destructive/80 line-through break-all">{formatVal(oldVal)}</span>
+                                        <span className="text-muted-foreground">➔</span>
+                                        <span className="text-emerald-600 dark:text-emerald-400 font-medium break-all">{formatVal(newVal)}</span>
+                                    </>
+                                ) : hasNew ? (
+                                    <span className="text-muted-foreground break-all">{formatVal(newVal)}</span>
+                                ) : (
+                                    <span className="text-destructive/80 line-through break-all">{formatVal(oldVal)}</span>
+                                )}
+                            </div>
+                        </li>
+                    );
+                })}
+            </ul>
+        );
+
+        if (keys.length > 2) {
             return (
                 <div className="group relative cursor-help">
-                    <span className="inline-block max-w-[150px] truncate">
-                        {jsonStr}
+                    <span className="inline-flex items-center rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-muted-foreground transition-colors group-hover:bg-muted">
+                        {keys.length} atributos modificados
                     </span>
-                    <div className="absolute bottom-full left-0 z-10 mb-1 hidden max-w-sm rounded-md border bg-popover p-2 text-xs whitespace-pre-wrap text-popover-foreground shadow-md group-hover:block">
-                        {JSON.stringify(properties, null, 2)}
+                    <div className="absolute bottom-full left-0 z-10 mb-2 hidden w-[300px] rounded-lg border bg-popover p-3 shadow-md group-hover:block sm:w-[400px]">
+                        {renderChangeList()}
                     </div>
                 </div>
             );
         }
 
-        return jsonStr;
+        return renderChangeList();
     };
 
     return (
@@ -194,7 +277,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                                     <SelectItem value="all">Todos</SelectItem>
                                     {options.events.map((ev) => (
                                         <SelectItem key={ev} value={ev}>
-                                            {ev}
+                                            {getEventLabel(ev)}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -306,10 +389,10 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                                         <span
                                             className={`rounded-full px-2 py-1 text-xs font-semibold tracking-wider uppercase ${getEventBadge(log.event)}`}
                                         >
-                                            {log.event || 'default'}
+                                            {getEventLabel(log.event)}
                                         </span>
                                     </td>
-                                    <td className="max-w-[200px] p-3 wrap-break-word text-foreground">
+                                    <td className="max-w-[200px] p-3 break-words text-foreground">
                                         {log.description}
                                     </td>
                                     <td className="max-w-[200px] p-3 font-mono text-xs text-muted-foreground">

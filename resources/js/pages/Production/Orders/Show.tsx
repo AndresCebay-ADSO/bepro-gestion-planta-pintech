@@ -59,7 +59,8 @@ export default function ProductionOrderShow({
     const isCompleted = order.status === 'completed';
     const isPending = order.status === 'pending';
     const isPendingReview = order.status === 'pending_review';
-    const isFormReadOnly = isPending || isCompleted || (isPendingReview && !can.complete);
+    const isFormReadOnly =
+        isPending || isCompleted || (isPendingReview && !can.complete);
     const hasOrderData =
         orderDetails.length > 0 || orderPackagingPlans.length > 0;
 
