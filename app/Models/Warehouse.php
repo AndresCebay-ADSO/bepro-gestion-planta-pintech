@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\WarehouseType;
+use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\WarehouseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -41,13 +42,19 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class Warehouse extends Model
 {
     /** @use HasFactory<WarehouseFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasAuditDescription, HasFactory, LogsActivity, SoftDeletes;
+
+    protected string $auditLabel = 'Bodega';
+
+    protected string $auditIdentifierAttribute = 'name';
+
+    protected bool $auditFeminine = true;
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->useLogName('bodegas')
-            ->setDescriptionForEvent(fn (string $eventName) => "Bodega {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
             ->logOnly(['name', 'city', 'address', 'type', 'is_active'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

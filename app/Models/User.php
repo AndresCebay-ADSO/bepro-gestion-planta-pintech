@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditDescription;
 use App\Notifications\ResetPasswordNotification;
 use Database\Factories\UserFactory;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -38,13 +39,17 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, LogsActivity, Notifiable;
+    use HasAuditDescription, HasFactory, HasRoles, LogsActivity, Notifiable;
+
+    protected string $auditLabel = 'Usuario';
+
+    protected string $auditIdentifierAttribute = 'name';
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->useLogName('usuarios')
-            ->setDescriptionForEvent(fn (string $eventName) => "Usuario {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
             ->logOnly(['name', 'email', 'is_active', 'last_login_at'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

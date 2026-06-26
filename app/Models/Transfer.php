@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TransferStatus;
+use App\Models\Concerns\HasAuditDescription;
 use App\Models\Concerns\ValidatesProductVariant;
 use Database\Factories\TransferFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -48,7 +49,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class Transfer extends Model
 {
     /** @use HasFactory<TransferFactory> */
-    use HasFactory, LogsActivity, ValidatesProductVariant;
+    use HasAuditDescription, HasFactory, LogsActivity, ValidatesProductVariant;
+
+    protected string $auditLabel = 'Traslado';
+
+    protected string $auditIdentifierAttribute = 'id';
 
     protected static function booted(): void
     {
@@ -78,7 +83,7 @@ class Transfer extends Model
     {
         return LogOptions::defaults()
             ->useLogName('traslados')
-            ->setDescriptionForEvent(fn (string $eventName) => "Traslado {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
             ->logOnly(['source_warehouse_id', 'destination_warehouse_id', 'product_id', 'product_variant_id', 'quantity', 'status'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

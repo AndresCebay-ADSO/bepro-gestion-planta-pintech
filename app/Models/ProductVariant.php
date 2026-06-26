@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\ProductVariantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -51,13 +52,19 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class ProductVariant extends Model
 {
     /** @use HasFactory<ProductVariantFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasAuditDescription, HasFactory, LogsActivity, SoftDeletes;
+
+    protected string $auditLabel = 'Variante de producto';
+
+    protected string $auditIdentifierAttribute = 'name';
+
+    protected bool $auditFeminine = true;
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->useLogName('variantes_producto')
-            ->setDescriptionForEvent(fn (string $eventName) => "Variante de producto {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
             ->logOnly([
                 'product_id',
                 'code',

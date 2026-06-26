@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\InventoryMovementType;
+use App\Models\Concerns\HasAuditDescription;
 use App\Models\Concerns\ValidatesProductVariant;
 use Database\Factories\FinishedInventoryMovementFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -48,13 +49,17 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class FinishedInventoryMovement extends Model
 {
     /** @use HasFactory<FinishedInventoryMovementFactory> */
-    use HasFactory, LogsActivity, ValidatesProductVariant;
+    use HasAuditDescription, HasFactory, LogsActivity, ValidatesProductVariant;
+
+    protected string $auditLabel = 'Movimiento de inv. terminado';
+
+    protected string $auditIdentifierAttribute = 'id';
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->useLogName('movimientos_inventario_terminado')
-            ->setDescriptionForEvent(fn (string $eventName) => "Movimiento inv. terminado {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
             ->logOnly(['product_id', 'product_variant_id', 'warehouse_id', 'type', 'quantity', 'production_order_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

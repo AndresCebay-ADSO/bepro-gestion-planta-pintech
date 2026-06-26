@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ProductionOrderStatus;
+use App\Models\Concerns\HasAuditDescription;
 use Carbon\CarbonInterface;
 use Database\Factories\ProductionOrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -96,7 +97,13 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class ProductionOrder extends Model
 {
     /** @use HasFactory<ProductionOrderFactory> */
-    use HasFactory, LogsActivity;
+    use HasAuditDescription, HasFactory, LogsActivity;
+
+    protected string $auditLabel = 'Orden de producción';
+
+    protected string $auditIdentifierAttribute = 'order_number';
+
+    protected bool $auditFeminine = true;
 
     protected static function booted(): void
     {
@@ -113,7 +120,7 @@ class ProductionOrder extends Model
     {
         return LogOptions::defaults()
             ->useLogName('ordenes_produccion')
-            ->setDescriptionForEvent(fn (string $eventName) => "Orden de producción {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
             ->logOnly(['order_number', 'lot_number', 'actual_quantity', 'yield_percentage', 'status', 'completion_date', 'rejection_reason'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

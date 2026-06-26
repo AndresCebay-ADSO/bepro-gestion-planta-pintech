@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -72,13 +73,17 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasAuditDescription, HasFactory, LogsActivity, SoftDeletes;
+
+    protected string $auditLabel = 'Producto';
+
+    protected string $auditIdentifierAttribute = 'name';
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->useLogName('productos')
-            ->setDescriptionForEvent(fn (string $eventName) => "Producto {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
             ->logOnly(['code', 'name', 'category_id', 'is_active'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

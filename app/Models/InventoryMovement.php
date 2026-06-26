@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\InventoryMovementType;
+use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\InventoryMovementFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -47,11 +48,17 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class InventoryMovement extends Model
 {
     /** @use HasFactory<InventoryMovementFactory> */
-    use HasFactory, LogsActivity;
+    use HasAuditDescription, HasFactory, LogsActivity;
+
+    protected string $auditLabel = 'Movimiento de inventario';
+
+    protected string $auditIdentifierAttribute = 'id';
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
+            ->useLogName('movimientos_inventario')
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
             ->logOnly(['raw_material_id', 'type', 'quantity', 'cost_price', 'production_order_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\FormulaFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -41,13 +42,19 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class Formula extends Model
 {
     /** @use HasFactory<FormulaFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasAuditDescription, HasFactory, LogsActivity, SoftDeletes;
+
+    protected string $auditLabel = 'Fórmula';
+
+    protected string $auditIdentifierAttribute = 'version';
+
+    protected bool $auditFeminine = true;
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->useLogName('formulas')
-            ->setDescriptionForEvent(fn (string $eventName) => "Fórmula {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
             ->logOnly(['product_id', 'version', 'is_active', 'notes'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

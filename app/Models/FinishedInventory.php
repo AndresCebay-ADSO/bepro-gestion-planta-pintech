@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditDescription;
 use App\Models\Concerns\ValidatesProductVariant;
 use Database\Factories\FinishedInventoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -33,13 +34,17 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class FinishedInventory extends Model
 {
     /** @use HasFactory<FinishedInventoryFactory> */
-    use HasFactory, LogsActivity, ValidatesProductVariant;
+    use HasAuditDescription, HasFactory, LogsActivity, ValidatesProductVariant;
+
+    protected string $auditLabel = 'Inventario terminado';
+
+    protected string $auditIdentifierAttribute = 'id';
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->useLogName('inventario_terminado')
-            ->setDescriptionForEvent(fn (string $eventName) => "Inventario terminado {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
             ->logOnly(['product_id', 'product_variant_id', 'warehouse_id', 'quantity'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

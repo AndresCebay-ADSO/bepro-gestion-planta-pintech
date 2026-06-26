@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PriceUpdateType;
+use App\Models\Concerns\HasAuditDescription;
 use App\Models\Concerns\ValidatesProductVariant;
 use Database\Factories\PriceListFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -46,13 +47,19 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class PriceList extends Model
 {
     /** @use HasFactory<PriceListFactory> */
-    use HasFactory, LogsActivity, ValidatesProductVariant;
+    use HasAuditDescription, HasFactory, LogsActivity, ValidatesProductVariant;
+
+    protected string $auditLabel = 'Lista de precios';
+
+    protected string $auditIdentifierAttribute = 'id';
+
+    protected bool $auditFeminine = true;
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->useLogName('listas_precios')
-            ->setDescriptionForEvent(fn (string $eventName) => "Lista de precios {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
             ->logOnly(['product_id', 'product_variant_id', 'price', 'profit_margin', 'update_type'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

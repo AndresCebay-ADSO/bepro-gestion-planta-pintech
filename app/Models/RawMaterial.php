@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\RawMaterialFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -51,13 +52,19 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class RawMaterial extends Model
 {
     /** @use HasFactory<RawMaterialFactory> */
-    use HasFactory, LogsActivity;
+    use HasAuditDescription, HasFactory, LogsActivity;
+
+    protected string $auditLabel = 'Materia prima';
+
+    protected string $auditIdentifierAttribute = 'code';
+
+    protected bool $auditFeminine = true;
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->useLogName('materias_primas')
-            ->setDescriptionForEvent(fn (string $eventName) => "Materia prima {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
             ->logOnly(['code', 'unit_of_measure_id', 'current_price', 'minimum_stock', 'is_active'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

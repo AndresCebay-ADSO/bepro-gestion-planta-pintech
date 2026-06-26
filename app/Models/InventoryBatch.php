@@ -4,6 +4,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\InventoryBatchFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
@@ -48,13 +49,17 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class InventoryBatch extends Model
 {
     /** @use HasFactory<InventoryBatchFactory> */
-    use HasFactory, LogsActivity;
+    use HasAuditDescription, HasFactory, LogsActivity;
+
+    protected string $auditLabel = 'Lote de inventario';
+
+    protected string $auditIdentifierAttribute = 'lot_number';
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->useLogName('lotes_inventario')
-            ->setDescriptionForEvent(fn (string $eventName) => "Lote de inventario {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
             ->logOnly(['initial_quantity', 'remaining_quantity', 'unit_price', 'expiry_date', 'lot_number'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
