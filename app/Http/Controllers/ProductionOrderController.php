@@ -113,6 +113,7 @@ class ProductionOrderController extends Controller
                 'complete' => $user?->can('complete', $productionOrder) ?? false,
                 'rejectReview' => $user?->can('rejectReview', $productionOrder) ?? false,
                 'previewCosts' => $user?->can('previewCosts', $productionOrder) ?? false,
+                'updateOperationalData' => $user?->can('updateOperationalData', $productionOrder) ?? false,
             ],
         ]);
     }

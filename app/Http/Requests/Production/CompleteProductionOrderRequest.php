@@ -58,6 +58,9 @@ class CompleteProductionOrderRequest extends FormRequest
                     ->where('production_order_id', $orderId),
             ],
             'packaging.*.actual_units' => 'required|numeric|min:0',
+            'density_kg_per_gallon' => ['required', 'numeric', 'min:0.0001'],
+            'remnant_quantity_gallons' => ['nullable', 'numeric', 'min:0'],
+            'remnant_notes' => ['nullable', 'string', 'max:1000'],
             'notes' => 'nullable|string',
         ];
     }
