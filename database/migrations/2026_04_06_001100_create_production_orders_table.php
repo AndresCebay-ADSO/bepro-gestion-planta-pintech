@@ -46,6 +46,7 @@ return new class extends Migration
             $table->dateTime('packaging_start_time')->nullable();
             $table->dateTime('packaging_end_time')->nullable();
             $table->decimal('spillage_quantity', 12, 4)->default(0)->comment('Cantidad de derrame detectado');
+            $table->decimal('density_kg_per_gallon', 10, 4)->nullable()->comment('Densidad en kg/galón');
 
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
             $table->foreignId('submitted_by')->nullable()->constrained('users')->nullOnDelete();

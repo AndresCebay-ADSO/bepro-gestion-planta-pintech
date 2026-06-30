@@ -42,6 +42,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property Carbon|null $packaging_start_time
  * @property Carbon|null $packaging_end_time
  * @property float $spillage_quantity
+ * @property float|null $density_kg_per_gallon
  * @property int|null $lot_number
  * @property int $created_by
  * @property int|null $submitted_by
@@ -61,6 +62,8 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read Collection|ProductionOrderPackagingPlan[] $packagingPlans
  * @property-read Collection|ProductionOrderLineAdjustment[] $lineAdjustments
  * @property-read QrCode|null $qrCode
+ * @property-read ProductionRemnant|null $remnant
+ * @property-read Collection|RemnantConsumption[] $remnantConsumptions
  */
 #[Fillable([
     'order_number',
@@ -87,6 +90,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'packaging_start_time',
     'packaging_end_time',
     'spillage_quantity',
+    'density_kg_per_gallon',
     'created_by',
     'submitted_by',
     'submitted_at',
@@ -147,6 +151,7 @@ class ProductionOrder extends Model
             'packaging_start_time' => 'datetime',
             'packaging_end_time' => 'datetime',
             'spillage_quantity' => 'decimal:4',
+            'density_kg_per_gallon' => 'decimal:4',
             'submitted_at' => 'datetime',
             'reviewed_at' => 'datetime',
         ];
@@ -212,6 +217,22 @@ class ProductionOrder extends Model
     public function qrCode(): HasOne
     {
         return $this->hasOne(QrCode::class, 'production_order_id');
+    }
+
+    /**
+     * Saldo de PT generado por esta orden al cierre.
+     */
+    public function remnant(): HasOne
+    {
+        return $this->hasOne(ProductionRemnant::class, 'source_order_id');
+    }
+
+    /**
+     * Consumos de saldo realizados EN esta orden (como destino).
+     */
+    public function remnantConsumptions(): HasMany
+    {
+        return $this->hasMany(RemnantConsumption::class, 'target_order_id');
     }
 
     public function getManufacturingDate(): ?CarbonInterface
