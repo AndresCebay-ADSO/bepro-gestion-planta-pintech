@@ -121,6 +121,7 @@ test('completing an order stores quality solids and generates current certificat
         'grinding_hg' => 7,
         'quality_solids' => 50,
         'responsible_name' => 'Analista Calidad',
+        'density_kg_per_gallon' => 5,
         'ingredients' => [
             [
                 'id' => $detail->id,

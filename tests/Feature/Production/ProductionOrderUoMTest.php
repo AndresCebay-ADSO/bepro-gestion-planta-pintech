@@ -286,6 +286,7 @@ test('it previews and completes a production order with normalized quantities', 
         'viscosity_ku' => 100,
         'grinding_hg' => 6,
         'responsible_name' => 'Operario UoM',
+        'density_kg_per_gallon' => 5,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 3.0], // 3.0 kg reales gastados
         ],

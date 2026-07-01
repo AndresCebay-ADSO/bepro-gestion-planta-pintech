@@ -118,6 +118,7 @@ test('it rejects completing a pending order', function () {
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 100,
+        'density_kg_per_gallon' => 5,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -134,6 +135,7 @@ test('it allows completing an in_progress order', function () {
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 100,
+        'density_kg_per_gallon' => 5,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -191,6 +193,7 @@ test('it records final approver after submit reject resubmit complete cycle', fu
 
     $operationalPayload = [
         'actual_yield_quantity' => 100,
+        'density_kg_per_gallon' => 5,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
