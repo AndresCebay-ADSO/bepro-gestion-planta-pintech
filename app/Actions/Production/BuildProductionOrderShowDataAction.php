@@ -280,9 +280,9 @@ class BuildProductionOrderShowDataAction
                 ? ProductionRemnant::query()
                     ->with(['sourceOrder:id,order_number'])
                     ->available()
-                    ->where('product_id', $productionOrder->product_id)
                     ->where('warehouse_id', $productionOrder->warehouse_id)
                     ->orderBy('created_at', 'asc')
+                    ->limit(50)
                     ->get()
                     ->map(fn (ProductionRemnant $r) => [
                         'id' => $r->id,

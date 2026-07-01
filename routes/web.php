@@ -14,6 +14,8 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductDocumentController;
 use App\Http\Controllers\Production\LineAdjustmentController;
 use App\Http\Controllers\Production\PackagingPlanController;
+use App\Http\Controllers\Production\RemnantConsumptionController;
+use App\Http\Controllers\Production\RemnantController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProductVariantController;
@@ -120,6 +122,9 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
     Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
     Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
     Route::delete('products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
+
+    // Saldos de PT
+    Route::get('production/remnants', [RemnantController::class, 'index'])->name('production.remnants.index');
 });
 
 // ADMIN + PRODUCCIÓN + OPERADOR: Datos operativos de órdenes (ajustes de línea + envasado)
@@ -131,6 +136,10 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,operador'])->group
     // Planes de envasado
     Route::post('production-orders/{production_order}/packaging-plans', [PackagingPlanController::class, 'store'])->name('production-orders.packaging-plans.store');
     Route::delete('production-orders/{production_order}/packaging-plans/{plan}', [PackagingPlanController::class, 'destroy'])->name('production-orders.packaging-plans.destroy');
+
+    // Consumo de saldos
+    Route::post('production-orders/{production_order}/consume-remnant', [RemnantConsumptionController::class, 'store'])->name('production-orders.consume-remnant');
+    Route::get('production-orders/{production_order}/available-remnants', [RemnantConsumptionController::class, 'availableRemnants'])->name('production-orders.available-remnants');
 });
 
 // ADMIN + PRODUCCIÓN + OPERADOR: Órdenes de Producción (lectura + submit)
