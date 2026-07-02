@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\ProductionOrderStatus;
 use App\Enums\RemnantStatus;
+use App\Models\FinishedInventoryMovement;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
@@ -11,7 +12,9 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
+use App\Models\ProductionOrderPackagingPlan;
 use App\Models\ProductionRemnant;
+use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
@@ -100,7 +103,7 @@ beforeEach(function () {
 
 function completePayload(object $test, array $overrides = []): array
 {
-    return array_merge([
+    $defaults = [
         'actual_yield_quantity' => 100,
         'density_kg_per_gallon' => 5,
         'remnant_quantity_gallons' => null,
@@ -109,7 +112,20 @@ function completePayload(object $test, array $overrides = []): array
             ['id' => $test->detail->id, 'actual_quantity' => 50],
         ],
         'packaging' => [],
-    ], $overrides);
+    ];
+
+    $payload = array_merge($defaults, $overrides);
+
+    // When there is a remnant but no packaging, and actual_yield_quantity was not explicitly overridden,
+    // set it to match the remnant so validation passes by default.
+    $hasPackaging = is_array($payload['packaging']) && $payload['packaging'] !== [];
+    $remnantGallons = (float) ($payload['remnant_quantity_gallons'] ?? 0);
+    $explicitYieldOverridden = array_key_exists('actual_yield_quantity', $overrides);
+    if (! $hasPackaging && $remnantGallons > 0 && ! $explicitYieldOverridden) {
+        $payload['actual_yield_quantity'] = $remnantGallons;
+    }
+
+    return $payload;
 }
 
 it('requires density when completing', function () {
@@ -181,4 +197,129 @@ it('assigns cost per gallon to the remnant when cost is calculated', function ()
 
     expect($remnant->cost_per_gallon)->not->toBeNull()
         ->and((float) $remnant->cost_per_gallon)->toBeGreaterThan(0);
+});
+
+it('validates actual yield must include remnant when no packaging', function () {
+    $this->post(route('production-orders.complete', $this->order), completePayload($this, [
+        'remnant_quantity_gallons' => 5,
+        'actual_yield_quantity' => 3, // Wrong: should be 5 to match remnant
+    ]))->assertSessionHasErrors(['actual_yield_quantity']);
+});
+
+it('distributes bulk cost across packaging and remnant', function () {
+    $variant = ProductVariant::create([
+        'product_id' => $this->product->id,
+        'code' => 'VAR-GALON',
+        'name' => 'Galón',
+        'unit_of_measure_id' => UnitOfMeasure::first()->id,
+        'presentation_value' => 1,
+        'presentation_label' => 'Galón',
+        'is_active' => true,
+    ]);
+
+    $packPlan = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $this->order->id,
+        'product_variant_id' => $variant->id,
+        'planned_units' => 20,
+    ]);
+
+    $this->post(route('production-orders.start', $this->order));
+
+    $this->post(route('production-orders.complete', $this->order), [
+        'actual_yield_quantity' => 25, // 20 gal envasados + 5 gal saldo
+        'density_kg_per_gallon' => 5,
+        'remnant_quantity_gallons' => 5,
+        'ingredients' => [
+            ['id' => $this->detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [
+            ['id' => $packPlan->id, 'actual_units' => 20],
+        ],
+    ])->assertRedirect();
+
+    $movement = FinishedInventoryMovement::where('production_order_id', $this->order->id)->first();
+    $remnant = ProductionRemnant::first();
+
+    // Total bulk cost: 50 * 5 = 250
+    // Total to distribute: 20 (envasado) + 5 (saldo) = 25 gal
+    // Costo por gal: 250 / 25 = 10.00
+    // Galón debe costar 10.00, no 12.50 (que sería si solo repartiera en 20)
+
+    expect($movement)->not->toBeNull();
+    expect(round((float) $movement->cost_price, 2))->toBe(10.00);
+    expect($remnant)->not->toBeNull();
+    expect(round((float) $remnant->cost_per_gallon, 2))->toBe(10.00);
+});
+
+it('assigns all bulk cost to remnant when there is no packaging', function () {
+    $this->post(route('production-orders.start', $this->order));
+
+    $this->post(route('production-orders.complete', $this->order), completePayload($this, [
+        'remnant_quantity_gallons' => 5,
+    ]))->assertRedirect();
+
+    $remnant = ProductionRemnant::first();
+
+    // Total bulk cost: 50 * 5 = 250
+    // Solo saldo: 5 gal
+    // Costo por gal: 250 / 5 = 50.00
+
+    expect($remnant)->not->toBeNull();
+    expect(round((float) $remnant->cost_per_gallon, 2))->toBe(50.00);
+});
+
+it('preview costs distributes correctly when remnant is present', function () {
+    $variant = ProductVariant::create([
+        'product_id' => $this->product->id,
+        'code' => 'VAR-GALON',
+        'name' => 'Galón',
+        'unit_of_measure_id' => UnitOfMeasure::first()->id,
+        'presentation_value' => 1,
+        'presentation_label' => 'Galón',
+        'is_active' => true,
+    ]);
+
+    $packPlan = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $this->order->id,
+        'product_variant_id' => $variant->id,
+        'planned_units' => 20,
+    ]);
+
+    $this->post(route('production-orders.start', $this->order));
+
+    $response = $this->postJson(route('production-orders.preview-costs', $this->order), [
+        'ingredients' => [
+            ['id' => $this->detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [
+            ['id' => $packPlan->id, 'actual_units' => 20],
+        ],
+        'remnant_quantity_gallons' => 5,
+    ]);
+
+    $response->assertOk();
+    $data = $response->json();
+
+    // Total bulk cost: 50 * 5 = 250
+    // Total to distribute: 20 (envasado) + 5 (saldo) = 25 gal
+    // Costo por gal: 250 / 25 = 10.00
+
+    $packaging = $data['packaging'];
+    expect($packaging)->toHaveCount(1);
+    expect(round((float) $packaging[0]['cost_price'], 2))->toBe(10.00);
+});
+
+it('preview costs rejects invalid remnant_quantity_gallons', function () {
+    $this->post(route('production-orders.start', $this->order));
+
+    $response = $this->postJson(route('production-orders.preview-costs', $this->order), [
+        'ingredients' => [
+            ['id' => $this->detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [],
+        'remnant_quantity_gallons' => -1,
+    ]);
+
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['remnant_quantity_gallons']);
 });

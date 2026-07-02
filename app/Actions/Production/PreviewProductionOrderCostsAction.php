@@ -28,7 +28,7 @@ class PreviewProductionOrderCostsAction
      *   total_equivalent: string
      * }
      */
-    public function execute(ProductionOrder $order, array $ingredients, array $packaging): array
+    public function execute(ProductionOrder $order, array $ingredients, array $packaging, ?string $remnantGallons = null): array
     {
         $order->loadMissing(['details', 'packagingPlans.productVariant']);
 
@@ -105,11 +105,13 @@ class PreviewProductionOrderCostsAction
             }
         }
 
-        $distributedBulkCosts = $this->productionCostCalculator->calculateDistributedBulkCosts(
+        $costDistribution = $this->productionCostCalculator->calculateDistributedBulkCosts(
             order: $order,
             packagingData: $packaging,
-            totalBulkCost: $totalBulkCost
+            totalBulkCost: $totalBulkCost,
+            remnantGallons: $remnantGallons
         );
+        $distributedBulkCosts = $costDistribution['distributedCosts'];
 
         $plansById = $order->packagingPlans->keyBy('id');
         $packagingRequirements = [];

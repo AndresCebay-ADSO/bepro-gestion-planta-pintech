@@ -120,11 +120,16 @@ class CompleteProductionOrderAction
                 ), 4);
             }
 
-            $distributedBulkCosts = $this->productionCostCalculator->calculateDistributedBulkCosts(
+            $remnantGallons = (string) ($data['remnant_quantity_gallons'] ?? '0');
+
+            $costDistribution = $this->productionCostCalculator->calculateDistributedBulkCosts(
                 order: $lockedOrder,
                 packagingData: $data['packaging'] ?? [],
-                totalBulkCost: $totalBulkCost
+                totalBulkCost: $totalBulkCost,
+                remnantGallons: $this->calculator->cmp($remnantGallons, '0', 4) > 0 ? $remnantGallons : null
             );
+            $distributedBulkCosts = $costDistribution['distributedCosts'];
+            $bulkCostPerUnit = $costDistribution['bulkCostPerUnit'];
 
             $productForPricing = Product::query()
                 ->select(['id', 'profit_margin', 'price_threshold'])
@@ -251,7 +256,7 @@ class CompleteProductionOrderAction
             $this->registerRemnantIfApplicable(
                 order: $lockedOrder,
                 data: $data,
-                costPerYieldUnit: $costPerYieldUnit ?? null,
+                bulkCostPerUnit: $bulkCostPerUnit,
                 userId: $userId
             );
 
@@ -279,7 +284,7 @@ class CompleteProductionOrderAction
     private function registerRemnantIfApplicable(
         ProductionOrder $order,
         array $data,
-        ?string $costPerYieldUnit,
+        ?string $bulkCostPerUnit,
         int $userId
     ): void {
         $remnantGallons = (string) ($data['remnant_quantity_gallons'] ?? '0');
@@ -300,11 +305,10 @@ class CompleteProductionOrderAction
             'available_quantity_gallons' => $remnantGallons,
             'available_quantity_kg' => $remnantKg,
             'density_kg_per_gallon' => $density,
-            'cost_per_gallon' => $costPerYieldUnit,
+            'cost_per_gallon' => $bulkCostPerUnit,
             'status' => RemnantStatus::Available,
             'notes' => $data['remnant_notes'] ?? null,
             'created_by' => $userId,
         ]);
     }
 }
-

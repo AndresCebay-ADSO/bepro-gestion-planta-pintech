@@ -8,6 +8,7 @@ import type {
 type OrderInfoCardProps = {
     order: ProductionOrder;
     totalEquivalent: FormNumberValue;
+    actualYieldQuantity: FormNumberValue;
     bulkCost: FormNumberValue;
     finishedCost: FormNumberValue;
     marginPercentage: number;
@@ -19,6 +20,7 @@ type OrderInfoCardProps = {
 export function OrderInfoCard({
     order,
     totalEquivalent,
+    actualYieldQuantity,
     bulkCost,
     finishedCost,
     marginPercentage,
@@ -50,6 +52,17 @@ export function OrderInfoCard({
                     <span className="font-medium">
                         <FormattedNumber
                             value={totalEquivalent}
+                            maxDecimals={2}
+                        />
+                    </span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                        Rend. real total (eq. gal):
+                    </span>
+                    <span className="font-medium">
+                        <FormattedNumber
+                            value={actualYieldQuantity}
                             maxDecimals={2}
                         />
                     </span>

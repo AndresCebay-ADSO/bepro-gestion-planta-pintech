@@ -136,6 +136,7 @@ export default function ProductionOrderShow({
         ingredients: data.ingredients,
         packaging: data.packaging,
         lineAdjustments,
+        remnantQuantityGallons: data.remnant_quantity_gallons,
         isCompleted,
         enabled: can.previewCosts,
     });
@@ -402,6 +403,7 @@ export default function ProductionOrderShow({
                         <OrderInfoCard
                             order={order}
                             totalEquivalent={totalEquivalent}
+                            actualYieldQuantity={data.actual_yield_quantity}
                             bulkCost={
                                 isCompleted
                                     ? (order.total_bulk_cost ?? 0)

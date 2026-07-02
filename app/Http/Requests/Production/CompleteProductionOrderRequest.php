@@ -31,8 +31,12 @@ class CompleteProductionOrderRequest extends FormRequest
         $order = $this->route('production_order');
         $orderId = is_object($order) ? $order->id : null;
 
+        $packaging = $this->input('packaging');
+        $hasPackaging = is_array($packaging) && $packaging !== [];
+        $hasRemnant = (float) ($this->input('remnant_quantity_gallons') ?? 0) > 0;
+
         return [
-            'actual_yield_quantity' => 'nullable|numeric|min:0',
+            'actual_yield_quantity' => [$hasPackaging || $hasRemnant ? 'required' : 'nullable', 'numeric', 'min:0.0001'],
             'viscosity_ku' => 'nullable|numeric|min:0',
             'grinding_hg' => 'nullable|numeric|min:0',
             'quality_solids' => 'nullable|numeric|min:0|max:100',
@@ -80,49 +84,62 @@ class CompleteProductionOrderRequest extends FormRequest
 
                 $calculator = app(DecimalCalculator::class);
 
+                $packaging = $this->input('packaging');
+                $hasPackaging = is_array($packaging) && $packaging !== [];
+                $remnantGallons = (string) ($this->input('remnant_quantity_gallons') ?? '0');
+                $hasRemnant = $calculator->cmp($remnantGallons, '0', 4) > 0;
+
+                if (! $hasPackaging && ! $hasRemnant) {
+                    return;
+                }
+
                 $actualYield = $this->input('actual_yield_quantity');
                 if ($actualYield === null) {
                     return;
                 }
 
-                $packaging = $this->input('packaging');
-                if (! is_array($packaging) || $packaging === []) {
-                    return;
+                $packagingIds = [];
+                if ($hasPackaging) {
+                    $packagingIds = collect($packaging)
+                        ->pluck('id')
+                        ->filter()
+                        ->map(fn ($id) => (int) $id)
+                        ->values()
+                        ->all();
                 }
 
-                $packagingIds = collect($packaging)
-                    ->pluck('id')
-                    ->filter()
-                    ->map(fn ($id) => (int) $id)
-                    ->values()
-                    ->all();
-
-                if ($packagingIds === []) {
-                    return;
+                $plans = collect();
+                if ($packagingIds !== []) {
+                    $plans = ProductionOrderPackagingPlan::query()
+                        ->whereIn('id', $packagingIds)
+                        ->with('productVariant:id,presentation_value')
+                        ->get()
+                        ->keyBy('id');
                 }
-
-                $plans = ProductionOrderPackagingPlan::query()
-                    ->whereIn('id', $packagingIds)
-                    ->with('productVariant:id,presentation_value')
-                    ->get()
-                    ->keyBy('id');
 
                 $expectedYield = '0';
-                foreach ($packaging as $packagingData) {
-                    $planId = (int) ($packagingData['id'] ?? 0);
-                    $plan = $plans->get($planId);
-                    if ($plan === null) {
-                        continue;
-                    }
 
-                    $actualUnits = (string) ($packagingData['actual_units'] ?? '0');
-                    if ($calculator->cmp($actualUnits, '0', 4) <= 0) {
-                        continue;
-                    }
+                if ($hasPackaging) {
+                    foreach ($packaging as $packagingData) {
+                        $planId = (int) ($packagingData['id'] ?? 0);
+                        $plan = $plans->get($planId);
+                        if ($plan === null) {
+                            continue;
+                        }
 
-                    $presentationValue = (string) ($plan->productVariant?->presentation_value ?? '1');
-                    $yieldAddition = $calculator->mul($actualUnits, $presentationValue, 4);
-                    $expectedYield = $calculator->add($expectedYield, $yieldAddition, 4);
+                        $actualUnits = (string) ($packagingData['actual_units'] ?? '0');
+                        if ($calculator->cmp($actualUnits, '0', 4) <= 0) {
+                            continue;
+                        }
+
+                        $presentationValue = (string) ($plan->productVariant?->presentation_value ?? '1');
+                        $yieldAddition = $calculator->mul($actualUnits, $presentationValue, 4);
+                        $expectedYield = $calculator->add($expectedYield, $yieldAddition, 4);
+                    }
+                }
+
+                if ($hasRemnant) {
+                    $expectedYield = $calculator->add($expectedYield, $remnantGallons, 4);
                 }
 
                 $actualYieldStr = (string) $actualYield;
@@ -135,7 +152,7 @@ class CompleteProductionOrderRequest extends FormRequest
 
                 $validator->errors()->add(
                     'actual_yield_quantity',
-                    "El rendimiento real debe coincidir con el envasado equivalente. Registrado: {$actualYield}, esperado: {$expectedYield} (tolerancia: {$yieldTolerance})."
+                    "El rendimiento real debe coincidir con el envasado equivalente más el saldo. Registrado: {$actualYield}, esperado: {$expectedYield} (tolerancia: {$yieldTolerance})."
                 );
             },
         ];

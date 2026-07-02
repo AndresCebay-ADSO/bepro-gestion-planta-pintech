@@ -324,11 +324,16 @@ class ProductionOrderController extends Controller
     {
         $validated = $request->validated();
 
+        $remnantGallons = isset($validated['remnant_quantity_gallons'])
+            ? (string) $validated['remnant_quantity_gallons']
+            : null;
+
         return response()->json(
             $this->previewProductionOrderCosts->execute(
                 order: $productionOrder,
                 ingredients: $validated['ingredients'],
-                packaging: $validated['packaging'] ?? []
+                packaging: $validated['packaging'] ?? [],
+                remnantGallons: $remnantGallons
             )
         );
     }

@@ -13,6 +13,7 @@ type UseProductionCostPreviewProps = {
     ingredients: ProductionOrderIngredientFormRow[];
     packaging: ProductionOrderPackagingFormRow[];
     lineAdjustments: ProductionOrderLineAdjustment[];
+    remnantQuantityGallons: string | number;
     isCompleted: boolean;
     enabled?: boolean;
 };
@@ -20,6 +21,7 @@ type UseProductionCostPreviewProps = {
 type PreviewCostPayload = {
     ingredients: Array<{ id: number; actual_quantity: number }>;
     packaging: Array<{ id: number; actual_units: number }>;
+    remnant_quantity_gallons: number;
 };
 
 export function useProductionCostPreview({
@@ -27,6 +29,7 @@ export function useProductionCostPreview({
     ingredients,
     packaging,
     lineAdjustments,
+    remnantQuantityGallons,
     isCompleted,
     enabled = true,
 }: UseProductionCostPreviewProps) {
@@ -66,6 +69,7 @@ export function useProductionCostPreview({
         ingredients: ingredientsSignature,
         packaging: packagingSignature,
         lineAdjustmentsSignature,
+        remnantQuantityGallons,
     });
 
     useEffect(() => {
@@ -90,6 +94,7 @@ export function useProductionCostPreview({
                 packaging: JSON.parse(
                     packagingSignature,
                 ) as PreviewCostPayload['packaging'],
+                remnant_quantity_gallons: Number(remnantQuantityGallons) || 0,
             };
 
             loadingIndicatorId = window.setTimeout(() => {
@@ -148,6 +153,7 @@ export function useProductionCostPreview({
         orderId,
         packagingSignature,
         previewSignature,
+        remnantQuantityGallons,
     ]);
 
     return { previewCosts, previewLoading };

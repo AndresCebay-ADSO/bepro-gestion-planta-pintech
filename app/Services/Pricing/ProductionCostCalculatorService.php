@@ -15,15 +15,16 @@ class ProductionCostCalculatorService
 
     /**
      * @param  array<int, array{id:int,actual_units:float|int}>  $packagingData
-     * @return array<int, string>
+     * @return array{distributedCosts: array<int, string>, bulkCostPerUnit: string|null}
      */
-    public function calculateDistributedBulkCosts(ProductionOrder $order, array $packagingData, string|float $totalBulkCost): array
+    public function calculateDistributedBulkCosts(ProductionOrder $order, array $packagingData, string|float $totalBulkCost, ?string $remnantGallons = null): array
     {
-        if ($packagingData === [] || $this->calculator->isZero($totalBulkCost)) {
-            return [];
+        $totalBulkCostStr = (string) $totalBulkCost;
+
+        if ($this->calculator->isZero($totalBulkCostStr)) {
+            return ['distributedCosts' => [], 'bulkCostPerUnit' => null];
         }
 
-        $totalBulkCostStr = (string) $totalBulkCost;
         $packagingDataByPlanId = [];
 
         foreach ($packagingData as $packData) {
@@ -55,8 +56,12 @@ class ProductionCostCalculatorService
             $totalEquivalentYield = $this->calculator->add($totalEquivalentYield, $yieldFromVariant, 4);
         }
 
+        if ($remnantGallons !== null && $this->calculator->cmp($remnantGallons, '0', 4) > 0) {
+            $totalEquivalentYield = $this->calculator->add($totalEquivalentYield, $remnantGallons, 4);
+        }
+
         if ($this->calculator->isZero($totalEquivalentYield)) {
-            return [];
+            return ['distributedCosts' => [], 'bulkCostPerUnit' => null];
         }
 
         $bulkCostPerEquivalentUnit = $this->calculator->div($totalBulkCostStr, $totalEquivalentYield, 4);
@@ -82,6 +87,9 @@ class ProductionCostCalculatorService
             $distributedCosts[(int) $variant->id] = $distributedCost;
         }
 
-        return $distributedCosts;
+        return [
+            'distributedCosts' => $distributedCosts,
+            'bulkCostPerUnit' => $bulkCostPerEquivalentUnit,
+        ];
     }
 }
