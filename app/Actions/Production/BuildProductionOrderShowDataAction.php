@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Actions\Production;
 
+use App\Enums\ProductionOrderStatus;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderLineAdjustment;
 use App\Models\ProductionOrderPackagingPlan;
+use App\Models\ProductionRemnant;
+use App\Models\RemnantConsumption;
 use App\Services\DecimalCalculator;
 use App\Services\FormulaService;
 use App\Services\Inventory\FifoStockAllocatorService;
@@ -30,6 +33,9 @@ class BuildProductionOrderShowDataAction
         $productionOrder->load([
             'product',
             'qrCode',
+            'remnant',
+            'remnantConsumptions.remnant.sourceOrder',
+            'remnantConsumptions.consumedBy',
             'formula.details.rawMaterial',
             'formula.details.unitOfMeasure',
             'details.rawMaterial.unitOfMeasure',
@@ -117,6 +123,7 @@ class BuildProductionOrderShowDataAction
             'packaging_end_time' => optional($productionOrder->packaging_end_time)->format('Y-m-d\TH:i'),
             'responsible_name' => $productionOrder->responsible_name,
             'spillage_quantity' => (float) $productionOrder->spillage_quantity,
+            'density_kg_per_gallon' => $productionOrder->density_kg_per_gallon !== null ? (float) $productionOrder->density_kg_per_gallon : null,
             'notes' => $productionOrder->notes,
             'submitted_at' => $productionOrder->submitted_at?->toISOString(),
             'reviewed_at' => $productionOrder->reviewed_at?->toISOString(),
@@ -245,6 +252,45 @@ class BuildProductionOrderShowDataAction
                     'code' => $adj->rawMaterial->code,
                 ] : null,
             ])->values(),
+            'remnant' => $productionOrder->remnant ? [
+                'id' => $productionOrder->remnant->id,
+                'original_quantity_gallons' => (float) $productionOrder->remnant->original_quantity_gallons,
+                'available_quantity_gallons' => (float) $productionOrder->remnant->available_quantity_gallons,
+                'original_quantity_kg' => (float) $productionOrder->remnant->original_quantity_kg,
+                'available_quantity_kg' => (float) $productionOrder->remnant->available_quantity_kg,
+                'density_kg_per_gallon' => (float) $productionOrder->remnant->density_kg_per_gallon,
+                'cost_per_gallon' => $productionOrder->remnant->cost_per_gallon !== null ? (float) $productionOrder->remnant->cost_per_gallon : null,
+                'status' => $productionOrder->remnant->status->value,
+                'status_label' => $productionOrder->remnant->status->label(),
+            ] : null,
+            'remnant_consumptions' => $productionOrder->remnantConsumptions->map(fn (RemnantConsumption $consumption) => [
+                'id' => $consumption->id,
+                'remnant_id' => $consumption->remnant_id,
+                'source_order_number' => $consumption->remnant?->sourceOrder?->order_number,
+                'quantity_gallons' => (float) $consumption->quantity_gallons,
+                'quantity_kg' => (float) $consumption->quantity_kg,
+                'notes' => $consumption->notes,
+                'consumed_at' => $consumption->consumed_at->toISOString(),
+                'consumed_by' => $consumption->consumedBy ? [
+                    'id' => $consumption->consumedBy->id,
+                    'name' => $consumption->consumedBy->name,
+                ] : null,
+            ])->values(),
+            'available_remnants' => $productionOrder->status === ProductionOrderStatus::InProgress
+                ? ProductionRemnant::query()
+                    ->with(['sourceOrder:id,order_number'])
+                    ->available()
+                    ->where('warehouse_id', $productionOrder->warehouse_id)
+                    ->orderBy('created_at', 'asc')
+                    ->limit(50)
+                    ->get()
+                    ->map(fn (ProductionRemnant $r) => [
+                        'id' => $r->id,
+                        'source_order_number' => $r->sourceOrder->order_number,
+                        'available_quantity_gallons' => (float) $r->available_quantity_gallons,
+                        'density_kg_per_gallon' => (float) $r->density_kg_per_gallon,
+                    ])->values()
+                : [],
         ];
     }
 }

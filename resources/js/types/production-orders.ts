@@ -59,6 +59,36 @@ export type ProductionOrderLineAdjustment = {
     reason: string;
 };
 
+export type ProductionOrderRemnant = {
+    id: number;
+    original_quantity_gallons: FormNumberValue;
+    available_quantity_gallons: FormNumberValue;
+    original_quantity_kg: FormNumberValue;
+    available_quantity_kg: FormNumberValue;
+    density_kg_per_gallon: FormNumberValue;
+    cost_per_gallon: FormNumberValue | null;
+    status: string;
+    status_label: string;
+};
+
+export type ProductionOrderRemnantConsumption = {
+    id: number;
+    remnant_id: number;
+    source_order_number?: string;
+    quantity_gallons: FormNumberValue;
+    quantity_kg: FormNumberValue;
+    notes?: string | null;
+    consumed_at: string;
+    consumed_by?: { id: number; name: string } | null;
+};
+
+export type ProductionOrderAvailableRemnant = {
+    id: number;
+    source_order_number: string;
+    available_quantity_gallons: FormNumberValue;
+    density_kg_per_gallon: FormNumberValue;
+};
+
 export type ProductionOrder = {
     id: number;
     order_number: string;
@@ -99,9 +129,13 @@ export type ProductionOrder = {
         name?: string | null;
     } | null;
     planned_date?: string | null;
+    density_kg_per_gallon?: FormNumberValue | null;
     details?: ProductionOrderDetail[];
     packaging_plans?: ProductionOrderPackagingPlan[];
     line_adjustments?: ProductionOrderLineAdjustment[];
+    remnant?: ProductionOrderRemnant | null;
+    remnant_consumptions?: ProductionOrderRemnantConsumption[];
+    available_remnants?: ProductionOrderAvailableRemnant[];
 };
 
 export type ProductionOrderCan = {
@@ -110,6 +144,7 @@ export type ProductionOrderCan = {
     complete: boolean;
     rejectReview: boolean;
     previewCosts: boolean;
+    updateOperationalData: boolean;
 };
 
 export type ProductionOrderShowProps = {
@@ -153,6 +188,9 @@ export type ProductionOrderFormData = {
     packaging_end_time: string;
     responsible_name: string;
     spillage_quantity: FormNumberValue;
+    density_kg_per_gallon: FormNumberValue;
+    remnant_quantity_gallons: FormNumberValue;
+    remnant_notes: string;
     notes: string;
     ingredients: ProductionOrderIngredientFormRow[];
     packaging: ProductionOrderPackagingFormRow[];

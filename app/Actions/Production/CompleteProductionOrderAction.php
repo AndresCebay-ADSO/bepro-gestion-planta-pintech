@@ -6,6 +6,7 @@ namespace App\Actions\Production;
 
 use App\Enums\InventoryMovementType;
 use App\Enums\ProductionOrderStatus;
+use App\Enums\RemnantStatus;
 use App\Jobs\GenerateQualityInspectionCertificateJob;
 use App\Jobs\RecalculateRawMaterialReferencePrice;
 use App\Models\FinishedInventory;
@@ -13,6 +14,7 @@ use App\Models\FinishedInventoryMovement;
 use App\Models\Product;
 use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
+use App\Models\ProductionRemnant;
 use App\Models\ProductVariant;
 use App\Services\AlertService;
 use App\Services\DecimalCalculator;
@@ -118,11 +120,16 @@ class CompleteProductionOrderAction
                 ), 4);
             }
 
-            $distributedBulkCosts = $this->productionCostCalculator->calculateDistributedBulkCosts(
+            $remnantGallons = (string) ($data['remnant_quantity_gallons'] ?? '0');
+
+            $costDistribution = $this->productionCostCalculator->calculateDistributedBulkCosts(
                 order: $lockedOrder,
                 packagingData: $data['packaging'] ?? [],
-                totalBulkCost: $totalBulkCost
+                totalBulkCost: $totalBulkCost,
+                remnantGallons: $this->calculator->cmp($remnantGallons, '0', 4) > 0 ? $remnantGallons : null
             );
+            $distributedBulkCosts = $costDistribution['distributedCosts'];
+            $bulkCostPerUnit = $costDistribution['bulkCostPerUnit'];
 
             $productForPricing = Product::query()
                 ->select(['id', 'profit_margin', 'price_threshold'])
@@ -246,6 +253,13 @@ class CompleteProductionOrderAction
                 );
             }
 
+            $this->registerRemnantIfApplicable(
+                order: $lockedOrder,
+                data: $data,
+                bulkCostPerUnit: $bulkCostPerUnit,
+                userId: $userId
+            );
+
             $uniqueConsumedRawMaterialIds = collect($consumedRawMaterialIds)->unique()->values();
 
             $uniqueConsumedRawMaterialIds
@@ -260,5 +274,41 @@ class CompleteProductionOrderAction
         GenerateQualityInspectionCertificateJob::dispatch($completedOrder, $userId)->afterCommit();
 
         return $completedOrder;
+    }
+
+    /**
+     * Si se reportaron galones sobrantes, crear un registro de saldo de PT.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function registerRemnantIfApplicable(
+        ProductionOrder $order,
+        array $data,
+        ?string $bulkCostPerUnit,
+        int $userId
+    ): void {
+        $remnantGallons = (string) ($data['remnant_quantity_gallons'] ?? '0');
+
+        if ($this->calculator->cmp($remnantGallons, '0', 4) <= 0) {
+            return;
+        }
+
+        $density = (string) $order->density_kg_per_gallon;
+        $remnantKg = $this->calculator->mul($remnantGallons, $density, 4);
+
+        ProductionRemnant::create([
+            'source_order_id' => $order->id,
+            'product_id' => $order->product_id,
+            'warehouse_id' => $order->warehouse_id,
+            'original_quantity_gallons' => $remnantGallons,
+            'original_quantity_kg' => $remnantKg,
+            'available_quantity_gallons' => $remnantGallons,
+            'available_quantity_kg' => $remnantKg,
+            'density_kg_per_gallon' => $density,
+            'cost_per_gallon' => $bulkCostPerUnit,
+            'status' => RemnantStatus::Available,
+            'notes' => $data['remnant_notes'] ?? null,
+            'created_by' => $userId,
+        ]);
     }
 }

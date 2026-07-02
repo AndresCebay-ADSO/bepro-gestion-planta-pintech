@@ -45,6 +45,7 @@ class PreviewProductionOrderCostsRequest extends FormRequest
                     ->where('production_order_id', $orderId),
             ],
             'packaging.*.actual_units' => 'required|numeric|min:0',
+            'remnant_quantity_gallons' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

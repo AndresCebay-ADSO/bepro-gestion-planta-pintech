@@ -121,6 +121,7 @@ test('completing order generates qr code and quality certificate', function () {
         'grinding_hg' => 7,
         'quality_solids' => 52.5,
         'responsible_name' => 'Analista QC',
+        'density_kg_per_gallon' => 5,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -177,6 +178,7 @@ test('completing order saves quality solids alongside viscosity and grinding', f
         'grinding_hg' => 6.5,
         'quality_solids' => 48.3,
         'responsible_name' => 'Operario Test',
+        'density_kg_per_gallon' => 5,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],

@@ -113,6 +113,7 @@ class ProductionOrderController extends Controller
                 'complete' => $user?->can('complete', $productionOrder) ?? false,
                 'rejectReview' => $user?->can('rejectReview', $productionOrder) ?? false,
                 'previewCosts' => $user?->can('previewCosts', $productionOrder) ?? false,
+                'updateOperationalData' => $user?->can('updateOperationalData', $productionOrder) ?? false,
             ],
         ]);
     }
@@ -323,11 +324,16 @@ class ProductionOrderController extends Controller
     {
         $validated = $request->validated();
 
+        $remnantGallons = isset($validated['remnant_quantity_gallons'])
+            ? (string) $validated['remnant_quantity_gallons']
+            : null;
+
         return response()->json(
             $this->previewProductionOrderCosts->execute(
                 order: $productionOrder,
                 ingredients: $validated['ingredients'],
-                packaging: $validated['packaging'] ?? []
+                packaging: $validated['packaging'] ?? [],
+                remnantGallons: $remnantGallons
             )
         );
     }

@@ -26,6 +26,7 @@ class SaveProductionOrderOperationalDataAction
             'packaging_end_time' => isset($data['packaging_end_time']) ? Carbon::parse($data['packaging_end_time'], 'America/Bogota') : null,
             'responsible_name' => $data['responsible_name'] ?? null,
             'spillage_quantity' => $data['spillage_quantity'] ?? 0,
+            'density_kg_per_gallon' => $data['density_kg_per_gallon'] ?? $order->density_kg_per_gallon,
             'notes' => $data['notes'] ?? $order->notes,
         ]);
 
