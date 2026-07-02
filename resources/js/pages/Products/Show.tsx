@@ -71,7 +71,7 @@ type Props = {
         unit_of_measure?: { name: string; symbol: string } | null;
         current_cost?: string | null;
         current_price?: string | null;
-        profit_margin?: string | null;
+        cif_percentage?: string | null;
         brand?: string;
         description?: string | null;
         quality_viscosity_lower?: number | string | null;

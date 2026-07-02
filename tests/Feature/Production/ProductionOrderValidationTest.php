@@ -39,7 +39,7 @@ function createDependencies(): array
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,
         'current_cost' => 10,
-        'profit_margin' => 50,
+        'cif_percentage' => 50,
         'current_price' => 15,
         'price_threshold' => 5,
     ]);
@@ -109,7 +109,7 @@ test('rejects formula_id that belongs to another product', function () {
         'category_id' => $product->category_id,
         'unit_of_measure_id' => $product->unit_of_measure_id,
         'current_cost' => 12,
-        'profit_margin' => 35,
+        'cif_percentage' => 35,
         'current_price' => 16.2,
         'price_threshold' => 5,
     ]);

@@ -22,7 +22,7 @@ test('it updates variant cost and refreshes price when threshold is met', functi
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
         'current_cost' => 10,
-        'profit_margin' => 20,
+        'cif_percentage' => 20,
         'current_price' => 12,
         'price_threshold' => 1,
     ]);
@@ -42,7 +42,7 @@ test('it updates variant cost and refreshes price when threshold is met', functi
     app(VariantPricingService::class)->updateVariantCostAndPrice(
         variant: $variant,
         bulkCost: 8,
-        profitMargin: 25,
+        cifPercentage: 25,
         priceThreshold: 1,
         packageUnitCost: 1,
         autoUpdatePrice: true,
@@ -65,7 +65,7 @@ test('it updates variant cost without changing price when auto refresh is disabl
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
         'current_cost' => 10,
-        'profit_margin' => 20,
+        'cif_percentage' => 20,
         'current_price' => 14,
         'price_threshold' => 5,
     ]);
@@ -85,7 +85,7 @@ test('it updates variant cost without changing price when auto refresh is disabl
     app(VariantPricingService::class)->updateVariantCostAndPrice(
         variant: $variant,
         bulkCost: 11,
-        profitMargin: 30,
+        cifPercentage: 30,
         priceThreshold: 1,
         packageUnitCost: 0.5,
         autoUpdatePrice: false,
@@ -108,7 +108,7 @@ test('it refreshes price when previous cost and current price are zero', functio
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
         'current_cost' => 0,
-        'profit_margin' => 25,
+        'cif_percentage' => 25,
         'current_price' => 0,
         'price_threshold' => 5,
     ]);
@@ -127,7 +127,7 @@ test('it refreshes price when previous cost and current price are zero', functio
     app(VariantPricingService::class)->updateVariantCostAndPrice(
         variant: $variant,
         bulkCost: 18.5,
-        profitMargin: 25,
+        cifPercentage: 25,
         priceThreshold: 5,
         packageUnitCost: 0,
         autoUpdatePrice: true,
@@ -150,7 +150,7 @@ test('it refreshes price when previous cost is zero and current price exists', f
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
         'current_cost' => 0,
-        'profit_margin' => 20,
+        'cif_percentage' => 20,
         'current_price' => 12,
         'price_threshold' => 50,
     ]);
@@ -169,7 +169,7 @@ test('it refreshes price when previous cost is zero and current price exists', f
     app(VariantPricingService::class)->updateVariantCostAndPrice(
         variant: $variant,
         bulkCost: 18.5,
-        profitMargin: 20,
+        cifPercentage: 20,
         priceThreshold: 50,
         packageUnitCost: 0,
         autoUpdatePrice: true,
@@ -192,7 +192,7 @@ test('it refreshes price when current price is zero even below threshold', funct
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
         'current_cost' => 10,
-        'profit_margin' => 20,
+        'cif_percentage' => 20,
         'current_price' => 0,
         'price_threshold' => 5,
     ]);
@@ -211,7 +211,7 @@ test('it refreshes price when current price is zero even below threshold', funct
     app(VariantPricingService::class)->updateVariantCostAndPrice(
         variant: $variant,
         bulkCost: 10.2,
-        profitMargin: 20,
+        cifPercentage: 20,
         priceThreshold: 5,
         packageUnitCost: 0,
         autoUpdatePrice: true,
@@ -234,7 +234,7 @@ test('it keeps valid price when cost variation is below threshold', function () 
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
         'current_cost' => 10,
-        'profit_margin' => 20,
+        'cif_percentage' => 20,
         'current_price' => 12,
         'price_threshold' => 5,
     ]);
@@ -253,7 +253,7 @@ test('it keeps valid price when cost variation is below threshold', function () 
     app(VariantPricingService::class)->updateVariantCostAndPrice(
         variant: $variant,
         bulkCost: 10.2,
-        profitMargin: 20,
+        cifPercentage: 20,
         priceThreshold: 5,
         packageUnitCost: 0,
         autoUpdatePrice: true,

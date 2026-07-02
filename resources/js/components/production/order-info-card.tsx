@@ -11,9 +11,9 @@ type OrderInfoCardProps = {
     actualYieldQuantity: FormNumberValue;
     bulkCost: FormNumberValue;
     finishedCost: FormNumberValue;
-    marginPercentage: number;
-    estimatedMarginValue: number;
-    estimatedTargetValue: number;
+    cifPercentage: number;
+    estimatedCifValue: number;
+    estimatedTotalCost: number;
     showCosts?: boolean;
 };
 
@@ -23,9 +23,9 @@ export function OrderInfoCard({
     actualYieldQuantity,
     bulkCost,
     finishedCost,
-    marginPercentage,
-    estimatedMarginValue,
-    estimatedTargetValue,
+    cifPercentage,
+    estimatedCifValue,
+    estimatedTotalCost,
     showCosts = true,
 }: OrderInfoCardProps) {
     return (
@@ -95,11 +95,11 @@ export function OrderInfoCard({
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">
-                                Margen producto (%):
+                                CIF producto (%):
                             </span>
                             <span className="font-medium">
                                 <FormattedNumber
-                                    value={marginPercentage}
+                                    value={cifPercentage}
                                     maxDecimals={2}
                                 />
                                 %
@@ -107,11 +107,11 @@ export function OrderInfoCard({
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">
-                                Margen estimado:
+                                CIF estimado:
                             </span>
                             <span className="font-medium">
                                 <FormattedNumber
-                                    value={estimatedMarginValue}
+                                    value={estimatedCifValue}
                                     currency
                                     maxDecimals={2}
                                 />
@@ -119,11 +119,11 @@ export function OrderInfoCard({
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">
-                                Valor objetivo c/margen:
+                                Costo real producción:
                             </span>
                             <span className="font-medium">
                                 <FormattedNumber
-                                    value={estimatedTargetValue}
+                                    value={estimatedTotalCost}
                                     currency
                                     maxDecimals={2}
                                 />

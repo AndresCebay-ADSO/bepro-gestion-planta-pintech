@@ -34,7 +34,7 @@ test('product audit description uses Spanish with identifier on create', functio
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
         'current_cost' => 10,
-        'profit_margin' => 0,
+        'cif_percentage' => 0,
         'current_price' => 10,
         'price_threshold' => 0,
     ]);
@@ -118,7 +118,7 @@ test('formula audit description uses feminine Spanish on update', function () {
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
         'current_cost' => 10,
-        'profit_margin' => 0,
+        'cif_percentage' => 0,
         'current_price' => 10,
         'price_threshold' => 0,
     ]);
@@ -173,7 +173,7 @@ test('production order audit description uses feminine Spanish on create', funct
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
         'current_cost' => 10,
-        'profit_margin' => 0,
+        'cif_percentage' => 0,
         'current_price' => 10,
         'price_threshold' => 0,
     ]);
@@ -215,7 +215,7 @@ test('product audit description uses Spanish on delete', function () {
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
         'current_cost' => 10,
-        'profit_margin' => 0,
+        'cif_percentage' => 0,
         'current_price' => 10,
         'price_threshold' => 0,
     ]);
@@ -294,7 +294,7 @@ test('unknown event names pass through untranslated', function () {
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
         'current_cost' => 10,
-        'profit_margin' => 0,
+        'cif_percentage' => 0,
         'current_price' => 10,
         'price_threshold' => 0,
     ]);

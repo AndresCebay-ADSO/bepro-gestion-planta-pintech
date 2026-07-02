@@ -42,7 +42,7 @@ beforeEach(function () {
         'name' => 'Pintura',
         'category_id' => $pCat->id,
         'unit_of_measure_id' => $unit->id,
-        'profit_margin' => 25,
+        'cif_percentage' => 25,
         'price_threshold' => 3,
         'is_active' => true,
     ]);

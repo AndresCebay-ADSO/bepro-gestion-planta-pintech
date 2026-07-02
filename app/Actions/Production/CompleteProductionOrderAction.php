@@ -132,11 +132,11 @@ class CompleteProductionOrderAction
             $bulkCostPerUnit = $costDistribution['bulkCostPerUnit'];
 
             $productForPricing = Product::query()
-                ->select(['id', 'profit_margin', 'price_threshold'])
+                ->select(['id', 'cif_percentage', 'price_threshold'])
                 ->find($lockedOrder->product_id);
             $autoUpdateVariantPrice = (bool) config('production.auto_update_variant_price', true);
-            $productProfitMargin = $productForPricing?->profit_margin !== null
-                ? (string) $productForPricing->profit_margin
+            $productCifPercentage = $productForPricing?->cif_percentage !== null
+                ? (string) $productForPricing->cif_percentage
                 : null;
             $productPriceThreshold = (string) ($productForPricing?->price_threshold ?? '0');
 
@@ -200,7 +200,7 @@ class CompleteProductionOrderAction
                     $this->variantPricingService->updateVariantCostAndPrice(
                         variant: $variant,
                         bulkCost: $bulkCost,
-                        profitMargin: $productProfitMargin,
+                        cifPercentage: $productCifPercentage,
                         priceThreshold: $productPriceThreshold,
                         packageUnitCost: $packagingUnitCost,
                         autoUpdatePrice: $autoUpdateVariantPrice,

@@ -56,7 +56,7 @@ function createExportTestDependencies(): array
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,
         'current_cost' => 35,
-        'profit_margin' => 25,
+        'cif_percentage' => 25,
         'current_price' => 43.75,
         'price_threshold' => 5,
     ]);

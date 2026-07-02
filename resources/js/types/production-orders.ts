@@ -118,7 +118,7 @@ export type ProductionOrder = {
     reviewed_by?: { id: number; name: string } | null;
     product?: {
         name?: string | null;
-        profit_margin?: FormNumberValue | null;
+        cif_percentage?: FormNumberValue | null;
         quality_solids_lower?: FormNumberValue | null;
         quality_solids_upper?: FormNumberValue | null;
     } | null;

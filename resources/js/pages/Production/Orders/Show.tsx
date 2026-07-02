@@ -232,12 +232,12 @@ export default function ProductionOrderShow({
 
     const pendingBulkCost = previewCosts?.total_bulk_cost ?? 0;
     const pendingFinishedCost = previewCosts?.total_finished_cost ?? 0;
-    const marginPercentage = Number(order.product?.profit_margin ?? 0);
+    const cifPercentage = Number(order.product?.cif_percentage ?? 0);
     const activeFinishedCost = isCompleted
         ? Number(order.total_finished_cost || 0)
         : Number(pendingFinishedCost || 0);
-    const estimatedMarginValue = activeFinishedCost * (marginPercentage / 100);
-    const estimatedTargetValue = activeFinishedCost + estimatedMarginValue;
+    const estimatedCifValue = activeFinishedCost * (cifPercentage / 100);
+    const estimatedTotalCost = activeFinishedCost + estimatedCifValue;
 
     const showSubmit = can.submitForReview || can.complete;
     const showReject = can.rejectReview && isPendingReview;
@@ -414,9 +414,9 @@ export default function ProductionOrderShow({
                                     ? (order.total_finished_cost ?? 0)
                                     : pendingFinishedCost
                             }
-                            marginPercentage={marginPercentage}
-                            estimatedMarginValue={estimatedMarginValue}
-                            estimatedTargetValue={estimatedTargetValue}
+                            cifPercentage={cifPercentage}
+                            estimatedCifValue={estimatedCifValue}
+                            estimatedTotalCost={estimatedTotalCost}
                             showCosts={can.previewCosts}
                         />
                     </div>

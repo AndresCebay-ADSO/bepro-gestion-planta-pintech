@@ -46,7 +46,7 @@ function createPublicQrFixture(): array
         'description' => 'Producto visible en QR.',
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
-        'profit_margin' => 20,
+        'cif_percentage' => 20,
         'price_threshold' => 5,
     ]);
     $formula = Formula::create([

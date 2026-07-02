@@ -37,7 +37,7 @@ beforeEach(function () {
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,
         'current_cost' => 10,
-        'profit_margin' => 50,
+        'cif_percentage' => 50,
         'current_price' => 15,
         'price_threshold' => 5,
     ]);
@@ -48,7 +48,7 @@ beforeEach(function () {
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,
         'current_cost' => 12,
-        'profit_margin' => 40,
+        'cif_percentage' => 40,
         'current_price' => 16.8,
         'price_threshold' => 5,
     ]);

@@ -35,7 +35,7 @@ function createMetadataDependencies(): array
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,
         'current_cost' => 10,
-        'profit_margin' => 50,
+        'cif_percentage' => 50,
         'current_price' => 15,
         'price_threshold' => 5,
     ]);
