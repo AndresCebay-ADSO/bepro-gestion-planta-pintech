@@ -31,6 +31,7 @@ import { index as auditLogsIndex } from '@/routes/audit-logs';
 import { index as formulasIndex } from '@/routes/formulas';
 import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
 import { index as productionIndex } from '@/routes/production';
+import { index as remnantsIndex } from '@/routes/production/remnants';
 import { index as productionOrdersIndex } from '@/routes/production-orders';
 import { index as productsIndex } from '@/routes/products';
 import { index as rawMaterialsIndex } from '@/routes/raw-materials';
@@ -91,6 +92,12 @@ const navigationGroups: NavGroup[] = [
                 title: 'Órdenes de Producción',
                 href: productionOrdersIndex().url,
                 icon: ClipboardList,
+                allowedRoles: ['admin', 'produccion', 'operador'],
+            },
+            {
+                title: 'Saldos de Producción',
+                href: remnantsIndex().url,
+                icon: FlaskConical,
                 allowedRoles: ['admin', 'produccion', 'operador'],
             },
         ],

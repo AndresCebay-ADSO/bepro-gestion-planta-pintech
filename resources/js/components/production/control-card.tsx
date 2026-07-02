@@ -1,4 +1,4 @@
-import { Clock, User as UserIcon } from 'lucide-react';
+import { Clock, FlaskConical, User as UserIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -65,18 +65,108 @@ export function ControlCard({
                         disabled={isReadOnly}
                     />
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="spillage">Derrame Detectado (gal)</Label>
-                    <Input
-                        id="spillage"
-                        type="number"
-                        step="0.01"
-                        value={data.spillage_quantity}
-                        onChange={(event) =>
-                            setData('spillage_quantity', event.target.value)
-                        }
-                        disabled={isReadOnly}
-                    />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                        <Label htmlFor="density">
+                            Densidad (kg/gal){' '}
+                            <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                            id="density"
+                            type="number"
+                            step="0.0001"
+                            value={data.density_kg_per_gallon}
+                            onChange={(event) =>
+                                setData(
+                                    'density_kg_per_gallon',
+                                    event.target.value,
+                                )
+                            }
+                            disabled={isReadOnly}
+                        />
+                        {errors.density_kg_per_gallon && (
+                            <p className="text-xs text-destructive">
+                                {errors.density_kg_per_gallon}
+                            </p>
+                        )}
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="spillage">Derrame (gal)</Label>
+                        <Input
+                            id="spillage"
+                            type="number"
+                            step="0.01"
+                            value={data.spillage_quantity}
+                            onChange={(event) =>
+                                setData('spillage_quantity', event.target.value)
+                            }
+                            disabled={isReadOnly}
+                        />
+                    </div>
+                </div>
+                <Separator />
+                <div className="space-y-4 rounded-md border bg-muted/30 p-4">
+                    <div className="space-y-1">
+                        <p className="flex items-center gap-1.5 text-sm font-semibold">
+                            <FlaskConical className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            Sobrante de Producto Terminado
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                            Si sobraron galones sin envasar, regístralos aquí para
+                            reutilizarlos en futuras órdenes.
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="remnant">
+                                Galones Sobrantes
+                            </Label>
+                            <Input
+                                id="remnant"
+                                type="number"
+                                step="0.0001"
+                                placeholder="0.0"
+                                value={data.remnant_quantity_gallons}
+                                onChange={(event) =>
+                                    setData(
+                                        'remnant_quantity_gallons',
+                                        event.target.value,
+                                    )
+                                }
+                                disabled={isReadOnly}
+                            />
+                            {data.remnant_quantity_gallons &&
+                                data.density_kg_per_gallon && (
+                                    <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                                        ≈{' '}
+                                        {(
+                                            Number(
+                                                data.remnant_quantity_gallons,
+                                            ) *
+                                            Number(data.density_kg_per_gallon)
+                                        ).toFixed(4)}{' '}
+                                        kg
+                                    </p>
+                                )}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="remnant_notes">
+                                Nota del Sobrante
+                            </Label>
+                            <Input
+                                id="remnant_notes"
+                                placeholder="Ej: Tarro azul al fondo..."
+                                value={data.remnant_notes}
+                                onChange={(event) =>
+                                    setData(
+                                        'remnant_notes',
+                                        event.target.value,
+                                    )
+                                }
+                                disabled={isReadOnly}
+                            />
+                        </div>
+                    </div>
                 </div>
                 <Separator />
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

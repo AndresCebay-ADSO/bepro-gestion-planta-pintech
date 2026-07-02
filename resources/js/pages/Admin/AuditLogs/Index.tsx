@@ -124,6 +124,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
         if (!attributes && !old) {
             // Not standard Spatie format, fallback to JSON
             const jsonStr = JSON.stringify(properties);
+
             if (jsonStr.length > 50) {
                 return (
                     <div className="group relative cursor-help">
@@ -136,22 +137,35 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                     </div>
                 );
             }
+
             return <span className="text-muted-foreground">{jsonStr}</span>;
         }
 
         const keys = attributes ? Object.keys(attributes) : Object.keys(old || {});
-        if (keys.length === 0) return '-';
+
+        if (keys.length === 0) {
+return '-';
+}
 
         const formatVal = (val: any) => {
-            if (val === null) return <span className="text-muted-foreground italic">null</span>;
-            if (typeof val === 'boolean') return val ? 'Sí' : 'No';
+            if (val === null) {
+return <span className="text-muted-foreground italic">null</span>;
+}
+
+            if (typeof val === 'boolean') {
+return val ? 'Sí' : 'No';
+}
+
             if (typeof val === 'object') {
                 const jsonStr = JSON.stringify(val);
+
                 if (jsonStr.length > 30) {
                     return <span className="text-xs font-mono text-muted-foreground cursor-help" title={jsonStr}>[Objeto]</span>;
                 }
+
                 return <span className="text-xs font-mono text-muted-foreground">{jsonStr}</span>;
             }
+
             return String(val);
         };
 
@@ -163,7 +177,9 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                     const hasOld = old && key in old;
                     const hasNew = attributes && key in attributes;
 
-                    if (hasOld && hasNew && newVal === oldVal) return null;
+                    if (hasOld && hasNew && newVal === oldVal) {
+return null;
+}
 
                     return (
                         <li key={key} className="flex flex-col gap-0.5 md:flex-row md:items-start md:gap-1.5">

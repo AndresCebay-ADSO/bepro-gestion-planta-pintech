@@ -10,6 +10,7 @@ import {
     submitForReview as productionOrderSubmitForReview,
 } from '@/actions/App/Http/Controllers/ProductionOrderController';
 import { DetailPageNav } from '@/components/detail-page-nav';
+import { ConsumeRemnantsCard } from '@/components/production/consume-remnants-card';
 import { ControlCard } from '@/components/production/control-card';
 import { OrderHeader } from '@/components/production/order-header';
 import { OrderInfoCard } from '@/components/production/order-info-card';
@@ -101,6 +102,9 @@ export default function ProductionOrderShow({
             packaging_end_time: order.packaging_end_time ?? '',
             responsible_name: order.responsible_name ?? '',
             spillage_quantity: order.spillage_quantity ?? 0,
+            density_kg_per_gallon: order.density_kg_per_gallon ?? '',
+            remnant_quantity_gallons: '',
+            remnant_notes: '',
             notes: order.notes ?? '',
             ingredients: orderDetails.map(mapDetailToIngredientFormRow),
             packaging: orderPackagingPlans.map(mapPackagingPlanToFormRow),
@@ -369,6 +373,17 @@ export default function ProductionOrderShow({
                                 onCopyLandingLink={handleCopyLandingLink}
                             />
                         )}
+
+                        <ConsumeRemnantsCard
+                            orderId={order.id}
+                            order={order}
+                            canConsume={
+                                can.updateOperationalData &&
+                                !isPending &&
+                                !isCompleted &&
+                                !isPendingReview
+                            }
+                        />
 
                         <ControlCard
                             data={data}

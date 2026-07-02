@@ -70,6 +70,7 @@ class RemnantController extends Controller
                 'last_page' => $remnants->lastPage(),
                 'total' => $remnants->total(),
             ],
+            'links' => $remnants->linkCollection()->toArray(),
             'filters' => $request->only(['search', 'status', 'warehouse_id']),
         ]);
     }
