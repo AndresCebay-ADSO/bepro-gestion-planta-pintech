@@ -397,7 +397,7 @@ test('it prevents completing the same production order twice', function () {
         ->post(route('production-orders.complete', $order), [
             'actual_yield_quantity' => 100,
             'density_kg_per_gallon' => 5,
-        'ingredients' => [
+            'ingredients' => [
                 ['id' => $detail->id, 'actual_quantity' => 50],
             ],
             'packaging' => [],

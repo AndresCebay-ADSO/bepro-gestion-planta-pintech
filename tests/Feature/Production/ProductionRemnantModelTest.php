@@ -11,6 +11,7 @@ use App\Models\ProductionRemnant;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -95,7 +96,7 @@ it('belongs to created by', function () {
 });
 
 it('has many consumptions', function () {
-    expect($this->remnant->consumptions)->toBeInstanceOf(Illuminate\Database\Eloquent\Collection::class)
+    expect($this->remnant->consumptions)->toBeInstanceOf(Collection::class)
         ->and($this->remnant->consumptions)->toHaveCount(0);
 });
 

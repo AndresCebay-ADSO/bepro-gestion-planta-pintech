@@ -5,12 +5,7 @@ import { useState } from 'react';
 import { store as consumeRemnant } from '@/actions/App/Http/Controllers/Production/RemnantConsumptionController';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -278,18 +273,22 @@ export function ConsumeRemnantsCard({
                             size="sm"
                             className="border-emerald-300 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
                             onClick={handleAdd}
-                            disabled={submitting || availableRemnants.length === 0}
+                            disabled={
+                                submitting || availableRemnants.length === 0
+                            }
                         >
                             {submitting ? 'Consumiendo...' : 'Consumir Saldo'}
                         </Button>
                     </div>
                 )}
 
-                {consumedRemnants.length === 0 && !canConsume && !order.remnant && (
-                    <p className="text-xs text-muted-foreground">
-                        No hay saldos registrados para esta orden.
-                    </p>
-                )}
+                {consumedRemnants.length === 0 &&
+                    !canConsume &&
+                    !order.remnant && (
+                        <p className="text-xs text-muted-foreground">
+                            No hay saldos registrados para esta orden.
+                        </p>
+                    )}
             </CardContent>
         </Card>
     );

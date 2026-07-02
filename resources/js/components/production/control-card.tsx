@@ -112,15 +112,13 @@ export function ControlCard({
                             Sobrante de Producto Terminado
                         </p>
                         <p className="text-xs text-muted-foreground">
-                            Si sobraron galones sin envasar, regístralos aquí para
-                            reutilizarlos en futuras órdenes.
+                            Si sobraron galones sin envasar, regístralos aquí
+                            para reutilizarlos en futuras órdenes.
                         </p>
                     </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
-                            <Label htmlFor="remnant">
-                                Galones Sobrantes
-                            </Label>
+                            <Label htmlFor="remnant">Galones Sobrantes</Label>
                             <Input
                                 id="remnant"
                                 type="number"
@@ -158,10 +156,7 @@ export function ControlCard({
                                 placeholder="Ej: Tarro azul al fondo..."
                                 value={data.remnant_notes}
                                 onChange={(event) =>
-                                    setData(
-                                        'remnant_notes',
-                                        event.target.value,
-                                    )
+                                    setData('remnant_notes', event.target.value)
                                 }
                                 disabled={isReadOnly}
                             />

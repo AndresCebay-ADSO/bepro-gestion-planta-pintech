@@ -24,7 +24,7 @@ return new class extends Migration
             $table->decimal('cost_per_gallon', 12, 4)->nullable();
             $table->enum('status', ['available', 'partially_consumed', 'consumed'])->default('available');
             $table->text('notes')->nullable();
-            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();           
+            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
             $table->timestamps();
 
             $table->index(['product_id', 'warehouse_id', 'status']);

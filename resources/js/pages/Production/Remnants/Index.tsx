@@ -60,7 +60,12 @@ type Props = {
     filters: Filters;
 };
 
-export default function RemnantsIndex({ remnants, meta, links, filters }: Props) {
+export default function RemnantsIndex({
+    remnants,
+    meta,
+    links,
+    filters,
+}: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
 
     const applyFilters = (overrides: Partial<Filters> = {}) => {
@@ -127,7 +132,7 @@ export default function RemnantsIndex({ remnants, meta, links, filters }: Props)
                         <div className="flex flex-col gap-3 md:flex-row md:items-end">
                             <div className="flex-1">
                                 <div className="relative">
-                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         placeholder="Buscar por producto u orden..."
                                         className="pl-9"
@@ -171,10 +176,7 @@ export default function RemnantsIndex({ remnants, meta, links, filters }: Props)
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <Button
-                                variant="outline"
-                                onClick={handleSearch}
-                            >
+                            <Button variant="outline" onClick={handleSearch}>
                                 <Search className="mr-2 h-4 w-4" />
                                 Buscar
                             </Button>
@@ -243,12 +245,14 @@ export default function RemnantsIndex({ remnants, meta, links, filters }: Props)
                                                     </td>
                                                     <td className="p-4">
                                                         <Link
-                                                            href={productionOrderShow(
-                                                                {
-                                                                    production_order:
-                                                                        remnant.source_order_id,
-                                                                },
-                                                            ).url}
+                                                            href={
+                                                                productionOrderShow(
+                                                                    {
+                                                                        production_order:
+                                                                            remnant.source_order_id,
+                                                                    },
+                                                                ).url
+                                                            }
                                                             className="font-medium text-primary hover:underline"
                                                         >
                                                             {
@@ -257,9 +261,7 @@ export default function RemnantsIndex({ remnants, meta, links, filters }: Props)
                                                         </Link>
                                                     </td>
                                                     <td className="p-4 text-muted-foreground">
-                                                        {
-                                                            remnant.warehouse_name
-                                                        }
+                                                        {remnant.warehouse_name}
                                                     </td>
                                                     <td className="p-4 text-right">
                                                         <FormattedNumber
@@ -280,9 +282,7 @@ export default function RemnantsIndex({ remnants, meta, links, filters }: Props)
                                                                     remnant.cost_per_gallon
                                                                 }
                                                                 currency
-                                                                maxDecimals={
-                                                                    2
-                                                                }
+                                                                maxDecimals={2}
                                                             />
                                                         ) : (
                                                             <span className="text-muted-foreground">
