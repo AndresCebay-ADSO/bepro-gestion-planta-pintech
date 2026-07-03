@@ -77,6 +77,7 @@ export type ProductionOrderRemnantConsumption = {
     source_order_number?: string;
     quantity_gallons: FormNumberValue;
     quantity_kg: FormNumberValue;
+    consumed_cost?: FormNumberValue | null;
     notes?: string | null;
     consumed_at: string;
     consumed_by?: { id: number; name: string } | null;

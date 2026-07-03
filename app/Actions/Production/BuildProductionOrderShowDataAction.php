@@ -269,6 +269,7 @@ class BuildProductionOrderShowDataAction
                 'source_order_number' => $consumption->remnant?->sourceOrder?->order_number,
                 'quantity_gallons' => (float) $consumption->quantity_gallons,
                 'quantity_kg' => (float) $consumption->quantity_kg,
+                'consumed_cost' => $consumption->consumed_cost !== null ? (float) $consumption->consumed_cost : null,
                 'notes' => $consumption->notes,
                 'consumed_at' => $consumption->consumed_at->toISOString(),
                 'consumed_by' => $consumption->consumedBy ? [

@@ -243,6 +243,16 @@ export default function ProductionOrderShow({
     const bulkCostPerUnit = previewCosts?.bulk_cost_per_unit ?? null;
     const remnantBulkCost = previewCosts?.remnant_bulk_cost ?? null;
 
+    const consumedRemnantCost = useMemo(() => {
+        const consumptions = order.remnant_consumptions ?? [];
+
+        return consumptions.reduce((sum, consumption) => {
+            const cost = Number(consumption.consumed_cost ?? 0);
+
+            return sum + (Number.isFinite(cost) ? cost : 0);
+        }, 0);
+    }, [order.remnant_consumptions]);
+
     const showSubmit = can.submitForReview || can.complete;
     const showReject = can.rejectReview && isPendingReview;
 
@@ -424,6 +434,7 @@ export default function ProductionOrderShow({
                             bulkCostPerUnit={bulkCostPerUnit}
                             remnantQuantityGallons={data.remnant_quantity_gallons}
                             remnantBulkCost={remnantBulkCost}
+                            consumedRemnantCost={consumedRemnantCost}
                             showCosts={can.previewCosts}
                         />
                     </div>

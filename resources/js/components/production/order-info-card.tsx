@@ -18,6 +18,7 @@ type OrderInfoCardProps = {
     bulkCostPerUnit?: FormNumberValue | null;
     remnantQuantityGallons?: FormNumberValue;
     remnantBulkCost?: FormNumberValue | null;
+    consumedRemnantCost?: FormNumberValue | null;
     showCosts?: boolean;
 };
 
@@ -33,6 +34,7 @@ export function OrderInfoCard({
     bulkCostPerUnit,
     remnantQuantityGallons,
     remnantBulkCost,
+    consumedRemnantCost,
     showCosts = true,
 }: OrderInfoCardProps) {
     const costPerGallonWithCif =
@@ -98,6 +100,21 @@ export function OrderInfoCard({
                                 />
                             </span>
                         </div>
+                        {consumedRemnantCost !== null &&
+                            Number(consumedRemnantCost) > 0 && (
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">
+                                        Costo saldos consumidos:
+                                    </span>
+                                    <span className="font-medium">
+                                        <FormattedNumber
+                                            value={consumedRemnantCost}
+                                            currency
+                                            maxDecimals={2}
+                                        />
+                                    </span>
+                                </div>
+                            )}
                         {costPerGallonWithCif !== null && (
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">

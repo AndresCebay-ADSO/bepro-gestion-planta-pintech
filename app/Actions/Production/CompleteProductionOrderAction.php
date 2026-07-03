@@ -72,7 +72,7 @@ class CompleteProductionOrderAction
 
             $lockedOrder->update($updateData);
 
-            $lockedOrder->loadMissing(['details', 'packagingPlans.productVariant', 'lineAdjustments']);
+            $lockedOrder->loadMissing(['details', 'packagingPlans.productVariant', 'lineAdjustments', 'remnantConsumptions']);
             $detailsById = $lockedOrder->details->keyBy('id');
             $totalBulkCost = '0';
             $consumedRawMaterialIds = [];
@@ -118,6 +118,16 @@ class CompleteProductionOrderAction
                     errorKey: 'line_adjustments',
                     contextLabel: 'ajuste de línea'
                 ), 4);
+            }
+
+            foreach ($lockedOrder->remnantConsumptions as $consumption) {
+                if ($consumption->consumed_cost !== null) {
+                    $totalBulkCost = $this->calculator->add(
+                        $totalBulkCost,
+                        (string) $consumption->consumed_cost,
+                        4
+                    );
+                }
             }
 
             $remnantGallons = (string) ($data['remnant_quantity_gallons'] ?? '0');

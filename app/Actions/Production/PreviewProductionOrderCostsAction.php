@@ -33,7 +33,7 @@ class PreviewProductionOrderCostsAction
      */
     public function execute(ProductionOrder $order, array $ingredients, array $packaging, ?string $remnantGallons = null): array
     {
-        $order->loadMissing(['details', 'packagingPlans.productVariant', 'product']);
+        $order->loadMissing(['details', 'packagingPlans.productVariant', 'product', 'remnantConsumptions']);
 
         $detailsById = $order->details->keyBy('id');
         $ingredientRequirements = [];
@@ -105,6 +105,16 @@ class PreviewProductionOrderCostsAction
                 $unitCost = (string) ($adjustmentUnitCosts[$materialId] ?? '0');
                 $adjustmentCostStr = $this->calculator->mul((string) $quantity, $unitCost, 4);
                 $totalBulkCost = $this->calculator->add($totalBulkCost, $adjustmentCostStr, 4);
+            }
+        }
+
+        foreach ($order->remnantConsumptions as $consumption) {
+            if ($consumption->consumed_cost !== null) {
+                $totalBulkCost = $this->calculator->add(
+                    $totalBulkCost,
+                    (string) $consumption->consumed_cost,
+                    4
+                );
             }
         }
 
