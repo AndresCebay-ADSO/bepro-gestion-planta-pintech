@@ -217,4 +217,7 @@ export type PreviewCostData = {
     total_bulk_cost: FormNumberValue;
     total_finished_cost: FormNumberValue;
     total_equivalent: FormNumberValue;
+    bulk_cost_per_unit?: FormNumberValue | null;
+    cif_percentage?: FormNumberValue | null;
+    remnant_bulk_cost?: FormNumberValue | null;
 };

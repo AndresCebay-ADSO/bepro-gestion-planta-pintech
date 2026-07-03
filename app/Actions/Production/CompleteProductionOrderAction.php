@@ -257,6 +257,7 @@ class CompleteProductionOrderAction
                 order: $lockedOrder,
                 data: $data,
                 bulkCostPerUnit: $bulkCostPerUnit,
+                cifPercentage: $productCifPercentage,
                 userId: $userId
             );
 
@@ -285,6 +286,7 @@ class CompleteProductionOrderAction
         ProductionOrder $order,
         array $data,
         ?string $bulkCostPerUnit,
+        ?string $cifPercentage,
         int $userId
     ): void {
         $remnantGallons = (string) ($data['remnant_quantity_gallons'] ?? '0');
@@ -296,6 +298,12 @@ class CompleteProductionOrderAction
         $density = (string) $order->density_kg_per_gallon;
         $remnantKg = $this->calculator->mul($remnantGallons, $density, 4);
 
+        $costPerGallon = $bulkCostPerUnit ?? '0';
+
+        if ($cifPercentage !== null && $this->calculator->cmp($cifPercentage, '0', 4) > 0) {
+            $costPerGallon = $this->productionCostCalculator->applyCifToCost($costPerGallon, $cifPercentage);
+        }
+
         ProductionRemnant::create([
             'source_order_id' => $order->id,
             'product_id' => $order->product_id,
@@ -305,7 +313,7 @@ class CompleteProductionOrderAction
             'available_quantity_gallons' => $remnantGallons,
             'available_quantity_kg' => $remnantKg,
             'density_kg_per_gallon' => $density,
-            'cost_per_gallon' => $bulkCostPerUnit,
+            'cost_per_gallon' => $costPerGallon,
             'status' => RemnantStatus::Available,
             'notes' => $data['remnant_notes'] ?? null,
             'created_by' => $userId,

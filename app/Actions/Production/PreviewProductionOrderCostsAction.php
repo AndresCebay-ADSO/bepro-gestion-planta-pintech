@@ -25,12 +25,15 @@ class PreviewProductionOrderCostsAction
      *   packaging: array<int, array{id:int,cost_price:string,total_cost:string,equivalent:string,actual_units:float}>,
      *   total_bulk_cost: string,
      *   total_finished_cost: string,
-     *   total_equivalent: string
+     *   total_equivalent: string,
+     *   bulk_cost_per_unit: string|null,
+     *   cif_percentage: string|null,
+     *   remnant_bulk_cost: string|null
      * }
      */
     public function execute(ProductionOrder $order, array $ingredients, array $packaging, ?string $remnantGallons = null): array
     {
-        $order->loadMissing(['details', 'packagingPlans.productVariant']);
+        $order->loadMissing(['details', 'packagingPlans.productVariant', 'product']);
 
         $detailsById = $order->details->keyBy('id');
         $ingredientRequirements = [];
@@ -112,6 +115,23 @@ class PreviewProductionOrderCostsAction
             remnantGallons: $remnantGallons
         );
         $distributedBulkCosts = $costDistribution['distributedCosts'];
+        $globalBulkCostPerUnit = $costDistribution['bulkCostPerUnit'];
+
+        $cifPercentage = $order->product?->cif_percentage !== null
+            ? (string) $order->product->cif_percentage
+            : null;
+
+        $remnantBulkCost = null;
+
+        if ($remnantGallons !== null && $this->calculator->cmp($remnantGallons, '0', 4) > 0 && $globalBulkCostPerUnit !== null) {
+            $costPerGallon = $globalBulkCostPerUnit;
+
+            if ($cifPercentage !== null && $this->calculator->cmp($cifPercentage, '0', 4) > 0) {
+                $costPerGallon = $this->productionCostCalculator->applyCifToCost($costPerGallon, $cifPercentage);
+            }
+
+            $remnantBulkCost = $this->calculator->mul($costPerGallon, $remnantGallons, 4);
+        }
 
         $plansById = $order->packagingPlans->keyBy('id');
         $packagingRequirements = [];
@@ -155,12 +175,12 @@ class PreviewProductionOrderCostsAction
         $totalEquivalent = '0';
 
         foreach ($packagingRows as $row) {
-            $bulkCostPerUnit = (string) ($distributedBulkCosts[$row['product_variant_id']] ?? '0');
+            $variantBulkCost = (string) ($distributedBulkCosts[$row['product_variant_id']] ?? '0');
             $packagingUnitCost = $row['package_raw_material_id'] !== null
                 ? (string) ($packagingUnitCosts[$row['package_raw_material_id']] ?? '0')
                 : '0';
 
-            $costPrice = $this->calculator->add($bulkCostPerUnit, $packagingUnitCost, 4);
+            $costPrice = $this->calculator->add($variantBulkCost, $packagingUnitCost, 4);
             $totalCostStr = $this->calculator->mul((string) $row['actual_units'], $costPrice, 4);
             $equivalentStr = $this->calculator->mul((string) $row['actual_units'], (string) $row['presentation_value'], 4);
 
@@ -182,6 +202,9 @@ class PreviewProductionOrderCostsAction
             'total_bulk_cost' => $totalBulkCost,
             'total_finished_cost' => $totalFinishedCost,
             'total_equivalent' => $totalEquivalent,
+            'bulk_cost_per_unit' => $globalBulkCostPerUnit,
+            'cif_percentage' => $cifPercentage,
+            'remnant_bulk_cost' => $remnantBulkCost,
         ];
     }
 }

@@ -242,13 +242,14 @@ it('distributes bulk cost across packaging and remnant', function () {
 
     // Total bulk cost: 50 * 5 = 250
     // Total to distribute: 20 (envasado) + 5 (saldo) = 25 gal
-    // Costo por gal: 250 / 25 = 10.00
-    // Galón debe costar 10.00, no 12.50 (que sería si solo repartiera en 20)
+    // Costo granel por gal: 250 / 25 = 10.00
+    // Costo por gal con CIF (50%): 10.00 * 1.50 = 15.00
+    // El envasado usa costo granel (10.00), el saldo usa costo con CIF (15.00)
 
     expect($movement)->not->toBeNull();
     expect(round((float) $movement->cost_price, 2))->toBe(10.00);
     expect($remnant)->not->toBeNull();
-    expect(round((float) $remnant->cost_per_gallon, 2))->toBe(10.00);
+    expect(round((float) $remnant->cost_per_gallon, 2))->toBe(15.00);
 });
 
 it('assigns all bulk cost to remnant when there is no packaging', function () {
@@ -262,10 +263,11 @@ it('assigns all bulk cost to remnant when there is no packaging', function () {
 
     // Total bulk cost: 50 * 5 = 250
     // Solo saldo: 5 gal
-    // Costo por gal: 250 / 5 = 50.00
+    // Costo granel por gal: 250 / 5 = 50.00
+    // Costo por gal con CIF (50%): 50.00 * 1.50 = 75.00
 
     expect($remnant)->not->toBeNull();
-    expect(round((float) $remnant->cost_per_gallon, 2))->toBe(50.00);
+    expect(round((float) $remnant->cost_per_gallon, 2))->toBe(75.00);
 });
 
 it('preview costs distributes correctly when remnant is present', function () {
@@ -302,11 +304,22 @@ it('preview costs distributes correctly when remnant is present', function () {
 
     // Total bulk cost: 50 * 5 = 250
     // Total to distribute: 20 (envasado) + 5 (saldo) = 25 gal
-    // Costo por gal: 250 / 25 = 10.00
+    // Costo granel por gal: 250 / 25 = 10.00
+    // Costo por gal con CIF (50%): 10.00 * 1.50 = 15.00
+    // Costo saldo con CIF: 15.00 * 5 = 75.00
 
     $packaging = $data['packaging'];
     expect($packaging)->toHaveCount(1);
     expect(round((float) $packaging[0]['cost_price'], 2))->toBe(10.00);
+
+    expect($data)->toHaveKey('bulk_cost_per_unit');
+    expect(round((float) $data['bulk_cost_per_unit'], 2))->toBe(10.00);
+
+    expect($data)->toHaveKey('cif_percentage');
+    expect((float) $data['cif_percentage'])->toBe(50.0);
+
+    expect($data)->toHaveKey('remnant_bulk_cost');
+    expect(round((float) $data['remnant_bulk_cost'], 2))->toBe(75.00);
 });
 
 it('preview costs rejects invalid remnant_quantity_gallons', function () {

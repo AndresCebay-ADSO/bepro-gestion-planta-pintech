@@ -232,12 +232,16 @@ export default function ProductionOrderShow({
 
     const pendingBulkCost = previewCosts?.total_bulk_cost ?? 0;
     const pendingFinishedCost = previewCosts?.total_finished_cost ?? 0;
-    const cifPercentage = Number(order.product?.cif_percentage ?? 0);
+    const cifPercentage = Number(
+        previewCosts?.cif_percentage ?? order.product?.cif_percentage ?? 0,
+    );
     const activeFinishedCost = isCompleted
         ? Number(order.total_finished_cost || 0)
         : Number(pendingFinishedCost || 0);
     const estimatedCifValue = activeFinishedCost * (cifPercentage / 100);
     const estimatedTotalCost = activeFinishedCost + estimatedCifValue;
+    const bulkCostPerUnit = previewCosts?.bulk_cost_per_unit ?? null;
+    const remnantBulkCost = previewCosts?.remnant_bulk_cost ?? null;
 
     const showSubmit = can.submitForReview || can.complete;
     const showReject = can.rejectReview && isPendingReview;
@@ -417,6 +421,9 @@ export default function ProductionOrderShow({
                             cifPercentage={cifPercentage}
                             estimatedCifValue={estimatedCifValue}
                             estimatedTotalCost={estimatedTotalCost}
+                            bulkCostPerUnit={bulkCostPerUnit}
+                            remnantQuantityGallons={data.remnant_quantity_gallons}
+                            remnantBulkCost={remnantBulkCost}
                             showCosts={can.previewCosts}
                         />
                     </div>
