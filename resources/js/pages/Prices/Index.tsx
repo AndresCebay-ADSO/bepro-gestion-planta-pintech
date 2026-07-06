@@ -77,7 +77,8 @@ export default function PricesIndex({
                             Lista de Precios
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Precios de venta vigentes por producto y presentación.
+                            Precios de venta vigentes por producto y
+                            presentación.
                         </p>
                     </div>
                 </div>
@@ -121,7 +122,7 @@ export default function PricesIndex({
                                                 {product.name}
                                             </h3>
                                             {product.code && (
-                                                <span className="text-xs text-muted-foreground font-mono">
+                                                <span className="font-mono text-xs text-muted-foreground">
                                                     {product.code}
                                                 </span>
                                             )}
@@ -204,7 +205,7 @@ export default function PricesIndex({
                                                                     }
                                                                 </div>
                                                                 {variant.code && (
-                                                                    <div className="text-xs text-muted-foreground font-mono">
+                                                                    <div className="font-mono text-xs text-muted-foreground">
                                                                         {
                                                                             variant.code
                                                                         }
@@ -234,7 +235,9 @@ export default function PricesIndex({
                                                                             variant.current_price
                                                                         }
                                                                         currency
-                                                                        maxDecimals={2}
+                                                                        maxDecimals={
+                                                                            2
+                                                                        }
                                                                     />
                                                                 </td>
                                                             )}
@@ -244,7 +247,9 @@ export default function PricesIndex({
                                                                         variant.sales_price
                                                                     }
                                                                     currency
-                                                                    maxDecimals={2}
+                                                                    maxDecimals={
+                                                                        2
+                                                                    }
                                                                     bold
                                                                     size="lg"
                                                                 />

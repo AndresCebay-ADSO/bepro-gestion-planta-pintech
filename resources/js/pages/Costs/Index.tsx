@@ -1,12 +1,15 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { Search } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
-import { index as adminCostsIndex, update as adminCostsUpdate } from '@/routes/admin/costs';
+import {
+    index as adminCostsIndex,
+    update as adminCostsUpdate,
+} from '@/routes/admin/costs';
 import type { PaginationLink } from '@/types/ui';
 
 type ProductRow = {
@@ -51,19 +54,20 @@ function calculateSalesPrice(
     return parseFloat((currentPrice * (1 + margin / 100)).toFixed(2));
 }
 
-function calculateMargin(
-    currentPrice: number,
-    salesPrice: number,
-): number {
-    return parseFloat((((salesPrice / currentPrice) - 1) * 100).toFixed(2));
+function calculateMargin(currentPrice: number, salesPrice: number): number {
+    return parseFloat(((salesPrice / currentPrice - 1) * 100).toFixed(2));
 }
 
-function buildInitialMargins(products: ProductRow[]): Record<number, MarginState> {
+function buildInitialMargins(
+    products: ProductRow[],
+): Record<number, MarginState> {
     const initial: Record<number, MarginState> = {};
 
     products.forEach((product) => {
         const margin = product.sales_margin ?? '';
-        const price = calculateSalesPrice(product.current_price, product.sales_margin) ?? '';
+        const price =
+            calculateSalesPrice(product.current_price, product.sales_margin) ??
+            '';
 
         initial[product.id] = {
             margin: margin === '' ? '' : String(margin),
@@ -91,11 +95,6 @@ export default function CostsIndex({
     const [savingIds, setSavingIds] = useState<Set<number>>(new Set());
     const [errors, setErrors] = useState<Record<number, string | null>>({});
 
-    useEffect(() => {
-        setMargins(buildInitialMargins(productsData.data));
-        setErrors({});
-    }, [productsData.data]);
-
     const handleSearch = () => {
         get(adminCostsIndex().url, {
             preserveState: true,
@@ -107,9 +106,13 @@ export default function CostsIndex({
     const syncMargin = useCallback(
         (productId: number, marginValue: string) => {
             const product = productsData.data.find((p) => p.id === productId);
-            if (!product) return;
 
-            const numericValue = marginValue === '' ? null : parseFloat(marginValue);
+            if (!product) {
+                return;
+            }
+
+            const numericValue =
+                marginValue === '' ? null : parseFloat(marginValue);
             const price =
                 numericValue === null || isNaN(numericValue)
                     ? ''
@@ -141,10 +144,20 @@ export default function CostsIndex({
     const syncPrice = useCallback(
         (productId: number, priceValue: string) => {
             const product = productsData.data.find((p) => p.id === productId);
-            if (!product || !product.current_price || product.current_price <= 0) return;
+
+            if (
+                !product ||
+                !product.current_price ||
+                product.current_price <= 0
+            ) {
+                return;
+            }
 
             const price = parseFloat(priceValue) || 0;
-            const margin = priceValue === '' ? '' : String(calculateMargin(product.current_price, price));
+            const margin =
+                priceValue === ''
+                    ? ''
+                    : String(calculateMargin(product.current_price, price));
 
             setMargins((prev) => ({
                 ...prev,
@@ -167,15 +180,22 @@ export default function CostsIndex({
     const handleSave = useCallback(
         (productId: number) => {
             const state = margins[productId];
-            if (!state || !state.lastEdited) return;
+
+            if (!state || !state.lastEdited) {
+                return;
+            }
 
             const product = productsData.data.find((p) => p.id === productId);
-            if (!product) return;
+
+            if (!product) {
+                return;
+            }
 
             let payload: Record<string, number | null> = {};
 
             if (state.lastEdited === 'margin') {
-                const numericValue = state.margin === '' ? null : parseFloat(state.margin);
+                const numericValue =
+                    state.margin === '' ? null : parseFloat(state.margin);
 
                 if (numericValue === null || isNaN(numericValue)) {
                     setErrors((prev) => ({
@@ -197,7 +217,8 @@ export default function CostsIndex({
 
                 payload = { sales_margin: numericValue };
             } else {
-                const numericValue = state.price === '' ? null : parseFloat(state.price);
+                const numericValue =
+                    state.price === '' ? null : parseFloat(state.price);
 
                 if (numericValue === null || isNaN(numericValue)) {
                     setErrors((prev) => ({
@@ -287,12 +308,12 @@ export default function CostsIndex({
     );
 
     const handleKeyDown = useCallback(
-        (e: React.KeyboardEvent<HTMLInputElement>, productId: number) => {
+        (e: React.KeyboardEvent<HTMLInputElement>) => {
             if (e.key === 'Enter') {
                 (e.target as HTMLInputElement).blur();
             }
         },
-        [handleBlur],
+        [],
     );
 
     const hasCurrentPrice = (product: ProductRow): boolean => {
@@ -391,32 +412,39 @@ export default function CostsIndex({
                                                         {product.name}
                                                     </div>
                                                     {product.code && (
-                                                        <div className="text-xs text-muted-foreground font-mono">
+                                                        <div className="font-mono text-xs text-muted-foreground">
                                                             {product.code}
                                                         </div>
                                                     )}
                                                 </td>
                                                 <td className="p-4 text-right">
                                                     <FormattedNumber
-                                                        value={product.current_cost}
+                                                        value={
+                                                            product.current_cost
+                                                        }
                                                         currency
                                                         maxDecimals={2}
                                                     />
                                                 </td>
                                                 <td className="p-4 text-right">
                                                     <FormattedNumber
-                                                        value={product.cif_percentage}
+                                                        value={
+                                                            product.cif_percentage
+                                                        }
                                                         maxDecimals={2}
                                                     />
-                                                    {product.cif_percentage !== null && (
-                                                        <span className="text-xs text-muted-foreground ml-1">
+                                                    {product.cif_percentage !==
+                                                        null && (
+                                                        <span className="ml-1 text-xs text-muted-foreground">
                                                             %
                                                         </span>
                                                     )}
                                                 </td>
                                                 <td className="p-4 text-right">
                                                     <FormattedNumber
-                                                        value={product.current_price}
+                                                        value={
+                                                            product.current_price
+                                                        }
                                                         currency
                                                         maxDecimals={2}
                                                     />
@@ -430,21 +458,26 @@ export default function CostsIndex({
                                                                     min={0}
                                                                     max={500}
                                                                     step={0.01}
-                                                                    value={state.margin}
-                                                                    onChange={(e) =>
+                                                                    value={
+                                                                        state.margin
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
                                                                         syncMargin(
                                                                             product.id,
-                                                                            e.target.value,
+                                                                            e
+                                                                                .target
+                                                                                .value,
                                                                         )
                                                                     }
                                                                     onBlur={() =>
-                                                                        handleBlur(product.id)
-                                                                    }
-                                                                    onKeyDown={(e) =>
-                                                                        handleKeyDown(
-                                                                            e,
+                                                                        handleBlur(
                                                                             product.id,
                                                                         )
+                                                                    }
+                                                                    onKeyDown={
+                                                                        handleKeyDown
                                                                     }
                                                                     className="w-20 text-right"
                                                                 />
@@ -454,14 +487,21 @@ export default function CostsIndex({
                                                                 {savingIds.has(
                                                                     product.id,
                                                                 ) && (
-                                                                    <span className="text-xs text-muted-foreground animate-pulse">
+                                                                    <span className="animate-pulse text-xs text-muted-foreground">
                                                                         Guardando...
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            {errors[product.id] && (
+                                                            {errors[
+                                                                product.id
+                                                            ] && (
                                                                 <span className="text-xs text-red-500">
-                                                                    {errors[product.id]}
+                                                                    {
+                                                                        errors[
+                                                                            product
+                                                                                .id
+                                                                        ]
+                                                                    }
                                                                 </span>
                                                             )}
                                                         </div>
@@ -482,28 +522,30 @@ export default function CostsIndex({
                                                                 type="number"
                                                                 min={0}
                                                                 step={0.01}
-                                                                value={state.price}
+                                                                value={
+                                                                    state.price
+                                                                }
                                                                 onChange={(e) =>
                                                                     syncPrice(
                                                                         product.id,
-                                                                        e.target.value,
+                                                                        e.target
+                                                                            .value,
                                                                     )
                                                                 }
                                                                 onBlur={() =>
-                                                                    handleBlur(product.id)
-                                                                }
-                                                                onKeyDown={(e) =>
-                                                                    handleKeyDown(
-                                                                        e,
+                                                                    handleBlur(
                                                                         product.id,
                                                                     )
+                                                                }
+                                                                onKeyDown={
+                                                                    handleKeyDown
                                                                 }
                                                                 className="w-28 text-right"
                                                             />
                                                             {savingIds.has(
                                                                 product.id,
                                                             ) && (
-                                                                <span className="text-xs text-muted-foreground animate-pulse">
+                                                                <span className="animate-pulse text-xs text-muted-foreground">
                                                                     Guardando...
                                                                 </span>
                                                             )}
