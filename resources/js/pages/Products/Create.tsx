@@ -448,8 +448,8 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                     Precios y Costos
                                 </h2>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    Define CIF y umbral para cálculo
-                                    automático de precios.
+                                    Define CIF y umbral para cálculo automático
+                                    de precios.
                                 </p>
                             </div>
 

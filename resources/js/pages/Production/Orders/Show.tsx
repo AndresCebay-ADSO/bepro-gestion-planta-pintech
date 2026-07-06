@@ -432,7 +432,9 @@ export default function ProductionOrderShow({
                             estimatedCifValue={estimatedCifValue}
                             estimatedTotalCost={estimatedTotalCost}
                             bulkCostPerUnit={bulkCostPerUnit}
-                            remnantQuantityGallons={data.remnant_quantity_gallons}
+                            remnantQuantityGallons={
+                                data.remnant_quantity_gallons
+                            }
                             remnantBulkCost={remnantBulkCost}
                             consumedRemnantCost={consumedRemnantCost}
                             showCosts={can.previewCosts}
