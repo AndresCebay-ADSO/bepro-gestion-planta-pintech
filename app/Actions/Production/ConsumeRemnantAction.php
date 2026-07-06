@@ -63,11 +63,21 @@ class ConsumeRemnantAction
                 'status' => $newStatus,
             ]);
 
+            $consumedCost = null;
+            if ($lockedRemnant->cost_per_gallon !== null) {
+                $consumedCost = $this->calculator->mul(
+                    $quantityGallons,
+                    (string) $lockedRemnant->cost_per_gallon,
+                    4
+                );
+            }
+
             return RemnantConsumption::create([
                 'remnant_id' => $lockedRemnant->id,
                 'target_order_id' => $lockedOrder->id,
                 'quantity_gallons' => $quantityGallons,
                 'quantity_kg' => $quantityKg,
+                'consumed_cost' => $consumedCost,
                 'consumed_by' => $userId,
                 'consumed_at' => now(),
                 'notes' => $notes,

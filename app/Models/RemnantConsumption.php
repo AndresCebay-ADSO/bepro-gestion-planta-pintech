@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $remnant_id
  * @property int|null $target_order_id
+ * @property float|null $consumed_cost
  * @property float $quantity_gallons
  * @property float $quantity_kg
  * @property int $consumed_by
@@ -25,6 +26,7 @@ use Illuminate\Support\Carbon;
 #[Fillable([
     'remnant_id',
     'target_order_id',
+    'consumed_cost',
     'quantity_gallons',
     'quantity_kg',
     'consumed_by',
@@ -36,6 +38,7 @@ class RemnantConsumption extends Model
     protected function casts(): array
     {
         return [
+            'consumed_cost' => 'decimal:4',
             'quantity_gallons' => 'decimal:4',
             'quantity_kg' => 'decimal:4',
             'consumed_at' => 'datetime',

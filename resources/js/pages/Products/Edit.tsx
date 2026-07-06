@@ -29,7 +29,7 @@ type Props = {
         category_id: number | null;
         unit_of_measure_id: number | null;
         current_cost: string | null;
-        profit_margin: string | null;
+        cif_percentage: string | null;
         current_price: string | null;
         price_threshold: string | null;
         quality_viscosity_lower: number | string | null;
@@ -53,7 +53,7 @@ type ProductForm = {
     category_id: string;
     unit_of_measure_id: string;
     current_cost: string;
-    profit_margin: string;
+    cif_percentage: string;
     current_price: string;
     price_threshold: string;
     quality_viscosity_lower: string;
@@ -86,7 +86,7 @@ export default function ProductsEdit({
             ? String(product.unit_of_measure_id)
             : '',
         current_cost: product.current_cost ?? '',
-        profit_margin: product.profit_margin ?? '0',
+        cif_percentage: product.cif_percentage ?? '0',
         current_price: product.current_price ?? '',
         price_threshold: product.price_threshold ?? '0',
         quality_viscosity_lower: toInput(product.quality_viscosity_lower),
@@ -519,20 +519,20 @@ export default function ProductsEdit({
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="profit_margin">
-                                        Margen de ganancia (%) *
+                                    <Label htmlFor="cif_percentage">
+                                        CIF (%) *
                                     </Label>
                                     <Input
-                                        id="profit_margin"
+                                        id="cif_percentage"
                                         type="number"
                                         step="0.01"
                                         min="0"
                                         max="100"
                                         required
-                                        value={data.profit_margin}
+                                        value={data.cif_percentage}
                                         onChange={(e) =>
                                             setData(
-                                                'profit_margin',
+                                                'cif_percentage',
                                                 e.target.value,
                                             )
                                         }

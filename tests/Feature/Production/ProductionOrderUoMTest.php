@@ -60,7 +60,7 @@ beforeEach(function () {
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->liter->id,
         'current_cost' => 10,
-        'profit_margin' => 0,
+        'cif_percentage' => 0,
         'current_price' => 10,
         'price_threshold' => 0,
     ]);

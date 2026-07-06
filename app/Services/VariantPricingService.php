@@ -21,7 +21,7 @@ class VariantPricingService
      *
      * @param  ProductVariant  $variant  La variante a actualizar
      * @param  string|float  $bulkCost  Costo del producto a granel (base)
-     * @param  string|float|null  $profitMargin  Margen de ganancia del producto (porcentaje)
+     * @param  string|float|null  $cifPercentage  CIF del producto (porcentaje)
      * @param  string|float  $priceThreshold  Umbral de variación de costo para actualizar el precio
      * @param  string|float  $packageUnitCost  Costo unitario del material de envase
      * @param  bool  $autoUpdatePrice  Si debe actualizar el precio automáticamente si supera el umbral
@@ -30,7 +30,7 @@ class VariantPricingService
     public function updateVariantCostAndPrice(
         ProductVariant $variant,
         string|float $bulkCost,
-        string|float|null $profitMargin,
+        string|float|null $cifPercentage,
         string|float $priceThreshold,
         string|float $packageUnitCost = '0',
         bool $autoUpdatePrice = true,
@@ -46,7 +46,7 @@ class VariantPricingService
 
         $variantUpdates = ['current_cost' => $newVariantCost];
 
-        if ($autoUpdatePrice && $profitMargin !== null) {
+        if ($autoUpdatePrice && $cifPercentage !== null) {
             $previousVariantCost = $variant->current_cost !== null ? (string) $variant->current_cost : null;
             $currentVariantPrice = $variant->current_price !== null ? (string) $variant->current_price : null;
 
@@ -58,10 +58,10 @@ class VariantPricingService
             );
 
             if ($shouldUpdateVariantPrice) {
-                $profitMarginStr = (string) $profitMargin;
-                $marginRatio = $this->calculator->div($profitMarginStr, '100', 4);
-                $marginFactor = $this->calculator->add('1', $marginRatio, 4);
-                $newPrice = $this->calculator->mul($newVariantCost, $marginFactor, 4);
+                $cifPercentageStr = (string) $cifPercentage;
+                $cifRatio = $this->calculator->div($cifPercentageStr, '100', 4);
+                $cifFactor = $this->calculator->add('1', $cifRatio, 4);
+                $newPrice = $this->calculator->mul($newVariantCost, $cifFactor, 4);
                 $variantUpdates['current_price'] = $newPrice;
             }
         }

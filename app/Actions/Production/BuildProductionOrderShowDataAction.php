@@ -142,7 +142,7 @@ class BuildProductionOrderShowDataAction
                 'id' => $productionOrder->product->id,
                 'name' => $productionOrder->product->name,
                 'code' => $productionOrder->product->code,
-                'profit_margin' => $productionOrder->product->profit_margin !== null ? (float) $productionOrder->product->profit_margin : null,
+                'cif_percentage' => $productionOrder->product->cif_percentage !== null ? (float) $productionOrder->product->cif_percentage : null,
                 'quality_solids_lower' => $productionOrder->product->quality_solids_lower !== null
                     ? (float) $productionOrder->product->quality_solids_lower
                     : null,
@@ -269,6 +269,7 @@ class BuildProductionOrderShowDataAction
                 'source_order_number' => $consumption->remnant?->sourceOrder?->order_number,
                 'quantity_gallons' => (float) $consumption->quantity_gallons,
                 'quantity_kg' => (float) $consumption->quantity_kg,
+                'consumed_cost' => $consumption->consumed_cost !== null ? (float) $consumption->consumed_cost : null,
                 'notes' => $consumption->notes,
                 'consumed_at' => $consumption->consumed_at->toISOString(),
                 'consumed_by' => $consumption->consumedBy ? [

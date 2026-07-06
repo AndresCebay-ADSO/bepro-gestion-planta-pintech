@@ -544,7 +544,7 @@ end note
 
 note right of CU37
   Precio nuevo =
-  Costo × (1 + margen %)
+  Costo × (1 + cif %)
 end note
 
 @enduml

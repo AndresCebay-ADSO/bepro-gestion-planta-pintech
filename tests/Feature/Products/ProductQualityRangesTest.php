@@ -25,7 +25,7 @@ beforeEach(function (): void {
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
         'price_threshold' => 3,
-        'profit_margin' => 10,
+        'cif_percentage' => 10,
     ]);
 });
 
@@ -39,7 +39,7 @@ test('product update rejects solids range when lower exceeds upper', function ()
             'category_id' => $this->category->id,
             'unit_of_measure_id' => $this->uom->id,
             'current_cost' => '',
-            'profit_margin' => '10',
+            'cif_percentage' => '10',
             'current_price' => '',
             'price_threshold' => '3',
             'quality_viscosity_lower' => '',
@@ -63,7 +63,7 @@ test('product update persists quality reference ranges', function (): void {
             'category_id' => $this->category->id,
             'unit_of_measure_id' => $this->uom->id,
             'current_cost' => '',
-            'profit_margin' => '10',
+            'cif_percentage' => '10',
             'current_price' => '',
             'price_threshold' => '3',
             'quality_viscosity_lower' => '90',

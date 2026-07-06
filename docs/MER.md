@@ -97,7 +97,7 @@ Catalogo de productos terminados.
 - `category_id` BIGINT FK -> `product_categories.id`
 - `unit_of_measure_id` BIGINT FK -> `unit_of_measures.id`
 - `current_cost` DECIMAL(12,4) NULL
-- `profit_margin` DECIMAL(5,2) NULL
+- `cif_percentage` DECIMAL(5,2) NULL
 - `current_price` DECIMAL(12,4) NULL
 - `price_threshold` DECIMAL(5,2) DEFAULT 3.00
 - `is_active` BOOLEAN DEFAULT true

@@ -278,7 +278,7 @@ class ProductSeeder extends Seeder
                     'category_id' => $category?->id,
                     'unit_of_measure_id' => $unit?->id,
                     'description' => $name,
-                    'profit_margin' => 15,
+                    'cif_percentage' => 15,
                     'is_active' => true,
                     ...$extra,
                 ]

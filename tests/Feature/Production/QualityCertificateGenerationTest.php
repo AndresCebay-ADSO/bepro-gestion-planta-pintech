@@ -49,7 +49,7 @@ beforeEach(function () {
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,
         'current_cost' => 10,
-        'profit_margin' => 0,
+        'cif_percentage' => 0,
         'current_price' => 10,
         'price_threshold' => 0,
         'quality_viscosity_lower' => 90,

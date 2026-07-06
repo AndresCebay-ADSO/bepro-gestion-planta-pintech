@@ -9,9 +9,12 @@ use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
+use App\Models\ProductionOrderPackagingPlan;
 use App\Models\ProductionRemnant;
+use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
@@ -37,7 +40,7 @@ beforeEach(function () {
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,
         'current_cost' => 10,
-        'profit_margin' => 50,
+        'cif_percentage' => 50,
         'current_price' => 15,
         'price_threshold' => 5,
     ]);
@@ -48,7 +51,7 @@ beforeEach(function () {
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,
         'current_cost' => 12,
-        'profit_margin' => 40,
+        'cif_percentage' => 40,
         'current_price' => 16.8,
         'price_threshold' => 5,
     ]);
@@ -60,7 +63,7 @@ beforeEach(function () {
         'created_by' => $this->user->id,
     ]);
 
-    $material = RawMaterial::create([
+    $this->material = RawMaterial::create([
         'code' => 'RM-CONSUME-'.uniqid(),
         'unit_of_measure_id' => $uom->id,
         'current_price' => 5000,
@@ -68,7 +71,7 @@ beforeEach(function () {
 
     FormulaDetail::create([
         'formula_id' => $formula->id,
-        'raw_material_id' => $material->id,
+        'raw_material_id' => $this->material->id,
         'quantity' => 0.5,
         'unit_of_measure_id' => $uom->id,
     ]);
@@ -81,7 +84,7 @@ beforeEach(function () {
     ]);
 
     $this->batch = InventoryBatch::create([
-        'raw_material_id' => $material->id,
+        'raw_material_id' => $this->material->id,
         'warehouse_id' => $this->warehouse->id,
         'initial_quantity' => 200,
         'remaining_quantity' => 200,
@@ -104,7 +107,7 @@ beforeEach(function () {
 
     ProductionOrderDetail::create([
         'production_order_id' => $this->sourceOrder->id,
-        'raw_material_id' => $material->id,
+        'raw_material_id' => $this->material->id,
         'batch_id' => $this->batch->id,
         'planned_quantity' => 50,
         'unit_cost' => 5,
@@ -162,7 +165,7 @@ beforeEach(function () {
 
     FormulaDetail::create([
         'formula_id' => $targetFormula->id,
-        'raw_material_id' => $material->id,
+        'raw_material_id' => $this->material->id,
         'quantity' => 0.3,
         'unit_of_measure_id' => $uom->id,
     ]);
@@ -220,6 +223,7 @@ it('creates consumption record with correct data', function () {
         ->and((int) $consumption->target_order_id)->toBe($this->targetOrder->id)
         ->and((float) $consumption->quantity_gallons)->toBe(4.0)
         ->and((float) $consumption->quantity_kg)->toBe(20.0)
+        ->and((float) $consumption->consumed_cost)->toBe(22.0) // 4 gal * 5.5 cost_per_gallon
         ->and((int) $consumption->consumed_by)->toBe($this->user->id)
         ->and($consumption->notes)->toBe('Consumo de prueba')
         ->and($consumption->consumed_at)->not->toBeNull();
@@ -344,4 +348,125 @@ it('excludes consumed remnants from json endpoint', function () {
 
     expect($remnants)->toHaveCount(1)
         ->and($remnants[0]['id'])->toBe($this->remnant2->id);
+});
+
+it('stores null consumed_cost when remnant has no cost_per_gallon', function () {
+    $this->remnant->update(['cost_per_gallon' => null]);
+
+    $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
+        'remnant_id' => $this->remnant->id,
+        'quantity_gallons' => 4,
+    ])->assertRedirect();
+
+    $consumption = $this->remnant->consumptions()->first();
+
+    expect($consumption->consumed_cost)->toBeNull();
+});
+
+it('preview costs include consumed remnant cost in total bulk cost', function () {
+    // Setup target order with a detail and packaging plan for preview
+    $targetDetail = ProductionOrderDetail::create([
+        'production_order_id' => $this->targetOrder->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $this->batch->id,
+        'planned_quantity' => 30,
+        'unit_cost' => 5,
+        'total_cost' => 150,
+    ]);
+
+    $variant = ProductVariant::create([
+        'product_id' => $this->targetProduct->id,
+        'code' => 'VAR-TARGET',
+        'name' => 'Galón',
+        'unit_of_measure_id' => UnitOfMeasure::first()->id,
+        'presentation_value' => 1,
+        'presentation_label' => 'Galón',
+        'is_active' => true,
+    ]);
+
+    $packPlan = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $this->targetOrder->id,
+        'product_variant_id' => $variant->id,
+        'planned_units' => 10,
+    ]);
+
+    // Consume remnant first: 4 gal at 5.5 = 22.0
+    $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
+        'remnant_id' => $this->remnant->id,
+        'quantity_gallons' => 4,
+    ])->assertRedirect();
+
+    $response = $this->postJson(route('production-orders.preview-costs', $this->targetOrder), [
+        'ingredients' => [
+            ['id' => $targetDetail->id, 'actual_quantity' => 30],
+        ],
+        'packaging' => [
+            ['id' => $packPlan->id, 'actual_units' => 10],
+        ],
+    ]);
+
+    $response->assertOk();
+    $data = $response->json();
+
+    // Ingredient cost: 30 * 5 = 150
+    // Consumed remnant cost: 4 * 5.5 = 22
+    // Total bulk cost should be 172
+    expect((float) $data['total_bulk_cost'])->toBe(172.0);
+});
+
+it('completing order includes consumed remnant cost in production cost', function () {
+    // Setup target order with detail and packaging
+    $targetDetail = ProductionOrderDetail::create([
+        'production_order_id' => $this->targetOrder->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $this->batch->id,
+        'planned_quantity' => 30,
+        'unit_cost' => 5,
+        'total_cost' => 150,
+    ]);
+
+    $variant = ProductVariant::create([
+        'product_id' => $this->targetProduct->id,
+        'code' => 'VAR-TARGET-COMPLETE',
+        'name' => 'Galón',
+        'unit_of_measure_id' => UnitOfMeasure::first()->id,
+        'presentation_value' => 1,
+        'presentation_label' => 'Galón',
+        'is_active' => true,
+    ]);
+
+    $packPlan = ProductionOrderPackagingPlan::create([
+        'production_order_id' => $this->targetOrder->id,
+        'product_variant_id' => $variant->id,
+        'planned_units' => 10,
+    ]);
+
+    // Consume remnant: 4 gal at 5.5 = 22.0
+    $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
+        'remnant_id' => $this->remnant->id,
+        'quantity_gallons' => 4,
+    ])->assertRedirect();
+
+    $this->post(route('production-orders.start', $this->targetOrder));
+
+    $response = $this->post(route('production-orders.complete', $this->targetOrder), [
+        'actual_yield_quantity' => 10, // 10 envasados, no se genera saldo
+        'density_kg_per_gallon' => 5,
+        'ingredients' => [
+            ['id' => $targetDetail->id, 'actual_quantity' => 30],
+        ],
+        'packaging' => [
+            ['id' => $packPlan->id, 'actual_units' => 10],
+        ],
+    ]);
+
+    $response->assertRedirect()->assertSessionHasNoErrors();
+
+    $this->targetOrder->refresh();
+
+    // Total bulk cost: 150 (ingredients) + 22 (consumed remnant) = 172
+    $productionCost = ProductionCost::where('production_order_id', $this->targetOrder->id)->first();
+
+    expect($productionCost)->not->toBeNull();
+    expect(round((float) $productionCost->cost, 2))->toBe(172.0);
 });

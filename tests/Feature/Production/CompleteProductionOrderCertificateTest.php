@@ -48,7 +48,7 @@ function createCertificateCompletionFixture(): array
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
         'current_cost' => 10,
-        'profit_margin' => 20,
+        'cif_percentage' => 20,
         'current_price' => 12,
         'price_threshold' => 5,
         'quality_viscosity_lower' => 90,

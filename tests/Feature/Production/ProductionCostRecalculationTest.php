@@ -51,7 +51,7 @@ beforeEach(function () {
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
         'current_cost' => null,
-        'profit_margin' => 25,
+        'cif_percentage' => 25,
         'current_price' => null,
         'price_threshold' => 3,
         'is_active' => true,
@@ -377,7 +377,7 @@ test('it refreshes product and variant prices when profit margin is updated', fu
         'name' => $this->product->name,
         'category_id' => $this->product->category_id,
         'unit_of_measure_id' => $this->product->unit_of_measure_id,
-        'profit_margin' => 40,
+        'cif_percentage' => 40,
         'price_threshold' => $this->product->price_threshold,
         'is_active' => true,
     ])->assertRedirect(route('products.index'));

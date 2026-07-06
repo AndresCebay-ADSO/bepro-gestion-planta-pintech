@@ -33,7 +33,7 @@ beforeEach(function () {
         'category_id' => $category->id,
         'unit_of_measure_id' => $unitOfMeasure->id,
         'current_cost' => 10,
-        'profit_margin' => 20,
+        'cif_percentage' => 20,
         'current_price' => 12,
         'price_threshold' => 5,
     ]);

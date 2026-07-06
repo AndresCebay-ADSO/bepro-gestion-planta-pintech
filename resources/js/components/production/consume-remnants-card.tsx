@@ -140,12 +140,15 @@ export function ConsumeRemnantsCard({
                                             <th className="p-3 text-right">
                                                 Galones
                                             </th>
-                                            <th className="p-3 text-right">
-                                                Kilogramos
-                                            </th>
-                                            <th className="p-3 text-left">
-                                                Operario
-                                            </th>
+                                        <th className="p-3 text-right">
+                                            Kilogramos
+                                        </th>
+                                        <th className="p-3 text-right">
+                                            Costo
+                                        </th>
+                                        <th className="p-3 text-left">
+                                            Operario
+                                        </th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -174,6 +177,18 @@ export function ConsumeRemnantsCard({
                                                         maxDecimals={4}
                                                     />{' '}
                                                     kg
+                                                </td>
+                                                <td className="p-3 text-right">
+                                                    {consumption.consumed_cost !=
+                                                        null && (
+                                                        <FormattedNumber
+                                                            value={
+                                                                consumption.consumed_cost
+                                                            }
+                                                            currency
+                                                            maxDecimals={2}
+                                                        />
+                                                    )}
                                                 </td>
                                                 <td className="p-3">
                                                     {consumption.consumed_by

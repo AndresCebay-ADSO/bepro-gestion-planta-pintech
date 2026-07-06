@@ -72,7 +72,7 @@ class CompleteProductionOrderAction
 
             $lockedOrder->update($updateData);
 
-            $lockedOrder->loadMissing(['details', 'packagingPlans.productVariant', 'lineAdjustments']);
+            $lockedOrder->loadMissing(['details', 'packagingPlans.productVariant', 'lineAdjustments', 'remnantConsumptions']);
             $detailsById = $lockedOrder->details->keyBy('id');
             $totalBulkCost = '0';
             $consumedRawMaterialIds = [];
@@ -120,6 +120,16 @@ class CompleteProductionOrderAction
                 ), 4);
             }
 
+            foreach ($lockedOrder->remnantConsumptions as $consumption) {
+                if ($consumption->consumed_cost !== null) {
+                    $totalBulkCost = $this->calculator->add(
+                        $totalBulkCost,
+                        (string) $consumption->consumed_cost,
+                        4
+                    );
+                }
+            }
+
             $remnantGallons = (string) ($data['remnant_quantity_gallons'] ?? '0');
 
             $costDistribution = $this->productionCostCalculator->calculateDistributedBulkCosts(
@@ -132,11 +142,11 @@ class CompleteProductionOrderAction
             $bulkCostPerUnit = $costDistribution['bulkCostPerUnit'];
 
             $productForPricing = Product::query()
-                ->select(['id', 'profit_margin', 'price_threshold'])
+                ->select(['id', 'cif_percentage', 'price_threshold'])
                 ->find($lockedOrder->product_id);
             $autoUpdateVariantPrice = (bool) config('production.auto_update_variant_price', true);
-            $productProfitMargin = $productForPricing?->profit_margin !== null
-                ? (string) $productForPricing->profit_margin
+            $productCifPercentage = $productForPricing?->cif_percentage !== null
+                ? (string) $productForPricing->cif_percentage
                 : null;
             $productPriceThreshold = (string) ($productForPricing?->price_threshold ?? '0');
 
@@ -200,7 +210,7 @@ class CompleteProductionOrderAction
                     $this->variantPricingService->updateVariantCostAndPrice(
                         variant: $variant,
                         bulkCost: $bulkCost,
-                        profitMargin: $productProfitMargin,
+                        cifPercentage: $productCifPercentage,
                         priceThreshold: $productPriceThreshold,
                         packageUnitCost: $packagingUnitCost,
                         autoUpdatePrice: $autoUpdateVariantPrice,
@@ -257,6 +267,7 @@ class CompleteProductionOrderAction
                 order: $lockedOrder,
                 data: $data,
                 bulkCostPerUnit: $bulkCostPerUnit,
+                cifPercentage: $productCifPercentage,
                 userId: $userId
             );
 
@@ -285,6 +296,7 @@ class CompleteProductionOrderAction
         ProductionOrder $order,
         array $data,
         ?string $bulkCostPerUnit,
+        ?string $cifPercentage,
         int $userId
     ): void {
         $remnantGallons = (string) ($data['remnant_quantity_gallons'] ?? '0');
@@ -296,6 +308,12 @@ class CompleteProductionOrderAction
         $density = (string) $order->density_kg_per_gallon;
         $remnantKg = $this->calculator->mul($remnantGallons, $density, 4);
 
+        $costPerGallon = $bulkCostPerUnit ?? '0';
+
+        if ($cifPercentage !== null && $this->calculator->cmp($cifPercentage, '0', 4) > 0) {
+            $costPerGallon = $this->productionCostCalculator->applyCifToCost($costPerGallon, $cifPercentage);
+        }
+
         ProductionRemnant::create([
             'source_order_id' => $order->id,
             'product_id' => $order->product_id,
@@ -305,7 +323,7 @@ class CompleteProductionOrderAction
             'available_quantity_gallons' => $remnantGallons,
             'available_quantity_kg' => $remnantKg,
             'density_kg_per_gallon' => $density,
-            'cost_per_gallon' => $bulkCostPerUnit,
+            'cost_per_gallon' => $costPerGallon,
             'status' => RemnantStatus::Available,
             'notes' => $data['remnant_notes'] ?? null,
             'created_by' => $userId,

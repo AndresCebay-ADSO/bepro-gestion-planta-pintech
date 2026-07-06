@@ -13,6 +13,14 @@ class ProductionCostCalculatorService
         private readonly DecimalCalculator $calculator
     ) {}
 
+    public function applyCifToCost(string $cost, string $cifPercentage): string
+    {
+        $cifRatio = $this->calculator->div($cifPercentage, '100', 4);
+        $cifFactor = $this->calculator->add('1', $cifRatio, 4);
+
+        return $this->calculator->mul($cost, $cifFactor, 4);
+    }
+
     /**
      * @param  array<int, array{id:int,actual_units:float|int}>  $packagingData
      * @return array{distributedCosts: array<int, string>, bulkCostPerUnit: string|null}

@@ -59,10 +59,10 @@ class ProductionCostRecalculationService
             }
 
             $product = Product::query()
-                ->select('id', 'current_price', 'profit_margin', 'price_threshold')
+                ->select('id', 'current_price', 'cif_percentage', 'price_threshold')
                 ->find($productId);
             $autoUpdateVariantPrice = (bool) config('production.auto_update_variant_price', true);
-            $productProfitMargin = $product?->profit_margin !== null ? (string) $product->profit_margin : null;
+            $productCifPercentage = $product?->cif_percentage !== null ? (string) $product->cif_percentage : null;
             $priceThreshold = (string) ($product?->price_threshold ?? '0');
 
             if ($product !== null) {
@@ -77,11 +77,11 @@ class ProductionCostRecalculationService
                         4
                     ) >= 0);
 
-                if ($shouldUpdatePrice && $product->profit_margin !== null) {
-                    $profitMargin = (string) $product->profit_margin;
-                    $marginRatio = $this->calculator->div($profitMargin, '100', 4);
-                    $marginFactor = $this->calculator->add('1', $marginRatio, 4);
-                    $productUpdates['current_price'] = $this->calculator->mul($calculatedCost, $marginFactor, 4);
+                if ($shouldUpdatePrice && $product->cif_percentage !== null) {
+                    $cifPercentage = (string) $product->cif_percentage;
+                    $cifRatio = $this->calculator->div($cifPercentage, '100', 4);
+                    $cifFactor = $this->calculator->add('1', $cifRatio, 4);
+                    $productUpdates['current_price'] = $this->calculator->mul($calculatedCost, $cifFactor, 4);
                 }
 
                 $product->update($productUpdates);
@@ -107,7 +107,7 @@ class ProductionCostRecalculationService
             $variants->each(function (ProductVariant $variant) use (
                 $calculatedCost,
                 $autoUpdateVariantPrice,
-                $productProfitMargin,
+                $productCifPercentage,
                 $priceThreshold,
                 $packageUnitPrices,
                 $forcePriceRefresh
@@ -119,7 +119,7 @@ class ProductionCostRecalculationService
                 $this->variantPricingService->updateVariantCostAndPrice(
                     variant: $variant,
                     bulkCost: $calculatedCost,
-                    profitMargin: $productProfitMargin,
+                    cifPercentage: $productCifPercentage,
                     priceThreshold: $priceThreshold,
                     packageUnitCost: $packageUnitCost,
                     autoUpdatePrice: $autoUpdateVariantPrice,

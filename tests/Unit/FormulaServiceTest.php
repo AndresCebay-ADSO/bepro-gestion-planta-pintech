@@ -41,7 +41,7 @@ test('it throws when trying to calculate planned materials with incompatible uni
         'category_id' => $category->id,
         'unit_of_measure_id' => $liter->id,
         'current_cost' => 10,
-        'profit_margin' => 25,
+        'cif_percentage' => 25,
         'current_price' => 12.5,
         'price_threshold' => 5,
     ]);
@@ -124,7 +124,7 @@ test('it calculates planned materials and converts units successfully', function
         'category_id' => $category->id,
         'unit_of_measure_id' => $liter->id,
         'current_cost' => 10,
-        'profit_margin' => 25,
+        'cif_percentage' => 25,
         'current_price' => 12.5,
         'price_threshold' => 5,
     ]);

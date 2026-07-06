@@ -181,7 +181,7 @@ class ProductController extends Controller
         $product->update($validated);
 
         if (
-            ($product->wasChanged('profit_margin') || $product->wasChanged('price_threshold') || $product->wasChanged('current_cost'))
+            ($product->wasChanged('cif_percentage') || $product->wasChanged('price_threshold') || $product->wasChanged('current_cost'))
             && ! $priceWasManuallyChanged
         ) {
             $costRecord = $this->productionCostRecalculationService->recalculateForProduct(
@@ -191,10 +191,10 @@ class ProductController extends Controller
 
             if ($costRecord === null) {
                 $costStr = (string) ($product->current_cost ?? '0');
-                $marginStr = (string) ($product->profit_margin ?? '0');
-                $marginRatio = $this->calculator->div($marginStr, '100', 4);
-                $marginFactor = $this->calculator->add('1', $marginRatio, 4);
-                $newPrice = $this->calculator->mul($costStr, $marginFactor, 4);
+                $cifPercentageStr = (string) ($product->cif_percentage ?? '0');
+                $cifRatio = $this->calculator->div($cifPercentageStr, '100', 4);
+                $cifFactor = $this->calculator->add('1', $cifRatio, 4);
+                $newPrice = $this->calculator->mul($costStr, $cifFactor, 4);
 
                 $product->updateQuietly(['current_price' => $newPrice]);
 
@@ -204,7 +204,7 @@ class ProductController extends Controller
 
                     $costTimesPresentation = $this->calculator->mul($costStr, $presentationStr, 4);
                     $newVariantCost = $this->calculator->add($costTimesPresentation, $packageCostStr, 4);
-                    $newVariantPrice = $this->calculator->mul($newVariantCost, $marginFactor, 4);
+                    $newVariantPrice = $this->calculator->mul($newVariantCost, $cifFactor, 4);
 
                     $variant->updateQuietly([
                         'current_cost' => $newVariantCost,

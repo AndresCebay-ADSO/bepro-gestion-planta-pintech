@@ -77,6 +77,7 @@ export type ProductionOrderRemnantConsumption = {
     source_order_number?: string;
     quantity_gallons: FormNumberValue;
     quantity_kg: FormNumberValue;
+    consumed_cost?: FormNumberValue | null;
     notes?: string | null;
     consumed_at: string;
     consumed_by?: { id: number; name: string } | null;
@@ -118,7 +119,7 @@ export type ProductionOrder = {
     reviewed_by?: { id: number; name: string } | null;
     product?: {
         name?: string | null;
-        profit_margin?: FormNumberValue | null;
+        cif_percentage?: FormNumberValue | null;
         quality_solids_lower?: FormNumberValue | null;
         quality_solids_upper?: FormNumberValue | null;
     } | null;
@@ -217,4 +218,7 @@ export type PreviewCostData = {
     total_bulk_cost: FormNumberValue;
     total_finished_cost: FormNumberValue;
     total_equivalent: FormNumberValue;
+    bulk_cost_per_unit?: FormNumberValue | null;
+    cif_percentage?: FormNumberValue | null;
+    remnant_bulk_cost?: FormNumberValue | null;
 };

@@ -31,7 +31,7 @@ test('it recalculates one product and updates variant prices from command', func
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
         'current_cost' => null,
-        'profit_margin' => 20,
+        'cif_percentage' => 20,
         'current_price' => null,
         'price_threshold' => 0,
         'is_active' => true,

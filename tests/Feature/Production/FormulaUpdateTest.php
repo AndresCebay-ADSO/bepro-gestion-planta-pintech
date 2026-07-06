@@ -52,7 +52,7 @@ beforeEach(function () {
         'name' => 'Pintura Editable',
         'category_id' => $this->productCategory->id,
         'unit_of_measure_id' => $this->unit->id,
-        'profit_margin' => 25,
+        'cif_percentage' => 25,
         'price_threshold' => 3,
         'is_active' => true,
     ]);

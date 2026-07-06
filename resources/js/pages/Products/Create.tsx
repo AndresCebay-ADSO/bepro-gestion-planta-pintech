@@ -30,7 +30,7 @@ type ProductForm = {
     category_id: string;
     unit_of_measure_id: string;
     current_cost: string;
-    profit_margin: string;
+    cif_percentage: string;
     current_price: string;
     price_threshold: string;
     quality_viscosity_lower: string;
@@ -51,7 +51,7 @@ export default function ProductsCreate({ categories, units, can }: Props) {
         category_id: '',
         unit_of_measure_id: '',
         current_cost: '',
-        profit_margin: '0',
+        cif_percentage: '0',
         current_price: '',
         price_threshold: '0',
         quality_viscosity_lower: '',
@@ -448,7 +448,7 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                     Precios y Costos
                                 </h2>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    Define margen y umbral para cálculo
+                                    Define CIF y umbral para cálculo
                                     automático de precios.
                                 </p>
                             </div>
@@ -505,28 +505,28 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="profit_margin">
-                                        Margen de ganancia (%) *
+                                    <Label htmlFor="cif_percentage">
+                                        CIF (%) *
                                     </Label>
                                     <Input
-                                        id="profit_margin"
+                                        id="cif_percentage"
                                         type="number"
                                         step="0.01"
                                         min="0"
                                         max="100"
                                         required
-                                        value={data.profit_margin}
+                                        value={data.cif_percentage}
                                         onChange={(e) =>
                                             setData(
-                                                'profit_margin',
+                                                'cif_percentage',
                                                 e.target.value,
                                             )
                                         }
                                         placeholder="0.00"
                                     />
-                                    {errors.profit_margin && (
+                                    {errors.cif_percentage && (
                                         <p className="text-sm text-destructive">
-                                            {errors.profit_margin}
+                                            {errors.cif_percentage}
                                         </p>
                                     )}
                                 </div>

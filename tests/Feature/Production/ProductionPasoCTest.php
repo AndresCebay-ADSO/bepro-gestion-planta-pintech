@@ -50,7 +50,7 @@ beforeEach(function () {
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,
         'current_cost' => 10,
-        'profit_margin' => 0,
+        'cif_percentage' => 0,
         'current_price' => 10,
         'price_threshold' => 0,
     ]);
@@ -876,7 +876,7 @@ test('it calculates cost_price correctly for single variant with packaging', fun
     $variant = ProductVariant::where('product_id', $order->product_id)->first();
     $variant->update(['presentation_value' => 1]); // 1 galón
     Product::where('id', $order->product_id)->update([
-        'profit_margin' => 20,
+        'cif_percentage' => 20,
         'price_threshold' => 0,
     ]);
 

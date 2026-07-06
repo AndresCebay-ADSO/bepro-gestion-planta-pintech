@@ -38,7 +38,7 @@ class StoreProductRequest extends FormRequest
                 Rule::exists('unit_of_measures', 'id')->whereNull('deleted_at'),
             ],
             'current_cost' => ['nullable', 'numeric', 'min:0', 'decimal:0,4'],
-            'profit_margin' => ['bail', 'required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
+            'cif_percentage' => ['bail', 'required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
             'current_price' => ['nullable', 'numeric', 'min:0', 'decimal:0,4'],
             'price_threshold' => ['bail', 'required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
             'quality_viscosity_lower' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
