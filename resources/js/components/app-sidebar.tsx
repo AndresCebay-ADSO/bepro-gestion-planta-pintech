@@ -26,6 +26,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as adminCostsIndex } from '@/routes/admin/costs';
 import { index as alertsIndex } from '@/routes/alerts';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import { index as formulasIndex } from '@/routes/formulas';
@@ -33,6 +34,7 @@ import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
 import { index as productionIndex } from '@/routes/production';
 import { index as remnantsIndex } from '@/routes/production/remnants';
 import { index as productionOrdersIndex } from '@/routes/production-orders';
+import { index as pricesIndex } from '@/routes/prices';
 import { index as productsIndex } from '@/routes/products';
 import { index as rawMaterialsIndex } from '@/routes/raw-materials';
 import { index as usersIndex } from '@/routes/users';
@@ -107,20 +109,16 @@ const navigationGroups: NavGroup[] = [
         items: [
             {
                 title: 'Costos',
-                href: '/admin/costs',
+                href: adminCostsIndex().url,
                 icon: Calculator,
                 allowedRoles: ['admin'],
                 unauthorizedBehavior: 'hide',
-                disabled: true,
-                disabledLabel: 'Módulo en desarrollo',
             },
             {
                 title: 'Lista de Precios',
-                href: '/prices',
+                href: pricesIndex().url,
                 icon: WalletCards,
                 allowedRoles: ['admin', 'comercial'],
-                disabled: true,
-                disabledLabel: 'Módulo en desarrollo',
             },
         ],
     },
