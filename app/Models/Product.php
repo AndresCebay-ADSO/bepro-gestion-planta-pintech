@@ -27,6 +27,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $unit_of_measure_id
  * @property float|null $current_cost
  * @property float|null $cif_percentage
+ * @property float|null $sales_margin
  * @property float|null $current_price
  * @property float $price_threshold
  * @property float|null $quality_viscosity_lower
@@ -60,6 +61,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'unit_of_measure_id',
     'current_cost',
     'cif_percentage',
+    'sales_margin',
     'current_price',
     'price_threshold',
     'quality_viscosity_lower',
@@ -94,6 +96,7 @@ class Product extends Model
         return [
             'current_cost' => 'decimal:4',
             'cif_percentage' => 'decimal:2',
+            'sales_margin' => 'decimal:2',
             'current_price' => 'decimal:4',
             'price_threshold' => 'decimal:2',
             'quality_viscosity_lower' => 'decimal:1',

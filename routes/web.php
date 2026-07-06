@@ -10,6 +10,8 @@ use App\Http\Controllers\Inventory\RawMaterialController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
 use App\Http\Controllers\OperatorController;
+use App\Http\Controllers\Pricing\CostController;
+use App\Http\Controllers\Pricing\PriceListController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductDocumentController;
 use App\Http\Controllers\Production\LineAdjustmentController;
@@ -39,10 +41,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // ============ RUTAS PROTEGIDAS POR ROL ============
 
-// Solo ADMIN: Acceso a configuración, usuarios, auditoría
+// Solo ADMIN: Acceso a configuración, usuarios, auditoría, costos
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
     Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+    Route::get('/admin/costs', [CostController::class, 'index'])->name('admin.costs.index');
+    Route::patch('/admin/costs/{product}', [CostController::class, 'update'])->name('admin.costs.update');
     Route::resource('users', UserController::class)->except(['show']);
     Route::patch('raw-materials/{raw_material}/reactivate', [RawMaterialController::class, 'reactivate'])->name('raw-materials.reactivate');
     Route::resource('raw-materials', RawMaterialController::class)->except(['index', 'show']);
@@ -58,6 +62,11 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
     Route::get('/production', [ProductionController::class, 'index'])->name('production.index');
     // Route::resource('production-orders', ProductionOrderController::class);
     // Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+});
+
+// ADMIN + COMERCIAL: Lista de precios (lectura)
+Route::middleware(['auth', 'verified', 'role:admin,comercial'])->group(function () {
+    Route::get('/prices', [PriceListController::class, 'index'])->name('prices.index');
 });
 
 // COMERCIAL: Consulta de disponibilidad (solo lectura)
@@ -82,11 +91,9 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
     Route::resource('warehouses', WarehouseController::class)->only(['show']);
 });
 
-// ADMIN + PRODUCCIÓN: Acceso a costos y precios
-Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
-    // Route::resource('production-costs', ProductionCostController::class);
-    // Route::resource('price-list', PriceListController::class);
-});
+// ADMIN + PRODUCCIÓN: Acceso a costos y precios (legacy comments removed)
+// Costos: /admin/costs (role:admin)
+// Lista de Precios: /prices (role:admin,comercial)
 
 // ADMIN + PRODUCCIÓN + COMERCIAL: Consulta de catálogos e inventarios (según policy)
 Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
