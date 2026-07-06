@@ -25,6 +25,32 @@ class FormulaSeeder extends Seeder
         $formulas = [
 
             // Ajustadores
+            'BP AJUSTADOR IA-500' => [
+                ['S-4', 0.36],
+                ['S-3', 2.64],
+            ],
+            'BP AJUSTADOR IP-350' => [
+                ['S-4', 3.156],
+                ['S-10', 0.105],
+                ['S-6', 0.105],
+            ],
+            'BP AJUSTADOR AP-100' => [
+                ['S-4', 2.68],
+                ['S-10', 0.34],
+                ['S-6', 0.34],
+            ],
+            'BP AJUSTADOR IE-400 FM' => [
+                ['S-7', 1],
+                ['S-11', 0.17],
+                ['S-4', 1.68],
+                ['S-5', 0.504],
+            ],
+            'BP AJUSTADOR IP-300' => [
+                ['S-8 B', 1.28],
+                ['S-11 S', 1.022],
+                ['S-6', 0.598],
+                ['S-9 R', 0.427],
+            ],
             'BP ESMALTE POLIURETANO BLANCO' => [
                 ['R-7 A', 1.45],
                 ['ABS-1 PU', 0.03],
@@ -110,22 +136,6 @@ class FormulaSeeder extends Seeder
                 ['ABS - 9', 0.006],
                 ['ABS - 13', 0.032],
             ],
-            'BP AJUSTADOR IE-400 FM' => [
-                ['S-7', 1],
-                ['S-11', 0.17],
-                ['S-4', 1.68],
-                ['S-5', 0.504],
-            ],
-            'BP AJUSTADOR IP-350' => [
-                ['S-4', 3.156],
-                ['S-10', 0.105],
-                ['S-6', 0.105],
-            ],
-            'BP AJUSTADOR IP-300' => [
-                ['S-9 R', 2.85],
-                ['S-6', 0.17],
-                ['S-7', 0.34],
-            ],
             'BP CATALIZADOR PRIMER ESTRUCTURAL' => [
                 ['R-6 S', 0.52],
                 ['S-4', 0.95],
@@ -134,11 +144,6 @@ class FormulaSeeder extends Seeder
                 ['ABS-15', 0.015],
                 ['ABS-19', 0.0062],
                 ['S-4', 0.83],
-            ],
-            'BP AJUSTADOR AP-100' => [
-                ['S-4', 2.68],
-                ['S-10', 0.34],
-                ['S-6', 0.34],
             ],
             'BP PRIMER EPOXICO HS 2K TINTEABLE' => [
                 ['R-5 C', 0.6],

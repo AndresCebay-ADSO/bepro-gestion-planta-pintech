@@ -20,7 +20,6 @@ use App\Services\AlertService;
 use App\Services\DecimalCalculator;
 use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\Pricing\ProductionCostCalculatorService;
-use App\Services\VariantPricingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -29,7 +28,6 @@ class CompleteProductionOrderAction
     public function __construct(
         private readonly FifoStockAllocatorService $fifoStockAllocator,
         private readonly ProductionCostCalculatorService $productionCostCalculator,
-        private readonly VariantPricingService $variantPricingService,
         private readonly DecimalCalculator $calculator,
         private readonly AlertService $alertService,
         private readonly SaveProductionOrderOperationalDataAction $saveOperationalData,
@@ -142,13 +140,11 @@ class CompleteProductionOrderAction
             $bulkCostPerUnit = $costDistribution['bulkCostPerUnit'];
 
             $productForPricing = Product::query()
-                ->select(['id', 'cif_percentage', 'price_threshold'])
+                ->select(['id', 'cif_percentage'])
                 ->find($lockedOrder->product_id);
-            $autoUpdateVariantPrice = (bool) config('production.auto_update_variant_price', true);
             $productCifPercentage = $productForPricing?->cif_percentage !== null
                 ? (string) $productForPricing->cif_percentage
                 : null;
-            $productPriceThreshold = (string) ($productForPricing?->price_threshold ?? '0');
 
             $packagingPlansById = $lockedOrder->packagingPlans->keyBy('id');
 
@@ -168,7 +164,7 @@ class CompleteProductionOrderAction
                 }
 
                 $variant = ProductVariant::query()
-                    ->select(['id', 'presentation_value', 'package_raw_material_id', 'current_cost', 'current_price'])
+                    ->select(['id', 'package_raw_material_id'])
                     ->find($plan->product_variant_id);
 
                 $packagingUnitCost = '0';
@@ -202,21 +198,6 @@ class CompleteProductionOrderAction
                     'notes' => "Finalización OP #{$lockedOrder->order_number}",
                     'created_by' => $userId,
                 ]);
-
-                if ($variant !== null) {
-                    $presentationValue = (string) ($variant->presentation_value ?? 1);
-                    $bulkCost = $this->calculator->cmp($presentationValue, '0', 4) > 0 ? $this->calculator->div($bulkCostForVariant, $presentationValue, 4) : '0';
-
-                    $this->variantPricingService->updateVariantCostAndPrice(
-                        variant: $variant,
-                        bulkCost: $bulkCost,
-                        cifPercentage: $productCifPercentage,
-                        priceThreshold: $productPriceThreshold,
-                        packageUnitCost: $packagingUnitCost,
-                        autoUpdatePrice: $autoUpdateVariantPrice,
-                        forceRefresh: false
-                    );
-                }
 
                 $inventory = FinishedInventory::query()
                     ->lockForUpdate()

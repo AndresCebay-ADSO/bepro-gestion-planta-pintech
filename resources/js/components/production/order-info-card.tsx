@@ -46,6 +46,7 @@ export function OrderInfoCard({
         remnantQuantityGallons !== undefined &&
         remnantQuantityGallons !== '' &&
         Number(remnantQuantityGallons) > 0;
+
     return (
         <Card className="bg-muted/40">
             <CardContent className="space-y-2 p-4 text-xs">

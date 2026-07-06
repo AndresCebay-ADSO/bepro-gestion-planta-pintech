@@ -140,15 +140,15 @@ export function ConsumeRemnantsCard({
                                             <th className="p-3 text-right">
                                                 Galones
                                             </th>
-                                        <th className="p-3 text-right">
-                                            Kilogramos
-                                        </th>
-                                        <th className="p-3 text-right">
-                                            Costo
-                                        </th>
-                                        <th className="p-3 text-left">
-                                            Operario
-                                        </th>
+                                            <th className="p-3 text-right">
+                                                Kilogramos
+                                            </th>
+                                            <th className="p-3 text-right">
+                                                Costo
+                                            </th>
+                                            <th className="p-3 text-left">
+                                                Operario
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
