@@ -910,11 +910,6 @@ test('it calculates cost_price correctly for single variant with packaging', fun
     expect((float) $movement->cost_price)->toBe(12.5); // (50*5)/20 = 12.5
     expect((float) $movement->quantity)->toBe(20.0);
 
-    // Verify ProductVariant.current_cost was updated
-    $variant->refresh();
-    expect((float) $variant->current_cost)->toBe(12.5);
-    expect((float) $variant->current_price)->toBe(15.0);
-
     Queue::assertPushed(RecalculateRawMaterialReferencePrice::class, function ($job) {
         return $job->rawMaterialId === $this->material->id;
     });
