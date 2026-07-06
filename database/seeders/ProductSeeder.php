@@ -29,10 +29,6 @@ class ProductSeeder extends Seeder
             'BP AJUSTADOR AP-100',
             'BP AJUSTADOR IE-400 FM',
             'BP AJUSTADOR IP-300', // Hasta aqui
-            'BP AJUSTADOR ALQUIDICO',
-            'BP AJUSTADOR AUTOMOTIVO',
-            'BP AJUSTADOR INDUSTRIAL SS100',
-            'BP AJUSTADOR SS-100',
             // Esmalte Poliuretano
             ['name' => 'BP ESMALTE POLIURETANO BLANCO',
                 'quality_viscosity_lower' => 95, 'quality_viscosity_upper' => 100,
