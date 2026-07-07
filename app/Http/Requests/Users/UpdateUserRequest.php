@@ -22,6 +22,7 @@ class UpdateUserRequest extends FormRequest
         return [
             'name' => ['bail', 'required', 'string', 'max:255'],
             'email' => ['bail', 'required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($userId)],
+            'job_title' => ['bail', 'nullable', 'string', 'max:255'],
             'role' => ['bail', 'required', 'string', Rule::exists('roles', 'name')],
             'is_active' => ['bail', 'required', 'boolean'],
         ];

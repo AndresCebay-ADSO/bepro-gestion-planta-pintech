@@ -72,7 +72,8 @@ class UserController extends Controller
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => bcrypt($validated['password']),
+            'job_title' => ! empty($validated['job_title']) ? $validated['job_title'] : null,
+            'password' => $validated['password'],
             'email_verified_at' => now(),
             'is_active' => $validated['is_active'],
         ]);
@@ -107,6 +108,7 @@ class UserController extends Controller
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'job_title' => ! empty($validated['job_title']) ? $validated['job_title'] : null,
             'is_active' => $validated['is_active'],
         ]);
 

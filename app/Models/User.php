@@ -6,9 +6,11 @@ use App\Models\Concerns\HasAuditDescription;
 use App\Notifications\ResetPasswordNotification;
 use Database\Factories\UserFactory;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -16,6 +18,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -30,11 +33,14 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $remember_token
  * @property bool $is_active
  * @property Carbon|null $last_login_at
+ * @property string|null $job_title
+ * @property string|null $signature_path
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection|Warehouse[] $warehouses
  */
-#[Fillable(['name', 'email', 'password', 'is_active', 'last_login_at'])]
+#[Appends(['signature_url'])]
+#[Fillable(['name', 'email', 'password', 'is_active', 'last_login_at', 'job_title', 'signature_path'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -50,7 +56,7 @@ class User extends Authenticatable
         return LogOptions::defaults()
             ->useLogName('usuarios')
             ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
-            ->logOnly(['name', 'email', 'is_active', 'last_login_at'])
+            ->logOnly(['name', 'email', 'is_active', 'last_login_at', 'job_title', 'signature_path'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -67,7 +73,16 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
+            'job_title' => 'string',
+            'signature_path' => 'string',
         ];
+    }
+
+    public function signatureUrl(): Attribute
+    {
+        return Attribute::get(fn () => $this->signature_path
+            ? Storage::disk('public')->url($this->signature_path)
+            : null);
     }
 
     /**

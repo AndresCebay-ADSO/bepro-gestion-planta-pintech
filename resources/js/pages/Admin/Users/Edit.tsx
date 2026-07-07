@@ -9,6 +9,7 @@ interface User {
     id: number;
     name: string;
     email: string;
+    job_title?: string | null;
     is_active: boolean;
     roles: { name: string }[];
 }
@@ -27,6 +28,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
     const { data, setData, put, processing, errors } = useForm({
         name: user.name,
         email: user.email,
+        job_title: user.job_title ?? '',
         role: user.roles[0]?.name || 'produccion',
         is_active: user.is_active,
     });
@@ -94,6 +96,26 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                         {errors.email && (
                             <p className="mt-1 text-sm text-destructive">
                                 {errors.email}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Job Title */}
+                    <div>
+                        <label className="mb-2 block text-sm font-semibold text-foreground">
+                            Cargo
+                        </label>
+                        <input
+                            type="text"
+                            name="job_title"
+                            value={data.job_title}
+                            onChange={(e) => setData('job_title', e.target.value)}
+                            placeholder="Ej: Gerente de Producción"
+                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
+                        />
+                        {errors.job_title && (
+                            <p className="mt-1 text-sm text-destructive">
+                                {errors.job_title}
                             </p>
                         )}
                     </div>

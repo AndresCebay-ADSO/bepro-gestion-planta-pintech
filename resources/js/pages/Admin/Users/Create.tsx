@@ -19,6 +19,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
+        job_title: '',
         password: '',
         password_confirmation: '',
         role: roles.find((r) => r.name === 'produccion')?.name || 'produccion',
@@ -92,6 +93,26 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         {errors.email && (
                             <p className="mt-1 text-sm text-destructive">
                                 {errors.email}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Job Title */}
+                    <div>
+                        <label className="mb-2 block text-sm font-semibold text-foreground">
+                            Cargo
+                        </label>
+                        <input
+                            type="text"
+                            name="job_title"
+                            value={data.job_title}
+                            onChange={(e) => setData('job_title', e.target.value)}
+                            placeholder="Ej: Gerente de Producción"
+                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
+                        />
+                        {errors.job_title && (
+                            <p className="mt-1 text-sm text-destructive">
+                                {errors.job_title}
                             </p>
                         )}
                     </div>
