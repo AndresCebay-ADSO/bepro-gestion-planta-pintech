@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Services\SignatureOptimizerService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -43,7 +44,15 @@ class ProfileController extends Controller
                 Storage::disk('public')->delete($user->signature_path);
             }
 
-            $user->signature_path = $request->file('signature')->store('signatures', 'public');
+            try {
+                $optimizer = app(SignatureOptimizerService::class);
+                $optimized = $optimizer->optimize($request->file('signature'));
+                $user->signature_path = $optimized->store('signatures', 'public');
+            } catch (\RuntimeException) {
+                return back()->withErrors([
+                    'signature' => 'No se pudo procesar la imagen de firma. Asegúrate de que sea un archivo de imagen válido.',
+                ]);
+            }
         } elseif ($request->boolean('remove_signature')) {
             if ($user->signature_path) {
                 Storage::disk('public')->delete($user->signature_path);

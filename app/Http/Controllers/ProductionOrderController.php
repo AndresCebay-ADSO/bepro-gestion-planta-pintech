@@ -26,6 +26,7 @@ use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
+use App\Models\User;
 use App\Models\Warehouse;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -102,10 +103,23 @@ class ProductionOrderController extends Controller
         $user = auth()->user();
         $includeCosts = $user?->can('previewCosts', $productionOrder) ?? false;
 
+        $qualitySigners = User::role(['admin', 'produccion'])
+            ->active()
+            ->whereNotNull('job_title')
+            ->whereNotNull('signature_path')
+            ->get(['id', 'name', 'job_title', 'signature_path'])
+            ->map(fn (User $u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'job_title' => $u->job_title,
+                'signature_url' => $u->signature_url,
+            ]);
+
         return Inertia::render('Production/Orders/Show', [
             'order' => $this->buildProductionOrderShowData->execute($productionOrder, $includeCosts),
             'rawMaterials' => $rawMaterials,
             'availableVariants' => $availableVariants,
+            'qualitySigners' => $qualitySigners,
             'returnTo' => $this->resolveReturnTo($request),
             'can' => [
                 'startProduction' => $user?->can('startProduction', $productionOrder) ?? false,

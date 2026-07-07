@@ -26,7 +26,11 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Role::create(['name' => 'admin']);
-    $this->user = User::factory()->create(['email_verified_at' => now()]);
+    $this->user = User::factory()->create([
+        'email_verified_at' => now(),
+        'job_title' => 'Analista de Calidad',
+        'signature_path' => 'signatures/test.png',
+    ]);
     $this->user->assignRole('admin');
     $this->actingAs($this->user);
 
@@ -108,6 +112,7 @@ function completePayload(object $test, array $overrides = []): array
         'density_kg_per_gallon' => 5,
         'remnant_quantity_gallons' => null,
         'remnant_notes' => null,
+        'quality_responsible_user_id' => $test->user->id,
         'ingredients' => [
             ['id' => $test->detail->id, 'actual_quantity' => 50],
         ],
@@ -229,6 +234,7 @@ it('distributes bulk cost across packaging and remnant', function () {
         'actual_yield_quantity' => 25, // 20 gal envasados + 5 gal saldo
         'density_kg_per_gallon' => 5,
         'remnant_quantity_gallons' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $this->detail->id, 'actual_quantity' => 50],
         ],

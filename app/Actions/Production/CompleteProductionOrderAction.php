@@ -61,6 +61,7 @@ class CompleteProductionOrderAction
             $updateData = [
                 'status' => ProductionOrderStatus::Completed,
                 'completion_date' => now(),
+                'quality_responsible_user_id' => $data['quality_responsible_user_id'] ?? null,
             ];
 
             if ($wasPendingReview) {

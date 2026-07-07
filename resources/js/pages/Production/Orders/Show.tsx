@@ -44,6 +44,7 @@ export default function ProductionOrderShow({
     order,
     rawMaterials,
     availableVariants,
+    qualitySigners,
     returnTo,
     can,
 }: ProductionOrderShowProps) {
@@ -101,6 +102,7 @@ export default function ProductionOrderShow({
             packaging_start_time: order.packaging_start_time ?? '',
             packaging_end_time: order.packaging_end_time ?? '',
             responsible_name: order.responsible_name ?? '',
+            quality_responsible_user_id: order.quality_responsible_user_id ?? null,
             spillage_quantity: order.spillage_quantity ?? 0,
             density_kg_per_gallon: order.density_kg_per_gallon ?? '',
             remnant_quantity_gallons: '',
@@ -412,6 +414,8 @@ export default function ProductionOrderShow({
                             processingLabel={processingLabel}
                             showReject={showReject}
                             onReject={() => setIsRejectOpen(true)}
+                            qualitySigners={qualitySigners}
+                            showQualitySigner={submitMode === 'complete'}
                         />
 
                         <OrderInfoCard

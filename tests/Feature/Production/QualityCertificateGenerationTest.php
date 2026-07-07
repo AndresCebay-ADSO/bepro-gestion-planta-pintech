@@ -27,10 +27,17 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Storage::fake('local');
+    Storage::fake('public');
 
-    $this->user = User::factory()->create(['email_verified_at' => now()]);
+    $this->user = User::factory()->create([
+        'email_verified_at' => now(),
+        'job_title' => 'Analista de Calidad',
+        'signature_path' => 'signatures/test.png',
+    ]);
     $this->user->assignRole(Role::create(['name' => 'admin']));
     $this->actingAs($this->user);
+
+    Storage::disk('public')->put('signatures/test.png', 'fake-signature-content');
 
     $this->factory = Warehouse::create([
         'id' => 1,
@@ -121,6 +128,7 @@ test('completing order generates qr code and quality certificate', function () {
         'grinding_hg' => 7,
         'quality_solids' => 52.5,
         'responsible_name' => 'Analista QC',
+        'quality_responsible_user_id' => $this->user->id,
         'density_kg_per_gallon' => 5,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
@@ -178,6 +186,7 @@ test('completing order saves quality solids alongside viscosity and grinding', f
         'grinding_hg' => 6.5,
         'quality_solids' => 48.3,
         'responsible_name' => 'Operario Test',
+        'quality_responsible_user_id' => $this->user->id,
         'density_kg_per_gallon' => 5,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
@@ -229,6 +238,7 @@ test('regenerating certificate does not duplicate current document', function ()
         'viscosity_ku' => 105,
         'grinding_hg' => 7,
         'responsible_name' => 'QC 1',
+        'quality_responsible_user_id' => $this->user->id,
     ]);
 
     $service = app(QualityInspectionCertificateService::class);
@@ -254,4 +264,261 @@ test('regenerating certificate does not duplicate current document', function ()
 
     // Solo 1 QR code por orden (reutiliza)
     expect(QrCode::where('production_order_id', $order->id)->count())->toBe(1);
+});
+
+test('quality signer is required on complete', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-QS-REQ-0001',
+        'product_id' => $this->product->id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $this->post(route('production-orders.start', $order));
+
+    $response = $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 98,
+        'viscosity_ku' => 105,
+        'grinding_hg' => 7,
+        'quality_solids' => 52.5,
+        'responsible_name' => 'Analista QC',
+        'density_kg_per_gallon' => 5,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [],
+    ]);
+
+    $response->assertSessionHasErrors('quality_responsible_user_id');
+});
+
+test('quality signer must have job_title and signature', function () {
+    $incompleteUser = User::factory()->create([
+        'job_title' => null,
+        'signature_path' => null,
+    ]);
+    $incompleteUser->assignRole(Role::create(['name' => 'produccion']));
+
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-QS-INC-0001',
+        'product_id' => $this->product->id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $this->post(route('production-orders.start', $order));
+
+    $response = $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 98,
+        'viscosity_ku' => 105,
+        'grinding_hg' => 7,
+        'quality_solids' => 52.5,
+        'responsible_name' => 'Analista QC',
+        'quality_responsible_user_id' => $incompleteUser->id,
+        'density_kg_per_gallon' => 5,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [],
+    ]);
+
+    $response->assertSessionHasErrors('quality_responsible_user_id');
+});
+
+test('quality signer must have admin or produccion role', function () {
+    $operatorUser = User::factory()->create([
+        'job_title' => 'Operario de Planta',
+        'signature_path' => 'signatures/operator.png',
+    ]);
+    $operatorUser->assignRole(Role::create(['name' => 'operador']));
+
+    Storage::disk('public')->put('signatures/operator.png', 'fake-signature-content');
+
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-QS-ROL-0001',
+        'product_id' => $this->product->id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $this->post(route('production-orders.start', $order));
+
+    $response = $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 98,
+        'viscosity_ku' => 105,
+        'grinding_hg' => 7,
+        'quality_solids' => 52.5,
+        'responsible_name' => 'Analista QC',
+        'quality_responsible_user_id' => $operatorUser->id,
+        'density_kg_per_gallon' => 5,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [],
+    ]);
+
+    $response->assertSessionHasErrors('quality_responsible_user_id');
+});
+
+test('quality signer must be active', function () {
+    $inactiveUser = User::factory()->create([
+        'is_active' => false,
+        'job_title' => 'Jefe de Calidad',
+        'signature_path' => 'signatures/inactive.png',
+    ]);
+    $inactiveUser->assignRole(Role::create(['name' => 'produccion']));
+
+    Storage::disk('public')->put('signatures/inactive.png', 'fake-signature-content');
+
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-QS-ACT-0001',
+        'product_id' => $this->product->id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $this->user->id,
+    ]);
+
+    $detail = ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $this->post(route('production-orders.start', $order));
+
+    $response = $this->post(route('production-orders.complete', $order), [
+        'actual_yield_quantity' => 98,
+        'viscosity_ku' => 105,
+        'grinding_hg' => 7,
+        'quality_solids' => 52.5,
+        'responsible_name' => 'Analista QC',
+        'quality_responsible_user_id' => $inactiveUser->id,
+        'density_kg_per_gallon' => 5,
+        'ingredients' => [
+            ['id' => $detail->id, 'actual_quantity' => 50],
+        ],
+        'packaging' => [],
+    ]);
+
+    $response->assertSessionHasErrors('quality_responsible_user_id');
+});
+
+test('certificate uses quality responsible user data', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->material->id,
+        'warehouse_id' => $this->factory->id,
+        'initial_quantity' => 100,
+        'remaining_quantity' => 100,
+        'unit_price' => 5,
+        'entry_date' => now(),
+    ]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-QS-DATA-0001',
+        'product_id' => $this->product->id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->factory->id,
+        'quantity' => 100,
+        'status' => 'completed',
+        'planned_date' => now(),
+        'completion_date' => now(),
+        'created_by' => $this->user->id,
+        'quality_responsible_user_id' => $this->user->id,
+    ]);
+
+    ProductionOrderDetail::create([
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'batch_id' => $batch->id,
+        'planned_quantity' => 50,
+        'unit_cost' => 5,
+        'total_cost' => 250,
+    ]);
+
+    $service = app(QualityInspectionCertificateService::class);
+    $payload = $service->buildPayload($order);
+
+    expect($payload['responsible_name'])->toBe($this->user->name)
+        ->and($payload['responsible_role'])->toBe($this->user->job_title);
 });

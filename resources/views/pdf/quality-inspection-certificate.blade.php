@@ -238,8 +238,8 @@
             @if($signatureBase64)
                 <img src="{{ $signatureBase64 }}" alt="Firma">
             @endif
-            <div class="name">{{ $certificate['responsible_name'] ?? 'N/A Carlos Alberto Muñoz' }}</div>
-            <div class="role">{{ $certificate['responsible_role'] ?? 'Analista de producción.' }}</div>
+            <div class="name">{{ $certificate['responsible_name'] ?? 'N/A' }}</div>
+            <div class="role">{{ $certificate['responsible_role'] ?? 'N/A' }}</div>
         </div>
 
     </div>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Production;
 
 use App\Models\ProductionOrderPackagingPlan;
+use App\Models\User;
 use App\Services\DecimalCalculator;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -45,6 +46,7 @@ class CompleteProductionOrderRequest extends FormRequest
             'packaging_start_time' => 'nullable|date',
             'packaging_end_time' => 'nullable|date',
             'responsible_name' => 'nullable|string|max:255',
+            'quality_responsible_user_id' => ['required', 'exists:users,id'],
             'spillage_quantity' => 'nullable|numeric|min:0',
             'ingredients' => 'required|array',
             'ingredients.*.id' => [
@@ -154,6 +156,43 @@ class CompleteProductionOrderRequest extends FormRequest
                     'actual_yield_quantity',
                     "El rendimiento real debe coincidir con el envasado equivalente más el saldo. Registrado: {$actualYield}, esperado: {$expectedYield} (tolerancia: {$yieldTolerance})."
                 );
+            },
+            function (Validator $validator): void {
+                if ($validator->errors()->isNotEmpty()) {
+                    return;
+                }
+
+                $signerId = $this->input('quality_responsible_user_id');
+
+                if ($signerId === null) {
+                    return;
+                }
+
+                $user = User::query()->find($signerId);
+
+                if ($user === null) {
+                    $validator->errors()->add('quality_responsible_user_id', 'El usuario seleccionado no existe.');
+
+                    return;
+                }
+
+                if (! $user->is_active) {
+                    $validator->errors()->add('quality_responsible_user_id', 'El usuario seleccionado no está activo.');
+
+                    return;
+                }
+
+                if (! $user->hasAnyRole(['admin', 'produccion'])) {
+                    $validator->errors()->add('quality_responsible_user_id', 'El usuario seleccionado debe tener rol administrador o producción.');
+                }
+
+                if ($user->job_title === null || $user->job_title === '') {
+                    $validator->errors()->add('quality_responsible_user_id', 'El usuario seleccionado no tiene un cargo configurado.');
+                }
+
+                if ($user->signature_path === null || $user->signature_path === '') {
+                    $validator->errors()->add('quality_responsible_user_id', 'El usuario seleccionado no tiene una firma cargada.');
+                }
             },
         ];
     }

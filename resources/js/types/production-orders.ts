@@ -117,6 +117,12 @@ export type ProductionOrder = {
     rejection_reason?: string | null;
     submitted_by?: { id: number; name: string } | null;
     reviewed_by?: { id: number; name: string } | null;
+    quality_responsible_user_id?: number | null;
+    quality_responsible_user?: {
+        id: number;
+        name: string;
+        job_title: string;
+    } | null;
     product?: {
         name?: string | null;
         cif_percentage?: FormNumberValue | null;
@@ -152,6 +158,7 @@ export type ProductionOrderShowProps = {
     order: ProductionOrder;
     rawMaterials: RawMaterialOption[];
     availableVariants: VariantOption[];
+    qualitySigners: QualitySignerOption[];
     returnTo?: string | null;
     can: ProductionOrderCan;
 };
@@ -188,6 +195,7 @@ export type ProductionOrderFormData = {
     packaging_start_time: string;
     packaging_end_time: string;
     responsible_name: string;
+    quality_responsible_user_id: number | null;
     spillage_quantity: FormNumberValue;
     density_kg_per_gallon: FormNumberValue;
     remnant_quantity_gallons: FormNumberValue;
@@ -195,6 +203,13 @@ export type ProductionOrderFormData = {
     notes: string;
     ingredients: ProductionOrderIngredientFormRow[];
     packaging: ProductionOrderPackagingFormRow[];
+};
+
+export type QualitySignerOption = {
+    id: number;
+    name: string;
+    job_title: string;
+    signature_url: string | null;
 };
 
 export type ProductionOrderSetData = SetDataAction<ProductionOrderFormData>;

@@ -28,7 +28,12 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->user = User::factory()->create(['email_verified_at' => now()]);
+    $this->user = User::factory()->create([
+        'email_verified_at' => now(),
+        'job_title' => 'Analista de Calidad',
+        'signature_path' => 'signatures/test.png',
+    ]);
+    Role::create(['name' => 'produccion']);
     $this->user->assignRole(Role::create(['name' => 'admin']));
     $this->actingAs($this->user);
 
@@ -265,6 +270,7 @@ test('it completes order and updates inventory', function () {
         'grinding_hg' => 7,
         'responsible_name' => 'Operario Juan',
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 52],
         ],
@@ -326,6 +332,7 @@ test('it completes order for materials that do not track inventory without consu
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 100,
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 52],
         ],
@@ -387,6 +394,7 @@ test('it prevents completing the same production order twice', function () {
     $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 100,
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -397,6 +405,7 @@ test('it prevents completing the same production order twice', function () {
         ->post(route('production-orders.complete', $order), [
             'actual_yield_quantity' => 100,
             'density_kg_per_gallon' => 5,
+            'quality_responsible_user_id' => $this->user->id,
             'ingredients' => [
                 ['id' => $detail->id, 'actual_quantity' => 50],
             ],
@@ -442,6 +451,7 @@ test('it completes order even when there is no packaging plan', function () {
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 98,
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -499,6 +509,7 @@ test('it rejects completion when actual yield does not match packaging equivalen
         ->post(route('production-orders.complete', $order), [
             'actual_yield_quantity' => 9.98,
             'density_kg_per_gallon' => 5,
+            'quality_responsible_user_id' => $this->user->id,
             'ingredients' => [
                 ['id' => $detail->id, 'actual_quantity' => 50],
             ],
@@ -647,6 +658,7 @@ test('it creates separate finished inventory records per variant when packaging 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 20,
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -728,6 +740,7 @@ test('it consumes raw material using fifo across multiple batches', function () 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 150,
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 150],
         ],
@@ -819,6 +832,7 @@ test('it consumes packaging raw material when finishing production by variant un
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 20,
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -891,6 +905,7 @@ test('it calculates cost_price correctly for single variant with packaging', fun
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 20,
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -977,6 +992,7 @@ test('it distributes bulk cost across multiple variants by presentation_value', 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 30,
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -1071,6 +1087,7 @@ test('it includes packaging material cost in cost_price', function () {
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 20,
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -1134,6 +1151,7 @@ test('it creates production_costs record for historical tracking', function () {
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 20,
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -1205,6 +1223,7 @@ test('it updates existing production_cost record for the same order instead of f
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 20,
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -1259,6 +1278,7 @@ test('it keeps production_costs history for multiple orders with the same formul
 
     $this->post(route('production-orders.complete', $firstOrder), [
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $firstDetail->id, 'actual_quantity' => 50],
         ],
@@ -1289,6 +1309,7 @@ test('it keeps production_costs history for multiple orders with the same formul
 
     $this->post(route('production-orders.complete', $secondOrder), [
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $secondDetail->id, 'actual_quantity' => 60],
         ],
@@ -1342,6 +1363,7 @@ test('it sets unit_cost and total_cost to zero when actual quantity is zero', fu
 
     $this->post(route('production-orders.complete', $order), [
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 0],
         ],
@@ -1443,6 +1465,7 @@ test('it rejects completion when ingredient detail ids are duplicated', function
         ->post(route('production-orders.complete', $order), [
             'actual_yield_quantity' => 100,
             'density_kg_per_gallon' => 5,
+            'quality_responsible_user_id' => $this->user->id,
             'ingredients' => [
                 ['id' => $detail->id, 'actual_quantity' => 25],
                 ['id' => $detail->id, 'actual_quantity' => 25],

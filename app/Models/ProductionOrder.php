@@ -50,6 +50,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int|null $reviewed_by
  * @property CarbonInterface|null $reviewed_at
  * @property string|null $rejection_reason
+ * @property int|null $quality_responsible_user_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Product $product
@@ -97,6 +98,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'reviewed_by',
     'reviewed_at',
     'rejection_reason',
+    'quality_responsible_user_id',
 ])]
 class ProductionOrder extends Model
 {
@@ -185,6 +187,11 @@ class ProductionOrder extends Model
     public function reviewedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function qualityResponsibleUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'quality_responsible_user_id');
     }
 
     public function details(): HasMany

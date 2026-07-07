@@ -18,7 +18,7 @@ class QualityInspectionCertificateService
 {
     public function generateForCompletedOrder(ProductionOrder $order, int $userId): QrDocument
     {
-        $order->loadMissing(['product', 'qrCode.documents']);
+        $order->loadMissing(['product', 'qrCode.documents', 'qualityResponsibleUser']);
 
         if ($order->status !== ProductionOrderStatus::Completed) {
             throw new \DomainException('Solo se puede generar certificado para órdenes completadas.');
@@ -55,8 +55,9 @@ class QualityInspectionCertificateService
      */
     public function buildPayload(ProductionOrder $order): array
     {
-        $order->loadMissing('product');
+        $order->loadMissing(['product', 'qualityResponsibleUser']);
         $product = $order->product;
+        $signer = $order->qualityResponsibleUser;
 
         $lot = $order->lot_number ?? $order->order_number;
 
@@ -66,8 +67,8 @@ class QualityInspectionCertificateService
             'lot' => $lot,
             'manufacturing_date' => $order->getManufacturingDate()?->format('d/m/Y'),
             'verification_date' => $order->getVerificationDate()?->format('d/m/Y'),
-            'responsible_name' => $order->responsible_name, // Organizar un campo en la tabla extra para el responsable de calidad
-            'responsible_role' => 'Analista de producción',
+            'responsible_name' => $signer?->name ?? $order->responsible_name ?? 'N/A',
+            'responsible_role' => $signer?->job_title ?? 'N/A',
             'tests' => [
                 $this->numericTest(
                     name: 'VISCOSIDAD',
@@ -128,7 +129,13 @@ class QualityInspectionCertificateService
     private function storePdf(ProductionOrder $order, array $payload, int $version): array
     {
         $logoBase64 = $this->assetBase64(public_path('images/logo-bepro-calidad.png'));
-        $signatureBase64 = $this->assetBase64(public_path('images/firma-calidad.jpg'));
+
+        $signatureBase64 = null;
+        if ($order->qualityResponsibleUser?->signature_path) {
+            $signatureBase64 = $this->assetBase64(
+                Storage::disk('public')->path($order->qualityResponsibleUser->signature_path)
+            );
+        }
 
         /** @var \Barryvdh\DomPDF\PDF $pdf */
         $pdf = Pdf::loadView('pdf.quality-inspection-certificate', [

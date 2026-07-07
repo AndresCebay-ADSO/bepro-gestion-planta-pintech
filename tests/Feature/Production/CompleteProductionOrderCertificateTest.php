@@ -39,6 +39,8 @@ function createCertificateCompletionFixture(): array
         'name' => 'Quality Analyst',
         'email' => 'quality@example.com',
         'password' => Hash::make('password'),
+        'job_title' => 'Analista de Calidad',
+        'signature_path' => 'signatures/test.png',
     ]);
     $user->assignRole('produccion');
 
@@ -122,6 +124,7 @@ test('completing an order stores quality solids and generates current certificat
         'quality_solids' => 50,
         'responsible_name' => 'Analista Calidad',
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $user->id,
         'ingredients' => [
             [
                 'id' => $detail->id,

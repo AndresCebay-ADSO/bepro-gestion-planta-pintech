@@ -27,7 +27,11 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     Role::create(['name' => 'admin']);
     Role::create(['name' => 'produccion']);
-    $this->user = User::factory()->create(['email_verified_at' => now()]);
+    $this->user = User::factory()->create([
+        'email_verified_at' => now(),
+        'job_title' => 'Analista de Calidad',
+        'signature_path' => 'signatures/test.png',
+    ]);
     $this->user->assignRole('admin');
     $this->actingAs($this->user);
 
@@ -452,6 +456,7 @@ it('completing order includes consumed remnant cost in production cost', functio
     $response = $this->post(route('production-orders.complete', $this->targetOrder), [
         'actual_yield_quantity' => 10, // 10 envasados, no se genera saldo
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $targetDetail->id, 'actual_quantity' => 30],
         ],

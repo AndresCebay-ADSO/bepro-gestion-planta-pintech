@@ -45,6 +45,7 @@ class BuildProductionOrderShowDataAction
             'lineAdjustments.rawMaterial',
             'submittedBy:id,name',
             'reviewedBy:id,name',
+            'qualityResponsibleUser:id,name,job_title',
         ]);
 
         $formulaDetailsByKey = collect();
@@ -135,6 +136,12 @@ class BuildProductionOrderShowDataAction
             'reviewed_by' => $productionOrder->reviewedBy ? [
                 'id' => $productionOrder->reviewedBy->id,
                 'name' => $productionOrder->reviewedBy->name,
+            ] : null,
+            'quality_responsible_user_id' => $productionOrder->quality_responsible_user_id,
+            'quality_responsible_user' => $productionOrder->qualityResponsibleUser ? [
+                'id' => $productionOrder->qualityResponsibleUser->id,
+                'name' => $productionOrder->qualityResponsibleUser->name,
+                'job_title' => $productionOrder->qualityResponsibleUser->job_title,
             ] : null,
             'qr_landing_url' => $qrLandingUrl,
             'qr_image_url' => $qrImageUrl,

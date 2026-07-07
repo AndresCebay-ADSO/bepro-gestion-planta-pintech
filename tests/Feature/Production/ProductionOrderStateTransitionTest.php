@@ -21,7 +21,11 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->user = User::factory()->create(['email_verified_at' => now()]);
+    $this->user = User::factory()->create([
+        'email_verified_at' => now(),
+        'job_title' => 'Analista de Calidad',
+        'signature_path' => 'signatures/test.png',
+    ]);
     $this->user->assignRole(Role::create(['name' => 'admin']));
     $this->actingAs($this->user);
 
@@ -119,6 +123,7 @@ test('it rejects completing a pending order', function () {
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 100,
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -136,6 +141,7 @@ test('it allows completing an in_progress order', function () {
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 100,
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -153,6 +159,7 @@ test('it rejects completing a cancelled order', function () {
     $response = $this->from(route('production-orders.show', $order))
         ->post(route('production-orders.complete', $order), [
             'actual_yield_quantity' => 100,
+            'quality_responsible_user_id' => $this->user->id,
             'ingredients' => [
                 ['id' => $detail->id, 'actual_quantity' => 50],
             ],
@@ -170,6 +177,7 @@ test('it rejects completing an already completed order', function () {
     $response = $this->from(route('production-orders.show', $order))
         ->post(route('production-orders.complete', $order), [
             'actual_yield_quantity' => 100,
+            'quality_responsible_user_id' => $this->user->id,
             'ingredients' => [
                 ['id' => $detail->id, 'actual_quantity' => 50],
             ],
@@ -186,7 +194,11 @@ test('it records final approver after submit reject resubmit complete cycle', fu
     $operator = User::factory()->create(['email_verified_at' => now()]);
     $operator->assignRole('operador');
 
-    $reviewer = User::factory()->create(['email_verified_at' => now()]);
+    $reviewer = User::factory()->create([
+        'email_verified_at' => now(),
+        'job_title' => 'Analista de Calidad',
+        'signature_path' => 'signatures/test.png',
+    ]);
     $reviewer->assignRole('produccion');
 
     [$order, $detail] = createOrderInState($this, ProductionOrderStatus::InProgress);
@@ -194,6 +206,7 @@ test('it records final approver after submit reject resubmit complete cycle', fu
     $operationalPayload = [
         'actual_yield_quantity' => 100,
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $reviewer->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],

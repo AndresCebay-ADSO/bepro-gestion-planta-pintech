@@ -18,7 +18,11 @@ use App\Models\Warehouse;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
-    $this->user = User::factory()->create(['email_verified_at' => now()]);
+    $this->user = User::factory()->create([
+        'email_verified_at' => now(),
+        'job_title' => 'Analista de Calidad',
+        'signature_path' => 'signatures/test.png',
+    ]);
     $this->adminRole = Role::firstOrCreate(['name' => 'admin']);
     $this->user->assignRole($this->adminRole);
     $this->actingAs($this->user);
@@ -287,6 +291,7 @@ test('it previews and completes a production order with normalized quantities', 
         'grinding_hg' => 6,
         'responsible_name' => 'Operario UoM',
         'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $this->user->id,
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 3.0], // 3.0 kg reales gastados
         ],

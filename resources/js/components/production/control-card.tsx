@@ -4,12 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import type {
     ProductionOrderErrors,
     ProductionOrderFormData,
     ProductionOrderSetData,
+    QualitySignerOption,
 } from '@/types/production-orders';
 
 type ControlCardProps = {
@@ -24,6 +32,8 @@ type ControlCardProps = {
     processingLabel: string;
     showReject?: boolean;
     onReject?: () => void;
+    qualitySigners: QualitySignerOption[];
+    showQualitySigner?: boolean;
 };
 
 export function ControlCard({
@@ -38,7 +48,12 @@ export function ControlCard({
     processingLabel,
     showReject = false,
     onReject,
+    qualitySigners,
+    showQualitySigner = false,
 }: ControlCardProps) {
+    const selectedSigner = qualitySigners.find(
+        (s) => s.id === data.quality_responsible_user_id,
+    );
     return (
         <Card>
             <CardHeader>
@@ -65,6 +80,102 @@ export function ControlCard({
                         disabled={isReadOnly}
                     />
                 </div>
+
+                {(showQualitySigner || (isReadOnly && data.quality_responsible_user_id)) && (
+                    <div className="space-y-2">
+                        <Label
+                            htmlFor="quality-responsible"
+                            className="flex items-center gap-1"
+                        >
+                            <UserIcon className="h-3 w-3 text-primary" />{' '}
+                            Responsable de Calidad (Firma Certificado)
+                        </Label>
+                        {!isReadOnly ? (
+                            <>
+                                <Select
+                                    value={
+                                        data.quality_responsible_user_id
+                                            ? String(
+                                                  data.quality_responsible_user_id,
+                                              )
+                                            : ''
+                                    }
+                                    onValueChange={(value) =>
+                                        setData(
+                                            'quality_responsible_user_id',
+                                            Number(value),
+                                        )
+                                    }
+                                    disabled={isReadOnly}
+                                >
+                                    <SelectTrigger id="quality-responsible">
+                                        <SelectValue placeholder="Selecciona quien firma el certificado..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {qualitySigners.map((signer) => (
+                                            <SelectItem
+                                                key={signer.id}
+                                                value={String(signer.id)}
+                                            >
+                                                {signer.name} —{' '}
+                                                {signer.job_title}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {selectedSigner && (
+                                    <div className="flex items-center gap-3 rounded-md border bg-muted/30 p-2">
+                                        {selectedSigner.signature_url && (
+                                            <img
+                                                src={
+                                                    selectedSigner.signature_url
+                                                }
+                                                alt="Firma"
+                                                className="h-8 max-w-[120px] object-contain"
+                                            />
+                                        )}
+                                        <div className="text-xs">
+                                            <p className="font-medium">
+                                                {selectedSigner.name}
+                                            </p>
+                                            <p className="text-muted-foreground">
+                                                {selectedSigner.job_title}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        ) : selectedSigner ? (
+                            <div className="flex items-center gap-3 rounded-md border bg-muted/30 p-2">
+                                {selectedSigner.signature_url && (
+                                    <img
+                                        src={selectedSigner.signature_url}
+                                        alt="Firma"
+                                        className="h-8 max-w-[120px] object-contain"
+                                    />
+                                )}
+                                <div className="text-xs">
+                                    <p className="font-medium">
+                                        {selectedSigner.name}
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                        {selectedSigner.job_title}
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">
+                                No asignado
+                            </p>
+                        )}
+                        {errors.quality_responsible_user_id && (
+                            <p className="text-xs text-destructive">
+                                {errors.quality_responsible_user_id}
+                            </p>
+                        )}
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                         <Label htmlFor="density">
