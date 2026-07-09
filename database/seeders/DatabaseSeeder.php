@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             InventoryBatchSeeder::class,
             ProductVariantSeeder::class,
             FormulaSeeder::class,
+            SalesOrderSeeder::class,
         ]);
     }
 }

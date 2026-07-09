@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Models\SalesOrder;
 use Inertia\Inertia;
 
 class ComercialController extends Controller
@@ -11,13 +14,20 @@ class ComercialController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+
+        $pendingOrders = SalesOrder::query()
+            ->where('created_by', $user?->id)
+            ->pending()
+            ->count();
+
         return Inertia::render('Comercial/Dashboard', [
-            'role' => auth()->user()->getRoleNames()->first(),
-            'userName' => auth()->user()->name,
+            'role' => $user?->getRoleNames()->first(),
+            'userName' => $user?->name,
             'stats' => [
                 'availableProducts' => 0,
                 'activeQuotes' => 0,
-                'pendingOrders' => 0,
+                'pendingOrders' => $pendingOrders,
             ],
         ]);
     }
