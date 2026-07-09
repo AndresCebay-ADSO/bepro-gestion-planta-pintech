@@ -22,10 +22,22 @@ export default function Profile({
     const { auth } = usePage().props;
     const user = auth.user;
     const signatureInputRef = useRef<HTMLInputElement>(null);
-    const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
-    const [signatureReadError, setSignatureReadError] = useState<string | null>(null);
+    const [signaturePreview, setSignaturePreview] = useState<string | null>(
+        null,
+    );
+    const [signatureReadError, setSignatureReadError] = useState<string | null>(
+        null,
+    );
 
-    const { data, setData, patch, post, processing, recentlySuccessful, errors } = useForm({
+    const {
+        data,
+        setData,
+        patch,
+        post,
+        processing,
+        recentlySuccessful,
+        errors,
+    } = useForm({
         name: user?.name ?? '',
         email: user?.email ?? '',
         job_title: (user as any)?.job_title ?? '',
@@ -76,7 +88,9 @@ export default function Profile({
                 setSignaturePreview(event.target?.result as string);
             };
             reader.onerror = () => {
-                setSignatureReadError('No se pudo leer el archivo seleccionado.');
+                setSignatureReadError(
+                    'No se pudo leer el archivo seleccionado.',
+                );
             };
             reader.readAsDataURL(file);
         }
@@ -108,10 +122,7 @@ export default function Profile({
                     description="Actualiza tu nombre, correo electrónico y cargo"
                 />
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="space-y-6"
-                >
+                <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid gap-2">
                         <Label htmlFor="name">Nombre</Label>
 
@@ -125,16 +136,11 @@ export default function Profile({
                             placeholder="Nombre completo"
                         />
 
-                        <InputError
-                            className="mt-2"
-                            message={errors.name}
-                        />
+                        <InputError className="mt-2" message={errors.name} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="email">
-                            Correo electrónico
-                        </Label>
+                        <Label htmlFor="email">Correo electrónico</Label>
 
                         <Input
                             id="email"
@@ -147,10 +153,7 @@ export default function Profile({
                             placeholder="Correo electrónico"
                         />
 
-                        <InputError
-                            className="mt-2"
-                            message={errors.email}
-                        />
+                        <InputError className="mt-2" message={errors.email} />
                     </div>
 
                     <div className="grid gap-2">
@@ -160,7 +163,9 @@ export default function Profile({
                             id="job_title"
                             className="mt-1 block w-full"
                             value={data.job_title}
-                            onChange={(e) => setData('job_title', e.target.value)}
+                            onChange={(e) =>
+                                setData('job_title', e.target.value)
+                            }
                             placeholder="Ej: Gerente de Producción"
                         />
 
@@ -176,7 +181,9 @@ export default function Profile({
                         {(signaturePreview || currentSignatureUrl) && (
                             <div className="relative inline-block max-w-[200px] rounded-lg border border-border p-2">
                                 <img
-                                    src={signaturePreview ?? currentSignatureUrl}
+                                    src={
+                                        signaturePreview ?? currentSignatureUrl
+                                    }
                                     alt="Vista previa de firma"
                                     className="h-16 w-full object-contain"
                                 />
@@ -215,32 +222,28 @@ export default function Profile({
                         />
                     </div>
 
-                    {mustVerifyEmail &&
-                        user.email_verified_at === null && (
-                            <div>
-                                <p className="-mt-4 text-sm text-muted-foreground">
-                                    Tu correo electrónico no está
-                                    verificado.{' '}
-                                    <Link
-                                        href={send()}
-                                        as="button"
-                                        className="text-foreground underline decoration-border underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current!"
-                                    >
-                                        Haz clic aquí para reenviar el
-                                        correo de verificación.
-                                    </Link>
-                                </p>
+                    {mustVerifyEmail && user.email_verified_at === null && (
+                        <div>
+                            <p className="-mt-4 text-sm text-muted-foreground">
+                                Tu correo electrónico no está verificado.{' '}
+                                <Link
+                                    href={send()}
+                                    as="button"
+                                    className="text-foreground underline decoration-border underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current!"
+                                >
+                                    Haz clic aquí para reenviar el correo de
+                                    verificación.
+                                </Link>
+                            </p>
 
-                                {status ===
-                                    'verification-link-sent' && (
-                                    <div className="mt-2 text-sm font-medium text-primary">
-                                        Un nuevo enlace de verificación
-                                        ha sido enviado a tu correo
-                                        electrónico.
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                            {status === 'verification-link-sent' && (
+                                <div className="mt-2 text-sm font-medium text-primary">
+                                    Un nuevo enlace de verificación ha sido
+                                    enviado a tu correo electrónico.
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <div className="flex items-center gap-4">
                         <Button

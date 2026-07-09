@@ -54,6 +54,7 @@ export function ControlCard({
     const selectedSigner = qualitySigners.find(
         (s) => s.id === data.quality_responsible_user_id,
     );
+
     return (
         <Card>
             <CardHeader>
@@ -81,7 +82,8 @@ export function ControlCard({
                     />
                 </div>
 
-                {(showQualitySigner || (isReadOnly && data.quality_responsible_user_id)) && (
+                {(showQualitySigner ||
+                    (isReadOnly && data.quality_responsible_user_id)) && (
                     <div className="space-y-2">
                         <Label
                             htmlFor="quality-responsible"

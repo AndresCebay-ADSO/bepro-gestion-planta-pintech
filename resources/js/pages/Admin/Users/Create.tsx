@@ -106,7 +106,9 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                             type="text"
                             name="job_title"
                             value={data.job_title}
-                            onChange={(e) => setData('job_title', e.target.value)}
+                            onChange={(e) =>
+                                setData('job_title', e.target.value)
+                            }
                             placeholder="Ej: Gerente de Producción"
                             className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
                         />
