@@ -20,6 +20,7 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => ['bail', 'required', 'string', 'max:255'],
             'email' => ['bail', 'required', 'string', 'email', 'max:255', Rule::unique('users')],
+            'phone' => ['bail', 'nullable', 'string', 'max:15'],
             'job_title' => ['bail', 'nullable', 'string', 'max:255'],
             'password' => ['bail', 'required', 'string', Password::default(), 'confirmed'],
             'role' => ['bail', 'required', 'string', Rule::exists('roles', 'name')],

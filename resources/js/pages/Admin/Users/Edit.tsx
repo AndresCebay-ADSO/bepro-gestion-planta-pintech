@@ -10,6 +10,7 @@ interface User {
     name: string;
     email: string;
     job_title?: string | null;
+    phone?: string | null;
     is_active: boolean;
     roles: { name: string }[];
 }
@@ -29,6 +30,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
         name: user.name,
         email: user.email,
         job_title: user.job_title ?? '',
+        phone: user.phone ?? '',
         role: user.roles[0]?.name || 'produccion',
         is_active: user.is_active,
     });
@@ -118,6 +120,28 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                         {errors.job_title && (
                             <p className="mt-1 text-sm text-destructive">
                                 {errors.job_title}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Phone */}
+                    <div>
+                        <label className="mb-2 block text-sm font-semibold text-foreground">
+                            Teléfono
+                        </label>
+                        <input
+                            type="tel"
+                            name="phone"
+                            value={data.phone}
+                            onChange={(e) =>
+                                setData('phone', e.target.value)
+                            }
+                            placeholder="Ej: 3001234567"
+                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
+                        />
+                        {errors.phone && (
+                            <p className="mt-1 text-sm text-destructive">
+                                {errors.phone}
                             </p>
                         )}
                     </div>

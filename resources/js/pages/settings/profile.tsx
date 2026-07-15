@@ -41,6 +41,7 @@ export default function Profile({
         name: user?.name ?? '',
         email: user?.email ?? '',
         job_title: (user as any)?.job_title ?? '',
+        phone: (user as any)?.phone ?? '',
         signature: null as File | null,
         remove_signature: false,
     });
@@ -172,6 +173,26 @@ export default function Profile({
                         <InputError
                             className="mt-2"
                             message={errors.job_title}
+                        />
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="phone">Teléfono</Label>
+
+                        <Input
+                            id="phone"
+                            type="tel"
+                            className="mt-1 block w-full"
+                            value={data.phone}
+                            onChange={(e) =>
+                                setData('phone', e.target.value)
+                            }
+                            placeholder="Ej: 3001234567"
+                        />
+
+                        <InputError
+                            className="mt-2"
+                            message={errors.phone}
                         />
                     </div>
 
