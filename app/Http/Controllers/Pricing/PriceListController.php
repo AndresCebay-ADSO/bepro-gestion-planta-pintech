@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Pricing;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Services\DecimalCalculator;
+use App\Services\VariantSalesPriceService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -12,7 +12,7 @@ use Inertia\Response;
 class PriceListController extends Controller
 {
     public function __construct(
-        private readonly DecimalCalculator $calculator
+        private readonly VariantSalesPriceService $salesPriceService
     ) {}
 
     /**
@@ -67,11 +67,8 @@ class PriceListController extends Controller
 
         // Transform variants to include sales_price
         $products->through(function (Product $product) use ($isAdmin) {
-            $salesMargin = $product->sales_margin ?? 0;
-            $productSalesPrice = $this->calculateSalesPrice(
-                $product->current_price,
-                $salesMargin
-            );
+            $resolvedProductPrice = $this->salesPriceService->resolveForProduct($product);
+            $productSalesPrice = $resolvedProductPrice !== null ? (float) $resolvedProductPrice : null;
 
             $productData = [
                 'id' => $product->id,
@@ -89,11 +86,9 @@ class PriceListController extends Controller
                 ]);
             }
 
-            $variants = $product->variants->map(function ($variant) use ($salesMargin, $isAdmin) {
-                $variantSalesPrice = $this->calculateSalesPrice(
-                    $variant->current_price,
-                    $salesMargin
-                );
+            $variants = $product->variants->map(function ($variant) use ($isAdmin) {
+                $resolvedVariantPrice = $this->salesPriceService->resolveForVariant($variant);
+                $variantSalesPrice = $resolvedVariantPrice !== null ? (float) $resolvedVariantPrice : null;
 
                 $variantData = [
                     'id' => $variant->id,
@@ -128,21 +123,5 @@ class PriceListController extends Controller
                 'search' => $search,
             ],
         ]);
-    }
-
-    /**
-     * Calculate sales price from current price and margin using decimal arithmetic.
-     */
-    private function calculateSalesPrice(?float $currentPrice, float $salesMargin): ?float
-    {
-        if ($currentPrice === null) {
-            return null;
-        }
-
-        $marginDecimal = $this->calculator->div((string) $salesMargin, '100', 4);
-        $multiplier = $this->calculator->add('1', $marginDecimal, 4);
-        $result = $this->calculator->mul((string) $currentPrice, $multiplier, 4);
-
-        return (float) $result;
     }
 }
