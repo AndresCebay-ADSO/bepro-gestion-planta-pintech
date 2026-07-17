@@ -1,6 +1,6 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { Search } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
@@ -94,6 +94,60 @@ export default function CostsIndex({
 
     const [savingIds, setSavingIds] = useState<Set<number>>(new Set());
     const [errors, setErrors] = useState<Record<number, string | null>>({});
+
+    // Sync margins state when productsData changes (e.g. pagination)
+    // to ensure newly visible products get their server values pre-filled
+    useEffect(() => {
+        setMargins((prev) => {
+            const next: Record<number, MarginState> = { ...prev };
+
+            productsData.data.forEach((product) => {
+                if (!next[product.id]) {
+                    const margin = product.sales_margin ?? '';
+                    const price =
+                        calculateSalesPrice(
+                            product.current_price,
+                            product.sales_margin,
+                        ) ?? '';
+
+                    next[product.id] = {
+                        margin: margin === '' ? '' : String(margin),
+                        price: price === '' ? '' : String(price),
+                        lastEdited: null,
+                    };
+                }
+            });
+
+            return next;
+        });
+
+        // Clean up errors and savingIds for products that are no longer visible
+        const visibleIds = new Set(productsData.data.map((p) => p.id));
+
+        setErrors((prev) => {
+            const next: Record<number, string | null> = {};
+
+            for (const [id, error] of Object.entries(prev)) {
+                if (visibleIds.has(Number(id))) {
+                    next[Number(id)] = error;
+                }
+            }
+
+            return next;
+        });
+
+        setSavingIds((prev) => {
+            const next = new Set(prev);
+
+            for (const id of prev) {
+                if (!visibleIds.has(id)) {
+                    next.delete(id);
+                }
+            }
+
+            return next;
+        });
+    }, [productsData.data]);
 
     const handleSearch = () => {
         get(adminCostsIndex().url, {

@@ -78,7 +78,13 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $user ? [
-                    ...$user->toArray(),
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'job_title' => $user->job_title,
+                    'email_verified_at' => $user->email_verified_at,
+                    'signature_url' => $user->signature_url,
                     'role_names' => $user->getRoleNames()->values()->all(),
                 ] : null,
             ],
