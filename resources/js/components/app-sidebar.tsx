@@ -5,6 +5,7 @@ import {
     Boxes,
     Calculator,
     ClipboardList,
+    FileText,
     Factory,
     FlaskConical,
     LayoutGrid,
@@ -38,6 +39,7 @@ import { index as productionIndex } from '@/routes/production';
 import { index as remnantsIndex } from '@/routes/production/remnants';
 import { index as productionOrdersIndex } from '@/routes/production-orders';
 import { index as productsIndex } from '@/routes/products';
+import { index as quotationsIndex } from '@/routes/quotations';
 import { index as rawMaterialsIndex } from '@/routes/raw-materials';
 import { index as salesOrdersIndex } from '@/routes/sales-orders';
 import { index as usersIndex } from '@/routes/users';
@@ -127,6 +129,12 @@ const navigationGroups: NavGroup[] = [
                 title: 'Clientes',
                 href: clientsIndex().url,
                 icon: Users,
+                allowedRoles: ['admin', 'comercial'],
+            },
+            {
+                title: 'Cotizaciones',
+                href: quotationsIndex().url,
+                icon: FileText,
                 allowedRoles: ['admin', 'comercial'],
             },
             {
