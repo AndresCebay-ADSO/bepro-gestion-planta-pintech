@@ -75,6 +75,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'iva_percentage',
     'iva_amount',
     'total',
+    'status',
     'created_by',
 ])]
 class Quotation extends Model

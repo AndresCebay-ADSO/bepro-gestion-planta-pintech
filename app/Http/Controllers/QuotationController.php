@@ -54,6 +54,7 @@ class QuotationController extends Controller
             ->latest()
             ->paginate(15)
             ->onEachSide(1)
+            ->withQueryString()
             ->through(fn (Quotation $quotation) => [
                 'id' => $quotation->id,
                 'quotation_number' => $quotation->quotation_number,

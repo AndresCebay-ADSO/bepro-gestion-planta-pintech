@@ -50,7 +50,7 @@ class StoreQuotationRequest extends FormRequest
             'notes' => ['nullable', 'string', 'max:5000'],
             'iva_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('is_active', true)],
+            'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('is_active', true)->whereNull('deleted_at')],
             'items.*.product_variant_id' => [
                 'required',
                 'integer',

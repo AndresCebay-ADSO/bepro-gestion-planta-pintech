@@ -11,6 +11,7 @@ use App\Models\ProductVariant;
 use App\Models\Quotation;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
+use App\Services\QuotationService;
 use App\Services\VariantSalesPriceService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,11 +22,7 @@ uses(RefreshDatabase::class);
 beforeEach(function (): void {
     $this->seed(RolePermissionSeeder::class);
 
-    $this->unit = UnitOfMeasure::create([
-        'code' => 'gl',
-        'name' => 'Galón',
-        'symbol' => 'gl',
-    ]);
+    $this->unit = UnitOfMeasure::factory()->create();
 
     $this->category = ProductCategory::create([
         'name' => 'Categoría Test',
@@ -299,4 +296,28 @@ it('fails validation when items array is empty', function () {
             ['items' => []]
         ))
         ->assertInvalid(['items']);
+});
+
+it('fails validation when product is soft deleted', function () {
+    $this->product->delete();
+
+    $this->actingAs($this->comercialUser)
+        ->post(route('quotations.store'), quotationPayload(
+            $this->client->id,
+            $this->product->id,
+            $this->variant->id,
+        ))
+        ->assertInvalid(['items.0.product_id']);
+});
+
+it('allows updating quotation status via service', function () {
+    $quotation = Quotation::factory()->create([
+        'client_id' => $this->client->id,
+        'created_by' => $this->comercialUser->id,
+        'status' => QuotationStatus::Draft,
+    ]);
+
+    app(QuotationService::class)->updateStatus($quotation, QuotationStatus::Sent);
+
+    expect($quotation->fresh()->status)->toBe(QuotationStatus::Sent);
 });
