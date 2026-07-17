@@ -107,6 +107,7 @@ test('admin can create user with is_active = true', function () {
         ->post(route('users.store'), [
             'name' => 'Usuario Activo',
             'email' => 'activo@test.com',
+            'phone' => '3001234567',
             'password' => 'password',
             'password_confirmation' => 'password',
             'role' => 'operador',
@@ -117,6 +118,7 @@ test('admin can create user with is_active = true', function () {
 
     $this->assertDatabaseHas('users', [
         'email' => 'activo@test.com',
+        'phone' => '3001234567',
         'is_active' => true,
     ]);
 });
@@ -129,6 +131,7 @@ test('admin can create user with is_active = false', function () {
         ->post(route('users.store'), [
             'name' => 'Usuario Inactivo',
             'email' => 'inactivo@test.com',
+            'phone' => '3007654321',
             'password' => 'password',
             'password_confirmation' => 'password',
             'role' => 'operador',
@@ -139,6 +142,7 @@ test('admin can create user with is_active = false', function () {
 
     $this->assertDatabaseHas('users', [
         'email' => 'inactivo@test.com',
+        'phone' => '3007654321',
         'is_active' => false,
     ]);
 });
@@ -156,6 +160,7 @@ test('admin can update user is_active from true to false', function () {
         ->put(route('users.update', $target), [
             'name' => $target->name,
             'email' => $target->email,
+            'phone' => '3001112222',
             'role' => 'operador',
             'is_active' => false,
         ])
@@ -164,6 +169,7 @@ test('admin can update user is_active from true to false', function () {
 
     $this->assertDatabaseHas('users', [
         'id' => $target->id,
+        'phone' => '3001112222',
         'is_active' => false,
     ]);
 });
@@ -181,6 +187,7 @@ test('admin can update user is_active from false to true', function () {
         ->put(route('users.update', $target), [
             'name' => $target->name,
             'email' => $target->email,
+            'phone' => '3003334444',
             'role' => 'operador',
             'is_active' => true,
         ])
@@ -189,6 +196,7 @@ test('admin can update user is_active from false to true', function () {
 
     $this->assertDatabaseHas('users', [
         'id' => $target->id,
+        'phone' => '3003334444',
         'is_active' => true,
     ]);
 });

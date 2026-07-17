@@ -23,6 +23,7 @@ use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\PublicQrLandingController;
+use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -90,6 +91,15 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
 
 Route::middleware(['auth', 'verified', 'role:admin,comercial'])->group(function () {
     Route::get('/prices', [PriceListController::class, 'index'])->name('prices.index');
+
+    Route::get('quotations', [QuotationController::class, 'index'])->name('quotations.index');
+    Route::get('quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
+    Route::post('quotations', [QuotationController::class, 'store'])->name('quotations.store');
+    Route::get('quotations/{quotation}', [QuotationController::class, 'show'])->name('quotations.show');
+    Route::get('quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
+    Route::put('quotations/{quotation}', [QuotationController::class, 'update'])->name('quotations.update');
+    Route::patch('quotations/{quotation}/status', [QuotationController::class, 'updateStatus'])->name('quotations.update-status');
+    Route::get('quotations/{quotation}/export-pdf', [QuotationController::class, 'exportPdf'])->name('quotations.export-pdf');
 
     Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
     Route::get('clients/create', [ClientController::class, 'create'])->name('clients.create');

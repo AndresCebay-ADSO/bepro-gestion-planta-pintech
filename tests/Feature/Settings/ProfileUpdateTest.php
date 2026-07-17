@@ -71,6 +71,42 @@ test('job_title can be cleared', function () {
     expect($user->refresh()->job_title)->toBeNull();
 });
 
+test('phone can be updated in profile', function () {
+    $user = User::factory()->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => '3009876543',
+        ]);
+
+    $response
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('profile.edit'));
+
+    expect($user->refresh()->phone)->toBe('3009876543');
+});
+
+test('phone can be cleared', function () {
+    $user = User::factory()->create(['phone' => '3009876543']);
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => '',
+        ]);
+
+    $response
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('profile.edit'));
+
+    expect($user->refresh()->phone)->toBeNull();
+});
+
 test('signature can be uploaded', function () {
     Storage::fake('public');
 

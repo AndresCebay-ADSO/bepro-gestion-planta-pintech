@@ -9,6 +9,7 @@ export type User = {
     id: number;
     name: string;
     email: string;
+    phone?: string | null;
     avatar?: string;
     role?: UserRole | string;
     roles?: UserRoleRecord[] | string[];

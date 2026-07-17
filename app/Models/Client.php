@@ -62,4 +62,9 @@ class Client extends Model
     {
         return $this->hasMany(SalesOrder::class, 'client_id');
     }
+
+    public function quotations(): HasMany
+    {
+        return $this->hasMany(Quotation::class, 'client_id');
+    }
 }

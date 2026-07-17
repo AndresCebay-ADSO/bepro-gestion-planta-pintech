@@ -28,6 +28,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property int $id
  * @property string $name
  * @property string $email
+ * @property string|null $phone
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $remember_token
@@ -40,7 +41,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read Collection|Warehouse[] $warehouses
  */
 #[Appends(['signature_url'])]
-#[Fillable(['name', 'email', 'password', 'is_active', 'last_login_at', 'job_title', 'signature_path'])]
+#[Fillable(['name', 'email', 'phone', 'password', 'is_active', 'last_login_at', 'job_title', 'signature_path'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -56,7 +57,7 @@ class User extends Authenticatable
         return LogOptions::defaults()
             ->useLogName('usuarios')
             ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
-            ->logOnly(['name', 'email', 'is_active', 'last_login_at', 'job_title', 'signature_path'])
+            ->logOnly(['name', 'email', 'phone', 'is_active', 'last_login_at', 'job_title', 'signature_path'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -74,6 +75,7 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
             'job_title' => 'string',
+            'phone' => 'string',
             'signature_path' => 'string',
         ];
     }

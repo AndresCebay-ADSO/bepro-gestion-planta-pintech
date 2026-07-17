@@ -74,6 +74,7 @@ class UserController extends Controller
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'phone' => ! empty($validated['phone']) ? $validated['phone'] : null,
             'job_title' => ! empty($validated['job_title']) ? $validated['job_title'] : null,
             'password' => $validated['password'],
             'email_verified_at' => now(),
@@ -110,6 +111,7 @@ class UserController extends Controller
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'phone' => ! empty($validated['phone']) ? $validated['phone'] : null,
             'job_title' => ! empty($validated['job_title']) ? $validated['job_title'] : null,
             'is_active' => $validated['is_active'],
         ]);
