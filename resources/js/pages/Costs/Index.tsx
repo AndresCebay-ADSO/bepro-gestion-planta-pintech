@@ -1,6 +1,6 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { Search } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useReducer } from 'react';
 
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
@@ -79,6 +79,152 @@ function buildInitialMargins(
     return initial;
 }
 
+type CostsState = {
+    margins: Record<number, MarginState>;
+    errors: Record<number, string | null>;
+    savingIds: Set<number>;
+};
+
+type CostsAction =
+    | { type: 'SYNC_PRODUCTS'; products: ProductRow[] }
+    | {
+          type: 'SET_MARGIN';
+          productId: number;
+          margin: string;
+          price: string;
+      }
+    | {
+          type: 'SET_PRICE';
+          productId: number;
+          margin: string;
+          price: string;
+      }
+    | { type: 'SET_ERROR'; productId: number; error: string | null }
+    | { type: 'START_SAVING'; productId: number }
+    | { type: 'FINISH_SAVING'; productId: number }
+    | { type: 'RESET_EDITED'; productId: number };
+
+function costsReducer(state: CostsState, action: CostsAction): CostsState {
+    switch (action.type) {
+        case 'SYNC_PRODUCTS': {
+            const visibleIds = new Set(action.products.map((p) => p.id));
+            const nextMargins = { ...state.margins };
+
+            action.products.forEach((product) => {
+                if (!nextMargins[product.id]) {
+                    const margin = product.sales_margin ?? '';
+                    const price =
+                        calculateSalesPrice(
+                            product.current_price,
+                            product.sales_margin,
+                        ) ?? '';
+
+                    nextMargins[product.id] = {
+                        margin: margin === '' ? '' : String(margin),
+                        price: price === '' ? '' : String(price),
+                        lastEdited: null,
+                    };
+                }
+            });
+
+            const nextErrors: Record<number, string | null> = {};
+
+            for (const [id, error] of Object.entries(state.errors)) {
+                if (visibleIds.has(Number(id))) {
+                    nextErrors[Number(id)] = error;
+                }
+            }
+
+            const nextSavingIds = new Set(state.savingIds);
+
+            for (const id of state.savingIds) {
+                if (!visibleIds.has(id)) {
+                    nextSavingIds.delete(id);
+                }
+            }
+
+            return {
+                ...state,
+                margins: nextMargins,
+                errors: nextErrors,
+                savingIds: nextSavingIds,
+            };
+        }
+
+        case 'SET_MARGIN':
+            return {
+                ...state,
+                margins: {
+                    ...state.margins,
+                    [action.productId]: {
+                        margin: action.margin,
+                        price: action.price,
+                        lastEdited: 'margin',
+                    },
+                },
+                errors: {
+                    ...state.errors,
+                    [action.productId]: null,
+                },
+            };
+
+        case 'SET_PRICE':
+            return {
+                ...state,
+                margins: {
+                    ...state.margins,
+                    [action.productId]: {
+                        margin: action.margin,
+                        price: action.price,
+                        lastEdited: 'price',
+                    },
+                },
+                errors: {
+                    ...state.errors,
+                    [action.productId]: null,
+                },
+            };
+
+        case 'SET_ERROR':
+            return {
+                ...state,
+                errors: {
+                    ...state.errors,
+                    [action.productId]: action.error,
+                },
+            };
+
+        case 'START_SAVING': {
+            const next = new Set(state.savingIds);
+            next.add(action.productId);
+
+            return { ...state, savingIds: next };
+        }
+
+        case 'FINISH_SAVING': {
+            const next = new Set(state.savingIds);
+            next.delete(action.productId);
+
+            return { ...state, savingIds: next };
+        }
+
+        case 'RESET_EDITED':
+            return {
+                ...state,
+                margins: {
+                    ...state.margins,
+                    [action.productId]: {
+                        ...state.margins[action.productId],
+                        lastEdited: null,
+                    },
+                },
+            };
+
+        default:
+            return state;
+    }
+}
+
 export default function CostsIndex({
     products: productsData,
     can,
@@ -88,65 +234,21 @@ export default function CostsIndex({
         search: filters.search ?? '',
     });
 
-    const [margins, setMargins] = useState<Record<number, MarginState>>(() =>
-        buildInitialMargins(productsData.data),
+    const [state, dispatch] = useReducer(
+        costsReducer,
+        productsData.data,
+        (products) => ({
+            margins: buildInitialMargins(products),
+            errors: {} as Record<number, string | null>,
+            savingIds: new Set<number>(),
+        }),
     );
 
-    const [savingIds, setSavingIds] = useState<Set<number>>(new Set());
-    const [errors, setErrors] = useState<Record<number, string | null>>({});
+    const { margins, errors, savingIds } = state;
 
-    // Sync margins state when productsData changes (e.g. pagination)
-    // to ensure newly visible products get their server values pre-filled
+    // Sync state when productsData changes (e.g. pagination)
     useEffect(() => {
-        setMargins((prev) => {
-            const next: Record<number, MarginState> = { ...prev };
-
-            productsData.data.forEach((product) => {
-                if (!next[product.id]) {
-                    const margin = product.sales_margin ?? '';
-                    const price =
-                        calculateSalesPrice(
-                            product.current_price,
-                            product.sales_margin,
-                        ) ?? '';
-
-                    next[product.id] = {
-                        margin: margin === '' ? '' : String(margin),
-                        price: price === '' ? '' : String(price),
-                        lastEdited: null,
-                    };
-                }
-            });
-
-            return next;
-        });
-
-        // Clean up errors and savingIds for products that are no longer visible
-        const visibleIds = new Set(productsData.data.map((p) => p.id));
-
-        setErrors((prev) => {
-            const next: Record<number, string | null> = {};
-
-            for (const [id, error] of Object.entries(prev)) {
-                if (visibleIds.has(Number(id))) {
-                    next[Number(id)] = error;
-                }
-            }
-
-            return next;
-        });
-
-        setSavingIds((prev) => {
-            const next = new Set(prev);
-
-            for (const id of prev) {
-                if (!visibleIds.has(id)) {
-                    next.delete(id);
-                }
-            }
-
-            return next;
-        });
+        dispatch({ type: 'SYNC_PRODUCTS', products: productsData.data });
     }, [productsData.data]);
 
     const handleSearch = () => {
@@ -177,20 +279,12 @@ export default function CostsIndex({
                           ) ?? '',
                       );
 
-            setMargins((prev) => ({
-                ...prev,
-                [productId]: {
-                    margin: marginValue,
-                    price,
-                    lastEdited: 'margin',
-                },
-            }));
-
-            // Clear error when user starts editing
-            setErrors((prev) => ({
-                ...prev,
-                [productId]: null,
-            }));
+            dispatch({
+                type: 'SET_MARGIN',
+                productId,
+                margin: marginValue,
+                price,
+            });
         },
         [productsData.data],
     );
@@ -213,20 +307,12 @@ export default function CostsIndex({
                     ? ''
                     : String(calculateMargin(product.current_price, price));
 
-            setMargins((prev) => ({
-                ...prev,
-                [productId]: {
-                    margin,
-                    price: priceValue,
-                    lastEdited: 'price',
-                },
-            }));
-
-            // Clear error when user starts editing
-            setErrors((prev) => ({
-                ...prev,
-                [productId]: null,
-            }));
+            dispatch({
+                type: 'SET_PRICE',
+                productId,
+                margin,
+                price: priceValue,
+            });
         },
         [productsData.data],
     );
@@ -252,19 +338,21 @@ export default function CostsIndex({
                     state.margin === '' ? null : parseFloat(state.margin);
 
                 if (numericValue === null || isNaN(numericValue)) {
-                    setErrors((prev) => ({
-                        ...prev,
-                        [productId]: 'El margen debe ser un número válido.',
-                    }));
+                    dispatch({
+                        type: 'SET_ERROR',
+                        productId,
+                        error: 'El margen debe ser un número válido.',
+                    });
 
                     return;
                 }
 
                 if (numericValue < 0 || numericValue > 500) {
-                    setErrors((prev) => ({
-                        ...prev,
-                        [productId]: 'El margen debe estar entre 0% y 500%.',
-                    }));
+                    dispatch({
+                        type: 'SET_ERROR',
+                        productId,
+                        error: 'El margen debe estar entre 0% y 500%.',
+                    });
 
                     return;
                 }
@@ -275,19 +363,21 @@ export default function CostsIndex({
                     state.price === '' ? null : parseFloat(state.price);
 
                 if (numericValue === null || isNaN(numericValue)) {
-                    setErrors((prev) => ({
-                        ...prev,
-                        [productId]: 'El precio debe ser un número válido.',
-                    }));
+                    dispatch({
+                        type: 'SET_ERROR',
+                        productId,
+                        error: 'El precio debe ser un número válido.',
+                    });
 
                     return;
                 }
 
                 if (numericValue < 0) {
-                    setErrors((prev) => ({
-                        ...prev,
-                        [productId]: 'El precio no puede ser negativo.',
-                    }));
+                    dispatch({
+                        type: 'SET_ERROR',
+                        productId,
+                        error: 'El precio no puede ser negativo.',
+                    });
 
                     return;
                 }
@@ -296,12 +386,9 @@ export default function CostsIndex({
             }
 
             // Clear error before attempting save
-            setErrors((prev) => ({
-                ...prev,
-                [productId]: null,
-            }));
+            dispatch({ type: 'SET_ERROR', productId, error: null });
 
-            setSavingIds((prev) => new Set(prev).add(productId));
+            dispatch({ type: 'START_SAVING', productId });
 
             router.patch(
                 adminCostsUpdate({ product: productId }).url,
@@ -310,43 +397,24 @@ export default function CostsIndex({
                     preserveState: true,
                     preserveScroll: true,
                     onSuccess: () => {
-                        setSavingIds((prev) => {
-                            const next = new Set(prev);
-
-                            next.delete(productId);
-
-                            return next;
-                        });
-
-                        // Reset lastEdited after successful save
-                        setMargins((prev) => ({
-                            ...prev,
-                            [productId]: {
-                                ...prev[productId],
-                                lastEdited: null,
-                            },
-                        }));
+                        dispatch({ type: 'FINISH_SAVING', productId });
+                        dispatch({ type: 'RESET_EDITED', productId });
                     },
                     onError: (errorBag) => {
-                        setSavingIds((prev) => {
-                            const next = new Set(prev);
-
-                            next.delete(productId);
-
-                            return next;
-                        });
+                        dispatch({ type: 'FINISH_SAVING', productId });
 
                         const serverError =
                             errorBag?.sales_price ||
                             errorBag?.sales_margin ||
                             'Error al guardar. Intente nuevamente.';
 
-                        setErrors((prev) => ({
-                            ...prev,
-                            [productId]: Array.isArray(serverError)
+                        dispatch({
+                            type: 'SET_ERROR',
+                            productId,
+                            error: Array.isArray(serverError)
                                 ? serverError[0]
                                 : serverError,
-                        }));
+                        });
                     },
                 },
             );
