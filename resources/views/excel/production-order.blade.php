@@ -93,21 +93,21 @@
             <th colspan="3"
                 style="font-weight: bold; border: 1px solid #000000; background-color: #daeef3; text-align: left;">
                 INICIO AGITACIÓN</th>
-            <td colspan="4" style="border: 1px solid #000000;">{{ $order['agitation_start_time'] ?? '---' }}</td>
+            <td colspan="4" style="border: 1px solid #000000;">{{ $order['agitation_start_time'] ? \Carbon\Carbon::parse($order['agitation_start_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
             <th colspan="3"
                 style="font-weight: bold; border: 1px solid #000000; background-color: #daeef3; text-align: left;">FIN
                 AGITACIÓN</th>
-            <td colspan="5" style="border: 1px solid #000000;">{{ $order['agitation_end_time'] ?? '---' }}</td>
+            <td colspan="5" style="border: 1px solid #000000;">{{ $order['agitation_end_time'] ? \Carbon\Carbon::parse($order['agitation_end_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
         </tr>
         <tr>
             <th colspan="3"
                 style="font-weight: bold; border: 1px solid #000000; background-color: #daeef3; text-align: left;">
                 INICIO ENVASADO</th>
-            <td colspan="4" style="border: 1px solid #000000;">{{ $order['packaging_start_time'] ?? '---' }}</td>
+            <td colspan="4" style="border: 1px solid #000000;">{{ $order['packaging_start_time'] ? \Carbon\Carbon::parse($order['packaging_start_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
             <th colspan="3"
                 style="font-weight: bold; border: 1px solid #000000; background-color: #daeef3; text-align: left;">FIN
                 ENVASADO</th>
-            <td colspan="5" style="border: 1px solid #000000;">{{ $order['packaging_end_time'] ?? '---' }}</td>
+            <td colspan="5" style="border: 1px solid #000000;">{{ $order['packaging_end_time'] ? \Carbon\Carbon::parse($order['packaging_end_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
         </tr>
 
         <tr>

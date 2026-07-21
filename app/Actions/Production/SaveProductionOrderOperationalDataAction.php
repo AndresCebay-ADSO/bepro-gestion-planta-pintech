@@ -20,10 +20,10 @@ class SaveProductionOrderOperationalDataAction
             'viscosity_ku' => $data['viscosity_ku'] ?? null,
             'grinding_hg' => $data['grinding_hg'] ?? null,
             'quality_solids' => $data['quality_solids'] ?? null,
-            'agitation_start_time' => isset($data['agitation_start_time']) ? Carbon::parse($data['agitation_start_time'], 'America/Bogota') : null,
-            'agitation_end_time' => isset($data['agitation_end_time']) ? Carbon::parse($data['agitation_end_time'], 'America/Bogota') : null,
-            'packaging_start_time' => isset($data['packaging_start_time']) ? Carbon::parse($data['packaging_start_time'], 'America/Bogota') : null,
-            'packaging_end_time' => isset($data['packaging_end_time']) ? Carbon::parse($data['packaging_end_time'], 'America/Bogota') : null,
+            'agitation_start_time' => $this->parseOperationalTime($data['agitation_start_time'] ?? null),
+            'agitation_end_time' => $this->parseOperationalTime($data['agitation_end_time'] ?? null),
+            'packaging_start_time' => $this->parseOperationalTime($data['packaging_start_time'] ?? null),
+            'packaging_end_time' => $this->parseOperationalTime($data['packaging_end_time'] ?? null),
             'responsible_name' => $data['responsible_name'] ?? null,
             'spillage_quantity' => $data['spillage_quantity'] ?? 0,
             'density_kg_per_gallon' => $data['density_kg_per_gallon'] ?? $order->density_kg_per_gallon,
@@ -61,5 +61,27 @@ class SaveProductionOrderOperationalDataAction
         }
 
         return $order->refresh();
+    }
+
+    /**
+     * Parsea un tiempo operacional enviado desde el frontend.
+     *
+     * Si el string incluye un offset explícito (Z, +HH:MM, -HH:MM), se respeta.
+     * Si no trae offset, se asume que es hora local de Colombia (America/Bogota)
+     * como fallback para clientes antiguos que aún no envían offset.
+     */
+    private function parseOperationalTime(?string $value): ?Carbon
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $hasOffset = preg_match('/[Zz]|[+-]\d{2}:\d{2}$/', $value) === 1;
+
+        if ($hasOffset) {
+            return Carbon::parse($value)->utc();
+        }
+
+        return Carbon::parse($value, 'America/Bogota')->utc();
     }
 }

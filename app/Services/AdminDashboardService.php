@@ -21,7 +21,7 @@ class AdminDashboardService
 
     public function build(): array
     {
-        $today = Carbon::today(config('app.timezone', 'America/Bogota'));
+        $today = Carbon::today('America/Bogota')->format('Y-m-d');
 
         $totalUsers = User::query()->count();
 

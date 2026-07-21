@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\ProductionOrderStatus;
 use App\Models\ProductionOrder;
+use Illuminate\Support\Carbon;
 
 class OperatorDashboardService
 {
@@ -30,7 +31,7 @@ class OperatorDashboardService
      */
     public function build(): array
     {
-        $today = now(config('app.timezone', 'America/Bogota'))->toDateString();
+        $today = Carbon::today('America/Bogota')->format('Y-m-d');
 
         $pendingOrders = ProductionOrder::query()
             ->where('status', ProductionOrderStatus::Pending)
