@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Download, FileStack, FileText, Trash2, Upload } from 'lucide-react';
+import { Download, FileStack, FileText, Pencil, Trash2, Upload } from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -46,6 +46,8 @@ import {
     create as formulasCreate,
     show as formulasShow,
 } from '@/routes/formulas';
+import { store, update, destroy } from '@/actions/App/Http/Controllers/ProductVariantController';
+import { destroy as destroyProduct } from '@/actions/App/Http/Controllers/ProductController';
 import {
     index as productsIndex,
     show as productsShow,
@@ -84,8 +86,12 @@ type Props = {
             id: number;
             code: string;
             name: string;
-            presentation_label?: string | null;
-            current_price?: string | null;
+            unit_of_measure_id: number;
+            presentation_value: number | null;
+            presentation_label: string | null;
+            current_cost: number | null;
+            current_price: string | null;
+            package_raw_material_id: number | null;
             is_active: boolean;
             unit_of_measure?: { name: string; symbol: string } | null;
         }>;
@@ -127,7 +133,8 @@ export default function ProductsShow({
     units,
     rawMaterials,
 }: Props) {
-    const [isOpen, setIsOpen] = useState(false);
+    const [dialogMode, setDialogMode] = useState<'create' | 'edit' | null>(null);
+    const [editingVariantId, setEditingVariantId] = useState<number | null>(null);
     const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
 
     const formatQualityRange = (
@@ -188,17 +195,64 @@ export default function ProductsShow({
             return;
         }
 
-        router.delete(`/products/${product.id}`);
+        router.delete(destroyProduct({ product: product.id }).url);
+    };
+
+    const handleDeleteVariant = (variant: NonNullable<Props['product']['variants']>[number]) => {
+        if (!window.confirm(`¿Eliminar la variante "${variant.name}"?`)) {
+            return;
+        }
+
+        router.delete(
+            destroy({ product: product.id, variant: variant.id }).url,
+            { preserveScroll: true },
+        );
+    };
+
+    const openCreate = () => {
+        form.reset();
+        setEditingVariantId(null);
+        setDialogMode('create');
+    };
+
+    const openEdit = (variant: NonNullable<Props['product']['variants']>[number]) => {
+        form.setData({
+            code: variant.code,
+            name: variant.name,
+            unit_of_measure_id: String(variant.unit_of_measure_id),
+            presentation_value: variant.presentation_value != null ? String(variant.presentation_value) : '',
+            presentation_label: variant.presentation_label ?? '',
+            current_cost: variant.current_cost != null ? String(variant.current_cost) : '',
+            current_price: variant.current_price ?? '',
+            package_raw_material_id: variant.package_raw_material_id != null ? String(variant.package_raw_material_id) : '',
+            is_active: variant.is_active,
+        });
+        setEditingVariantId(variant.id);
+        setDialogMode('edit');
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        form.post(`/products/${product.id}/variants`, {
-            onSuccess: () => {
-                setIsOpen(false);
-                form.reset();
-            },
-        });
+
+        if (dialogMode === 'edit' && editingVariantId != null) {
+            form.patch(
+                update({ product: product.id, variant: editingVariantId }).url,
+                {
+                    onSuccess: () => {
+                        setDialogMode(null);
+                        setEditingVariantId(null);
+                        form.reset();
+                    },
+                },
+            );
+        } else {
+            form.post(store({ product: product.id }).url, {
+                onSuccess: () => {
+                    setDialogMode(null);
+                    form.reset();
+                },
+            });
+        }
     };
 
     const handleDocumentSubmit = (e: React.FormEvent) => {
@@ -724,14 +778,25 @@ export default function ProductsShow({
                             </p>
                         </div>
                         {can.update && (
-                            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                                <DialogTrigger asChild>
-                                    <Button size="sm">Nueva Variante</Button>
-                                </DialogTrigger>
+                            <Dialog
+                                open={dialogMode !== null}
+                                onOpenChange={(open) => {
+                                    if (!open) {
+                                        setDialogMode(null);
+                                        setEditingVariantId(null);
+                                        form.reset();
+                                    }
+                                }}
+                            >
+                                <Button size="sm" onClick={openCreate}>
+                                    Nueva Variante
+                                </Button>
                                 <DialogContent className="max-w-lg">
                                     <DialogHeader>
                                         <DialogTitle>
-                                            Nueva Variante
+                                            {dialogMode === 'edit'
+                                                ? 'Editar Variante'
+                                                : 'Nueva Variante'}
                                         </DialogTitle>
                                     </DialogHeader>
                                     <form
@@ -962,7 +1027,11 @@ export default function ProductsShow({
                                             <Button
                                                 type="button"
                                                 variant="outline"
-                                                onClick={() => setIsOpen(false)}
+                                                onClick={() => {
+                                                    setDialogMode(null);
+                                                    setEditingVariantId(null);
+                                                    form.reset();
+                                                }}
                                             >
                                                 Cancelar
                                             </Button>
@@ -972,7 +1041,9 @@ export default function ProductsShow({
                                             >
                                                 {form.processing
                                                     ? 'Guardando...'
-                                                    : 'Guardar Variante'}
+                                                    : dialogMode === 'edit'
+                                                      ? 'Guardar Cambios'
+                                                      : 'Guardar Variante'}
                                             </Button>
                                         </div>
                                     </form>
@@ -999,6 +1070,11 @@ export default function ProductsShow({
                                 <th className="p-4 text-left font-medium">
                                     Estado
                                 </th>
+                                {can.update && (
+                                    <th className="p-4 text-right font-medium">
+                                        Acciones
+                                    </th>
+                                )}
                             </tr>
                         </thead>
                         <tbody>
@@ -1043,12 +1119,40 @@ export default function ProductsShow({
                                                 : 'Inactiva'}
                                         </Badge>
                                     </td>
+                                    {can.update && (
+                                        <td className="p-4 text-right">
+                                            <div className="flex items-center justify-end gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() =>
+                                                        openEdit(variant)
+                                                    }
+                                                    title="Editar variante"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() =>
+                                                        handleDeleteVariant(
+                                                            variant,
+                                                        )
+                                                    }
+                                                    title="Eliminar variante"
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                             {(product.variants ?? []).length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={5}
+                                        colSpan={can.update ? 6 : 5}
                                         className="p-8 text-center text-sm text-muted-foreground"
                                     >
                                         Este producto aún no tiene variantes
