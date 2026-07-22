@@ -17,6 +17,7 @@ type VariantRow = {
     presentation_value: number | null;
     current_price: number | null;
     sales_price: number | null;
+    available_stock: number;
 };
 
 type ProductRow = {
@@ -174,6 +175,9 @@ export default function PricesIndex({
                                                 <th className="p-4 text-right font-medium">
                                                     Precio Venta
                                                 </th>
+                                                <th className="p-4 text-right font-medium">
+                                                    Disponible
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -182,8 +186,8 @@ export default function PricesIndex({
                                                     <td
                                                         colSpan={
                                                             can.view_costs
-                                                                ? 4
-                                                                : 3
+                                                                ? 5
+                                                                : 4
                                                         }
                                                         className="p-4 text-center text-sm text-muted-foreground"
                                                     >
@@ -252,6 +256,16 @@ export default function PricesIndex({
                                                                     }
                                                                     bold
                                                                     size="lg"
+                                                                />
+                                                            </td>
+                                                            <td className="p-4 text-right text-muted-foreground">
+                                                                <FormattedNumber
+                                                                    value={
+                                                                        variant.available_stock
+                                                                    }
+                                                                    maxDecimals={
+                                                                        2
+                                                                    }
                                                                 />
                                                             </td>
                                                         </tr>

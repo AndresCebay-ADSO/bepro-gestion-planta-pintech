@@ -9,6 +9,7 @@ import {
     Factory,
     FlaskConical,
     LayoutGrid,
+    Package,
     QrCode,
     Settings,
     ShieldCheck,
@@ -33,6 +34,7 @@ import { index as alertsIndex } from '@/routes/alerts';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import { index as clientsIndex } from '@/routes/clients';
 import { index as formulasIndex } from '@/routes/formulas';
+import { index as finishedInventoryIndex } from '@/routes/finished-inventory';
 import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
 import { index as pricesIndex } from '@/routes/prices';
 import { index as productionIndex } from '@/routes/production';
@@ -68,6 +70,12 @@ const navigationGroups: NavGroup[] = [
                 href: inventoryMovementsIndex().url,
                 icon: ArrowLeftRight,
                 allowedRoles: ['admin', 'produccion'],
+            },
+            {
+                title: 'Inventario PT',
+                href: finishedInventoryIndex().url,
+                icon: Package,
+                allowedRoles: ['admin', 'produccion', 'comercial'],
             },
             {
                 title: 'Bodegas',

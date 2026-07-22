@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Pricing;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Services\FinishedInventoryQueryService;
 use App\Services\VariantSalesPriceService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,7 +13,8 @@ use Inertia\Response;
 class PriceListController extends Controller
 {
     public function __construct(
-        private readonly VariantSalesPriceService $salesPriceService
+        private readonly VariantSalesPriceService $salesPriceService,
+        private readonly FinishedInventoryQueryService $finishedInventoryQueryService,
     ) {}
 
     /**
@@ -23,6 +25,10 @@ class PriceListController extends Controller
         $user = $request->user();
         $search = $request->input('search');
         $isAdmin = $user?->hasRole('admin') ?? false;
+
+        $variantStockTotals = $user !== null
+            ? $this->finishedInventoryQueryService->sumQuantityByVariant($user)
+            : collect();
 
         $products = Product::query()
             ->select([
@@ -66,7 +72,7 @@ class PriceListController extends Controller
             ->withQueryString();
 
         // Transform variants to include sales_price
-        $products->through(function (Product $product) use ($isAdmin) {
+        $products->through(function (Product $product) use ($isAdmin, $variantStockTotals) {
             $resolvedProductPrice = $this->salesPriceService->resolveForProduct($product);
             $productSalesPrice = $resolvedProductPrice !== null ? (float) $resolvedProductPrice : null;
 
@@ -86,9 +92,10 @@ class PriceListController extends Controller
                 ]);
             }
 
-            $variants = $product->variants->map(function ($variant) use ($isAdmin) {
+            $variants = $product->variants->map(function ($variant) use ($isAdmin, $variantStockTotals) {
                 $resolvedVariantPrice = $this->salesPriceService->resolveForVariant($variant);
                 $variantSalesPrice = $resolvedVariantPrice !== null ? (float) $resolvedVariantPrice : null;
+                $availableStock = $variantStockTotals->get($variant->id);
 
                 $variantData = [
                     'id' => $variant->id,
@@ -97,6 +104,7 @@ class PriceListController extends Controller
                     'presentation_label' => $variant->presentation_label,
                     'presentation_value' => $variant->presentation_value,
                     'sales_price' => $variantSalesPrice,
+                    'available_stock' => $availableStock !== null ? (float) $availableStock : 0.0,
                 ];
 
                 if ($isAdmin) {

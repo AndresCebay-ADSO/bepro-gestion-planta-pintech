@@ -13,6 +13,7 @@ use App\Models\ProductCategory;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Services\DecimalCalculator;
+use App\Services\FinishedInventoryQueryService;
 use App\Services\ProductionCostRecalculationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,7 +25,8 @@ class ProductController extends Controller
 {
     public function __construct(
         private readonly ProductionCostRecalculationService $productionCostRecalculationService,
-        private readonly DecimalCalculator $calculator
+        private readonly DecimalCalculator $calculator,
+        private readonly FinishedInventoryQueryService $finishedInventoryQueryService,
     ) {}
 
     public function index(Request $request): Response
@@ -111,8 +113,13 @@ class ProductController extends Controller
     {
         $this->authorize('view', $product);
 
+        $user = $request->user();
+
         return Inertia::render('Products/Show', [
             'returnTo' => $this->resolveReturnTo($request),
+            'finishedInventory' => $user !== null
+                ? $this->finishedInventoryQueryService->inventoryRowsForProduct($user, $product)
+                : [],
             'product' => $product->load([
                 'category:id,name',
                 'unitOfMeasure:id,name,symbol',

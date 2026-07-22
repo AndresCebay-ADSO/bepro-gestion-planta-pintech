@@ -52,6 +52,26 @@ import {
     index as productsIndex,
     show as productsShow,
 } from '@/routes/products';
+import { index as finishedInventoryIndex } from '@/routes/finished-inventory';
+
+type FinishedInventoryRow = {
+    id: number;
+    quantity: string | number;
+    warehouse: {
+        id: number;
+        name: string;
+        city: string;
+        type: string;
+    } | null;
+    variant: {
+        id: number;
+        code: string | null;
+        name: string;
+        presentation_label: string | null;
+        presentation_value: number | null;
+        unit_symbol: string | null;
+    } | null;
+};
 
 type FormulaItem = {
     id: number;
@@ -64,6 +84,7 @@ type FormulaItem = {
 
 type Props = {
     returnTo?: string | null;
+    finishedInventory: FinishedInventoryRow[];
     product: {
         id: number;
         code: string;
@@ -127,6 +148,7 @@ type Props = {
 
 export default function ProductsShow({
     returnTo,
+    finishedInventory,
     product,
     can,
     documentTypes,
@@ -761,6 +783,98 @@ export default function ProductsShow({
                                     );
                                 })}
                             </ul>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-start justify-between gap-4">
+                        <div>
+                            <CardTitle>Inventario terminado</CardTitle>
+                            <CardDescription>
+                                Stock disponible por variante y bodega (según
+                                tus bodegas asignadas).
+                            </CardDescription>
+                        </div>
+                        <Button variant="outline" size="sm" asChild>
+                            <Link
+                                href={`${finishedInventoryIndex().url}?product_id=${product.id}`}
+                            >
+                                Ver en Inventario PT
+                            </Link>
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        {finishedInventory.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                                No hay stock registrado para este producto en
+                                las bodegas consultables.
+                            </p>
+                        ) : (
+                            <div className="overflow-x-auto rounded-lg border border-border">
+                                <table className="w-full text-sm">
+                                    <thead className="border-b border-border bg-muted/40">
+                                        <tr>
+                                            <th className="p-3 text-left font-medium">
+                                                Variante
+                                            </th>
+                                            <th className="p-3 text-left font-medium">
+                                                Bodega
+                                            </th>
+                                            <th className="p-3 text-right font-medium">
+                                                Cantidad
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {finishedInventory.map((row) => (
+                                            <tr
+                                                key={row.id}
+                                                className="border-b border-border/60 last:border-0"
+                                            >
+                                                <td className="p-3">
+                                                    {row.variant?.name ?? '-'}
+                                                    {row.variant
+                                                        ?.presentation_label && (
+                                                        <span className="ml-1 text-xs text-muted-foreground">
+                                                            (
+                                                            {
+                                                                row.variant
+                                                                    .presentation_label
+                                                            }
+                                                            )
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="p-3 text-muted-foreground">
+                                                    {row.warehouse?.name ?? '-'}
+                                                    {row.warehouse?.city && (
+                                                        <span className="ml-1 text-xs">
+                                                            ({row.warehouse.city}
+                                                            )
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="p-3 text-right font-medium">
+                                                    <FormattedNumber
+                                                        value={row.quantity}
+                                                        maxDecimals={2}
+                                                    />
+                                                    {row.variant
+                                                        ?.unit_symbol && (
+                                                        <span className="ml-1 text-xs font-normal text-muted-foreground">
+                                                            {
+                                                                row.variant
+                                                                    .unit_symbol
+                                                            }
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         )}
                     </CardContent>
                 </Card>

@@ -7,6 +7,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ComercialController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormulaController;
+use App\Http\Controllers\Inventory\FinishedInventoryController;
 use App\Http\Controllers\Inventory\RawMaterialController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
@@ -119,6 +120,7 @@ Route::middleware(['auth', 'verified', 'role:comercial'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
+    Route::get('finished-inventory', [FinishedInventoryController::class, 'index'])->name('finished-inventory.index');
     Route::resource('warehouses', WarehouseController::class)->only(['index', 'show']);
     Route::resource('products', ProductController::class);
     Route::post('products/{product}/documents', [ProductDocumentController::class, 'store'])->name('products.documents.store');
