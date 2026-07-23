@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\FinishedInventory;
-use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Warehouse;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -19,9 +18,17 @@ class FinishedInventoryFactory extends Factory
     {
         return [
             'product_variant_id' => ProductVariant::factory(),
-            'product_id' => fn (array $attributes): int => ProductVariant::query()->find($attributes['product_variant_id'])?->product_id ?? Product::factory()->create()->id,
             'warehouse_id' => Warehouse::factory(),
             'quantity' => $this->faker->randomFloat(2, 1, 500),
         ];
+    }
+
+    protected function configure(): static
+    {
+        return $this->afterMaking(function (FinishedInventory $inventory) {
+            if ($inventory->product_id === null && $inventory->productVariant) {
+                $inventory->product_id = $inventory->productVariant->product_id;
+            }
+        });
     }
 }

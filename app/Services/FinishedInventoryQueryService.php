@@ -31,19 +31,13 @@ class FinishedInventoryQueryService
 
     public function scopedQuery(User $user): Builder
     {
-        $query = FinishedInventory::query();
-
-        if ($user->hasRole('admin')) {
-            return $query;
-        }
-
         $warehouseIds = $this->accessibleWarehouseIds($user);
 
         if ($warehouseIds === []) {
-            return $query->whereRaw('1 = 0');
+            return FinishedInventory::query()->whereRaw('1 = 0');
         }
 
-        return $query->whereIn('warehouse_id', $warehouseIds);
+        return FinishedInventory::query()->whereIn('warehouse_id', $warehouseIds);
     }
 
     /**
@@ -66,6 +60,101 @@ class FinishedInventoryQueryService
         }
 
         return $query->pluck('total_quantity', 'product_variant_id');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function buildIndexData(User $user, ?string $search, ?int $warehouseId, ?int $productId): array
+    {
+        $search = $search !== null ? strtolower(trim($search)) : '';
+
+        $query = $this->scopedQuery($user)
+            ->where('quantity', '>', 0)
+            ->with([
+                'product:id,code,name,category_id',
+                'product.category:id,name',
+                'productVariant:id,code,name,presentation_label,presentation_value',
+                'warehouse:id,name,city,type',
+            ])
+            ->latest('id');
+
+        if ($warehouseId !== null) {
+            $query->where('warehouse_id', $warehouseId);
+        }
+
+        if ($productId !== null) {
+            $query->where('product_id', $productId);
+        }
+
+        if ($search !== '') {
+            $query->where(function ($searchQuery) use ($search): void {
+                $searchQuery
+                    ->whereHas('product', function ($productQuery) use ($search): void {
+                        $productQuery
+                            ->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"])
+                            ->orWhereRaw('LOWER(name) LIKE ?', ["%{$search}%"]);
+                    })
+                    ->orWhereHas('productVariant', function ($variantQuery) use ($search): void {
+                        $variantQuery
+                            ->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"])
+                            ->orWhereRaw('LOWER(name) LIKE ?', ["%{$search}%"]);
+                    })
+                    ->orWhereHas('warehouse', function ($warehouseQuery) use ($search): void {
+                        $warehouseQuery->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"]);
+                    });
+            });
+        }
+
+        $inventory = $query
+            ->paginate(20)
+            ->onEachSide(1)
+            ->withQueryString()
+            ->through(fn (FinishedInventory $row): array => [
+                'id' => $row->id,
+                'quantity' => $row->quantity,
+                'product' => $row->product ? [
+                    'id' => $row->product->id,
+                    'code' => $row->product->code,
+                    'name' => $row->product->name,
+                    'category' => $row->product->category ? [
+                        'name' => $row->product->category->name,
+                    ] : null,
+                ] : null,
+                'variant' => $row->productVariant ? [
+                    'id' => $row->productVariant->id,
+                    'code' => $row->productVariant->code,
+                    'name' => $row->productVariant->name,
+                    'presentation_label' => $row->productVariant->presentation_label,
+                    'presentation_value' => $row->productVariant->presentation_value,
+                ] : null,
+                'warehouse' => $row->warehouse ? [
+                    'id' => $row->warehouse->id,
+                    'name' => $row->warehouse->name,
+                    'city' => $row->warehouse->city,
+                    'type' => $row->warehouse->type->value,
+                ] : null,
+            ]);
+
+        $warehouses = $this->warehouseContextService
+            ->availableWarehouses($user)
+            ->map(fn ($warehouse): array => [
+                'id' => $warehouse->id,
+                'name' => $warehouse->name,
+                'city' => $warehouse->city,
+            ])
+            ->values();
+
+        return [
+            'inventory' => $inventory,
+            'warehouses' => $warehouses,
+            'filters' => [
+                'search' => $search,
+                'warehouse_id' => $warehouseId,
+                'product_id' => $productId,
+                'product_name' => $productId !== null ? Product::query()->whereKey($productId)->value('name') : null,
+            ],
+        ];
     }
 
     /**
