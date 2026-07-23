@@ -50,11 +50,7 @@ const statusColors: Record<string, string> = {
     rejected: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
 };
 
-export default function QuotationsIndex({
-    quotations,
-    filters,
-    can,
-}: Props) {
+export default function QuotationsIndex({ quotations, filters, can }: Props) {
     const { data, setData, get } = useForm({
         search: filters.search ?? '',
         status: filters.status ?? '',

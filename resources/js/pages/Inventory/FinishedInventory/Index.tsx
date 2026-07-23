@@ -126,14 +126,12 @@ export default function FinishedInventoryIndex({
                     onSubmit={handleSearch}
                     className="flex flex-wrap items-end gap-3"
                 >
-                    <div className="relative min-w-[240px] flex-1 max-w-md">
+                    <div className="relative max-w-md min-w-[240px] flex-1">
                         <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             placeholder="Buscar producto, variante o bodega..."
                             value={data.search}
-                            onChange={(e) =>
-                                setData('search', e.target.value)
-                            }
+                            onChange={(e) => setData('search', e.target.value)}
                             className="pl-10"
                         />
                     </div>
@@ -235,7 +233,7 @@ export default function FinishedInventoryIndex({
                                                         {row.variant
                                                             .presentation_value !=
                                                             null &&
-                                                            `(${row.variant.presentation_value} gl)`}
+                                                            `(${row.variant.presentation_value})`}
                                                     </div>
                                                 </>
                                             ) : (
@@ -264,11 +262,6 @@ export default function FinishedInventoryIndex({
                                                 value={row.quantity}
                                                 maxDecimals={2}
                                             />
-                                            {row.variant?.unit_symbol ? (
-                                                <span className="ml-1 text-xs font-normal text-muted-foreground">
-                                                    {row.variant.unit_symbol}
-                                                </span>
-                                            ) : null}
                                         </td>
                                     </tr>
                                 ))

@@ -2,8 +2,12 @@ import { Head } from '@inertiajs/react';
 
 import { update as quotationUpdate } from '@/actions/App/Http/Controllers/QuotationController';
 import QuotationForm from '@/components/quotations/QuotationForm';
-import type {ClientOption, ProductOption, QuotationFormData} from '@/components/quotations/QuotationForm';
-import type {ComboboxOptionType} from '@/components/ui/combobox';
+import type {
+    ClientOption,
+    ProductOption,
+    QuotationFormData,
+} from '@/components/quotations/QuotationForm';
+import type { ComboboxOptionType } from '@/components/ui/combobox';
 import { index as quotationsIndex } from '@/routes/quotations';
 
 type QuotationDetail = {
@@ -94,7 +98,9 @@ export default function QuotationsEdit({
 }: Props) {
     return (
         <>
-            <Head title={`Editar Cotización ${quotation.quotation_number ?? quotation.id}`} />
+            <Head
+                title={`Editar Cotización ${quotation.quotation_number ?? quotation.id}`}
+            />
             <QuotationForm
                 clients={clients}
                 products={products}

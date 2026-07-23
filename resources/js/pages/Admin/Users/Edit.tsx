@@ -133,9 +133,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                             type="tel"
                             name="phone"
                             value={data.phone}
-                            onChange={(e) =>
-                                setData('phone', e.target.value)
-                            }
+                            onChange={(e) => setData('phone', e.target.value)}
                             placeholder="Ej: 3001234567"
                             className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
                         />

@@ -1,5 +1,12 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Download, FileStack, FileText, Pencil, Trash2, Upload } from 'lucide-react';
+import {
+    Download,
+    FileStack,
+    FileText,
+    Pencil,
+    Trash2,
+    Upload,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -46,7 +53,11 @@ import {
     create as formulasCreate,
     show as formulasShow,
 } from '@/routes/formulas';
-import { store, update, destroy } from '@/actions/App/Http/Controllers/ProductVariantController';
+import {
+    store,
+    update,
+    destroy,
+} from '@/actions/App/Http/Controllers/ProductVariantController';
 import { destroy as destroyProduct } from '@/actions/App/Http/Controllers/ProductController';
 import {
     index as productsIndex,
@@ -155,8 +166,12 @@ export default function ProductsShow({
     units,
     rawMaterials,
 }: Props) {
-    const [dialogMode, setDialogMode] = useState<'create' | 'edit' | null>(null);
-    const [editingVariantId, setEditingVariantId] = useState<number | null>(null);
+    const [dialogMode, setDialogMode] = useState<'create' | 'edit' | null>(
+        null,
+    );
+    const [editingVariantId, setEditingVariantId] = useState<number | null>(
+        null,
+    );
     const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
 
     const formatQualityRange = (
@@ -220,7 +235,9 @@ export default function ProductsShow({
         router.delete(destroyProduct({ product: product.id }).url);
     };
 
-    const handleDeleteVariant = (variant: NonNullable<Props['product']['variants']>[number]) => {
+    const handleDeleteVariant = (
+        variant: NonNullable<Props['product']['variants']>[number],
+    ) => {
         if (!window.confirm(`¿Eliminar la variante "${variant.name}"?`)) {
             return;
         }
@@ -237,16 +254,27 @@ export default function ProductsShow({
         setDialogMode('create');
     };
 
-    const openEdit = (variant: NonNullable<Props['product']['variants']>[number]) => {
+    const openEdit = (
+        variant: NonNullable<Props['product']['variants']>[number],
+    ) => {
         form.setData({
             code: variant.code,
             name: variant.name,
             unit_of_measure_id: String(variant.unit_of_measure_id),
-            presentation_value: variant.presentation_value != null ? String(variant.presentation_value) : '',
+            presentation_value:
+                variant.presentation_value != null
+                    ? String(variant.presentation_value)
+                    : '',
             presentation_label: variant.presentation_label ?? '',
-            current_cost: variant.current_cost != null ? String(variant.current_cost) : '',
+            current_cost:
+                variant.current_cost != null
+                    ? String(variant.current_cost)
+                    : '',
             current_price: variant.current_price ?? '',
-            package_raw_material_id: variant.package_raw_material_id != null ? String(variant.package_raw_material_id) : '',
+            package_raw_material_id:
+                variant.package_raw_material_id != null
+                    ? String(variant.package_raw_material_id)
+                    : '',
             is_active: variant.is_active,
         });
         setEditingVariantId(variant.id);
@@ -850,7 +878,8 @@ export default function ProductsShow({
                                                     {row.warehouse?.name ?? '-'}
                                                     {row.warehouse?.city && (
                                                         <span className="ml-1 text-xs">
-                                                            ({row.warehouse.city}
+                                                            (
+                                                            {row.warehouse.city}
                                                             )
                                                         </span>
                                                     )}

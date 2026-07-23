@@ -111,7 +111,13 @@ export default function QuotationsShow({
 
     return (
         <>
-            <Head title={quotation.quotation_number ? `Cotización No.${quotation.quotation_number}` : 'Cotización'} />
+            <Head
+                title={
+                    quotation.quotation_number
+                        ? `Cotización No.${quotation.quotation_number}`
+                        : 'Cotización'
+                }
+            />
 
             <div className="mx-auto max-w-6xl space-y-6 p-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -125,7 +131,9 @@ export default function QuotationsShow({
                         <div>
                             <h1 className="flex items-center gap-2 text-2xl font-semibold">
                                 <FileText className="h-6 w-6" />
-                                {quotation.quotation_number ? `Cotización No.${quotation.quotation_number}` : 'Cotización'}
+                                {quotation.quotation_number
+                                    ? `Cotización No.${quotation.quotation_number}`
+                                    : 'Cotización'}
                             </h1>
                             <span
                                 className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[quotation.status] ?? ''}`}
@@ -188,7 +196,8 @@ export default function QuotationsShow({
                                     type="button"
                                     variant="secondary"
                                     disabled={
-                                        processing || data.status === quotation.status
+                                        processing ||
+                                        data.status === quotation.status
                                     }
                                 >
                                     Actualizar estado
@@ -196,18 +205,33 @@ export default function QuotationsShow({
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
-                                    <AlertDialogTitle>¿Cambiar estado de la cotización?</AlertDialogTitle>
+                                    <AlertDialogTitle>
+                                        ¿Cambiar estado de la cotización?
+                                    </AlertDialogTitle>
                                     <AlertDialogDescription>
                                         El estado pasará de{' '}
-                                        <span className="font-semibold">{quotation.status_label}</span> a{' '}
                                         <span className="font-semibold">
-                                            {statusOptions.find((o) => o.value === data.status)?.label}
-                                        </span>.
+                                            {quotation.status_label}
+                                        </span>{' '}
+                                        a{' '}
+                                        <span className="font-semibold">
+                                            {
+                                                statusOptions.find(
+                                                    (o) =>
+                                                        o.value === data.status,
+                                                )?.label
+                                            }
+                                        </span>
+                                        .
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleStatusUpdate}>
+                                    <AlertDialogCancel>
+                                        Cancelar
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={handleStatusUpdate}
+                                    >
                                         Confirmar cambio
                                     </AlertDialogAction>
                                 </AlertDialogFooter>
@@ -264,7 +288,11 @@ export default function QuotationsShow({
                                 <dt className="text-muted-foreground">
                                     Forma de pago
                                 </dt>
-                                <dd>{quotation.payment_method_label ?? quotation.payment_method ?? 'N.D.'}</dd>
+                                <dd>
+                                    {quotation.payment_method_label ??
+                                        quotation.payment_method ??
+                                        'N.D.'}
+                                </dd>
                             </div>
                             <div className="flex justify-between gap-4">
                                 <dt className="text-muted-foreground">
@@ -277,7 +305,10 @@ export default function QuotationsShow({
                                     Validez
                                 </dt>
                                 <dd>
-                                    {quotation.validity_days_label ?? (quotation.validity_days ? `${quotation.validity_days} días` : 'N.D.')}
+                                    {quotation.validity_days_label ??
+                                        (quotation.validity_days
+                                            ? `${quotation.validity_days} días`
+                                            : 'N.D.')}
                                 </dd>
                             </div>
                         </dl>
@@ -288,7 +319,9 @@ export default function QuotationsShow({
                     <table className="w-full text-sm">
                         <thead className="border-b border-border bg-muted/30">
                             <tr>
-                                <th className="px-4 py-3 text-left">Producto</th>
+                                <th className="px-4 py-3 text-left">
+                                    Producto
+                                </th>
                                 <th className="px-4 py-3 text-left">Tipo</th>
                                 <th className="px-4 py-3 text-left">
                                     Descripción
@@ -401,9 +434,7 @@ export default function QuotationsShow({
 
                 <div className="text-sm text-muted-foreground">
                     Creada el {quotation.created_at}
-                    {quotation.creator
-                        ? ` por ${quotation.creator.name}`
-                        : ''}
+                    {quotation.creator ? ` por ${quotation.creator.name}` : ''}
                 </div>
             </div>
         </>

@@ -3,7 +3,9 @@
  *
  * Ej: "2026-07-15T14:00:00Z" → "2026-07-15T09:00" (si el navegador está en UTC-5)
  */
-export function toLocalDateTimeInput(isoUtcString: string | null | undefined): string {
+export function toLocalDateTimeInput(
+    isoUtcString: string | null | undefined,
+): string {
     if (!isoUtcString) {
         return '';
     }

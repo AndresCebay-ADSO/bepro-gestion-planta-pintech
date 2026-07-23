@@ -184,16 +184,11 @@ export default function Profile({
                             type="tel"
                             className="mt-1 block w-full"
                             value={data.phone}
-                            onChange={(e) =>
-                                setData('phone', e.target.value)
-                            }
+                            onChange={(e) => setData('phone', e.target.value)}
                             placeholder="Ej: 3001234567"
                         />
 
-                        <InputError
-                            className="mt-2"
-                            message={errors.phone}
-                        />
+                        <InputError className="mt-2" message={errors.phone} />
                     </div>
 
                     <div className="grid gap-2">
