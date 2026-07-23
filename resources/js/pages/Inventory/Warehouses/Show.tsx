@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
+import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
 
 type UserItem = {
@@ -256,8 +257,11 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                                                 '-'
                                             )}
                                         </td>
-                                        <td className="p-3 text-muted-foreground">
-                                            {item.quantity}
+                                        <td className="p-3 text-right text-muted-foreground">
+                                            <FormattedNumber
+                                                value={item.quantity}
+                                                maxDecimals={2}
+                                            />
                                         </td>
                                     </tr>
                                 ))}

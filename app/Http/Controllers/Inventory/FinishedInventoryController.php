@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Models\FinishedInventory;
+use App\Models\Product;
 use App\Services\FinishedInventoryQueryService;
 use App\Services\WarehouseContextService;
 use Illuminate\Http\Request;
@@ -34,16 +35,18 @@ class FinishedInventoryController extends Controller
             ->with([
                 'product:id,code,name,category_id',
                 'product.category:id,name',
-                'productVariant:id,code,name,presentation_label,presentation_value,unit_of_measure_id',
-                'productVariant.unitOfMeasure:id,symbol',
+                'productVariant:id,code,name,presentation_label,presentation_value',
                 'warehouse:id,name,city,type',
             ])
             ->latest('id');
 
         if ($warehouseId !== null) {
-            $accessibleIds = $this->finishedInventoryQueryService->accessibleWarehouseIds($user);
-            if ($user->hasRole('admin') || in_array($warehouseId, $accessibleIds, true)) {
+            if ($user->hasRole('admin')) {
                 $query->where('warehouse_id', $warehouseId);
+            } elseif (in_array($warehouseId, $this->finishedInventoryQueryService->accessibleWarehouseIds($user), true)) {
+                $query->where('warehouse_id', $warehouseId);
+            } else {
+                $query->whereRaw('1 = 0');
             }
         }
 
@@ -91,7 +94,6 @@ class FinishedInventoryController extends Controller
                     'name' => $row->productVariant->name,
                     'presentation_label' => $row->productVariant->presentation_label,
                     'presentation_value' => $row->productVariant->presentation_value,
-                    'unit_symbol' => $row->productVariant->unitOfMeasure?->symbol,
                 ] : null,
                 'warehouse' => $row->warehouse ? [
                     'id' => $row->warehouse->id,
@@ -117,6 +119,7 @@ class FinishedInventoryController extends Controller
                 'search' => $search,
                 'warehouse_id' => $warehouseId,
                 'product_id' => $productId,
+                'product_name' => $productId !== null ? Product::query()->whereKey($productId)->value('name') : null,
             ],
         ]);
     }

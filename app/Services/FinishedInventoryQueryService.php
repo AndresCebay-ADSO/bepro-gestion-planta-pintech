@@ -57,7 +57,11 @@ class FinishedInventoryQueryService
             ->whereNotNull('product_variant_id')
             ->groupBy('product_variant_id');
 
-        if ($variantIds !== null && $variantIds !== []) {
+        if ($variantIds !== null) {
+            if ($variantIds === []) {
+                return collect();
+            }
+
             $query->whereIn('product_variant_id', $variantIds);
         }
 

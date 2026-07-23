@@ -26,10 +26,6 @@ class PriceListController extends Controller
         $search = $request->input('search');
         $isAdmin = $user?->hasRole('admin') ?? false;
 
-        $variantStockTotals = $user !== null
-            ? $this->finishedInventoryQueryService->sumQuantityByVariant($user)
-            : collect();
-
         $products = Product::query()
             ->select([
                 'id',
@@ -70,6 +66,14 @@ class PriceListController extends Controller
             ->paginate(15)
             ->onEachSide(1)
             ->withQueryString();
+
+        $variantIds = $products->getCollection()
+            ->flatMap(fn (Product $p) => $p->variants->pluck('id'))
+            ->all();
+
+        $variantStockTotals = $user !== null
+            ? $this->finishedInventoryQueryService->sumQuantityByVariant($user, $variantIds)
+            : collect();
 
         // Transform variants to include sales_price
         $products->through(function (Product $product) use ($isAdmin, $variantStockTotals) {

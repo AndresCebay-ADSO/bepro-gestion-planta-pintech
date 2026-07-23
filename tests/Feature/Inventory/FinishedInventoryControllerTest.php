@@ -123,6 +123,17 @@ it('includes available stock on price list for comercial', function (): void {
         );
 });
 
+it('scopes warehouse filter to accessible warehouses for comercial', function (): void {
+    $this->actingAs($this->comercial)
+        ->get(route('finished-inventory.index', [
+            'warehouse_id' => $this->warehouseHidden->id,
+        ]))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('inventory.data', 0)
+        );
+});
+
 it('allows produccion to view finished inventory index', function (): void {
     $this->produccion->warehouses()->attach($this->warehouseVisible->id);
 

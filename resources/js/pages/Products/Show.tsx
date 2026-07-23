@@ -9,11 +9,17 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { destroy as destroyProduct } from '@/actions/App/Http/Controllers/ProductController';
 import {
     destroy as destroyProductDocument,
     download as downloadProductDocument,
     store as storeProductDocument,
 } from '@/actions/App/Http/Controllers/ProductDocumentController';
+import {
+    destroy,
+    store,
+    update,
+} from '@/actions/App/Http/Controllers/ProductVariantController';
 import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -49,21 +55,15 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { withReturnTo } from '@/lib/navigation';
+import { index as finishedInventoryIndex } from '@/routes/finished-inventory';
 import {
     create as formulasCreate,
     show as formulasShow,
 } from '@/routes/formulas';
 import {
-    store,
-    update,
-    destroy,
-} from '@/actions/App/Http/Controllers/ProductVariantController';
-import { destroy as destroyProduct } from '@/actions/App/Http/Controllers/ProductController';
-import {
     index as productsIndex,
     show as productsShow,
 } from '@/routes/products';
-import { index as finishedInventoryIndex } from '@/routes/finished-inventory';
 
 type FinishedInventoryRow = {
     id: number;

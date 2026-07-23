@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Package, Search } from 'lucide-react';
 import type { FormEvent } from 'react';
 
@@ -26,7 +26,6 @@ type InventoryRow = {
         name: string;
         presentation_label: string | null;
         presentation_value: number | null;
-        unit_symbol: string | null;
     } | null;
     warehouse: {
         id: number;
@@ -52,6 +51,7 @@ type Props = {
         search?: string;
         warehouse_id?: number | null;
         product_id?: number | null;
+        product_name?: string | null;
     };
 };
 
@@ -81,11 +81,18 @@ export default function FinishedInventoryIndex({
     };
 
     const clearProductFilter = () => {
+        router.get(
+            finishedInventoryIndex().url,
+            {
+                search: data.search,
+                warehouse_id: data.warehouse_id,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
         setData('product_id', '');
-        get(finishedInventoryIndex().url, {
-            preserveState: true,
-            replace: true,
-        });
     };
 
     return (
@@ -109,7 +116,8 @@ export default function FinishedInventoryIndex({
                 {data.product_id ? (
                     <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2 text-sm">
                         <span className="text-muted-foreground">
-                            Filtrado por producto #{data.product_id}
+                            Filtrado por producto:{' '}
+                            {filters.product_name ?? `#${data.product_id}`}
                         </span>
                         <Button
                             type="button"
