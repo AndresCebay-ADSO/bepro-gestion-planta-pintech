@@ -46,6 +46,7 @@ import { index as rawMaterialsIndex } from '@/routes/raw-materials';
 import { index as salesOrdersIndex } from '@/routes/sales-orders';
 import { index as usersIndex } from '@/routes/users';
 import { index as warehousesIndex } from '@/routes/warehouses';
+import { edit as editAppearance } from '@/routes/appearance';
 import type { User, UserRole } from '@/types/auth';
 import type { NavGroup } from '@/types/navigation';
 
@@ -202,7 +203,7 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Configuración',
-                href: '/settings/appearance',
+                href: editAppearance(),
                 icon: Settings,
                 allowedRoles: ['admin', 'operador'],
                 unauthorizedBehavior: 'hide',
