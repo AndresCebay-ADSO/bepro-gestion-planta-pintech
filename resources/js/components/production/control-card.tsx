@@ -13,10 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import {
-    toLocalDateTimeInput,
-    toUtcIsoString,
-} from '@/lib/date-time-helpers';
+import { toLocalDateTimeInput, toUtcIsoString } from '@/lib/date-time-helpers';
 import type {
     ProductionOrderErrors,
     ProductionOrderFormData,
@@ -287,7 +284,9 @@ export function ControlCard({
                         <Input
                             type="datetime-local"
                             className="h-9 text-xs"
-                            value={toLocalDateTimeInput(data.agitation_start_time)}
+                            value={toLocalDateTimeInput(
+                                data.agitation_start_time,
+                            )}
                             onChange={(event) =>
                                 setData(
                                     'agitation_start_time',
@@ -302,7 +301,9 @@ export function ControlCard({
                         <Input
                             type="datetime-local"
                             className="h-9 text-xs"
-                            value={toLocalDateTimeInput(data.agitation_end_time)}
+                            value={toLocalDateTimeInput(
+                                data.agitation_end_time,
+                            )}
                             onChange={(event) =>
                                 setData(
                                     'agitation_end_time',
@@ -317,7 +318,9 @@ export function ControlCard({
                         <Input
                             type="datetime-local"
                             className="h-9 text-xs"
-                            value={toLocalDateTimeInput(data.packaging_start_time)}
+                            value={toLocalDateTimeInput(
+                                data.packaging_start_time,
+                            )}
                             onChange={(event) =>
                                 setData(
                                     'packaging_start_time',
@@ -332,7 +335,9 @@ export function ControlCard({
                         <Input
                             type="datetime-local"
                             className="h-9 text-xs"
-                            value={toLocalDateTimeInput(data.packaging_end_time)}
+                            value={toLocalDateTimeInput(
+                                data.packaging_end_time,
+                            )}
                             onChange={(event) =>
                                 setData(
                                     'packaging_end_time',

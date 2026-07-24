@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
+import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
 
 type UserItem = {
@@ -18,6 +19,13 @@ type FinishedInventoryItem = {
         id: number;
         code: string;
         name: string;
+    } | null;
+    product_variant: {
+        id: number;
+        code: string | null;
+        name: string;
+        presentation_label: string | null;
+        presentation_value: number | null;
     } | null;
 };
 
@@ -209,6 +217,9 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                                         Producto
                                     </th>
                                     <th className="p-3 text-left font-medium text-foreground">
+                                        Variante
+                                    </th>
+                                    <th className="p-3 text-left font-medium text-foreground">
                                         Cantidad
                                     </th>
                                 </tr>
@@ -226,7 +237,31 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                                             {item.product?.name ?? '-'}
                                         </td>
                                         <td className="p-3 text-muted-foreground">
-                                            {item.quantity}
+                                            {item.product_variant ? (
+                                                <>
+                                                    {item.product_variant.name}
+                                                    {item.product_variant
+                                                        .presentation_label && (
+                                                        <span className="ml-1 text-xs">
+                                                            (
+                                                            {
+                                                                item
+                                                                    .product_variant
+                                                                    .presentation_label
+                                                            }
+                                                            )
+                                                        </span>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                '-'
+                                            )}
+                                        </td>
+                                        <td className="p-3 text-right text-muted-foreground">
+                                            <FormattedNumber
+                                                value={item.quantity}
+                                                maxDecimals={2}
+                                            />
                                         </td>
                                     </tr>
                                 ))}
@@ -234,7 +269,7 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                                     0 && (
                                     <tr>
                                         <td
-                                            colSpan={3}
+                                            colSpan={4}
                                             className="p-8 text-center text-sm text-muted-foreground"
                                         >
                                             No hay inventario terminado en esta

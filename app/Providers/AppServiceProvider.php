@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Listeners\LogFailedLoginAttempt;
 use App\Models\Alert;
+use App\Models\FinishedInventory;
 use App\Models\Formula;
 use App\Models\PriceList;
 use App\Models\ProductionOrder;
@@ -12,6 +13,7 @@ use App\Models\RawMaterial;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Policies\AlertPolicy;
+use App\Policies\FinishedInventoryPolicy;
 use App\Policies\FormulaPolicy;
 use App\Policies\PriceListPolicy;
 use App\Policies\ProductionOrderPolicy;
@@ -84,6 +86,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(PriceList::class, PriceListPolicy::class);
         Gate::policy(ProductionOrder::class, ProductionOrderPolicy::class);
         Gate::policy(ProductionRemnant::class, ProductionRemnantPolicy::class);
+        Gate::policy(FinishedInventory::class, FinishedInventoryPolicy::class);
         Gate::policy(RawMaterial::class, RawMaterialPolicy::class);
         Gate::policy(Warehouse::class, WarehousePolicy::class);
 

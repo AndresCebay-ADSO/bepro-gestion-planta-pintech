@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
-import type {ComboboxOptionType} from '@/components/ui/combobox';
+import type { ComboboxOptionType } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -219,7 +219,9 @@ export default function QuotationForm({
 
                 if (listPrice > 0) {
                     next.price_adjustment_pct = String(
-                        (((unitPrice - listPrice) / listPrice) * 100).toFixed(4),
+                        (((unitPrice - listPrice) / listPrice) * 100).toFixed(
+                            4,
+                        ),
                     );
                 }
             }
@@ -341,14 +343,18 @@ export default function QuotationForm({
                             <Label>Línea</Label>
                             <Input
                                 value={data.line}
-                                onChange={(e) => setData('line', e.target.value)}
+                                onChange={(e) =>
+                                    setData('line', e.target.value)
+                                }
                             />
                         </div>
                         <div className="space-y-2">
                             <Label>Área</Label>
                             <Input
                                 value={data.area}
-                                onChange={(e) => setData('area', e.target.value)}
+                                onChange={(e) =>
+                                    setData('area', e.target.value)
+                                }
                             />
                         </div>
                         <div className="space-y-2">
@@ -365,7 +371,10 @@ export default function QuotationForm({
                             <Input
                                 value={data.application_method}
                                 onChange={(e) =>
-                                    setData('application_method', e.target.value)
+                                    setData(
+                                        'application_method',
+                                        e.target.value,
+                                    )
                                 }
                             />
                         </div>
@@ -452,10 +461,12 @@ export default function QuotationForm({
                                         product.id === Number(item.product_id),
                                 );
                                 const variantOptions = selectedProduct
-                                    ? selectedProduct.variants.map((variant) => ({
-                                          id: String(variant.id),
-                                          label: `${variant.name}${variant.presentation_label ? ` (${variant.presentation_label})` : ''}`,
-                                      }))
+                                    ? selectedProduct.variants.map(
+                                          (variant) => ({
+                                              id: String(variant.id),
+                                              label: `${variant.name}${variant.presentation_label ? ` (${variant.presentation_label})` : ''}`,
+                                          }),
+                                      )
                                     : [];
                                 const lineSubtotal = calculateLineSubtotal(
                                     item.quantity,
@@ -670,7 +681,12 @@ export default function QuotationForm({
                                         max="100"
                                         step="0.1"
                                         value={data.iva_percentage}
-                                        onChange={(e) => setData('iva_percentage', e.target.value)}
+                                        onChange={(e) =>
+                                            setData(
+                                                'iva_percentage',
+                                                e.target.value,
+                                            )
+                                        }
                                         className="h-8 w-20 text-right"
                                     />
                                     <span>%</span>

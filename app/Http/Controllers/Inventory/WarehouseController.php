@@ -102,8 +102,12 @@ class WarehouseController extends Controller
         $warehouse->load([
             'users:id,name,email',
             'finishedInventories' => fn ($query) => $query
-                ->select('id', 'warehouse_id', 'product_id', 'quantity')
-                ->with(['product:id,code,name'])
+                ->select('id', 'warehouse_id', 'product_id', 'product_variant_id', 'quantity')
+                ->with([
+                    'product:id,code,name',
+                    'productVariant:id,code,name,presentation_label,presentation_value',
+                ])
+                ->where('quantity', '>', 0)
                 ->orderByDesc('id'),
         ]);
 

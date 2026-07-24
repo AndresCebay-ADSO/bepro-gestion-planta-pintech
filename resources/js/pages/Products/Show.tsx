@@ -1,12 +1,25 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Download, FileStack, FileText, Pencil, Trash2, Upload } from 'lucide-react';
+import {
+    Download,
+    FileStack,
+    FileText,
+    Pencil,
+    Trash2,
+    Upload,
+} from 'lucide-react';
 import { useState } from 'react';
 
+import { destroy as destroyProduct } from '@/actions/App/Http/Controllers/ProductController';
 import {
     destroy as destroyProductDocument,
     download as downloadProductDocument,
     store as storeProductDocument,
 } from '@/actions/App/Http/Controllers/ProductDocumentController';
+import {
+    destroy,
+    store,
+    update,
+} from '@/actions/App/Http/Controllers/ProductVariantController';
 import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -42,16 +55,34 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { withReturnTo } from '@/lib/navigation';
+import { index as finishedInventoryIndex } from '@/routes/finished-inventory';
 import {
     create as formulasCreate,
     show as formulasShow,
 } from '@/routes/formulas';
-import { store, update, destroy } from '@/actions/App/Http/Controllers/ProductVariantController';
-import { destroy as destroyProduct } from '@/actions/App/Http/Controllers/ProductController';
 import {
     index as productsIndex,
     show as productsShow,
 } from '@/routes/products';
+
+type FinishedInventoryRow = {
+    id: number;
+    quantity: string | number;
+    warehouse: {
+        id: number;
+        name: string;
+        city: string;
+        type: string;
+    } | null;
+    variant: {
+        id: number;
+        code: string | null;
+        name: string;
+        presentation_label: string | null;
+        presentation_value: number | null;
+        unit_symbol: string | null;
+    } | null;
+};
 
 type FormulaItem = {
     id: number;
@@ -64,6 +95,7 @@ type FormulaItem = {
 
 type Props = {
     returnTo?: string | null;
+    finishedInventory: FinishedInventoryRow[];
     product: {
         id: number;
         code: string;
@@ -127,14 +159,19 @@ type Props = {
 
 export default function ProductsShow({
     returnTo,
+    finishedInventory,
     product,
     can,
     documentTypes,
     units,
     rawMaterials,
 }: Props) {
-    const [dialogMode, setDialogMode] = useState<'create' | 'edit' | null>(null);
-    const [editingVariantId, setEditingVariantId] = useState<number | null>(null);
+    const [dialogMode, setDialogMode] = useState<'create' | 'edit' | null>(
+        null,
+    );
+    const [editingVariantId, setEditingVariantId] = useState<number | null>(
+        null,
+    );
     const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
 
     const formatQualityRange = (
@@ -198,7 +235,9 @@ export default function ProductsShow({
         router.delete(destroyProduct({ product: product.id }).url);
     };
 
-    const handleDeleteVariant = (variant: NonNullable<Props['product']['variants']>[number]) => {
+    const handleDeleteVariant = (
+        variant: NonNullable<Props['product']['variants']>[number],
+    ) => {
         if (!window.confirm(`¿Eliminar la variante "${variant.name}"?`)) {
             return;
         }
@@ -215,16 +254,27 @@ export default function ProductsShow({
         setDialogMode('create');
     };
 
-    const openEdit = (variant: NonNullable<Props['product']['variants']>[number]) => {
+    const openEdit = (
+        variant: NonNullable<Props['product']['variants']>[number],
+    ) => {
         form.setData({
             code: variant.code,
             name: variant.name,
             unit_of_measure_id: String(variant.unit_of_measure_id),
-            presentation_value: variant.presentation_value != null ? String(variant.presentation_value) : '',
+            presentation_value:
+                variant.presentation_value != null
+                    ? String(variant.presentation_value)
+                    : '',
             presentation_label: variant.presentation_label ?? '',
-            current_cost: variant.current_cost != null ? String(variant.current_cost) : '',
+            current_cost:
+                variant.current_cost != null
+                    ? String(variant.current_cost)
+                    : '',
             current_price: variant.current_price ?? '',
-            package_raw_material_id: variant.package_raw_material_id != null ? String(variant.package_raw_material_id) : '',
+            package_raw_material_id:
+                variant.package_raw_material_id != null
+                    ? String(variant.package_raw_material_id)
+                    : '',
             is_active: variant.is_active,
         });
         setEditingVariantId(variant.id);
@@ -761,6 +811,99 @@ export default function ProductsShow({
                                     );
                                 })}
                             </ul>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-start justify-between gap-4">
+                        <div>
+                            <CardTitle>Inventario terminado</CardTitle>
+                            <CardDescription>
+                                Stock disponible por variante y bodega (según
+                                tus bodegas asignadas).
+                            </CardDescription>
+                        </div>
+                        <Button variant="outline" size="sm" asChild>
+                            <Link
+                                href={`${finishedInventoryIndex().url}?product_id=${product.id}`}
+                            >
+                                Ver en Inventario PT
+                            </Link>
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        {finishedInventory.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                                No hay stock registrado para este producto en
+                                las bodegas consultables.
+                            </p>
+                        ) : (
+                            <div className="overflow-x-auto rounded-lg border border-border">
+                                <table className="w-full text-sm">
+                                    <thead className="border-b border-border bg-muted/40">
+                                        <tr>
+                                            <th className="p-3 text-left font-medium">
+                                                Variante
+                                            </th>
+                                            <th className="p-3 text-left font-medium">
+                                                Bodega
+                                            </th>
+                                            <th className="p-3 text-right font-medium">
+                                                Cantidad
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {finishedInventory.map((row) => (
+                                            <tr
+                                                key={row.id}
+                                                className="border-b border-border/60 last:border-0"
+                                            >
+                                                <td className="p-3">
+                                                    {row.variant?.name ?? '-'}
+                                                    {row.variant
+                                                        ?.presentation_label && (
+                                                        <span className="ml-1 text-xs text-muted-foreground">
+                                                            (
+                                                            {
+                                                                row.variant
+                                                                    .presentation_label
+                                                            }
+                                                            )
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="p-3 text-muted-foreground">
+                                                    {row.warehouse?.name ?? '-'}
+                                                    {row.warehouse?.city && (
+                                                        <span className="ml-1 text-xs">
+                                                            (
+                                                            {row.warehouse.city}
+                                                            )
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="p-3 text-right font-medium">
+                                                    <FormattedNumber
+                                                        value={row.quantity}
+                                                        maxDecimals={2}
+                                                    />
+                                                    {row.variant
+                                                        ?.unit_symbol && (
+                                                        <span className="ml-1 text-xs font-normal text-muted-foreground">
+                                                            {
+                                                                row.variant
+                                                                    .unit_symbol
+                                                            }
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         )}
                     </CardContent>
                 </Card>

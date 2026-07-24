@@ -9,6 +9,7 @@ import {
     Factory,
     FlaskConical,
     LayoutGrid,
+    Package,
     QrCode,
     Settings,
     ShieldCheck,
@@ -32,6 +33,7 @@ import { index as adminCostsIndex } from '@/routes/admin/costs';
 import { index as alertsIndex } from '@/routes/alerts';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import { index as clientsIndex } from '@/routes/clients';
+import { index as finishedInventoryIndex } from '@/routes/finished-inventory';
 import { index as formulasIndex } from '@/routes/formulas';
 import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
 import { index as pricesIndex } from '@/routes/prices';
@@ -44,6 +46,7 @@ import { index as rawMaterialsIndex } from '@/routes/raw-materials';
 import { index as salesOrdersIndex } from '@/routes/sales-orders';
 import { index as usersIndex } from '@/routes/users';
 import { index as warehousesIndex } from '@/routes/warehouses';
+import { edit as editAppearance } from '@/routes/appearance';
 import type { User, UserRole } from '@/types/auth';
 import type { NavGroup } from '@/types/navigation';
 
@@ -68,6 +71,12 @@ const navigationGroups: NavGroup[] = [
                 href: inventoryMovementsIndex().url,
                 icon: ArrowLeftRight,
                 allowedRoles: ['admin', 'produccion'],
+            },
+            {
+                title: 'Inventario PT',
+                href: finishedInventoryIndex().url,
+                icon: Package,
+                allowedRoles: ['admin', 'produccion', 'comercial'],
             },
             {
                 title: 'Bodegas',
@@ -194,7 +203,7 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Configuración',
-                href: '/settings/appearance',
+                href: editAppearance(),
                 icon: Settings,
                 allowedRoles: ['admin', 'operador'],
                 unauthorizedBehavior: 'hide',

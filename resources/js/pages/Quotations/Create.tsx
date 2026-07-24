@@ -4,8 +4,11 @@ import { store as quotationStore } from '@/actions/App/Http/Controllers/Quotatio
 import QuotationForm, {
     buildEmptyItem,
 } from '@/components/quotations/QuotationForm';
-import type {ClientOption, ProductOption} from '@/components/quotations/QuotationForm';
-import type {ComboboxOptionType} from '@/components/ui/combobox';
+import type {
+    ClientOption,
+    ProductOption,
+} from '@/components/quotations/QuotationForm';
+import type { ComboboxOptionType } from '@/components/ui/combobox';
 import { index as quotationsIndex } from '@/routes/quotations';
 
 type Props = {
