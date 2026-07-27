@@ -30,6 +30,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read Collection|FinishedInventory[] $finishedInventories
  * @property-read Collection|ProductionOrder[] $productionOrders
  * @property-read Collection|FinishedInventoryMovement[] $finishedInventoryMovements
+ * @property-read Collection|FinishedProductBatchStock[] $finishedProductBatchStocks
  * @property-read Collection|User[] $users
  */
 #[Fillable([
@@ -99,6 +100,11 @@ class Warehouse extends Model
     public function finishedInventoryMovements(): HasMany
     {
         return $this->hasMany(FinishedInventoryMovement::class, 'warehouse_id');
+    }
+
+    public function finishedProductBatchStocks(): HasMany
+    {
+        return $this->hasMany(FinishedProductBatchStock::class, 'warehouse_id');
     }
 
     public function users(): BelongsToMany

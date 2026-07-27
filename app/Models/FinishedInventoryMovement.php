@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\FinishedInventoryMovementReason;
 use App\Enums\InventoryMovementType;
 use App\Models\Concerns\HasAuditDescription;
 use App\Models\Concerns\ValidatesProductVariant;
@@ -20,9 +21,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int|null $product_variant_id
  * @property int $warehouse_id
  * @property int|null $production_order_id
+ * @property int|null $finished_product_batch_id
  * @property InventoryMovementType $type
+ * @property FinishedInventoryMovementReason $reason
  * @property float $quantity
- * @property float|null $cost_price Costo unitario del producto terminado al momento del movimiento.
+ * @property float|null $cost_price
  * @property Carbon $movement_date
  * @property string|null $notes
  * @property int $created_by
@@ -32,6 +35,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read ProductVariant|null $productVariant
  * @property-read Warehouse $warehouse
  * @property-read ProductionOrder|null $productionOrder
+ * @property-read FinishedProductBatch|null $finishedProductBatch
  * @property-read User $createdBy
  */
 #[Fillable([
@@ -39,7 +43,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'product_variant_id',
     'warehouse_id',
     'production_order_id',
+    'finished_product_batch_id',
     'type',
+    'reason',
     'quantity',
     'cost_price',
     'movement_date',
@@ -60,7 +66,7 @@ class FinishedInventoryMovement extends Model
         return LogOptions::defaults()
             ->useLogName('movimientos_inventario_terminado')
             ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
-            ->logOnly(['product_id', 'product_variant_id', 'warehouse_id', 'type', 'quantity', 'production_order_id'])
+            ->logOnly(['product_id', 'product_variant_id', 'warehouse_id', 'type', 'quantity', 'production_order_id', 'reason'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -69,6 +75,7 @@ class FinishedInventoryMovement extends Model
     {
         return [
             'type' => InventoryMovementType::class,
+            'reason' => FinishedInventoryMovementReason::class,
             'quantity' => 'decimal:4',
             'cost_price' => 'decimal:4',
             'movement_date' => 'date',
@@ -93,6 +100,11 @@ class FinishedInventoryMovement extends Model
     public function productionOrder(): BelongsTo
     {
         return $this->belongsTo(ProductionOrder::class, 'production_order_id');
+    }
+
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(FinishedProductBatch::class, 'finished_product_batch_id');
     }
 
     public function createdBy(): BelongsTo

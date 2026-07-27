@@ -137,6 +137,11 @@ class Product extends Model
         return $this->hasMany(FinishedInventoryMovement::class, 'product_id');
     }
 
+    public function finishedProductBatches(): HasMany
+    {
+        return $this->hasMany(FinishedProductBatch::class, 'product_id');
+    }
+
     public function formulas(): HasMany
     {
         return $this->hasMany(Formula::class, 'product_id');
