@@ -35,7 +35,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read ProductVariant|null $productVariant
  * @property-read Warehouse $warehouse
  * @property-read ProductionOrder|null $productionOrder
- * @property-read FinishedProductBatch|null $finishedProductBatch
+ * @property-read FinishedProductBatch|null $batch
  * @property-read User $createdBy
  */
 #[Fillable([

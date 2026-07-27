@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditDescription;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -26,7 +29,21 @@ use Illuminate\Support\Carbon;
 ])]
 class FinishedProductBatchStock extends Model
 {
-    use HasFactory;
+    use HasAuditDescription, HasFactory, LogsActivity;
+
+    protected string $auditLabel = 'Stock de lote por bodega';
+
+    protected string $auditIdentifierAttribute = 'id';
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('lotes_stock_bodega')
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
+            ->logOnly(['finished_product_batch_id', 'warehouse_id', 'quantity'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     protected function casts(): array
     {

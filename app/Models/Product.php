@@ -44,6 +44,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read UnitOfMeasure $unitOfMeasure
  * @property-read Collection|FinishedInventory[] $finishedInventories
  * @property-read Collection|FinishedInventoryMovement[] $finishedInventoryMovements
+ * @property-read Collection|FinishedProductBatch[] $finishedProductBatches
  * @property-read Collection|Formula[] $formulas
  * @property-read Collection|ProductionOrder[] $productionOrders
  * @property-read Collection|ProductionCost[] $productionCosts

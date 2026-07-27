@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasAuditDescription;
+use App\Models\Concerns\ValidatesProductVariant;
 use Database\Factories\FinishedProductBatchFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -40,7 +41,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class FinishedProductBatch extends Model
 {
     /** @use HasFactory<FinishedProductBatchFactory> */
-    use HasAuditDescription, HasFactory, LogsActivity;
+    use HasAuditDescription, HasFactory, LogsActivity, ValidatesProductVariant;
 
     protected string $auditLabel = 'Lote de producto terminado';
 
