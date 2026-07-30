@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Actions\Production;
 
-use App\Enums\InventoryMovementType;
+use App\Enums\FinishedInventoryMovementReason;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\RemnantStatus;
 use App\Jobs\GenerateQualityInspectionCertificateJob;
 use App\Jobs\RecalculateRawMaterialReferencePrice;
-use App\Models\FinishedInventory;
-use App\Models\FinishedInventoryMovement;
+use App\Models\FinishedProductBatch;
 use App\Models\Product;
 use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
@@ -18,6 +17,7 @@ use App\Models\ProductionRemnant;
 use App\Models\ProductVariant;
 use App\Services\AlertService;
 use App\Services\DecimalCalculator;
+use App\Services\FinishedInventory\FinishedInventoryMovementService;
 use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\Pricing\ProductionCostCalculatorService;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +31,7 @@ class CompleteProductionOrderAction
         private readonly DecimalCalculator $calculator,
         private readonly AlertService $alertService,
         private readonly SaveProductionOrderOperationalDataAction $saveOperationalData,
+        private readonly FinishedInventoryMovementService $finishedInventoryMovementService,
     ) {}
 
     /**
@@ -187,29 +188,24 @@ class CompleteProductionOrderAction
                 $bulkCostForVariant = (string) ($distributedBulkCosts[$plan->product_variant_id] ?? '0');
                 $costPriceForVariant = $this->calculator->add($bulkCostForVariant, $packagingUnitCost, 4);
 
-                FinishedInventoryMovement::create([
+                $batch = FinishedProductBatch::create([
                     'product_id' => $lockedOrder->product_id,
                     'product_variant_id' => $plan->product_variant_id,
-                    'warehouse_id' => $lockedOrder->warehouse_id,
                     'production_order_id' => $lockedOrder->id,
-                    'type' => InventoryMovementType::Entry,
-                    'quantity' => $actualUnits,
-                    'cost_price' => $costPriceForVariant,
-                    'movement_date' => now(),
-                    'notes' => "Finalización OP #{$lockedOrder->order_number}",
-                    'created_by' => $userId,
+                    'initial_quantity' => $actualUnits,
+                    'entry_date' => now(),
                 ]);
 
-                $inventory = FinishedInventory::query()
-                    ->lockForUpdate()
-                    ->firstOrNew([
-                        'product_id' => $lockedOrder->product_id,
-                        'product_variant_id' => $plan->product_variant_id,
-                        'warehouse_id' => $lockedOrder->warehouse_id,
-                    ]);
-
-                $inventory->quantity = $this->calculator->add((string) ($inventory->quantity ?? '0'), $actualUnits, 4);
-                $inventory->save();
+                $this->finishedInventoryMovementService->registerEntry(
+                    batchId: (int) $batch->id,
+                    warehouseId: (int) $lockedOrder->warehouse_id,
+                    quantity: (string) $actualUnits,
+                    reason: FinishedInventoryMovementReason::Production,
+                    userId: $userId,
+                    productionOrderId: (int) $lockedOrder->id,
+                    costPrice: $costPriceForVariant,
+                    notes: "Finalización OP #{$lockedOrder->order_number}",
+                );
             }
 
             $yieldRealQuantity = (string) ($data['actual_yield_quantity'] ?? $lockedOrder->quantity);
