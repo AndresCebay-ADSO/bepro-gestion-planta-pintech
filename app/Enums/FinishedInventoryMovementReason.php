@@ -41,6 +41,7 @@ enum FinishedInventoryMovementReason: string
                 self::Production,
                 self::Return,
                 self::Adjustment,
+                self::Transfer,
             ],
             InventoryMovementType::Exit => [
                 self::Sale,
