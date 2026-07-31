@@ -49,6 +49,16 @@ class FinishedInventoryMovementService
         return DB::transaction(function () use ($batchId, $warehouseId, $quantity, $reason, $userId, $productionOrderId, $costPrice, $notes, $movementDate) {
             $batch = $this->lockBatch($batchId);
 
+            if ($reason === FinishedInventoryMovementReason::Return) {
+                $returnable = $this->calculateReturnableForBatchWarehouse($batchId, $warehouseId);
+
+                if ($this->calculator->cmp($quantity, $returnable) > 0) {
+                    throw ValidationException::withMessages([
+                        'quantity' => __('La cantidad de devolución no puede superar lo que realmente salió del lote. Retornable máximo: :returnable', ['returnable' => $returnable]),
+                    ]);
+                }
+            }
+
             $this->stockService->incrementStock($batchId, $warehouseId, $quantity);
 
             $movement = FinishedInventoryMovement::create([
@@ -167,135 +177,6 @@ class FinishedInventoryMovementService
     }
 
     /**
-     * Reverse a movement by creating an inverse movement (for audit trail).
-     *
-     * Production-linked movements cannot be reversed.
-     */
-    public function reverseMovement(FinishedInventoryMovement $movement): FinishedInventoryMovement
-    {
-        $this->rejectProductionLinkedModification($movement, 'revertir');
-
-        $this->requireBatchId($movement);
-
-        $notes = __('Reversión del movimiento #:id', ['id' => $movement->id]);
-
-        if ($movement->type === InventoryMovementType::Entry) {
-            return $this->registerExit(
-                batchId: (int) $movement->finished_product_batch_id,
-                warehouseId: (int) $movement->warehouse_id,
-                quantity: (string) $movement->quantity,
-                reason: FinishedInventoryMovementReason::Adjustment,
-                userId: (int) $movement->created_by,
-                notes: $notes,
-            );
-        }
-
-        return $this->registerEntry(
-            batchId: (int) $movement->finished_product_batch_id,
-            warehouseId: (int) $movement->warehouse_id,
-            quantity: (string) $movement->quantity,
-            reason: FinishedInventoryMovementReason::Adjustment,
-            userId: (int) $movement->created_by,
-            notes: $notes,
-        );
-    }
-
-    /**
-     * Update a movement. Metadata-only changes (date, notes) skip stock recalculation.
-     * Substantial changes reverse the old effect and apply the new one.
-     */
-    public function updateMovement(FinishedInventoryMovement $movement, array $data): FinishedInventoryMovement
-    {
-        $this->rejectProductionLinkedModification($movement, 'editar');
-
-        return DB::transaction(function () use ($movement, $data) {
-            if ($this->isMetadataOnlyUpdate($movement, $data)) {
-                $movement->update([
-                    'movement_date' => $data['movement_date'],
-                    'notes' => array_key_exists('notes', $data) ? $data['notes'] : $movement->notes,
-                ]);
-
-                return $movement->refresh();
-            }
-
-            $this->requireBatchId($movement);
-
-            // Reverse old stock effect (no new movement record)
-            $this->reverseStockEffect($movement);
-
-            // Apply new values
-            $batch = $this->lockBatch((int) $data['finished_product_batch_id']);
-            $type = $data['type'] instanceof InventoryMovementType
-                ? $data['type']
-                : InventoryMovementType::from($data['type']);
-            $reason = $data['reason'] instanceof FinishedInventoryMovementReason
-                ? $data['reason']
-                : FinishedInventoryMovementReason::from($data['reason']);
-            $quantity = (string) $data['quantity'];
-            $warehouseId = (int) $data['warehouse_id'];
-
-            if ($type === InventoryMovementType::Entry) {
-                $this->stockService->incrementStock((int) $batch->id, $warehouseId, $quantity);
-                $this->syncInventoryCache((int) $batch->product_id, $batch->product_variant_id, $warehouseId, $quantity, isEntry: true);
-            } else {
-                $this->stockService->decrementStock((int) $batch->id, $warehouseId, $quantity);
-                $this->syncInventoryCache((int) $batch->product_id, $batch->product_variant_id, $warehouseId, $quantity, isEntry: false);
-            }
-
-            $movement->update([
-                'product_id' => $batch->product_id,
-                'product_variant_id' => $batch->product_variant_id,
-                'warehouse_id' => $warehouseId,
-                'finished_product_batch_id' => (int) $batch->id,
-                'type' => $type,
-                'reason' => $reason,
-                'quantity' => $quantity,
-                'movement_date' => $data['movement_date'],
-                'notes' => array_key_exists('notes', $data) ? $data['notes'] : $movement->notes,
-            ]);
-
-            return $movement->refresh();
-        });
-    }
-
-    /**
-     * Delete a movement. Reverses the stock effect and removes the record.
-     *
-     * Production-linked movements cannot be deleted.
-     */
-    public function deleteMovement(FinishedInventoryMovement $movement): void
-    {
-        $this->rejectProductionLinkedModification($movement, 'eliminar');
-
-        DB::transaction(function () use ($movement) {
-            if ($movement->finished_product_batch_id !== null) {
-                $this->reverseStockEffect($movement);
-            }
-
-            $movement->delete();
-        });
-    }
-
-    /**
-     * Reverse the stock effect of a movement without creating a new movement record.
-     * Used internally by updateMovement() and deleteMovement().
-     */
-    private function reverseStockEffect(FinishedInventoryMovement $movement): void
-    {
-        $batch = $this->lockBatch((int) $movement->finished_product_batch_id);
-        $quantity = (string) $movement->quantity;
-        $warehouseId = (int) $movement->warehouse_id;
-
-        if ($movement->type === InventoryMovementType::Entry) {
-            $this->stockService->decrementStock((int) $movement->finished_product_batch_id, $warehouseId, $quantity);
-            $this->syncInventoryCache((int) $batch->product_id, $batch->product_variant_id, $warehouseId, $quantity, isEntry: false);
-        } else {
-            $this->stockService->incrementStock((int) $movement->finished_product_batch_id, $warehouseId, $quantity);
-            $this->syncInventoryCache((int) $batch->product_id, $batch->product_variant_id, $warehouseId, $quantity, isEntry: true);
-        }
-    }
-
-    /**
      * Sync the finished_inventories cache table after a stock change.
      *
      * This table aggregates total quantity per (product, variant, warehouse)
@@ -331,33 +212,31 @@ class FinishedInventoryMovementService
         return FinishedProductBatch::query()->lockForUpdate()->findOrFail($batchId);
     }
 
-    private function rejectProductionLinkedModification(FinishedInventoryMovement $movement, string $action): void
+    private function calculateReturnableForBatchWarehouse(int $batchId, int $warehouseId): string
     {
-        if ($movement->production_order_id !== null) {
-            throw ValidationException::withMessages([
-                'movement' => __('No se permite :action movimientos vinculados a órdenes de producción.', ['action' => $action]),
-            ]);
-        }
-    }
+        $exitReasons = [
+            FinishedInventoryMovementReason::Sale->value,
+            FinishedInventoryMovementReason::Sample->value,
+            FinishedInventoryMovementReason::Deterioration->value,
+            FinishedInventoryMovementReason::Transformation->value,
+        ];
 
-    private function requireBatchId(FinishedInventoryMovement $movement): void
-    {
-        if ($movement->finished_product_batch_id === null) {
-            throw ValidationException::withMessages([
-                'movement' => __('Este movimiento no tiene lote asociado y no puede ser modificado.'),
-            ]);
-        }
-    }
+        $eligibleExits = (string) FinishedInventoryMovement::query()
+            ->where('finished_product_batch_id', $batchId)
+            ->where('warehouse_id', $warehouseId)
+            ->where('type', InventoryMovementType::Exit)
+            ->whereIn('reason', $exitReasons)
+            ->sum('quantity');
 
-    private function isMetadataOnlyUpdate(FinishedInventoryMovement $movement, array $data): bool
-    {
-        $typeValue = $data['type'] instanceof InventoryMovementType ? $data['type']->value : $data['type'];
-        $reasonValue = $data['reason'] instanceof FinishedInventoryMovementReason ? $data['reason']->value : $data['reason'];
+        $totalReturns = (string) FinishedInventoryMovement::query()
+            ->where('finished_product_batch_id', $batchId)
+            ->where('warehouse_id', $warehouseId)
+            ->where('type', InventoryMovementType::Entry)
+            ->where('reason', FinishedInventoryMovementReason::Return->value)
+            ->sum('quantity');
 
-        return (int) ($movement->finished_product_batch_id ?? 0) === (int) ($data['finished_product_batch_id'] ?? 0)
-            && (int) $movement->warehouse_id === (int) $data['warehouse_id']
-            && $movement->type->value === $typeValue
-            && $movement->reason->value === $reasonValue
-            && $this->calculator->cmp((string) $movement->quantity, (string) $data['quantity']) === 0;
+        $returnable = $this->calculator->sub($eligibleExits, $totalReturns);
+
+        return $this->calculator->cmp($returnable, '0') < 0 ? '0' : $returnable;
     }
 }

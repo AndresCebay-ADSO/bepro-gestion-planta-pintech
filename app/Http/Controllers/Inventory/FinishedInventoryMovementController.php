@@ -7,7 +7,6 @@ namespace App\Http\Controllers\Inventory;
 use App\Enums\FinishedInventoryMovementReason;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\FinishedInventory\StoreFinishedInventoryMovementRequest;
-use App\Http\Requests\FinishedInventory\UpdateFinishedInventoryMovementRequest;
 use App\Models\FinishedInventoryMovement;
 use App\Models\FinishedProductBatch;
 use App\Models\Warehouse;
@@ -71,13 +70,11 @@ class FinishedInventoryMovementController extends Controller
         return Inertia::render('Inventory/FinishedMovements/Index', [
             'movements' => $movements,
             'batches' => Inertia::optional(fn () => FinishedProductBatch::query()
-                ->available()
-                ->when(
-                    $movementWarehouse !== null,
-                    fn ($query) => $query->whereHas('stocks', fn ($q) => $q->forWarehouse($movementWarehouse->id)->available()),
-                    fn ($query) => $query->whereRaw('1 = 0')
-                )
-                ->with(['product:id,code,name', 'productVariant:id,code,name,presentation_label', 'stocks'])
+                ->with([
+                    'product:id,code,name',
+                    'productVariant:id,code,name,presentation_label',
+                    'stocks',
+                ])
                 ->select('id', 'product_id', 'product_variant_id', 'entry_date', 'initial_quantity')
                 ->fifoOrder()
                 ->get()
@@ -157,55 +154,6 @@ class FinishedInventoryMovementController extends Controller
                 'productionOrder:id,order_number',
                 'createdBy:id,name',
             ]),
-            'can' => [
-                'update' => Gate::allows('update', $finishedInventoryMovement),
-                'delete' => Gate::allows('delete', $finishedInventoryMovement),
-            ],
         ]);
-    }
-
-    public function edit(FinishedInventoryMovement $finishedInventoryMovement): Response
-    {
-        $this->authorize('update', $finishedInventoryMovement);
-
-        return Inertia::render('Inventory/FinishedMovements/Edit', [
-            'movement' => $finishedInventoryMovement->load([
-                'product:id,code,name',
-                'productVariant:id,code,name',
-            ]),
-            'batches' => FinishedProductBatch::query()
-                ->where(function ($query) use ($finishedInventoryMovement): void {
-                    $query->available();
-
-                    if ($finishedInventoryMovement->finished_product_batch_id !== null) {
-                        $query->orWhere('id', $finishedInventoryMovement->finished_product_batch_id);
-                    }
-                })
-                ->with(['product:id,code,name', 'productVariant:id,code,name,presentation_label'])
-                ->select('id', 'product_id', 'product_variant_id', 'entry_date', 'initial_quantity')
-                ->fifoOrder()
-                ->get(),
-            'warehouses' => Warehouse::query()->select('id', 'name', 'city', 'type')->get(),
-        ]);
-    }
-
-    public function update(UpdateFinishedInventoryMovementRequest $request, FinishedInventoryMovement $finishedInventoryMovement): RedirectResponse
-    {
-        $this->authorize('update', $finishedInventoryMovement);
-
-        $this->movementService->updateMovement($finishedInventoryMovement, $request->validated());
-
-        return redirect()->route('finished-inventory-movements.index')
-            ->with('success', __('Movimiento de inventario de producto terminado actualizado exitosamente.'));
-    }
-
-    public function destroy(FinishedInventoryMovement $finishedInventoryMovement): RedirectResponse
-    {
-        $this->authorize('delete', $finishedInventoryMovement);
-
-        $this->movementService->deleteMovement($finishedInventoryMovement);
-
-        return redirect()->route('finished-inventory-movements.index')
-            ->with('success', __('Movimiento de inventario de producto terminado eliminado exitosamente.'));
     }
 }

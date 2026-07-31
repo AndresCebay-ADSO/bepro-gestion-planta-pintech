@@ -134,7 +134,7 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
 
 Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
     Route::resource('finished-inventory-movements', FinishedInventoryMovementController::class)
-        ->except(['create'])
+        ->only(['index', 'store', 'show'])
         ->where(['finished_inventory_movement' => '[0-9]+']);
 });
 

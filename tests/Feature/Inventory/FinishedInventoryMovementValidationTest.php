@@ -4,12 +4,12 @@ use App\Enums\FinishedInventoryMovementReason;
 use App\Enums\InventoryMovementType;
 use App\Models\FinishedInventoryMovement;
 use App\Models\FinishedProductBatch;
-use App\Models\FinishedProductBatchStock;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Illuminate\Support\Facades\Gate;
 use Spatie\Permission\Models\Role;
 
 use function Pest\Laravel\actingAs;
@@ -18,15 +18,15 @@ beforeEach(function () {
     Role::firstOrCreate(['name' => 'admin']);
 });
 
-it('fails update validation if exit movement selects a batch with no stock in that warehouse', function () {
+function createFinishedMovementFixture(string $code = 'PROD-RET'): array
+{
     $admin = User::factory()->create()->assignRole('admin');
-    $warehouse = Warehouse::factory()->create();
     $unit = UnitOfMeasure::factory()->create();
-    $category = ProductCategory::create(['name' => 'Cat Test']);
+    $category = ProductCategory::create(['name' => "Cat {$code}"]);
 
     $product = Product::create([
-        'code' => 'PROD-TEST',
-        'name' => 'Producto Test',
+        'code' => $code,
+        'name' => "Producto {$code}",
         'brand' => 'BEPRO',
         'unit_of_measure_id' => $unit->id,
         'category_id' => $category->id,
@@ -35,81 +35,151 @@ it('fails update validation if exit movement selects a batch with no stock in th
 
     $batch = FinishedProductBatch::create([
         'product_id' => $product->id,
-        'initial_quantity' => '100',
+        'initial_quantity' => '20',
         'entry_date' => now(),
     ]);
 
-    // Create a movement we want to edit
-    $movement = FinishedInventoryMovement::create([
-        'product_id' => $product->id,
-        'warehouse_id' => $warehouse->id,
-        'finished_product_batch_id' => $batch->id,
-        'type' => InventoryMovementType::Exit,
-        'reason' => FinishedInventoryMovementReason::Sale,
-        'quantity' => '10',
-        'movement_date' => now(),
-        'created_by' => $admin->id,
-    ]);
+    return [$admin, $product, $batch];
+}
 
-    // The batch has no stock record yet (or we could explicitly create one with 0 quantity)
-    FinishedProductBatchStock::create([
-        'finished_product_batch_id' => $batch->id,
-        'warehouse_id' => $warehouse->id,
-        'quantity' => '0', // No stock!
-    ]);
-
+function registerFinishedMovement(
+    User $admin,
+    FinishedProductBatch $batch,
+    Warehouse $warehouse,
+    string $type,
+    string $reason,
+    string $quantity,
+): void {
     actingAs($admin)
-        ->put(route('finished-inventory-movements.update', $movement), [
+        ->post(route('finished-inventory-movements.store'), [
             'finished_product_batch_id' => $batch->id,
             'warehouse_id' => $warehouse->id,
-            'type' => 'exit',
-            'reason' => 'sale',
-            'quantity' => '5',
+            'type' => $type,
+            'reason' => $reason,
+            'quantity' => $quantity,
             'movement_date' => now()->toDateString(),
         ])
-        ->assertInvalid(['finished_product_batch_id' => 'El lote seleccionado no tiene stock disponible en la bodega indicada.']);
-});
+        ->assertRedirect();
+}
 
-it('fails update validation if reason is changed to Transfer', function () {
-    $admin = User::factory()->create()->assignRole('admin');
+it('does not expose edit update or delete routes for finished inventory movements', function () {
+    [$admin, $product, $batch] = createFinishedMovementFixture('PROD-IMMUTABLE');
     $warehouse = Warehouse::factory()->create();
-    $unit = UnitOfMeasure::factory()->create();
-    $category = ProductCategory::create(['name' => 'Cat Test 2']);
-
-    $product = Product::create([
-        'code' => 'PROD-TEST-2',
-        'name' => 'Producto Test 2',
-        'brand' => 'BEPRO',
-        'unit_of_measure_id' => $unit->id,
-        'category_id' => $category->id,
-        'is_active' => true,
-    ]);
-
-    $batch = FinishedProductBatch::create([
-        'product_id' => $product->id,
-        'initial_quantity' => '100',
-        'entry_date' => now(),
-    ]);
 
     $movement = FinishedInventoryMovement::create([
         'product_id' => $product->id,
         'warehouse_id' => $warehouse->id,
         'finished_product_batch_id' => $batch->id,
         'type' => InventoryMovementType::Entry,
-        'reason' => FinishedInventoryMovementReason::Production,
+        'reason' => FinishedInventoryMovementReason::Adjustment,
         'quantity' => '10',
         'movement_date' => now(),
         'created_by' => $admin->id,
     ]);
 
     actingAs($admin)
-        ->put(route('finished-inventory-movements.update', $movement), [
+        ->get("/finished-inventory-movements/{$movement->id}/edit")
+        ->assertNotFound();
+
+    actingAs($admin)
+        ->put("/finished-inventory-movements/{$movement->id}", [])
+        ->assertMethodNotAllowed();
+
+    actingAs($admin)
+        ->delete("/finished-inventory-movements/{$movement->id}")
+        ->assertMethodNotAllowed();
+});
+
+it('denies update and delete abilities even for admins', function () {
+    [$admin, $product, $batch] = createFinishedMovementFixture('PROD-POLICY');
+    $warehouse = Warehouse::factory()->create();
+
+    $movement = FinishedInventoryMovement::create([
+        'product_id' => $product->id,
+        'warehouse_id' => $warehouse->id,
+        'finished_product_batch_id' => $batch->id,
+        'type' => InventoryMovementType::Entry,
+        'reason' => FinishedInventoryMovementReason::Adjustment,
+        'quantity' => '10',
+        'movement_date' => now(),
+        'created_by' => $admin->id,
+    ]);
+
+    expect(Gate::forUser($admin)->allows('update', $movement))->toBeFalse()
+        ->and(Gate::forUser($admin)->allows('delete', $movement))->toBeFalse();
+});
+
+it('allows return up to the exited quantity of the batch in the same warehouse', function () {
+    [$admin, , $batch] = createFinishedMovementFixture('PROD-RETURN');
+    $warehouse = Warehouse::factory()->create();
+
+    registerFinishedMovement($admin, $batch, $warehouse, 'entry', 'adjustment', '10');
+    registerFinishedMovement($admin, $batch, $warehouse, 'exit', 'sale', '5');
+    registerFinishedMovement($admin, $batch, $warehouse, 'entry', 'return', '5');
+
+    actingAs($admin)
+        ->post(route('finished-inventory-movements.store'), [
             'finished_product_batch_id' => $batch->id,
             'warehouse_id' => $warehouse->id,
             'type' => 'entry',
-            'reason' => 'transfer',
-            'quantity' => '10',
+            'reason' => 'return',
+            'quantity' => '1',
             'movement_date' => now()->toDateString(),
         ])
-        ->assertInvalid(['reason' => 'No se puede cambiar un movimiento existente a Traslado. Los traslados se crean como pares desde cero.']);
+        ->assertInvalid(['quantity' => 'La cantidad de devolución no puede superar lo que realmente salió del lote.']);
+});
+
+it('blocks return in a warehouse that never had exits for the batch', function () {
+    [$admin, , $batch] = createFinishedMovementFixture('PROD-CROSS');
+    $warehouseA = Warehouse::factory()->create();
+    $warehouseB = Warehouse::factory()->create();
+
+    registerFinishedMovement($admin, $batch, $warehouseA, 'entry', 'adjustment', '10');
+    registerFinishedMovement($admin, $batch, $warehouseA, 'exit', 'sale', '5');
+
+    actingAs($admin)
+        ->post(route('finished-inventory-movements.store'), [
+            'finished_product_batch_id' => $batch->id,
+            'warehouse_id' => $warehouseB->id,
+            'type' => 'entry',
+            'reason' => 'return',
+            'quantity' => '5',
+            'movement_date' => now()->toDateString(),
+        ])
+        ->assertInvalid(['quantity' => 'La cantidad de devolución no puede superar lo que realmente salió del lote.']);
+});
+
+it('keeps returnable quotas independent per warehouse', function () {
+    [$admin, , $batch] = createFinishedMovementFixture('PROD-INDEPENDENT');
+    $warehouseA = Warehouse::factory()->create();
+    $warehouseB = Warehouse::factory()->create();
+
+    registerFinishedMovement($admin, $batch, $warehouseA, 'entry', 'adjustment', '10');
+    registerFinishedMovement($admin, $batch, $warehouseB, 'entry', 'adjustment', '10');
+    registerFinishedMovement($admin, $batch, $warehouseA, 'exit', 'sale', '5');
+    registerFinishedMovement($admin, $batch, $warehouseB, 'exit', 'sale', '3');
+    registerFinishedMovement($admin, $batch, $warehouseA, 'entry', 'return', '5');
+    registerFinishedMovement($admin, $batch, $warehouseB, 'entry', 'return', '3');
+
+    actingAs($admin)
+        ->post(route('finished-inventory-movements.store'), [
+            'finished_product_batch_id' => $batch->id,
+            'warehouse_id' => $warehouseA->id,
+            'type' => 'entry',
+            'reason' => 'return',
+            'quantity' => '1',
+            'movement_date' => now()->toDateString(),
+        ])
+        ->assertInvalid(['quantity' => 'La cantidad de devolución no puede superar lo que realmente salió del lote.']);
+
+    actingAs($admin)
+        ->post(route('finished-inventory-movements.store'), [
+            'finished_product_batch_id' => $batch->id,
+            'warehouse_id' => $warehouseB->id,
+            'type' => 'entry',
+            'reason' => 'return',
+            'quantity' => '1',
+            'movement_date' => now()->toDateString(),
+        ])
+        ->assertInvalid(['quantity' => 'La cantidad de devolución no puede superar lo que realmente salió del lote.']);
 });

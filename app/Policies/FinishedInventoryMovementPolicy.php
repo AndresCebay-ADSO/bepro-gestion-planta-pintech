@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Enums\FinishedInventoryMovementReason;
 use App\Models\FinishedInventoryMovement;
 use App\Models\User;
 
@@ -27,33 +26,21 @@ class FinishedInventoryMovementPolicy
 
     public function update(User $user, FinishedInventoryMovement $movement): bool
     {
-        if ($movement->production_order_id !== null) {
-            return false;
-        }
-
-        if ($movement->reason === FinishedInventoryMovementReason::Transfer) {
-            return false;
-        }
-
-        return $user->hasAnyRole(['admin', 'produccion']);
+        return false;
     }
 
     public function delete(User $user, FinishedInventoryMovement $movement): bool
     {
-        if ($movement->production_order_id !== null) {
-            return false;
-        }
-
-        return $user->hasRole('admin');
+        return false;
     }
 
     public function restore(User $user, FinishedInventoryMovement $movement): bool
     {
-        return $user->hasRole('admin');
+        return false;
     }
 
     public function forceDelete(User $user, FinishedInventoryMovement $movement): bool
     {
-        return $user->hasRole('admin');
+        return false;
     }
 }
