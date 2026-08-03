@@ -20,6 +20,21 @@ class QuotationPricingService
 
     /**
      * @return array{list_unit_price: string, price_adjustment_pct: string, unit_price: string}
+     *
+     * Business Rule — Margin-based adjustment:
+     * The price_adjustment_pct modifies the profit margin, not a simple
+     * discount/surcharge. Positive values increase the margin (price goes up),
+     * negative values decrease it (price goes down).
+     *
+     * Formula:  unit_price = list_unit_price / (1 - adjustmentPct / 100)
+     *
+     * Examples:
+     *   adjustment = +15%  →  divisor = 0.85   →  price = list / 0.85
+     *   adjustment = -15%  →  divisor = 1.15   →  price = list / 1.15
+     *   adjustment =   0%  →  divisor = 1.00   →  price = list
+     *
+     * This is intentionally asymmetric: a +15% and -15% adjustment do NOT
+     * cancel each other out, because they operate on the margin space.
      */
     public function resolveItemPricing(
         string $listUnitPrice,
@@ -29,6 +44,13 @@ class QuotationPricingService
         if ($manualUnitPrice !== null && $manualUnitPrice !== '') {
             $unitPrice = $this->calculator->round($manualUnitPrice, 4);
             $adjustmentPct = $this->resolveAdjustmentFromPrices($listUnitPrice, $unitPrice);
+
+            // Clamp adjustment to valid bounds [-100, 99.99]
+            if ($this->calculator->cmp($adjustmentPct, '-100', 4) < 0) {
+                $adjustmentPct = '-100';
+            } elseif ($this->calculator->cmp($adjustmentPct, '99.99', 4) > 0) {
+                $adjustmentPct = '99.99';
+            }
 
             return [
                 'list_unit_price' => $listUnitPrice,
@@ -41,13 +63,14 @@ class QuotationPricingService
             ? $this->calculator->round($adjustmentPct, 4)
             : '0';
 
-        $factor = $this->calculator->add(
-            '1',
-            $this->calculator->div($adjustmentPct, '100', 4),
-            4
-        );
+        $adjustmentDecimal = $this->calculator->div($adjustmentPct, '100', 4);
+        $divisor = $this->calculator->sub('1', $adjustmentDecimal, 4);
 
-        $unitPrice = $this->calculator->mul($listUnitPrice, $factor, 4);
+        if ($this->calculator->cmp($divisor, '0', 4) <= 0) {
+            $unitPrice = '0';
+        } else {
+            $unitPrice = $this->calculator->div($listUnitPrice, $divisor, 4);
+        }
 
         return [
             'list_unit_price' => $listUnitPrice,
@@ -94,10 +117,14 @@ class QuotationPricingService
             return '0';
         }
 
-        $difference = $this->calculator->sub($unitPrice, $listUnitPrice, 4);
+        if ($this->calculator->isZero($unitPrice, 4)) {
+            return '0';
+        }
+
+        $ratio = $this->calculator->div($listUnitPrice, $unitPrice, 4);
 
         return $this->calculator->mul(
-            $this->calculator->div($difference, $listUnitPrice, 4),
+            $this->calculator->sub('1', $ratio, 4),
             '100',
             4
         );

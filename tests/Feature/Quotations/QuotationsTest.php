@@ -137,7 +137,7 @@ it('applies negative price adjustment percentage on quotation items', function (
     $listPrice = (float) $item->list_unit_price;
 
     expect((float) $item->price_adjustment_pct)->toEqual(-10.0);
-    expect((float) $item->unit_price)->toEqual(round($listPrice * 0.9, 4));
+    expect((float) $item->unit_price)->toEqual(round($listPrice / 1.1, 4));
 });
 
 it('prevents comercial from viewing another users quotation', function () {
