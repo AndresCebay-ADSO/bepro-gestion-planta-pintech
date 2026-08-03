@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Pricing;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Pricing\UpdateCostRequest;
 use App\Models\Product;
-use App\Services\DecimalCalculator;
+use App\Services\VariantSalesPriceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,7 +14,7 @@ use Inertia\Response;
 class CostController extends Controller
 {
     public function __construct(
-        private readonly DecimalCalculator $calculator,
+        private readonly VariantSalesPriceService $salesPriceService,
     ) {}
 
     /**
@@ -59,12 +60,11 @@ class CostController extends Controller
     /**
      * Update the sales margin for a product.
      */
-    public function update(Request $request, Product $product): RedirectResponse
+    public function update(UpdateCostRequest $request, Product $product): RedirectResponse
     {
-        $validated = $request->validate([
-            'sales_margin' => ['nullable', 'numeric', 'min:0', 'max:99.99'],
-            'sales_price' => ['nullable', 'numeric', 'gt:0'],
-        ]);
+        $this->authorize('update', $product);
+
+        $validated = $request->validated();
 
         $salesMargin = $validated['sales_margin'] ?? null;
 
@@ -75,13 +75,10 @@ class CostController extends Controller
                 ]);
             }
 
-            $ratio = $this->calculator->div(
-                (string) $product->current_price,
-                (string) $validated['sales_price'],
-                6,
+            $salesMargin = (float) $this->salesPriceService->resolveMarginFromSalesPrice(
+                $product->current_price,
+                $validated['sales_price'],
             );
-            $marginDecimal = $this->calculator->sub('1', $ratio, 6);
-            $salesMargin = (float) $this->calculator->mul($marginDecimal, '100', 2);
         }
 
         if ($salesMargin !== null && ($salesMargin < 0 || $salesMargin >= 100)) {

@@ -20,7 +20,7 @@ class VariantSalesPriceService
         }
 
         return $this->applySalesMargin(
-            (string) $product->current_price,
+            $this->toDecimalString($product->current_price, 4),
             $product->sales_margin
         );
     }
@@ -34,13 +34,14 @@ class VariantSalesPriceService
         $variant->loadMissing('product:id,sales_margin');
 
         return $this->applySalesMargin(
-            (string) $variant->current_price,
+            $this->toDecimalString($variant->current_price, 4),
             $variant->product?->sales_margin
         );
     }
 
-    public function applySalesMargin(string $basePrice, float|string|null $salesMargin): ?string
+    public function applySalesMargin(string|float $basePrice, float|string|null $salesMargin): ?string
     {
+        $base = $this->toDecimalString($basePrice, 4);
         $margin = $salesMargin !== null ? (string) $salesMargin : '0';
         $marginDecimal = $this->calculator->div($margin, '100', 4);
         $divisor = $this->calculator->sub('1', $marginDecimal, 4);
@@ -49,6 +50,22 @@ class VariantSalesPriceService
             return null;
         }
 
-        return $this->calculator->div($basePrice, $divisor, 4);
+        return $this->calculator->div($base, $divisor, 4);
+    }
+
+    public function resolveMarginFromSalesPrice(string|float $basePrice, string|float $salesPrice): string
+    {
+        $base = $this->toDecimalString($basePrice, 6);
+        $sale = $this->toDecimalString($salesPrice, 6);
+
+        $ratio = $this->calculator->div($base, $sale, 6);
+        $marginDecimal = $this->calculator->sub('1', $ratio, 6);
+
+        return $this->calculator->mul($marginDecimal, '100', 2);
+    }
+
+    private function toDecimalString(string|float $value, int $scale = 4): string
+    {
+        return is_string($value) ? $value : number_format((float) $value, $scale, '.', '');
     }
 }
