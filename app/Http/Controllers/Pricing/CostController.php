@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Pricing;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Pricing\UpdateCostRequest;
 use App\Models\Product;
+use App\Services\VariantSalesPriceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -11,6 +13,10 @@ use Inertia\Response;
 
 class CostController extends Controller
 {
+    public function __construct(
+        private readonly VariantSalesPriceService $salesPriceService,
+    ) {}
+
     /**
      * Display the costs dashboard for admin.
      */
@@ -54,12 +60,11 @@ class CostController extends Controller
     /**
      * Update the sales margin for a product.
      */
-    public function update(Request $request, Product $product): RedirectResponse
+    public function update(UpdateCostRequest $request, Product $product): RedirectResponse
     {
-        $validated = $request->validate([
-            'sales_margin' => ['nullable', 'numeric', 'min:0', 'max:500'],
-            'sales_price' => ['nullable', 'numeric', 'min:0'],
-        ]);
+        $this->authorize('update', $product);
+
+        $validated = $request->validated();
 
         $salesMargin = $validated['sales_margin'] ?? null;
 
@@ -70,12 +75,15 @@ class CostController extends Controller
                 ]);
             }
 
-            $salesMargin = round((($validated['sales_price'] / $product->current_price) - 1) * 100, 2);
+            $salesMargin = (float) $this->salesPriceService->resolveMarginFromSalesPrice(
+                $product->current_price,
+                $validated['sales_price'],
+            );
         }
 
-        if ($salesMargin !== null && ($salesMargin < 0 || $salesMargin > 500)) {
+        if ($salesMargin !== null && ($salesMargin < 0 || $salesMargin >= 100)) {
             return back()->withErrors([
-                'sales_price' => 'El precio ingresado genera un margen inválido (debe estar entre 0% y 500%).',
+                'sales_price' => 'El precio ingresado genera un margen inválido (debe estar entre 0% y 99.99%).',
             ]);
         }
 

@@ -141,14 +141,14 @@ export default function PricesIndex({
                                                     />
                                                 </span>
                                                 <span>
-                                                    Margen:{' '}
+                                                    Margen Venta:{' '}
                                                     <FormattedNumber
                                                         value={
                                                             product.sales_margin
                                                         }
                                                         maxDecimals={2}
                                                     />
-                                                    %
+                                                    % (s/ venta)
                                                 </span>
                                             </div>
                                         )}

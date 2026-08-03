@@ -249,7 +249,7 @@ it('renders quotation pdf template with bepro layout sections', function () {
 it('uses shared sales price service for list prices', function () {
     $service = app(VariantSalesPriceService::class);
 
-    expect((float) $service->resolveForVariant($this->variant))->toEqual(83990.0);
+    expect((float) $service->resolveForVariant($this->variant))->toEqual(89589.3333);
 });
 
 it('validates quotation update requires draft status', function () {

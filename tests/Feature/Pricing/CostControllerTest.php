@@ -149,10 +149,10 @@ describe('update', function () {
             ->assertSessionHasErrors('sales_margin');
     });
 
-    it('validates sales_margin maximum is 500', function () {
+    it('validates sales_margin maximum is 99.99', function () {
         $this->actingAs($this->adminUser)
             ->patch(route('admin.costs.update', $this->product), [
-                'sales_margin' => 501,
+                'sales_margin' => 100,
             ])
             ->assertSessionHasErrors('sales_margin');
     });
@@ -167,7 +167,7 @@ describe('update', function () {
 
         $this->assertDatabaseHas('products', [
             'id' => $this->product->id,
-            'sales_margin' => '25.00',
+            'sales_margin' => '20.00',
         ]);
     });
 
@@ -191,30 +191,30 @@ describe('update', function () {
             ->assertSessionHasErrors('sales_price');
     });
 
-    it('allows sales_margin up to 500', function () {
+    it('rejects sales_price of zero', function () {
         $this->actingAs($this->adminUser)
             ->patch(route('admin.costs.update', $this->product), [
-                'sales_margin' => 500.00,
-            ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
-
-        $this->assertDatabaseHas('products', [
-            'id' => $this->product->id,
-            'sales_margin' => '500.00',
-        ]);
-    });
-
-    it('rejects sales_price that generates margin over 500', function () {
-        $this->actingAs($this->adminUser)
-            ->patch(route('admin.costs.update', $this->product), [
-                'sales_price' => 1000.00,
+                'sales_price' => 0,
             ])
             ->assertSessionHasErrors('sales_price');
 
         $this->assertDatabaseHas('products', [
             'id' => $this->product->id,
             'sales_margin' => null,
+        ]);
+    });
+
+    it('allows sales_margin up to 99.99', function () {
+        $this->actingAs($this->adminUser)
+            ->patch(route('admin.costs.update', $this->product), [
+                'sales_margin' => 99.99,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('products', [
+            'id' => $this->product->id,
+            'sales_margin' => '99.99',
         ]);
     });
 
