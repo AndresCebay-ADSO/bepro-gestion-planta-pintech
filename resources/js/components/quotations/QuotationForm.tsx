@@ -230,9 +230,11 @@ export default function QuotationForm({
             if (field === 'price_adjustment_pct') {
                 const listPrice = Number(next.list_unit_price) || 0;
                 const adjustment = Number(value) || 0;
-                next.unit_price = String(
-                    applyAdjustment(listPrice, adjustment).toFixed(4),
-                );
+                const adjustedPrice = applyAdjustment(listPrice, adjustment);
+
+                if (adjustedPrice !== null) {
+                    next.unit_price = String(adjustedPrice.toFixed(4));
+                }
             }
 
             if (field === 'unit_price') {

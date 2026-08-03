@@ -45,6 +45,13 @@ class QuotationPricingService
             $unitPrice = $this->calculator->round($manualUnitPrice, 4);
             $adjustmentPct = $this->resolveAdjustmentFromPrices($listUnitPrice, $unitPrice);
 
+            // Clamp adjustment to valid bounds [-100, 99.99]
+            if ($this->calculator->cmp($adjustmentPct, '-100', 4) < 0) {
+                $adjustmentPct = '-100';
+            } elseif ($this->calculator->cmp($adjustmentPct, '99.99', 4) > 0) {
+                $adjustmentPct = '99.99';
+            }
+
             return [
                 'list_unit_price' => $listUnitPrice,
                 'price_adjustment_pct' => $adjustmentPct,
