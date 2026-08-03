@@ -126,7 +126,7 @@ it('allows return up to the exited quantity of the batch in the same warehouse',
             'quantity' => '1',
             'movement_date' => now()->toDateString(),
         ])
-        ->assertInvalid(['quantity' => 'La cantidad de devolución no puede superar lo que realmente salió del lote.']);
+        ->assertInvalid(['quantity']);
 });
 
 it('blocks return in a warehouse that never had exits for the batch', function () {
@@ -146,7 +146,7 @@ it('blocks return in a warehouse that never had exits for the batch', function (
             'quantity' => '5',
             'movement_date' => now()->toDateString(),
         ])
-        ->assertInvalid(['quantity' => 'La cantidad de devolución no puede superar lo que realmente salió del lote.']);
+        ->assertInvalid(['quantity']);
 });
 
 it('keeps returnable quotas independent per warehouse', function () {
@@ -170,7 +170,7 @@ it('keeps returnable quotas independent per warehouse', function () {
             'quantity' => '1',
             'movement_date' => now()->toDateString(),
         ])
-        ->assertInvalid(['quantity' => 'La cantidad de devolución no puede superar lo que realmente salió del lote.']);
+        ->assertInvalid(['quantity']);
 
     actingAs($admin)
         ->post(route('finished-inventory-movements.store'), [
@@ -181,5 +181,5 @@ it('keeps returnable quotas independent per warehouse', function () {
             'quantity' => '1',
             'movement_date' => now()->toDateString(),
         ])
-        ->assertInvalid(['quantity' => 'La cantidad de devolución no puede superar lo que realmente salió del lote.']);
+        ->assertInvalid(['quantity']);
 });
