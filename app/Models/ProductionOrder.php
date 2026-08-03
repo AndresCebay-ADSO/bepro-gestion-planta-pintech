@@ -62,6 +62,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read Collection|FinishedInventoryMovement[] $finishedInventoryMovements
  * @property-read Collection|ProductionOrderPackagingPlan[] $packagingPlans
  * @property-read Collection|ProductionOrderLineAdjustment[] $lineAdjustments
+ * @property-read Collection|FinishedProductBatch[] $finishedProductBatches
  * @property-read QrCode|null $qrCode
  * @property-read ProductionRemnant|null $remnant
  * @property-read Collection|RemnantConsumption[] $remnantConsumptions
@@ -219,6 +220,11 @@ class ProductionOrder extends Model
     public function lineAdjustments(): HasMany
     {
         return $this->hasMany(ProductionOrderLineAdjustment::class, 'production_order_id');
+    }
+
+    public function finishedProductBatches(): HasMany
+    {
+        return $this->hasMany(FinishedProductBatch::class, 'production_order_id');
     }
 
     public function qrCode(): HasOne

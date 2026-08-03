@@ -8,6 +8,7 @@ use App\Http\Controllers\ComercialController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormulaController;
 use App\Http\Controllers\Inventory\FinishedInventoryController;
+use App\Http\Controllers\Inventory\FinishedInventoryMovementController;
 use App\Http\Controllers\Inventory\RawMaterialController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
@@ -129,6 +130,12 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
     Route::resource('inventory-movements', InventoryMovementController::class)
         ->except(['create'])
         ->where(['inventory_movement' => '[0-9]+']);
+});
+
+Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
+    Route::resource('finished-inventory-movements', FinishedInventoryMovementController::class)
+        ->only(['index', 'store', 'show'])
+        ->where(['finished_inventory_movement' => '[0-9]+']);
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,produccion,operador'])->group(function () {

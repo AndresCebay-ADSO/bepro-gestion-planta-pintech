@@ -34,6 +34,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read UnitOfMeasure $unitOfMeasure
  * @property-read Collection|FinishedInventory[] $finishedInventories
  * @property-read Collection|FinishedInventoryMovement[] $finishedInventoryMovements
+ * @property-read Collection|FinishedProductBatch[] $finishedProductBatches
  * @property-read Collection|Transfer[] $transfers
  * @property-read Collection|PriceList[] $priceLists
  */
@@ -116,6 +117,11 @@ class ProductVariant extends Model
     public function finishedInventoryMovements(): HasMany
     {
         return $this->hasMany(FinishedInventoryMovement::class, 'product_variant_id');
+    }
+
+    public function finishedProductBatches(): HasMany
+    {
+        return $this->hasMany(FinishedProductBatch::class, 'product_variant_id');
     }
 
     public function transfers(): HasMany
