@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Pricing;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Services\DecimalCalculator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -11,6 +12,10 @@ use Inertia\Response;
 
 class CostController extends Controller
 {
+    public function __construct(
+        private readonly DecimalCalculator $calculator,
+    ) {}
+
     /**
      * Display the costs dashboard for admin.
      */
@@ -57,8 +62,8 @@ class CostController extends Controller
     public function update(Request $request, Product $product): RedirectResponse
     {
         $validated = $request->validate([
-            'sales_margin' => ['nullable', 'numeric', 'min:0', 'max:500'],
-            'sales_price' => ['nullable', 'numeric', 'min:0'],
+            'sales_margin' => ['nullable', 'numeric', 'min:0', 'max:99.99'],
+            'sales_price' => ['nullable', 'numeric', 'gt:0'],
         ]);
 
         $salesMargin = $validated['sales_margin'] ?? null;
@@ -70,12 +75,18 @@ class CostController extends Controller
                 ]);
             }
 
-            $salesMargin = round((($validated['sales_price'] / $product->current_price) - 1) * 100, 2);
+            $ratio = $this->calculator->div(
+                (string) $product->current_price,
+                (string) $validated['sales_price'],
+                6,
+            );
+            $marginDecimal = $this->calculator->sub('1', $ratio, 6);
+            $salesMargin = (float) $this->calculator->mul($marginDecimal, '100', 2);
         }
 
-        if ($salesMargin !== null && ($salesMargin < 0 || $salesMargin > 500)) {
+        if ($salesMargin !== null && ($salesMargin < 0 || $salesMargin >= 100)) {
             return back()->withErrors([
-                'sales_price' => 'El precio ingresado genera un margen inválido (debe estar entre 0% y 500%).',
+                'sales_price' => 'El precio ingresado genera un margen inválido (debe estar entre 0% y 99.99%).',
             ]);
         }
 

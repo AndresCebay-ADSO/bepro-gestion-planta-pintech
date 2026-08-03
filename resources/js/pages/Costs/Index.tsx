@@ -50,12 +50,21 @@ function calculateSalesPrice(
     }
 
     const margin = salesMargin ?? 0;
+    const divisor = 1 - margin / 100;
 
-    return parseFloat((currentPrice * (1 + margin / 100)).toFixed(2));
+    if (divisor <= 0) {
+        return null;
+    }
+
+    return parseFloat((currentPrice / divisor).toFixed(2));
 }
 
-function calculateMargin(currentPrice: number, salesPrice: number): number {
-    return parseFloat(((salesPrice / currentPrice - 1) * 100).toFixed(2));
+function calculateMargin(currentPrice: number, salesPrice: number): number | null {
+    if (salesPrice <= 0) {
+        return null;
+    }
+
+    return parseFloat(((1 - currentPrice / salesPrice) * 100).toFixed(2));
 }
 
 function buildInitialMargins(
@@ -302,6 +311,17 @@ export default function CostsIndex({
             }
 
             const price = parseFloat(priceValue) || 0;
+
+            if (price <= 0) {
+                dispatch({
+                    type: 'SET_ERROR',
+                    productId,
+                    error: 'El precio de venta debe ser mayor a 0.',
+                });
+
+                return;
+            }
+
             const margin =
                 priceValue === ''
                     ? ''
@@ -347,11 +367,11 @@ export default function CostsIndex({
                     return;
                 }
 
-                if (numericValue < 0 || numericValue > 500) {
+                if (numericValue < 0 || numericValue >= 100) {
                     dispatch({
                         type: 'SET_ERROR',
                         productId,
-                        error: 'El margen debe estar entre 0% y 500%.',
+                        error: 'El margen debe estar entre 0% y 99.99%.',
                     });
 
                     return;
@@ -499,7 +519,7 @@ export default function CostsIndex({
                                         Precio Interno
                                     </th>
                                     <th className="p-4 text-right font-medium">
-                                        Margen Venta %
+                                        Margen Venta % (s/ venta)
                                     </th>
                                     <th className="p-4 text-right font-medium">
                                         Precio Venta
@@ -578,7 +598,7 @@ export default function CostsIndex({
                                                                 <Input
                                                                     type="number"
                                                                     min={0}
-                                                                    max={500}
+                                                                    max={99.99}
                                                                     step={0.01}
                                                                     value={
                                                                         state.margin

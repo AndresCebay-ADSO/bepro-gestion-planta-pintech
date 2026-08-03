@@ -92,11 +92,11 @@ it('allows admin to view price list with variants and sales prices', function ()
             ->where('products.data.0.id', $this->product->id)
             ->where('products.data.0.name', 'Producto Test')
             ->where('products.data.0.sales_margin', '25.00')
-            ->where('products.data.0.sales_price', 115)
+            ->where('products.data.0.sales_price', 122.6667)
             ->has('products.data.0.variants', 1)
             ->where('products.data.0.variants.0.id', $this->variant->id)
             ->where('products.data.0.variants.0.name', 'Cubeta 5 Galones')
-            ->where('products.data.0.variants.0.sales_price', 575)
+            ->where('products.data.0.variants.0.sales_price', 613.3333)
             ->where('can.view_costs', true)
             ->where('can.view_prices', true)
         );
@@ -112,9 +112,9 @@ it('allows comercial to view price list without cost data', function () {
             ->where('can.view_costs', false)
             ->where('can.view_prices', true)
             ->where('products.data.0.id', $this->product->id)
-            ->where('products.data.0.sales_price', 115)
+            ->where('products.data.0.sales_price', 122.6667)
             ->has('products.data.0.variants', 1)
-            ->where('products.data.0.variants.0.sales_price', 575)
+            ->where('products.data.0.variants.0.sales_price', 613.3333)
         );
 });
 

@@ -39,12 +39,16 @@ class VariantSalesPriceService
         );
     }
 
-    public function applySalesMargin(string $basePrice, float|string|null $salesMargin): string
+    public function applySalesMargin(string $basePrice, float|string|null $salesMargin): ?string
     {
         $margin = $salesMargin !== null ? (string) $salesMargin : '0';
         $marginDecimal = $this->calculator->div($margin, '100', 4);
-        $multiplier = $this->calculator->add('1', $marginDecimal, 4);
+        $divisor = $this->calculator->sub('1', $marginDecimal, 4);
 
-        return $this->calculator->mul($basePrice, $multiplier, 4);
+        if ($this->calculator->cmp($divisor, '0', 4) <= 0) {
+            return null;
+        }
+
+        return $this->calculator->div($basePrice, $divisor, 4);
     }
 }

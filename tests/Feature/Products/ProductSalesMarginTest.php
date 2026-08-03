@@ -70,16 +70,16 @@ it('accepts zero as sales_margin', function () {
     expect((float) $product->sales_margin)->toBe(0.0);
 });
 
-it('accepts maximum sales_margin of 500', function () {
+it('accepts maximum valid sales_margin of 99.99', function () {
     $product = Product::create([
         'code' => 'PROD-004',
         'name' => 'Producto Margen Max',
         'brand' => 'BEPRO',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
-        'sales_margin' => 500.00,
+        'sales_margin' => 99.99,
         'is_active' => true,
     ]);
 
-    expect((float) $product->sales_margin)->toBe(500.00);
+    expect((float) $product->sales_margin)->toBe(99.99);
 });
