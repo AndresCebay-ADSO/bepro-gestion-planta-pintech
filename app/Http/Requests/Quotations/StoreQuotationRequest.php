@@ -81,7 +81,7 @@ class StoreQuotationRequest extends FormRequest
             'items.*.description' => ['nullable', 'string', 'max:255'],
             'items.*.color' => ['nullable', 'string', 'max:100'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.0001'],
-            'items.*.price_adjustment_pct' => ['nullable', 'numeric', 'min:-100', 'max:500'],
+            'items.*.price_adjustment_pct' => ['nullable', 'numeric', 'min:-100', 'max:99.99'],
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
         ];
     }

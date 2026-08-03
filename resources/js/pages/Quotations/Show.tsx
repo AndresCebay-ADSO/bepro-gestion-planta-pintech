@@ -372,7 +372,11 @@ export default function QuotationsShow({
                                         />
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        {item.price_adjustment_pct}%
+                                        <FormattedNumber
+                                            value={item.price_adjustment_pct}
+                                            suffix="%"
+                                            maxDecimals={2}
+                                        />
                                     </td>
                                     <td className="px-4 py-3 text-right">
                                         <FormattedNumber

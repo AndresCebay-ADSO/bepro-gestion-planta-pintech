@@ -80,8 +80,30 @@ type Props = {
     submitLabel: string;
 };
 
-function applyAdjustment(listPrice: number, adjustmentPct: number): number {
-    return listPrice * (1 + adjustmentPct / 100);
+/**
+ * Business Rule — Margin-based adjustment:
+ * The adjustment modifies the profit margin, not a simple discount/surcharge.
+ * Positive values increase the margin (price goes up), negative values decrease
+ * it (price goes down).
+ *
+ * Formula:  unit_price = list_price / (1 - adjustmentPct / 100)
+ *
+ * Examples:
+ *   adjustment = +15%  →  divisor = 0.85   →  price = list / 0.85
+ *   adjustment = -15%  →  divisor = 1.15   →  price = list / 1.15
+ *   adjustment =   0%  →  divisor = 1.00   →  price = list
+ *
+ * This is intentionally asymmetric: a +15% and -15% adjustment do NOT cancel
+ * each other out, because they operate on the margin space.
+ */
+function applyAdjustment(listPrice: number, adjustmentPct: number): number | null {
+    const divisor = 1 - adjustmentPct / 100;
+
+    if (divisor <= 0) {
+        return null;
+    }
+
+    return parseFloat((listPrice / divisor).toFixed(4));
 }
 
 function calculateLineSubtotal(quantity: string, unitPrice: string): number {
@@ -217,12 +239,14 @@ export default function QuotationForm({
                 const listPrice = Number(next.list_unit_price) || 0;
                 const unitPrice = Number(value) || 0;
 
-                if (listPrice > 0) {
+                // Inverse of the margin formula:
+                //   adjustment = (1 - listPrice / unitPrice) * 100
+                if (listPrice > 0 && unitPrice > 0) {
                     next.price_adjustment_pct = String(
-                        (((unitPrice - listPrice) / listPrice) * 100).toFixed(
-                            4,
-                        ),
+                        ((1 - listPrice / unitPrice) * 100).toFixed(4),
                     );
+                } else {
+                    next.price_adjustment_pct = '0';
                 }
             }
 
