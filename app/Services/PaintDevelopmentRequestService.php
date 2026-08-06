@@ -104,6 +104,11 @@ class PaintDevelopmentRequestService
     public function updateStatus(PaintDevelopmentRequest $paintRequest, array $data): PaintDevelopmentRequest
     {
         return DB::transaction(function () use ($paintRequest, $data): PaintDevelopmentRequest {
+            $locked = PaintDevelopmentRequest::query()
+                ->where('id', $paintRequest->id)
+                ->lockForUpdate()
+                ->first();
+
             $newStatus = PaintDevelopmentRequestStatus::tryFrom($data['status']);
 
             if ($newStatus === null) {
@@ -112,7 +117,8 @@ class PaintDevelopmentRequestService
                 ]);
             }
 
-            $allowed = $paintRequest->status->nextTransitions();
+            $currentStatus = $locked?->status ?? $paintRequest->status;
+            $allowed = $currentStatus->nextTransitions();
 
             if (! in_array($newStatus, $allowed, true)) {
                 throw ValidationException::withMessages([

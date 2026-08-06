@@ -65,15 +65,12 @@ export default function PaintDevelopmentRequestsIndex({
 
     const handleStatusChange = (value: string) => {
         setData('status', value);
-        router.get(
-            requestsIndex().url,
-            { ...data, status: value },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            },
-        );
+        get(requestsIndex().url, {
+            data: { ...data, status: value },
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
     };
 
     return (

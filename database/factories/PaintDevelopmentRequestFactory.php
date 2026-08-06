@@ -6,6 +6,7 @@ namespace Database\Factories;
 
 use App\Enums\PaintDevelopmentRequestStatus;
 use App\Models\PaintDevelopmentRequest;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -84,7 +85,7 @@ class PaintDevelopmentRequestFactory extends Factory
                 'criterios_aprobacion' => 'Aprobación por el cliente final',
             ],
             'schema_version' => 1,
-            'created_by' => 1,
+            'created_by' => User::factory(),
         ];
     }
 
