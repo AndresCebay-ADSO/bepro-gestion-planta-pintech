@@ -28,7 +28,7 @@ class AlertService
     }
 
     /**
-     * @return array{stock_bajo: int, vencimiento_proximo: int, variacion_precio: int}
+     * @return array{stock_bajo: int, vencimiento_proximo: int, variacion_precio: int, paint_development_request: int}
      */
     public function unresolvedBreakdown(): array
     {
@@ -42,6 +42,7 @@ class AlertService
             'stock_bajo' => (int) ($counts[AlertType::StockBajo->value] ?? 0),
             'vencimiento_proximo' => (int) ($counts[AlertType::VencimientoProximo->value] ?? 0),
             'variacion_precio' => (int) ($counts[AlertType::VariacionPrecio->value] ?? 0),
+            'paint_development_request' => (int) ($counts[AlertType::PaintDevelopmentRequest->value] ?? 0),
         ];
     }
 
@@ -282,6 +283,30 @@ class AlertService
             'resolved_at' => now(),
             'updated_by' => $userId,
         ]);
+    }
+
+    public function createPaintDevelopmentAlert(
+        AlertType $type,
+        AlertSeverity $severity,
+        string $message,
+    ): void {
+        $alert = Alert::create([
+            'type' => $type,
+            'severity' => $severity,
+            'message' => $message,
+            'is_resolved' => false,
+        ]);
+
+        $payload = [
+            'id' => $alert->id,
+            'message' => $message,
+            'severity' => $severity->value,
+            'type' => $type->value,
+            'type_label' => $type->label(),
+        ];
+
+        $this->createdInRequest[] = $payload;
+        session()->push('new_alerts', $payload);
     }
 
     private function createOrRefresh(

@@ -38,6 +38,7 @@ import { index as finishedInventoryIndex } from '@/routes/finished-inventory';
 import { index as finishedInventoryMovementsIndex } from '@/routes/finished-inventory-movements';
 import { index as formulasIndex } from '@/routes/formulas';
 import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
+import { index as paintDevIndex } from '@/routes/paint-development-requests';
 import { index as pricesIndex } from '@/routes/prices';
 import { index as productionIndex } from '@/routes/production';
 import { index as remnantsIndex } from '@/routes/production/remnants';
@@ -153,6 +154,12 @@ const navigationGroups: NavGroup[] = [
                 href: quotationsIndex().url,
                 icon: FileText,
                 allowedRoles: ['admin', 'comercial'],
+            },
+            {
+                title: 'Desarrollo de pinturas',
+                href: paintDevIndex().url,
+                icon: FlaskConical,
+                allowedRoles: ['admin', 'produccion', 'comercial'],
             },
             {
                 title: 'Pedidos',

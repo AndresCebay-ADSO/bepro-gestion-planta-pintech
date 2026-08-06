@@ -13,6 +13,7 @@ use App\Http\Controllers\Inventory\RawMaterialController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
 use App\Http\Controllers\OperatorController;
+use App\Http\Controllers\PaintDevelopmentRequestController;
 use App\Http\Controllers\Pricing\CostController;
 use App\Http\Controllers\Pricing\PriceListController;
 use App\Http\Controllers\ProductController;
@@ -106,6 +107,18 @@ Route::middleware(['auth', 'verified', 'role:admin,comercial'])->group(function 
     Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
     Route::get('clients/create', [ClientController::class, 'create'])->name('clients.create');
     Route::post('clients', [ClientController::class, 'store'])->name('clients.store');
+});
+
+Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
+    Route::get('paint-development-requests', [PaintDevelopmentRequestController::class, 'index'])->name('paint-development-requests.index');
+    Route::get('paint-development-requests/create', [PaintDevelopmentRequestController::class, 'create'])->name('paint-development-requests.create');
+    Route::post('paint-development-requests', [PaintDevelopmentRequestController::class, 'store'])->name('paint-development-requests.store');
+    Route::get('paint-development-requests/{paintDevelopmentRequest}', [PaintDevelopmentRequestController::class, 'show'])->name('paint-development-requests.show');
+    Route::get('paint-development-requests/{paintDevelopmentRequest}/edit', [PaintDevelopmentRequestController::class, 'edit'])->name('paint-development-requests.edit');
+    Route::put('paint-development-requests/{paintDevelopmentRequest}', [PaintDevelopmentRequestController::class, 'update'])->name('paint-development-requests.update');
+    Route::patch('paint-development-requests/{paintDevelopmentRequest}/submit', [PaintDevelopmentRequestController::class, 'submit'])->name('paint-development-requests.submit');
+    Route::patch('paint-development-requests/{paintDevelopmentRequest}/status', [PaintDevelopmentRequestController::class, 'updateStatus'])->name('paint-development-requests.update-status');
+    Route::get('paint-development-requests/{paintDevelopmentRequest}/export-pdf', [PaintDevelopmentRequestController::class, 'exportPdf'])->name('paint-development-requests.export-pdf');
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('alerts', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['stock_bajo', 'vencimiento_proximo', 'variacion_precio']);
+            $table->string('type', 50);
             $table->foreignId('raw_material_id')->nullable()->constrained('raw_materials')->cascadeOnDelete();
             $table->foreignId('batch_id')->nullable()->constrained('inventory_batches')->cascadeOnDelete();
             $table->enum('severity', ['baja', 'media', 'alta'])->default('media');

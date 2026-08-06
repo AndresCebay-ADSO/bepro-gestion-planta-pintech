@@ -7,6 +7,7 @@ use App\Models\Alert;
 use App\Models\FinishedInventory;
 use App\Models\FinishedInventoryMovement;
 use App\Models\Formula;
+use App\Models\PaintDevelopmentRequest;
 use App\Models\PriceList;
 use App\Models\ProductionOrder;
 use App\Models\ProductionRemnant;
@@ -17,6 +18,7 @@ use App\Policies\AlertPolicy;
 use App\Policies\FinishedInventoryMovementPolicy;
 use App\Policies\FinishedInventoryPolicy;
 use App\Policies\FormulaPolicy;
+use App\Policies\PaintDevelopmentRequestPolicy;
 use App\Policies\PriceListPolicy;
 use App\Policies\ProductionOrderPolicy;
 use App\Policies\ProductionRemnantPolicy;
@@ -85,6 +87,7 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Alert::class, AlertPolicy::class);
         Gate::policy(Formula::class, FormulaPolicy::class);
+        Gate::policy(PaintDevelopmentRequest::class, PaintDevelopmentRequestPolicy::class);
         Gate::policy(PriceList::class, PriceListPolicy::class);
         Gate::policy(ProductionOrder::class, ProductionOrderPolicy::class);
         Gate::policy(ProductionRemnant::class, ProductionRemnantPolicy::class);
