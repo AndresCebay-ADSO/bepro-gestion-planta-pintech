@@ -7,10 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\ProductDocument;
 use App\Models\QrCode;
 use App\Models\QrDocument;
-use Endroid\QrCode\ErrorCorrectionLevel;
-use Endroid\QrCode\Logo\Logo;
-use Endroid\QrCode\QrCode as QrCodeImage;
-use Endroid\QrCode\Writer\PngWriter;
+use App\Services\QrImageService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -96,25 +93,11 @@ class PublicQrLandingController extends Controller
         );
     }
 
-    public function qrImage(string $token): Response
+    public function qrImage(string $token, QrImageService $service): Response
     {
         $qrCode = QrCode::query()->active()->where('token', $token)->firstOrFail();
 
-        $url = route('qr.public.show', ['token' => $qrCode->token]);
-
-        $image = new QrCodeImage(
-            data: $url,
-            errorCorrectionLevel: ErrorCorrectionLevel::High,
-            size: 300,
-            margin: 10,
-        );
-
-        $logoPath = public_path('images/beprologoqr.png');
-        $logo = file_exists($logoPath)
-            ? new Logo(path: $logoPath, resizeToWidth: 130, punchoutBackground: false)
-            : null;
-
-        $png = (new PngWriter)->write($image, $logo)->getString();
+        $png = $service->generatePng($qrCode);
 
         return response($png, 200, [
             'Content-Type' => 'image/png',

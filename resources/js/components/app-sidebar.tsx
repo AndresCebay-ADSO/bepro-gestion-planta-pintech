@@ -44,6 +44,7 @@ import { index as productionIndex } from '@/routes/production';
 import { index as remnantsIndex } from '@/routes/production/remnants';
 import { index as productionOrdersIndex } from '@/routes/production-orders';
 import { index as productsIndex } from '@/routes/products';
+import { index as qrCodesIndex } from '@/routes/qr-codes';
 import { index as quotationsIndex } from '@/routes/quotations';
 import { index as rawMaterialsIndex } from '@/routes/raw-materials';
 import { index as salesOrdersIndex } from '@/routes/sales-orders';
@@ -181,12 +182,10 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Códigos QR',
-                href: '/qr-codes',
+                href: qrCodesIndex().url,
                 icon: QrCode,
                 allowedRoles: ['admin', 'produccion'],
                 unauthorizedBehavior: 'hide',
-                disabled: true,
-                disabledLabel: 'Módulo en desarrollo',
             },
             {
                 title: 'Reportes',
