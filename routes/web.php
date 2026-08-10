@@ -26,6 +26,7 @@ use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\PublicQrLandingController;
+use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\UserController;
@@ -70,6 +71,14 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
     // Alertas
     Route::get('alerts', [AlertController::class, 'index'])->name('alerts.index');
     Route::patch('alerts/{alert}/resolve', [AlertController::class, 'resolve'])->name('alerts.resolve');
+
+    // Códigos QR
+    Route::get('qr-codes', [QrCodeController::class, 'index'])->name('qr-codes.index');
+    Route::get('qr-codes/{qrCode}', [QrCodeController::class, 'show'])->name('qr-codes.show');
+    Route::patch('qr-codes/{qrCode}', [QrCodeController::class, 'update'])->name('qr-codes.update');
+    Route::get('qr-codes/{qrCode}/qr.png', [QrCodeController::class, 'qrImage'])->name('qr-codes.qr-image');
+    Route::get('qr-codes/{qrCode}/documents/{document}/download', [QrCodeController::class, 'downloadDocument'])
+        ->name('qr-codes.documents.download');
 
     Route::resource('raw-materials', RawMaterialController::class)->only(['index', 'show']);
 

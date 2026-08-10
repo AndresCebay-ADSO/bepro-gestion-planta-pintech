@@ -11,8 +11,8 @@ use App\Models\PaintDevelopmentRequest;
 use App\Models\PriceList;
 use App\Models\ProductionOrder;
 use App\Models\ProductionRemnant;
+use App\Models\QrCode;
 use App\Models\RawMaterial;
-use App\Models\User;
 use App\Models\Warehouse;
 use App\Policies\AlertPolicy;
 use App\Policies\FinishedInventoryMovementPolicy;
@@ -22,6 +22,7 @@ use App\Policies\PaintDevelopmentRequestPolicy;
 use App\Policies\PriceListPolicy;
 use App\Policies\ProductionOrderPolicy;
 use App\Policies\ProductionRemnantPolicy;
+use App\Policies\QrCodePolicy;
 use App\Policies\RawMaterialPolicy;
 use App\Policies\WarehousePolicy;
 use App\Services\DecimalCalculator;
@@ -93,6 +94,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ProductionRemnant::class, ProductionRemnantPolicy::class);
         Gate::policy(FinishedInventory::class, FinishedInventoryPolicy::class);
         Gate::policy(FinishedInventoryMovement::class, FinishedInventoryMovementPolicy::class);
+        Gate::policy(QrCode::class, QrCodePolicy::class);
         Gate::policy(RawMaterial::class, RawMaterialPolicy::class);
         Gate::policy(Warehouse::class, WarehousePolicy::class);
 
