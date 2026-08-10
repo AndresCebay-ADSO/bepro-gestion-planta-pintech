@@ -86,16 +86,20 @@ function createQrFixture(array $overrides = []): QrCode
         'spillage_quantity' => 0,
     ]);
 
-    $token = fake()->unique()->regexify('[a-zA-Z0-9]{40}');
+    $isActive = $overrides['is_active'] ?? true;
+    unset($overrides['is_active']);
 
-    return QrCode::create([
+    $factory = QrCode::factory()->state([
         'product_id' => $product->id,
         'production_order_id' => $order->id,
-        'token' => $token,
-        'url' => route('qr.public.show', ['token' => $token]),
-        'is_active' => $overrides['is_active'] ?? true,
-        'created_by' => $overrides['created_by'] ?? $order->created_by,
+        'created_by' => $createdBy,
     ]);
+
+    if (! $isActive) {
+        $factory = $factory->inactive();
+    }
+
+    return $factory->create($overrides);
 }
 
 test('index is accessible to admin and produccion', function () {
@@ -109,7 +113,8 @@ test('index is accessible to admin and produccion', function () {
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('QrCodes/Index')
             ->has('qrCodes.data')
-            ->has('filters'));
+            ->has('filters')
+            ->has('can'));
 
     $this->actingAs($produccion)
         ->get(route('qr-codes.index'))
@@ -156,18 +161,18 @@ test('index filters by status', function () {
             ->where('filters.status', 'inactive'));
 });
 
-test('index filters by search text', function () {
+test('index filters by search text case insensitively', function () {
     $user = adminUser();
     $qr1 = createQrFixture(['created_by' => $user->id]);
     $qr1->product->update(['name' => 'Pintura Especial']);
     createQrFixture(['created_by' => $user->id]);
 
     $this->actingAs($user)
-        ->get(route('qr-codes.index', ['search' => 'Especial']))
+        ->get(route('qr-codes.index', ['search' => 'especial']))
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->has('qrCodes.data', 1)
             ->where('qrCodes.data.0.id', $qr1->id)
-            ->where('filters.search', 'Especial'));
+            ->where('filters.search', 'especial'));
 });
 
 test('show displays qr code detail with documents', function () {

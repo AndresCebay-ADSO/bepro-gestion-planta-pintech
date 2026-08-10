@@ -45,6 +45,10 @@ type Props = {
         search: string;
         status: string;
     };
+    can?: {
+        viewAny: boolean;
+        update: boolean;
+    };
 };
 
 export default function QrCodesIndex({

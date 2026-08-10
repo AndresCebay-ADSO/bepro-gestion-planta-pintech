@@ -28,6 +28,7 @@ class QrCodeController extends Controller
 
         $search = $validated['search'] ?? '';
         $status = $validated['status'] ?? 'all';
+        $searchLower = mb_strtolower($search);
 
         $qrCodes = QrCode::query()
             ->with([
@@ -37,14 +38,15 @@ class QrCodeController extends Controller
             ->withCount('documents')
             ->when($status === 'active', fn ($query) => $query->where('is_active', true))
             ->when($status === 'inactive', fn ($query) => $query->where('is_active', false))
-            ->when($search !== '', function ($q) use ($search): void {
-                $q->where(function ($searchQuery) use ($search): void {
+            ->when($search !== '', function ($q) use ($searchLower): void {
+                $q->where(function ($searchQuery) use ($searchLower): void {
                     $searchQuery
-                        ->where('token', 'like', "%{$search}%")
+                        ->whereRaw('LOWER(token) LIKE ?', ["%{$searchLower}%"])
                         ->orWhereHas('product', fn ($pq) => $pq
-                            ->where('name', 'like', "%{$search}%")
-                            ->orWhere('code', 'like', "%{$search}%"))
-                        ->orWhereHas('productionOrder', fn ($oq) => $oq->where('order_number', 'like', "%{$search}%"));
+                            ->whereRaw('LOWER(name) LIKE ?', ["%{$searchLower}%"])
+                            ->orWhereRaw('LOWER(code) LIKE ?', ["%{$searchLower}%"]))
+                        ->orWhereHas('productionOrder', fn ($oq) => $oq
+                            ->whereRaw('LOWER(order_number) LIKE ?', ["%{$searchLower}%"]));
                 });
             })
             ->latest('id')
@@ -77,6 +79,10 @@ class QrCodeController extends Controller
             'filters' => [
                 'search' => $search,
                 'status' => $status,
+            ],
+            'can' => [
+                'viewAny' => $request->user()?->can('viewAny', QrCode::class) ?? false,
+                'update' => $request->user()?->can('update', QrCode::class) ?? false,
             ],
         ]);
     }
