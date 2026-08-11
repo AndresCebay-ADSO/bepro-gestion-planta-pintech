@@ -1,10 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\AuditLogController;
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\ClientController;
-use App\Http\Controllers\ComercialController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormulaController;
 use App\Http\Controllers\Inventory\FinishedInventoryController;
@@ -12,7 +10,6 @@ use App\Http\Controllers\Inventory\FinishedInventoryMovementController;
 use App\Http\Controllers\Inventory\RawMaterialController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
-use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\PaintDevelopmentRequestController;
 use App\Http\Controllers\Pricing\CostController;
 use App\Http\Controllers\Pricing\PriceListController;
@@ -22,7 +19,6 @@ use App\Http\Controllers\Production\LineAdjustmentController;
 use App\Http\Controllers\Production\PackagingPlanController;
 use App\Http\Controllers\Production\RemnantConsumptionController;
 use App\Http\Controllers\Production\RemnantController;
-use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\PublicQrLandingController;
@@ -42,13 +38,12 @@ Route::get('/c/{token}/product-documents/{document}', [PublicQrLandingController
     ->name('qr.public.product-documents.download');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'redirect'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
 
 // ============ RUTAS PROTEGIDAS POR ROL ============
 
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
-    Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
     Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::get('/admin/costs', [CostController::class, 'index'])->name('admin.costs.index');
     Route::patch('/admin/costs/{product}', [CostController::class, 'update'])->name('admin.costs.update');
@@ -66,8 +61,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
-    Route::get('/production', [ProductionController::class, 'index'])->name('production.index');
-
     // Alertas
     Route::get('alerts', [AlertController::class, 'index'])->name('alerts.index');
     Route::patch('alerts/{alert}/resolve', [AlertController::class, 'resolve'])->name('alerts.resolve');
@@ -138,10 +131,6 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
     Route::patch('sales-orders/{sales_order}', [SalesOrderController::class, 'update'])->name('sales-orders.update');
 });
 
-Route::middleware(['auth', 'verified', 'role:comercial'])->group(function () {
-    Route::get('/availability', [ComercialController::class, 'index'])->name('availability.index');
-});
-
 Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
     Route::get('finished-inventory', [FinishedInventoryController::class, 'index'])->name('finished-inventory.index');
     Route::resource('warehouses', WarehouseController::class)->only(['index', 'show']);
@@ -176,10 +165,6 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,operador'])->group
     Route::get('production-orders/{production_order}/export-excel', [ProductionOrderController::class, 'exportExcel'])->name('production-orders.export-excel');
     Route::post('production-orders/{production_order}/start', [ProductionOrderController::class, 'startProduction'])->name('production-orders.start')->whereNumber('production_order');
     Route::post('production-orders/{production_order}/submit-for-review', [ProductionOrderController::class, 'submitForReview'])->name('production-orders.submit-for-review');
-});
-
-Route::middleware(['auth', 'verified', 'role:operador'])->group(function () {
-    Route::get('/operator', [OperatorController::class, 'index'])->name('operator.index');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

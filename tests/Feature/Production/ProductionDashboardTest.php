@@ -121,10 +121,10 @@ beforeEach(function (): void {
 
 test('production dashboard exposes real operational stats', function (): void {
     $this->actingAs($this->productionUser)
-        ->get(route('production.index'))
+        ->get(route('dashboard'))
         ->assertSuccessful()
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->component('Production/Dashboard')
+            ->component('Dashboard/Index')
             ->where('stats.pending_orders', 1)
             ->where('stats.active_orders', 1)
             ->where('stats.pending_review_orders', 1)
