@@ -27,6 +27,7 @@ import { RecentAlertsCard } from '@/components/dashboard/RecentAlertsCard';
 import { RecentOrdersCompact, RecentOrdersList } from '@/components/dashboard/RecentOrdersList';
 import { StatCard } from '@/components/dashboard/StatCard';
 import type { AlertBreakdown, DashboardStats, RecentAlert, RecentOrder, RecentQuote, RecentSalesOrder } from '@/components/dashboard/types';
+import { formatBackendDate } from '@/components/dashboard/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { index as alertsIndex } from '@/routes/alerts';
@@ -95,28 +96,6 @@ export default function Dashboard({
     recent_quotes,
     recent_sales_orders,
 }: DashboardProps) {
-    const isSupportedRole = ['admin', 'produccion', 'operador', 'comercial'].includes(role);
-
-    if (!isSupportedRole) {
-        return (
-            <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 px-4">
-                <Card className="max-w-md w-full border-none shadow-lg">
-                    <CardHeader className="text-center">
-                        <AlertTriangle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
-                        <CardTitle className="text-xl font-bold">Rol no configurado</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-center text-sm text-muted-foreground space-y-4">
-                        <p>
-                            Hola, {userName}. Tu rol ({role}) no tiene un panel de control asignado en este sistema.
-                        </p>
-                        <p>
-                            Por favor, ponte en contacto con el administrador para asignar los permisos correspondientes.
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950">
@@ -312,7 +291,7 @@ export default function Dashboard({
                                                     <p className="text-sm text-muted-foreground">
                                                         {quote.client_name}
                                                         {quote.total !== null
-                                                            ? ` · $${quote.total.toLocaleString('es-CO')}`
+                                                            ? ` · ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(quote.total)}`
                                                             : ''}
                                                     </p>
                                                 </div>
@@ -356,7 +335,7 @@ export default function Dashboard({
                                                     <p className="text-sm text-muted-foreground">
                                                         {order.client_name}
                                                         {order.required_date
-                                                            ? ` · Entrega: ${order.required_date}`
+                                                            ? ` · Entrega: ${formatBackendDate(order.required_date)}`
                                                             : ''}
                                                     </p>
                                                 </div>

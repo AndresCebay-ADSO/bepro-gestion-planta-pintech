@@ -1,11 +1,10 @@
 import { Link } from '@inertiajs/react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { ArrowRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { RecentOrder } from './types';
+import { formatBackendDate } from './utils';
 
 interface RecentOrdersListProps {
     orders: RecentOrder[];
@@ -69,7 +68,7 @@ export function RecentOrdersList({
                                 <p className="text-sm text-muted-foreground">
                                     {order.product_code ?? 'Sin producto'}
                                     {order.planned_date
-                                        ? ` · Plan ${order.planned_date}`
+                                        ? ` · Plan: ${formatBackendDate(order.planned_date)}`
                                         : ''}
                                 </p>
                             </div>
@@ -125,13 +124,7 @@ export function RecentOrdersCompact({
                                     {order.product_code ?? 'Sin producto'} •
                                     Plan:{" "}
                                     {order.planned_date
-                                        ? format(
-                                              new Date(
-                                                  `${order.planned_date}T12:00:00`,
-                                              ),
-                                              'dd MMM yyyy',
-                                              { locale: es },
-                                          )
+                                        ? formatBackendDate(order.planned_date)
                                         : '—'}
                                 </p>
                             </div>
