@@ -40,7 +40,6 @@ import { index as formulasIndex } from '@/routes/formulas';
 import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
 import { index as paintDevIndex } from '@/routes/paint-development-requests';
 import { index as pricesIndex } from '@/routes/prices';
-import { index as productionIndex } from '@/routes/production';
 import { index as remnantsIndex } from '@/routes/production/remnants';
 import { index as productionOrdersIndex } from '@/routes/production-orders';
 import { index as productsIndex } from '@/routes/products';
@@ -104,13 +103,6 @@ const navigationGroups: NavGroup[] = [
                 title: 'Fórmulas',
                 href: formulasIndex().url,
                 icon: FlaskConical,
-                allowedRoles: ['admin', 'produccion'],
-                unauthorizedBehavior: 'hide',
-            },
-            {
-                title: 'Centro de Producción',
-                href: productionIndex().url,
-                icon: Factory,
                 allowedRoles: ['admin', 'produccion'],
                 unauthorizedBehavior: 'hide',
             },
