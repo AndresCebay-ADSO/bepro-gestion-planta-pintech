@@ -31,11 +31,13 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string|null $client_nit
  * @property string|null $client_contact_name
  * @property string|null $client_phone
+ * @property int|null $quotation_id
  * @property int $created_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  * @property-read Client $client
+ * @property-read Quotation|null $quotation
  * @property-read User $creator
  * @property-read Collection|SalesOrderItem[] $items
  */
@@ -51,6 +53,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'client_contact_name',
     'client_phone',
     'priority',
+    'quotation_id',
     'created_by',
 ])]
 class SalesOrder extends Model
@@ -67,7 +70,7 @@ class SalesOrder extends Model
         return LogOptions::defaults()
             ->useLogName('pedidos')
             ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
-            ->logOnly(['client_id', 'status', 'required_date', 'estimated_delivery_date', 'notes', 'shipping_address', 'client_business_name', 'client_nit', 'client_contact_name', 'client_phone', 'priority'])
+            ->logOnly(['client_id', 'status', 'required_date', 'estimated_delivery_date', 'notes', 'shipping_address', 'client_business_name', 'client_nit', 'client_contact_name', 'client_phone', 'priority', 'quotation_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -100,6 +103,11 @@ class SalesOrder extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function quotation(): BelongsTo
+    {
+        return $this->belongsTo(Quotation::class, 'quotation_id');
     }
 
     public function items(): HasMany

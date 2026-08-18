@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\QuotationStatus;
+use App\Enums\SalesOrderStatus;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Quotation;
+use App\Models\SalesOrder;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -214,6 +216,70 @@ class QuotationService
         }
 
         return $prepared;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function convertToOrder(Quotation $quotation, array $data): SalesOrder
+    {
+        return DB::transaction(function () use ($quotation, $data): SalesOrder {
+            $lockedQuotation = Quotation::query()->where('id', $quotation->id)->lockForUpdate()->first();
+
+            if ($lockedQuotation?->status !== QuotationStatus::Accepted) {
+                throw ValidationException::withMessages([
+                    'status' => __('Solo se pueden convertir cotizaciones aceptadas.'),
+                ]);
+            }
+
+            if ($lockedQuotation?->convert_to_order_id !== null) {
+                throw ValidationException::withMessages([
+                    'status' => __('Esta cotización ya fue convertida en un pedido.'),
+                ]);
+            }
+
+            $lockedQuotation->loadMissing('items');
+
+            if ($lockedQuotation->items->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'status' => __('La cotización no tiene productos para convertir en pedido.'),
+                ]);
+            }
+
+            $order = SalesOrder::create([
+                'client_id' => $lockedQuotation->client_id,
+                'status' => SalesOrderStatus::Pending,
+                'priority' => $data['priority'],
+                'required_date' => $data['required_date'],
+                'notes' => $data['notes'] ?? null,
+                'client_business_name' => $lockedQuotation->client_business_name,
+                'client_nit' => $lockedQuotation->client_nit,
+                'client_contact_name' => $lockedQuotation->client_contact_name,
+                'client_phone' => $lockedQuotation->client_phone,
+                'shipping_address' => $data['shipping_address'] ?? null,
+                'quotation_id' => $lockedQuotation->id,
+
+                /**
+                 * Business Rule: The order creator is the quotation's original
+                 * creator, not the user performing the conversion. This ensures
+                 * the commercial responsible for the client relationship
+                 * remains the order owner.
+                 */
+                'created_by' => $lockedQuotation->created_by,
+            ]);
+
+            foreach ($lockedQuotation->items as $item) {
+                $order->items()->create([
+                    'product_id' => $item->product_id,
+                    'product_variant_id' => $item->product_variant_id,
+                    'quantity' => $item->quantity,
+                ]);
+            }
+
+            $lockedQuotation->update(['convert_to_order_id' => $order->id]);
+
+            return $order->load(['client', 'creator', 'items.product', 'items.productVariant']);
+        });
     }
 
     private function generateQuotationNumber(): int

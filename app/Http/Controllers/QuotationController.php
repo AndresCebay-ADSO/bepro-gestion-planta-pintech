@@ -9,6 +9,7 @@ use App\Enums\PaymentMethod;
 use App\Enums\QuotationItemType;
 use App\Enums\QuotationStatus;
 use App\Enums\QuotationValidity;
+use App\Http\Requests\Quotations\ConvertQuotationToOrderRequest;
 use App\Http\Requests\Quotations\StoreQuotationRequest;
 use App\Http\Requests\Quotations\UpdateQuotationRequest;
 use App\Http\Requests\Quotations\UpdateQuotationStatusRequest;
@@ -113,7 +114,9 @@ class QuotationController extends Controller
     {
         $this->authorize('view', $quotation);
 
-        $quotation->load(['client', 'creator', 'items.product', 'items.productVariant']);
+        $quotation->load(['client', 'creator', 'items.product', 'items.productVariant', 'salesOrder']);
+
+        $salesOrder = $quotation->salesOrder;
 
         return Inertia::render('Quotations/Show', [
             'quotation' => $this->buildQuotationData($quotation),
@@ -121,7 +124,10 @@ class QuotationController extends Controller
                 'update' => auth()->user()?->can('update', $quotation) ?? false,
                 'exportPdf' => auth()->user()?->can('exportPdf', $quotation) ?? false,
                 'updateStatus' => auth()->user()?->can('updateStatus', $quotation) ?? false,
+                'convertToOrder' => auth()->user()?->can('convertToOrder', $quotation) ?? false,
+                'viewSalesOrder' => $salesOrder !== null && (auth()->user()?->can('view', $salesOrder) ?? false),
             ],
+            'salesOrderId' => $quotation->convert_to_order_id,
             'statusOptions' => array_map(
                 fn (QuotationStatus $status) => ['value' => $status->value, 'label' => $status->label()],
                 QuotationStatus::cases()
@@ -160,6 +166,17 @@ class QuotationController extends Controller
 
         return redirect()->route('quotations.show', $quotation)
             ->with('success', __('Estado de la cotización actualizado.'));
+    }
+
+    public function convertToOrder(ConvertQuotationToOrderRequest $request, Quotation $quotation): RedirectResponse
+    {
+        $order = $this->quotationService->convertToOrder(
+            $quotation,
+            $request->validated()
+        );
+
+        return redirect()->route('sales-orders.show', $order)
+            ->with('success', __('Cotización convertida en pedido exitosamente.'));
     }
 
     public function exportPdf(Quotation $quotation): \Illuminate\Http\Response
@@ -244,6 +261,7 @@ class QuotationController extends Controller
                 'nit' => $quotation->client_nit,
                 'contact_name' => $quotation->client_contact_name,
                 'phone' => $quotation->client_phone,
+                'shipping_address' => $quotation->client?->shipping_address,
             ],
             'technology' => $quotation->technology,
             'line' => $quotation->line,

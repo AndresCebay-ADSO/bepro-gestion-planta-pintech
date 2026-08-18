@@ -48,6 +48,24 @@ class QuotationPolicy
 
     public function updateStatus(User $user, Quotation $quotation): bool
     {
+        if ($quotation->convert_to_order_id !== null) {
+            return false;
+        }
+
+        return $user->hasRole('admin')
+            || ($user->hasRole('comercial') && $quotation->created_by === $user->id);
+    }
+
+    public function convertToOrder(User $user, Quotation $quotation): bool
+    {
+        if ($quotation->status !== QuotationStatus::Accepted) {
+            return false;
+        }
+
+        if ($quotation->convert_to_order_id !== null) {
+            return false;
+        }
+
         return $user->hasRole('admin')
             || ($user->hasRole('comercial') && $quotation->created_by === $user->id);
     }

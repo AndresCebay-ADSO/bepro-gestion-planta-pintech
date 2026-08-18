@@ -104,6 +104,7 @@ Route::middleware(['auth', 'verified', 'role:admin,comercial'])->group(function 
     Route::get('quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
     Route::put('quotations/{quotation}', [QuotationController::class, 'update'])->name('quotations.update');
     Route::patch('quotations/{quotation}/status', [QuotationController::class, 'updateStatus'])->name('quotations.update-status');
+    Route::post('quotations/{quotation}/convert-to-order', [QuotationController::class, 'convertToOrder'])->name('quotations.convert-to-order');
     Route::get('quotations/{quotation}/export-pdf', [QuotationController::class, 'exportPdf'])->name('quotations.export-pdf');
 
     Route::get('clients', [ClientController::class, 'index'])->name('clients.index');

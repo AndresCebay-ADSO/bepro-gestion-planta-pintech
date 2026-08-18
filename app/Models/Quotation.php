@@ -76,6 +76,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'iva_amount',
     'total',
     'status',
+    'convert_to_order_id',
     'created_by',
 ])]
 class Quotation extends Model
