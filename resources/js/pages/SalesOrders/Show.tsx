@@ -1,8 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, FileText, ShoppingCart } from 'lucide-react';
 
 import AdminOrderSidebar from '@/components/sales-orders/AdminOrderSidebar';
 import { Button } from '@/components/ui/button';
+import { show as quotationsShow } from '@/routes/quotations';
 import { index as salesOrdersIndex } from '@/routes/sales-orders';
 
 type ProductItem = {
@@ -33,6 +34,7 @@ type SalesOrderDetail = {
     estimated_delivery_date: string | null;
     notes: string | null;
     shipping_address: string | null;
+    quotation_id: number | null;
     items: ProductItem[];
     created_at: string;
     creator: { name: string } | null;
@@ -48,6 +50,7 @@ type Props = {
     statusTransitions: StatusTransition[];
     can: {
         manage: boolean;
+        viewQuotation: boolean;
     };
 };
 
@@ -143,6 +146,21 @@ export default function SalesOrdersShow({
                                         <span className="font-medium">
                                             {order.estimated_delivery_date}
                                         </span>
+                                    </p>
+                                )}
+                                {order.quotation_id && can.viewQuotation && (
+                                    <p>
+                                        <span className="text-muted-foreground">
+                                            Origen:
+                                        </span>{' '}
+                                        <Button variant="link" size="sm" asChild className="h-auto p-0">
+                                            <Link
+                                                href={quotationsShow(order.quotation_id).url}
+                                            >
+                                                <FileText className="mr-1 h-3 w-3" />
+                                                Cotización #{order.quotation_id}
+                                            </Link>
+                                        </Button>
                                     </p>
                                 )}
                             </div>

@@ -146,7 +146,7 @@ class SalesOrderController extends Controller
         $user = auth()->user();
         $canManage = $user?->hasAnyRole(['admin', 'produccion']) ?? false;
 
-        $salesOrder->load(['client', 'creator', 'items.product', 'items.productVariant']);
+        $salesOrder->load(['client', 'creator', 'items.product', 'items.productVariant', 'quotation']);
 
         $statusTransitions = $salesOrder->status->nextTransitions();
 
@@ -158,6 +158,7 @@ class SalesOrderController extends Controller
             ),
             'can' => [
                 'manage' => $canManage,
+                'viewQuotation' => $salesOrder->quotation !== null && ($user?->can('view', $salesOrder->quotation) ?? false),
             ],
         ]);
     }
@@ -210,6 +211,7 @@ class SalesOrderController extends Controller
             'estimated_delivery_date' => $salesOrder->estimated_delivery_date?->format('Y-m-d'),
             'notes' => $salesOrder->notes,
             'shipping_address' => $salesOrder->shipping_address,
+            'quotation_id' => $salesOrder->quotation_id,
             'items' => $salesOrder->items->map(fn ($item) => [
                 'id' => $item->id,
                 'product' => $item->product,

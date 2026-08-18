@@ -4,6 +4,7 @@ use App\Models\Client;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
+use App\Models\Quotation;
 use App\Models\SalesOrder;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
@@ -122,6 +123,31 @@ it('allows admin to access sales orders', function () {
     $this->actingAs($admin)
         ->get(route('sales-orders.show', $order))
         ->assertOk();
+});
+
+it('exposes viewQuotation permission on order linked to quotation', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $comercial = User::factory()->create();
+    $comercial->assignRole('comercial');
+
+    $quotation = Quotation::factory()->create(['created_by' => $comercial->id]);
+    $order = SalesOrder::factory()->create(['quotation_id' => $quotation->id, 'created_by' => $comercial->id]);
+
+    $this->actingAs($admin)
+        ->get(route('sales-orders.show', $order))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('can.viewQuotation', true)
+        );
+
+    $this->actingAs($comercial)
+        ->get(route('sales-orders.show', $order))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('can.viewQuotation', true)
+        );
 });
 
 it('allows produccion to update sales order status', function () {
