@@ -68,7 +68,7 @@ class QuotationController extends Controller
             'filters' => $request->validated(),
             'can' => [
                 'create' => $user?->can('create', Quotation::class) ?? false,
-                'filter_by_creator' => $fullVisibility,
+                'filter_by_creator' => $fullVisibility ?? false,
             ],
             'creatorOptions' => $fullVisibility
                 ? User::query()->select('id', 'name')->whereHas('quotations')->orderBy('name')->get()

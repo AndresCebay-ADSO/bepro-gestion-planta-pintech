@@ -33,7 +33,7 @@ type Props = {
         data: QuotationRow[];
         links: PaginationLink[];
     };
-    filters: Record<string, string | undefined>;
+    filters: Record<string, string | null | undefined>;
     can: {
         create: boolean;
         filter_by_creator: boolean;

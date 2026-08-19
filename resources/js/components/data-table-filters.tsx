@@ -112,6 +112,7 @@ export function DataTableFilters({
                             <Input
                                 type="date"
                                 value={filters[field.nameFrom] ?? ''}
+                                max={filters[field.nameTo] ?? undefined}
                                 onChange={(e) =>
                                     onChange(field.nameFrom, e.target.value)
                                 }
@@ -123,6 +124,7 @@ export function DataTableFilters({
                             <Input
                                 type="date"
                                 value={filters[field.nameTo] ?? ''}
+                                min={filters[field.nameFrom] ?? undefined}
                                 onChange={(e) =>
                                     onChange(field.nameTo, e.target.value)
                                 }
