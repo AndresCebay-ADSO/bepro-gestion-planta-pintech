@@ -9,12 +9,15 @@ use App\Enums\PaymentMethod;
 use App\Enums\QuotationItemType;
 use App\Enums\QuotationStatus;
 use App\Enums\QuotationValidity;
+use App\Filters\QuotationFilter;
 use App\Http\Requests\Quotations\ConvertQuotationToOrderRequest;
+use App\Http\Requests\Quotations\IndexQuotationRequest;
 use App\Http\Requests\Quotations\StoreQuotationRequest;
 use App\Http\Requests\Quotations\UpdateQuotationRequest;
 use App\Http\Requests\Quotations\UpdateQuotationStatusRequest;
 use App\Models\Client;
 use App\Models\Quotation;
+use App\Models\User;
 use App\Services\QuotationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -28,30 +31,16 @@ class QuotationController extends Controller
         private readonly BuildQuotationPdfDataAction $buildQuotationPdfData
     ) {}
 
-    public function index(): Response
+    public function index(IndexQuotationRequest $request): Response
     {
-        $this->authorize('viewAny', Quotation::class);
+        $user = $request->user();
+        $fullVisibility = $user?->hasRole('admin');
 
-        $user = auth()->user();
-        $isAdmin = $user?->hasRole('admin') ?? false;
-        $status = $this->resolveStatusFilter(request('status'));
-        $search = strtolower((string) request('search', ''));
-
-        $quotations = Quotation::query()
+        $quotations = (new QuotationFilter($request))
+            ->apply(Quotation::query())
+            ->visibleTo($user)
             ->with(['client', 'creator'])
             ->withCount('items')
-            ->unless($isAdmin, fn ($q) => $q->where('created_by', $user?->id))
-            ->when($status, fn ($q) => $q->where('status', $status))
-            ->when($search !== '', function ($q) use ($search): void {
-                $q->where(function ($query) use ($search): void {
-                    $driver = $query->getConnection()->getDriverName();
-                    $castType = in_array($driver, ['pgsql', 'sqlite'], true) ? 'TEXT' : 'CHAR';
-
-                    $query->whereRaw("CAST(quotation_number AS {$castType}) LIKE ?", ["%{$search}%"])
-                        ->orWhereRaw('LOWER(client_business_name) LIKE ?', ["%{$search}%"])
-                        ->orWhereHas('client', fn ($cq) => $cq->whereRaw('LOWER(business_name) LIKE ?', ["%{$search}%"]));
-                });
-            })
             ->latest()
             ->paginate(15)
             ->onEachSide(1)
@@ -63,7 +52,7 @@ class QuotationController extends Controller
                     'id' => $quotation->client_id,
                     'business_name' => $quotation->client_business_name ?? $quotation->client?->business_name,
                 ],
-                'creator' => $isAdmin && $quotation->creator ? [
+                'creator' => $fullVisibility && $quotation->creator ? [
                     'name' => $quotation->creator->name,
                 ] : null,
                 'status' => $quotation->status->value,
@@ -76,13 +65,14 @@ class QuotationController extends Controller
 
         return Inertia::render('Quotations/Index', [
             'quotations' => $quotations,
-            'filters' => [
-                'search' => request('search'),
-                'status' => $status,
-            ],
+            'filters' => $request->validated(),
             'can' => [
                 'create' => $user?->can('create', Quotation::class) ?? false,
+                'filter_by_creator' => $fullVisibility,
             ],
+            'creatorOptions' => $fullVisibility
+                ? User::query()->select('id', 'name')->whereHas('quotations')->orderBy('name')->get()
+                : [],
         ]);
     }
 
@@ -235,15 +225,6 @@ class QuotationController extends Controller
             ],
             $cases
         );
-    }
-
-    private function resolveStatusFilter(mixed $status): ?string
-    {
-        if (! is_string($status) || $status === '') {
-            return null;
-        }
-
-        return QuotationStatus::tryFrom($status)?->value;
     }
 
     /**

@@ -1,12 +1,12 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import { FileText, Plus, Search } from 'lucide-react';
-import type { FormEvent } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
+import { FileText, Plus } from 'lucide-react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { useFilters } from '@/hooks/use-filters';
 import {
     create as quotationsCreate,
     edit as quotationsEdit,
@@ -33,13 +33,12 @@ type Props = {
         data: QuotationRow[];
         links: PaginationLink[];
     };
-    filters: {
-        search?: string;
-        status?: string;
-    };
+    filters: Record<string, string | undefined>;
     can: {
         create: boolean;
+        filter_by_creator: boolean;
     };
+    creatorOptions: { id: number; name: string }[];
 };
 
 const statusColors: Record<string, string> = {
@@ -50,33 +49,58 @@ const statusColors: Record<string, string> = {
     rejected: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
 };
 
-export default function QuotationsIndex({ quotations, filters, can }: Props) {
-    const { data, setData, get } = useForm({
-        search: filters.search ?? '',
-        status: filters.status ?? '',
-    });
-
-    const handleSearch = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        get(quotationsIndex().url, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
+export default function QuotationsIndex({
+    quotations,
+    filters,
+    can,
+    creatorOptions,
+}: Props) {
+    const { filters: filterState, setFilter, setFilterImmediate, clearFilters } =
+        useFilters({
+            routeUrl: quotationsIndex().url,
+            initialFilters: filters,
         });
-    };
 
-    const handleStatusChange = (value: string) => {
-        setData('status', value);
-        router.get(
-            quotationsIndex().url,
-            { ...data, status: value },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            },
-        );
-    };
+    const filterFields: React.ComponentProps<typeof DataTableFilters>['fields'] = [
+        {
+            type: 'text',
+            name: 'search',
+            label: 'Buscar',
+            placeholder: 'Número, cliente o NIT...',
+        },
+        {
+            type: 'select',
+            name: 'status',
+            label: 'Estado',
+            options: [
+                { value: 'draft', label: 'Borrador' },
+                { value: 'sent', label: 'Enviado' },
+                { value: 'accepted', label: 'Aceptado' },
+                { value: 'rejected', label: 'Rechazado' },
+            ],
+        },
+    ];
+
+    if (can.filter_by_creator) {
+        filterFields.push({
+            type: 'select',
+            name: 'created_by',
+            label: 'Creado por',
+            options: [
+                ...creatorOptions.map((u) => ({
+                    value: String(u.id),
+                    label: u.name,
+                })),
+            ],
+        });
+    }
+
+    filterFields.push({
+        type: 'date-range',
+        nameFrom: 'date_from',
+        nameTo: 'date_to',
+        label: 'Fecha de cotización',
+    });
 
     return (
         <>
@@ -102,34 +126,18 @@ export default function QuotationsIndex({ quotations, filters, can }: Props) {
                     )}
                 </div>
 
-                <form
-                    onSubmit={handleSearch}
-                    className="flex flex-col gap-3 md:flex-row md:items-center"
-                >
-                    <div className="relative flex-1">
-                        <Search className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            value={data.search}
-                            onChange={(e) => setData('search', e.target.value)}
-                            placeholder="Buscar por número o cliente..."
-                            className="pl-9"
-                        />
-                    </div>
-                    <select
-                        value={data.status}
-                        onChange={(e) => handleStatusChange(e.target.value)}
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                    >
-                        <option value="">Todos los estados</option>
-                        <option value="draft">Borrador</option>
-                        <option value="sent">Enviado</option>
-                        <option value="accepted">Aceptado</option>
-                        <option value="rejected">Rechazado</option>
-                    </select>
-                    <Button type="submit" variant="outline">
-                        Buscar
-                    </Button>
-                </form>
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    onChange={(name, value) => {
+                        if (name === 'search') {
+                            setFilter(name, value);
+                        } else {
+                            setFilterImmediate(name, value);
+                        }
+                    }}
+                    onClear={clearFilters}
+                />
 
                 <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                     <table className="w-full text-sm">
