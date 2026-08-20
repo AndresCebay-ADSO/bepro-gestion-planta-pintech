@@ -245,7 +245,7 @@ export default function QuotationForm({
                 //   adjustment = (1 - listPrice / unitPrice) * 100
                 if (listPrice > 0 && unitPrice > 0) {
                     next.price_adjustment_pct = String(
-                        ((1 - listPrice / unitPrice) * 100).toFixed(4),
+                        ((1 - listPrice / unitPrice) * 100).toFixed(2),
                     );
                 } else {
                     next.price_adjustment_pct = '0';

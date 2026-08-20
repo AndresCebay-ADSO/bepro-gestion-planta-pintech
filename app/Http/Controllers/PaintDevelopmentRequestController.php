@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\PaintDevelopmentRequestStatus;
+use App\Filters\PaintDevelopmentRequestFilter;
+use App\Http\Requests\PaintDevelopmentRequests\IndexPaintDevelopmentRequestRequest;
 use App\Http\Requests\PaintDevelopmentRequests\StorePaintDevelopmentRequest;
 use App\Http\Requests\PaintDevelopmentRequests\UpdatePaintDevelopmentRequest;
 use App\Http\Requests\PaintDevelopmentRequests\UpdatePaintDevelopmentRequestStatus;
 use App\Models\PaintDevelopmentRequest;
 use App\Services\PaintDevelopmentRequestService;
+use App\Support\EnumOptions;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -21,55 +24,38 @@ class PaintDevelopmentRequestController extends Controller
         private readonly PaintDevelopmentRequestService $service,
     ) {}
 
-    public function index(): Response
+    public function index(IndexPaintDevelopmentRequestRequest $request): Response
     {
-        $this->authorize('viewAny', PaintDevelopmentRequest::class);
-
-        $user = auth()->user();
+        $user = $request->user();
         $isAdminOrProduction = $user?->hasAnyRole(['admin', 'produccion']) ?? false;
-        $status = $this->resolveStatusFilter(request('status'));
-        $search = strtolower((string) request('search', ''));
 
-        $requests = PaintDevelopmentRequest::query()
+        $requests = (new PaintDevelopmentRequestFilter($request))
+            ->apply(PaintDevelopmentRequest::query())
+            ->visibleTo($user)
             ->with(['creator'])
-            ->unless($isAdminOrProduction, fn ($q) => $q->where('created_by', $user?->id))
-            ->when($status, fn ($q) => $q->where('status', $status))
-            ->when($search !== '', function ($q) use ($search): void {
-                $q->where(function ($query) use ($search): void {
-                    $driver = $query->getConnection()->getDriverName();
-                    $castType = in_array($driver, ['pgsql', 'sqlite'], true) ? 'TEXT' : 'CHAR';
-
-                    $query->whereRaw("CAST(request_number AS {$castType}) LIKE ?", ["%{$search}%"])
-                        ->orWhereRaw('LOWER(project_name) LIKE ?', ["%{$search}%"])
-                        ->orWhereRaw('LOWER(client_name) LIKE ?', ["%{$search}%"]);
-                });
-            })
             ->latest()
             ->paginate(15)
             ->onEachSide(1)
             ->withQueryString()
-            ->through(fn (PaintDevelopmentRequest $request) => [
-                'id' => $request->id,
-                'request_number' => $request->request_number,
-                'client_name' => $request->client_name,
-                'creator' => $isAdminOrProduction && $request->creator ? [
-                    'name' => $request->creator->name,
+            ->through(fn (PaintDevelopmentRequest $paintRequest) => [
+                'id' => $paintRequest->id,
+                'request_number' => $paintRequest->request_number,
+                'client_name' => $paintRequest->client_name,
+                'creator' => $isAdminOrProduction && $paintRequest->creator ? [
+                    'name' => $paintRequest->creator->name,
                 ] : null,
-                'status' => $request->status->value,
-                'status_label' => $request->status->label(),
-                'project_name' => $request->project_name,
-                'sample_due_date' => $request->sample_due_date?->format('d/m/Y'),
-                'city' => $request->city,
-                'created_at' => $request->created_at?->format('d/m/Y'),
+                'status' => $paintRequest->status->value,
+                'status_label' => $paintRequest->status->label(),
+                'project_name' => $paintRequest->project_name,
+                'sample_due_date' => $paintRequest->sample_due_date?->format('d/m/Y'),
+                'city' => $paintRequest->city,
+                'created_at' => $paintRequest->created_at?->format('d/m/Y'),
             ]);
 
         return Inertia::render('PaintDevelopmentRequests/Index', [
             'requests' => $requests,
-            'filters' => [
-                'search' => request('search'),
-                'status' => $status,
-            ],
-            'statusOptions' => $this->enumOptions(PaintDevelopmentRequestStatus::cases()),
+            'filters' => $request->validated(),
+            'statusOptions' => EnumOptions::for(PaintDevelopmentRequestStatus::cases()),
             'can' => [
                 'create' => $user?->can('create', PaintDevelopmentRequest::class) ?? false,
             ],
@@ -114,7 +100,7 @@ class PaintDevelopmentRequestController extends Controller
                 'submit' => auth()->user()?->can('update', $paintDevelopmentRequest)
                     && $paintDevelopmentRequest->status === PaintDevelopmentRequestStatus::Draft,
             ],
-            'nextStatusOptions' => $this->enumOptions($paintDevelopmentRequest->status->nextTransitions()),
+            'nextStatusOptions' => EnumOptions::for($paintDevelopmentRequest->status->nextTransitions()),
         ]);
     }
 
@@ -185,33 +171,6 @@ class PaintDevelopmentRequestController extends Controller
         return $pdf->download($filename);
     }
 
-    /**
-     * @param  array<int, \BackedEnum>  $cases
-     * @return array<int, array{id: int|string, label: string}>
-     */
-    private function enumOptions(array $cases): array
-    {
-        return array_map(
-            fn (\BackedEnum $case) => [
-                'id' => $case->value,
-                'label' => method_exists($case, 'label') ? $case->label() : (string) $case->value,
-            ],
-            $cases
-        );
-    }
-
-    private function resolveStatusFilter(mixed $status): ?string
-    {
-        if (! is_string($status) || $status === '') {
-            return null;
-        }
-
-        return PaintDevelopmentRequestStatus::tryFrom($status)?->value;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
     private function buildRequestData(PaintDevelopmentRequest $request): array
     {
         return [

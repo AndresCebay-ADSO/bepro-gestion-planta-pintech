@@ -1,13 +1,14 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Plus, Search, ShoppingCart } from 'lucide-react';
-import type { FormEvent } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { Plus, ShoppingCart } from 'lucide-react';
+import type { ComponentProps } from 'react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { useFilters } from '@/hooks/use-filters';
 import {
-    index as salesOrdersIndex,
     create as salesOrdersCreate,
+    index as salesOrdersIndex,
     show as salesOrdersShow,
 } from '@/routes/sales-orders';
 import type { PaginationLink } from '@/types/ui';
@@ -31,15 +32,13 @@ type Props = {
         data: SalesOrderRow[];
         links: PaginationLink[];
     };
-    filters: {
-        search?: string;
-        status?: string;
-        priority?: string;
-    };
+    filters: Record<string, string | null | undefined>;
     can: {
         create: boolean;
         manage: boolean;
     };
+    statusOptions: { value: string; label: string }[];
+    priorityOptions: { value: string; label: string }[];
 };
 
 const statusColors: Record<string, string> = {
@@ -59,34 +58,45 @@ const priorityColors: Record<string, string> = {
     high: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
 };
 
-export default function SalesOrdersIndex({ orders, filters, can }: Props) {
-    const { data, setData, get } = useForm({
-        search: filters.search ?? '',
-        status: filters.status ?? '',
-        priority: filters.priority ?? '',
-    });
-
-    const handleSearch = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        get(salesOrdersIndex().url, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
+export default function SalesOrdersIndex({
+    orders,
+    filters,
+    can,
+    statusOptions,
+    priorityOptions,
+}: Props) {
+    const { filters: filterState, setFilter, setFilterImmediate, clearFilters } =
+        useFilters({
+            routeUrl: salesOrdersIndex().url,
+            initialFilters: filters,
         });
-    };
 
-    const handleFilterChange = (field: string, value: string) => {
-        setData(field as 'search' | 'status' | 'priority', value);
-        router.get(
-            salesOrdersIndex().url,
-            { ...data, [field]: value },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            },
-        );
-    };
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
+        {
+            type: 'text',
+            name: 'search',
+            label: 'Buscar',
+            placeholder: 'Buscar por cliente o número de pedido...',
+        },
+        {
+            type: 'select',
+            name: 'status',
+            label: 'Estado',
+            options: statusOptions,
+        },
+        {
+            type: 'select',
+            name: 'priority',
+            label: 'Prioridad',
+            options: priorityOptions,
+        },
+        {
+            type: 'date-range',
+            nameFrom: 'date_from',
+            nameTo: 'date_to',
+            label: 'Fecha requerida',
+        },
+    ];
 
     return (
         <>
@@ -114,48 +124,18 @@ export default function SalesOrdersIndex({ orders, filters, can }: Props) {
                     )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4">
-                    <form
-                        onSubmit={handleSearch}
-                        className="relative w-full max-w-sm"
-                    >
-                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            placeholder="Buscar por cliente..."
-                            value={data.search}
-                            onChange={(e) => setData('search', e.target.value)}
-                            className="pl-10"
-                        />
-                    </form>
-
-                    <select
-                        value={data.status}
-                        onChange={(e) =>
-                            handleFilterChange('status', e.target.value)
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    onChange={(name, value) => {
+                        if (name === 'search') {
+                            setFilter(name, value);
+                        } else {
+                            setFilterImmediate(name, value);
                         }
-                        className="h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background"
-                    >
-                        <option value="">Todos los estados</option>
-                        <option value="pending">Pendiente</option>
-                        <option value="in_progress">En progreso</option>
-                        <option value="ready">Lista</option>
-                        <option value="delivered">Entregada</option>
-                        <option value="cancelled">Cancelada</option>
-                    </select>
-
-                    <select
-                        value={data.priority}
-                        onChange={(e) =>
-                            handleFilterChange('priority', e.target.value)
-                        }
-                        className="h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background"
-                    >
-                        <option value="">Todas las prioridades</option>
-                        <option value="low">Baja</option>
-                        <option value="medium">Media</option>
-                        <option value="high">Alta</option>
-                    </select>
-                </div>
+                    }}
+                    onClear={clearFilters}
+                />
 
                 {orders.data.length === 0 ? (
                     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12">

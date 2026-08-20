@@ -95,6 +95,20 @@ class SalesOrder extends Model
         $query->whereIn('status', [SalesOrderStatus::Pending->value, SalesOrderStatus::InProgress->value]);
     }
 
+    /**
+     * Scope to restrict visibility based on user role.
+     * Admin/produccion see all; comercial sees only their own.
+     * Null user is treated as admin (no restriction).
+     */
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
+    {
+        if ($user === null || $user->hasAnyRole(['admin', 'produccion'])) {
+            return $query;
+        }
+
+        return $query->where('created_by', $user->id);
+    }
+
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'client_id');

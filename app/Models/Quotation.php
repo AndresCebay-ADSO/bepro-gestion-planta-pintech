@@ -130,6 +130,20 @@ class Quotation extends Model
         $query->where('status', $status);
     }
 
+    /**
+     * Scope to restrict visibility based on user role.
+     * Admin sees all; others see only their own records.
+     * Null user is treated as admin (no restriction).
+     */
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
+    {
+        if ($user === null || $user->hasRole('admin')) {
+            return $query;
+        }
+
+        return $query->where('created_by', $user->id);
+    }
+
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'client_id');

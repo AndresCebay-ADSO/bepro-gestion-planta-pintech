@@ -41,6 +41,12 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement('CREATE EXTENSION IF NOT EXISTS pg_trgm');
+            DB::statement('CREATE INDEX IF NOT EXISTS quotations_client_business_name_trgm ON quotations USING gin (LOWER(client_business_name) gin_trgm_ops)');
+            DB::statement('CREATE INDEX IF NOT EXISTS quotations_client_nit_trgm ON quotations USING gin (LOWER(client_nit) gin_trgm_ops)');
+        }
     }
 
     /**

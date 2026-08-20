@@ -6,11 +6,14 @@ namespace App\Http\Controllers;
 
 use App\Enums\SalesOrderPriority;
 use App\Enums\SalesOrderStatus;
+use App\Filters\SalesOrderFilter;
+use App\Http\Requests\SalesOrders\IndexSalesOrderRequest;
 use App\Http\Requests\SalesOrders\StoreSalesOrderRequest;
 use App\Http\Requests\SalesOrders\UpdateSalesOrderRequest;
 use App\Models\Client;
 use App\Models\Product;
 use App\Models\SalesOrder;
+use App\Support\EnumOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -18,29 +21,20 @@ use Inertia\Response;
 
 class SalesOrderController extends Controller
 {
-    public function index(): Response
+    public function index(IndexSalesOrderRequest $request): Response
     {
-        $this->authorize('viewAny', SalesOrder::class);
-
-        $user = auth()->user();
+        $user = $request->user();
         $canManage = $user?->hasAnyRole(['admin', 'produccion']) ?? false;
-        $status = $this->resolveStatusFilter(request('status'));
-        $priority = $this->resolvePriorityFilter(request('priority'));
-        $search = strtolower((string) request('search', ''));
 
-        $orders = SalesOrder::query()
+        $orders = (new SalesOrderFilter($request))
+            ->apply(SalesOrder::query())
+            ->visibleTo($user)
             ->with($canManage ? ['client', 'creator'] : ['client'])
             ->withCount('items')
-            ->unless($canManage, fn ($q) => $q->where('created_by', $user?->id))
-            ->when($status, fn ($q) => $q->where('status', $status))
-            ->when($priority, fn ($q) => $q->where('priority', $priority))
-            ->when($search !== '', fn ($q) => $q->whereHas(
-                'client',
-                fn ($sq) => $sq->whereRaw('LOWER(business_name) LIKE ?', ["%{$search}%"])
-            ))
             ->latest()
             ->paginate(15)
             ->onEachSide(1)
+            ->withQueryString()
             ->through(fn (SalesOrder $order) => [
                 'id' => $order->id,
                 'client' => $order->client,
@@ -57,15 +51,13 @@ class SalesOrderController extends Controller
 
         return Inertia::render('SalesOrders/Index', [
             'orders' => $orders,
-            'filters' => [
-                'search' => request('search'),
-                'status' => $status,
-                'priority' => $priority,
-            ],
+            'filters' => $request->validated(),
             'can' => [
                 'create' => $user?->hasAnyRole(['admin', 'comercial']) ?? false,
                 'manage' => $canManage,
             ],
+            'statusOptions' => EnumOptions::for(SalesOrderStatus::cases()),
+            'priorityOptions' => EnumOptions::for(SalesOrderPriority::cases()),
         ]);
     }
 
@@ -171,27 +163,6 @@ class SalesOrderController extends Controller
             ->with('success', 'Pedido actualizado con éxito.');
     }
 
-    private function resolveStatusFilter(mixed $status): ?string
-    {
-        if (! is_string($status) || $status === '') {
-            return null;
-        }
-
-        return SalesOrderStatus::tryFrom($status)?->value;
-    }
-
-    private function resolvePriorityFilter(mixed $priority): ?string
-    {
-        if (! is_string($priority) || $priority === '') {
-            return null;
-        }
-
-        return SalesOrderPriority::tryFrom($priority)?->value;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
     private function buildOrderData(SalesOrder $salesOrder): array
     {
         return [

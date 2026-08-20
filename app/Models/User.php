@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -115,6 +116,16 @@ class User extends Authenticatable
         return $this->warehouses()
             ->wherePivot('is_default', true)
             ->first();
+    }
+
+    /**
+     * Quotations created by this user.
+     *
+     * @return HasMany<Quotation, $this>
+     */
+    public function quotations(): HasMany
+    {
+        return $this->hasMany(Quotation::class, 'created_by');
     }
 
     /**

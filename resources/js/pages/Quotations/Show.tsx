@@ -157,7 +157,7 @@ export default function QuotationsShow({
             convertForm.reset();
             convertForm.clearErrors();
         }
-    }, [convertDialogOpen]);
+    }, [convertDialogOpen, convertForm]);
 
     const handleStatusUpdate = () => {
         patch(quotationsUpdateStatus(quotation.id).url, {
@@ -263,11 +263,6 @@ export default function QuotationsShow({
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="space-y-4 py-2">
-                                        {convertForm.errors.status && (
-                                            <p className="text-sm text-destructive">
-                                                {convertForm.errors.status}
-                                            </p>
-                                        )}
                                         <div className="space-y-2">
                                             <Label htmlFor="priority">
                                                 Prioridad
@@ -607,9 +602,10 @@ export default function QuotationsShow({
                                     <td className="px-4 py-3 text-right">
                                         <FormattedNumber
                                             value={item.price_adjustment_pct}
-                                            percent
                                             maxDecimals={2}
+                                            trimTrailingZeros
                                         />
+                                        %
                                     </td>
                                     <td className="px-4 py-3 text-right">
                                         <FormattedNumber
