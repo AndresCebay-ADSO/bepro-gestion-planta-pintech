@@ -19,6 +19,7 @@ use App\Models\Client;
 use App\Models\Quotation;
 use App\Models\User;
 use App\Services\QuotationService;
+use App\Support\EnumOptions;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -73,6 +74,7 @@ class QuotationController extends Controller
             'creatorOptions' => $fullVisibility
                 ? User::query()->select('id', 'name')->whereHas('quotations')->orderBy('name')->get()
                 : [],
+            'statusOptions' => EnumOptions::for(QuotationStatus::cases()),
         ]);
     }
 

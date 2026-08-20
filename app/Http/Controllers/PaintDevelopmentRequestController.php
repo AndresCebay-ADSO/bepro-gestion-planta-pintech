@@ -12,6 +12,7 @@ use App\Http\Requests\PaintDevelopmentRequests\UpdatePaintDevelopmentRequest;
 use App\Http\Requests\PaintDevelopmentRequests\UpdatePaintDevelopmentRequestStatus;
 use App\Models\PaintDevelopmentRequest;
 use App\Services\PaintDevelopmentRequestService;
+use App\Support\EnumOptions;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -54,7 +55,7 @@ class PaintDevelopmentRequestController extends Controller
         return Inertia::render('PaintDevelopmentRequests/Index', [
             'requests' => $requests,
             'filters' => $request->validated(),
-            'statusOptions' => $this->enumOptions(PaintDevelopmentRequestStatus::cases()),
+            'statusOptions' => EnumOptions::for(PaintDevelopmentRequestStatus::cases()),
             'can' => [
                 'create' => $user?->can('create', PaintDevelopmentRequest::class) ?? false,
             ],
@@ -99,7 +100,7 @@ class PaintDevelopmentRequestController extends Controller
                 'submit' => auth()->user()?->can('update', $paintDevelopmentRequest)
                     && $paintDevelopmentRequest->status === PaintDevelopmentRequestStatus::Draft,
             ],
-            'nextStatusOptions' => $this->enumOptions($paintDevelopmentRequest->status->nextTransitions()),
+            'nextStatusOptions' => EnumOptions::for($paintDevelopmentRequest->status->nextTransitions()),
         ]);
     }
 
@@ -170,24 +171,6 @@ class PaintDevelopmentRequestController extends Controller
         return $pdf->download($filename);
     }
 
-    /**
-     * @param  array<int, \BackedEnum>  $cases
-     * @return array<int, array{value: string, label: string}>
-     */
-    private function enumOptions(array $cases): array
-    {
-        return array_map(
-            fn (\BackedEnum $case) => [
-                'value' => $case->value,
-                'label' => method_exists($case, 'label') ? $case->label() : (string) $case->value,
-            ],
-            $cases
-        );
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
     private function buildRequestData(PaintDevelopmentRequest $request): array
     {
         return [

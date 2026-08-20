@@ -66,14 +66,13 @@ abstract class QueryFilter
             throw new \InvalidArgumentException("Invalid column name: {$column}");
         }
 
-        // ILIKE is PostgreSQL-only; SQLite LIKE is already case-insensitive for ASCII.
-        $likeOperator = $query->getConnection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'LIKE';
+        $lowerValue = mb_strtolower($value, 'UTF-8');
 
         if (str_contains($column, '.')) {
             [$relation, $relationColumn] = explode('.', $column, 2);
-            $query->orWhereHas($relation, fn (Builder $q) => $q->whereRaw($relationColumn.' '.$likeOperator.' ?', ['%'.$value.'%']));
+            $query->orWhereHas($relation, fn (Builder $q) => $q->whereRaw('LOWER('.$relationColumn.') LIKE LOWER(?)', ['%'.$lowerValue.'%']));
         } else {
-            $query->orWhereRaw('CAST('.$column.' AS TEXT) '.$likeOperator.' ?', ['%'.$value.'%']);
+            $query->orWhereRaw('LOWER(CAST('.$column.' AS TEXT)) LIKE LOWER(?)', ['%'.$lowerValue.'%']);
         }
     }
 

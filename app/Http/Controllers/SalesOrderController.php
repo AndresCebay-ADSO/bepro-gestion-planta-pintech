@@ -13,6 +13,7 @@ use App\Http\Requests\SalesOrders\UpdateSalesOrderRequest;
 use App\Models\Client;
 use App\Models\Product;
 use App\Models\SalesOrder;
+use App\Support\EnumOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -55,8 +56,8 @@ class SalesOrderController extends Controller
                 'create' => $user?->hasAnyRole(['admin', 'comercial']) ?? false,
                 'manage' => $canManage,
             ],
-            'statusOptions' => $this->enumOptions(SalesOrderStatus::cases()),
-            'priorityOptions' => $this->enumOptions(SalesOrderPriority::cases()),
+            'statusOptions' => EnumOptions::for(SalesOrderStatus::cases()),
+            'priorityOptions' => EnumOptions::for(SalesOrderPriority::cases()),
         ]);
     }
 
@@ -162,24 +163,6 @@ class SalesOrderController extends Controller
             ->with('success', 'Pedido actualizado con éxito.');
     }
 
-    /**
-     * @param  array<int, \BackedEnum>  $cases
-     * @return array<int, array{value: string, label: string}>
-     */
-    private function enumOptions(array $cases): array
-    {
-        return array_map(
-            fn (\BackedEnum $case) => [
-                'value' => $case->value,
-                'label' => method_exists($case, 'label') ? $case->label() : (string) $case->value,
-            ],
-            $cases
-        );
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
     private function buildOrderData(SalesOrder $salesOrder): array
     {
         return [

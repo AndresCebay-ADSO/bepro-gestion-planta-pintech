@@ -62,6 +62,7 @@ export function DataTableFilters({
                         <div key={field.name} className="relative flex-1">
                             <Search className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
                             <Input
+                                aria-label={field.label}
                                 placeholder={
                                     field.placeholder ?? field.label
                                 }
@@ -87,7 +88,7 @@ export function DataTableFilters({
                                 )
                             }
                         >
-                            <SelectTrigger className="w-full md:w-52">
+                            <SelectTrigger aria-label={field.label} className="w-full md:w-52">
                                 <SelectValue placeholder={field.label} />
                             </SelectTrigger>
                             <SelectContent>

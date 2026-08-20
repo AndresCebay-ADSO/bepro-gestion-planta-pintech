@@ -39,6 +39,7 @@ type Props = {
         filter_by_creator: boolean;
     };
     creatorOptions: { id: number; name: string }[];
+    statusOptions: { value: string; label: string }[];
 };
 
 const statusColors: Record<string, string> = {
@@ -54,6 +55,7 @@ export default function QuotationsIndex({
     filters,
     can,
     creatorOptions,
+    statusOptions,
 }: Props) {
     const { filters: filterState, setFilter, setFilterImmediate, clearFilters } =
         useFilters({
@@ -72,12 +74,7 @@ export default function QuotationsIndex({
             type: 'select',
             name: 'status',
             label: 'Estado',
-            options: [
-                { value: 'draft', label: 'Borrador' },
-                { value: 'sent', label: 'Enviado' },
-                { value: 'accepted', label: 'Aceptado' },
-                { value: 'rejected', label: 'Rechazado' },
-            ],
+            options: statusOptions,
         },
     ];
 
