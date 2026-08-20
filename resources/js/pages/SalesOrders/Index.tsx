@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Plus, ShoppingCart } from 'lucide-react';
 
 import { DataTableFilters } from '@/components/data-table-filters';

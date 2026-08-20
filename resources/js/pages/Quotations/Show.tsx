@@ -157,7 +157,7 @@ export default function QuotationsShow({
             convertForm.reset();
             convertForm.clearErrors();
         }
-    }, [convertDialogOpen]);
+    }, [convertDialogOpen, convertForm]);
 
     const handleStatusUpdate = () => {
         patch(quotationsUpdateStatus(quotation.id).url, {
