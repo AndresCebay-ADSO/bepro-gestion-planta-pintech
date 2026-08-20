@@ -32,7 +32,7 @@ type FilterField =
 
 type DataTableFiltersProps = {
     fields: FilterField[];
-    filters: Record<string, string | undefined>;
+    filters: Record<string, string | null | undefined>;
     onChange: (name: string, value: string | undefined) => void;
     onClear: () => void;
 };
@@ -81,13 +81,17 @@ export function DataTableFilters({
                             key={field.name}
                             value={filters[field.name] ?? ''}
                             onValueChange={(value) =>
-                                onChange(field.name, value)
+                                onChange(
+                                    field.name,
+                                    value === '__all__' ? undefined : value,
+                                )
                             }
                         >
                             <SelectTrigger className="w-full md:w-52">
                                 <SelectValue placeholder={field.label} />
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="__all__">Todos</SelectItem>
                                 {field.options
                                     .filter((opt) => opt.value !== '')
                                     .map((opt) => (
@@ -111,6 +115,7 @@ export function DataTableFilters({
                         >
                             <Input
                                 type="date"
+                                aria-label={`${field.label} desde`}
                                 value={filters[field.nameFrom] ?? ''}
                                 max={filters[field.nameTo] ?? undefined}
                                 onChange={(e) =>
@@ -123,6 +128,7 @@ export function DataTableFilters({
                             </span>
                             <Input
                                 type="date"
+                                aria-label={`${field.label} hasta`}
                                 value={filters[field.nameTo] ?? ''}
                                 min={filters[field.nameFrom] ?? undefined}
                                 onChange={(e) =>

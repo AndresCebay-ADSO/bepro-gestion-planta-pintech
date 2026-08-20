@@ -8,6 +8,7 @@ use App\Enums\PaintDevelopmentRequestStatus;
 use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\PaintDevelopmentRequestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -101,6 +102,20 @@ class PaintDevelopmentRequest extends Model
             'schema_version' => 'integer',
             'reviewed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Scope to restrict visibility based on user role.
+     * Admin/produccion see all; comercial sees only their own.
+     * Null user is treated as admin (no restriction).
+     */
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
+    {
+        if ($user === null || $user->hasAnyRole(['admin', 'produccion'])) {
+            return $query;
+        }
+
+        return $query->where('created_by', $user->id);
     }
 
     public function creator(): BelongsTo

@@ -1,12 +1,12 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import { FlaskConical, Plus, Search } from 'lucide-react';
-import type { FormEvent } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
+import { FlaskConical, Plus } from 'lucide-react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import StatusBadge from '@/components/paint-development-requests/StatusBadge';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { useFilters } from '@/hooks/use-filters';
 import {
     create as requestsCreate,
     edit as requestsEdit,
@@ -33,11 +33,8 @@ type Props = {
         data: RequestRow[];
         links: PaginationLink[];
     };
-    filters: {
-        search?: string;
-        status?: string;
-    };
-    statusOptions: { id: string | number; label: string }[];
+    filters: Record<string, string | null | undefined>;
+    statusOptions: { value: string; label: string }[];
     can: {
         create: boolean;
     };
@@ -49,29 +46,32 @@ export default function PaintDevelopmentRequestsIndex({
     statusOptions,
     can,
 }: Props) {
-    const { data, setData, get } = useForm({
-        search: filters.search ?? '',
-        status: filters.status ?? '',
-    });
-
-    const handleSearch = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        get(requestsIndex().url, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
+    const { filters: filterState, setFilter, setFilterImmediate, clearFilters } =
+        useFilters({
+            routeUrl: requestsIndex().url,
+            initialFilters: filters,
         });
-    };
 
-    const handleStatusChange = (value: string) => {
-        setData('status', value);
-        get(requestsIndex().url, {
-            data: { ...data, status: value },
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
+    const filterFields: React.ComponentProps<typeof DataTableFilters>['fields'] = [
+        {
+            type: 'text',
+            name: 'search',
+            label: 'Buscar',
+            placeholder: 'Número, proyecto o cliente...',
+        },
+        {
+            type: 'select',
+            name: 'status',
+            label: 'Estado',
+            options: statusOptions,
+        },
+        {
+            type: 'date-range',
+            nameFrom: 'date_from',
+            nameTo: 'date_to',
+            label: 'Fecha muestra',
+        },
+    ];
 
     return (
         <>
@@ -97,35 +97,18 @@ export default function PaintDevelopmentRequestsIndex({
                     )}
                 </div>
 
-                <form
-                    onSubmit={handleSearch}
-                    className="flex flex-col gap-3 md:flex-row md:items-center"
-                >
-                    <div className="relative flex-1">
-                        <Search className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            value={data.search}
-                            onChange={(e) => setData('search', e.target.value)}
-                            placeholder="Buscar por número, proyecto o cliente..."
-                            className="pl-9"
-                        />
-                    </div>
-                    <select
-                        value={data.status}
-                        onChange={(e) => handleStatusChange(e.target.value)}
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                    >
-                        <option value="">Todos los estados</option>
-                        {statusOptions.map((opt) => (
-                            <option key={opt.id} value={String(opt.id)}>
-                                {opt.label}
-                            </option>
-                        ))}
-                    </select>
-                    <Button type="submit" variant="outline">
-                        Buscar
-                    </Button>
-                </form>
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    onChange={(name, value) => {
+                        if (name === 'search') {
+                            setFilter(name, value);
+                        } else {
+                            setFilterImmediate(name, value);
+                        }
+                    }}
+                    onClear={clearFilters}
+                />
 
                 <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                     <table className="w-full text-sm">

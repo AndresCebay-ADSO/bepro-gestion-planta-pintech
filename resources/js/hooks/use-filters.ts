@@ -1,7 +1,7 @@
 import { router } from '@inertiajs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-type FilterValue = string | undefined;
+type FilterValue = string | null | undefined;
 
 type Filters = Record<string, FilterValue>;
 
@@ -20,7 +20,7 @@ function cleanFilters(filters: Filters): Record<string, string> {
                 ? value.trim().replace(/\s+/g, ' ')
                 : value;
 
-        if (normalized !== '' && normalized !== undefined && normalized !== null) {
+        if (normalized !== '' && normalized !== undefined && normalized !== null && normalized !== '__all__') {
             clean[key] = normalized;
         }
     }
