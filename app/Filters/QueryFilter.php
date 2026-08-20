@@ -66,13 +66,11 @@ abstract class QueryFilter
             throw new \InvalidArgumentException("Invalid column name: {$column}");
         }
 
-        $lowerValue = mb_strtolower($value, 'UTF-8');
-
         if (str_contains($column, '.')) {
             [$relation, $relationColumn] = explode('.', $column, 2);
-            $query->orWhereHas($relation, fn (Builder $q) => $q->whereRaw('LOWER('.$relationColumn.') LIKE LOWER(?)', ['%'.$lowerValue.'%']));
+            $query->orWhereHas($relation, fn (Builder $q) => $q->whereRaw('LOWER('.$relationColumn.') LIKE LOWER(?)', ['%'.$value.'%']));
         } else {
-            $query->orWhereRaw('LOWER(CAST('.$column.' AS TEXT)) LIKE LOWER(?)', ['%'.$lowerValue.'%']);
+            $query->orWhereRaw('LOWER(CAST('.$column.' AS TEXT)) LIKE LOWER(?)', ['%'.$value.'%']);
         }
     }
 

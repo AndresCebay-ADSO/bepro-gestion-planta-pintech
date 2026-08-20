@@ -215,6 +215,10 @@ class QuotationController extends Controller
     }
 
     /**
+     * Adapter for the legacy Combobox component which expects {id, label}.
+     * Will be removed when Combobox is replaced by shadcn/ui in a future phase.
+     * For new code, prefer App\Support\EnumOptions::for() which returns {value, label}.
+     *
      * @param  array<int, \BackedEnum>  $cases
      * @return array<int, array{id: int|string, label: string}>
      */
