@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { FileText, Plus } from 'lucide-react';
+import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -63,7 +64,7 @@ export default function QuotationsIndex({
             initialFilters: filters,
         });
 
-    const filterFields: React.ComponentProps<typeof DataTableFilters>['fields'] = [
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
         {
             type: 'text',
             name: 'search',

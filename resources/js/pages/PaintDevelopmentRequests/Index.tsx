@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { FlaskConical, Plus } from 'lucide-react';
+import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
 import StatusBadge from '@/components/paint-development-requests/StatusBadge';
@@ -52,7 +53,7 @@ export default function PaintDevelopmentRequestsIndex({
             initialFilters: filters,
         });
 
-    const filterFields: React.ComponentProps<typeof DataTableFilters>['fields'] = [
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
         {
             type: 'text',
             name: 'search',

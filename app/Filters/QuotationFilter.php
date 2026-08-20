@@ -4,18 +4,23 @@ declare(strict_types=1);
 
 namespace App\Filters;
 
+use Illuminate\Database\Eloquent\Builder;
+
 class QuotationFilter extends QueryFilter
 {
     protected array $filterable = ['search', 'status', 'createdBy', 'dateFrom', 'dateTo'];
 
     protected function search(string $value): void
     {
-        $this->applySearch([
-            'quotation_number',
-            'client_business_name',
-            'client_nit',
-            'client.business_name',
-        ], $value);
+        $this->builder->where(function (Builder $query) use ($value) {
+            if (is_numeric($value)) {
+                $query->orWhere('quotation_number', (int) $value);
+            }
+
+            $this->applySearchColumn($query, 'client_business_name', $value);
+            $this->applySearchColumn($query, 'client_nit', $value);
+            $this->applySearchColumn($query, 'client.business_name', $value);
+        });
     }
 
     protected function status(string $value): void

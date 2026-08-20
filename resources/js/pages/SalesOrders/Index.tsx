@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { Plus, ShoppingCart } from 'lucide-react';
+import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
 import { Button } from '@/components/ui/button';
@@ -70,7 +71,7 @@ export default function SalesOrdersIndex({
             initialFilters: filters,
         });
 
-    const filterFields: React.ComponentProps<typeof DataTableFilters>['fields'] = [
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
         {
             type: 'text',
             name: 'search',

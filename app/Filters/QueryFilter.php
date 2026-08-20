@@ -70,7 +70,7 @@ abstract class QueryFilter
             [$relation, $relationColumn] = explode('.', $column, 2);
             $query->orWhereHas($relation, fn (Builder $q) => $q->whereRaw('LOWER('.$relationColumn.') LIKE LOWER(?)', ['%'.$value.'%']));
         } else {
-            $query->orWhereRaw('LOWER(CAST('.$column.' AS TEXT)) LIKE LOWER(?)', ['%'.$value.'%']);
+            $query->orWhereRaw('LOWER('.$column.') LIKE LOWER(?)', ['%'.$value.'%']);
         }
     }
 

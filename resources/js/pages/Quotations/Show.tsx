@@ -263,11 +263,6 @@ export default function QuotationsShow({
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="space-y-4 py-2">
-                                        {convertForm.errors.status && (
-                                            <p className="text-sm text-destructive">
-                                                {convertForm.errors.status}
-                                            </p>
-                                        )}
                                         <div className="space-y-2">
                                             <Label htmlFor="priority">
                                                 Prioridad

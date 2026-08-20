@@ -34,12 +34,20 @@ export function useFilters({
     debounceMs = 300,
 }: UseFiltersOptions) {
     const [filters, setFiltersState] = useState<Filters>(initialFilters);
-    const immediateRef = useRef(false);
     const isFirstRender = useRef(true);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastNavigated = useRef<string>('');
 
     const navigate = useCallback(
         (nextFilters: Filters) => {
             const clean = cleanFilters(nextFilters);
+            const key = JSON.stringify(clean);
+
+            if (lastNavigated.current === key) {
+                return;
+            }
+
+            lastNavigated.current = key;
             router.get(routeUrl, clean, {
                 preserveState: true,
                 preserveScroll: true,
@@ -56,18 +64,15 @@ export function useFilters({
             return;
         }
 
-        if (immediateRef.current) {
-            immediateRef.current = false;
-            navigate(filters);
-
-            return;
-        }
-
-        const timer = setTimeout(() => {
+        timerRef.current = setTimeout(() => {
             navigate(filters);
         }, debounceMs);
 
-        return () => clearTimeout(timer);
+        return () => {
+            if (timerRef.current) {
+                clearTimeout(timerRef.current);
+            }
+        };
     }, [filters, debounceMs, navigate]);
 
     const setFilter = (key: string, value: FilterValue) => {
@@ -75,18 +80,31 @@ export function useFilters({
     };
 
     const setFilterImmediate = (key: string, value: FilterValue) => {
-        immediateRef.current = true;
-        setFiltersState((prev) => ({ ...prev, [key]: value }));
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+        }
+
+        setFiltersState((prev) => {
+            const next = { ...prev, [key]: value };
+            navigate(next);
+
+            return next;
+        });
     };
 
     const clearFilters = () => {
-        immediateRef.current = true;
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+        }
+
         setFiltersState((prev) => {
             const empty: Filters = {};
 
             for (const key of Object.keys(prev)) {
                 empty[key] = '';
             }
+
+            navigate(empty);
 
             return empty;
         });
