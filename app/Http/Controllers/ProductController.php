@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\QrDocumentType;
+use App\Filters\ProductFilter;
+use App\Http\Requests\Products\IndexProductRequest;
 use App\Http\Requests\Products\StoreProductRequest;
 use App\Http\Requests\Products\UpdateProductRequest;
 use App\Models\PriceList;
@@ -29,20 +31,11 @@ class ProductController extends Controller
         private readonly FinishedInventoryQueryService $finishedInventoryQueryService,
     ) {}
 
-    public function index(Request $request): Response
+    public function index(IndexProductRequest $request): Response
     {
-        $this->authorize('viewAny', Product::class);
-
-        $search = strtolower((string) $request->input('search'));
-
-        $products = Product::query()
+        $products = (new ProductFilter($request))
+            ->apply(Product::query())
             ->with(['category:id,name', 'unitOfMeasure:id,name,symbol'])
-            ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
-                        ->orWhereRaw('LOWER(code) LIKE ?', ["%{$search}%"]);
-                });
-            })
             ->latest('id')
             ->paginate(15)
             ->onEachSide(1)
@@ -71,9 +64,7 @@ class ProductController extends Controller
 
         return Inertia::render('Products/Index', [
             'products' => $products,
-            'filters' => [
-                'search' => $search,
-            ],
+            'filters' => $request->validated(),
             'can' => [
                 'create' => Gate::allows('create', Product::class),
                 'managePrices' => Gate::allows('create', PriceList::class),

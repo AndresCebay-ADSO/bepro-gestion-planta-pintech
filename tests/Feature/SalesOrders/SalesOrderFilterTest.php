@@ -112,3 +112,80 @@ it('returns validated filters in inertia props', function () {
             ->where('filters.search', 'test')
         );
 });
+
+it('combines search and status filters', function () {
+    $this->actingAs($this->admin)
+        ->get(route('sales-orders.index', [
+            'search' => 'Alpha',
+            'status' => SalesOrderStatus::Pending->value,
+        ]))
+        ->assertInertia(fn ($page) => $page
+            ->component('SalesOrders/Index')
+            ->has('orders.data', 1)
+            ->where('orders.data.0.id', $this->orderA->id)
+        );
+
+    $this->actingAs($this->admin)
+        ->get(route('sales-orders.index', [
+            'search' => 'Alpha',
+            'status' => SalesOrderStatus::Delivered->value,
+        ]))
+        ->assertInertia(fn ($page) => $page
+            ->component('SalesOrders/Index')
+            ->has('orders.data', 0)
+        );
+});
+
+it('normalizes whitespace in search term', function () {
+    $this->actingAs($this->admin)
+        ->get(route('sales-orders.index', ['search' => '  Alpha   Corporation  ']))
+        ->assertInertia(fn ($page) => $page
+            ->component('SalesOrders/Index')
+            ->has('orders.data', 1)
+            ->where('orders.data.0.id', $this->orderA->id)
+        );
+});
+
+it('ignores invalid filter keys', function () {
+    $this->actingAs($this->admin)
+        ->get(route('sales-orders.index', ['invalid_key' => 'whatever']))
+        ->assertInertia(fn ($page) => $page
+            ->component('SalesOrders/Index')
+            ->has('orders.data', 2)
+            ->missing('filters.invalid_key')
+        );
+});
+
+it('preserves query string in pagination links', function () {
+    $this->actingAs($this->admin)
+        ->get(route('sales-orders.index', ['search' => 'Alpha']))
+        ->assertInertia(fn ($page) => $page
+            ->component('SalesOrders/Index')
+            ->has('orders.data', 1)
+            ->has('orders.links')
+        );
+});
+
+it('rejects an invalid date range', function () {
+    $this->actingAs($this->admin)
+        ->getJson(route('sales-orders.index', [
+            'date_from' => '2026-03-01',
+            'date_to' => '2026-01-01',
+        ]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['date_to']);
+});
+
+it('rejects an invalid status value', function () {
+    $this->actingAs($this->admin)
+        ->getJson(route('sales-orders.index', ['status' => 'nonexistent']))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['status']);
+});
+
+it('rejects an invalid priority value', function () {
+    $this->actingAs($this->admin)
+        ->getJson(route('sales-orders.index', ['priority' => 'nonexistent']))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['priority']);
+});

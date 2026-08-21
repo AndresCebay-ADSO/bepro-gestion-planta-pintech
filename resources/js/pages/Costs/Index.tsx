@@ -1,11 +1,11 @@
-import { Head, router, useForm } from '@inertiajs/react';
-import { Search } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
 import { useCallback, useEffect, useReducer } from 'react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { useFilters } from '@/hooks/use-filters';
 import {
     index as adminCostsIndex,
     update as adminCostsUpdate,
@@ -239,8 +239,11 @@ export default function CostsIndex({
     can,
     filters,
 }: Props) {
-    const { data, setData, get } = useForm({
-        search: filters.search ?? '',
+    const { filters: filterState, setFilter, clearFilters } = useFilters({
+        routeUrl: adminCostsIndex().url,
+        initialFilters: {
+            search: filters.search ?? '',
+        },
     });
 
     const [state, dispatch] = useReducer(
@@ -259,14 +262,6 @@ export default function CostsIndex({
     useEffect(() => {
         dispatch({ type: 'SYNC_PRODUCTS', products: productsData.data });
     }, [productsData.data]);
-
-    const handleSearch = () => {
-        get(adminCostsIndex().url, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
 
     const syncMargin = useCallback(
         (productId: number, marginValue: string) => {
@@ -478,28 +473,19 @@ export default function CostsIndex({
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="relative w-full max-w-sm">
-                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            placeholder="Buscar producto..."
-                            value={data.search}
-                            onChange={(e) => {
-                                setData('search', e.target.value);
-                            }}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    handleSearch();
-                                }
-                            }}
-                            className="pl-10"
-                        />
-                    </div>
-                    <Button variant="outline" onClick={handleSearch}>
-                        <Search className="mr-2 h-4 w-4" />
-                        Buscar
-                    </Button>
-                </div>
+                <DataTableFilters
+                    fields={[
+                        {
+                            type: 'text',
+                            name: 'search',
+                            label: 'Buscar',
+                            placeholder: 'Buscar por nombre o código...',
+                        },
+                    ]}
+                    filters={filterState}
+                    onChange={(name, value) => setFilter(name, value)}
+                    onClear={clearFilters}
+                />
 
                 <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                     <div className="overflow-x-auto">

@@ -1,10 +1,10 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import { Plus, Search, Users } from 'lucide-react';
-import type { FormEvent } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { Plus, Users } from 'lucide-react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { useFilters } from '@/hooks/use-filters';
 import {
     index as clientsIndex,
     create as clientsCreate,
@@ -26,27 +26,19 @@ type Props = {
         data: ClientRow[];
         links: PaginationLink[];
     };
-    filters: {
-        search?: string;
-    };
+    filters: Record<string, string | null | undefined>;
     can: {
         edit: boolean;
     };
 };
 
 export default function ClientsIndex({ clients, filters, can }: Props) {
-    const { data, setData, get } = useForm({
-        search: filters.search ?? '',
+    const { filters: filterState, setFilter, clearFilters } = useFilters({
+        routeUrl: clientsIndex().url,
+        initialFilters: {
+            search: filters.search ?? '',
+        },
     });
-
-    const handleSearch = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        get(clientsIndex().url, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
 
     return (
         <>
@@ -70,18 +62,19 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
                     </Button>
                 </div>
 
-                <form
-                    onSubmit={handleSearch}
-                    className="relative w-full max-w-sm"
-                >
-                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        placeholder="Buscar cliente..."
-                        value={data.search}
-                        onChange={(e) => setData('search', e.target.value)}
-                        className="pl-10"
-                    />
-                </form>
+                <DataTableFilters
+                    fields={[
+                        {
+                            type: 'text',
+                            name: 'search',
+                            label: 'Buscar',
+                            placeholder: 'Buscar por razón social o NIT...',
+                        },
+                    ]}
+                    filters={filterState}
+                    onChange={(name, value) => setFilter(name, value)}
+                    onClear={clearFilters}
+                />
 
                 {clients.data.length === 0 ? (
                     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12">

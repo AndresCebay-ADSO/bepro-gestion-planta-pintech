@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Filters\WarehouseFilter;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Inventory\IndexWarehouseRequest;
 use App\Http\Requests\Warehouses\AssignUsersRequest;
 use App\Http\Requests\Warehouses\SetCurrentWarehouseRequest;
 use App\Http\Requests\Warehouses\StoreWarehouseRequest;
@@ -11,7 +13,6 @@ use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\WarehouseContextService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -21,11 +22,8 @@ class WarehouseController extends Controller
 {
     public function __construct(private readonly WarehouseContextService $warehouseContextService) {}
 
-    public function index(Request $request): Response
+    public function index(IndexWarehouseRequest $request): Response
     {
-        $this->authorize('viewAny', Warehouse::class);
-
-        $search = strtolower(trim((string) $request->input('search')));
         $user = $request->user();
 
         $query = Warehouse::query()
@@ -36,16 +34,8 @@ class WarehouseController extends Controller
             $query->whereHas('users', fn ($usersQuery) => $usersQuery->where('users.id', $user->id));
         }
 
-        if ($search !== '') {
-            $query->where(function ($searchQuery) use ($search): void {
-                $searchQuery
-                    ->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(city) LIKE ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(address) LIKE ?', ["%{$search}%"]);
-            });
-        }
-
-        $warehouses = $query
+        $warehouses = (new WarehouseFilter($request))
+            ->apply($query)
             ->paginate(15)
             ->onEachSide(1)
             ->withQueryString()
@@ -68,9 +58,7 @@ class WarehouseController extends Controller
 
         return Inertia::render('Inventory/Warehouses/Index', [
             'warehouses' => $warehouses,
-            'filters' => [
-                'search' => $search,
-            ],
+            'filters' => $request->validated(),
             'can' => [
                 'create' => Gate::allows('create', Warehouse::class),
             ],

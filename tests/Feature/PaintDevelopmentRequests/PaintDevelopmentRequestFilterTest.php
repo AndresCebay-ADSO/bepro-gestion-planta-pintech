@@ -95,3 +95,73 @@ it('returns validated filters in inertia props', function () {
             ->where('filters.search', 'alpha')
         );
 });
+
+it('combines search and status filters', function () {
+    $this->actingAs($this->admin)
+        ->get(route('paint-development-requests.index', [
+            'search' => 'Alpha',
+            'status' => PaintDevelopmentRequestStatus::Draft->value,
+        ]))
+        ->assertInertia(fn ($page) => $page
+            ->component('PaintDevelopmentRequests/Index')
+            ->has('requests.data', 1)
+            ->where('requests.data.0.id', $this->requestA->id)
+        );
+
+    $this->actingAs($this->admin)
+        ->get(route('paint-development-requests.index', [
+            'search' => 'Alpha',
+            'status' => PaintDevelopmentRequestStatus::Approved->value,
+        ]))
+        ->assertInertia(fn ($page) => $page
+            ->component('PaintDevelopmentRequests/Index')
+            ->has('requests.data', 0)
+        );
+});
+
+it('normalizes whitespace in search term', function () {
+    $this->actingAs($this->admin)
+        ->get(route('paint-development-requests.index', ['search' => '  Test   Project   Alpha  ']))
+        ->assertInertia(fn ($page) => $page
+            ->component('PaintDevelopmentRequests/Index')
+            ->has('requests.data', 1)
+            ->where('requests.data.0.id', $this->requestA->id)
+        );
+});
+
+it('ignores invalid filter keys', function () {
+    $this->actingAs($this->admin)
+        ->get(route('paint-development-requests.index', ['invalid_key' => 'whatever']))
+        ->assertInertia(fn ($page) => $page
+            ->component('PaintDevelopmentRequests/Index')
+            ->has('requests.data', 2)
+            ->missing('filters.invalid_key')
+        );
+});
+
+it('preserves query string in pagination links', function () {
+    $this->actingAs($this->admin)
+        ->get(route('paint-development-requests.index', ['search' => 'Alpha']))
+        ->assertInertia(fn ($page) => $page
+            ->component('PaintDevelopmentRequests/Index')
+            ->has('requests.data', 1)
+            ->has('requests.links')
+        );
+});
+
+it('rejects an invalid date range', function () {
+    $this->actingAs($this->admin)
+        ->getJson(route('paint-development-requests.index', [
+            'date_from' => '2026-03-01',
+            'date_to' => '2026-01-01',
+        ]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['date_to']);
+});
+
+it('rejects an invalid status value', function () {
+    $this->actingAs($this->admin)
+        ->getJson(route('paint-development-requests.index', ['status' => 'nonexistent']))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['status']);
+});
