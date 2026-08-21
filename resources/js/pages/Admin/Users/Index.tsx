@@ -1,15 +1,16 @@
-import { useForm, Link, router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Activity, Search, UserPlus } from 'lucide-react';
-import type { FC, FormEvent } from 'react';
+import { Activity, UserPlus } from 'lucide-react';
+import type { FC } from 'react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { useFilters } from '@/hooks/use-filters';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import {
     create as usersCreate,
@@ -49,25 +50,16 @@ interface Props {
         links: PaginationLink[];
     };
     recentActivities: ActivityLog[];
-    filters: {
-        search?: string;
-    };
+    filters: Record<string, string | null | undefined>;
 }
 
 const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
-    const form = useForm({
-        search: filters.search ?? '',
+    const { filters: filterState, setFilter, clearFilters } = useFilters({
+        routeUrl: usersIndex().url,
+        initialFilters: {
+            search: filters.search ?? '',
+        },
     });
-
-    const handleSearch = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-
-        form.get(usersIndex().url, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
 
     const getInitials = (name: string) => {
         return name
@@ -103,22 +95,19 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
                     </Button>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <form
-                        onSubmit={handleSearch}
-                        className="relative w-full max-w-sm"
-                    >
-                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            placeholder="Buscar usuario..."
-                            value={form.data.search}
-                            onChange={(e) =>
-                                form.setData('search', e.target.value)
-                            }
-                            className="pl-10"
-                        />
-                    </form>
-                </div>
+                <DataTableFilters
+                    fields={[
+                        {
+                            type: 'text',
+                            name: 'search',
+                            label: 'Buscar',
+                            placeholder: 'Buscar por nombre o correo...',
+                        },
+                    ]}
+                    filters={filterState}
+                    onChange={(name, value) => setFilter(name, value)}
+                    onClear={clearFilters}
+                />
 
                 {/* GRID */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">

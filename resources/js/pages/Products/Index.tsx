@@ -1,12 +1,15 @@
-import { Head, useForm, Link } from '@inertiajs/react';
-import { Search } from 'lucide-react';
-import type { FormEvent } from 'react';
+import { Head, Link } from '@inertiajs/react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { useFilters } from '@/hooks/use-filters';
 import { withReturnTo } from '@/lib/navigation';
-import products from '@/routes/products';
+import {
+    create as productsCreate,
+    index as productsIndex,
+    show as productsShow,
+} from '@/routes/products';
 import type { PaginationLink } from '@/types/ui';
 
 type ProductRow = {
@@ -25,9 +28,7 @@ type Props = {
     can: {
         create: boolean;
     };
-    filters: {
-        search?: string;
-    };
+    filters: Record<string, string | null | undefined>;
 };
 
 export default function ProductsIndex({
@@ -35,19 +36,12 @@ export default function ProductsIndex({
     can,
     filters,
 }: Props) {
-    const { data, setData, get } = useForm({
-        search: filters.search ?? '',
+    const { filters: filterState, setFilter, clearFilters } = useFilters({
+        routeUrl: productsIndex().url,
+        initialFilters: {
+            search: filters.search ?? '',
+        },
     });
-
-    const handleSearch = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-
-        get(products.index().url, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
 
     return (
         <>
@@ -65,27 +59,26 @@ export default function ProductsIndex({
                     </div>
                     {can.create && (
                         <Button asChild>
-                            <Link href={products.create().url}>
+                            <Link href={productsCreate().url}>
                                 Nuevo Producto
                             </Link>
                         </Button>
                     )}
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <form
-                        onSubmit={handleSearch}
-                        className="relative w-full max-w-sm"
-                    >
-                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            placeholder="Buscar producto..."
-                            value={data.search}
-                            onChange={(e) => setData('search', e.target.value)}
-                            className="pl-10"
-                        />
-                    </form>
-                </div>
+                <DataTableFilters
+                    fields={[
+                        {
+                            type: 'text',
+                            name: 'search',
+                            label: 'Buscar',
+                            placeholder: 'Buscar por nombre o código...',
+                        },
+                    ]}
+                    filters={filterState}
+                    onChange={(name, value) => setFilter(name, value)}
+                    onClear={clearFilters}
+                />
 
                 <div className="rounded border border-border bg-card">
                     <table className="w-full text-sm">
@@ -130,7 +123,7 @@ export default function ProductsIndex({
                                         >
                                             <Link
                                                 href={withReturnTo(
-                                                    products.show(product.id)
+                                                    productsShow(product.id)
                                                         .url,
                                                 )}
                                             >

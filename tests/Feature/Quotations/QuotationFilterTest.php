@@ -213,3 +213,43 @@ it('ignores created_by filter for non-admin users', function () {
             ->where('quotations.data.1.id', $this->quotationB->id)
         );
 });
+
+it('combines search and status filters', function () {
+    $this->actingAs($this->admin)
+        ->get(route('quotations.index', [
+            'search' => 'acme',
+            'status' => QuotationStatus::Draft->value,
+        ]))
+        ->assertInertia(fn ($page) => $page
+            ->component('Quotations/Index')
+            ->has('quotations.data', 1)
+            ->where('quotations.data.0.id', $this->quotationA->id)
+        );
+});
+
+it('preserves query string in pagination links', function () {
+    $this->actingAs($this->admin)
+        ->get(route('quotations.index', ['search' => 'acme']))
+        ->assertInertia(fn ($page) => $page
+            ->component('Quotations/Index')
+            ->has('quotations.data', 2)
+            ->has('quotations.links')
+        );
+});
+
+it('rejects an invalid date range', function () {
+    $this->actingAs($this->admin)
+        ->getJson(route('quotations.index', [
+            'date_from' => now()->toDateString(),
+            'date_to' => now()->subDay()->toDateString(),
+        ]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['date_to']);
+});
+
+it('rejects an invalid status value', function () {
+    $this->actingAs($this->admin)
+        ->getJson(route('quotations.index', ['status' => 'nonexistent']))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['status']);
+});

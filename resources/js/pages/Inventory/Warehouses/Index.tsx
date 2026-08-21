@@ -1,16 +1,16 @@
-import { Head, useForm, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Users } from 'lucide-react';
-import type { FormEvent } from 'react';
+import { DataTableFilters } from '@/components/data-table-filters';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useFilters } from '@/hooks/use-filters';
 import {
     index as warehousesIndex,
     create as warehousesCreate,
@@ -42,30 +42,21 @@ type Props = {
         data: WarehouseRow[];
         links: PaginationLink[];
     };
-    filters: {
-        search: string;
-    };
+    filters: Record<string, string | null | undefined>;
     can: {
         create: boolean;
     };
 };
 
 export default function WarehousesIndex({ warehouses, filters, can }: Props) {
-    const { data, setData, get } = useForm({
-        search: filters.search ?? '',
+    const { filters: filterState, setFilter, clearFilters } = useFilters({
+        routeUrl: warehousesIndex().url,
+        initialFilters: {
+            search: filters.search ?? '',
+        },
     });
     const flash = usePage<{ flash?: { success?: string; error?: string } }>()
         .props.flash;
-
-    const handleSearch = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-
-        get(warehousesIndex({ query: { search: data.search } }).url, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
 
     const handleDelete = (id: number) => {
         if (
@@ -116,22 +107,19 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                     </div>
                 )}
 
-                <form
-                    onSubmit={handleSearch}
-                    className="flex flex-col gap-2 sm:flex-row"
-                >
-                    <Input
-                        value={data.search}
-                        onChange={(event) =>
-                            setData('search', event.target.value)
-                        }
-                        placeholder="Buscar por nombre, ciudad o dirección..."
-                        className="sm:max-w-md"
-                    />
-                    <Button type="submit" variant="outline">
-                        Buscar
-                    </Button>
-                </form>
+                <DataTableFilters
+                    fields={[
+                        {
+                            type: 'text',
+                            name: 'search',
+                            label: 'Buscar',
+                            placeholder: 'Buscar por nombre, ciudad o dirección...',
+                        },
+                    ]}
+                    filters={filterState}
+                    onChange={(name, value) => setFilter(name, value)}
+                    onClear={clearFilters}
+                />
 
                 <div className="overflow-x-auto rounded-lg border border-border bg-card">
                     <table className="w-full text-sm">

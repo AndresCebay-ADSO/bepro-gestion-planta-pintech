@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Filters\UserFilter;
+use App\Http\Requests\Admin\IndexUserRequest;
 use App\Http\Requests\Users\StoreUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Activitylog\Models\Activity;
@@ -19,20 +20,10 @@ class UserController extends Controller
     /**
      * Mostrar lista de usuarios.
      */
-    public function index(Request $request): Response
+    public function index(IndexUserRequest $request): Response
     {
-        $search = $request->input('search');
-
-        $query = User::with('roles');
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        $users = $query
+        $users = (new UserFilter($request))
+            ->apply(User::with('roles'))
             ->latest()
             ->paginate(15)
             ->onEachSide(1)
@@ -45,9 +36,7 @@ class UserController extends Controller
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
-            'filters' => [
-                'search' => $search,
-            ],
+            'filters' => $request->validated(),
             'recentActivities' => $activities,
         ]);
     }

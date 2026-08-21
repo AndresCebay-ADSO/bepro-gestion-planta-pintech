@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Pricing;
 
+use App\Filters\CostFilter;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Pricing\IndexCostRequest;
 use App\Http\Requests\Pricing\UpdateCostRequest;
 use App\Models\Product;
 use App\Services\VariantSalesPriceService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,11 +21,10 @@ class CostController extends Controller
     /**
      * Display the costs dashboard for admin.
      */
-    public function index(Request $request): Response
+    public function index(IndexCostRequest $request): Response
     {
-        $search = $request->input('search');
-
-        $products = Product::query()
+        $products = (new CostFilter($request))
+            ->apply(Product::query())
             ->select([
                 'id',
                 'code',
@@ -34,12 +34,6 @@ class CostController extends Controller
                 'current_price',
                 'sales_margin',
             ])
-            ->when($search, function ($query) use ($search): void {
-                $query->where(function ($q) use ($search): void {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('code', 'like', "%{$search}%");
-                });
-            })
             ->active()
             ->orderBy('name')
             ->paginate(15)
@@ -51,9 +45,7 @@ class CostController extends Controller
             'can' => [
                 'update_margin' => true,
             ],
-            'filters' => [
-                'search' => $search,
-            ],
+            'filters' => $request->validated(),
         ]);
     }
 

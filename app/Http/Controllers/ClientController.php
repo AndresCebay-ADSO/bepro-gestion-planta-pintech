@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Filters\ClientFilter;
+use App\Http\Requests\Clients\IndexClientRequest;
 use App\Http\Requests\Clients\StoreClientRequest;
 use App\Http\Requests\Clients\UpdateClientRequest;
 use App\Models\Client;
@@ -13,20 +15,12 @@ use Inertia\Response;
 
 class ClientController extends Controller
 {
-    public function index(): Response
+    public function index(IndexClientRequest $request): Response
     {
-        $this->authorize('viewAny', Client::class);
+        $user = $request->user();
 
-        $search = strtolower((string) request('search', ''));
-        $user = auth()->user();
-
-        $clients = Client::query()
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->whereRaw('LOWER(business_name) LIKE ?', ["%{$search}%"])
-                        ->orWhereRaw('LOWER(nit) LIKE ?', ["%{$search}%"]);
-                });
-            })
+        $clients = (new ClientFilter($request))
+            ->apply(Client::query())
             ->orderBy('business_name')
             ->paginate(15)
             ->onEachSide(1)
@@ -34,7 +28,7 @@ class ClientController extends Controller
 
         return Inertia::render('Clients/Index', [
             'clients' => $clients,
-            'filters' => ['search' => request('search')],
+            'filters' => $request->validated(),
             'can' => ['edit' => $user?->hasRole('admin') ?? false],
         ]);
     }
