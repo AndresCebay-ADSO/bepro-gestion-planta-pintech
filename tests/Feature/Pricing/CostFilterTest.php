@@ -17,10 +17,10 @@ beforeEach(function (): void {
     $this->admin = User::factory()->create(['email_verified_at' => now()]);
     $this->admin->assignRole('admin');
 
-    $this->category = ProductCategory::create(['name' => 'Industrial']);
-    $this->uom = UnitOfMeasure::create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
+    $this->category = ProductCategory::factory()->create(['name' => 'Industrial']);
+    $this->uom = UnitOfMeasure::factory()->create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
 
-    $this->productA = Product::create([
+    $this->productA = Product::factory()->create([
         'code' => 'COST-001',
         'name' => 'Pintura Epóxica',
         'category_id' => $this->category->id,
@@ -28,7 +28,7 @@ beforeEach(function (): void {
         'is_active' => true,
     ]);
 
-    $this->productB = Product::create([
+    $this->productB = Product::factory()->create([
         'code' => 'COST-002',
         'name' => 'Sellador Acrílico',
         'category_id' => $this->category->id,
@@ -36,7 +36,7 @@ beforeEach(function (): void {
         'is_active' => true,
     ]);
 
-    $this->productC = Product::create([
+    $this->productC = Product::factory()->create([
         'code' => 'COST-003',
         'name' => 'Esmalte Industrial',
         'category_id' => $this->category->id,
@@ -99,7 +99,7 @@ test('invalid filter keys are ignored', function (): void {
 });
 
 test('only active products are shown in costs', function (): void {
-    Product::create([
+    Product::factory()->create([
         'code' => 'COST-004',
         'name' => 'Producto Inactivo',
         'category_id' => $this->category->id,

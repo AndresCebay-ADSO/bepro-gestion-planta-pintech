@@ -88,12 +88,14 @@ test('invalid filter keys are ignored', function (): void {
 });
 
 test('pagination preserves query string', function (): void {
+    User::factory()->count(16)->sequence(fn ($sq) => ['name' => "Searchable User {$sq->index}"])->create();
+
     $response = $this->actingAs($this->admin)
-        ->get(route('users.index', ['search' => 'User']));
+        ->get(route('users.index', ['search' => 'Searchable User']));
 
     $response->assertInertia(fn ($page) => $page
-        ->has('users.data')
-        ->has('users.links')
+        ->has('users.data', 15)
+        ->where('users.links.2.url', fn ($url) => is_string($url) && str_contains($url, 'search=Searchable') && str_contains($url, 'page=2'))
     );
 });
 

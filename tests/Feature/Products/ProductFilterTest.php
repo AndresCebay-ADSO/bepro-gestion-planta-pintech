@@ -17,24 +17,24 @@ beforeEach(function (): void {
     $this->admin = User::factory()->create(['email_verified_at' => now()]);
     $this->admin->assignRole('admin');
 
-    $this->category = ProductCategory::create(['name' => 'Industrial']);
-    $this->uom = UnitOfMeasure::create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
+    $this->category = ProductCategory::factory()->create(['name' => 'Industrial']);
+    $this->uom = UnitOfMeasure::factory()->create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
 
-    $this->productA = Product::create([
+    $this->productA = Product::factory()->create([
         'code' => 'PROD-001',
         'name' => 'Pintura Epóxica',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
     ]);
 
-    $this->productB = Product::create([
+    $this->productB = Product::factory()->create([
         'code' => 'PROD-002',
         'name' => 'Sellador Acrílico',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
     ]);
 
-    $this->productC = Product::create([
+    $this->productC = Product::factory()->create([
         'code' => 'PROD-003',
         'name' => 'Esmalte Industrial',
         'category_id' => $this->category->id,
@@ -96,12 +96,17 @@ test('invalid filter keys are ignored', function (): void {
 });
 
 test('pagination preserves query string', function (): void {
+    Product::factory()->count(16)->sequence(fn ($sq) => ['name' => "Pintura Extra {$sq->index}"])->create([
+        'category_id' => $this->category->id,
+        'unit_of_measure_id' => $this->uom->id,
+    ]);
+
     $response = $this->actingAs($this->admin)
-        ->get(route('products.index', ['search' => 'PROD']));
+        ->get(route('products.index', ['search' => 'Pintura Extra']));
 
     $response->assertInertia(fn ($page) => $page
-        ->has('products.data', 3)
-        ->has('products.links')
+        ->has('products.data', 15)
+        ->where('products.links.2.url', fn ($url) => is_string($url) && str_contains($url, 'search=Pintura') && str_contains($url, 'page=2'))
     );
 });
 

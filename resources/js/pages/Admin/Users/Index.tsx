@@ -51,9 +51,12 @@ interface Props {
     };
     recentActivities: ActivityLog[];
     filters: Record<string, string | null | undefined>;
+    can?: {
+        create?: boolean;
+    };
 }
 
-const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
+const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
     const { filters: filterState, setFilter, clearFilters } = useFilters({
         routeUrl: usersIndex().url,
         initialFilters: {
@@ -84,15 +87,17 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters }) => {
                             planta.
                         </p>
                     </div>
-                    <Button
-                        asChild
-                        className="shrink-0 bg-blue-600 hover:bg-blue-700"
-                    >
-                        <Link href={usersCreate().url}>
-                            <UserPlus className="mr-2 h-4 w-4" />
-                            Nuevo Usuario
-                        </Link>
-                    </Button>
+                    {can?.create !== false && (
+                        <Button
+                            asChild
+                            className="shrink-0 bg-blue-600 hover:bg-blue-700"
+                        >
+                            <Link href={usersCreate().url}>
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Nuevo Usuario
+                            </Link>
+                        </Button>
+                    )}
                 </div>
 
                 <DataTableFilters

@@ -101,6 +101,18 @@ test('invalid filter keys are ignored', function (): void {
     );
 });
 
+test('pagination preserves query string', function (): void {
+    Warehouse::factory()->count(16)->sequence(fn ($sq) => ['name' => "Bodega Extra {$sq->index}"])->create();
+
+    $response = $this->actingAs($this->admin)
+        ->get(route('warehouses.index', ['search' => 'Bodega Extra']));
+
+    $response->assertInertia(fn ($page) => $page
+        ->has('warehouses.data', 15)
+        ->where('warehouses.links.2.url', fn ($url) => is_string($url) && str_contains($url, 'search=Bodega') && str_contains($url, 'page=2'))
+    );
+});
+
 test('non admin user only sees assigned warehouses', function (): void {
     $response = $this->actingAs($this->produccion)
         ->get(route('warehouses.index'));

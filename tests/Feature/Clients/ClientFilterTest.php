@@ -85,12 +85,14 @@ test('invalid filter keys are ignored', function (): void {
 });
 
 test('pagination preserves query string', function (): void {
+    Client::factory()->count(16)->sequence(fn ($sq) => ['business_name' => "Acme Branch {$sq->index}"])->create();
+
     $response = $this->actingAs($this->admin)
-        ->get(route('clients.index', ['search' => 'Corp']));
+        ->get(route('clients.index', ['search' => 'Acme Branch']));
 
     $response->assertInertia(fn ($page) => $page
-        ->has('clients.data', 1)
-        ->has('clients.links')
+        ->has('clients.data', 15)
+        ->where('clients.links.2.url', fn ($url) => is_string($url) && str_contains($url, 'search=Acme') && str_contains($url, 'page=2'))
     );
 });
 

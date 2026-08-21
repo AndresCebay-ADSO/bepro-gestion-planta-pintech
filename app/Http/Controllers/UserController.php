@@ -38,6 +38,9 @@ class UserController extends Controller
             'users' => $users,
             'filters' => $request->validated(),
             'recentActivities' => $activities,
+            'can' => [
+                'create' => $request->user()?->hasRole('admin') ?? false,
+            ],
         ]);
     }
 
