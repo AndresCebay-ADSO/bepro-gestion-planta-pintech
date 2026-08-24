@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Filters\FormulaFilter;
+use App\Http\Requests\Formulas\IndexFormulaRequest;
 use App\Http\Requests\Formulas\StoreFormulaRequest;
 use App\Http\Requests\Formulas\UpdateFormulaRequest;
 use App\Models\Formula;
@@ -25,22 +27,11 @@ class FormulaController extends Controller
         private readonly ProductionCostRecalculationService $productionCostRecalculationService
     ) {}
 
-    public function index(Request $request): Response
+    public function index(IndexFormulaRequest $request): Response
     {
-        $this->authorize('viewAny', Formula::class);
-
-        $search = strtolower((string) $request->input('search'));
-        $productId = $request->input('product_id');
-
-        $formulas = Formula::query()
+        $formulas = (new FormulaFilter($request))
+            ->apply(Formula::query())
             ->with(['product:id,code,name', 'createdBy:id,name'])
-            ->when($search, function ($query) use ($search) {
-                $query->whereHas('product', function ($q) use ($search) {
-                    $q->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"])
-                        ->orWhereRaw('LOWER(name) LIKE ?', ["%{$search}%"]);
-                });
-            })
-            ->when($productId, fn ($q) => $q->where('product_id', $productId))
             ->latest('id')
             ->paginate(15)
             ->onEachSide(1)
@@ -48,10 +39,7 @@ class FormulaController extends Controller
 
         return Inertia::render('Formulas/Index', [
             'formulas' => $formulas,
-            'filters' => [
-                'search' => $search,
-                'product_id' => $productId,
-            ],
+            'filters' => $request->validated(),
             'can' => [
                 'create' => Gate::allows('create', Formula::class),
             ],
