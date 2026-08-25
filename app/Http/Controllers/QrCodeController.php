@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Filters\QrCodeFilter;
+use App\Http\Requests\QrCodes\IndexQrCodeRequest;
 use App\Models\QrCode;
 use App\Models\QrDocument;
 use App\Services\QrImageService;
@@ -17,38 +19,15 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QrCodeController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(IndexQrCodeRequest $request): Response
     {
-        $this->authorize('viewAny', QrCode::class);
-
-        $validated = $request->validate([
-            'search' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'string', 'in:active,inactive,all'],
-        ]);
-
-        $search = $validated['search'] ?? '';
-        $status = $validated['status'] ?? 'all';
-        $searchLower = mb_strtolower($search);
-
-        $qrCodes = QrCode::query()
+        $qrCodes = (new QrCodeFilter($request))
+            ->apply(QrCode::query())
             ->with([
                 'product:id,name,code',
                 'productionOrder:id,order_number,lot_number',
             ])
             ->withCount('documents')
-            ->when($status === 'active', fn ($query) => $query->where('is_active', true))
-            ->when($status === 'inactive', fn ($query) => $query->where('is_active', false))
-            ->when($search !== '', function ($q) use ($searchLower): void {
-                $q->where(function ($searchQuery) use ($searchLower): void {
-                    $searchQuery
-                        ->whereRaw('LOWER(token) LIKE ?', ["%{$searchLower}%"])
-                        ->orWhereHas('product', fn ($pq) => $pq
-                            ->whereRaw('LOWER(name) LIKE ?', ["%{$searchLower}%"])
-                            ->orWhereRaw('LOWER(code) LIKE ?', ["%{$searchLower}%"]))
-                        ->orWhereHas('productionOrder', fn ($oq) => $oq
-                            ->whereRaw('LOWER(order_number) LIKE ?', ["%{$searchLower}%"]));
-                });
-            })
             ->latest('id')
             ->paginate(15)
             ->onEachSide(1)
@@ -76,10 +55,7 @@ class QrCodeController extends Controller
 
         return Inertia::render('QrCodes/Index', [
             'qrCodes' => $qrCodes,
-            'filters' => [
-                'search' => $search,
-                'status' => $status,
-            ],
+            'filters' => $request->validated(),
             'can' => [
                 'viewAny' => $request->user()?->can('viewAny', QrCode::class) ?? false,
                 'update' => $request->user()?->can('update', QrCode::class) ?? false,
