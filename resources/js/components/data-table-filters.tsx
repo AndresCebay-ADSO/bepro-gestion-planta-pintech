@@ -1,6 +1,7 @@
 import { Search, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -33,16 +34,26 @@ type FilterField =
 type DataTableFiltersProps = {
     fields: FilterField[];
     filters: Record<string, string | null | undefined>;
-    onChange: (name: string, value: string | undefined) => void;
+    onFilter: (
+        keyOrUpdates: string | Record<string, string | undefined>,
+        value?: string | undefined,
+    ) => void;
+    onFilterImmediate?: (
+        keyOrUpdates: string | Record<string, string | undefined>,
+        value?: string | undefined,
+    ) => void;
     onClear: () => void;
 };
 
 export function DataTableFilters({
     fields,
     filters,
-    onChange,
+    onFilter,
+    onFilterImmediate,
     onClear,
 }: DataTableFiltersProps) {
+    const handleImmediate = onFilterImmediate ?? onFilter;
+
     const hasActiveFilters = fields.some((field) => {
         if (field.type === 'date-range') {
             return (
@@ -63,12 +74,10 @@ export function DataTableFilters({
                             <Search className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
                             <Input
                                 aria-label={field.label}
-                                placeholder={
-                                    field.placeholder ?? field.label
-                                }
+                                placeholder={field.placeholder ?? field.label}
                                 value={filters[field.name] ?? ''}
                                 onChange={(e) =>
-                                    onChange(field.name, e.target.value)
+                                    onFilter(field.name, e.target.value)
                                 }
                                 className="pl-9"
                             />
@@ -82,13 +91,16 @@ export function DataTableFilters({
                             key={field.name}
                             value={filters[field.name] ?? ''}
                             onValueChange={(value) =>
-                                onChange(
+                                handleImmediate(
                                     field.name,
                                     value === '__all__' ? undefined : value,
                                 )
                             }
                         >
-                            <SelectTrigger aria-label={field.label} className="w-full md:w-52">
+                            <SelectTrigger
+                                aria-label={field.label}
+                                className="w-full md:w-52"
+                            >
                                 <SelectValue placeholder={field.label} />
                             </SelectTrigger>
                             <SelectContent>
@@ -110,34 +122,19 @@ export function DataTableFilters({
 
                 if (field.type === 'date-range') {
                     return (
-                        <div
+                        <DateRangePicker
                             key={`${field.nameFrom}-${field.nameTo}`}
-                            className="flex items-center gap-2"
-                        >
-                            <Input
-                                type="date"
-                                aria-label={`${field.label} desde`}
-                                value={filters[field.nameFrom] ?? ''}
-                                max={filters[field.nameTo] ?? undefined}
-                                onChange={(e) =>
-                                    onChange(field.nameFrom, e.target.value)
-                                }
-                                className="w-full md:w-40"
-                            />
-                            <span className="text-sm text-muted-foreground">
-                                -
-                            </span>
-                            <Input
-                                type="date"
-                                aria-label={`${field.label} hasta`}
-                                value={filters[field.nameTo] ?? ''}
-                                min={filters[field.nameFrom] ?? undefined}
-                                onChange={(e) =>
-                                    onChange(field.nameTo, e.target.value)
-                                }
-                                className="w-full md:w-40"
-                            />
-                        </div>
+                            valueFrom={filters[field.nameFrom]}
+                            valueTo={filters[field.nameTo]}
+                            label={field.label}
+                            onChange={(from, to) => {
+                                handleImmediate({
+                                    [field.nameFrom]: from,
+                                    [field.nameTo]: to,
+                                });
+                            }}
+                            className="w-full md:w-56"
+                        />
                     );
                 }
 
