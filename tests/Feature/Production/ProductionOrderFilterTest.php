@@ -143,6 +143,18 @@ it('filters by lot number numeric search', function (): void {
     );
 });
 
+it('does not match lot number when search contains decimal or scientific notation', function (string $search): void {
+    actingAs($this->admin);
+
+    $response = get(route('production-orders.index', ['search' => $search]));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('Production/Orders/Index')
+        ->has('orders.data', 0)
+    );
+})->with(['101.9', '1e2']);
+
 it('filters by status', function (): void {
     actingAs($this->admin);
 

@@ -271,7 +271,7 @@ export default function Dashboard({
                                 icon={Timer}
                                 label="OP pendientes"
                                 value={stats.pending_orders ?? 0}
-                                iconClassName="bg-slate-100 text-slate-600 dark:bg-slate-900"
+                                iconClassName="bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-400"
                             />
                             <StatCard
                                 icon={ClipboardList}
@@ -372,7 +372,7 @@ export default function Dashboard({
                                 icon={Timer}
                                 label="Pendientes"
                                 value={stats.pending_orders ?? 0}
-                                iconClassName="bg-slate-100 text-slate-600 dark:bg-slate-900"
+                                iconClassName="bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-400"
                             />
                             <StatCard
                                 icon={ClipboardList}

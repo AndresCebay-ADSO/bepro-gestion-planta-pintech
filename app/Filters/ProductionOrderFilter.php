@@ -20,7 +20,7 @@ class ProductionOrderFilter extends QueryFilter
     protected function search(string $value): void
     {
         $this->builder->where(function (Builder $query) use ($value) {
-            if (is_numeric($value)) {
+            if (ctype_digit($value)) {
                 $query->orWhere('lot_number', (int) $value);
             }
 

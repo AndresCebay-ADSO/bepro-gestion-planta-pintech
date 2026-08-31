@@ -1,6 +1,7 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
     "name": "Pintech-OS-Estable",
+    "version": "0.0.0",
     "private": true,
     "type": "module",
     "engines": {
