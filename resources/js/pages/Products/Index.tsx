@@ -36,7 +36,11 @@ export default function ProductsIndex({
     can,
     filters,
 }: Props) {
-    const { filters: filterState, setFilter, clearFilters } = useFilters({
+    const {
+        filters: filterState,
+        setFilter,
+        clearFilters,
+    } = useFilters({
         routeUrl: productsIndex().url,
         initialFilters: {
             search: filters.search ?? '',
@@ -76,7 +80,7 @@ export default function ProductsIndex({
                         },
                     ]}
                     filters={filterState}
-                    onChange={(name, value) => setFilter(name, value)}
+                    onFilter={setFilter}
                     onClear={clearFilters}
                 />
 

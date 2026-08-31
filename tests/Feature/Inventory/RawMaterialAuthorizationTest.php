@@ -68,7 +68,7 @@ describe('Raw Material Authorization', function () {
             $response->assertRedirect(route('login'));
         });
 
-        it('shows only active raw materials by default', function () {
+        it('shows all raw materials by default', function () {
             $admin = User::factory()->create();
             $admin->assignRole('admin');
 
@@ -96,9 +96,7 @@ describe('Raw Material Authorization', function () {
             $response->assertOk()
                 ->assertInertia(fn (AssertableInertia $page) => $page
                     ->component('Inventory/RawMaterials/Index')
-                    ->where('filters.status', 'active')
-                    ->has('rawMaterials.data', 1)
-                    ->where('rawMaterials.data.0.code', 'MP-ACTIVE')
+                    ->has('rawMaterials.data', 2)
                 );
         });
     });

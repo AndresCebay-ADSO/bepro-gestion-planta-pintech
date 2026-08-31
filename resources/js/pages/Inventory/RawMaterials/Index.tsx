@@ -1,21 +1,25 @@
-import { Head, useForm, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { BellRing } from 'lucide-react';
-import type { FormEvent } from 'react';
+import type { ComponentProps } from 'react';
 
-import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
-
+import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { useFilters } from '@/hooks/use-filters';
 import { withReturnTo } from '@/lib/navigation';
 import { index as alertsIndex } from '@/routes/alerts';
+import {
+    create as rawMaterialsCreate,
+    destroy as rawMaterialsDestroy,
+    edit as rawMaterialsEdit,
+    index as rawMaterialsIndex,
+    reactivate as rawMaterialsReactivate,
+    show as rawMaterialsShow,
+} from '@/routes/raw-materials';
 import type { PaginationLink } from '@/types/ui';
 
-/**
- * Types
- */
 type RawMaterialRow = {
     id: number;
     code: string;
@@ -42,8 +46,8 @@ type Props = {
         links: PaginationLink[];
     };
     filters: {
-        search: string;
-        status: 'active' | 'inactive' | 'all';
+        search?: string;
+        status?: string;
     };
     can: {
         create: boolean;
@@ -51,39 +55,45 @@ type Props = {
     };
 };
 
-/**
- * Main Component
- */
+const statusOptions = [
+    { value: 'active', label: 'Activas' },
+    { value: 'inactive', label: 'Inactivas' },
+];
+
 export default function RawMaterialsIndex({
     rawMaterials,
     filters,
     can,
 }: Props) {
-    const { data, setData, get } = useForm({
-        search: filters.search ?? '',
-        status: filters.status ?? 'active',
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: rawMaterialsIndex().url,
+        initialFilters: filters,
     });
+
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
+        {
+            type: 'text',
+            name: 'search',
+            label: 'Buscar',
+            placeholder: 'Buscar por código…',
+        },
+        {
+            type: 'select',
+            name: 'status',
+            label: 'Estado',
+            options: statusOptions,
+        },
+    ];
 
     const flash = usePage<{
         flash?: { success?: string; error?: string };
     }>().props.flash;
 
-    /**
-     * Search
-     */
-    const handleSearch = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-
-        get(RawMaterialController.index.url(), {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
-
-    /**
-     * Delete
-     */
     const handleDelete = (id: number) => {
         if (
             !window.confirm(
@@ -93,15 +103,19 @@ export default function RawMaterialsIndex({
             return;
         }
 
-        router.delete(RawMaterialController.destroy.url(id), {
+        router.delete(rawMaterialsDestroy({ raw_material: id }).url, {
             preserveScroll: true,
         });
     };
 
     const handleReactivate = (id: number) => {
-        router.patch(RawMaterialController.reactivate.url(id), undefined, {
-            preserveScroll: true,
-        });
+        router.patch(
+            rawMaterialsReactivate({ raw_material: id }).url,
+            undefined,
+            {
+                preserveScroll: true,
+            },
+        );
     };
 
     return (
@@ -122,7 +136,7 @@ export default function RawMaterialsIndex({
 
                     {can.create && (
                         <Button asChild>
-                            <Link href={RawMaterialController.create.url()}>
+                            <Link href={rawMaterialsCreate().url}>
                                 Nueva Materia Prima
                             </Link>
                         </Button>
@@ -143,34 +157,13 @@ export default function RawMaterialsIndex({
                 )}
 
                 {/* Search */}
-                <form
-                    onSubmit={handleSearch}
-                    className="flex flex-col gap-2 sm:flex-row"
-                >
-                    <Input
-                        value={data.search}
-                        onChange={(e) => setData('search', e.target.value)}
-                        placeholder="Buscar por código..."
-                        className="sm:max-w-sm"
-                    />
-                    <Button type="submit" variant="outline">
-                        Buscar
-                    </Button>
-                    <select
-                        value={data.status}
-                        onChange={(e) =>
-                            setData(
-                                'status',
-                                e.target.value as 'active' | 'inactive' | 'all',
-                            )
-                        }
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground"
-                    >
-                        <option value="active">Activas</option>
-                        <option value="inactive">Inactivas</option>
-                        <option value="all">Todas</option>
-                    </select>
-                </form>
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
+                    onClear={clearFilters}
+                />
 
                 {/* Tabla */}
                 <div className="overflow-x-auto rounded-lg border border-border bg-card">
@@ -282,17 +275,19 @@ export default function RawMaterialsIndex({
                                                 onView={() =>
                                                     router.get(
                                                         withReturnTo(
-                                                            RawMaterialController.show.url(
-                                                                item.id,
-                                                            ),
+                                                            rawMaterialsShow({
+                                                                raw_material:
+                                                                    item.id,
+                                                            }).url,
                                                         ),
                                                     )
                                                 }
                                                 onEdit={() =>
                                                     router.get(
-                                                        RawMaterialController.edit.url(
-                                                            item.id,
-                                                        ),
+                                                        rawMaterialsEdit({
+                                                            raw_material:
+                                                                item.id,
+                                                        }).url,
                                                     )
                                                 }
                                                 onDelete={() =>

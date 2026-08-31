@@ -59,7 +59,10 @@ function calculateSalesPrice(
     return parseFloat((currentPrice / divisor).toFixed(2));
 }
 
-function calculateMargin(currentPrice: number, salesPrice: number): number | null {
+function calculateMargin(
+    currentPrice: number,
+    salesPrice: number,
+): number | null {
     if (salesPrice <= 0) {
         return null;
     }
@@ -239,7 +242,11 @@ export default function CostsIndex({
     can,
     filters,
 }: Props) {
-    const { filters: filterState, setFilter, clearFilters } = useFilters({
+    const {
+        filters: filterState,
+        setFilter,
+        clearFilters,
+    } = useFilters({
         routeUrl: adminCostsIndex().url,
         initialFilters: {
             search: filters.search ?? '',
@@ -483,7 +490,7 @@ export default function CostsIndex({
                         },
                     ]}
                     filters={filterState}
-                    onChange={(name, value) => setFilter(name, value)}
+                    onFilter={setFilter}
                     onClear={clearFilters}
                 />
 

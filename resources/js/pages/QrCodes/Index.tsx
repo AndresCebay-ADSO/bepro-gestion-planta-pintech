@@ -1,24 +1,14 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import { QrCode, Search } from 'lucide-react';
-import type { FormEvent } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
+import { QrCode } from 'lucide-react';
+import type { ComponentProps } from 'react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { useFilters } from '@/hooks/use-filters';
 import { show as productionOrderShow } from '@/routes/production-orders';
-import {
-    index as qrCodesIndex,
-    show as qrCodesShow,
-} from '@/routes/qr-codes';
+import { index as qrCodesIndex, show as qrCodesShow } from '@/routes/qr-codes';
 import type { PaginationLink } from '@/types/ui';
 
 type QrCodeRow = {
@@ -41,46 +31,43 @@ type Props = {
         data: QrCodeRow[];
         links: PaginationLink[];
     };
-    filters: {
-        search: string;
-        status: string;
-    };
+    filters: Record<string, string | null | undefined>;
     can?: {
         viewAny: boolean;
         update: boolean;
     };
 };
 
-export default function QrCodesIndex({
-    qrCodes,
-    filters,
-}: Props) {
-    const { data, setData, get } = useForm({
-        search: filters.search ?? '',
-        status: filters.status ?? 'all',
+const statusOptions = [
+    { value: 'active', label: 'Activos' },
+    { value: 'inactive', label: 'Inactivos' },
+];
+
+export default function QrCodesIndex({ qrCodes, filters }: Props) {
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: qrCodesIndex().url,
+        initialFilters: filters,
     });
 
-    const handleSearch = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        get(qrCodesIndex().url, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
-
-    const handleStatusChange = (value: string) => {
-        setData('status', value);
-        router.get(
-            qrCodesIndex().url,
-            { ...data, status: value },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            },
-        );
-    };
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
+        {
+            type: 'text',
+            name: 'search',
+            label: 'Buscar',
+            placeholder: 'Buscar por producto, orden o token…',
+        },
+        {
+            type: 'select',
+            name: 'status',
+            label: 'Estado',
+            options: statusOptions,
+        },
+    ];
 
     return (
         <>
@@ -97,45 +84,13 @@ export default function QrCodesIndex({
                     </p>
                 </div>
 
-                <form
-                    onSubmit={handleSearch}
-                    className="flex flex-col gap-3 md:flex-row md:items-end"
-                >
-                    <div className="flex-1">
-                        <div className="relative">
-                            <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Buscar por producto, orden o token..."
-                                className="pl-9"
-                                value={data.search}
-                                onChange={(e) =>
-                                    setData('search', e.target.value)
-                                }
-                            />
-                        </div>
-                    </div>
-                    <div className="w-full md:w-52">
-                        <Select
-                            value={data.status}
-                            onValueChange={handleStatusChange}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Estado" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todos</SelectItem>
-                                <SelectItem value="active">Activos</SelectItem>
-                                <SelectItem value="inactive">
-                                    Inactivos
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <Button type="submit" variant="outline">
-                        <Search className="mr-2 h-4 w-4" />
-                        Buscar
-                    </Button>
-                </form>
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
+                    onClear={clearFilters}
+                />
 
                 <div className="overflow-hidden rounded-lg border border-border bg-card">
                     <table className="min-w-full divide-y divide-border text-sm">
@@ -261,9 +216,7 @@ export default function QrCodesIndex({
                                             {row.created_at
                                                 ? new Date(
                                                       row.created_at,
-                                                  ).toLocaleDateString(
-                                                      'es-CO',
-                                                  )
+                                                  ).toLocaleDateString('es-CO')
                                                 : '—'}
                                         </td>
                                         <td className="px-4 py-3 text-right align-top">

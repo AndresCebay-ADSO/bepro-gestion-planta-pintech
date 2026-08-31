@@ -49,7 +49,11 @@ type Props = {
 };
 
 export default function WarehousesIndex({ warehouses, filters, can }: Props) {
-    const { filters: filterState, setFilter, clearFilters } = useFilters({
+    const {
+        filters: filterState,
+        setFilter,
+        clearFilters,
+    } = useFilters({
         routeUrl: warehousesIndex().url,
         initialFilters: {
             search: filters.search ?? '',
@@ -113,11 +117,12 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                             type: 'text',
                             name: 'search',
                             label: 'Buscar',
-                            placeholder: 'Buscar por nombre, ciudad o dirección...',
+                            placeholder:
+                                'Buscar por nombre, ciudad o dirección...',
                         },
                     ]}
                     filters={filterState}
-                    onChange={(name, value) => setFilter(name, value)}
+                    onFilter={setFilter}
                     onClear={clearFilters}
                 />
 

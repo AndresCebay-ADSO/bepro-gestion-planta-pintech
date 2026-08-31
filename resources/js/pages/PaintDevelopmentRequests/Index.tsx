@@ -47,11 +47,15 @@ export default function PaintDevelopmentRequestsIndex({
     statusOptions,
     can,
 }: Props) {
-    const { filters: filterState, setFilter, setFilterImmediate, clearFilters } =
-        useFilters({
-            routeUrl: requestsIndex().url,
-            initialFilters: filters,
-        });
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: requestsIndex().url,
+        initialFilters: filters,
+    });
 
     const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
         {
@@ -101,13 +105,8 @@ export default function PaintDevelopmentRequestsIndex({
                 <DataTableFilters
                     fields={filterFields}
                     filters={filterState}
-                    onChange={(name, value) => {
-                        if (name === 'search') {
-                            setFilter(name, value);
-                        } else {
-                            setFilterImmediate(name, value);
-                        }
-                    }}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
                     onClear={clearFilters}
                 />
 

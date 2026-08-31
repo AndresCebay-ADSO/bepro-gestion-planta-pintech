@@ -9,7 +9,12 @@ interface StatCardProps {
     iconClassName?: string;
 }
 
-export function StatCard({ icon: Icon, label, value, iconClassName }: StatCardProps) {
+export function StatCard({
+    icon: Icon,
+    label,
+    value,
+    iconClassName,
+}: StatCardProps) {
     return (
         <Card className="border-none shadow-lg">
             <CardContent className="flex items-center gap-4 p-5">

@@ -13,10 +13,13 @@ use App\Actions\Production\PreviewProductionOrderCostsAction;
 use App\Actions\Production\RejectProductionOrderReviewAction;
 use App\Actions\Production\StartProductionOrderAction;
 use App\Actions\Production\SubmitProductionOrderForReviewAction;
+use App\Enums\ProductionOrderStatus;
 use App\Enums\WarehouseType;
 use App\Exports\ProductionOrderExport;
+use App\Filters\ProductionOrderFilter;
 use App\Http\Requests\Production\CancelProductionOrderRequest;
 use App\Http\Requests\Production\CompleteProductionOrderRequest;
+use App\Http\Requests\Production\IndexProductionOrderRequest;
 use App\Http\Requests\Production\PreviewProductionOrderCostsRequest;
 use App\Http\Requests\Production\RejectProductionOrderReviewRequest;
 use App\Http\Requests\Production\StartProductionOrderRequest;
@@ -28,6 +31,7 @@ use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Support\EnumOptions;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -55,20 +59,22 @@ class ProductionOrderController extends Controller
     /**
      * Listado de órdenes de producción.
      */
-    public function index(): Response
+    public function index(IndexProductionOrderRequest $request): Response
     {
-        $this->authorize('viewAny', ProductionOrder::class);
-
-        $orders = ProductionOrder::query()
+        $orders = (new ProductionOrderFilter($request))
+            ->apply(ProductionOrder::query())
             ->with(['product', 'formula', 'warehouse'])
             ->latest()
             ->paginate(15)
-            ->onEachSide(1);
+            ->onEachSide(1)
+            ->withQueryString();
 
         return Inertia::render('Production/Orders/Index', [
             'orders' => $orders,
+            'filters' => $request->validated(),
+            'statusOptions' => EnumOptions::for(ProductionOrderStatus::cases()),
             'can' => [
-                'create' => auth()->user()?->can('create', ProductionOrder::class) ?? false,
+                'create' => $request->user()?->can('create', ProductionOrder::class) ?? false,
             ],
         ]);
     }

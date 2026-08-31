@@ -62,4 +62,3 @@ export type DashboardStats = {
     accepted_quotes?: number;
     total_clients?: number;
 };
-

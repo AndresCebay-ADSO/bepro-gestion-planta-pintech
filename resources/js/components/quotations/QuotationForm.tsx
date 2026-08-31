@@ -96,7 +96,10 @@ type Props = {
  * This is intentionally asymmetric: a +15% and -15% adjustment do NOT cancel
  * each other out, because they operate on the margin space.
  */
-function applyAdjustment(listPrice: number, adjustmentPct: number): number | null {
+function applyAdjustment(
+    listPrice: number,
+    adjustmentPct: number,
+): number | null {
     const divisor = 1 - adjustmentPct / 100;
 
     if (divisor <= 0) {

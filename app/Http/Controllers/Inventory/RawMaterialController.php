@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Filters\RawMaterialFilter;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RawMaterials\IndexRawMaterialRequest;
 use App\Http\Requests\RawMaterials\StoreRawMaterialRequest;
 use App\Http\Requests\RawMaterials\UpdateRawMaterialRequest;
 use App\Models\RawMaterial;
@@ -17,25 +19,22 @@ use Inertia\Response;
 
 class RawMaterialController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(IndexRawMaterialRequest $request): Response
     {
-        $this->authorize('viewAny', RawMaterial::class);
-
-        $search = strtolower(trim((string) $request->input('search')));
         $user = $request->user();
-        $status = $request->string('status')->toString();
         $canViewCosts = $user?->hasAnyRole(['admin', 'produccion']) ?? false;
 
-        $rawMaterials = RawMaterial::query()
-            ->with(['category:id,name', 'unitOfMeasure:id,name,symbol'])
+        $rawMaterials = (new RawMaterialFilter($request))
+            ->apply(RawMaterial::query())
+            ->with([
+                'category:id,name',
+                'unitOfMeasure:id,name,symbol',
+            ])
             ->withSum('inventoryBatches as available_stock', 'remaining_quantity')
             ->withCount(['alerts as active_alerts_count' => fn ($query) => $query->where('is_resolved', false)])
             ->withExists(['alerts as has_critical_alert' => fn ($query) => $query
                 ->where('is_resolved', false)
                 ->where('severity', 'alta')])
-            ->when($status === '' || $status === 'active', fn ($query) => $query->active())
-            ->when($status === 'inactive', fn ($query) => $query->where('is_active', false))
-            ->when($search !== '', fn ($query) => $query->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"]))
             ->latest('id')
             ->paginate(15)
             ->onEachSide(1)
@@ -72,10 +71,7 @@ class RawMaterialController extends Controller
 
         return Inertia::render('Inventory/RawMaterials/Index', [
             'rawMaterials' => $rawMaterials,
-            'filters' => [
-                'search' => $search,
-                'status' => $status === '' ? 'active' : $status,
-            ],
+            'filters' => $request->validated(),
             'can' => [
                 'create' => Gate::allows('create', RawMaterial::class),
                 'view_costs' => $canViewCosts,

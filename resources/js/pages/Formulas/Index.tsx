@@ -1,12 +1,13 @@
-import { Head, Link, useForm, router } from '@inertiajs/react';
-import type { FormEvent } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
+import type { ComponentProps } from 'react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { useFilters } from '@/hooks/use-filters';
 import { withReturnTo } from '@/lib/navigation';
 import {
     index as formulasIndex,
@@ -30,23 +31,40 @@ type Props = {
         data: FormulaItem[];
         links: PaginationLink[];
     };
-    filters: { search?: string; product_id?: string };
+    filters: Record<string, string | null | undefined>;
     can: { create: boolean };
 };
 
+const statusOptions = [
+    { value: 'active', label: 'Activas' },
+    { value: 'inactive', label: 'Inactivas' },
+];
+
 export default function FormulasIndex({ formulas, filters, can }: Props) {
-    const { data, setData, get } = useForm({
-        search: filters.search ?? '',
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: formulasIndex().url,
+        initialFilters: filters,
     });
 
-    const handleSearch = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        get(formulasIndex().url, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
+        {
+            type: 'text',
+            name: 'search',
+            label: 'Buscar',
+            placeholder: 'Buscar por código o nombre de producto…',
+        },
+        {
+            type: 'select',
+            name: 'status',
+            label: 'Estado',
+            options: statusOptions,
+        },
+    ];
 
     return (
         <>
@@ -71,17 +89,13 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                     )}
                 </div>
 
-                <form
-                    onSubmit={handleSearch}
-                    className="relative w-full max-w-sm"
-                >
-                    <Input
-                        placeholder="Buscar por código o nombre de producto…"
-                        value={data.search}
-                        onChange={(e) => setData('search', e.target.value)}
-                        className="pr-4"
-                    />
-                </form>
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
+                    onClear={clearFilters}
+                />
 
                 <div className="rounded-xl border border-border bg-card shadow-sm">
                     <table className="w-full text-sm">

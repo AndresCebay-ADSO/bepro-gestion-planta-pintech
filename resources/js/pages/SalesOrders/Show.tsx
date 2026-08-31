@@ -153,9 +153,18 @@ export default function SalesOrdersShow({
                                         <span className="text-muted-foreground">
                                             Origen:
                                         </span>{' '}
-                                        <Button variant="link" size="sm" asChild className="h-auto p-0">
+                                        <Button
+                                            variant="link"
+                                            size="sm"
+                                            asChild
+                                            className="h-auto p-0"
+                                        >
                                             <Link
-                                                href={quotationsShow(order.quotation_id).url}
+                                                href={
+                                                    quotationsShow(
+                                                        order.quotation_id,
+                                                    ).url
+                                                }
                                             >
                                                 <FileText className="mr-1 h-3 w-3" />
                                                 Cotización #{order.quotation_id}

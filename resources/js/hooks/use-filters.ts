@@ -20,7 +20,12 @@ function cleanFilters(filters: Filters): Record<string, string> {
                 ? value.trim().replace(/\s+/g, ' ')
                 : value;
 
-        if (normalized !== '' && normalized !== undefined && normalized !== null && normalized !== '__all__') {
+        if (
+            normalized !== '' &&
+            normalized !== undefined &&
+            normalized !== null &&
+            normalized !== '__all__'
+        ) {
             clean[key] = normalized;
         }
     }
@@ -75,17 +80,34 @@ export function useFilters({
         };
     }, [filters, debounceMs, navigate]);
 
-    const setFilter = (key: string, value: FilterValue) => {
-        setFiltersState((prev) => ({ ...prev, [key]: value }));
+    const setFilter = (
+        keyOrUpdates: string | Record<string, FilterValue>,
+        value?: FilterValue,
+    ) => {
+        setFiltersState((prev) => {
+            const updates =
+                typeof keyOrUpdates === 'string'
+                    ? { [keyOrUpdates]: value }
+                    : keyOrUpdates;
+
+            return { ...prev, ...updates };
+        });
     };
 
-    const setFilterImmediate = (key: string, value: FilterValue) => {
+    const setFilterImmediate = (
+        keyOrUpdates: string | Record<string, FilterValue>,
+        value?: FilterValue,
+    ) => {
         if (timerRef.current) {
             clearTimeout(timerRef.current);
         }
 
         setFiltersState((prev) => {
-            const next = { ...prev, [key]: value };
+            const updates =
+                typeof keyOrUpdates === 'string'
+                    ? { [keyOrUpdates]: value }
+                    : keyOrUpdates;
+            const next = { ...prev, ...updates };
             navigate(next);
 
             return next;
