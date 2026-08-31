@@ -1,20 +1,26 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
+import type { ComponentProps } from 'react';
+
+import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
+import { useFilters } from '@/hooks/use-filters';
 import { withReturnTo } from '@/lib/navigation';
 import {
     show as productionOrderShow,
     create as productionOrderCreate,
+    index as productionOrderIndex,
 } from '@/routes/production-orders';
 import type { PaginationLink } from '@/types/ui';
 
 type ProductionOrderItem = {
     id: number;
     order_number: string;
+    lot_number?: number | null;
     product?: { code: string; name: string } | null;
     formula?: { version: number } | null;
     warehouse?: { name: string } | null;
@@ -35,12 +41,63 @@ type Props = {
         data: ProductionOrderItem[];
         links: PaginationLink[];
     };
+    filters: {
+        search?: string;
+        status?: string;
+        date_from?: string;
+        date_to?: string;
+        completed_from?: string;
+        completed_to?: string;
+    };
     can: {
         create: boolean;
     };
+    statusOptions: { value: string; label: string }[];
 };
 
-export default function ProductionOrdersIndex({ orders, can }: Props) {
+export default function ProductionOrdersIndex({
+    orders,
+    filters,
+    can,
+    statusOptions,
+}: Props) {
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: productionOrderIndex().url,
+        initialFilters: filters,
+    });
+
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
+        {
+            type: 'text',
+            name: 'search',
+            label: 'Buscar',
+            placeholder: 'Buscar por orden, lote o producto…',
+        },
+        {
+            type: 'select',
+            name: 'status',
+            label: 'Estado',
+            options: statusOptions,
+        },
+        {
+            type: 'date-range',
+            nameFrom: 'date_from',
+            nameTo: 'date_to',
+            label: 'Fecha de creación',
+        },
+        {
+            type: 'date-range',
+            nameFrom: 'completed_from',
+            nameTo: 'completed_to',
+            label: 'Fecha de finalización',
+        },
+    ];
+
     const getStatusVariant = (status: ProductionOrderItem['status']) => {
         switch (status) {
             case 'pending':
@@ -58,22 +115,8 @@ export default function ProductionOrdersIndex({ orders, can }: Props) {
         }
     };
 
-    const getStatusLabel = (status: ProductionOrderItem['status']) => {
-        switch (status) {
-            case 'pending':
-                return 'Pendiente';
-            case 'in_progress':
-                return 'En Proceso';
-            case 'pending_review':
-                return 'Pendiente de revisión';
-            case 'completed':
-                return 'Completada';
-            case 'cancelled':
-                return 'Cancelada';
-            default:
-                return status;
-        }
-    };
+    const getStatusLabel = (status: string) =>
+        statusOptions.find((o) => o.value === status)?.label ?? status;
 
     return (
         <>
@@ -99,6 +142,14 @@ export default function ProductionOrdersIndex({ orders, can }: Props) {
                     )}
                 </div>
 
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
+                    onClear={clearFilters}
+                />
+
                 <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                     <table className="w-full text-sm">
                         <thead className="border-b border-border bg-muted/50">
@@ -110,13 +161,16 @@ export default function ProductionOrdersIndex({ orders, can }: Props) {
                                     Producto
                                 </th>
                                 <th className="p-4 text-left font-medium">
-                                    Planificado
+                                    Cant. Planificada
                                 </th>
                                 <th className="p-4 text-left font-medium">
                                     Estado
                                 </th>
                                 <th className="p-4 text-left font-medium">
-                                    Fecha Plan
+                                    Fechas
+                                </th>
+                                <th className="p-4 text-left font-medium">
+                                    Fecha Fin
                                 </th>
                                 <th className="p-4 text-right font-medium">
                                     Acciones
@@ -129,19 +183,25 @@ export default function ProductionOrdersIndex({ orders, can }: Props) {
                                     key={order.id}
                                     className="border-b border-border/50 transition-colors hover:bg-muted/30"
                                 >
-                                    <td className="p-4 font-mono font-medium">
-                                        {order.order_number}
+                                    <td className="p-4">
+                                        <div className="font-mono font-medium text-foreground">
+                                            {order.order_number}
+                                        </div>
+                                        {order.lot_number ? (
+                                            <div className="text-xs text-muted-foreground">
+                                                #{order.lot_number}
+                                            </div>
+                                        ) : null}
                                     </td>
                                     <td className="p-4">
                                         <div className="font-medium text-foreground">
                                             {order.product?.name ?? 'S/N'}
                                         </div>
                                         <div className="text-xs text-muted-foreground">
-                                            {order.product?.code} (v
-                                            {order.formula?.version})
+                                            Fórmula v{order.formula?.version ?? 1}
                                         </div>
                                     </td>
-                                    <td className="p-4">
+                                    <td className="p-4 font-medium">
                                         {order.quantity} gal
                                     </td>
                                     <td className="p-4">
@@ -153,10 +213,22 @@ export default function ProductionOrdersIndex({ orders, can }: Props) {
                                             {getStatusLabel(order.status)}
                                         </Badge>
                                     </td>
+                                    <td className="p-4 text-xs">
+                                        <div className="text-muted-foreground">
+                                            Plan: <FormattedDate value={order.planned_date} />
+                                        </div>
+                                        <div className="text-muted-foreground/80">
+                                            Creada: <FormattedDate value={order.created_at} />
+                                        </div>
+                                    </td>
                                     <td className="p-4 text-xs text-muted-foreground">
-                                        <FormattedDate
-                                            value={order.planned_date}
-                                        />
+                                        {order.completion_date ? (
+                                            <FormattedDate
+                                                value={order.completion_date}
+                                            />
+                                        ) : (
+                                            '—'
+                                        )}
                                     </td>
                                     <td className="p-4 text-right">
                                         <TableActions
@@ -182,7 +254,7 @@ export default function ProductionOrdersIndex({ orders, can }: Props) {
                             {orders.data.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={6}
+                                        colSpan={7}
                                         className="p-8 text-center text-sm text-muted-foreground"
                                     >
                                         No hay órdenes de producción
