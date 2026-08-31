@@ -65,11 +65,15 @@ export default function RawMaterialsIndex({
     filters,
     can,
 }: Props) {
-    const { filters: filterState, setFilter, setFilterImmediate, clearFilters } =
-        useFilters({
-            routeUrl: rawMaterialsIndex().url,
-            initialFilters: filters,
-        });
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: rawMaterialsIndex().url,
+        initialFilters: filters,
+    });
 
     const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
         {
@@ -156,13 +160,8 @@ export default function RawMaterialsIndex({
                 <DataTableFilters
                     fields={filterFields}
                     filters={filterState}
-                    onChange={(name, value) => {
-                        if (name === 'search') {
-                            setFilter(name, value);
-                        } else {
-                            setFilterImmediate(name, value);
-                        }
-                    }}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
                     onClear={clearFilters}
                 />
 

@@ -87,13 +87,8 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
                 <DataTableFilters
                     fields={filterFields}
                     filters={filterState}
-                    onChange={(name, value) => {
-                        if (name === 'search') {
-                            setFilter(name, value);
-                        } else {
-                            setFilterImmediate(name, value);
-                        }
-                    }}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
                     onClear={clearFilters}
                 />
 

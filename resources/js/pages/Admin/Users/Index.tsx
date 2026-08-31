@@ -57,7 +57,11 @@ interface Props {
 }
 
 const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
-    const { filters: filterState, setFilter, clearFilters } = useFilters({
+    const {
+        filters: filterState,
+        setFilter,
+        clearFilters,
+    } = useFilters({
         routeUrl: usersIndex().url,
         initialFilters: {
             search: filters.search ?? '',
@@ -110,7 +114,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                         },
                     ]}
                     filters={filterState}
-                    onChange={(name, value) => setFilter(name, value)}
+                    onFilter={setFilter}
                     onClear={clearFilters}
                 />
 

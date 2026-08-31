@@ -40,16 +40,16 @@ const statusOptions = [
     { value: 'inactive', label: 'Inactivas' },
 ];
 
-export default function FormulasIndex({
-    formulas,
-    filters,
-    can,
-}: Props) {
-    const { filters: filterState, setFilter, setFilterImmediate, clearFilters } =
-        useFilters({
-            routeUrl: formulasIndex().url,
-            initialFilters: filters,
-        });
+export default function FormulasIndex({ formulas, filters, can }: Props) {
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: formulasIndex().url,
+        initialFilters: filters,
+    });
 
     const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
         {
@@ -92,13 +92,8 @@ export default function FormulasIndex({
                 <DataTableFilters
                     fields={filterFields}
                     filters={filterState}
-                    onChange={(name, value) => {
-                        if (name === 'search') {
-                            setFilter(name, value);
-                        } else {
-                            setFilterImmediate(name, value);
-                        }
-                    }}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
                     onClear={clearFilters}
                 />
 

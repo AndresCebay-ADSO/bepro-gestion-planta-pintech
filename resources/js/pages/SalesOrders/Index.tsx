@@ -65,11 +65,15 @@ export default function SalesOrdersIndex({
     statusOptions,
     priorityOptions,
 }: Props) {
-    const { filters: filterState, setFilter, setFilterImmediate, clearFilters } =
-        useFilters({
-            routeUrl: salesOrdersIndex().url,
-            initialFilters: filters,
-        });
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: salesOrdersIndex().url,
+        initialFilters: filters,
+    });
 
     const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
         {
@@ -127,13 +131,8 @@ export default function SalesOrdersIndex({
                 <DataTableFilters
                     fields={filterFields}
                     filters={filterState}
-                    onChange={(name, value) => {
-                        if (name === 'search') {
-                            setFilter(name, value);
-                        } else {
-                            setFilterImmediate(name, value);
-                        }
-                    }}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
                     onClear={clearFilters}
                 />
 

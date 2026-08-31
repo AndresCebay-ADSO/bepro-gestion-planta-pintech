@@ -198,7 +198,8 @@ export default function ProductionOrdersIndex({
                                             {order.product?.name ?? 'S/N'}
                                         </div>
                                         <div className="text-xs text-muted-foreground">
-                                            Fórmula v{order.formula?.version ?? 1}
+                                            Fórmula v
+                                            {order.formula?.version ?? 1}
                                         </div>
                                     </td>
                                     <td className="p-4 font-medium">
@@ -215,10 +216,16 @@ export default function ProductionOrdersIndex({
                                     </td>
                                     <td className="p-4 text-xs">
                                         <div className="text-muted-foreground">
-                                            Plan: <FormattedDate value={order.planned_date} />
+                                            Plan:{' '}
+                                            <FormattedDate
+                                                value={order.planned_date}
+                                            />
                                         </div>
                                         <div className="text-muted-foreground/80">
-                                            Creada: <FormattedDate value={order.created_at} />
+                                            Creada:{' '}
+                                            <FormattedDate
+                                                value={order.created_at}
+                                            />
                                         </div>
                                     </td>
                                     <td className="p-4 text-xs text-muted-foreground">

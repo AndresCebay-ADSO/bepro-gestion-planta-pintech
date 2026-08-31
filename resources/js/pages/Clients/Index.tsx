@@ -33,7 +33,11 @@ type Props = {
 };
 
 export default function ClientsIndex({ clients, filters, can }: Props) {
-    const { filters: filterState, setFilter, clearFilters } = useFilters({
+    const {
+        filters: filterState,
+        setFilter,
+        clearFilters,
+    } = useFilters({
         routeUrl: clientsIndex().url,
         initialFilters: {
             search: filters.search ?? '',
@@ -72,7 +76,7 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
                         },
                     ]}
                     filters={filterState}
-                    onChange={(name, value) => setFilter(name, value)}
+                    onFilter={setFilter}
                     onClear={clearFilters}
                 />
 
