@@ -31,7 +31,9 @@ export function DashboardHeader({
             <div className="relative mx-auto max-w-6xl">
                 <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
                     <div className="flex items-start gap-4">
-                        <div className={`rounded-xl p-3 shadow-lg ${iconBgClassName}`}>
+                        <div
+                            className={`rounded-xl p-3 shadow-lg ${iconBgClassName}`}
+                        >
                             <Icon className="h-8 w-8" />
                         </div>
                         <div>

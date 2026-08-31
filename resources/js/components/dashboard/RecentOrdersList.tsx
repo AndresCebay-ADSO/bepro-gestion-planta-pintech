@@ -122,7 +122,7 @@ export function RecentOrdersCompact({
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                     {order.product_code ?? 'Sin producto'} •
-                                    Plan:{" "}
+                                    Plan:{' '}
                                     {order.planned_date
                                         ? formatBackendDate(order.planned_date)
                                         : '—'}

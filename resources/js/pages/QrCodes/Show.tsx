@@ -130,9 +130,7 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                 size="sm"
                                 onClick={handleToggleActive}
                             >
-                                {qrCode.is_active
-                                    ? 'Desactivar'
-                                    : 'Activar'}
+                                {qrCode.is_active ? 'Desactivar' : 'Activar'}
                             </Button>
                         )}
                     </div>
@@ -157,7 +155,12 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                     className="block"
                                 />
                             </div>
-                            <Button variant="outline" size="sm" asChild className="w-full">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="w-full"
+                            >
                                 <a
                                     href={qrCode.image_url}
                                     download={`qr-${qrCode.token}.png`}
@@ -326,7 +329,8 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                             Documentos del lote
                         </CardTitle>
                         <CardDescription>
-                            Certificados y documentos asociados a este código QR.
+                            Certificados y documentos asociados a este código
+                            QR.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>

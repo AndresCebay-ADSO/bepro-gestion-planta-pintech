@@ -209,9 +209,7 @@ export default function QuotationsShow({
                     <div className="flex flex-wrap gap-2">
                         {salesOrderId && can.viewSalesOrder && (
                             <Button variant="outline" asChild>
-                                <Link
-                                    href={salesOrdersShow(salesOrderId).url}
-                                >
+                                <Link href={salesOrdersShow(salesOrderId).url}>
                                     <ShoppingCart className="mr-2 h-4 w-4" />
                                     Pedido #{salesOrderId}
                                 </Link>
@@ -268,7 +266,9 @@ export default function QuotationsShow({
                                                 Prioridad
                                             </Label>
                                             <Select
-                                                value={convertForm.data.priority}
+                                                value={
+                                                    convertForm.data.priority
+                                                }
                                                 onValueChange={(value) =>
                                                     convertForm.setData(
                                                         'priority',
@@ -293,7 +293,10 @@ export default function QuotationsShow({
                                             </Select>
                                             {convertForm.errors.priority && (
                                                 <p className="text-sm text-destructive">
-                                                    {convertForm.errors.priority}
+                                                    {
+                                                        convertForm.errors
+                                                            .priority
+                                                    }
                                                 </p>
                                             )}
                                         </div>
@@ -305,7 +308,8 @@ export default function QuotationsShow({
                                                 id="required_date"
                                                 type="date"
                                                 value={
-                                                    convertForm.data.required_date
+                                                    convertForm.data
+                                                        .required_date
                                                 }
                                                 onChange={(e) =>
                                                     convertForm.setData(
@@ -314,7 +318,8 @@ export default function QuotationsShow({
                                                     )
                                                 }
                                             />
-                                            {convertForm.errors.required_date && (
+                                            {convertForm.errors
+                                                .required_date && (
                                                 <p className="text-sm text-destructive">
                                                     {
                                                         convertForm.errors
