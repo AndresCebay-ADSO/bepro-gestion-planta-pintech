@@ -23,6 +23,7 @@ type FilterField =
           name: string;
           label: string;
           options: { value: string; label: string }[];
+          allValue?: string;
       }
     | {
           type: 'date-range';
@@ -34,6 +35,7 @@ type FilterField =
 type DataTableFiltersProps = {
     fields: FilterField[];
     filters: Record<string, string | null | undefined>;
+    defaultFilters?: Record<string, string | null | undefined>;
     onFilter: (
         keyOrUpdates: string | Record<string, string | undefined>,
         value?: string | undefined,
@@ -48,6 +50,7 @@ type DataTableFiltersProps = {
 export function DataTableFilters({
     fields,
     filters,
+    defaultFilters,
     onFilter,
     onFilterImmediate,
     onClear,
@@ -56,13 +59,18 @@ export function DataTableFilters({
 
     const hasActiveFilters = fields.some((field) => {
         if (field.type === 'date-range') {
+            const defaultFrom = defaultFilters?.[field.nameFrom] ?? '';
+            const defaultTo = defaultFilters?.[field.nameTo] ?? '';
+
             return (
-                (filters[field.nameFrom] ?? '') !== '' ||
-                (filters[field.nameTo] ?? '') !== ''
+                (filters[field.nameFrom] ?? '') !== defaultFrom ||
+                (filters[field.nameTo] ?? '') !== defaultTo
             );
         }
 
-        return (filters[field.name] ?? '') !== '';
+        const defaultValue = defaultFilters?.[field.name] ?? '';
+
+        return (filters[field.name] ?? '') !== defaultValue;
     });
 
     return (
@@ -86,15 +94,14 @@ export function DataTableFilters({
                 }
 
                 if (field.type === 'select') {
+                    const allItemValue = field.allValue ?? '__all__';
+
                     return (
                         <Select
                             key={field.name}
                             value={filters[field.name] ?? ''}
                             onValueChange={(value) =>
-                                handleImmediate(
-                                    field.name,
-                                    value === '__all__' ? undefined : value,
-                                )
+                                handleImmediate(field.name, value)
                             }
                         >
                             <SelectTrigger
@@ -104,7 +111,9 @@ export function DataTableFilters({
                                 <SelectValue placeholder={field.label} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="__all__">Todos</SelectItem>
+                                <SelectItem value={allItemValue}>
+                                    Todos
+                                </SelectItem>
                                 {field.options
                                     .filter((opt) => opt.value !== '')
                                     .map((opt) => (
