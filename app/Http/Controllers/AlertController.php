@@ -6,12 +6,14 @@ namespace App\Http\Controllers;
 
 use App\Enums\AlertSeverity;
 use App\Enums\AlertType;
+use App\Filters\AlertFilter;
+use App\Http\Requests\Alerts\IndexAlertRequest;
 use App\Models\Alert;
 use App\Services\AlertService;
+use App\Support\EnumOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,30 +23,15 @@ class AlertController extends Controller
         private readonly AlertService $alertService
     ) {}
 
-    public function index(Request $request): Response
+    public function index(IndexAlertRequest $request): Response
     {
-        $this->authorize('viewAny', Alert::class);
-
-        $validated = $request->validate([
-            'status' => ['nullable', 'string', Rule::in(['active', 'resolved', 'all'])],
-            'type' => ['nullable', 'string', Rule::in(array_column(AlertType::cases(), 'value'))],
-            'severity' => ['nullable', 'string', Rule::in(array_column(AlertSeverity::cases(), 'value'))],
-        ]);
-
-        $status = $validated['status'] ?? 'active';
-        $type = $validated['type'] ?? 'all';
-        $severity = $validated['severity'] ?? 'all';
-
-        $alerts = Alert::query()
+        $alerts = (new AlertFilter($request))
+            ->apply(Alert::query())
             ->with([
                 'rawMaterial:id,code',
                 'batch:id,lot_number,expiry_date',
                 'resolvedBy:id,name',
             ])
-            ->when($status === 'active', fn ($query) => $query->where('is_resolved', false))
-            ->when($status === 'resolved', fn ($query) => $query->where('is_resolved', true))
-            ->when($type !== 'all', fn ($query) => $query->where('type', $type))
-            ->when($severity !== 'all', fn ($query) => $query->where('severity', $severity))
             ->latest('id')
             ->paginate(20)
             ->onEachSide(1)
@@ -82,21 +69,13 @@ class AlertController extends Controller
 
         return Inertia::render('Alerts/Index', [
             'alerts' => $alerts,
-            'filters' => [
-                'status' => $status,
-                'type' => $type,
-                'severity' => $severity,
+            'filters' => $request->validated(),
+            'statusOptions' => [
+                ['value' => 'active', 'label' => __('Activas')],
+                ['value' => 'resolved', 'label' => __('Resueltas')],
             ],
-            'options' => [
-                'types' => collect(AlertType::cases())->map(fn (AlertType $case) => [
-                    'value' => $case->value,
-                    'label' => $case->label(),
-                ])->values()->all(),
-                'severities' => collect(AlertSeverity::cases())->map(fn (AlertSeverity $case) => [
-                    'value' => $case->value,
-                    'label' => $case->label(),
-                ])->values()->all(),
-            ],
+            'typeOptions' => EnumOptions::for(AlertType::cases()),
+            'severityOptions' => EnumOptions::for(AlertSeverity::cases()),
             'stats' => [
                 'unresolved_count' => $this->alertService->unresolvedCount(),
             ],

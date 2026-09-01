@@ -1,18 +1,13 @@
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { FormEvent } from 'react';
-import AlertController from '@/actions/App/Http/Controllers/AlertController';
+import type { ComponentProps } from 'react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { useFilters } from '@/hooks/use-filters';
+import { index as alertsIndex, resolve as alertResolve } from '@/routes/alerts';
 import { show as rawMaterialShow } from '@/routes/raw-materials';
 import type { PaginationLink } from '@/types/ui';
 
@@ -49,14 +44,13 @@ type Props = {
         links: PaginationLink[];
     };
     filters: {
-        status: 'active' | 'resolved' | 'all';
-        type: string;
-        severity: string;
+        status?: string;
+        type?: string;
+        severity?: string;
     };
-    options: {
-        types: Option[];
-        severities: Option[];
-    };
+    statusOptions: Option[];
+    typeOptions: Option[];
+    severityOptions: Option[];
     stats: {
         unresolved_count: number;
     };
@@ -86,34 +80,63 @@ function typeClass(type: string): string {
     }
 }
 
+const DEFAULT_FILTERS = {
+    status: 'active',
+    type: '',
+    severity: '',
+};
+
 export default function AlertsIndex({
     alerts,
     filters,
-    options,
+    statusOptions,
+    typeOptions,
+    severityOptions,
     stats,
 }: Props) {
-    const { data, setData, get } = useForm({
-        status: filters.status ?? 'active',
-        type: filters.type ?? 'all',
-        severity: filters.severity ?? 'all',
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: alertsIndex().url,
+        initialFilters: {
+            status: filters.status ?? DEFAULT_FILTERS.status,
+            type: filters.type ?? DEFAULT_FILTERS.type,
+            severity: filters.severity ?? DEFAULT_FILTERS.severity,
+        },
+        defaultFilters: DEFAULT_FILTERS,
     });
+
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
+        {
+            type: 'select',
+            name: 'status',
+            label: 'Estado',
+            options: statusOptions,
+            allValue: 'all',
+        },
+        {
+            type: 'select',
+            name: 'type',
+            label: 'Tipo de alerta',
+            options: typeOptions,
+        },
+        {
+            type: 'select',
+            name: 'severity',
+            label: 'Urgencia',
+            options: severityOptions,
+        },
+    ];
 
     const flash = usePage<{
         flash?: { success?: string; error?: string };
     }>().props.flash;
 
-    const handleFilter = (event?: FormEvent) => {
-        event?.preventDefault();
-
-        get(AlertController.index.url(), {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
-
     const handleResolve = (alertId: number) => {
-        router.patch(AlertController.resolve.url(alertId), undefined, {
+        router.patch(alertResolve({ alert: alertId }).url, undefined, {
             preserveScroll: true,
         });
     };
@@ -147,82 +170,14 @@ export default function AlertsIndex({
                     </div>
                 )}
 
-                <form
-                    onSubmit={handleFilter}
-                    className="grid grid-cols-1 gap-3 md:grid-cols-4"
-                >
-                    <Select
-                        value={data.status}
-                        onValueChange={(value) => {
-                            setData(
-                                'status',
-                                value as 'active' | 'resolved' | 'all',
-                            );
-                            handleFilter();
-                        }}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Estado" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="active">Activas</SelectItem>
-                            <SelectItem value="resolved">Resueltas</SelectItem>
-                            <SelectItem value="all">Todas</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    <Select
-                        value={data.type}
-                        onValueChange={(value) => {
-                            setData('type', value);
-                            handleFilter();
-                        }}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Tipo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todos los tipos</SelectItem>
-                            {options.types.map((option) => (
-                                <SelectItem
-                                    key={option.value}
-                                    value={option.value}
-                                >
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <Select
-                        value={data.severity}
-                        onValueChange={(value) => {
-                            setData('severity', value);
-                            handleFilter();
-                        }}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Urgencia" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">
-                                Todas las urgencias
-                            </SelectItem>
-                            {options.severities.map((option) => (
-                                <SelectItem
-                                    key={option.value}
-                                    value={option.value}
-                                >
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <Button type="submit" variant="outline">
-                        Aplicar filtros
-                    </Button>
-                </form>
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    defaultFilters={DEFAULT_FILTERS}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
+                    onClear={clearFilters}
+                />
 
                 <div className="overflow-hidden rounded-lg border border-border bg-card">
                     <table className="min-w-full divide-y divide-border text-sm">
