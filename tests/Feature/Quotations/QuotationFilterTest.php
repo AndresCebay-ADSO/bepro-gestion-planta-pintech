@@ -96,6 +96,33 @@ it('filters quotations by search term matching client nit', function () {
         );
 });
 
+it('filters quotations by search term matching client nit with large number exceeding 32-bit integer', function () {
+    $clientLargeNit = Client::factory()->create([
+        'business_name' => 'Gamma Logistics',
+        'nit' => '9001000012',
+    ]);
+
+    $quotationLargeNit = Quotation::factory()->create([
+        'client_id' => $clientLargeNit->id,
+        'client_business_name' => 'Gamma Logistics',
+        'client_nit' => '9001000012',
+        'quotation_number' => 1004,
+        'status' => QuotationStatus::Draft->value,
+        'quotation_date' => now()->toDateString(),
+        'created_by' => $this->admin->id,
+        'total' => 4000,
+    ]);
+
+    $this->actingAs($this->admin)
+        ->get(route('quotations.index', ['search' => '9001000012']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Quotations/Index')
+            ->has('quotations.data', 1)
+            ->where('quotations.data.0.id', $quotationLargeNit->id)
+        );
+});
+
 it('filters quotations by status', function () {
     $this->actingAs($this->admin)
         ->get(route('quotations.index', ['status' => QuotationStatus::Draft->value]))

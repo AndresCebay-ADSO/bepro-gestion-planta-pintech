@@ -129,6 +129,16 @@ it('normalizes whitespace in search term', function () {
         );
 });
 
+it('handles numeric search values exceeding 32-bit integer gracefully', function () {
+    $this->actingAs($this->admin)
+        ->get(route('paint-development-requests.index', ['search' => '9001000012']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('PaintDevelopmentRequests/Index')
+            ->has('requests.data', 0)
+        );
+});
+
 it('ignores invalid filter keys', function () {
     $this->actingAs($this->admin)
         ->get(route('paint-development-requests.index', ['invalid_key' => 'whatever']))

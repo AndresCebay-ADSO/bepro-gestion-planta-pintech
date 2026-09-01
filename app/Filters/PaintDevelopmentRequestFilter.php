@@ -13,12 +13,14 @@ class PaintDevelopmentRequestFilter extends QueryFilter
     protected function search(string $value): void
     {
         $this->builder->where(function (Builder $query) use ($value) {
-            if (is_numeric($value)) {
+            if ($this->isValidInteger($value)) {
                 $query->orWhere('request_number', (int) $value);
             }
 
-            $this->applySearchColumn($query, 'project_name', $value);
-            $this->applySearchColumn($query, 'client_name', $value);
+            $this->applySearchNested($query, [
+                'project_name',
+                'client_name',
+            ], $value);
         });
     }
 

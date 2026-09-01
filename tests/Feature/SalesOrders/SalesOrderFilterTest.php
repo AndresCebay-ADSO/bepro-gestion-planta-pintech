@@ -146,6 +146,16 @@ it('normalizes whitespace in search term', function () {
         );
 });
 
+it('handles numeric search values exceeding 32-bit integer gracefully', function () {
+    $this->actingAs($this->admin)
+        ->get(route('sales-orders.index', ['search' => '9001000012']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('SalesOrders/Index')
+            ->has('orders.data', 0)
+        );
+});
+
 it('ignores invalid filter keys', function () {
     $this->actingAs($this->admin)
         ->get(route('sales-orders.index', ['invalid_key' => 'whatever']))
