@@ -69,8 +69,13 @@ export function DataTableFilters({
         }
 
         const defaultValue = defaultFilters?.[field.name] ?? '';
+        const rawValue = filters[field.name] ?? '';
+        const normalizedValue =
+            field.type === 'select' && rawValue === '__all__'
+                ? ''
+                : rawValue;
 
-        return (filters[field.name] ?? '') !== defaultValue;
+        return normalizedValue !== defaultValue;
     });
 
     return (
@@ -95,14 +100,24 @@ export function DataTableFilters({
 
                 if (field.type === 'select') {
                     const allItemValue = field.allValue ?? '__all__';
+                    const rawValue = filters[field.name] ?? '';
+                    const selectValue =
+                        rawValue === '__all__' && !field.allValue
+                            ? ''
+                            : rawValue;
 
                     return (
                         <Select
                             key={field.name}
-                            value={filters[field.name] ?? ''}
-                            onValueChange={(value) =>
-                                handleImmediate(field.name, value)
-                            }
+                            value={selectValue}
+                            onValueChange={(value) => {
+                                const resolvedValue =
+                                    value === '__all__'
+                                        ? (defaultFilters?.[field.name] ?? '')
+                                        : value;
+
+                                handleImmediate(field.name, resolvedValue);
+                            }}
                         >
                             <SelectTrigger
                                 aria-label={field.label}
