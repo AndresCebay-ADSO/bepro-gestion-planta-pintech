@@ -1,10 +1,9 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { Search } from 'lucide-react';
-import { useState } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import type { ComponentProps } from 'react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -12,15 +11,8 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { useFilters } from '@/hooks/use-filters';
 import { index as remnantsIndex } from '@/routes/production/remnants';
 import { show as productionOrderShow } from '@/routes/production-orders';
 import type { PaginationLink } from '@/types/ui';
@@ -43,53 +35,62 @@ type RemnantItem = {
     created_at: string;
 };
 
-type Filters = {
-    search?: string;
-    status?: string;
-    warehouse_id?: string;
+type Option = {
+    value: string;
+    label: string;
 };
 
 type Props = {
-    remnants: RemnantItem[];
-    meta: {
-        current_page: number;
-        last_page: number;
+    remnants: {
+        data: RemnantItem[];
+        links: PaginationLink[];
         total: number;
     };
-    links: PaginationLink[];
-    filters: Filters;
+    filters: Record<string, string | null | undefined>;
+    statusOptions: Option[];
+    warehouseOptions: Option[];
 };
 
 export default function RemnantsIndex({
     remnants,
-    meta,
-    links,
     filters,
+    statusOptions,
+    warehouseOptions,
 }: Props) {
-    const [search, setSearch] = useState(filters.search ?? '');
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: remnantsIndex().url,
+        initialFilters: {
+            search: filters.search ?? '',
+            status: filters.status ?? '',
+            warehouse_id: filters.warehouse_id ?? '',
+        },
+    });
 
-    const applyFilters = (overrides: Partial<Filters> = {}) => {
-        const merged = { ...filters, ...overrides };
-        const query: Record<string, string> = {};
-
-        if (merged.search) {
-            query.search = merged.search;
-        }
-
-        if (merged.status && merged.status !== 'all') {
-            query.status = merged.status;
-        }
-
-        if (merged.warehouse_id) {
-            query.warehouse_id = merged.warehouse_id;
-        }
-
-        router.get(remnantsIndex().url, query, { preserveState: true });
-    };
-
-    const handleSearch = () => {
-        applyFilters({ search });
-    };
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
+        {
+            type: 'text',
+            name: 'search',
+            label: 'Buscar',
+            placeholder: 'Buscar por producto u orden...',
+        },
+        {
+            type: 'select',
+            name: 'status',
+            label: 'Estado',
+            options: statusOptions,
+        },
+        {
+            type: 'select',
+            name: 'warehouse_id',
+            label: 'Bodega',
+            options: warehouseOptions,
+        },
+    ];
 
     const getStatusVariant = (
         status: string,
@@ -124,63 +125,19 @@ export default function RemnantsIndex({
                     <CardHeader>
                         <CardTitle>Saldos de Producto Terminado</CardTitle>
                         <CardDescription>
-                            {meta.total} saldo{meta.total !== 1 ? 's' : ''}{' '}
-                            registrado{meta.total !== 1 ? 's' : ''}
+                            {remnants.total} saldo
+                            {remnants.total !== 1 ? 's' : ''} registrado
+                            {remnants.total !== 1 ? 's' : ''}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex flex-col gap-3 md:flex-row md:items-end">
-                            <div className="flex-1">
-                                <div className="relative">
-                                    <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Buscar por producto u orden..."
-                                        className="pl-9"
-                                        value={search}
-                                        onChange={(e) =>
-                                            setSearch(e.target.value)
-                                        }
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                handleSearch();
-                                            }
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                            <div className="w-full md:w-52">
-                                <Select
-                                    value={filters.status ?? 'all'}
-                                    onValueChange={(value) =>
-                                        applyFilters({
-                                            status: value,
-                                        })
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Estado" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">
-                                            Todos
-                                        </SelectItem>
-                                        <SelectItem value="available">
-                                            Disponible
-                                        </SelectItem>
-                                        <SelectItem value="partially_consumed">
-                                            Parcialmente consumido
-                                        </SelectItem>
-                                        <SelectItem value="consumed">
-                                            Consumido
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <Button variant="outline" onClick={handleSearch}>
-                                <Search className="mr-2 h-4 w-4" />
-                                Buscar
-                            </Button>
-                        </div>
+                        <DataTableFilters
+                            fields={filterFields}
+                            filters={filterState}
+                            onFilter={setFilter}
+                            onFilterImmediate={setFilterImmediate}
+                            onClear={clearFilters}
+                        />
 
                         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                             <div className="overflow-x-auto">
@@ -214,7 +171,7 @@ export default function RemnantsIndex({
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {remnants.length === 0 ? (
+                                        {remnants.data.length === 0 ? (
                                             <tr>
                                                 <td
                                                     colSpan={8}
@@ -224,7 +181,7 @@ export default function RemnantsIndex({
                                                 </td>
                                             </tr>
                                         ) : (
-                                            remnants.map((remnant) => (
+                                            remnants.data.map((remnant) => (
                                                 <tr
                                                     key={remnant.id}
                                                     className="border-b border-border/50 transition-colors hover:bg-muted/30"
@@ -326,7 +283,7 @@ export default function RemnantsIndex({
                         </div>
 
                         <div className="flex justify-center">
-                            <Pagination links={links} />
+                            <Pagination links={remnants.links} />
                         </div>
                     </CardContent>
                 </Card>

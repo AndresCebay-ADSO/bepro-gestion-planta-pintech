@@ -14,6 +14,8 @@ abstract class QueryFilter
 
     protected FormRequest $request;
 
+    public const MAX_PG_INTEGER = 2147483647;
+
     protected array $filterable = [];
 
     public function __construct(FormRequest $request)
@@ -54,23 +56,40 @@ abstract class QueryFilter
     protected function applySearch(array $columns, string $value): void
     {
         $this->builder->where(function (Builder $query) use ($columns, $value) {
-            foreach ($columns as $column) {
-                $this->applySearchColumn($query, $column, $value);
-            }
+            $this->applySearchNested($query, $columns, $value);
         });
     }
 
-    protected function applySearchColumn(Builder $query, string $column, string $value): void
+    protected function applySearchNested(Builder $query, array $columns, string $value): void
     {
-        if (! preg_match('/^[a-zA-Z0-9_.]+$/', $column)) {
-            throw new \InvalidArgumentException("Invalid column name: {$column}");
+        $directColumns = [];
+        $relationColumns = [];
+
+        foreach ($columns as $column) {
+            if (! preg_match('/^[a-zA-Z0-9_.]+$/', $column)) {
+                throw new \InvalidArgumentException("Invalid column name: {$column}");
+            }
+
+            if (str_contains($column, '.')) {
+                [$relation, $relationColumn] = explode('.', $column, 2);
+                $relationColumns[$relation][] = $relationColumn;
+            } else {
+                $directColumns[] = $column;
+            }
         }
 
-        if (str_contains($column, '.')) {
-            [$relation, $relationColumn] = explode('.', $column, 2);
-            $query->orWhereHas($relation, fn (Builder $q) => $q->whereRaw('LOWER('.$relationColumn.') LIKE LOWER(?)', ['%'.$value.'%']));
-        } else {
+        foreach ($directColumns as $column) {
             $query->orWhereRaw('LOWER('.$column.') LIKE LOWER(?)', ['%'.$value.'%']);
+        }
+
+        foreach ($relationColumns as $relation => $cols) {
+            $query->orWhereHas($relation, function (Builder $q) use ($cols, $value) {
+                $q->where(function (Builder $nested) use ($cols, $value) {
+                    foreach ($cols as $col) {
+                        $nested->orWhereRaw('LOWER('.$col.') LIKE LOWER(?)', ['%'.$value.'%']);
+                    }
+                });
+            });
         }
     }
 
@@ -87,5 +106,13 @@ abstract class QueryFilter
     protected function applyExact(string $column, mixed $value): void
     {
         $this->builder->where($column, $value);
+    }
+
+    protected function isValidInteger(mixed $value): bool
+    {
+        $stringVal = (string) $value;
+
+        return preg_match('/^\d+$/', $stringVal) === 1
+            && (float) $stringVal <= self::MAX_PG_INTEGER;
     }
 }

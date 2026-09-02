@@ -8,6 +8,7 @@ type Filters = Record<string, FilterValue>;
 type UseFiltersOptions = {
     routeUrl: string;
     initialFilters: Filters;
+    defaultFilters?: Filters;
     debounceMs?: number;
 };
 
@@ -36,12 +37,14 @@ function cleanFilters(filters: Filters): Record<string, string> {
 export function useFilters({
     routeUrl,
     initialFilters,
+    defaultFilters,
     debounceMs = 300,
 }: UseFiltersOptions) {
     const [filters, setFiltersState] = useState<Filters>(initialFilters);
     const isFirstRender = useRef(true);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastNavigated = useRef<string>('');
+    const immediateRef = useRef<Filters | null>(null);
 
     const navigate = useCallback(
         (nextFilters: Filters) => {
@@ -61,6 +64,13 @@ export function useFilters({
         },
         [routeUrl],
     );
+
+    useEffect(() => {
+        if (immediateRef.current) {
+            navigate(immediateRef.current);
+            immediateRef.current = null;
+        }
+    });
 
     useEffect(() => {
         if (isFirstRender.current) {
@@ -108,7 +118,7 @@ export function useFilters({
                     ? { [keyOrUpdates]: value }
                     : keyOrUpdates;
             const next = { ...prev, ...updates };
-            navigate(next);
+            immediateRef.current = next;
 
             return next;
         });
@@ -120,15 +130,12 @@ export function useFilters({
         }
 
         setFiltersState((prev) => {
-            const empty: Filters = {};
+            const defaults =
+                defaultFilters ??
+                Object.fromEntries(Object.keys(prev).map((k) => [k, '']));
+            immediateRef.current = defaults;
 
-            for (const key of Object.keys(prev)) {
-                empty[key] = '';
-            }
-
-            navigate(empty);
-
-            return empty;
+            return defaults;
         });
     };
 

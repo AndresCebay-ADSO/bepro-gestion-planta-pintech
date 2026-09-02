@@ -155,6 +155,18 @@ it('does not match lot number when search contains decimal or scientific notatio
     );
 })->with(['101.9', '1e2']);
 
+it('handles numeric search values exceeding 32-bit integer gracefully', function (): void {
+    actingAs($this->admin);
+
+    $response = get(route('production-orders.index', ['search' => '9001000012']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('Production/Orders/Index')
+        ->has('orders.data', 0)
+    );
+});
+
 it('filters by status', function (): void {
     actingAs($this->admin);
 

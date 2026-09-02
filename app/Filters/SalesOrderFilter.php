@@ -13,11 +13,13 @@ class SalesOrderFilter extends QueryFilter
     protected function search(string $value): void
     {
         $this->builder->where(function (Builder $query) use ($value) {
-            if (is_numeric($value)) {
+            if ($this->isValidInteger($value)) {
                 $query->orWhere('id', (int) $value);
             }
 
-            $this->applySearchColumn($query, 'client.business_name', $value);
+            $this->applySearchNested($query, [
+                'client.business_name',
+            ], $value);
         });
     }
 

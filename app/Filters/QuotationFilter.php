@@ -13,13 +13,15 @@ class QuotationFilter extends QueryFilter
     protected function search(string $value): void
     {
         $this->builder->where(function (Builder $query) use ($value) {
-            if (is_numeric($value)) {
+            if ($this->isValidInteger($value)) {
                 $query->orWhere('quotation_number', (int) $value);
             }
 
-            $this->applySearchColumn($query, 'client_business_name', $value);
-            $this->applySearchColumn($query, 'client_nit', $value);
-            $this->applySearchColumn($query, 'client.business_name', $value);
+            $this->applySearchNested($query, [
+                'client_business_name',
+                'client_nit',
+                'client.business_name',
+            ], $value);
         });
     }
 
