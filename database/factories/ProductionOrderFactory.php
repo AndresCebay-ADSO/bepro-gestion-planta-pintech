@@ -23,7 +23,9 @@ class ProductionOrderFactory extends Factory
             'order_number' => 'OP-'.fake()->unique()->numerify('2026-####'),
             'lot_number' => fake()->unique()->numberBetween(100, 99999),
             'product_id' => Product::factory(),
-            'formula_id' => Formula::factory(),
+            'formula_id' => fn (array $attributes) => Formula::factory()->create([
+                'product_id' => $attributes['product_id'],
+            ]),
             'warehouse_id' => Warehouse::factory()->factory(),
             'quantity' => 100,
             'status' => ProductionOrderStatus::Completed,
