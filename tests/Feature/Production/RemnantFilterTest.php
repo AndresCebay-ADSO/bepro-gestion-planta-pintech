@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Enums\ProductionOrderStatus;
 use App\Enums\RemnantStatus;
-use App\Enums\WarehouseType;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -37,10 +36,10 @@ beforeEach(function (): void {
     $this->comercial = User::factory()->create(['email_verified_at' => now()]);
     $this->comercial->assignRole('comercial');
 
-    $category = ProductCategory::create(['name' => 'Categoría Pinturas']);
-    $uom = UnitOfMeasure::create(['code' => 'gal', 'name' => 'Galón', 'symbol' => 'gal']);
+    $category = ProductCategory::factory()->create(['name' => 'Categoría Pinturas']);
+    $uom = UnitOfMeasure::factory()->create(['code' => 'gal', 'name' => 'Galón', 'symbol' => 'gal']);
 
-    $this->productA = Product::create([
+    $this->productA = Product::factory()->create([
         'code' => 'PROD-ALFA-001',
         'name' => 'Esmalte Sintético Brillante',
         'category_id' => $category->id,
@@ -51,7 +50,7 @@ beforeEach(function (): void {
         'price_threshold' => 5,
     ]);
 
-    $this->productB = Product::create([
+    $this->productB = Product::factory()->create([
         'code' => 'PROD-BETA-002',
         'name' => 'Vinilo Tipo 1 Blanco',
         'category_id' => $category->id,
@@ -62,37 +61,35 @@ beforeEach(function (): void {
         'price_threshold' => 5,
     ]);
 
-    $this->warehouseA = Warehouse::create([
+    $this->warehouseA = Warehouse::factory()->factory()->create([
         'name' => 'Bodega Principal',
         'city' => 'Bogotá',
         'address' => 'Calle 10 # 20-30',
-        'type' => WarehouseType::Factory,
         'is_active' => true,
     ]);
 
-    $this->warehouseB = Warehouse::create([
+    $this->warehouseB = Warehouse::factory()->storage()->create([
         'name' => 'Bodega Sucursal',
         'city' => 'Medellín',
         'address' => 'Carrera 45 # 67-89',
-        'type' => WarehouseType::Storage,
         'is_active' => true,
     ]);
 
-    $this->formulaA = Formula::create([
+    $this->formulaA = Formula::factory()->create([
         'product_id' => $this->productA->id,
         'version' => 1,
         'is_active' => true,
         'created_by' => $this->admin->id,
     ]);
 
-    $this->formulaB = Formula::create([
+    $this->formulaB = Formula::factory()->create([
         'product_id' => $this->productB->id,
         'version' => 1,
         'is_active' => true,
         'created_by' => $this->admin->id,
     ]);
 
-    $this->orderA = ProductionOrder::create([
+    $this->orderA = ProductionOrder::factory()->create([
         'order_number' => 'OP-2026-0001',
         'lot_number' => 101,
         'product_id' => $this->productA->id,
@@ -104,7 +101,7 @@ beforeEach(function (): void {
         'created_by' => $this->admin->id,
     ]);
 
-    $this->orderB = ProductionOrder::create([
+    $this->orderB = ProductionOrder::factory()->create([
         'order_number' => 'OP-2026-0002',
         'lot_number' => 102,
         'product_id' => $this->productB->id,
@@ -116,7 +113,7 @@ beforeEach(function (): void {
         'created_by' => $this->admin->id,
     ]);
 
-    $this->orderC = ProductionOrder::create([
+    $this->orderC = ProductionOrder::factory()->create([
         'order_number' => 'OP-2026-0003',
         'lot_number' => 103,
         'product_id' => $this->productA->id,
@@ -128,7 +125,7 @@ beforeEach(function (): void {
         'created_by' => $this->admin->id,
     ]);
 
-    $this->remnantA = ProductionRemnant::create([
+    $this->remnantA = ProductionRemnant::factory()->create([
         'source_order_id' => $this->orderA->id,
         'product_id' => $this->productA->id,
         'warehouse_id' => $this->warehouseA->id,
@@ -142,7 +139,7 @@ beforeEach(function (): void {
         'created_by' => $this->admin->id,
     ]);
 
-    $this->remnantB = ProductionRemnant::create([
+    $this->remnantB = ProductionRemnant::factory()->create([
         'source_order_id' => $this->orderB->id,
         'product_id' => $this->productB->id,
         'warehouse_id' => $this->warehouseB->id,
@@ -156,7 +153,7 @@ beforeEach(function (): void {
         'created_by' => $this->admin->id,
     ]);
 
-    $this->remnantC = ProductionRemnant::create([
+    $this->remnantC = ProductionRemnant::factory()->create([
         'source_order_id' => $this->orderC->id,
         'product_id' => $this->productA->id,
         'warehouse_id' => $this->warehouseB->id,
@@ -306,7 +303,7 @@ it('preserves query string in pagination links', function (): void {
     actingAs($this->admin);
 
     for ($i = 0; $i < 16; $i++) {
-        $order = ProductionOrder::create([
+        $order = ProductionOrder::factory()->create([
             'order_number' => sprintf('OP-PAG-%04d', $i),
             'lot_number' => 500 + $i,
             'product_id' => $this->productA->id,
@@ -318,7 +315,7 @@ it('preserves query string in pagination links', function (): void {
             'created_by' => $this->admin->id,
         ]);
 
-        ProductionRemnant::create([
+        ProductionRemnant::factory()->create([
             'source_order_id' => $order->id,
             'product_id' => $this->productA->id,
             'warehouse_id' => $this->warehouseA->id,
@@ -341,6 +338,9 @@ it('preserves query string in pagination links', function (): void {
             ->component('Production/Remnants/Index')
             ->has('remnants.links')
             ->where('filters.search', 'Esmalte')
+            ->where('remnants.links', fn ($links) => collect($links)->contains(fn ($link) => $link['url'] !== null && str_contains((string) $link['url'], 'search=Esmalte')
+            )
+            )
     );
 });
 

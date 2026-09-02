@@ -31,7 +31,7 @@ beforeEach(function (): void {
     $this->rmA = RawMaterial::factory()->create(['code' => 'RM-ALERTA-01']);
     $this->rmB = RawMaterial::factory()->create(['code' => 'RM-ALERTA-02']);
 
-    $this->alertUnresolvedStockHigh = Alert::create([
+    $this->alertUnresolvedStockHigh = Alert::factory()->create([
         'type' => AlertType::StockBajo,
         'raw_material_id' => $this->rmA->id,
         'severity' => AlertSeverity::Alta,
@@ -39,7 +39,7 @@ beforeEach(function (): void {
         'is_resolved' => false,
     ]);
 
-    $this->alertUnresolvedExpiryMed = Alert::create([
+    $this->alertUnresolvedExpiryMed = Alert::factory()->create([
         'type' => AlertType::VencimientoProximo,
         'raw_material_id' => $this->rmB->id,
         'severity' => AlertSeverity::Media,
@@ -47,14 +47,12 @@ beforeEach(function (): void {
         'is_resolved' => false,
     ]);
 
-    $this->alertResolvedPriceLow = Alert::create([
+    $this->alertResolvedPriceLow = Alert::factory()->resolved()->create([
         'type' => AlertType::VariacionPrecio,
         'raw_material_id' => $this->rmA->id,
         'severity' => AlertSeverity::Baja,
         'message' => 'Variación de precio registrada',
-        'is_resolved' => true,
         'resolved_by' => $this->admin->id,
-        'resolved_at' => now(),
     ]);
 });
 
@@ -165,15 +163,13 @@ it('ignores invalid filter keys', function (): void {
 it('preserves query string in pagination links', function (): void {
     actingAs($this->admin);
 
-    for ($i = 0; $i < 25; $i++) {
-        Alert::create([
-            'type' => AlertType::StockBajo,
-            'raw_material_id' => $this->rmA->id,
-            'severity' => AlertSeverity::Alta,
-            'message' => 'Alerta de prueba '.$i,
-            'is_resolved' => false,
-        ]);
-    }
+    Alert::factory()->count(25)->create([
+        'type' => AlertType::StockBajo,
+        'raw_material_id' => $this->rmA->id,
+        'severity' => AlertSeverity::Alta,
+        'message' => 'Alerta de prueba',
+        'is_resolved' => false,
+    ]);
 
     $response = get(route('alerts.index', ['type' => AlertType::StockBajo->value]));
 
@@ -183,6 +179,9 @@ it('preserves query string in pagination links', function (): void {
             ->component('Alerts/Index')
             ->has('alerts.links')
             ->where('filters.type', AlertType::StockBajo->value)
+            ->where('alerts.links', fn ($links) => collect($links)->contains(fn ($link) => $link['url'] !== null && str_contains((string) $link['url'], 'type=stock_bajo')
+            )
+            )
     );
 });
 
