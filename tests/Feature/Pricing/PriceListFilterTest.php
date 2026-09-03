@@ -161,6 +161,9 @@ it('preserves query string in pagination links', function (): void {
         fn ($page) => $page
             ->component('Prices/Index')
             ->has('products.links')
+            ->where('products.links', fn ($links) => collect($links)->contains(
+                fn ($link) => $link['url'] !== null && str_contains((string) $link['url'], 'search=PINTECH')
+            ))
     );
 });
 

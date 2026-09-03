@@ -172,6 +172,9 @@ it('preserves query string in pagination links', function (): void {
             ->component('Admin/AuditLogs/Index')
             ->has('logs.data', 1)
             ->has('logs.links')
+            ->where('logs.links', fn ($links) => collect($links)->contains(
+                fn ($link) => $link['url'] !== null && str_contains((string) $link['url'], 'search=Usuario')
+            ))
     );
 });
 

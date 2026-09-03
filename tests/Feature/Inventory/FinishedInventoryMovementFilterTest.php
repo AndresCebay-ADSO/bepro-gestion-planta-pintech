@@ -214,6 +214,9 @@ it('preserves query string in pagination links', function (): void {
             ->component('Inventory/FinishedMovements/Index')
             ->has('movements.data', 1)
             ->has('movements.links')
+            ->where('movements.links', fn ($links) => collect($links)->contains(
+                fn ($link) => $link['url'] !== null && str_contains((string) $link['url'], 'search=VINIL')
+            ))
     );
 });
 
