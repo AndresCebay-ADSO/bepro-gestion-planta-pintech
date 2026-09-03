@@ -1,19 +1,12 @@
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { FormEvent } from 'react';
+import type { ComponentProps } from 'react';
 import AuditLogController from '@/actions/App/Http/Controllers/Admin/AuditLogController';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { DataTableFilters } from '@/components/data-table-filters';
 import Pagination from '@/components/ui/pagination';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { useFilters } from '@/hooks/use-filters';
 import type { PaginationLink } from '@/types/ui';
 
 type Causer = {
@@ -55,29 +48,21 @@ type Props = {
 };
 
 export default function AuditLogsIndex({ logs, filters, options }: Props) {
-    const { data, setData, get } = useForm({
-        search: filters.search ?? '',
-        log_name: filters.log_name ?? 'all',
-        event: filters.event ?? 'all',
-        date_from: filters.date_from ?? '',
-        date_to: filters.date_to ?? '',
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: AuditLogController.index.url(),
+        initialFilters: {
+            search: filters.search ?? '',
+            log_name: filters.log_name ?? '',
+            event: filters.event ?? '',
+            date_from: filters.date_from ?? '',
+            date_to: filters.date_to ?? '',
+        },
     });
-
-    const handleFilter = (e?: FormEvent) => {
-        if (e) {
-            e.preventDefault();
-        }
-
-        get(AuditLogController.index.url(), {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
-
-    const clearFilters = () => {
-        router.get(AuditLogController.index.url());
-    };
 
     const getEventBadge = (event: string) => {
         switch (event) {
@@ -249,6 +234,39 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
         return renderChangeList();
     };
 
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
+        {
+            type: 'text',
+            name: 'search',
+            label: 'Buscar',
+            placeholder: 'Usuario, descripción...',
+        },
+        {
+            type: 'select',
+            name: 'log_name',
+            label: 'Módulo',
+            options: options.logNames.map((name) => ({
+                value: name,
+                label: name,
+            })),
+        },
+        {
+            type: 'select',
+            name: 'event',
+            label: 'Evento',
+            options: options.events.map((ev) => ({
+                value: ev,
+                label: getEventLabel(ev),
+            })),
+        },
+        {
+            type: 'date-range',
+            nameFrom: 'date_from',
+            nameTo: 'date_to',
+            label: 'Fecha',
+        },
+    ];
+
     return (
         <>
             <Head title="Registro de Actividades" />
@@ -266,110 +284,13 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                 </div>
 
                 {/* Filters */}
-                <div className="rounded-lg border border-border bg-card p-4">
-                    <form
-                        onSubmit={handleFilter}
-                        className="grid grid-cols-1 gap-4 md:grid-cols-6 lg:grid-cols-12"
-                    >
-                        <div className="col-span-1 md:col-span-2 lg:col-span-3">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
-                                Buscar
-                            </label>
-                            <Input
-                                value={data.search}
-                                onChange={(e) =>
-                                    setData('search', e.target.value)
-                                }
-                                placeholder="Usuario, descripción..."
-                            />
-                        </div>
-
-                        <div className="col-span-1 md:col-span-2 lg:col-span-2">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
-                                Módulo
-                            </label>
-                            <Select
-                                value={data.log_name}
-                                onValueChange={(val) =>
-                                    setData('log_name', val)
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Módulo" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todos</SelectItem>
-                                    {options.logNames.map((name) => (
-                                        <SelectItem key={name} value={name}>
-                                            {name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="col-span-1 md:col-span-2 lg:col-span-2">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
-                                Evento
-                            </label>
-                            <Select
-                                value={data.event}
-                                onValueChange={(val) => setData('event', val)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Evento" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todos</SelectItem>
-                                    {options.events.map((ev) => (
-                                        <SelectItem key={ev} value={ev}>
-                                            {getEventLabel(ev)}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="col-span-1 md:col-span-3 lg:col-span-2">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
-                                Desde
-                            </label>
-                            <Input
-                                type="date"
-                                value={data.date_from}
-                                onChange={(e) =>
-                                    setData('date_from', e.target.value)
-                                }
-                            />
-                        </div>
-
-                        <div className="col-span-1 md:col-span-3 lg:col-span-2">
-                            <label className="mb-1 block text-xs tracking-wide text-muted-foreground">
-                                Hasta
-                            </label>
-                            <Input
-                                type="date"
-                                value={data.date_to}
-                                onChange={(e) =>
-                                    setData('date_to', e.target.value)
-                                }
-                            />
-                        </div>
-
-                        <div className="col-span-1 flex items-end justify-center gap-2 md:col-span-6 lg:col-span-1 lg:justify-end">
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={clearFilters}
-                                title="Limpiar filtros"
-                            >
-                                ✕
-                            </Button>
-                            <Button type="submit">Filtrar</Button>
-                        </div>
-                    </form>
-                </div>
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
+                    onClear={clearFilters}
+                />
 
                 {/* Tabla */}
                 <div className="overflow-x-auto rounded-lg border border-border bg-card">
