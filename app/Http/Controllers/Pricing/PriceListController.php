@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Pricing;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Pricing\IndexPriceListRequest;
 use App\Services\PriceListService;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,13 +17,11 @@ class PriceListController extends Controller
     /**
      * Display the price list for admin and comercial roles.
      */
-    public function index(Request $request): Response
+    public function index(IndexPriceListRequest $request): Response
     {
-        $user = $request->user();
-
         return Inertia::render('Prices/Index', $this->priceListService->buildList(
-            $user,
-            $request->input('search'),
+            $request->user(),
+            $request,
         ));
     }
 }

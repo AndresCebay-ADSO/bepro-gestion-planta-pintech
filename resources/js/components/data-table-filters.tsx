@@ -71,9 +71,7 @@ export function DataTableFilters({
         const defaultValue = defaultFilters?.[field.name] ?? '';
         const rawValue = filters[field.name] ?? '';
         const normalizedValue =
-            field.type === 'select' && rawValue === '__all__'
-                ? ''
-                : rawValue;
+            field.type === 'select' && rawValue === '__all__' ? '' : rawValue;
 
         return normalizedValue !== defaultValue;
     });

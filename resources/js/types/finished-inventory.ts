@@ -87,9 +87,17 @@ export type FinishedMovementsPage = {
     };
     batches?: FinishedBatchOption[];
     warehouses?: FinishedWarehouseOption[];
+    warehouseOptions: { value: string; label: string }[];
+    typeOptions: { value: string; label: string }[];
+    reasonOptions: { value: string; label: string }[];
     currentWarehouseId?: number | null;
     filters: {
         search?: string;
+        type?: string;
+        reason?: string;
+        warehouse_id?: string | number;
+        date_from?: string;
+        date_to?: string;
     };
     can: {
         create: boolean;

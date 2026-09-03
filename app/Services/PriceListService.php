@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Filters\PriceListFilter;
+use App\Http\Requests\Pricing\IndexPriceListRequest;
 use App\Models\Product;
 use App\Models\User;
 
@@ -17,11 +19,11 @@ class PriceListService
     /**
      * @return array<string, mixed>
      */
-    public function buildList(User $user, ?string $search): array
+    public function buildList(User $user, IndexPriceListRequest $request): array
     {
         $isAdmin = $user?->hasRole('admin') ?? false;
 
-        $products = Product::query()
+        $baseQuery = Product::query()
             ->select([
                 'id',
                 'code',
@@ -31,16 +33,6 @@ class PriceListService
                 'current_price',
                 'sales_margin',
             ])
-            ->when($search, function ($query) use ($search): void {
-                $query->where(function ($q) use ($search): void {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('code', 'like', "%{$search}%")
-                        ->orWhereHas('variants', function ($vq) use ($search): void {
-                            $vq->where('name', 'like', "%{$search}%")
-                                ->orWhere('code', 'like', "%{$search}%");
-                        });
-                });
-            })
             ->active()
             ->with([
                 'variants' => function ($query): void {
@@ -56,7 +48,10 @@ class PriceListService
                         ->where('is_active', true)
                         ->orderBy('presentation_value', 'asc');
                 },
-            ])
+            ]);
+
+        $products = (new PriceListFilter($request))
+            ->apply($baseQuery)
             ->orderBy('name')
             ->paginate(15)
             ->onEachSide(1)
@@ -125,9 +120,7 @@ class PriceListService
                 'view_costs' => $isAdmin,
                 'view_prices' => true,
             ],
-            'filters' => [
-                'search' => $search,
-            ],
+            'filters' => $request->validated(),
         ];
     }
 }

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\InventoryMovementType;
+use App\Filters\InventoryMovementFilter;
+use App\Http\Requests\Inventory\IndexInventoryMovementRequest;
 use App\Http\Requests\Inventory\StoreInventoryMovementRequest;
 use App\Http\Requests\Inventory\UpdateInventoryMovementRequest;
 use App\Models\InventoryBatch;
@@ -12,8 +15,8 @@ use App\Models\RawMaterial;
 use App\Models\Warehouse;
 use App\Services\InventoryService;
 use App\Services\WarehouseContextService;
+use App\Support\EnumOptions;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,11 +28,8 @@ class InventoryMovementController extends Controller
         private readonly WarehouseContextService $warehouseContextService
     ) {}
 
-    public function index(Request $request): Response
+    public function index(IndexInventoryMovementRequest $request): Response
     {
-        $this->authorize('viewAny', InventoryMovement::class);
-
-        $search = strtolower((string) $request->input('search'));
         $user = $request->user();
         $currentWarehouse = $user !== null
             ? $this->warehouseContextService->resolveCurrentWarehouse(
@@ -40,19 +40,16 @@ class InventoryMovementController extends Controller
 
         $movementWarehouse = $this->warehouseContextService->resolveMovementWarehouse($currentWarehouse);
 
-        $movements = InventoryMovement::query()
-            ->with([
-                'rawMaterial:id,code',
-                'batch:id,lot_number,raw_material_id',
-                'warehouse:id,name,city',
-                'productionOrder:id,order_number',
-                'createdBy:id,name',
-            ])
-            ->when($search, function ($query, $search) {
-                $query->whereHas('rawMaterial', function ($q) use ($search) {
-                    $q->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"]);
-                });
-            })
+        $movements = (new InventoryMovementFilter($request))
+            ->apply(
+                InventoryMovement::query()->with([
+                    'rawMaterial:id,code',
+                    'batch:id,lot_number,raw_material_id',
+                    'warehouse:id,name,city',
+                    'productionOrder:id,order_number',
+                    'createdBy:id,name',
+                ])
+            )
             ->latest('movement_date')
             ->latest('id')
             ->paginate(20)
@@ -73,10 +70,15 @@ class InventoryMovementController extends Controller
                 ->orderByDesc('id')
                 ->get()),
             'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->get()),
+            'warehouseOptions' => Warehouse::query()
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Warehouse $w) => ['value' => (string) $w->id, 'label' => $w->name])
+                ->all(),
             'currentWarehouseId' => $movementWarehouse?->id,
-            'filters' => [
-                'search' => $search,
-            ],
+            'filters' => $request->validated(),
+            'typeOptions' => EnumOptions::for(InventoryMovementType::cases()),
             'can' => [
                 'create' => Gate::allows('create', InventoryMovement::class),
             ],

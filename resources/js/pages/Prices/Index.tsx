@@ -1,11 +1,10 @@
-import { Head, router } from '@inertiajs/react';
-import { Search } from 'lucide-react';
-import { useState } from 'react';
+import { Head } from '@inertiajs/react';
+import type { ComponentProps } from 'react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { useFilters } from '@/hooks/use-filters';
 import { index as pricesIndex } from '@/routes/prices';
 import type { PaginationLink } from '@/types/ui';
 
@@ -51,21 +50,26 @@ export default function PricesIndex({
     can,
     filters,
 }: Props) {
-    const [search, setSearch] = useState(filters.search ?? '');
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: pricesIndex().url,
+        initialFilters: {
+            search: filters.search ?? '',
+        },
+    });
 
-    const handleSearch = () => {
-        const query: Record<string, string> = {};
-
-        if (search) {
-            query.search = search;
-        }
-
-        router.get(pricesIndex().url, query, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
+        {
+            type: 'text',
+            name: 'search',
+            label: 'Buscar',
+            placeholder: 'Buscar producto o presentación...',
+        },
+    ];
 
     return (
         <>
@@ -84,26 +88,13 @@ export default function PricesIndex({
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="relative w-full max-w-sm">
-                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            placeholder="Buscar producto o presentación..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    handleSearch();
-                                }
-                            }}
-                            className="pl-10"
-                        />
-                    </div>
-                    <Button variant="outline" onClick={handleSearch}>
-                        <Search className="mr-2 h-4 w-4" />
-                        Buscar
-                    </Button>
-                </div>
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
+                    onClear={clearFilters}
+                />
 
                 <div className="space-y-6">
                     {productsData.data.length === 0 ? (

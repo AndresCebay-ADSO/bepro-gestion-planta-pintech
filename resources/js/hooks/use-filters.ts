@@ -41,10 +41,16 @@ export function useFilters({
     debounceMs = 300,
 }: UseFiltersOptions) {
     const [filters, setFiltersState] = useState<Filters>(initialFilters);
+    const filtersRef = useRef<Filters>(initialFilters);
     const isFirstRender = useRef(true);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const lastNavigated = useRef<string>('');
-    const immediateRef = useRef<Filters | null>(null);
+    const lastNavigated = useRef<string>(
+        JSON.stringify(cleanFilters(initialFilters)),
+    );
+
+    useEffect(() => {
+        filtersRef.current = filters;
+    }, [filters]);
 
     const navigate = useCallback(
         (nextFilters: Filters) => {
@@ -66,16 +72,16 @@ export function useFilters({
     );
 
     useEffect(() => {
-        if (immediateRef.current) {
-            navigate(immediateRef.current);
-            immediateRef.current = null;
-        }
-    });
-
-    useEffect(() => {
         if (isFirstRender.current) {
             isFirstRender.current = false;
 
+            return;
+        }
+
+        const clean = cleanFilters(filters);
+        const key = JSON.stringify(clean);
+
+        if (lastNavigated.current === key) {
             return;
         }
 
@@ -90,54 +96,62 @@ export function useFilters({
         };
     }, [filters, debounceMs, navigate]);
 
-    const setFilter = (
-        keyOrUpdates: string | Record<string, FilterValue>,
-        value?: FilterValue,
-    ) => {
-        setFiltersState((prev) => {
+    const setFilter = useCallback(
+        (
+            keyOrUpdates: string | Record<string, FilterValue>,
+            value?: FilterValue,
+        ) => {
             const updates =
                 typeof keyOrUpdates === 'string'
                     ? { [keyOrUpdates]: value }
                     : keyOrUpdates;
 
-            return { ...prev, ...updates };
-        });
-    };
+            const next = { ...filtersRef.current, ...updates };
+            filtersRef.current = next;
+            setFiltersState(next);
+        },
+        [],
+    );
 
-    const setFilterImmediate = (
-        keyOrUpdates: string | Record<string, FilterValue>,
-        value?: FilterValue,
-    ) => {
-        if (timerRef.current) {
-            clearTimeout(timerRef.current);
-        }
+    const setFilterImmediate = useCallback(
+        (
+            keyOrUpdates: string | Record<string, FilterValue>,
+            value?: FilterValue,
+        ) => {
+            if (timerRef.current) {
+                clearTimeout(timerRef.current);
+                timerRef.current = null;
+            }
 
-        setFiltersState((prev) => {
             const updates =
                 typeof keyOrUpdates === 'string'
                     ? { [keyOrUpdates]: value }
                     : keyOrUpdates;
-            const next = { ...prev, ...updates };
-            immediateRef.current = next;
 
-            return next;
-        });
-    };
+            const next = { ...filtersRef.current, ...updates };
+            filtersRef.current = next;
+            setFiltersState(next);
+            navigate(next);
+        },
+        [navigate],
+    );
 
-    const clearFilters = () => {
+    const clearFilters = useCallback(() => {
         if (timerRef.current) {
             clearTimeout(timerRef.current);
+            timerRef.current = null;
         }
 
-        setFiltersState((prev) => {
-            const defaults =
-                defaultFilters ??
-                Object.fromEntries(Object.keys(prev).map((k) => [k, '']));
-            immediateRef.current = defaults;
+        const defaults =
+            defaultFilters ??
+            Object.fromEntries(
+                Object.keys(filtersRef.current).map((k) => [k, '']),
+            );
 
-            return defaults;
-        });
-    };
+        filtersRef.current = defaults;
+        setFiltersState(defaults);
+        navigate(defaults);
+    }, [defaultFilters, navigate]);
 
     return {
         filters,
