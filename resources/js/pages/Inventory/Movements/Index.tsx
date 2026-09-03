@@ -1,14 +1,14 @@
-import { Head, useForm, router, usePage } from '@inertiajs/react';
-import { Search, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { FormEvent } from 'react';
+import type { ComponentProps } from 'react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { EntryMovementForm } from '@/components/inventory/entry-movement-form';
 import { ExitMovementForm } from '@/components/inventory/exit-movement-form';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
 import {
     Sheet,
@@ -18,6 +18,7 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFilters } from '@/hooks/use-filters';
 
 import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
 import type { PaginationLink } from '@/types/ui';
@@ -49,10 +50,16 @@ type Props = {
     rawMaterials?: Option[];
     batches?: Option[];
     warehouses?: Option[];
+    warehouseOptions: { value: string; label: string }[];
+    typeOptions: { value: string; label: string }[];
     can: { create: boolean };
     currentWarehouseId?: number | null;
     filters: {
         search?: string;
+        type?: string;
+        warehouse_id?: string | number;
+        date_from?: string;
+        date_to?: string;
     };
 };
 
@@ -61,13 +68,56 @@ export default function InventoryMovementsIndex({
     rawMaterials,
     batches,
     warehouses,
+    warehouseOptions,
+    typeOptions,
     can,
     currentWarehouseId,
     filters,
 }: Props) {
-    const { data, setData, get } = useForm({
-        search: filters.search ?? '',
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: inventoryMovementsIndex().url,
+        initialFilters: {
+            search: filters.search ?? '',
+            type: filters.type ?? '',
+            warehouse_id: filters.warehouse_id
+                ? String(filters.warehouse_id)
+                : '',
+            date_from: filters.date_from ?? '',
+            date_to: filters.date_to ?? '',
+        },
     });
+
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
+        {
+            type: 'text',
+            name: 'search',
+            label: 'Buscar',
+            placeholder: 'Buscar por materia prima o lote...',
+        },
+        {
+            type: 'select',
+            name: 'type',
+            label: 'Tipo',
+            options: typeOptions,
+        },
+        {
+            type: 'select',
+            name: 'warehouse_id',
+            label: 'Bodega',
+            options: warehouseOptions,
+        },
+        {
+            type: 'date-range',
+            nameFrom: 'date_from',
+            nameTo: 'date_to',
+            label: 'Fecha',
+        },
+    ];
 
     const [drawerState, setDrawerState] = useState<{
         isOpen: boolean;
@@ -120,16 +170,6 @@ export default function InventoryMovementsIndex({
         }
     }, [can.create, openDrawer]);
 
-    const handleSearch = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-
-        get(inventoryMovementsIndex().url, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
-
     const onSuccessForm = () => {
         setDrawerState((prev) => ({ ...prev, isOpen: false }));
         router.reload({ only: ['movements'] });
@@ -168,20 +208,13 @@ export default function InventoryMovementsIndex({
                     )}
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <form
-                        onSubmit={handleSearch}
-                        className="relative w-full max-w-sm"
-                    >
-                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            placeholder="Buscar por código de insumo..."
-                            value={data.search}
-                            onChange={(e) => setData('search', e.target.value)}
-                            className="pl-10"
-                        />
-                    </form>
-                </div>
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
+                    onClear={clearFilters}
+                />
 
                 {flash?.success && (
                     <div className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300">
