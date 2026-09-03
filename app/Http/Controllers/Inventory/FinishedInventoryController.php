@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
-use App\Models\FinishedInventory;
+use App\Http\Requests\Inventory\IndexFinishedInventoryRequest;
 use App\Services\FinishedInventoryQueryService;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,17 +16,11 @@ class FinishedInventoryController extends Controller
         private readonly FinishedInventoryQueryService $finishedInventoryQueryService,
     ) {}
 
-    public function index(Request $request): Response
+    public function index(IndexFinishedInventoryRequest $request): Response
     {
-        $this->authorize('viewAny', FinishedInventory::class);
-
-        $user = $request->user();
-
         return Inertia::render('Inventory/FinishedInventory/Index', $this->finishedInventoryQueryService->buildIndexData(
-            $user,
-            $request->input('search'),
-            $request->integer('warehouse_id') ?: null,
-            $request->integer('product_id') ?: null,
+            $request->user(),
+            $request,
         ));
     }
 }

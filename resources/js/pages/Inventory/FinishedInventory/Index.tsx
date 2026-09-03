@@ -1,11 +1,12 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Package, Search } from 'lucide-react';
-import type { FormEvent } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { Package } from 'lucide-react';
+import type { ComponentProps } from 'react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { useFilters } from '@/hooks/use-filters';
 import { withReturnTo } from '@/lib/navigation';
 import { index as finishedInventoryIndex } from '@/routes/finished-inventory';
 import { show as productsShow } from '@/routes/products';
@@ -35,22 +36,16 @@ type InventoryRow = {
     } | null;
 };
 
-type WarehouseOption = {
-    id: number;
-    name: string;
-    city: string;
-};
-
 type Props = {
     inventory: {
         data: InventoryRow[];
         links: PaginationLink[];
     };
-    warehouses: WarehouseOption[];
+    warehouseOptions: { value: string; label: string }[];
     filters: {
         search?: string;
-        warehouse_id?: number | null;
-        product_id?: number | null;
+        warehouse_id?: number | string | null;
+        product_id?: number | string | null;
         product_name?: string | null;
     };
 };
@@ -61,38 +56,42 @@ function warehouseTypeLabel(type: 'factory' | 'storage'): string {
 
 export default function FinishedInventoryIndex({
     inventory,
-    warehouses,
+    warehouseOptions,
     filters,
 }: Props) {
-    const { data, setData, get } = useForm({
-        search: filters.search ?? '',
-        warehouse_id: filters.warehouse_id ? String(filters.warehouse_id) : '',
-        product_id: filters.product_id ? String(filters.product_id) : '',
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: finishedInventoryIndex().url,
+        initialFilters: {
+            search: filters.search ?? '',
+            warehouse_id: filters.warehouse_id
+                ? String(filters.warehouse_id)
+                : '',
+            product_id: filters.product_id ? String(filters.product_id) : '',
+        },
     });
 
-    const handleSearch = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-
-        get(finishedInventoryIndex().url, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
+        {
+            type: 'text',
+            name: 'search',
+            label: 'Buscar',
+            placeholder: 'Buscar producto, variante o bodega...',
+        },
+        {
+            type: 'select',
+            name: 'warehouse_id',
+            label: 'Bodega',
+            options: warehouseOptions,
+        },
+    ];
 
     const clearProductFilter = () => {
-        router.get(
-            finishedInventoryIndex().url,
-            {
-                search: data.search,
-                warehouse_id: data.warehouse_id,
-            },
-            {
-                preserveState: true,
-                replace: true,
-            },
-        );
-        setData('product_id', '');
+        setFilterImmediate('product_id', '');
     };
 
     return (
@@ -113,11 +112,12 @@ export default function FinishedInventoryIndex({
                     </div>
                 </div>
 
-                {data.product_id ? (
+                {filterState.product_id ? (
                     <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2 text-sm">
                         <span className="text-muted-foreground">
                             Filtrado por producto:{' '}
-                            {filters.product_name ?? `#${data.product_id}`}
+                            {filters.product_name ??
+                                `#${filterState.product_id}`}
                         </span>
                         <Button
                             type="button"
@@ -130,47 +130,13 @@ export default function FinishedInventoryIndex({
                     </div>
                 ) : null}
 
-                <form
-                    onSubmit={handleSearch}
-                    className="flex flex-wrap items-end gap-3"
-                >
-                    <div className="relative max-w-md min-w-[240px] flex-1">
-                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            placeholder="Buscar producto, variante o bodega..."
-                            value={data.search}
-                            onChange={(e) => setData('search', e.target.value)}
-                            className="pl-10"
-                        />
-                    </div>
-                    <div className="w-full max-w-xs">
-                        <label
-                            htmlFor="warehouse_id"
-                            className="mb-1 block text-xs font-medium text-muted-foreground"
-                        >
-                            Bodega
-                        </label>
-                        <select
-                            id="warehouse_id"
-                            value={data.warehouse_id}
-                            onChange={(e) =>
-                                setData('warehouse_id', e.target.value)
-                            }
-                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs"
-                        >
-                            <option value="">Todas las bodegas</option>
-                            {warehouses.map((warehouse) => (
-                                <option key={warehouse.id} value={warehouse.id}>
-                                    {warehouse.name} ({warehouse.city})
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <Button type="submit" variant="outline">
-                        <Search className="mr-2 h-4 w-4" />
-                        Buscar
-                    </Button>
-                </form>
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
+                    onClear={clearFilters}
+                />
 
                 <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
                     <table className="w-full text-sm">

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Filters\FinishedInventoryFilter;
+use App\Http\Requests\Inventory\IndexFinishedInventoryRequest;
 use App\Models\FinishedInventory;
 use App\Models\Product;
 use App\Models\User;
@@ -65,11 +67,9 @@ class FinishedInventoryQueryService
     /**
      * @return array<string, mixed>
      */
-    public function buildIndexData(User $user, ?string $search, ?int $warehouseId, ?int $productId): array
+    public function buildIndexData(User $user, IndexFinishedInventoryRequest $request): array
     {
-        $search = $search !== null ? strtolower(trim($search)) : '';
-
-        $query = $this->scopedQuery($user)
+        $baseQuery = $this->scopedQuery($user)
             ->where('quantity', '>', 0)
             ->with([
                 'product:id,code,name,category_id',
@@ -79,32 +79,7 @@ class FinishedInventoryQueryService
             ])
             ->latest('id');
 
-        if ($warehouseId !== null) {
-            $query->where('warehouse_id', $warehouseId);
-        }
-
-        if ($productId !== null) {
-            $query->where('product_id', $productId);
-        }
-
-        if ($search !== '') {
-            $query->where(function ($searchQuery) use ($search): void {
-                $searchQuery
-                    ->whereHas('product', function ($productQuery) use ($search): void {
-                        $productQuery
-                            ->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"])
-                            ->orWhereRaw('LOWER(name) LIKE ?', ["%{$search}%"]);
-                    })
-                    ->orWhereHas('productVariant', function ($variantQuery) use ($search): void {
-                        $variantQuery
-                            ->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"])
-                            ->orWhereRaw('LOWER(name) LIKE ?', ["%{$search}%"]);
-                    })
-                    ->orWhereHas('warehouse', function ($warehouseQuery) use ($search): void {
-                        $warehouseQuery->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"]);
-                    });
-            });
-        }
+        $query = (new FinishedInventoryFilter($request))->apply($baseQuery);
 
         $inventory = $query
             ->paginate(20)
@@ -145,15 +120,19 @@ class FinishedInventoryQueryService
             ])
             ->values();
 
+        $warehouseOptions = $warehouses->map(fn ($w) => [
+            'value' => (string) $w['id'],
+            'label' => $w['name'],
+        ])->all();
+
+        $productId = $request->validated('product_id');
+
         return [
             'inventory' => $inventory,
-            'warehouses' => $warehouses,
-            'filters' => [
-                'search' => $search,
-                'warehouse_id' => $warehouseId,
-                'product_id' => $productId,
+            'warehouseOptions' => $warehouseOptions,
+            'filters' => array_merge($request->validated(), [
                 'product_name' => $productId !== null ? Product::query()->whereKey($productId)->value('name') : null,
-            ],
+            ]),
         ];
     }
 
