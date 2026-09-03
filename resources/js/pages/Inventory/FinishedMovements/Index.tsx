@@ -1,14 +1,14 @@
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowDownToLine,
     ArrowLeftRight,
     ArrowUpFromLine,
     Eye,
-    Search,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { ComponentProps } from 'react';
 
+import { DataTableFilters } from '@/components/data-table-filters';
 import { FinishedEntryMovementForm } from '@/components/finished-inventory/finished-entry-movement-form';
 import { FinishedExitMovementForm } from '@/components/finished-inventory/finished-exit-movement-form';
 import {
@@ -19,7 +19,6 @@ import { FinishedTransferMovementForm } from '@/components/finished-inventory/fi
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
 import {
     Sheet,
@@ -29,6 +28,7 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFilters } from '@/hooks/use-filters';
 import {
     index as finishedMovementsIndex,
     show as showFinishedMovement,
@@ -76,13 +76,65 @@ export default function FinishedMovementsIndex({
     movements,
     batches,
     warehouses,
+    warehouseOptions,
+    typeOptions,
+    reasonOptions,
     can,
     currentWarehouseId,
     filters,
 }: FinishedMovementsPage) {
-    const searchForm = useForm({
-        search: filters.search ?? '',
+    const {
+        filters: filterState,
+        setFilter,
+        setFilterImmediate,
+        clearFilters,
+    } = useFilters({
+        routeUrl: finishedMovementsIndex.url(),
+        initialFilters: {
+            search: filters.search ?? '',
+            type: filters.type ?? '',
+            reason: filters.reason ?? '',
+            warehouse_id: filters.warehouse_id
+                ? String(filters.warehouse_id)
+                : '',
+            date_from: filters.date_from ?? '',
+            date_to: filters.date_to ?? '',
+        },
     });
+
+    const filterFields: ComponentProps<typeof DataTableFilters>['fields'] = [
+        {
+            type: 'text',
+            name: 'search',
+            label: 'Buscar',
+            placeholder: 'Buscar por producto o presentación...',
+        },
+        {
+            type: 'select',
+            name: 'type',
+            label: 'Tipo',
+            options: typeOptions,
+        },
+        {
+            type: 'select',
+            name: 'reason',
+            label: 'Motivo',
+            options: reasonOptions,
+        },
+        {
+            type: 'select',
+            name: 'warehouse_id',
+            label: 'Bodega',
+            options: warehouseOptions,
+        },
+        {
+            type: 'date-range',
+            nameFrom: 'date_from',
+            nameTo: 'date_to',
+            label: 'Fecha',
+        },
+    ];
+
     const [drawerState, setDrawerState] = useState<{
         isOpen: boolean;
         mode: DrawerMode;
@@ -131,16 +183,6 @@ export default function FinishedMovementsIndex({
             setTimeout(() => openDrawer(openParam), 0);
         }
     }, [can.create, openDrawer]);
-
-    const handleSearch = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-
-        searchForm.get(finishedMovementsIndex.url(), {
-            preserveScroll: true,
-            preserveState: true,
-            replace: true,
-        });
-    };
 
     const closeDrawerAfterSuccess = () => {
         setDrawerState((state) => ({ ...state, isOpen: false }));
@@ -197,20 +239,13 @@ export default function FinishedMovementsIndex({
                     )}
                 </div>
 
-                <form
-                    onSubmit={handleSearch}
-                    className="relative w-full max-w-md"
-                >
-                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        placeholder="Buscar por producto o presentación..."
-                        value={searchForm.data.search}
-                        onChange={(event) =>
-                            searchForm.setData('search', event.target.value)
-                        }
-                        className="pl-10"
-                    />
-                </form>
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
+                    onClear={clearFilters}
+                />
 
                 {flash?.success && (
                     <div className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300">

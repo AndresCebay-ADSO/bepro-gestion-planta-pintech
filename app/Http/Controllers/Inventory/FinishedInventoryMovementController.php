@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Inventory;
 
 use App\Enums\FinishedInventoryMovementReason;
+use App\Enums\InventoryMovementType;
+use App\Filters\FinishedInventoryMovementFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\FinishedInventory\StoreFinishedInventoryMovementRequest;
+use App\Http\Requests\Inventory\IndexFinishedInventoryMovementRequest;
 use App\Models\FinishedInventoryMovement;
 use App\Models\FinishedProductBatch;
 use App\Models\Warehouse;
 use App\Services\FinishedInventory\FinishedInventoryMovementService;
 use App\Services\WarehouseContextService;
+use App\Support\EnumOptions;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,11 +28,8 @@ class FinishedInventoryMovementController extends Controller
         private readonly WarehouseContextService $warehouseContextService,
     ) {}
 
-    public function index(Request $request): Response
+    public function index(IndexFinishedInventoryMovementRequest $request): Response
     {
-        $this->authorize('viewAny', FinishedInventoryMovement::class);
-
-        $search = strtolower((string) $request->input('search'));
         $user = $request->user();
         $currentWarehouse = $user !== null
             ? $this->warehouseContextService->resolveCurrentWarehouse(
@@ -40,27 +40,17 @@ class FinishedInventoryMovementController extends Controller
 
         $movementWarehouse = $this->warehouseContextService->resolveMovementWarehouse($currentWarehouse);
 
-        $movements = FinishedInventoryMovement::query()
-            ->with([
-                'product:id,code,name',
-                'productVariant:id,code,name,presentation_label',
-                'batch:id,product_id,entry_date',
-                'warehouse:id,name,city',
-                'productionOrder:id,order_number',
-                'createdBy:id,name',
-            ])
-            ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search): void {
-                    $q->whereHas('product', function ($pq) use ($search): void {
-                        $pq->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"])
-                            ->orWhereRaw('LOWER(name) LIKE ?', ["%{$search}%"]);
-                    })
-                        ->orWhereHas('productVariant', function ($vq) use ($search): void {
-                            $vq->whereRaw('LOWER(code) LIKE ?', ["%{$search}%"])
-                                ->orWhereRaw('LOWER(name) LIKE ?', ["%{$search}%"]);
-                        });
-                });
-            })
+        $movements = (new FinishedInventoryMovementFilter($request))
+            ->apply(
+                FinishedInventoryMovement::query()->with([
+                    'product:id,code,name',
+                    'productVariant:id,code,name,presentation_label',
+                    'batch:id,product_id,entry_date',
+                    'warehouse:id,name,city',
+                    'productionOrder:id,order_number',
+                    'createdBy:id,name',
+                ])
+            )
             ->latest('movement_date')
             ->latest('id')
             ->paginate(20)
@@ -87,10 +77,16 @@ class FinishedInventoryMovementController extends Controller
                     'stocks' => $batch->stocks->map(fn ($stock) => ['warehouse_id' => $stock->warehouse_id, 'quantity' => $stock->quantity]),
                 ])),
             'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->get()),
+            'warehouseOptions' => Warehouse::query()
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Warehouse $w) => ['value' => (string) $w->id, 'label' => $w->name])
+                ->all(),
             'currentWarehouseId' => $movementWarehouse?->id,
-            'filters' => [
-                'search' => $search,
-            ],
+            'filters' => $request->validated(),
+            'typeOptions' => EnumOptions::for(InventoryMovementType::cases()),
+            'reasonOptions' => EnumOptions::for(FinishedInventoryMovementReason::cases()),
             'can' => [
                 'create' => Gate::allows('create', FinishedInventoryMovement::class),
             ],
