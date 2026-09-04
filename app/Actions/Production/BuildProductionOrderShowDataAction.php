@@ -114,7 +114,7 @@ class BuildProductionOrderShowDataAction
             'yield_variance_quantity' => $productionOrder->yield_variance_quantity !== null ? (float) $productionOrder->yield_variance_quantity : null,
             'yield_percentage' => $productionOrder->yield_percentage !== null ? (float) $productionOrder->yield_percentage : null,
             'planned_date' => optional($productionOrder->planned_date)->toDateString(),
-            'completion_date' => optional($productionOrder->completion_date)->toISOString(),
+            'completion_date' => optional($productionOrder->completion_date)->toDateString(),
             'viscosity_ku' => $productionOrder->viscosity_ku !== null ? (float) $productionOrder->viscosity_ku : null,
             'grinding_hg' => $productionOrder->grinding_hg !== null ? (float) $productionOrder->grinding_hg : null,
             'quality_solids' => $productionOrder->quality_solids !== null ? (float) $productionOrder->quality_solids : null,

@@ -40,7 +40,7 @@
                 DE PRODUCCIÓN N°</th>
             <td colspan="4" style="border: 1px solid #000000;">{{ $order['order_number'] }}</td>
             <th colspan="2" style="font-weight: bold; border: 1px solid #000000; background-color: #ffffff;">Lote:</th>
-            <td colspan="6" style="border: 1px solid #000000;">{{ $order['planned_date'] }}</td>
+            <td colspan="6" style="border: 1px solid #000000;">{{ $order['lot_number'] ?? $order['order_number'] }}</td>
         </tr>
         <tr>
             <th colspan="3"
@@ -48,7 +48,7 @@
                 NOMBRE DEL PRODUCTO</th>
             <td colspan="8" style="border: 1px solid #000000;">{{ $order['product']['name'] ?? 'N/A' }}</td>
             <th colspan="2" style="font-weight: bold; border: 1px solid #000000; background-color: #ffffff;">FECHA</th>
-            <td colspan="2" style="border: 1px solid #000000; text-align: center;">{{ date('d/m/Y') }}</td>
+            <td colspan="2" style="border: 1px solid #000000; text-align: center;">{{ !empty($order['planned_date']) ? \Carbon\Carbon::parse($order['planned_date'])->format('d/m/Y') : '—' }}</td>
         </tr>
         <tr>
             <th colspan="3"
@@ -71,7 +71,7 @@
                 style="font-weight: bold; border: 1px solid #000000; background-color: #ffffff; text-align: left;">
                 CANTIDAD RESULTADO</th>
             <td colspan="4" style="border: 1px solid #000000; text-align: center;">
-                {{ $order['yield_real_quantity'] ? number_format($order['yield_real_quantity'], 2) . ' kg' : '---' }}
+                {{ !empty($order['yield_real_quantity']) ? number_format($order['yield_real_quantity'], 2) . ' kg' : '---' }}
             </td>
             <th colspan="2" style="font-weight: bold; border: 1px solid #000000; background-color: #ffffff;">RESPONSABLE
             </th>
@@ -93,21 +93,21 @@
             <th colspan="3"
                 style="font-weight: bold; border: 1px solid #000000; background-color: #daeef3; text-align: left;">
                 INICIO AGITACIÓN</th>
-            <td colspan="4" style="border: 1px solid #000000;">{{ $order['agitation_start_time'] ? \Carbon\Carbon::parse($order['agitation_start_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
+            <td colspan="4" style="border: 1px solid #000000;">{{ !empty($order['agitation_start_time']) ? \Carbon\Carbon::parse($order['agitation_start_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
             <th colspan="3"
                 style="font-weight: bold; border: 1px solid #000000; background-color: #daeef3; text-align: left;">FIN
                 AGITACIÓN</th>
-            <td colspan="5" style="border: 1px solid #000000;">{{ $order['agitation_end_time'] ? \Carbon\Carbon::parse($order['agitation_end_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
+            <td colspan="5" style="border: 1px solid #000000;">{{ !empty($order['agitation_end_time']) ? \Carbon\Carbon::parse($order['agitation_end_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
         </tr>
         <tr>
             <th colspan="3"
                 style="font-weight: bold; border: 1px solid #000000; background-color: #daeef3; text-align: left;">
                 INICIO ENVASADO</th>
-            <td colspan="4" style="border: 1px solid #000000;">{{ $order['packaging_start_time'] ? \Carbon\Carbon::parse($order['packaging_start_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
+            <td colspan="4" style="border: 1px solid #000000;">{{ !empty($order['packaging_start_time']) ? \Carbon\Carbon::parse($order['packaging_start_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
             <th colspan="3"
                 style="font-weight: bold; border: 1px solid #000000; background-color: #daeef3; text-align: left;">FIN
                 ENVASADO</th>
-            <td colspan="5" style="border: 1px solid #000000;">{{ $order['packaging_end_time'] ? \Carbon\Carbon::parse($order['packaging_end_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
+            <td colspan="5" style="border: 1px solid #000000;">{{ !empty($order['packaging_end_time']) ? \Carbon\Carbon::parse($order['packaging_end_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
         </tr>
 
         <tr>

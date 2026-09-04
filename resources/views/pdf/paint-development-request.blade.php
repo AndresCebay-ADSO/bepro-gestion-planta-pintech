@@ -24,7 +24,7 @@
     <div class="meta">
         Número: <strong>{{ $request['request_number'] }}</strong> &nbsp;|&nbsp;
         Estado: <span class="badge badge-{{ $request['status'] }}">{{ $request['status_label'] }}</span> &nbsp;|&nbsp;
-        Fecha: {{ $request['created_at'] }}
+        Fecha: {{ $request['created_at'] ?? '—' }}
     </div>
 
     <h2>1. Identificación</h2>

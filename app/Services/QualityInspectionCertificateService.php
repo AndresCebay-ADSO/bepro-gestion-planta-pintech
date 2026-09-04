@@ -16,6 +16,10 @@ use Illuminate\Support\Str;
 
 class QualityInspectionCertificateService
 {
+    public function __construct(
+        private readonly TimezoneService $timezoneService,
+    ) {}
+
     public function generateForCompletedOrder(ProductionOrder $order, int $userId): QrDocument
     {
         $order->loadMissing(['product', 'qrCode.documents', 'qualityResponsibleUser']);
@@ -65,8 +69,8 @@ class QualityInspectionCertificateService
             'certificate_number' => "CC-{$lot}",
             'product_name' => $product->name,
             'lot' => $lot,
-            'manufacturing_date' => $order->getManufacturingDate()?->format('d/m/Y'),
-            'verification_date' => $order->getVerificationDate()?->format('d/m/Y'),
+            'manufacturing_date' => $this->timezoneService->formatPlantDate($order->getManufacturingDate()),
+            'verification_date' => $this->timezoneService->formatPlantDate($order->getVerificationDate()),
             'responsible_name' => $signer?->name ?? $order->responsible_name ?? 'N/A',
             'responsible_role' => $signer?->job_title ?? 'N/A',
             'tests' => [

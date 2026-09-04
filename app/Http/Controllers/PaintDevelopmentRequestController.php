@@ -12,6 +12,7 @@ use App\Http\Requests\PaintDevelopmentRequests\UpdatePaintDevelopmentRequest;
 use App\Http\Requests\PaintDevelopmentRequests\UpdatePaintDevelopmentRequestStatus;
 use App\Models\PaintDevelopmentRequest;
 use App\Services\PaintDevelopmentRequestService;
+use App\Services\TimezoneService;
 use App\Support\EnumOptions;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -22,6 +23,7 @@ class PaintDevelopmentRequestController extends Controller
 {
     public function __construct(
         private readonly PaintDevelopmentRequestService $service,
+        private readonly TimezoneService $timezoneService,
     ) {}
 
     public function index(IndexPaintDevelopmentRequestRequest $request): Response
@@ -47,9 +49,9 @@ class PaintDevelopmentRequestController extends Controller
                 'status' => $paintRequest->status->value,
                 'status_label' => $paintRequest->status->label(),
                 'project_name' => $paintRequest->project_name,
-                'sample_due_date' => $paintRequest->sample_due_date?->format('d/m/Y'),
+                'sample_due_date' => $paintRequest->sample_due_date?->toDateString(),
                 'city' => $paintRequest->city,
-                'created_at' => $paintRequest->created_at?->format('d/m/Y'),
+                'created_at' => $paintRequest->created_at?->toIso8601String(),
             ]);
 
         return Inertia::render('PaintDevelopmentRequests/Index', [
@@ -160,10 +162,20 @@ class PaintDevelopmentRequestController extends Controller
         $paintDevelopmentRequest->load(['creator', 'reviewer']);
         $filename = 'SDR-'.($paintDevelopmentRequest->request_number).'.pdf';
 
+        $requestData = $this->buildRequestData($paintDevelopmentRequest);
+        $pdfRequestData = [
+            ...$requestData,
+            'created_at' => $this->timezoneService->formatPlantDateTime($paintDevelopmentRequest->created_at),
+            'sample_due_date' => $paintDevelopmentRequest->sample_due_date?->format('d/m/Y'),
+            'reviewed_at' => $paintDevelopmentRequest->reviewed_at
+                ? $this->timezoneService->formatPlantDateTime($paintDevelopmentRequest->reviewed_at)
+                : null,
+        ];
+
         /** @var \Barryvdh\DomPDF\PDF $pdf */
         $pdf = Pdf::loadView('pdf.paint-development-request', [
-            'request' => $this->buildRequestData($paintDevelopmentRequest),
-            'generatedAt' => now()->format('d/m/Y H:i'),
+            'request' => $pdfRequestData,
+            'generatedAt' => $this->timezoneService->formatPlantDateTime(now()),
         ]);
 
         $pdf->setPaper('letter');
@@ -190,11 +202,11 @@ class PaintDevelopmentRequestController extends Controller
             'status' => $request->status->value,
             'status_label' => $request->status->label(),
             'review_notes' => $request->review_notes,
-            'reviewed_at' => $request->reviewed_at?->format('d/m/Y H:i'),
+            'reviewed_at' => $request->reviewed_at?->toIso8601String(),
             'reviewer' => $request->reviewer ? [
                 'name' => $request->reviewer->name,
             ] : null,
-            'created_at' => $request->created_at?->format('d/m/Y H:i'),
+            'created_at' => $request->created_at?->toIso8601String(),
             'creator' => $request->creator ? [
                 'name' => $request->creator->name,
                 'email' => $request->creator->email,
