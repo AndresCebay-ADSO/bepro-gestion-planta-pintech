@@ -80,7 +80,7 @@ class FinishedInventoryMovement extends Model
             'reason' => FinishedInventoryMovementReason::class,
             'quantity' => 'decimal:4',
             'cost_price' => 'decimal:4',
-            'movement_date' => 'date',
+            'movement_date' => 'date:Y-m-d',
         ];
     }
 

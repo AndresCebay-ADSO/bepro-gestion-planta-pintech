@@ -80,8 +80,8 @@ class SalesOrder extends Model
         return [
             'status' => SalesOrderStatus::class,
             'priority' => SalesOrderPriority::class,
-            'required_date' => 'date',
-            'estimated_delivery_date' => 'date',
+            'required_date' => 'date:Y-m-d',
+            'estimated_delivery_date' => 'date:Y-m-d',
         ];
     }
 

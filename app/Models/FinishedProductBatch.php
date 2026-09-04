@@ -63,7 +63,7 @@ class FinishedProductBatch extends Model
     {
         return [
             'initial_quantity' => 'decimal:4',
-            'entry_date' => 'date',
+            'entry_date' => 'date:Y-m-d',
         ];
     }
 

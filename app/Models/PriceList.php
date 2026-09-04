@@ -73,8 +73,8 @@ class PriceList extends Model
             'cost_at_time' => 'decimal:4',
             'profit_margin' => 'decimal:2',
             'variation_percentage' => 'decimal:4',
-            'valid_from' => 'date',
-            'valid_to' => 'date',
+            'valid_from' => 'date:Y-m-d',
+            'valid_to' => 'date:Y-m-d',
         ];
     }
 

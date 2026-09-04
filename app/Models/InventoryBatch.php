@@ -71,8 +71,8 @@ class InventoryBatch extends Model
             'initial_quantity' => 'decimal:4',
             'remaining_quantity' => 'decimal:4',
             'unit_price' => 'decimal:4',
-            'entry_date' => 'date',
-            'expiry_date' => 'date',
+            'entry_date' => 'date:Y-m-d',
+            'expiry_date' => 'date:Y-m-d',
         ];
     }
 
