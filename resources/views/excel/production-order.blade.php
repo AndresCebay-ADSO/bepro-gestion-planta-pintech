@@ -40,7 +40,7 @@
                 DE PRODUCCIÓN N°</th>
             <td colspan="4" style="border: 1px solid #000000;">{{ $order['order_number'] }}</td>
             <th colspan="2" style="font-weight: bold; border: 1px solid #000000; background-color: #ffffff;">Lote:</th>
-            <td colspan="6" style="border: 1px solid #000000;">{{ $order['lot_number'] ?? $order['order_number'] }}</td>
+            <td colspan="6" style="border: 1px solid #000000;">{{ filled($order['lot_number'] ?? null) ? $order['lot_number'] : $order['order_number'] }}</td>
         </tr>
         <tr>
             <th colspan="3"
@@ -93,21 +93,21 @@
             <th colspan="3"
                 style="font-weight: bold; border: 1px solid #000000; background-color: #daeef3; text-align: left;">
                 INICIO AGITACIÓN</th>
-            <td colspan="4" style="border: 1px solid #000000;">{{ !empty($order['agitation_start_time']) ? \Carbon\Carbon::parse($order['agitation_start_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
+            <td colspan="4" style="border: 1px solid #000000;">{{ filled($order['agitation_start_time'] ?? null) ? app(\App\Services\TimezoneService::class)->formatPlantDateTime($order['agitation_start_time'], 'H:i') : '---' }}</td>
             <th colspan="3"
                 style="font-weight: bold; border: 1px solid #000000; background-color: #daeef3; text-align: left;">FIN
                 AGITACIÓN</th>
-            <td colspan="5" style="border: 1px solid #000000;">{{ !empty($order['agitation_end_time']) ? \Carbon\Carbon::parse($order['agitation_end_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
+            <td colspan="5" style="border: 1px solid #000000;">{{ filled($order['agitation_end_time'] ?? null) ? app(\App\Services\TimezoneService::class)->formatPlantDateTime($order['agitation_end_time'], 'H:i') : '---' }}</td>
         </tr>
         <tr>
             <th colspan="3"
                 style="font-weight: bold; border: 1px solid #000000; background-color: #daeef3; text-align: left;">
                 INICIO ENVASADO</th>
-            <td colspan="4" style="border: 1px solid #000000;">{{ !empty($order['packaging_start_time']) ? \Carbon\Carbon::parse($order['packaging_start_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
+            <td colspan="4" style="border: 1px solid #000000;">{{ filled($order['packaging_start_time'] ?? null) ? app(\App\Services\TimezoneService::class)->formatPlantDateTime($order['packaging_start_time'], 'H:i') : '---' }}</td>
             <th colspan="3"
                 style="font-weight: bold; border: 1px solid #000000; background-color: #daeef3; text-align: left;">FIN
                 ENVASADO</th>
-            <td colspan="5" style="border: 1px solid #000000;">{{ !empty($order['packaging_end_time']) ? \Carbon\Carbon::parse($order['packaging_end_time'])->tz('America/Bogota')->format('H:i') : '---' }}</td>
+            <td colspan="5" style="border: 1px solid #000000;">{{ filled($order['packaging_end_time'] ?? null) ? app(\App\Services\TimezoneService::class)->formatPlantDateTime($order['packaging_end_time'], 'H:i') : '---' }}</td>
         </tr>
 
         <tr>

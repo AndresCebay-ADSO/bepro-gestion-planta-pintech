@@ -38,12 +38,14 @@ test('BuildProductionOrderShowDataAction serializa fechas de negocio como Y-m-d 
     expect($data['planned_date'])->toBe('2026-09-10');
     expect($data['completion_date'])->toBe('2026-09-15');
 
-    // Timestamps deben ser cadenas ISO-8601 con 'T' y 'Z'
-    expect($data['submitted_at'])->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/');
-    expect($data['agitation_start_time'])->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/');
+    // Timestamps deben ser cadenas ISO-8601 con 'T' y designador de zona ('Z' o offset ±HH:MM)
+    $isoTimestampRegex = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/';
+    expect($data['submitted_at'])->toMatch($isoTimestampRegex);
+    expect($data['agitation_start_time'])->toMatch($isoTimestampRegex);
 });
 
 test('SalesOrders index serializa created_at en ISO 8601 y required_date en Y-m-d', function () {
+    $isoTimestampRegex = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/';
     $user = User::factory()->create();
     $user->assignRole('comercial');
 
@@ -63,13 +65,14 @@ test('SalesOrders index serializa created_at en ISO 8601 y required_date en Y-m-
             ->component('SalesOrders/Index')
             ->has('orders.data.0', fn (Assert $item) => $item
                 ->where('required_date', '2026-09-20')
-                ->where('created_at', fn ($val) => (bool) preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', (string) $val))
+                ->where('created_at', fn ($val) => (bool) preg_match($isoTimestampRegex, (string) $val))
                 ->etc()
             )
         );
 });
 
 test('Quotations index serializa quotation_date en Y-m-d y created_at en ISO 8601', function () {
+    $isoTimestampRegex = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/';
     $user = User::factory()->create();
     $user->assignRole('comercial');
 
@@ -89,7 +92,7 @@ test('Quotations index serializa quotation_date en Y-m-d y created_at en ISO 860
             ->component('Quotations/Index')
             ->has('quotations.data.0', fn (Assert $item) => $item
                 ->where('quotation_date', '2026-09-25')
-                ->where('created_at', fn ($val) => (bool) preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', (string) $val))
+                ->where('created_at', fn ($val) => (bool) preg_match($isoTimestampRegex, (string) $val))
                 ->etc()
             )
         );
@@ -116,6 +119,7 @@ test('modelos con cast date:Y-m-d serializan a YYYY-MM-DD sin tiempo al llamar t
 });
 
 test('PaintDevelopmentRequest edit serializa sample_due_date en Y-m-d para input date HTML5 y timestamps en ISO 8601', function () {
+    $isoTimestampRegex = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/';
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -133,8 +137,8 @@ test('PaintDevelopmentRequest edit serializa sample_due_date en Y-m-d para input
         ->assertInertia(fn (Assert $page) => $page
             ->component('PaintDevelopmentRequests/Edit')
             ->where('request.sample_due_date', '2026-09-10')
-            ->where('request.created_at', fn ($val) => (bool) preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', (string) $val))
-            ->where('request.reviewed_at', fn ($val) => (bool) preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', (string) $val))
+            ->where('request.created_at', fn ($val) => (bool) preg_match($isoTimestampRegex, (string) $val))
+            ->where('request.reviewed_at', fn ($val) => (bool) preg_match($isoTimestampRegex, (string) $val))
         );
 });
 
@@ -210,4 +214,55 @@ test('plantilla de exportacion Excel de orden de produccion muestra numero de lo
     expect($rendered)->toContain('18/09/2026');
     // No debe mostrar la fecha del servidor en vez del lote
     expect($rendered)->not->toContain('<td colspan="6" style="border: 1px solid #000000;">2026-09-18</td>');
+});
+
+test('plantilla de exportacion Excel de orden de produccion usa order_number si lot_number esta vacio', function () {
+    $orderData = [
+        'order_number' => 'OP-2026-FALLBACK',
+        'lot_number' => '',
+        'planned_date' => '2026-09-18',
+        'product' => ['name' => 'Pintura Industrial Test'],
+        'quantity' => 500.0,
+        'packaging_plans' => [],
+        'details' => [],
+        'pdf_materials' => [
+            'batches' => [],
+            'totals' => ['total_planned_kg' => 500.0, 'total_real_kg' => 0.0],
+        ],
+    ];
+
+    $rendered = view('excel.production-order', [
+        'order' => $orderData,
+    ])->render();
+
+    expect($rendered)->toContain('OP-2026-FALLBACK');
+});
+
+test('plantilla de exportacion Excel formatea horas de proceso en la zona horaria de planta configurada', function () {
+    $orderData = [
+        'order_number' => 'OP-2026-002',
+        'lot_number' => 'LOTE-TIME',
+        'planned_date' => '2026-09-18',
+        'agitation_start_time' => '2026-09-18T17:00:00Z', // 12:00 en America/Bogota (UTC-5)
+        'agitation_end_time' => '2026-09-18T18:30:00Z', // 13:30 en America/Bogota
+        'packaging_start_time' => '2026-09-18T19:00:00Z', // 14:00 en America/Bogota
+        'packaging_end_time' => null,
+        'product' => ['name' => 'Pintura Industrial Test'],
+        'quantity' => 500.0,
+        'packaging_plans' => [],
+        'details' => [],
+        'pdf_materials' => [
+            'batches' => [],
+            'totals' => ['total_planned_kg' => 500.0, 'total_real_kg' => 0.0],
+        ],
+    ];
+
+    $rendered = view('excel.production-order', [
+        'order' => $orderData,
+    ])->render();
+
+    expect($rendered)->toContain('12:00');
+    expect($rendered)->toContain('13:30');
+    expect($rendered)->toContain('14:00');
+    expect($rendered)->toContain('---');
 });

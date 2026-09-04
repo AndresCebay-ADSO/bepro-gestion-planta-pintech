@@ -208,11 +208,11 @@
         <tr>
             <td class="label" style="width: 20%;">HORA DE INICIO DE AGITACIÓN</td>
             <td class="value" style="width: 13%;">
-                {{ $order['agitation_start_time'] ? \Carbon\Carbon::parse($order['agitation_start_time'])->tz('America/Bogota')->format('H:i') : '' }}
+                {{ filled($order['agitation_start_time'] ?? null) ? app(\App\Services\TimezoneService::class)->formatPlantDateTime($order['agitation_start_time'], 'H:i') : '' }}
             </td>
             <td class="label" style="width: 20%;">HORA FINALIZACIÓN AGITACIÓN</td>
             <td class="value" style="width: 13%;">
-                {{ $order['agitation_end_time'] ? \Carbon\Carbon::parse($order['agitation_end_time'])->tz('America/Bogota')->format('H:i') : '' }}
+                {{ filled($order['agitation_end_time'] ?? null) ? app(\App\Services\TimezoneService::class)->formatPlantDateTime($order['agitation_end_time'], 'H:i') : '' }}
             </td>
             <td class="label" style="width: 17%;">OBSERVACIONES</td>
             <td class="value" style="width: 17%;"></td>
@@ -220,11 +220,11 @@
         <tr>
             <td class="label">HORA DE INICIO DE ENVASADO</td>
             <td class="value">
-                {{ $order['packaging_start_time'] ? \Carbon\Carbon::parse($order['packaging_start_time'])->tz('America/Bogota')->format('H:i') : '' }}
+                {{ filled($order['packaging_start_time'] ?? null) ? app(\App\Services\TimezoneService::class)->formatPlantDateTime($order['packaging_start_time'], 'H:i') : '' }}
             </td>
             <td class="label">HORA FINALIZACIÓN ENVASADO</td>
             <td class="value">
-                {{ $order['packaging_end_time'] ? \Carbon\Carbon::parse($order['packaging_end_time'])->tz('America/Bogota')->format('H:i') : '' }}
+                {{ filled($order['packaging_end_time'] ?? null) ? app(\App\Services\TimezoneService::class)->formatPlantDateTime($order['packaging_end_time'], 'H:i') : '' }}
             </td>
             <td class="label">DERRAMES EN EL ENVASADO</td>
             <td class="value">
