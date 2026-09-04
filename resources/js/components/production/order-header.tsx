@@ -1,10 +1,11 @@
-import { format } from 'date-fns';
 import { CheckCircle2, FileSpreadsheet, FileText, Send } from 'lucide-react';
 
 import {
     exportExcel as productionOrderExportExcel,
     exportPdf as productionOrderExportPdf,
 } from '@/actions/App/Http/Controllers/ProductionOrderController';
+import { FormattedDate } from '@/components/formatted-date';
+
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
 import type {
@@ -68,8 +69,15 @@ export function OrderHeader({ order }: OrderHeaderProps) {
                     <p className="mt-2 flex items-center gap-1 text-sm text-blue-700 dark:text-blue-300">
                         <Send className="h-4 w-4" />
                         Enviada por {order.submitted_by.name}
-                        {order.submitted_at &&
-                            ` el ${format(new Date(order.submitted_at), 'dd/MM/yyyy HH:mm')}`}
+                        {order.submitted_at && (
+                            <>
+                                {' el '}
+                                <FormattedDate
+                                    value={order.submitted_at}
+                                    format="datetime"
+                                />
+                            </>
+                        )}
                     </p>
                 )}
                 {order.rejection_reason && (
@@ -83,10 +91,10 @@ export function OrderHeader({ order }: OrderHeaderProps) {
                     <div className="mr-4 flex items-center gap-2 font-medium text-green-600">
                         <CheckCircle2 className="h-5 w-5" />
                         Finalizada el{' '}
-                        {format(
-                            new Date(order.completion_date),
-                            'dd/MM/yyyy HH:mm',
-                        )}
+                        <FormattedDate
+                            value={order.completion_date}
+                            format="short"
+                        />
                     </div>
                 )}
                 <a

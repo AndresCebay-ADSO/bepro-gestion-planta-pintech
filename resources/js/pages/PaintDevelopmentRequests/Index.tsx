@@ -3,6 +3,7 @@ import { FlaskConical, Plus } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
+import { FormattedDate } from '@/components/formatted-date';
 import StatusBadge from '@/components/paint-development-requests/StatusBadge';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
@@ -167,7 +168,11 @@ export default function PaintDevelopmentRequestsIndex({
                                             />
                                         </td>
                                         <td className="px-4 py-3">
-                                            {req.sample_due_date ?? '—'}
+                                            <FormattedDate
+                                                value={req.sample_due_date}
+                                                format="short"
+                                                emptyValue="—"
+                                            />
                                         </td>
                                         <td className="px-4 py-3">
                                             <TableActions

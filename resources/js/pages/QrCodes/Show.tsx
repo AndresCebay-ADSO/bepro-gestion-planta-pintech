@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { FormattedDate } from '@/components/formatted-date';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -305,15 +306,11 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                         Fecha de creación
                                     </p>
                                     <p className="mt-1 text-sm text-foreground">
-                                        {qrCode.created_at
-                                            ? new Date(
-                                                  qrCode.created_at,
-                                              ).toLocaleDateString('es-CO', {
-                                                  year: 'numeric',
-                                                  month: 'long',
-                                                  day: 'numeric',
-                                              })
-                                            : '—'}
+                                        <FormattedDate
+                                            value={qrCode.created_at}
+                                            format="long"
+                                            emptyValue="—"
+                                        />
                                     </p>
                                 </div>
                             </div>
@@ -408,7 +405,11 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                                         '—'}
                                                 </td>
                                                 <td className="px-4 py-3 align-top text-muted-foreground">
-                                                    {doc.created_at ?? '—'}
+                                                    <FormattedDate
+                                                        value={doc.created_at}
+                                                        format="short"
+                                                        emptyValue="—"
+                                                    />
                                                 </td>
                                                 <td className="px-4 py-3 text-right align-top">
                                                     <Button

@@ -6,6 +6,7 @@ import {
     edit as formulasEdit,
 } from '@/actions/App/Http/Controllers/FormulaController';
 import { DetailPageHeader } from '@/components/detail-page-header';
+import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -155,7 +156,10 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                             Fecha
                         </p>
                         <p className="text-sm text-foreground">
-                            {formula.created_at}
+                            <FormattedDate
+                                value={formula.created_at}
+                                format="datetime"
+                            />
                         </p>
                     </div>
                     <div>

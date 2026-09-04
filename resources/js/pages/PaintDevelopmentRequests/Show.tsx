@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { FormattedDate } from '@/components/formatted-date';
 import StatusBadge from '@/components/paint-development-requests/StatusBadge';
 
 import { Button } from '@/components/ui/button';
@@ -238,7 +239,13 @@ export default function PaintDevelopmentRequestShow({
                         <FieldRow label="Ciudad" value={request.city} />
                         <FieldRow
                             label="Fecha muestra"
-                            value={request.sample_due_date ?? '—'}
+                            value={
+                                <FormattedDate
+                                    value={request.sample_due_date}
+                                    format="short"
+                                    emptyValue="—"
+                                />
+                            }
                         />
                         <FieldRow
                             label="Producto actual"
@@ -253,7 +260,12 @@ export default function PaintDevelopmentRequestShow({
                         />
                         <FieldRow
                             label="Fecha creación"
-                            value={request.created_at}
+                            value={
+                                <FormattedDate
+                                    value={request.created_at}
+                                    format="datetime"
+                                />
+                            }
                         />
                         {request.reviewer && (
                             <>
@@ -263,7 +275,13 @@ export default function PaintDevelopmentRequestShow({
                                 />
                                 <FieldRow
                                     label="Fecha revisión"
-                                    value={request.reviewed_at ?? '—'}
+                                    value={
+                                        <FormattedDate
+                                            value={request.reviewed_at}
+                                            format="datetime"
+                                            emptyValue="—"
+                                        />
+                                    }
                                 />
                             </>
                         )}

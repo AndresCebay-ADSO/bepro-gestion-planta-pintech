@@ -44,3 +44,17 @@ export function toUtcIsoString(localDateTimeString: string): string {
 
     return date.toISOString();
 }
+
+/**
+ * Retorna la fecha local en formato YYYY-MM-DD para inicializar inputs date
+ * evitando desfases de día por zonas horarias (ej. después de las 7:00 PM en UTC-5).
+ */
+export function getLocalDateString(date: Date = new Date()): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+
+    return `${year}-${month}-${day}`;
+}
+

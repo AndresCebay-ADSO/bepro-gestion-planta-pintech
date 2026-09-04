@@ -4,6 +4,7 @@ import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { getLocalDateString } from '@/lib/date-time-helpers';
 import { MovementFormBase } from './movement-form-base';
 
 type Option = {
@@ -55,7 +56,7 @@ export function EntryMovementForm({
         lot_number: '',
         supplier: '',
         expiry_date: '',
-        movement_date: new Date().toISOString().split('T')[0],
+        movement_date: getLocalDateString(),
         notes: '',
     });
 

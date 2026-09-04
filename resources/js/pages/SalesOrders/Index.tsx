@@ -3,6 +3,7 @@ import { Plus, ShoppingCart } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
+import { FormattedDate } from '@/components/formatted-date';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
@@ -213,11 +214,20 @@ export default function SalesOrdersIndex({
                                                 </span>
                                             </td>
                                             <td className="p-3 text-muted-foreground">
-                                                {order.required_date ?? '-'}
+                                                <FormattedDate
+                                                    value={order.required_date}
+                                                    format="short"
+                                                    emptyValue="-"
+                                                />
                                             </td>
                                             <td className="p-3 text-muted-foreground">
-                                                {order.estimated_delivery_date ??
-                                                    '-'}
+                                                <FormattedDate
+                                                    value={
+                                                        order.estimated_delivery_date
+                                                    }
+                                                    format="short"
+                                                    emptyValue="-"
+                                                />
                                             </td>
                                             <td className="p-3 text-muted-foreground">
                                                 {order.items_count} producto(s)

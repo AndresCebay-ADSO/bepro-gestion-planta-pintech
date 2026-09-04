@@ -3,6 +3,7 @@ import { QrCode } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
+import { FormattedDate } from '@/components/formatted-date';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import Pagination from '@/components/ui/pagination';
@@ -213,11 +214,11 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
                                             {row.documents_count}
                                         </td>
                                         <td className="px-4 py-3 align-top text-muted-foreground">
-                                            {row.created_at
-                                                ? new Date(
-                                                      row.created_at,
-                                                  ).toLocaleDateString('es-CO')
-                                                : '—'}
+                                            <FormattedDate
+                                                value={row.created_at}
+                                                format="short"
+                                                emptyValue="—"
+                                            />
                                         </td>
                                         <td className="px-4 py-3 text-right align-top">
                                             <TableActions
