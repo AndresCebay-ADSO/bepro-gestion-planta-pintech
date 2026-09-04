@@ -2,6 +2,7 @@ import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
+import { getLocalDateString } from '@/lib/date-time-helpers';
 import { MovementFormBase } from './movement-form-base';
 
 type Option = {
@@ -45,7 +46,7 @@ export function ExitMovementForm({
         batch_id: '',
         type: 'exit',
         quantity: '',
-        movement_date: new Date().toISOString().split('T')[0],
+        movement_date: getLocalDateString(),
         notes: '',
     });
 

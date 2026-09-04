@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import {
     AlertDialog,
@@ -40,6 +41,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { getLocalDateString } from '@/lib/date-time-helpers';
 import {
     convertToOrder as quotationsConvertToOrder,
     edit as quotationsEdit,
@@ -140,14 +142,7 @@ export default function QuotationsShow({
 
     const convertForm = useForm({
         priority: 'medium',
-        required_date: (() => {
-            const d = new Date();
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-
-            return `${year}-${month}-${day}`;
-        })(),
+        required_date: getLocalDateString(),
         notes: quotation.notes ?? '',
         shipping_address: quotation.client.shipping_address ?? '',
     });
@@ -671,7 +666,11 @@ export default function QuotationsShow({
                 )}
 
                 <div className="text-sm text-muted-foreground">
-                    Creada el {quotation.created_at}
+                    Creada el{' '}
+                    <FormattedDate
+                        value={quotation.created_at}
+                        format="datetime"
+                    />
                     {quotation.creator ? ` por ${quotation.creator.name}` : ''}
                 </div>
             </div>

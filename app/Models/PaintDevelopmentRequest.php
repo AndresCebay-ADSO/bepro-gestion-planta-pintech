@@ -94,7 +94,7 @@ class PaintDevelopmentRequest extends Model
         return [
             'request_number' => 'integer',
             'status' => PaintDevelopmentRequestStatus::class,
-            'sample_due_date' => 'date',
+            'sample_due_date' => 'date:Y-m-d',
             'context_payload' => 'array',
             'performance_payload' => 'array',
             'application_payload' => 'array',

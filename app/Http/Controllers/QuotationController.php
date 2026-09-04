@@ -19,6 +19,7 @@ use App\Models\Client;
 use App\Models\Quotation;
 use App\Models\User;
 use App\Services\QuotationService;
+use App\Services\TimezoneService;
 use App\Support\EnumOptions;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -29,7 +30,8 @@ class QuotationController extends Controller
 {
     public function __construct(
         private readonly QuotationService $quotationService,
-        private readonly BuildQuotationPdfDataAction $buildQuotationPdfData
+        private readonly BuildQuotationPdfDataAction $buildQuotationPdfData,
+        private readonly TimezoneService $timezoneService,
     ) {}
 
     public function index(IndexQuotationRequest $request): Response
@@ -58,10 +60,10 @@ class QuotationController extends Controller
                 ] : null,
                 'status' => $quotation->status->value,
                 'status_label' => $quotation->status->label(),
-                'quotation_date' => $quotation->quotation_date?->format('d/m/Y'),
+                'quotation_date' => $quotation->quotation_date?->toDateString(),
                 'total' => (float) $quotation->total,
                 'items_count' => $quotation->items_count,
-                'created_at' => $quotation->created_at?->format('d/m/Y'),
+                'created_at' => $quotation->created_at?->toIso8601String(),
             ]);
 
         return Inertia::render('Quotations/Index', [
@@ -183,7 +185,7 @@ class QuotationController extends Controller
             'quotation' => $quotationData,
             'beproLogoBase64' => $this->imageToBase64(public_path('images/firma-calidad.jpg')),
             'pintechLogoBase64' => $this->imageToBase64(public_path('images/beprologoqr.png')),
-            'generatedAt' => now()->format('d/m/Y H:i'),
+            'generatedAt' => $this->timezoneService->formatPlantDateTime(now()),
         ]);
 
         $pdf->setPaper('letter');
@@ -293,7 +295,7 @@ class QuotationController extends Controller
                 'subtotal' => (float) $item->subtotal,
                 'sort_order' => $item->sort_order,
             ]),
-            'created_at' => $quotation->created_at?->format('d/m/Y H:i'),
+            'created_at' => $quotation->created_at?->toIso8601String(),
             'creator' => $quotation->creator ? [
                 'name' => $quotation->creator->name,
                 'email' => $quotation->creator->email,

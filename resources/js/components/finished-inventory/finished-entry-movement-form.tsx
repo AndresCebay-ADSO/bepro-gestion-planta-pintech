@@ -2,6 +2,7 @@ import { useForm } from '@inertiajs/react';
 import type { SubmitEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { getLocalDateString } from '@/lib/date-time-helpers';
 import { store as storeFinishedMovement } from '@/routes/finished-inventory-movements';
 import { entryReasons } from '@/types/finished-inventory';
 import type {
@@ -31,7 +32,7 @@ export function FinishedEntryMovementForm({
         type: 'entry' as const,
         reason: 'adjustment' as FinishedMovementReason,
         quantity: '',
-        movement_date: new Date().toISOString().split('T')[0],
+        movement_date: getLocalDateString(),
         notes: '',
     });
 

@@ -3,6 +3,7 @@ import { FileText, Plus } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
+import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
@@ -191,7 +192,11 @@ export default function QuotationsIndex({
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            {quotation.quotation_date ?? '—'}
+                                            <FormattedDate
+                                                value={quotation.quotation_date}
+                                                format="short"
+                                                emptyValue="—"
+                                            />
                                         </td>
                                         <td className="px-4 py-3 text-right">
                                             <FormattedNumber

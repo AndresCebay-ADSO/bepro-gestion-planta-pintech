@@ -8,6 +8,7 @@ use App\Models\ProductDocument;
 use App\Models\QrCode;
 use App\Models\QrDocument;
 use App\Services\QrImageService;
+use App\Services\TimezoneService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -16,6 +17,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PublicQrLandingController extends Controller
 {
+    public function __construct(
+        private readonly TimezoneService $timezoneService,
+    ) {}
+
     public function show(string $token): InertiaResponse
     {
         $qrCode = QrCode::query()
@@ -35,8 +40,8 @@ class PublicQrLandingController extends Controller
             ],
             'lot' => [
                 'number' => $qrCode->productionOrder->order_number,
-                'manufacturing_date' => $qrCode->productionOrder->getManufacturingDate()?->format('d/m/Y'),
-                'verification_date' => $qrCode->productionOrder->getVerificationDate()?->format('d/m/Y'),
+                'manufacturing_date' => $this->timezoneService->formatPlantDate($qrCode->productionOrder->getManufacturingDate()),
+                'verification_date' => $this->timezoneService->formatPlantDate($qrCode->productionOrder->getVerificationDate()),
             ],
             'documents' => [
                 ...$qrCode->product->productDocuments->map(fn (ProductDocument $document) => [

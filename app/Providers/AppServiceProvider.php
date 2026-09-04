@@ -27,6 +27,7 @@ use App\Policies\RawMaterialPolicy;
 use App\Policies\WarehousePolicy;
 use App\Services\DecimalCalculator;
 use App\Services\FormulaService;
+use App\Services\TimezoneService;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -53,6 +54,12 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(FormulaService::class, function ($app) {
             return new FormulaService($app->make(DecimalCalculator::class));
+        });
+
+        $this->app->singleton(TimezoneService::class, function ($app) {
+            return new TimezoneService(
+                plantTimezone: (string) config('app.plant_timezone', 'America/Bogota')
+            );
         });
     }
 

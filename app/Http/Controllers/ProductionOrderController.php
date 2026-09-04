@@ -31,6 +31,7 @@ use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\TimezoneService;
 use App\Support\EnumOptions;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -54,6 +55,7 @@ class ProductionOrderController extends Controller
         private readonly SubmitProductionOrderForReviewAction $submitProductionOrderForReview,
         private readonly StartProductionOrderAction $startProductionOrder,
         private readonly RejectProductionOrderReviewAction $rejectProductionOrderReview,
+        private readonly TimezoneService $timezoneService,
     ) {}
 
     /**
@@ -158,7 +160,7 @@ class ProductionOrderController extends Controller
         $pdf = Pdf::loadView('pdf.production-order', [
             'order' => $orderData,
             'logoBase64' => $logoBase64,
-            'generatedAt' => now()->format('d/m/Y H:i'),
+            'generatedAt' => $this->timezoneService->formatPlantDateTime(now()),
         ]);
 
         $pdf->setPaper('letter');

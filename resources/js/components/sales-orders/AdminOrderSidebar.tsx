@@ -1,6 +1,7 @@
 import { useForm } from '@inertiajs/react';
 import { Save } from 'lucide-react';
 
+import { FormattedDate } from '@/components/formatted-date';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -195,11 +196,18 @@ export default function AdminOrderSidebar({ order, statusTransitions }: Props) {
                     <span className="text-muted-foreground">
                         Fecha creación:
                     </span>{' '}
-                    {order.created_at}
+                    <FormattedDate
+                        value={order.created_at}
+                        format="datetime"
+                    />
                 </p>
                 <p>
                     <span className="text-muted-foreground">Fecha req.:</span>{' '}
-                    {order.required_date ?? '-'}
+                    <FormattedDate
+                        value={order.required_date}
+                        format="short"
+                        emptyValue="-"
+                    />
                 </p>
                 {order.shipping_address && (
                     <p>

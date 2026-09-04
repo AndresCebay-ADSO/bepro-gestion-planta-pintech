@@ -46,7 +46,7 @@ class SalesOrderController extends Controller
                 'required_date' => $order->required_date?->format('Y-m-d'),
                 'estimated_delivery_date' => $order->estimated_delivery_date?->format('Y-m-d'),
                 'items_count' => $order->items_count,
-                'created_at' => $order->created_at?->format('d/m/Y'),
+                'created_at' => $order->created_at?->toIso8601String(),
             ]);
 
         return Inertia::render('SalesOrders/Index', [
@@ -189,7 +189,7 @@ class SalesOrderController extends Controller
                 'product_variant' => $item->productVariant,
                 'quantity' => $item->quantity,
             ]),
-            'created_at' => $salesOrder->created_at?->format('d/m/Y H:i'),
+            'created_at' => $salesOrder->created_at?->toIso8601String(),
             'creator' => $salesOrder->creator,
         ];
     }

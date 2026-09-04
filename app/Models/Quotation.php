@@ -117,7 +117,7 @@ class Quotation extends Model
             'status' => QuotationStatus::class,
             'payment_method' => PaymentMethod::class,
             'validity_days' => QuotationValidity::class,
-            'quotation_date' => 'date',
+            'quotation_date' => 'date:Y-m-d',
             'subtotal' => 'decimal:4',
             'iva_percentage' => 'decimal:2',
             'iva_amount' => 'decimal:4',

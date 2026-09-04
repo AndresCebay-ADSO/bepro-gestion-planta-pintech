@@ -2,6 +2,7 @@ import type { useForm } from '@inertiajs/react';
 import type { ChangeEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { formatSafeDate } from '@/components/formatted-date';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -107,7 +108,9 @@ function batchDescription(
                     .join(' / ')
               : formatNumber(batch.initial_quantity, { maxDecimals: 2 });
 
-    return `Ingreso ${batch.entry_date ?? '-'} · Disp. ${stockText}`;
+    const entryDate = formatSafeDate(batch.entry_date, 'short', '-');
+
+    return `Ingreso ${entryDate} · Disp. ${stockText}`;
 }
 
 export function FinishedMovementFormFields({
