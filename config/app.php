@@ -67,6 +67,8 @@ return [
 
     'timezone' => 'UTC',
 
+    'plant_timezone' => env('APP_PLANT_TIMEZONE', 'America/Bogota'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration

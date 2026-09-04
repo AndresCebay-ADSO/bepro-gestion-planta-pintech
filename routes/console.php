@@ -7,8 +7,10 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use Symfony\Component\Console\Command\Command;
 
-Schedule::command('activitylog:clean')->dailyAt('03:00');
-Schedule::command('alerts:check-expiry')->dailyAt('06:00');
+$plantTimezone = (string) config('app.plant_timezone', 'America/Bogota');
+
+Schedule::command('activitylog:clean')->dailyAt('03:00')->timezone($plantTimezone);
+Schedule::command('alerts:check-expiry')->dailyAt('06:00')->timezone($plantTimezone);
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
