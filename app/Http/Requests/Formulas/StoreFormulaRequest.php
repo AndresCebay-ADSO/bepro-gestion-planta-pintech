@@ -36,14 +36,27 @@ class StoreFormulaRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'product_id' => [
-                'required',
-                'integer',
-                Rule::exists('products', 'id')->whereNull('deleted_at'),
+        return array_merge(
+            [
+                'product_id' => [
+                    'required',
+                    'integer',
+                    Rule::exists('products', 'id')->whereNull('deleted_at'),
+                ],
+                'is_active' => ['boolean'],
+                'return_to' => ['nullable', 'string', 'max:2048'],
             ],
+            $this->commonRules()
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function commonRules(): array
+    {
+        return [
             'notes' => ['nullable', 'string', 'max:1000'],
-            'is_active' => ['boolean'],
             'details' => ['required', 'array', 'min:1'],
             'details.*.raw_material_id' => [
                 'required',
@@ -54,9 +67,10 @@ class StoreFormulaRequest extends FormRequest
             'details.*.unit_of_measure_id' => [
                 'required',
                 'integer',
-                Rule::exists('unit_of_measures', 'id'),
+                Rule::exists('unit_of_measures', 'id')
+                    ->where('is_active', true)
+                    ->whereNull('deleted_at'),
             ],
-            'return_to' => ['nullable', 'string', 'max:2048'],
         ];
     }
 
@@ -71,6 +85,20 @@ class StoreFormulaRequest extends FormRequest
             'details.*.raw_material_id.required' => 'Selecciona la materia prima del ingrediente.',
             'details.*.quantity.required' => 'La cantidad del ingrediente es obligatoria.',
             'details.*.quantity.min' => 'La cantidad debe ser mayor a cero.',
+            'details.*.unit_of_measure_id.exists' => 'La unidad de medida seleccionada no es válida o no se encuentra activa.',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'details' => 'ingredientes',
+            'details.*.raw_material_id' => 'materia prima',
+            'details.*.quantity' => 'cantidad',
+            'details.*.unit_of_measure_id' => 'unidad de medida',
         ];
     }
 }
