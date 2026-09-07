@@ -85,4 +85,53 @@ class StoreQuotationRequest extends FormRequest
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'items.required' => 'Debes agregar al menos un producto a la cotización.',
+            'items.min' => 'Debes agregar al menos un producto a la cotización.',
+            'items.*.product_id.required' => 'Debes seleccionar un producto.',
+            'items.*.product_variant_id.required' => 'Debes seleccionar la presentación del producto.',
+            'items.*.quantity.required' => 'La cantidad es obligatoria.',
+            'items.*.quantity.min' => 'La cantidad debe ser mayor a cero.',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'client_id' => 'cliente',
+            'client_business_name' => 'razón social',
+            'client_nit' => 'NIT o identificación',
+            'client_contact_name' => 'contacto del cliente',
+            'client_phone' => 'teléfono del cliente',
+            'technology' => 'tecnología',
+            'line' => 'línea',
+            'thickness_mils' => 'espesor',
+            'application_method' => 'método de aplicación',
+            'quotation_date' => 'fecha de cotización',
+            'validity_days' => 'días de validez',
+            'payment_method' => 'forma de pago',
+            'delivery_time' => 'tiempo de entrega',
+            'area' => 'área',
+            'notes' => 'observaciones',
+            'iva_percentage' => 'porcentaje de IVA',
+            'items' => 'productos',
+            'items.*.product_id' => 'producto',
+            'items.*.product_variant_id' => 'presentación',
+            'items.*.type' => 'tipo de ítem',
+            'items.*.description' => 'descripción',
+            'items.*.color' => 'color',
+            'items.*.quantity' => 'cantidad',
+            'items.*.price_adjustment_pct' => 'porcentaje de ajuste de precio',
+            'items.*.unit_price' => 'precio unitario',
+        ];
+    }
 }
