@@ -20,8 +20,20 @@ class StoreProductRequest extends FormRequest
      */
     public function rules(): array
     {
+        return array_merge(
+            [
+                'code' => ['bail', 'nullable', 'string', 'max:50', Rule::unique('products', 'code')],
+            ],
+            $this->baseRules()
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function baseRules(): array
+    {
         return [
-            'code' => ['bail', 'nullable', 'string', 'max:50', Rule::unique('products', 'code')],
             'name' => ['bail', 'required', 'string', 'min:3', 'max:150'],
             'brand' => ['bail', 'required', 'string', 'max:100'],
             'description' => ['nullable', 'string', 'max:10000'],
@@ -60,16 +72,47 @@ class StoreProductRequest extends FormRequest
         }
     }
 
-    public function withValidator(Validator $validator): void
+    /**
+     * @return array<int, callable(Validator): void>
+     */
+    public function after(): array
     {
-        $validator->after(function (Validator $validator): void {
-            $this->assertQualityRange($validator, 'quality_viscosity_lower', 'quality_viscosity_upper', 'Viscosidad');
-            $this->assertQualityRange($validator, 'quality_fineness_lower', 'quality_fineness_upper', 'Molienda');
-            $this->assertQualityRange($validator, 'quality_solids_lower', 'quality_solids_upper', 'Sólidos');
-        });
+        return [
+            function (Validator $validator): void {
+                $this->assertQualityRange($validator, 'quality_viscosity_lower', 'quality_viscosity_upper', 'Viscosidad');
+                $this->assertQualityRange($validator, 'quality_fineness_lower', 'quality_fineness_upper', 'Molienda');
+                $this->assertQualityRange($validator, 'quality_solids_lower', 'quality_solids_upper', 'Sólidos');
+            },
+        ];
     }
 
-    private function mergeEmptyQualityAndDescription(): void
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'code' => 'código',
+            'name' => 'nombre',
+            'brand' => 'marca',
+            'description' => 'descripción',
+            'category_id' => 'categoría',
+            'unit_of_measure_id' => 'unidad de medida',
+            'current_cost' => 'costo actual',
+            'cif_percentage' => 'porcentaje CIF',
+            'current_price' => 'precio actual',
+            'price_threshold' => 'umbral de precio',
+            'quality_viscosity_lower' => 'viscosidad mínima',
+            'quality_viscosity_upper' => 'viscosidad máxima',
+            'quality_fineness_lower' => 'molienda mínima',
+            'quality_fineness_upper' => 'molienda máxima',
+            'quality_solids_lower' => 'sólidos mínimos',
+            'quality_solids_upper' => 'sólidos máximos',
+            'is_active' => 'activo',
+        ];
+    }
+
+    protected function mergeEmptyQualityAndDescription(): void
     {
         $keys = [
             'description',
@@ -94,8 +137,12 @@ class StoreProductRequest extends FormRequest
         }
     }
 
-    private function assertQualityRange(Validator $validator, string $lowerKey, string $upperKey, string $label): void
+    protected function assertQualityRange(Validator $validator, string $lowerKey, string $upperKey, string $label): void
     {
+        if ($validator->errors()->has($lowerKey) || $validator->errors()->has($upperKey)) {
+            return;
+        }
+
         $lower = $this->input($lowerKey);
         $upper = $this->input($upperKey);
 
