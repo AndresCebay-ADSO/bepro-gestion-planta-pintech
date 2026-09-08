@@ -26,4 +26,12 @@ class UpdatePaintDevelopmentRequest extends FormRequest
     {
         return $this->sharedRules();
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return $this->sharedAttributes();
+    }
 }

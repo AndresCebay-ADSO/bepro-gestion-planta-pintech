@@ -6,11 +6,11 @@ namespace App\Http\Controllers;
 
 use App\Filters\QrCodeFilter;
 use App\Http\Requests\QrCodes\IndexQrCodeRequest;
+use App\Http\Requests\QrCodes\UpdateQrCodeRequest;
 use App\Models\QrCode;
 use App\Models\QrDocument;
 use App\Services\QrImageService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -128,15 +128,9 @@ class QrCodeController extends Controller
         ]);
     }
 
-    public function update(Request $request, QrCode $qrCode): RedirectResponse
+    public function update(UpdateQrCodeRequest $request, QrCode $qrCode): RedirectResponse
     {
-        $this->authorize('update', $qrCode);
-
-        $validated = $request->validate([
-            'is_active' => ['required', 'boolean'],
-        ]);
-
-        $qrCode->update(['is_active' => $validated['is_active']]);
+        $qrCode->update(['is_active' => $request->validated('is_active')]);
 
         return redirect()->back()->with('success', 'Estado del QR actualizado.');
     }

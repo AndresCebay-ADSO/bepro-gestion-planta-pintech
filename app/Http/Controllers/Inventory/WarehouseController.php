@@ -153,6 +153,7 @@ class WarehouseController extends Controller
 
         $selectedByUser = $warehouse->users->keyBy('id');
         $users = User::query()
+            ->active()
             ->select('id', 'name', 'email')
             ->orderBy('name')
             ->get()

@@ -57,4 +57,22 @@ class UpdateSalesOrderRequest extends FormRequest
             'client_nit' => ['sometimes', 'nullable', 'string', 'max:20'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'status' => 'estado',
+            'priority' => 'prioridad',
+            'estimated_delivery_date' => 'fecha estimada de entrega',
+            'notes' => 'observaciones',
+            'shipping_address' => 'dirección de entrega',
+            'client_contact_name' => 'contacto del cliente',
+            'client_phone' => 'teléfono del cliente',
+            'client_business_name' => 'razón social',
+            'client_nit' => 'NIT o identificación',
+        ];
+    }
 }

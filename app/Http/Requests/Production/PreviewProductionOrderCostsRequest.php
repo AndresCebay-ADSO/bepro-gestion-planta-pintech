@@ -6,10 +6,11 @@ namespace App\Http\Requests\Production;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class PreviewProductionOrderCostsRequest extends FormRequest
 {
+    use ProductionConsumptionRules;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -25,27 +26,24 @@ class PreviewProductionOrderCostsRequest extends FormRequest
      */
     public function rules(): array
     {
-        $order = $this->route('production_order');
-        $orderId = is_object($order) ? $order->id : null;
+        return array_merge(
+            $this->consumptionRules(),
+            [
+                'remnant_quantity_gallons' => ['nullable', 'numeric', 'min:0'],
+            ]
+        );
+    }
 
-        return [
-            'ingredients' => 'required|array',
-            'ingredients.*.id' => [
-                'required',
-                'distinct:strict',
-                Rule::exists('production_order_details', 'id')
-                    ->when($orderId !== null, fn ($query) => $query->where('production_order_id', $orderId)),
-            ],
-            'ingredients.*.actual_quantity' => 'required|numeric|min:0',
-            'packaging' => 'array',
-            'packaging.*.id' => [
-                'required',
-                'distinct:strict',
-                Rule::exists('production_order_packaging_plan', 'id')
-                    ->where('production_order_id', $orderId),
-            ],
-            'packaging.*.actual_units' => 'required|numeric|min:0',
-            'remnant_quantity_gallons' => ['nullable', 'numeric', 'min:0'],
-        ];
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return array_merge(
+            $this->consumptionAttributes(),
+            [
+                'remnant_quantity_gallons' => 'saldo sobrante (galones)',
+            ]
+        );
     }
 }
