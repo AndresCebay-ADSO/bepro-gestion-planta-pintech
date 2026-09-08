@@ -19,6 +19,9 @@ use Inertia\Response;
 
 class RawMaterialController extends Controller
 {
+    /**
+     * Display a listing of the raw materials.
+     */
     public function index(IndexRawMaterialRequest $request): Response
     {
         $user = $request->user();
@@ -117,6 +120,9 @@ class RawMaterialController extends Controller
             ->with('success', __('Materia prima registrada exitosamente.'));
     }
 
+    /**
+     * Display the specified raw material with its batches and activity status.
+     */
     public function show(Request $request, RawMaterial $rawMaterial): Response
     {
         $this->authorize('view', $rawMaterial);
@@ -195,6 +201,9 @@ class RawMaterialController extends Controller
             ->with('success', __('Materia prima actualizada exitosamente.'));
     }
 
+    /**
+     * Remove or deactivate the specified raw material depending on activity and stock.
+     */
     public function destroy(RawMaterial $rawMaterial): RedirectResponse
     {
         $this->authorize('delete', $rawMaterial);

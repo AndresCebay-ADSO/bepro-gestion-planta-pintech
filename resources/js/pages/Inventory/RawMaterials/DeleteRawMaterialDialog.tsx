@@ -21,6 +21,9 @@ export type DeleteRawMaterialDialogProps = {
     onConfirm: () => void;
 };
 
+/**
+ * Confirmation dialog for deactivating or permanently deleting a raw material.
+ */
 export function DeleteRawMaterialDialog({
     open,
     onOpenChange,

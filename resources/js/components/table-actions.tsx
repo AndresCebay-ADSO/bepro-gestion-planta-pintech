@@ -29,6 +29,9 @@ interface TableActionsProps {
     children?: React.ReactNode;
 }
 
+/**
+ * Renders standard table row action buttons (view, edit, delete) with tooltips and permissions.
+ */
 export function TableActions({
     actions = { view: true, edit: true, delete: true },
     permissions = { view: true, edit: true, delete: true },

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { withReturnTo } from '@/lib/navigation';
+import { DeleteRawMaterialDialog } from '@/pages/Inventory/RawMaterials/DeleteRawMaterialDialog';
 import { index as alertsIndex } from '@/routes/alerts';
 import {
     create as rawMaterialsCreate,
@@ -20,7 +21,6 @@ import {
     show as rawMaterialsShow,
 } from '@/routes/raw-materials';
 import type { PaginationLink } from '@/types/ui';
-import { DeleteRawMaterialDialog } from './DeleteRawMaterialDialog';
 
 type RawMaterialRow = {
     id: number;
@@ -64,6 +64,9 @@ const statusOptions = [
     { value: 'inactive', label: 'Inactivas' },
 ];
 
+/**
+ * Raw materials index page displaying listing, stock, alerts, and actions.
+ */
 export default function RawMaterialsIndex({
     rawMaterials,
     filters,

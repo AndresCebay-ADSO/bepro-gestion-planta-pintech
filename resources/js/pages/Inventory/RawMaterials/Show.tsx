@@ -6,7 +6,7 @@ import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
-import { DeleteRawMaterialDialog } from './DeleteRawMaterialDialog';
+import { DeleteRawMaterialDialog } from '@/pages/Inventory/RawMaterials/DeleteRawMaterialDialog';
 
 /**
  * Tipos
@@ -45,7 +45,7 @@ type Props = {
 };
 
 /**
- * Componente
+ * Raw materials show page displaying detail, batch inventory, and deletion/reactivation controls.
  */
 export default function RawMaterialsShow({
     returnTo,

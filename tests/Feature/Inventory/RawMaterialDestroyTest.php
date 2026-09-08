@@ -300,13 +300,10 @@ describe('Raw Material Destroy', function () {
             );
 
         // 2. Con stock disponible (> 0)
-        $batch = InventoryBatch::create([
+        $batch = InventoryBatch::factory()->create([
             'raw_material_id' => $this->rawMaterial->id,
             'warehouse_id' => $this->warehouse->id,
-            'initial_quantity' => 100,
             'remaining_quantity' => 50,
-            'unit_price' => 10.00,
-            'entry_date' => now(),
         ]);
 
         $responseWithStock = $this->actingAs($this->admin)
@@ -346,13 +343,10 @@ describe('Raw Material Destroy', function () {
             );
 
         // 2. Con stock disponible (> 0)
-        $batch = InventoryBatch::create([
+        $batch = InventoryBatch::factory()->create([
             'raw_material_id' => $this->rawMaterial->id,
             'warehouse_id' => $this->warehouse->id,
-            'initial_quantity' => 100,
             'remaining_quantity' => 50,
-            'unit_price' => 10.00,
-            'entry_date' => now(),
         ]);
 
         $responseWithStock = $this->actingAs($this->admin)
