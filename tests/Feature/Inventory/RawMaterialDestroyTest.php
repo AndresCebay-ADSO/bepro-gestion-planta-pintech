@@ -13,6 +13,7 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Role;
 
 /**
@@ -284,5 +285,97 @@ describe('Raw Material Destroy', function () {
             'id' => $this->rawMaterial->id,
             'is_active' => false,
         ]);
+    });
+
+    it('index correctly computes has_available_stock and has_activity under different conditions', function () {
+        // 1. Sin actividad
+        $response = $this->actingAs($this->admin)
+            ->get(route('raw-materials.index'));
+
+        $response->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Inventory/RawMaterials/Index')
+                ->where('rawMaterials.data.0.has_available_stock', false)
+                ->where('rawMaterials.data.0.has_activity', false)
+            );
+
+        // 2. Con stock disponible (> 0)
+        $batch = InventoryBatch::create([
+            'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouse->id,
+            'initial_quantity' => 100,
+            'remaining_quantity' => 50,
+            'unit_price' => 10.00,
+            'entry_date' => now(),
+        ]);
+
+        $responseWithStock = $this->actingAs($this->admin)
+            ->get(route('raw-materials.index'));
+
+        $responseWithStock->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Inventory/RawMaterials/Index')
+                ->where('rawMaterials.data.0.has_available_stock', true)
+                ->where('rawMaterials.data.0.has_activity', true)
+            );
+
+        // 3. Con lote agotado (stock = 0, pero conserva historial)
+        $batch->update(['remaining_quantity' => 0]);
+
+        $responseExhausted = $this->actingAs($this->admin)
+            ->get(route('raw-materials.index'));
+
+        $responseExhausted->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Inventory/RawMaterials/Index')
+                ->where('rawMaterials.data.0.has_available_stock', false)
+                ->where('rawMaterials.data.0.has_activity', true)
+            );
+    });
+
+    it('show correctly computes hasAvailableStock and hasActivity under different conditions', function () {
+        // 1. Sin actividad
+        $response = $this->actingAs($this->admin)
+            ->get(route('raw-materials.show', $this->rawMaterial));
+
+        $response->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Inventory/RawMaterials/Show')
+                ->where('hasAvailableStock', false)
+                ->where('hasActivity', false)
+            );
+
+        // 2. Con stock disponible (> 0)
+        $batch = InventoryBatch::create([
+            'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouse->id,
+            'initial_quantity' => 100,
+            'remaining_quantity' => 50,
+            'unit_price' => 10.00,
+            'entry_date' => now(),
+        ]);
+
+        $responseWithStock = $this->actingAs($this->admin)
+            ->get(route('raw-materials.show', $this->rawMaterial));
+
+        $responseWithStock->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Inventory/RawMaterials/Show')
+                ->where('hasAvailableStock', true)
+                ->where('hasActivity', true)
+            );
+
+        // 3. Con lote agotado (stock = 0, pero conserva historial)
+        $batch->update(['remaining_quantity' => 0]);
+
+        $responseExhausted = $this->actingAs($this->admin)
+            ->get(route('raw-materials.show', $this->rawMaterial));
+
+        $responseExhausted->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Inventory/RawMaterials/Show')
+                ->where('hasAvailableStock', false)
+                ->where('hasActivity', true)
+            );
     });
 });
