@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { BellRing } from 'lucide-react';
 import type { ComponentProps } from 'react';
+import { useState } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -19,6 +20,7 @@ import {
     show as rawMaterialsShow,
 } from '@/routes/raw-materials';
 import type { PaginationLink } from '@/types/ui';
+import { DeleteRawMaterialDialog } from './DeleteRawMaterialDialog';
 
 type RawMaterialRow = {
     id: number;
@@ -30,6 +32,8 @@ type RawMaterialRow = {
     alert_days_before_expiry: number;
     active_alerts_count: number;
     has_critical_alert: boolean;
+    has_available_stock: boolean;
+    has_activity: boolean;
     is_active: boolean;
     unit_of_measure: { id: number; name: string; symbol: string } | null;
     can: {
@@ -94,18 +98,27 @@ export default function RawMaterialsIndex({
         flash?: { success?: string; error?: string };
     }>().props.flash;
 
-    const handleDelete = (id: number) => {
-        if (
-            !window.confirm(
-                '¿Estás seguro de que quieres eliminar o desactivar esta materia prima? (El sistema determinará la acción según su historial)',
-            )
-        ) {
+    const [deleteTarget, setDeleteTarget] = useState<RawMaterialRow | null>(
+        null,
+    );
+    const [deleteProcessing, setDeleteProcessing] = useState(false);
+
+    const handleDeleteConfirm = () => {
+        if (!deleteTarget) {
             return;
         }
 
-        router.delete(rawMaterialsDestroy({ raw_material: id }).url, {
-            preserveScroll: true,
-        });
+        setDeleteProcessing(true);
+        router.delete(
+            rawMaterialsDestroy({ raw_material: deleteTarget.id }).url,
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setDeleteProcessing(false);
+                    setDeleteTarget(null);
+                },
+            },
+        );
     };
 
     const handleReactivate = (id: number) => {
@@ -272,6 +285,22 @@ export default function RawMaterialsIndex({
                                                     edit: item.can.update,
                                                     delete: item.can.delete,
                                                 }}
+                                                disabled={{
+                                                    delete: item.has_available_stock,
+                                                }}
+                                                tooltips={{
+                                                    delete: item.has_available_stock
+                                                        ? 'No disponible: tiene stock en bodega'
+                                                        : item.has_activity
+                                                          ? 'Desactivar materia prima'
+                                                          : 'Eliminar permanentemente',
+                                                }}
+                                                deleteIcon={
+                                                    item.has_available_stock ||
+                                                    item.has_activity
+                                                        ? 'power-off'
+                                                        : 'trash'
+                                                }
                                                 onView={() =>
                                                     router.get(
                                                         withReturnTo(
@@ -291,7 +320,7 @@ export default function RawMaterialsIndex({
                                                     )
                                                 }
                                                 onDelete={() =>
-                                                    handleDelete(item.id)
+                                                    setDeleteTarget(item)
                                                 }
                                             />
 
@@ -334,6 +363,19 @@ export default function RawMaterialsIndex({
                     <Pagination links={rawMaterials.links} />
                 </div>
             </div>
+
+            <DeleteRawMaterialDialog
+                open={deleteTarget !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setDeleteTarget(null);
+                    }
+                }}
+                rawMaterial={deleteTarget}
+                hasActivity={deleteTarget?.has_activity ?? false}
+                processing={deleteProcessing}
+                onConfirm={handleDeleteConfirm}
+            />
         </>
     );
 }
