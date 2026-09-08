@@ -36,7 +36,7 @@ trait ProductionConsumptionRules
             'ingredients' => ['required', 'array'],
             'ingredients.*.id' => [
                 'required',
-                'distinct:strict',
+                'distinct',
                 Rule::exists('production_order_details', 'id')
                     ->where('production_order_id', $scopedOrderId),
             ],
@@ -44,7 +44,7 @@ trait ProductionConsumptionRules
             'packaging' => ['array'],
             'packaging.*.id' => [
                 'required',
-                'distinct:strict',
+                'distinct',
                 Rule::exists('production_order_packaging_plan', 'id')
                     ->where('production_order_id', $scopedOrderId),
             ],

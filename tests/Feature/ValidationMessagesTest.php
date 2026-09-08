@@ -345,3 +345,42 @@ test('warehouse assign users request authorization returns false safely when no 
 
     expect($request->authorize())->toBeFalse();
 });
+
+test('complete production order request rejects duplicate ingredients and packaging even with mixed types', function () {
+    $request = new CompleteProductionOrderRequest;
+
+    $validatorIngredients = Validator::make(
+        [
+            'ingredients' => [
+                ['id' => 10, 'actual_quantity' => 5],
+                ['id' => '10', 'actual_quantity' => 8],
+            ],
+        ],
+        $request->rules(),
+        $request->messages(),
+        $request->attributes()
+    );
+
+    expect($validatorIngredients->fails())->toBeTrue();
+    expect($validatorIngredients->errors()->first('ingredients.0.id'))
+        ->toBe('No puedes repetir el mismo ingrediente en la lista.');
+
+    $validatorPackaging = Validator::make(
+        [
+            'ingredients' => [
+                ['id' => 1, 'actual_quantity' => 10],
+            ],
+            'packaging' => [
+                ['id' => 25, 'actual_units' => 4],
+                ['id' => '25', 'actual_units' => 2],
+            ],
+        ],
+        $request->rules(),
+        $request->messages(),
+        $request->attributes()
+    );
+
+    expect($validatorPackaging->fails())->toBeTrue();
+    expect($validatorPackaging->errors()->first('packaging.0.id'))
+        ->toBe('No puedes repetir la misma presentación de empaque en la lista.');
+});
