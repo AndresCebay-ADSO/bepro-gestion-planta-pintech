@@ -19,6 +19,9 @@ use Inertia\Response;
 
 class RawMaterialController extends Controller
 {
+    /**
+     * Display a listing of the raw materials.
+     */
     public function index(IndexRawMaterialRequest $request): Response
     {
         $user = $request->user();
@@ -31,6 +34,10 @@ class RawMaterialController extends Controller
                 'unitOfMeasure:id,name,symbol',
             ])
             ->withSum('inventoryBatches as available_stock', 'remaining_quantity')
+            ->withExists(['inventoryBatches as has_batches'])
+            ->withExists(['inventoryMovements as has_movements'])
+            ->withExists(['formulaDetails as has_formulas'])
+            ->withExists(['productionOrderDetails as has_orders'])
             ->withCount(['alerts as active_alerts_count' => fn ($query) => $query->where('is_resolved', false)])
             ->withExists(['alerts as has_critical_alert' => fn ($query) => $query
                 ->where('is_resolved', false)
@@ -47,6 +54,11 @@ class RawMaterialController extends Controller
                     'previous_price' => $canViewCosts ? $rawMaterial->previous_price : null,
                     'minimum_stock' => $rawMaterial->minimum_stock,
                     'available_stock' => $rawMaterial->available_stock ?? 0,
+                    'has_available_stock' => (float) ($rawMaterial->available_stock ?? 0) > 0,
+                    'has_activity' => (bool) ($rawMaterial->has_batches
+                        || $rawMaterial->has_movements
+                        || $rawMaterial->has_formulas
+                        || $rawMaterial->has_orders),
                     'alert_days_before_expiry' => $rawMaterial->alert_days_before_expiry,
                     'active_alerts_count' => (int) ($rawMaterial->active_alerts_count ?? 0),
                     'has_critical_alert' => (bool) ($rawMaterial->has_critical_alert ?? false),
@@ -63,7 +75,7 @@ class RawMaterialController extends Controller
                     'can' => [
                         'view' => Gate::forUser($user)->allows('view', $rawMaterial),
                         'update' => Gate::forUser($user)->allows('update', $rawMaterial),
-                        'delete' => Gate::forUser($user)->allows('delete', $rawMaterial),
+                        'delete' => Gate::forUser($user)->allows('delete', $rawMaterial) && $rawMaterial->is_active,
                         'reactivate' => Gate::forUser($user)->allows('update', $rawMaterial) && ! $rawMaterial->is_active,
                     ],
                 ];
@@ -108,33 +120,52 @@ class RawMaterialController extends Controller
             ->with('success', __('Materia prima registrada exitosamente.'));
     }
 
+    /**
+     * Display the specified raw material with its batches and activity status.
+     */
     public function show(Request $request, RawMaterial $rawMaterial): Response
     {
         $this->authorize('view', $rawMaterial);
 
+        $rawMaterial->load([
+            'category:id,name,code',
+            'unitOfMeasure:id,name,symbol',
+            'inventoryBatches' => fn ($query) => $query
+                ->select(
+                    'id',
+                    'raw_material_id',
+                    'lot_number',
+                    'supplier',
+                    'initial_quantity',
+                    'remaining_quantity',
+                    'unit_price',
+                    'entry_date',
+                    'expiry_date'
+                )
+                ->orderByDesc('entry_date')
+                ->orderByDesc('id'),
+        ])->loadExists([
+            'inventoryMovements as has_movements',
+            'formulaDetails as has_formulas',
+            'productionOrderDetails as has_orders',
+        ]);
+
+        $hasAvailableStock = $rawMaterial->inventoryBatches
+            ->contains(fn ($batch) => (float) $batch->remaining_quantity > 0);
+
+        $hasActivity = (bool) ($rawMaterial->inventoryBatches->isNotEmpty()
+            || $rawMaterial->has_movements
+            || $rawMaterial->has_formulas
+            || $rawMaterial->has_orders);
+
         return Inertia::render('Inventory/RawMaterials/Show', [
             'returnTo' => $this->resolveReturnTo($request),
-            'rawMaterial' => $rawMaterial->load([
-                'category:id,name,code',
-                'unitOfMeasure:id,name,symbol',
-                'inventoryBatches' => fn ($query) => $query
-                    ->select(
-                        'id',
-                        'raw_material_id',
-                        'lot_number',
-                        'supplier',
-                        'initial_quantity',
-                        'remaining_quantity',
-                        'unit_price',
-                        'entry_date',
-                        'expiry_date'
-                    )
-                    ->orderByDesc('entry_date')
-                    ->orderByDesc('id'),
-            ]),
+            'rawMaterial' => $rawMaterial,
+            'hasAvailableStock' => $hasAvailableStock,
+            'hasActivity' => $hasActivity,
             'can' => [
                 'update' => Gate::allows('update', $rawMaterial),
-                'delete' => Gate::allows('delete', $rawMaterial),
+                'delete' => Gate::allows('delete', $rawMaterial) && $rawMaterial->is_active,
                 'reactivate' => Gate::allows('update', $rawMaterial) && ! $rawMaterial->is_active,
             ],
         ]);
@@ -170,6 +201,9 @@ class RawMaterialController extends Controller
             ->with('success', __('Materia prima actualizada exitosamente.'));
     }
 
+    /**
+     * Remove or deactivate the specified raw material depending on activity and stock.
+     */
     public function destroy(RawMaterial $rawMaterial): RedirectResponse
     {
         $this->authorize('delete', $rawMaterial);

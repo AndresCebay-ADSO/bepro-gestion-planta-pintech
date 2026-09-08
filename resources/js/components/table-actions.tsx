@@ -1,4 +1,4 @@
-import { Eye, Loader2, Pencil, Trash } from 'lucide-react';
+import { Eye, Loader2, Pencil, PowerOff, Trash } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +19,9 @@ interface TableActionsProps {
     actions?: ActionConfig;
     permissions?: ActionConfig;
     loading?: ActionConfig;
+    disabled?: ActionConfig;
+    tooltips?: { view?: string; edit?: string; delete?: string };
+    deleteIcon?: 'trash' | 'power-off';
     onView?: () => void;
     onEdit?: () => void;
     onDelete?: () => void;
@@ -26,10 +29,16 @@ interface TableActionsProps {
     children?: React.ReactNode;
 }
 
+/**
+ * Renders standard table row action buttons (view, edit, delete) with tooltips and permissions.
+ */
 export function TableActions({
     actions = { view: true, edit: true, delete: true },
     permissions = { view: true, edit: true, delete: true },
     loading = { view: false, edit: false, delete: false },
+    disabled,
+    tooltips,
+    deleteIcon = 'trash',
     onView,
     onEdit,
     onDelete,
@@ -45,22 +54,28 @@ export function TableActions({
                 {actions.view && permissions.view && (
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="size-8 h-8 w-8 cursor-pointer"
-                                onClick={onView}
-                                disabled={loading.view}
-                            >
-                                {loading.view ? (
-                                    <Loader2 className="animate-spin" />
-                                ) : (
-                                    <Eye />
-                                )}
-                                <span className="sr-only">Ver detalles</span>
-                            </Button>
+                            <span className="inline-flex">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="size-8 h-8 w-8 cursor-pointer"
+                                    onClick={onView}
+                                    disabled={disabled?.view || loading.view}
+                                >
+                                    {loading.view ? (
+                                        <Loader2 className="animate-spin" />
+                                    ) : (
+                                        <Eye />
+                                    )}
+                                    <span className="sr-only">
+                                        {tooltips?.view ?? 'Ver detalles'}
+                                    </span>
+                                </Button>
+                            </span>
                         </TooltipTrigger>
-                        <TooltipContent>Ver detalles</TooltipContent>
+                        <TooltipContent>
+                            {tooltips?.view ?? 'Ver detalles'}
+                        </TooltipContent>
                     </Tooltip>
                 )}
 
@@ -68,22 +83,28 @@ export function TableActions({
                 {actions.edit && permissions.edit && (
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button
-                                variant="warning"
-                                size="icon"
-                                className="size-8 h-8 w-8 cursor-pointer"
-                                onClick={onEdit}
-                                disabled={loading.edit}
-                            >
-                                {loading.edit ? (
-                                    <Loader2 className="animate-spin" />
-                                ) : (
-                                    <Pencil />
-                                )}
-                                <span className="sr-only">Editar registro</span>
-                            </Button>
+                            <span className="inline-flex">
+                                <Button
+                                    variant="warning"
+                                    size="icon"
+                                    className="size-8 h-8 w-8 cursor-pointer"
+                                    onClick={onEdit}
+                                    disabled={disabled?.edit || loading.edit}
+                                >
+                                    {loading.edit ? (
+                                        <Loader2 className="animate-spin" />
+                                    ) : (
+                                        <Pencil />
+                                    )}
+                                    <span className="sr-only">
+                                        {tooltips?.edit ?? 'Editar registro'}
+                                    </span>
+                                </Button>
+                            </span>
                         </TooltipTrigger>
-                        <TooltipContent>Editar registro</TooltipContent>
+                        <TooltipContent>
+                            {tooltips?.edit ?? 'Editar registro'}
+                        </TooltipContent>
                     </Tooltip>
                 )}
 
@@ -91,24 +112,39 @@ export function TableActions({
                 {actions.delete && permissions.delete && (
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button
-                                variant="destructive"
-                                size="icon"
-                                className="size-8 h-8 w-8 cursor-pointer"
-                                onClick={onDelete}
-                                disabled={loading.delete}
-                            >
-                                {loading.delete ? (
-                                    <Loader2 className="animate-spin" />
-                                ) : (
-                                    <Trash />
-                                )}
-                                <span className="sr-only">
-                                    Eliminar registro
-                                </span>
-                            </Button>
+                            <span className="inline-flex">
+                                <Button
+                                    variant={
+                                        disabled?.delete
+                                            ? 'outline'
+                                            : deleteIcon === 'power-off'
+                                              ? 'warning'
+                                              : 'destructive'
+                                    }
+                                    size="icon"
+                                    className="size-8 h-8 w-8 cursor-pointer"
+                                    onClick={onDelete}
+                                    disabled={
+                                        disabled?.delete || loading.delete
+                                    }
+                                >
+                                    {loading.delete ? (
+                                        <Loader2 className="animate-spin" />
+                                    ) : deleteIcon === 'power-off' ? (
+                                        <PowerOff />
+                                    ) : (
+                                        <Trash />
+                                    )}
+                                    <span className="sr-only">
+                                        {tooltips?.delete ??
+                                            'Eliminar registro'}
+                                    </span>
+                                </Button>
+                            </span>
                         </TooltipTrigger>
-                        <TooltipContent>Eliminar registro</TooltipContent>
+                        <TooltipContent>
+                            {tooltips?.delete ?? 'Eliminar registro'}
+                        </TooltipContent>
                     </Tooltip>
                 )}
 

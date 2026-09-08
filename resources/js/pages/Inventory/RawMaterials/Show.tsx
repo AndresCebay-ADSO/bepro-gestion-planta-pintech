@@ -1,10 +1,12 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
 
 import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
+import { DeleteRawMaterialDialog } from '@/pages/Inventory/RawMaterials/DeleteRawMaterialDialog';
 
 /**
  * Tipos
@@ -38,31 +40,41 @@ type Props = {
         delete: boolean;
         reactivate: boolean;
     };
+    hasAvailableStock: boolean;
+    hasActivity: boolean;
 };
 
 /**
- * Componente
+ * Raw materials show page displaying detail, batch inventory, and deletion/reactivation controls.
  */
 export default function RawMaterialsShow({
     returnTo,
     rawMaterial,
     can,
+    hasAvailableStock,
+    hasActivity,
 }: Props) {
+    const flash = usePage<{
+        flash?: { success?: string; error?: string };
+    }>().props.flash;
+
     const totalAvailableQuantity = rawMaterial.inventory_batches.reduce(
         (sum, batch) => sum + (Number(batch.remaining_quantity) || 0),
         0,
     );
 
-    const handleDelete = () => {
-        if (
-            !window.confirm(
-                '¿Estás seguro de que quieres eliminar o desactivar esta materia prima? (El sistema determinará la acción según su historial)',
-            )
-        ) {
-            return;
-        }
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [deleteProcessing, setDeleteProcessing] = useState(false);
 
-        router.delete(RawMaterialController.destroy.url(rawMaterial.id));
+    const handleDeleteConfirm = () => {
+        setDeleteProcessing(true);
+        router.delete(RawMaterialController.destroy.url(rawMaterial.id), {
+            preserveScroll: true,
+            onFinish: () => {
+                setDeleteProcessing(false);
+                setDeleteOpen(false);
+            },
+        });
     };
 
     const handleReactivate = () => {
@@ -101,12 +113,20 @@ export default function RawMaterialsShow({
                                 </Button>
                             )}
 
-                            {can.delete && rawMaterial.is_active && (
+                            {can.delete && !hasAvailableStock && (
                                 <Button
-                                    variant="destructive"
-                                    onClick={handleDelete}
+                                    variant={
+                                        hasActivity ? 'warning' : 'destructive'
+                                    }
+                                    onClick={() => setDeleteOpen(true)}
                                 >
-                                    Desactivar / Eliminar
+                                    {hasActivity ? 'Desactivar' : 'Eliminar'}
+                                </Button>
+                            )}
+
+                            {can.delete && hasAvailableStock && (
+                                <Button variant="outline" disabled>
+                                    Desactivar (Con stock en bodega)
                                 </Button>
                             )}
 
@@ -121,6 +141,18 @@ export default function RawMaterialsShow({
                         </>
                     }
                 />
+
+                {flash?.success && (
+                    <div className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+                        {flash.success}
+                    </div>
+                )}
+
+                {flash?.error && (
+                    <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+                        {flash.error}
+                    </div>
+                )}
 
                 {/* Información general */}
                 <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-2">
@@ -318,6 +350,15 @@ export default function RawMaterialsShow({
                     </table>
                 </div>
             </div>
+
+            <DeleteRawMaterialDialog
+                open={deleteOpen}
+                onOpenChange={setDeleteOpen}
+                rawMaterial={rawMaterial}
+                hasActivity={hasActivity}
+                processing={deleteProcessing}
+                onConfirm={handleDeleteConfirm}
+            />
         </>
     );
 }
