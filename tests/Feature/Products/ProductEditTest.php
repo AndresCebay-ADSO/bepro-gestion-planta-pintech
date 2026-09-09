@@ -157,3 +157,23 @@ test('admin role user can modify cif_percentage and price_threshold', function (
     expect((float) $this->product->cif_percentage)->toBe(35.0);
     expect((float) $this->product->price_threshold)->toBe(5.0);
 });
+
+test('production role user can update product when cif_percentage matches numerically with different formatting', function (): void {
+    $produccionRole = Role::findOrCreate('produccion');
+    $produccionUser = User::factory()->create();
+    $produccionUser->assignRole($produccionRole);
+
+    actingAs($produccionUser)
+        ->put(route('products.update', $this->product), [
+            'code' => $this->product->code,
+            'name' => 'Nombre Actualizado por Producción',
+            'category_id' => $this->category->id,
+            'unit_of_measure_id' => $this->uom->id,
+            'cif_percentage' => 25, // En BD está como '25.00'
+            'price_threshold' => 3, // En BD está como '3.00'
+        ])
+        ->assertRedirect(route('products.index'));
+
+    $this->product->refresh();
+    expect($this->product->name)->toBe('Nombre Actualizado por Producción');
+});

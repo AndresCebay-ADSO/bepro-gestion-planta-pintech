@@ -19,6 +19,7 @@ use App\Services\FinishedInventoryQueryService;
 use App\Services\ProductionCostRecalculationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -175,48 +176,63 @@ class ProductController extends Controller
         $validated = $request->validated();
 
         $cifChanged = array_key_exists('cif_percentage', $validated)
-            && (string) ($product->cif_percentage ?? '') !== (string) ($validated['cif_percentage'] ?? '');
+            && $this->hasDecimalChanged($product->cif_percentage, $validated['cif_percentage'] ?? null);
         $thresholdChanged = array_key_exists('price_threshold', $validated)
-            && (string) ($product->price_threshold ?? '') !== (string) ($validated['price_threshold'] ?? '');
+            && $this->hasDecimalChanged($product->price_threshold, $validated['price_threshold'] ?? null);
 
         if (($cifChanged || $thresholdChanged) && ! Gate::allows('create', PriceList::class)) {
             abort(403, __('No tienes autorización para modificar los márgenes CIF o umbrales de precio.'));
         }
 
-        $product->update($validated);
+        DB::transaction(function () use ($product, $validated): void {
+            $product->update($validated);
 
-        if ($product->wasChanged('cif_percentage') || $product->wasChanged('price_threshold')) {
-            $costRecord = $this->productionCostRecalculationService->recalculateForProduct(
-                (int) $product->id,
-                forcePriceRefresh: true
-            );
+            if ($product->wasChanged('cif_percentage') || $product->wasChanged('price_threshold')) {
+                $costRecord = $this->productionCostRecalculationService->recalculateForProduct(
+                    (int) $product->id,
+                    forcePriceRefresh: true
+                );
 
-            if ($costRecord === null) {
-                $costStr = (string) ($product->current_cost ?? '0');
-                $cifPercentageStr = (string) ($product->cif_percentage ?? '0');
-                $cifRatio = $this->calculator->div($cifPercentageStr, '100', 4);
-                $cifFactor = $this->calculator->add('1', $cifRatio, 4);
-                $newPrice = $this->calculator->mul($costStr, $cifFactor, 4);
+                if ($costRecord === null) {
+                    $costStr = (string) ($product->current_cost ?? '0');
+                    $cifPercentageStr = (string) ($product->cif_percentage ?? '0');
+                    $cifRatio = $this->calculator->div($cifPercentageStr, '100', 4);
+                    $cifFactor = $this->calculator->add('1', $cifRatio, 4);
+                    $newPrice = $this->calculator->mul($costStr, $cifFactor, 4);
 
-                $product->updateQuietly(['current_price' => $newPrice]);
+                    $product->updateQuietly(['current_price' => $newPrice]);
 
-                foreach ($product->variants()->with('packageRawMaterial')->get() as $variant) {
-                    $packageCostStr = (string) ($variant->packageRawMaterial?->current_price ?? '0');
-                    $presentationStr = (string) ($variant->presentation_value ?? '1');
+                    foreach ($product->variants()->with('packageRawMaterial')->get() as $variant) {
+                        $packageCostStr = (string) ($variant->packageRawMaterial?->current_price ?? '0');
+                        $presentationStr = (string) ($variant->presentation_value ?? '1');
 
-                    $costTimesPresentation = $this->calculator->mul($costStr, $presentationStr, 4);
-                    $newVariantCost = $this->calculator->add($costTimesPresentation, $packageCostStr, 4);
-                    $newVariantPrice = $this->calculator->mul($newVariantCost, $cifFactor, 4);
+                        $costTimesPresentation = $this->calculator->mul($costStr, $presentationStr, 4);
+                        $newVariantCost = $this->calculator->add($costTimesPresentation, $packageCostStr, 4);
+                        $newVariantPrice = $this->calculator->mul($newVariantCost, $cifFactor, 4);
 
-                    $variant->updateQuietly([
-                        'current_cost' => $newVariantCost,
-                        'current_price' => $newVariantPrice,
-                    ]);
+                        $variant->updateQuietly([
+                            'current_cost' => $newVariantCost,
+                            'current_price' => $newVariantPrice,
+                        ]);
+                    }
                 }
             }
-        }
+        });
 
         return redirect()->route('products.index')->with('success', __('Producto actualizado exitosamente.'));
+    }
+
+    private function hasDecimalChanged(string|int|float|null $current, mixed $new): bool
+    {
+        if ($current === null && $new === null) {
+            return false;
+        }
+
+        if ($current === null || $new === null) {
+            return true;
+        }
+
+        return $this->calculator->cmp((string) $current, (string) $new) !== 0;
     }
 
     public function destroy(Product $product): RedirectResponse

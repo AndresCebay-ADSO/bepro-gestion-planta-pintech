@@ -143,7 +143,7 @@ export function MovementFormBase({
                                         selectedBatch?.unit_price !== null &&
                                         selectedBatch?.unit_price !== ''
                                             ? String(selectedBatch.unit_price)
-                                            : isNew && prev.batch_id !== ''
+                                            : prev.batch_id !== targetBatchId
                                               ? ''
                                               : prev.cost_price,
                                 }));
