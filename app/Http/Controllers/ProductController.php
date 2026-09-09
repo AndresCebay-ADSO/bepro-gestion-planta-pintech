@@ -91,8 +91,9 @@ class ProductController extends Controller
 
         $validated = $request->validated();
 
-        if (array_key_exists('current_price', $validated)) {
-            $this->authorize('create', PriceList::class);
+        if (! Gate::allows('create', PriceList::class)) {
+            $validated['cif_percentage'] = '0';
+            $validated['price_threshold'] = '0';
         }
 
         Product::create($validated);
@@ -158,6 +159,7 @@ class ProductController extends Controller
 
         return Inertia::render('Products/Edit', [
             'product' => $product,
+            'hasActiveFormula' => $product->activeFormula()->exists(),
             'categories' => ProductCategory::query()->select('id', 'name')->orderBy('name')->get(),
             'units' => UnitOfMeasure::query()->select('id', 'name', 'symbol')->orderBy('name')->get(),
             'can' => [
@@ -171,19 +173,19 @@ class ProductController extends Controller
         $this->authorize('update', $product);
 
         $validated = $request->validated();
-        $priceWasManuallyChanged = array_key_exists('current_price', $validated)
-            && (string) ($product->current_price ?? '') !== (string) ($validated['current_price'] ?? '');
 
-        if ($priceWasManuallyChanged) {
-            $this->authorize('create', PriceList::class);
+        $cifChanged = array_key_exists('cif_percentage', $validated)
+            && (string) ($product->cif_percentage ?? '') !== (string) ($validated['cif_percentage'] ?? '');
+        $thresholdChanged = array_key_exists('price_threshold', $validated)
+            && (string) ($product->price_threshold ?? '') !== (string) ($validated['price_threshold'] ?? '');
+
+        if (($cifChanged || $thresholdChanged) && ! Gate::allows('create', PriceList::class)) {
+            abort(403, __('No tienes autorización para modificar los márgenes CIF o umbrales de precio.'));
         }
 
         $product->update($validated);
 
-        if (
-            ($product->wasChanged('cif_percentage') || $product->wasChanged('price_threshold') || $product->wasChanged('current_cost'))
-            && ! $priceWasManuallyChanged
-        ) {
+        if ($product->wasChanged('cif_percentage') || $product->wasChanged('price_threshold')) {
             $costRecord = $this->productionCostRecalculationService->recalculateForProduct(
                 (int) $product->id,
                 forcePriceRefresh: true

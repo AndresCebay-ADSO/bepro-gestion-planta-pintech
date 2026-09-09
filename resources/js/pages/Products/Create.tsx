@@ -29,9 +29,7 @@ type ProductForm = {
     description: string;
     category_id: string;
     unit_of_measure_id: string;
-    current_cost: string;
     cif_percentage: string;
-    current_price: string;
     price_threshold: string;
     quality_viscosity_lower: string;
     quality_viscosity_upper: string;
@@ -50,9 +48,7 @@ export default function ProductsCreate({ categories, units, can }: Props) {
         description: '',
         category_id: '',
         unit_of_measure_id: '',
-        current_cost: '',
         cif_percentage: '0',
-        current_price: '',
         price_threshold: '0',
         quality_viscosity_lower: '',
         quality_viscosity_upper: '',
@@ -463,45 +459,33 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                         type="number"
                                         step="0.0001"
                                         min="0"
-                                        value={data.current_cost}
-                                        onChange={(e) =>
-                                            setData(
-                                                'current_cost',
-                                                e.target.value,
-                                            )
-                                        }
+                                        value=""
+                                        readOnly
+                                        className="bg-muted/50 cursor-not-allowed"
                                         placeholder="0.0000"
                                     />
-                                    {errors.current_cost && (
-                                        <p className="text-sm text-destructive">
-                                            {errors.current_cost}
-                                        </p>
-                                    )}
+                                    <p className="text-xs text-muted-foreground">
+                                        Se calculará automáticamente cuando se registre la fórmula de producción.
+                                    </p>
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label htmlFor="current_price">
-                                        Precio de venta
+                                        Precio Interno
                                     </Label>
                                     <Input
                                         id="current_price"
                                         type="number"
                                         step="0.0001"
                                         min="0"
-                                        value={data.current_price}
-                                        onChange={(e) =>
-                                            setData(
-                                                'current_price',
-                                                e.target.value,
-                                            )
-                                        }
+                                        value=""
+                                        readOnly
+                                        className="bg-muted/50 cursor-not-allowed"
                                         placeholder="0.0000"
                                     />
-                                    {errors.current_price && (
-                                        <p className="text-sm text-destructive">
-                                            {errors.current_price}
-                                        </p>
-                                    )}
+                                    <p className="text-xs text-muted-foreground">
+                                        Se calculará automáticamente: Costo actual × (1 + CIF %).
+                                    </p>
                                 </div>
 
                                 <div className="space-y-2">

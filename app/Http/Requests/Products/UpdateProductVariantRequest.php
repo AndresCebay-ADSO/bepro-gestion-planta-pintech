@@ -30,8 +30,6 @@ class UpdateProductVariantRequest extends FormRequest
             ],
             'presentation_value' => ['nullable', 'numeric', 'gt:0', 'decimal:0,4'],
             'presentation_label' => ['nullable', 'string', 'max:50'],
-            'current_cost' => ['nullable', 'numeric', 'min:0', 'decimal:0,4'],
-            'current_price' => ['nullable', 'numeric', 'min:0', 'decimal:0,4'],
             'package_raw_material_id' => [
                 'nullable',
                 'integer',
@@ -42,5 +40,14 @@ class UpdateProductVariantRequest extends FormRequest
             ],
             'is_active' => ['sometimes', 'boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        foreach (['presentation_value', 'package_raw_material_id'] as $key) {
+            if ($this->has($key) && ($this->input($key) === '' || $this->input($key) === null)) {
+                $this->merge([$key => null]);
+            }
+        }
     }
 }
