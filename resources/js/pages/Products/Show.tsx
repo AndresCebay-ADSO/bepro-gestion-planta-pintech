@@ -172,6 +172,9 @@ export default function ProductsShow({
     const [editingVariantId, setEditingVariantId] = useState<number | null>(
         null,
     );
+    const editingVariant = product.variants?.find(
+        (v) => v.id === editingVariantId,
+    );
     const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
 
     const formatQualityRange = (
@@ -217,8 +220,6 @@ export default function ProductsShow({
         unit_of_measure_id: '',
         presentation_value: '',
         presentation_label: '',
-        current_cost: '',
-        current_price: '',
         package_raw_material_id: '',
         is_active: true,
     });
@@ -266,11 +267,6 @@ export default function ProductsShow({
                     ? String(variant.presentation_value)
                     : '',
             presentation_label: variant.presentation_label ?? '',
-            current_cost:
-                variant.current_cost != null
-                    ? String(variant.current_cost)
-                    : '',
-            current_price: variant.current_price ?? '',
             package_raw_material_id:
                 variant.package_raw_material_id != null
                     ? String(variant.package_raw_material_id)
@@ -398,7 +394,7 @@ export default function ProductsShow({
                     </div>
                     <div>
                         <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                            Precio de Venta
+                            Precio Interno
                         </p>
                         <p className="text-sm font-medium text-foreground">
                             {product.current_price ? (
@@ -1093,36 +1089,48 @@ export default function ProductsShow({
                                                     type="number"
                                                     step="0.0001"
                                                     value={
-                                                        form.data.current_cost
+                                                        editingVariant?.current_cost !=
+                                                        null
+                                                            ? String(
+                                                                  editingVariant.current_cost,
+                                                              )
+                                                            : ''
                                                     }
-                                                    onChange={(e) =>
-                                                        form.setData(
-                                                            'current_cost',
-                                                            e.target.value,
-                                                        )
-                                                    }
+                                                    readOnly
+                                                    className="bg-muted/50 cursor-not-allowed"
                                                     placeholder="0.00"
                                                 />
+                                                <p className="text-xs text-muted-foreground">
+                                                    {activeFormula
+                                                        ? 'Calculado por la fórmula activa y el envase.'
+                                                        : 'Se calculará al registrar la fórmula de producción.'}
+                                                </p>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="current_price">
-                                                    Precio Venta
+                                                    Precio Interno
                                                 </Label>
                                                 <Input
                                                     id="current_price"
                                                     type="number"
                                                     step="0.0001"
                                                     value={
-                                                        form.data.current_price
+                                                        editingVariant?.current_price !=
+                                                        null
+                                                            ? String(
+                                                                  editingVariant.current_price,
+                                                              )
+                                                            : ''
                                                     }
-                                                    onChange={(e) =>
-                                                        form.setData(
-                                                            'current_price',
-                                                            e.target.value,
-                                                        )
-                                                    }
+                                                    readOnly
+                                                    className="bg-muted/50 cursor-not-allowed"
                                                     placeholder="0.00"
                                                 />
+                                                <p className="text-xs text-muted-foreground">
+                                                    {activeFormula
+                                                        ? 'Calculado con el factor CIF al guardar.'
+                                                        : 'Se calculará al registrar la fórmula de producción.'}
+                                                </p>
                                             </div>
                                         </div>
 
@@ -1147,7 +1155,7 @@ export default function ProductsShow({
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {rawMaterials?.map(
-                                                        (rm: any) => (
+                                                        (rm) => (
                                                             <SelectItem
                                                                 key={rm.id}
                                                                 value={String(
@@ -1208,7 +1216,7 @@ export default function ProductsShow({
                                     Presentación
                                 </th>
                                 <th className="p-4 text-left font-medium">
-                                    Precio
+                                    Precio Interno
                                 </th>
                                 <th className="p-4 text-left font-medium">
                                     Estado

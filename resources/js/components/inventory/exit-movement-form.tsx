@@ -3,24 +3,13 @@ import type { FormEvent } from 'react';
 import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
 import { getLocalDateString } from '@/lib/date-time-helpers';
+import type { InventoryOption } from '@/types';
 import { MovementFormBase } from './movement-form-base';
 
-type Option = {
-    id: number;
-    name?: string;
-    code?: string;
-    lot_number?: string;
-    city?: string;
-    type?: string;
-    raw_material_id?: number | string;
-    remaining_quantity?: string | number;
-    status?: string;
-};
-
 type Props = {
-    rawMaterials: Option[];
-    batches: Option[];
-    warehouses: Option[];
+    rawMaterials: InventoryOption[];
+    batches: InventoryOption[];
+    warehouses: InventoryOption[];
     defaultWarehouseId?: number;
     onSuccess?: () => void;
 };

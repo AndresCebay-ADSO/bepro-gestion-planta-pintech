@@ -49,9 +49,7 @@ class StoreProductRequest extends FormRequest
                 'integer',
                 Rule::exists('unit_of_measures', 'id')->whereNull('deleted_at'),
             ],
-            'current_cost' => ['nullable', 'numeric', 'min:0', 'decimal:0,4'],
             'cif_percentage' => ['bail', 'required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
-            'current_price' => ['nullable', 'numeric', 'min:0', 'decimal:0,4'],
             'price_threshold' => ['bail', 'required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
             'quality_viscosity_lower' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
             'quality_viscosity_upper' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
@@ -65,7 +63,7 @@ class StoreProductRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->mergeEmptyQualityAndDescription();
+        $this->normalizeEmptyInputs();
 
         if (! $this->filled('brand') || $this->string('brand')->trim()->isEmpty()) {
             $this->merge(['brand' => 'BEPRO']);
@@ -100,7 +98,7 @@ class StoreProductRequest extends FormRequest
             'unit_of_measure_id' => 'unidad de medida',
             'current_cost' => 'costo actual',
             'cif_percentage' => 'porcentaje CIF',
-            'current_price' => 'precio actual',
+            'current_price' => 'precio interno',
             'price_threshold' => 'umbral de precio',
             'quality_viscosity_lower' => 'viscosidad mínima',
             'quality_viscosity_upper' => 'viscosidad máxima',
@@ -112,7 +110,7 @@ class StoreProductRequest extends FormRequest
         ];
     }
 
-    protected function mergeEmptyQualityAndDescription(): void
+    protected function normalizeEmptyInputs(): void
     {
         $keys = [
             'description',

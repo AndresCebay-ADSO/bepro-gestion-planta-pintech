@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\ProductionCostRecalculationService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 
 class ProductVariantController extends Controller
 {
@@ -24,8 +25,10 @@ class ProductVariantController extends Controller
         $validated = $request->validated();
         $validated['product_id'] = $product->id;
 
-        ProductVariant::create($validated);
-        $this->productionCostRecalculationService->recalculateForProduct((int) $product->id);
+        DB::transaction(function () use ($validated, $product): void {
+            ProductVariant::create($validated);
+            $this->productionCostRecalculationService->recalculateForProduct((int) $product->id);
+        });
 
         return redirect()
             ->route('products.show', $product)
@@ -38,8 +41,12 @@ class ProductVariantController extends Controller
 
         abort_if((int) $variant->product_id !== (int) $product->id, 404);
 
-        $variant->update($request->validated());
-        $this->productionCostRecalculationService->recalculateForProduct((int) $product->id);
+        $validated = $request->validated();
+
+        DB::transaction(function () use ($variant, $validated, $product): void {
+            $variant->update($validated);
+            $this->productionCostRecalculationService->recalculateForProduct((int) $product->id);
+        });
 
         return redirect()
             ->route('products.show', $product)
@@ -52,7 +59,9 @@ class ProductVariantController extends Controller
 
         abort_if((int) $variant->product_id !== (int) $product->id, 404);
 
-        $variant->delete();
+        DB::transaction(function () use ($variant): void {
+            $variant->delete();
+        });
 
         return redirect()
             ->route('products.show', $product)

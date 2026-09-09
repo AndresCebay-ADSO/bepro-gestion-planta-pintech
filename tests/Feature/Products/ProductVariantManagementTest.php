@@ -23,10 +23,10 @@ function setupVariantManagementDependencies(): array
     $user = User::factory()->create();
     $user->assignRole($role);
 
-    $category = ProductCategory::create(['name' => 'Arquitectura']);
-    $uom = UnitOfMeasure::create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
+    $category = ProductCategory::factory()->create(['name' => 'Arquitectura']);
+    $uom = UnitOfMeasure::factory()->create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
 
-    $product = Product::create([
+    $product = Product::factory()->create([
         'code' => 'VINIL-BASE',
         'name' => 'Vinil Base',
         'category_id' => $category->id,
@@ -47,8 +47,6 @@ test('admin can create a product variant', function () {
             'unit_of_measure_id' => $uom->id,
             'presentation_value' => 1,
             'presentation_label' => '1 gal',
-            'current_cost' => 100,
-            'current_price' => 140,
             'is_active' => true,
         ])
         ->assertRedirect(route('products.show', $product));
@@ -63,11 +61,14 @@ test('admin can create a product variant', function () {
 test('admin can update a product variant', function () {
     [$user, $product, $uom] = setupVariantManagementDependencies();
 
-    $variant = ProductVariant::create([
+    $variant = ProductVariant::factory()->create([
         'product_id' => $product->id,
         'code' => '12345678',
         'name' => 'Vinil Base - 1 Galón',
         'unit_of_measure_id' => $uom->id,
+        'presentation_value' => 1,
+        'presentation_label' => '1 gal',
+        'is_active' => true,
     ]);
 
     actingAs($user)
@@ -77,8 +78,6 @@ test('admin can update a product variant', function () {
             'unit_of_measure_id' => $uom->id,
             'presentation_value' => 1,
             'presentation_label' => '1 gal',
-            'current_cost' => 105,
-            'current_price' => 145,
             'is_active' => true,
         ])
         ->assertRedirect(route('products.show', $product));
@@ -91,11 +90,14 @@ test('admin can update a product variant', function () {
 test('admin can delete a product variant', function () {
     [$user, $product, $uom] = setupVariantManagementDependencies();
 
-    $variant = ProductVariant::create([
+    $variant = ProductVariant::factory()->create([
         'product_id' => $product->id,
         'code' => '12345678',
         'name' => 'Vinil Base - 1 Galón',
         'unit_of_measure_id' => $uom->id,
+        'presentation_value' => 1,
+        'presentation_label' => '1 gal',
+        'is_active' => true,
     ]);
 
     actingAs($user)

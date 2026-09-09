@@ -43,6 +43,7 @@ type Props = {
     categories: Option[];
     units: Option[];
     can: { managePrices: boolean };
+    hasActiveFormula?: boolean;
 };
 
 type ProductForm = {
@@ -52,9 +53,7 @@ type ProductForm = {
     description: string;
     category_id: string;
     unit_of_measure_id: string;
-    current_cost: string;
     cif_percentage: string;
-    current_price: string;
     price_threshold: string;
     quality_viscosity_lower: string;
     quality_viscosity_upper: string;
@@ -70,6 +69,7 @@ export default function ProductsEdit({
     categories,
     units,
     can,
+    hasActiveFormula,
 }: Props) {
     const toInput = (value: number | string | null | undefined): string =>
         value !== null && value !== undefined && value !== ''
@@ -85,9 +85,7 @@ export default function ProductsEdit({
         unit_of_measure_id: product.unit_of_measure_id
             ? String(product.unit_of_measure_id)
             : '',
-        current_cost: product.current_cost ?? '',
         cif_percentage: product.cif_percentage ?? '0',
-        current_price: product.current_price ?? '',
         price_threshold: product.price_threshold ?? '0',
         quality_viscosity_lower: toInput(product.quality_viscosity_lower),
         quality_viscosity_upper: toInput(product.quality_viscosity_upper),
@@ -489,33 +487,33 @@ export default function ProductsEdit({
                                         type="number"
                                         step="0.0001"
                                         min="0"
-                                        value={data.current_cost}
-                                        onChange={(e) =>
-                                            setData(
-                                                'current_cost',
-                                                e.target.value,
-                                            )
-                                        }
+                                        value={toInput(product.current_cost)}
+                                        readOnly
+                                        className="bg-muted/50 cursor-not-allowed"
                                     />
+                                    <p className="text-xs text-muted-foreground">
+                                        {hasActiveFormula
+                                            ? 'Calculado automáticamente por la fórmula activa.'
+                                            : 'Se calculará automáticamente cuando se registre la fórmula de producción.'}
+                                    </p>
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label htmlFor="current_price">
-                                        Precio de venta
+                                        Precio Interno
                                     </Label>
                                     <Input
                                         id="current_price"
                                         type="number"
                                         step="0.0001"
                                         min="0"
-                                        value={data.current_price}
-                                        onChange={(e) =>
-                                            setData(
-                                                'current_price',
-                                                e.target.value,
-                                            )
-                                        }
+                                        value={toInput(product.current_price)}
+                                        readOnly
+                                        className="bg-muted/50 cursor-not-allowed"
                                     />
+                                    <p className="text-xs text-muted-foreground">
+                                        Calculado automáticamente: Costo actual × (1 + CIF %).
+                                    </p>
                                 </div>
 
                                 <div className="space-y-2">
