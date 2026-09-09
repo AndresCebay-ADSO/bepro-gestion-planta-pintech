@@ -1,5 +1,6 @@
 import type { useForm } from '@inertiajs/react';
 import type { ChangeEvent, ReactNode } from 'react';
+import { useMemo } from 'react';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,25 +13,13 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatNumber } from '@/lib/formatters';
-
-type Option = {
-    id: number;
-    name?: string;
-    code?: string;
-    lot_number?: string;
-    city?: string;
-    type?: string;
-    raw_material_id?: number | string;
-    warehouse_id?: number | string;
-    remaining_quantity?: string | number;
-    status?: string;
-};
+import type { InventoryOption } from '@/types';
 
 type Props = {
     form: ReturnType<typeof useForm<any>>;
-    rawMaterials: Option[];
-    batches: Option[];
-    warehouses: Option[];
+    rawMaterials: InventoryOption[];
+    batches: InventoryOption[];
+    warehouses: InventoryOption[];
     type: 'entry' | 'exit';
     children?: ReactNode;
 };
@@ -43,14 +32,18 @@ export function MovementFormBase({
     type,
     children,
 }: Props) {
-    const filteredBatches = form.data.raw_material_id
-        ? batches.filter(
-              (b) =>
-                  Number(b.raw_material_id) ===
-                      Number(form.data.raw_material_id) &&
-                  Number(b.warehouse_id) === Number(form.data.warehouse_id),
-          )
-        : [];
+    const filteredBatches = useMemo(() => {
+        if (!form.data.raw_material_id) {
+            return [];
+        }
+
+        return batches.filter(
+            (b) =>
+                Number(b.raw_material_id) ===
+                    Number(form.data.raw_material_id) &&
+                Number(b.warehouse_id) === Number(form.data.warehouse_id),
+        );
+    }, [batches, form.data.raw_material_id, form.data.warehouse_id]);
 
     return (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -59,8 +52,15 @@ export function MovementFormBase({
                 <Select
                     value={form.data.warehouse_id}
                     onValueChange={(value) => {
-                        form.setData('warehouse_id', value);
-                        form.setData('batch_id', '');
+                        form.setData((prev: any) => ({
+                            ...prev,
+                            warehouse_id: value,
+                            batch_id: '',
+                            cost_price:
+                                type === 'entry' && prev.batch_id !== ''
+                                    ? ''
+                                    : prev.cost_price,
+                        }));
                     }}
                 >
                     <SelectTrigger id="warehouse_id">
@@ -91,8 +91,15 @@ export function MovementFormBase({
                     }))}
                     value={form.data.raw_material_id}
                     onChange={(value) => {
-                        form.setData('raw_material_id', String(value));
-                        form.setData('batch_id', '');
+                        form.setData((prev: any) => ({
+                            ...prev,
+                            raw_material_id: String(value),
+                            batch_id: '',
+                            cost_price:
+                                type === 'entry' && prev.batch_id !== ''
+                                    ? ''
+                                    : prev.cost_price,
+                        }));
                     }}
                     placeholder="Busca o selecciona materia prima..."
                     emptyText="No se encontraron materias primas"
@@ -111,10 +118,39 @@ export function MovementFormBase({
                         Lote {type === 'entry' ? '(Opcional)' : ''}
                     </Label>
                     <Select
-                        value={form.data.batch_id}
-                        onValueChange={(value) =>
-                            form.setData('batch_id', value)
+                        value={
+                            form.data.batch_id === '' && type === 'entry'
+                                ? '__new__'
+                                : form.data.batch_id
                         }
+                        onValueChange={(value) => {
+                            const isNew = value === '__new__' || value === '';
+                            const targetBatchId = isNew ? '' : value;
+
+                            if (type === 'entry') {
+                                const selectedBatch = !isNew
+                                    ? filteredBatches.find(
+                                          (b) => String(b.id) === targetBatchId,
+                                      )
+                                    : undefined;
+
+                                form.setData((prev: any) => ({
+                                    ...prev,
+                                    batch_id: targetBatchId,
+                                    cost_price:
+                                        selectedBatch?.unit_price !==
+                                            undefined &&
+                                        selectedBatch?.unit_price !== null &&
+                                        selectedBatch?.unit_price !== ''
+                                            ? String(selectedBatch.unit_price)
+                                            : isNew && prev.batch_id !== ''
+                                              ? ''
+                                              : prev.cost_price,
+                                }));
+                            } else {
+                                form.setData('batch_id', targetBatchId);
+                            }
+                        }}
                         disabled={!form.data.raw_material_id}
                     >
                         <SelectTrigger id="batch_id">
@@ -130,6 +166,11 @@ export function MovementFormBase({
                             />
                         </SelectTrigger>
                         <SelectContent>
+                            {type === 'entry' && (
+                                <SelectItem value="__new__">
+                                    + Registrar como nuevo lote
+                                </SelectItem>
+                            )}
                             {filteredBatches.map((b) => (
                                 <SelectItem key={b.id} value={String(b.id)}>
                                     {b.lot_number ?? `Auto #${b.id}`} (Disp:{' '}

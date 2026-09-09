@@ -66,7 +66,7 @@ class InventoryMovementController extends Controller
                     fn ($query) => $query->whereRaw('1 = 0')
                 )
                 ->where('remaining_quantity', '>', 0)
-                ->select('id', 'raw_material_id', 'warehouse_id', 'lot_number', 'remaining_quantity')
+                ->select('id', 'raw_material_id', 'warehouse_id', 'lot_number', 'remaining_quantity', 'unit_price')
                 ->orderByDesc('id')
                 ->get()),
             'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->get()),
@@ -128,7 +128,7 @@ class InventoryMovementController extends Controller
                         $query->orWhere('id', $inventoryMovement->batch_id);
                     }
                 })
-                ->select('id', 'raw_material_id', 'warehouse_id', 'lot_number', 'remaining_quantity')
+                ->select('id', 'raw_material_id', 'warehouse_id', 'lot_number', 'remaining_quantity', 'unit_price')
                 ->orderByDesc('id')
                 ->get(),
         ]);

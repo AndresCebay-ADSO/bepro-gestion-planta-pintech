@@ -21,19 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useFilters } from '@/hooks/use-filters';
 
 import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
-import type { PaginationLink } from '@/types/ui';
-
-type Option = {
-    id: number;
-    name?: string;
-    code?: string;
-    lot_number?: string;
-    city?: string;
-    type?: string;
-    raw_material_id?: number | string;
-    remaining_quantity?: string | number;
-    status?: string;
-};
+import type { InventoryOption, PaginationLink } from '@/types';
 
 type Props = {
     movements: {
@@ -47,9 +35,9 @@ type Props = {
         }>;
         links: PaginationLink[];
     };
-    rawMaterials?: Option[];
-    batches?: Option[];
-    warehouses?: Option[];
+    rawMaterials?: InventoryOption[];
+    batches?: InventoryOption[];
+    warehouses?: InventoryOption[];
     warehouseOptions: { value: string; label: string }[];
     typeOptions: { value: string; label: string }[];
     can: { create: boolean };
