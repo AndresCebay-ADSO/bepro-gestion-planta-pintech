@@ -7,6 +7,7 @@ use App\Services\SignatureOptimizerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -34,16 +35,26 @@ test('optimizer resizes oversized signature image', function () {
         true
     );
 
-    $optimized = $service->optimize($file);
+    $optimizedPath = null;
+    try {
+        $optimized = $service->optimize($file);
 
-    $optimizedPath = $optimized->getRealPath();
-    $optimizedImage = imagecreatefrompng($optimizedPath);
-    $width = imagesx($optimizedImage);
-    $height = imagesy($optimizedImage);
-    imagedestroy($optimizedImage);
+        $optimizedPath = $optimized->getRealPath();
+        $optimizedImage = imagecreatefrompng($optimizedPath);
+        $width = imagesx($optimizedImage);
+        $height = imagesy($optimizedImage);
+        imagedestroy($optimizedImage);
 
-    expect($width)->toBeLessThanOrEqual(400)
-        ->and($height)->toBeLessThanOrEqual(200);
+        expect($width)->toBeLessThanOrEqual(400)
+            ->and($height)->toBeLessThanOrEqual(200);
+    } finally {
+        if (file_exists($tempPath)) {
+            @unlink($tempPath);
+        }
+        if ($optimizedPath !== null && file_exists($optimizedPath)) {
+            @unlink($optimizedPath);
+        }
+    }
 });
 
 test('optimizer does not resize already small signature', function () {
@@ -68,9 +79,15 @@ test('optimizer does not resize already small signature', function () {
         true
     );
 
-    $optimized = $service->optimize($file);
+    try {
+        $optimized = $service->optimize($file);
 
-    expect($optimized)->toBe($file);
+        expect($optimized)->toBe($file);
+    } finally {
+        if (file_exists($tempPath)) {
+            @unlink($tempPath);
+        }
+    }
 });
 
 test('optimized signature does not cause memory error on certificate generation', function () {
@@ -114,4 +131,121 @@ test('optimized signature does not cause memory error on certificate generation'
 
     expect($info[0])->toBeLessThanOrEqual(400)
         ->and($info[1])->toBeLessThanOrEqual(200);
+});
+
+test('optimizeAndStore stores optimized signature and returns public path', function () {
+    Storage::fake('public');
+
+    $service = app(SignatureOptimizerService::class);
+    $file = UploadedFile::fake()->image('my_signature.png', 800, 400);
+
+    $path = $service->optimizeAndStore($file);
+
+    expect($path)->toBeString()->toStartWith('signatures/');
+    Storage::disk('public')->assertExists($path);
+});
+
+test('optimizeAndStore throws ValidationException with signature message on failure', function () {
+    Storage::fake('public');
+
+    $service = app(SignatureOptimizerService::class);
+    $tempFile = tempnam(sys_get_temp_dir(), 'corrupt_');
+    file_put_contents($tempFile, 'not-a-valid-image');
+
+    $file = new UploadedFile($tempFile, 'corrupt.png', 'image/png', null, true);
+
+    try {
+        $service->optimizeAndStore($file);
+        test()->fail('Expected ValidationException was not thrown.');
+    } catch (ValidationException $e) {
+        expect($e->errors())->toHaveKey('signature');
+        expect($e->errors()['signature'][0])->toContain('No se pudo procesar la imagen de firma');
+    } finally {
+        if (file_exists($tempFile)) {
+            @unlink($tempFile);
+        }
+    }
+});
+
+test('optimizeAndStore converts any Throwable into ValidationException', function () {
+    Storage::fake('public');
+
+    $service = new class extends SignatureOptimizerService
+    {
+        public function optimize(UploadedFile $file): UploadedFile
+        {
+            throw new Exception('Non-runtime unexpected failure');
+        }
+    };
+
+    $file = UploadedFile::fake()->image('signature.png', 200, 100);
+
+    try {
+        $service->optimizeAndStore($file);
+        test()->fail('Expected ValidationException was not thrown.');
+    } catch (ValidationException $e) {
+        expect($e->errors())->toHaveKey('signature');
+        expect($e->errors()['signature'][0])->toContain('No se pudo procesar la imagen de firma');
+    }
+});
+
+test('optimize converts small jpeg to png format and returns png path', function () {
+    Storage::fake('public');
+
+    $service = app(SignatureOptimizerService::class);
+
+    // Crear JPEG pequeño (200x100)
+    $image = imagecreatetruecolor(200, 100);
+    $white = imagecolorallocate($image, 255, 255, 255);
+    imagefill($image, 0, 0, $white);
+
+    $tempPath = tempnam(sys_get_temp_dir(), 'test_jpg_');
+    imagejpeg($image, $tempPath);
+    imagedestroy($image);
+
+    $file = new UploadedFile(
+        $tempPath,
+        'firma.jpg',
+        'image/jpeg',
+        null,
+        true
+    );
+
+    try {
+        $path = $service->optimizeAndStore($file);
+
+        expect($path)->toEndWith('.png');
+        Storage::disk('public')->assertExists($path);
+    } finally {
+        if (file_exists($tempPath)) {
+            @unlink($tempPath);
+        }
+    }
+});
+
+test('optimizeAndStore cleans up temporary file in sys_get_temp_dir after storage', function () {
+    Storage::fake('public');
+
+    $service = app(SignatureOptimizerService::class);
+    $file = UploadedFile::fake()->image('big_signature.png', 800, 400);
+
+    // Identificar el archivo temporal capturando el UploadedFile optimizado
+    $tempFileTracked = null;
+    $serviceReflected = new class extends SignatureOptimizerService
+    {
+        public ?string $capturedTempPath = null;
+
+        public function optimize(UploadedFile $file): UploadedFile
+        {
+            $optimized = parent::optimize($file);
+            $this->capturedTempPath = $optimized->getRealPath();
+
+            return $optimized;
+        }
+    };
+
+    $serviceReflected->optimizeAndStore($file);
+
+    expect($serviceReflected->capturedTempPath)->not->toBeNull();
+    expect(file_exists($serviceReflected->capturedTempPath))->toBeFalse();
 });

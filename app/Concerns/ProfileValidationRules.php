@@ -3,10 +3,23 @@
 namespace App\Concerns;
 
 use App\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 trait ProfileValidationRules
 {
+    /**
+     * Prepare the data for validation when used within a FormRequest.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (method_exists($this, 'has') && method_exists($this, 'merge') && $this->has('email') && is_string($this->input('email'))) {
+            $this->merge([
+                'email' => Str::lower(trim((string) $this->input('email'))),
+            ]);
+        }
+    }
+
     /**
      * Get the validation rules used to validate user profiles.
      *
@@ -19,7 +32,7 @@ trait ProfileValidationRules
             'email' => $this->emailRules($userId),
             'phone' => ['nullable', 'string', 'max:15'],
             'job_title' => ['nullable', 'string', 'max:255'],
-            'signature' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:1024'],
+            'signature' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:1024', 'dimensions:max_width=4000,max_height=4000'],
             'remove_signature' => ['nullable', 'boolean'],
         ];
     }
@@ -44,6 +57,7 @@ trait ProfileValidationRules
         return [
             'required',
             'string',
+            'lowercase',
             'email',
             'max:255',
             $userId === null
