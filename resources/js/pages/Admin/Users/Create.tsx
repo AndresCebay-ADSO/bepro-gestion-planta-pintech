@@ -1,15 +1,21 @@
-import { useForm, Link } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 import type { FC, FormEvent } from 'react';
-import { route } from 'ziggy-js';
 
+import UserController from '@/actions/App/Http/Controllers/UserController';
+import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-
-interface Role {
-    id: number;
-    name: string;
-}
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import UserIdentityFields from '@/components/users/user-identity-fields';
+import type { Role } from '@/types';
 
 interface Props {
     roles: Role[];
@@ -21,6 +27,8 @@ const UsersCreate: FC<Props> = ({ roles }) => {
         email: '',
         job_title: '',
         phone: '',
+        signature: null as File | null,
+        remove_signature: false,
         password: '',
         password_confirmation: '',
         role: roles.find((r) => r.name === 'produccion')?.name || 'produccion',
@@ -29,8 +37,9 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        post(route('users.store'), {
-            onSuccess: () => reset('password', 'password_confirmation'),
+        post(UserController.store.url(), {
+            forceFormData: true,
+            onSuccess: () => reset('password', 'password_confirmation', 'signature'),
         });
     };
 
@@ -40,202 +49,131 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                 {/* Header */}
                 <div className="mb-8">
                     <Link
-                        href={route('users.index')}
-                        className="mb-4 inline-block text-primary hover:text-primary/80"
+                        href={UserController.index.url()}
+                        className="mb-4 inline-block text-sm text-primary hover:text-primary/80"
                     >
                         ← Volver a Gestión de Usuarios
                     </Link>
-                    <h1 className="mb-2 text-4xl font-bold text-foreground">
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">
                         Crear Nuevo Usuario
                     </h1>
-                    <p className="text-muted-foreground">
-                        Agrega un nuevo usuario al sistema
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Agrega un nuevo usuario al sistema con sus credenciales y permisos
                     </p>
                 </div>
 
                 {/* Form */}
                 <form
                     onSubmit={handleSubmit}
-                    className="space-y-6 rounded-lg border border-border bg-card p-8 shadow-sm"
+                    className="space-y-6 rounded-xl border border-border bg-card p-6 shadow-xs md:p-8"
                 >
-                    {/* Name */}
-                    <div>
-                        <label className="mb-2 block text-sm font-semibold text-foreground">
-                            Nombre Completo
-                        </label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            placeholder="Ej: Juan Pérez"
-                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
-                        />
-                        {errors.name && (
-                            <p className="mt-1 text-sm text-destructive">
-                                {errors.name}
-                            </p>
-                        )}
+                    {/* Identidad y Firma Compartida */}
+                    <UserIdentityFields
+                        data={data}
+                        setData={setData}
+                        errors={errors}
+                        disabled={processing}
+                    />
+
+                    <div className="border-t border-border pt-6 space-y-6">
+                        {/* Rol */}
+                        <div className="grid gap-2">
+                            <Label htmlFor="role">
+                                Rol <span className="text-destructive">*</span>
+                            </Label>
+                            <Select
+                                value={data.role}
+                                onValueChange={(val) => setData('role', val)}
+                                disabled={processing}
+                            >
+                                <SelectTrigger id="role" className="w-full">
+                                    <SelectValue placeholder="Seleccionar rol..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {roles.map((role) => (
+                                        <SelectItem key={role.id} value={role.name}>
+                                            {role.name.charAt(0).toUpperCase() +
+                                                role.name.slice(1)}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <InputError message={errors.role} />
+                        </div>
+
+                        {/* Estado Activo */}
+                        <div className="flex items-center gap-3">
+                            <Checkbox
+                                id="is_active"
+                                checked={data.is_active}
+                                onCheckedChange={(checked) =>
+                                    setData('is_active', checked === true)
+                                }
+                                disabled={processing}
+                            />
+                            <Label htmlFor="is_active" className="cursor-pointer">
+                                Usuario activo
+                            </Label>
+                        </div>
                     </div>
 
-                    {/* Email */}
-                    <div>
-                        <label className="mb-2 block text-sm font-semibold text-foreground">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            name="email"
-                            value={data.email}
-                            onChange={(e) => setData('email', e.target.value)}
-                            placeholder="juan@pintech.com"
-                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
-                        />
-                        {errors.email && (
-                            <p className="mt-1 text-sm text-destructive">
-                                {errors.email}
-                            </p>
-                        )}
+                    <div className="border-t border-border pt-6 space-y-6">
+                        {/* Contraseña */}
+                        <div className="grid gap-2">
+                            <Label htmlFor="password">
+                                Contraseña <span className="text-destructive">*</span>
+                            </Label>
+                            <PasswordInput
+                                id="password"
+                                name="password"
+                                value={data.password}
+                                onChange={(e) =>
+                                    setData('password', e.target.value)
+                                }
+                                placeholder="Mínimo 8 caracteres"
+                                disabled={processing}
+                            />
+                            <InputError message={errors.password} />
+                        </div>
+
+                        {/* Confirmar Contraseña */}
+                        <div className="grid gap-2">
+                            <Label htmlFor="password_confirmation">
+                                Confirmar Contraseña <span className="text-destructive">*</span>
+                            </Label>
+                            <PasswordInput
+                                id="password_confirmation"
+                                name="password_confirmation"
+                                value={data.password_confirmation}
+                                onChange={(e) =>
+                                    setData('password_confirmation', e.target.value)
+                                }
+                                placeholder="Repite la contraseña"
+                                disabled={processing}
+                            />
+                            <InputError message={errors.password_confirmation} />
+                        </div>
                     </div>
 
-                    {/* Job Title */}
-                    <div>
-                        <label className="mb-2 block text-sm font-semibold text-foreground">
-                            Cargo
-                        </label>
-                        <input
-                            type="text"
-                            name="job_title"
-                            value={data.job_title}
-                            onChange={(e) =>
-                                setData('job_title', e.target.value)
-                            }
-                            placeholder="Ej: Gerente de Producción"
-                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
-                        />
-                        {errors.job_title && (
-                            <p className="mt-1 text-sm text-destructive">
-                                {errors.job_title}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Phone */}
-                    <div>
-                        <label className="mb-2 block text-sm font-semibold text-foreground">
-                            Teléfono
-                        </label>
-                        <input
-                            type="tel"
-                            name="phone"
-                            value={data.phone}
-                            onChange={(e) => setData('phone', e.target.value)}
-                            placeholder="Ej: 3001234567"
-                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
-                        />
-                        {errors.phone && (
-                            <p className="mt-1 text-sm text-destructive">
-                                {errors.phone}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Role */}
-                    <div>
-                        <label className="mb-2 block text-sm font-semibold text-foreground">
-                            Rol
-                        </label>
-                        <select
-                            name="role"
-                            value={data.role}
-                            onChange={(e) => setData('role', e.target.value)}
-                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
-                        >
-                            {roles.map((role) => (
-                                <option key={role.id} value={role.name}>
-                                    {role.name.charAt(0).toUpperCase() +
-                                        role.name.slice(1)}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.role && (
-                            <p className="mt-1 text-sm text-destructive">
-                                {errors.role}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Status */}
-                    <div className="flex items-center gap-3">
-                        <Checkbox
-                            id="is_active"
-                            checked={data.is_active}
-                            onCheckedChange={(checked) =>
-                                setData('is_active', checked === true)
-                            }
-                        />
-                        <Label htmlFor="is_active" className="cursor-pointer">
-                            Usuario activo
-                        </Label>
-                    </div>
-
-                    {/* Password */}
-                    <div>
-                        <label className="mb-2 block text-sm font-semibold text-foreground">
-                            Contraseña
-                        </label>
-                        <PasswordInput
-                            name="password"
-                            value={data.password}
-                            onChange={(e) =>
-                                setData('password', e.target.value)
-                            }
-                            placeholder="Mínimo 8 caracteres"
-                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
-                        />
-                        {errors.password && (
-                            <p className="mt-1 text-sm text-destructive">
-                                {errors.password}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Password Confirmation */}
-                    <div>
-                        <label className="mb-2 block text-sm font-semibold text-foreground">
-                            Confirmar Contraseña
-                        </label>
-                        <PasswordInput
-                            name="password_confirmation"
-                            value={data.password_confirmation}
-                            onChange={(e) =>
-                                setData('password_confirmation', e.target.value)
-                            }
-                            placeholder="Repite la contraseña"
-                            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:outline-none"
-                        />
-                        {errors.password_confirmation && (
-                            <p className="mt-1 text-sm text-destructive">
-                                {errors.password_confirmation}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="flex gap-4 pt-6">
-                        <button
+                    {/* Botones */}
+                    <div className="flex gap-4 pt-4">
+                        <Button
                             type="submit"
                             disabled={processing}
-                            className="flex-1 rounded-lg bg-primary px-6 py-2 font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+                            className="flex-1"
                         >
                             {processing ? 'Creando...' : 'Crear Usuario'}
-                        </button>
-                        <Link
-                            href={route('users.index')}
-                            className="flex-1 rounded-lg bg-secondary px-6 py-2 text-center font-semibold text-secondary-foreground transition hover:bg-secondary/80"
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            asChild
+                            className="flex-1"
                         >
-                            Cancelar
-                        </Link>
+                            <Link href={UserController.index.url()}>
+                                Cancelar
+                            </Link>
+                        </Button>
                     </div>
                 </form>
             </div>
@@ -244,3 +182,4 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 };
 
 export default UsersCreate;
+
