@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import type { ChangeEvent, FC } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,24 +25,26 @@ export const SignatureUploadField: FC<SignatureUploadFieldProps> = ({
     label = 'Firma digital',
 }) => {
     const signatureInputRef = useRef<HTMLInputElement>(null);
-    const [objectPreviewUrl, setObjectPreviewUrl] = useState<string | null>(null);
 
-    useEffect(() => {
+    const objectPreviewUrl = useMemo(() => {
         if (!signatureFile) {
-            setObjectPreviewUrl(null);
-            if (signatureInputRef.current) {
-                signatureInputRef.current.value = '';
-            }
-            return;
+            return null;
         }
 
-        const objectUrl = URL.createObjectURL(signatureFile);
-        setObjectPreviewUrl(objectUrl);
+        return URL.createObjectURL(signatureFile);
+    }, [signatureFile]);
+
+    useEffect(() => {
+        if (!signatureFile && signatureInputRef.current) {
+            signatureInputRef.current.value = '';
+        }
 
         return () => {
-            URL.revokeObjectURL(objectUrl);
+            if (objectPreviewUrl) {
+                URL.revokeObjectURL(objectPreviewUrl);
+            }
         };
-    }, [signatureFile]);
+    }, [signatureFile, objectPreviewUrl]);
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] ?? null;
@@ -51,6 +53,7 @@ export const SignatureUploadField: FC<SignatureUploadFieldProps> = ({
 
     const handleRemove = () => {
         onRemoveSignature();
+
         if (signatureInputRef.current) {
             signatureInputRef.current.value = '';
         }
