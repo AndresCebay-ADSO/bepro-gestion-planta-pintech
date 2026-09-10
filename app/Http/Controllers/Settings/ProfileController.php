@@ -10,6 +10,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -30,42 +31,47 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(ProfileUpdateRequest $request, SignatureOptimizerService $optimizer): RedirectResponse
     {
         $user = $request->user();
 
         $validated = $request->safe()->except(['signature', 'remove_signature']);
+        $validated['phone'] = ! empty($validated['phone']) ? $validated['phone'] : null;
         $validated['job_title'] = ! empty($validated['job_title']) ? $validated['job_title'] : null;
 
-        $user->fill($validated);
+        $oldSignatureToDelete = null;
+        $newSignaturePath = null;
 
         if ($request->hasFile('signature')) {
-            if ($user->signature_path) {
-                Storage::disk('public')->delete($user->signature_path);
-            }
-
-            try {
-                $optimizer = app(SignatureOptimizerService::class);
-                $optimized = $optimizer->optimize($request->file('signature'));
-                $user->signature_path = $optimized->store('signatures', 'public');
-            } catch (\RuntimeException) {
-                return back()->withErrors([
-                    'signature' => 'No se pudo procesar la imagen de firma. Asegúrate de que sea un archivo de imagen válido.',
-                ]);
-            }
+            $newSignaturePath = $optimizer->optimizeAndStore($request->file('signature'));
+            $oldSignatureToDelete = $user->signature_path;
+            $validated['signature_path'] = $newSignaturePath;
         } elseif ($request->boolean('remove_signature')) {
-            if ($user->signature_path) {
-                Storage::disk('public')->delete($user->signature_path);
+            $oldSignatureToDelete = $user->signature_path;
+            $validated['signature_path'] = null;
+        }
+
+        try {
+            DB::transaction(function () use ($user, $validated) {
+                $user->fill($validated);
+
+                if ($user->isDirty('email')) {
+                    $user->email_verified_at = null;
+                }
+
+                $user->save();
+            });
+        } catch (\Throwable $e) {
+            if ($newSignaturePath) {
+                Storage::disk('public')->delete($newSignaturePath);
             }
 
-            $user->signature_path = null;
+            throw $e;
         }
 
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
+        if ($oldSignatureToDelete) {
+            Storage::disk('public')->delete($oldSignatureToDelete);
         }
-
-        $user->save();
 
         return to_route('profile.edit');
     }
