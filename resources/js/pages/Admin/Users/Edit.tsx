@@ -30,7 +30,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
         signature: null as File | null,
         remove_signature: false,
         role: user.roles[0]?.name ?? '',
-        is_active: user.is_active,
+        is_active: user.is_active ?? true,
     });
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {

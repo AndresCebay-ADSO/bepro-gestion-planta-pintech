@@ -81,7 +81,7 @@ export const UserIdentityFields = <T extends UserIdentityData = UserIdentityData
                     id="job_title"
                     name="job_title"
                     value={data.job_title ?? ''}
-                    onChange={(e) => setData('job_title', (e.target.value || null) as T['job_title'])}
+                    onChange={(e) => setData('job_title', e.target.value as T['job_title'])}
                     placeholder="Ej: Gerente de Producción"
                     disabled={disabled}
                 />
@@ -96,7 +96,7 @@ export const UserIdentityFields = <T extends UserIdentityData = UserIdentityData
                     name="phone"
                     type="tel"
                     value={data.phone ?? ''}
-                    onChange={(e) => setData('phone', (e.target.value || null) as T['phone'])}
+                    onChange={(e) => setData('phone', e.target.value as T['phone'])}
                     placeholder="Ej: 3001234567"
                     disabled={disabled}
                 />

@@ -50,7 +50,7 @@ php artisan optimize:clear
 ```
 
 CI (`.github/workflows/`) runs Pest on PHP 8.3 and 8.4, plus Pint/Prettier/ESLint, on pushes and
-PRs to `develop`/`main`.
+PRs to `develop`, `main`, `master`, and `workos`.
 
 ### Build
 
@@ -271,10 +271,11 @@ mandatory, `sr-only` text included. Colors: View (outline), Edit (warning/amber)
   `boost.json` and regenerate rather than editing by hand). Skills for Fortify, Wayfinder, Pest,
   Inertia-React, Tailwind and Laravel best practices are installed and auto-activate.
 
-## Demo Credentials (from seeds)
+## Demo Credentials (local / testing seeds only)
 
 - Admin: `pintech.sistemas@gmail.com` · Production: `pintech.auxiliar@gmail.com`
-- Commercial: `pintech.comercial@gmail.com` · Password: `Pintech_2026`
+- Commercial: `pintech.comercial@gmail.com` · Operator: `pintech.operador@gmail.com`
+- Password: Configurable via `SEED_USER_PASSWORD` in `.env` (fallback default defined in `UserSeeder.php` for local development).
 
 ## Documentation
 

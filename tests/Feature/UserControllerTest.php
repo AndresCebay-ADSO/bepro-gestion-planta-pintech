@@ -667,9 +667,7 @@ test('admin cannot deactivate the last remaining active administrator', function
     $admin2 = User::factory()->create(['is_active' => false]);
     $admin2->assignRole('admin');
 
-    // admin1 tries to deactivate admin2 (admin2 is already inactive, but what if admin1 tries on the sole active admin?)
-    // Specifically: If admin2 tries to deactivate admin1 while admin2 is inactive:
-    $this->actingAs($admin1)
+    $this->actingAs($admin2)
         ->put(route('users.update', $admin1), [
             'name' => $admin1->name,
             'email' => $admin1->email,
@@ -677,7 +675,7 @@ test('admin cannot deactivate the last remaining active administrator', function
             'is_active' => false,
         ])
         ->assertRedirect()
-        ->assertSessionHas('error');
+        ->assertSessionHas('error', 'No se puede desactivar o degradar al único administrador activo del sistema.');
 
     expect($admin1->fresh()->is_active)->toBeTrue();
 });
@@ -703,8 +701,8 @@ test('admin cannot demote or deactivate another admin if they are the only other
     expect($admin2->fresh()->is_active)->toBeFalse();
 
     // Now admin2 is inactive, only admin1 is active.
-    // If admin1 tries to demote admin1, it is blocked:
-    $this->actingAs($admin1)
+    // If admin2 tries to demote admin1, it is blocked:
+    $this->actingAs($admin2)
         ->put(route('users.update', $admin1), [
             'name' => $admin1->name,
             'email' => $admin1->email,
@@ -712,7 +710,7 @@ test('admin cannot demote or deactivate another admin if they are the only other
             'is_active' => true,
         ])
         ->assertRedirect()
-        ->assertSessionHas('error');
+        ->assertSessionHas('error', 'No se puede desactivar o degradar al único administrador activo del sistema.');
 
     expect($admin1->fresh()->hasRole('admin'))->toBeTrue();
 });

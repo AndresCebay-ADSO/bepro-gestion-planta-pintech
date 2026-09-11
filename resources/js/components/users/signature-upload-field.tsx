@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 export interface SignatureUploadFieldProps {
+    id?: string;
     currentSignatureUrl?: string | null;
     signatureFile?: File | null;
     onSignatureChange: (file: File | null) => void;
@@ -16,6 +17,7 @@ export interface SignatureUploadFieldProps {
 }
 
 export const SignatureUploadField: FC<SignatureUploadFieldProps> = ({
+    id = 'signature',
     currentSignatureUrl,
     signatureFile,
     onSignatureChange,
@@ -63,7 +65,7 @@ export const SignatureUploadField: FC<SignatureUploadFieldProps> = ({
 
     return (
         <div className="grid gap-2">
-            <Label htmlFor="signature">{label}</Label>
+            <Label htmlFor={id}>{label}</Label>
 
             {activeImageSrc && (
                 <div className="relative inline-block max-w-[220px] rounded-lg border border-border bg-card p-2 shadow-xs">
@@ -88,7 +90,7 @@ export const SignatureUploadField: FC<SignatureUploadFieldProps> = ({
 
             <Input
                 ref={signatureInputRef}
-                id="signature"
+                id={id}
                 type="file"
                 className="mt-1 block w-full cursor-pointer file:cursor-pointer"
                 accept="image/png,image/jpeg"
