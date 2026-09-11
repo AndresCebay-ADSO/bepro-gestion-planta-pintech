@@ -7,15 +7,13 @@ use App\Models\ProductCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 use Inertia\Testing\AssertableInertia;
-use Spatie\Permission\Models\Role;
 
 use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
-    Role::firstOrCreate(['name' => 'admin']);
-    Role::firstOrCreate(['name' => 'produccion']);
-    Role::firstOrCreate(['name' => 'comercial']);
+    $this->seed(RolePermissionSeeder::class);
 });
 
 it('allows admin and produccion to access finished inventory movements index', function () {
@@ -55,6 +53,18 @@ it('allows comercial to access finished inventory index', function () {
     actingAs($comercial)
         ->get(route('finished-inventory.index'))
         ->assertOk();
+});
+
+it('allows operador to see finished inventory but not its movements', function () {
+    $operador = User::factory()->create()->assignRole('operador');
+
+    actingAs($operador)
+        ->get(route('finished-inventory.index'))
+        ->assertOk();
+
+    actingAs($operador)
+        ->get(route('finished-inventory-movements.index'))
+        ->assertForbidden();
 });
 
 it('exposes finished product batches from all warehouses for movement forms', function () {

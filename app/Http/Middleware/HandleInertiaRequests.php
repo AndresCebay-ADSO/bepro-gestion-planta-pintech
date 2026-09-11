@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\Permission;
 use App\Services\AlertService;
 use App\Services\WarehouseContextService;
 use Illuminate\Http\Request;
@@ -87,6 +88,7 @@ class HandleInertiaRequests extends Middleware
                     'signature_url' => $user->signature_url,
                     'is_active' => (bool) $user->is_active,
                     'role_names' => $user->getRoleNames()->values()->all(),
+                    'permissions' => $user->getAllPermissions()->pluck('name')->values()->all(),
                 ] : null,
             ],
             'flash' => [
@@ -97,10 +99,10 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'warehouseContext' => $warehouseContext,
-            'unresolvedAlertsCount' => $user?->hasAnyRole(['admin', 'produccion'])
+            'unresolvedAlertsCount' => $user?->can(Permission::AlertsView->value)
                 ? $this->alertService->unresolvedCount()
                 : 0,
-            'recentAlerts' => $user?->hasAnyRole(['admin', 'produccion'])
+            'recentAlerts' => $user?->can(Permission::AlertsView->value)
                 ? $this->alertService->recentUnresolved(5)
                 : [],
         ];

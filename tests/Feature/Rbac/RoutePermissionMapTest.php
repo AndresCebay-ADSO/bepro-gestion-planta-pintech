@@ -102,3 +102,29 @@ it('usa cada permiso en alguna ruta o justifica por qué no tiene', function () 
         expect(Permission::tryFrom($value))->not->toBeNull("Permiso desconocido: {$value}");
     }
 });
+
+it('exige el permiso del mapa en las rutas que ya no dependen de role:', function () {
+    $mismatches = [];
+
+    foreach (applicationRoutes() as $route) {
+        $entry = RoutePermissionMap::routes()[$route->getName()] ?? null;
+
+        // Los marcadores y las listas (basta con uno de varios permisos) se verifican al migrar su módulo.
+        if (! $entry instanceof Permission) {
+            continue;
+        }
+
+        $middleware = $route->gatherMiddleware();
+
+        // Ruta aún no migrada (tarea 2.2): sigue protegida por rol.
+        if (collect($middleware)->contains(fn ($item) => is_string($item) && str_starts_with($item, 'role:'))) {
+            continue;
+        }
+
+        if (! in_array('can:'.$entry->value, $middleware, true)) {
+            $mismatches[] = "{$route->getName()} (esperado can:{$entry->value})";
+        }
+    }
+
+    expect($mismatches)->toBe([], 'Rutas sin su permiso: '.implode(', ', $mismatches));
+});

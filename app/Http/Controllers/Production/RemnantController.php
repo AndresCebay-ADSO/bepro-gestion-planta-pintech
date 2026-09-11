@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Production;
 
+use App\Enums\Permission;
 use App\Enums\RemnantStatus;
 use App\Filters\RemnantFilter;
 use App\Http\Controllers\Controller;
@@ -21,6 +22,8 @@ class RemnantController extends Controller
      */
     public function index(IndexRemnantRequest $request): Response
     {
+        $canViewCosts = $request->user()?->can(Permission::CostsView->value) ?? false;
+
         $remnants = (new RemnantFilter($request))
             ->apply(ProductionRemnant::query())
             ->with([
@@ -44,7 +47,7 @@ class RemnantController extends Controller
                 'available_quantity_gallons' => (float) $remnant->available_quantity_gallons,
                 'available_quantity_kg' => (float) $remnant->available_quantity_kg,
                 'density_kg_per_gallon' => (float) $remnant->density_kg_per_gallon,
-                'cost_per_gallon' => $remnant->cost_per_gallon !== null ? (float) $remnant->cost_per_gallon : null,
+                'cost_per_gallon' => $canViewCosts && $remnant->cost_per_gallon !== null ? (float) $remnant->cost_per_gallon : null,
                 'status' => $remnant->status->value,
                 'status_label' => $remnant->status->label(),
                 'created_at' => $remnant->created_at?->toIso8601String(),
@@ -54,6 +57,7 @@ class RemnantController extends Controller
             'remnants' => $remnants,
             'filters' => $request->validated(),
             'statusOptions' => EnumOptions::for(RemnantStatus::cases()),
+            'can' => ['viewCosts' => $canViewCosts],
             'warehouseOptions' => Warehouse::query()
                 ->select('id', 'name')
                 ->orderBy('name')

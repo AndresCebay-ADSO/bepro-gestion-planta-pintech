@@ -344,15 +344,32 @@ it('preserves query string in pagination links', function (): void {
     );
 });
 
-it('allows produccion users to access remnants index', function (): void {
+it('allows produccion and operador users to access remnants index', function (): void {
     actingAs($this->produccion);
+    get(route('production.remnants.index'))->assertOk();
+
+    actingAs($this->operador);
     get(route('production.remnants.index'))->assertOk();
 });
 
-it('forbids unauthorized users from accessing remnants index', function (): void {
-    actingAs($this->operador);
-    get(route('production.remnants.index'))->assertForbidden();
+it('shows the remnant cost only to users with costs.view', function (): void {
+    actingAs($this->produccion);
+    get(route('production.remnants.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('can.viewCosts', false)
+            ->where('remnants.data', fn ($rows) => count($rows) > 0
+                && collect($rows)->every(fn ($row) => $row['cost_per_gallon'] === null)));
 
+    actingAs($this->admin);
+    get(route('production.remnants.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('can.viewCosts', true)
+            ->where('remnants.data', fn ($rows) => collect($rows)->contains(fn ($row) => $row['cost_per_gallon'] !== null)));
+});
+
+it('forbids unauthorized users from accessing remnants index', function (): void {
     actingAs($this->comercial);
     get(route('production.remnants.index'))->assertForbidden();
 

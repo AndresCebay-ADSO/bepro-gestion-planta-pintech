@@ -11,15 +11,12 @@ use App\Models\QrDocument;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
-use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
-    Role::create(['name' => 'admin']);
-    Role::create(['name' => 'produccion']);
-    Role::create(['name' => 'comercial']);
-    Role::create(['name' => 'operador']);
+    $this->seed(RolePermissionSeeder::class);
 });
 
 function adminUser(): User
@@ -102,7 +99,7 @@ function createQrFixture(array $overrides = []): QrCode
     return $factory->create($overrides);
 }
 
-test('index is accessible to admin and produccion', function () {
+test('index is accessible to admin, produccion and comercial', function () {
     $admin = adminUser();
     $produccion = produccionUser();
     $comercial = comercialUser();
@@ -121,6 +118,13 @@ test('index is accessible to admin and produccion', function () {
         ->assertOk();
 
     $this->actingAs($comercial)
+        ->get(route('qr-codes.index'))
+        ->assertOk();
+
+    $operador = User::factory()->create();
+    $operador->assignRole('operador');
+
+    $this->actingAs($operador)
         ->get(route('qr-codes.index'))
         ->assertForbidden();
 });
@@ -195,12 +199,28 @@ test('show displays qr code detail with documents', function () {
 });
 
 test('show is blocked for unauthorized roles', function () {
-    $comercial = comercialUser();
-    $qrCode = createQrFixture(['created_by' => $comercial->id]);
+    $operador = User::factory()->create();
+    $operador->assignRole('operador');
+    $qrCode = createQrFixture(['created_by' => adminUser()->id]);
 
-    $this->actingAs($comercial)
+    $this->actingAs($operador)
         ->get(route('qr-codes.show', $qrCode))
         ->assertForbidden();
+});
+
+test('produccion can view but not update qr codes', function () {
+    $produccion = produccionUser();
+    $qrCode = createQrFixture(['created_by' => adminUser()->id, 'is_active' => true]);
+
+    $this->actingAs($produccion)
+        ->get(route('qr-codes.show', $qrCode))
+        ->assertOk();
+
+    $this->actingAs($produccion)
+        ->patch(route('qr-codes.update', $qrCode), ['is_active' => false])
+        ->assertForbidden();
+
+    expect($qrCode->fresh()->is_active)->toBeTrue();
 });
 
 test('update toggles is_active', function () {

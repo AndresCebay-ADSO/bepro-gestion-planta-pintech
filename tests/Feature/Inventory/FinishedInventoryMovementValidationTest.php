@@ -9,13 +9,13 @@ use App\Models\ProductCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Support\Facades\Gate;
-use Spatie\Permission\Models\Role;
 
 use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
-    Role::firstOrCreate(['name' => 'admin']);
+    $this->seed(RolePermissionSeeder::class);
 });
 
 function createFinishedMovementFixture(string $code = 'PROD-RET'): array

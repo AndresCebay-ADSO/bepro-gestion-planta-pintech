@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Permission;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\ClientController;
@@ -38,7 +39,49 @@ Route::get('/c/{token}/product-documents/{document}', [PublicQrLandingController
     ->name('qr.public.product-documents.download');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->middleware('can:'.Permission::DashboardView->value)
+        ->name('dashboard');
+});
+
+// ============ RUTAS PROTEGIDAS POR PERMISO (docs/MATRIZ_RBAC.md) ============
+// Los módulos se mueven aquí a medida que su policy se migra a permisos (tarea 2.2).
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Alertas
+    Route::get('alerts', [AlertController::class, 'index'])
+        ->middleware('can:'.Permission::AlertsView->value)
+        ->name('alerts.index');
+    Route::patch('alerts/{alert}/resolve', [AlertController::class, 'resolve'])
+        ->middleware('can:'.Permission::AlertsResolve->value)
+        ->name('alerts.resolve');
+
+    // Códigos QR
+    Route::middleware('can:'.Permission::QrCodesView->value)->group(function () {
+        Route::get('qr-codes', [QrCodeController::class, 'index'])->name('qr-codes.index');
+        Route::get('qr-codes/{qrCode}', [QrCodeController::class, 'show'])->name('qr-codes.show');
+        Route::get('qr-codes/{qrCode}/qr.png', [QrCodeController::class, 'qrImage'])->name('qr-codes.qr-image');
+        Route::get('qr-codes/{qrCode}/documents/{document}/download', [QrCodeController::class, 'downloadDocument'])
+            ->name('qr-codes.documents.download');
+    });
+    Route::patch('qr-codes/{qrCode}', [QrCodeController::class, 'update'])
+        ->middleware('can:'.Permission::QrCodesUpdate->value)
+        ->name('qr-codes.update');
+
+    // Saldos de producción
+    Route::get('production/remnants', [RemnantController::class, 'index'])
+        ->middleware('can:'.Permission::ProductionRemnantsView->value)
+        ->name('production.remnants.index');
+
+    // Inventario de producto terminado
+    Route::get('finished-inventory', [FinishedInventoryController::class, 'index'])
+        ->middleware('can:'.Permission::FinishedInventoryView->value)
+        ->name('finished-inventory.index');
+    Route::resource('finished-inventory-movements', FinishedInventoryMovementController::class)
+        ->only(['index', 'store', 'show'])
+        ->where(['finished_inventory_movement' => '[0-9]+'])
+        ->middlewareFor(['index', 'show'], 'can:'.Permission::FinishedInventoryMovementsView->value)
+        ->middlewareFor('store', 'can:'.Permission::FinishedInventoryMovementsCreate->value);
 });
 
 // ============ RUTAS PROTEGIDAS POR ROL ============
@@ -61,18 +104,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
-    // Alertas
-    Route::get('alerts', [AlertController::class, 'index'])->name('alerts.index');
-    Route::patch('alerts/{alert}/resolve', [AlertController::class, 'resolve'])->name('alerts.resolve');
-
-    // Códigos QR
-    Route::get('qr-codes', [QrCodeController::class, 'index'])->name('qr-codes.index');
-    Route::get('qr-codes/{qrCode}', [QrCodeController::class, 'show'])->name('qr-codes.show');
-    Route::patch('qr-codes/{qrCode}', [QrCodeController::class, 'update'])->name('qr-codes.update');
-    Route::get('qr-codes/{qrCode}/qr.png', [QrCodeController::class, 'qrImage'])->name('qr-codes.qr-image');
-    Route::get('qr-codes/{qrCode}/documents/{document}/download', [QrCodeController::class, 'downloadDocument'])
-        ->name('qr-codes.documents.download');
-
     Route::resource('raw-materials', RawMaterialController::class)->only(['index', 'show']);
 
     Route::resource('formulas', FormulaController::class);
@@ -90,8 +121,6 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
     Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
     Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
     Route::delete('products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
-
-    Route::get('production/remnants', [RemnantController::class, 'index'])->name('production.remnants.index');
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,comercial'])->group(function () {
@@ -133,7 +162,6 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
-    Route::get('finished-inventory', [FinishedInventoryController::class, 'index'])->name('finished-inventory.index');
     Route::resource('warehouses', WarehouseController::class)->only(['index', 'show']);
     Route::resource('products', ProductController::class);
     Route::post('products/{product}/documents', [ProductDocumentController::class, 'store'])->name('products.documents.store');
@@ -142,12 +170,6 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
     Route::resource('inventory-movements', InventoryMovementController::class)
         ->except(['create'])
         ->where(['inventory_movement' => '[0-9]+']);
-});
-
-Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
-    Route::resource('finished-inventory-movements', FinishedInventoryMovementController::class)
-        ->only(['index', 'store', 'show'])
-        ->where(['finished_inventory_movement' => '[0-9]+']);
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,produccion,operador'])->group(function () {

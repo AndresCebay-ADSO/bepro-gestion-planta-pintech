@@ -259,6 +259,28 @@ policy    → permiso && invariante
 
 Esto además mata C1 de raíz y hace los invariantes testeables sin usuario.
 
+**✅ Método adoptado: migración por módulo completo.** Cada commit migra un módulo de punta a punta: policy, form
+requests, controladores, **rutas** (salen de los grupos `role:` y pasan a `can:<permiso>` en el bloque
+"RUTAS PROTEGIDAS POR PERMISO" de `routes/web.php`) y sus tests, que adoptan el seeder o los helpers. Migrar solo la
+policy dejaría la ruta bloqueando los accesos nuevos de la matriz. El test `RoutePermissionMapTest` exige `can:<permiso>`
+en toda ruta que ya no tenga `role:`. Con este método, la 2.8 se reduce a las páginas de error y a retirar `CheckRole`.
+
+**Avance por módulo**
+
+| Lote | Módulo | Estado |
+| --- | --- | --- |
+| 1 | Alertas | ✅ Producción pierde `resolve`. La campana usa `alerts.view` (permisos compartidos con el frontend en `auth.user.permissions`). |
+| 1 | Inventario PT + movimientos | ✅ Operador gana la vista del inventario (no sus movimientos). |
+| 1 | Saldos de producción | ✅ Operador gana acceso (antes el sidebar se lo mostraba y la ruta daba 403). Costo por galón solo con `costs.view`. |
+| 1 | Códigos QR | ✅ Comercial gana la vista; Producción pierde la edición. |
+| 1 | Dashboard | ✅ Ruta con `can:dashboard.view`. |
+| 2+ | Materias primas, fórmulas, productos, bodegas, clientes, precios/costos, usuarios, auditoría | ⏳ |
+| — | Cotizaciones, pedidos, desarrollo de pinturas (con dueño) | ⏳ |
+| — | Órdenes de producción (máquina de estados) y movimientos MP | ⏳ |
+
+**Pendiente de la 2.5 que ya se nota:** el sidebar sigue decidiendo por rol, así que Operador aún no ve el enlace a
+Inventario PT ni Comercial el de Códigos QR, aunque ya tienen acceso.
+
 **Criterio de aceptación:** `grep -rn "hasRole\|hasAnyRole" app/` devuelve **0 resultados** fuera de `UserController` (protección del último admin) y del futuro chequeo de `super-admin`. El test de matriz de acceso (ver 2.8) pasa en verde. Los tests existentes solo cambian donde la matriz modifica un acceso a propósito.
 
 **Riesgo: ALTO.** Es la subfase donde se rompe todo si se hace en un solo commit.

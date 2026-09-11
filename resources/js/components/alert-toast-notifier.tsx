@@ -61,9 +61,7 @@ export function AlertToastNotifier() {
     const [toasts, setToasts] = useState<AlertToast[]>([]);
 
     const canReceiveAlerts =
-        auth.user?.role_names?.some((role) =>
-            ['admin', 'produccion'].includes(role),
-        ) ?? false;
+        auth.user?.permissions?.includes('alerts.view') ?? false;
 
     useEffect(() => {
         if (!canReceiveAlerts) {

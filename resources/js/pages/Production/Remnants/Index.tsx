@@ -49,6 +49,9 @@ type Props = {
     filters: Record<string, string | null | undefined>;
     statusOptions: Option[];
     warehouseOptions: Option[];
+    can: {
+        viewCosts: boolean;
+    };
 };
 
 export default function RemnantsIndex({
@@ -56,6 +59,7 @@ export default function RemnantsIndex({
     filters,
     statusOptions,
     warehouseOptions,
+    can,
 }: Props) {
     const {
         filters: filterState,
@@ -156,9 +160,11 @@ export default function RemnantsIndex({
                                             <th className="p-4 text-right font-medium">
                                                 Densidad
                                             </th>
-                                            <th className="p-4 text-right font-medium">
-                                                Costo/gal
-                                            </th>
+                                            {can.viewCosts && (
+                                                <th className="p-4 text-right font-medium">
+                                                    Costo/gal
+                                                </th>
+                                            )}
                                             <th className="p-4 text-right font-medium">
                                                 Disponible (gal)
                                             </th>
@@ -174,7 +180,9 @@ export default function RemnantsIndex({
                                         {remnants.data.length === 0 ? (
                                             <tr>
                                                 <td
-                                                    colSpan={8}
+                                                    colSpan={
+                                                        can.viewCosts ? 8 : 7
+                                                    }
                                                     className="p-8 text-center text-sm text-muted-foreground"
                                                 >
                                                     No hay saldos registrados.
@@ -231,22 +239,26 @@ export default function RemnantsIndex({
                                                             kg/gal
                                                         </span>
                                                     </td>
-                                                    <td className="p-4 text-right">
-                                                        {remnant.cost_per_gallon !=
-                                                        null ? (
-                                                            <FormattedNumber
-                                                                value={
-                                                                    remnant.cost_per_gallon
-                                                                }
-                                                                currency
-                                                                maxDecimals={2}
-                                                            />
-                                                        ) : (
-                                                            <span className="text-muted-foreground">
-                                                                ---
-                                                            </span>
-                                                        )}
-                                                    </td>
+                                                    {can.viewCosts && (
+                                                        <td className="p-4 text-right">
+                                                            {remnant.cost_per_gallon !=
+                                                            null ? (
+                                                                <FormattedNumber
+                                                                    value={
+                                                                        remnant.cost_per_gallon
+                                                                    }
+                                                                    currency
+                                                                    maxDecimals={
+                                                                        2
+                                                                    }
+                                                                />
+                                                            ) : (
+                                                                <span className="text-muted-foreground">
+                                                                    ---
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                    )}
                                                     <td className="p-4 text-right font-medium">
                                                         <FormattedNumber
                                                             value={

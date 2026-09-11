@@ -24,6 +24,8 @@ export type User = {
     role?: UserRole | string;
     roles?: UserRoleRecord[] | string[];
     role_names?: string[];
+    /** Permisos efectivos del usuario (docs/MATRIZ_RBAC.md). */
+    permissions?: string[];
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
     created_at: string;
