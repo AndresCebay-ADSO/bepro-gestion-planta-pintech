@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\SystemRole;
 use App\Filters\UserFilter;
 use App\Http\Requests\Admin\IndexUserRequest;
 use App\Http\Requests\Users\StoreUserRequest;
@@ -53,7 +54,7 @@ class UserController extends Controller
      */
     public function create(): Response
     {
-        $roles = Role::all();
+        $roles = Role::query()->where('name', '!=', SystemRole::SuperAdmin->value)->get();
 
         return Inertia::render('Admin/Users/Create', [
             'roles' => $roles,
@@ -103,7 +104,7 @@ class UserController extends Controller
      */
     public function edit(User $user): Response
     {
-        $roles = Role::all();
+        $roles = Role::query()->where('name', '!=', SystemRole::SuperAdmin->value)->get();
 
         $user->load('roles');
 
