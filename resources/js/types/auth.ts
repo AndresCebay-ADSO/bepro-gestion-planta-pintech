@@ -1,5 +1,12 @@
 export type UserRole = 'admin' | 'produccion' | 'comercial' | 'operador';
 
+export type Role = {
+    id: number;
+    name: string;
+    guard_name?: string;
+    [key: string]: unknown;
+};
+
 export type UserRoleRecord = {
     name: UserRole | string;
     [key: string]: unknown;
@@ -10,6 +17,9 @@ export type User = {
     name: string;
     email: string;
     phone?: string | null;
+    job_title?: string | null;
+    signature_url?: string | null;
+    is_active?: boolean;
     avatar?: string;
     role?: UserRole | string;
     roles?: UserRoleRecord[] | string[];

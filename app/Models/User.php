@@ -53,6 +53,23 @@ class User extends Authenticatable
 
     protected string $auditIdentifierAttribute = 'name';
 
+    protected static function booted(): void
+    {
+        static::deleted(function (User $user) {
+            // Forward-compatibility guard for upcoming sprint:
+            // "FASE 2: RBAC + Integridad de Datos (Soft deletes en modelos críticos)".
+            // When SoftDeletes is added, this prevents logical deletions from purging
+            // historical signature files from storage while preserving audit trails.
+            if (method_exists($user, 'isForceDeleting') && ! $user->isForceDeleting()) {
+                return;
+            }
+
+            if ($user->signature_path && Storage::disk('public')->exists($user->signature_path)) {
+                Storage::disk('public')->delete($user->signature_path);
+            }
+        });
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -134,10 +151,17 @@ class User extends Authenticatable
     public function hasActivity(): bool
     {
         return DB::table('production_orders')->where('created_by', $this->id)->exists()
+            || DB::table('production_orders')->where('quality_responsible_user_id', $this->id)->exists()
             || DB::table('formulas')->where('created_by', $this->id)->exists()
             || DB::table('transfers')->where('created_by', $this->id)->exists()
             || DB::table('inventory_movements')->where('created_by', $this->id)->exists()
             || DB::table('finished_inventory_movements')->where('created_by', $this->id)->exists()
+            || DB::table('quotations')->where('created_by', $this->id)->exists()
+            || DB::table('sales_orders')->where('created_by', $this->id)->exists()
+            || DB::table('paint_development_requests')->where('created_by', $this->id)->exists()
+            || DB::table('production_remnants')->where('created_by', $this->id)->exists()
+            || DB::table('production_order_line_adjustments')->where('created_by', $this->id)->exists()
+            || DB::table('remnant_consumptions')->where('consumed_by', $this->id)->exists()
             || DB::table('qr_codes')->where('created_by', $this->id)->exists()
             || DB::table('qr_documents')->where('uploaded_by', $this->id)->exists()
             || DB::table('product_documents')->where('uploaded_by', $this->id)->exists()

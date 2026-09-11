@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\User;
+use App\Services\SignatureOptimizerService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -184,6 +186,21 @@ test('signature upload rejects oversized file', function () {
     $response->assertSessionHasErrors('signature');
 });
 
+test('signature upload rejects image with excessive dimensions', function () {
+    $user = User::factory()->create();
+    $file = UploadedFile::fake()->image('huge.png', 5000, 5000);
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'signature' => $file,
+        ]);
+
+    $response->assertSessionHasErrors('signature');
+});
+
 test('email verification status is unchanged when the email address is unchanged', function () {
     $user = User::factory()->create();
 
@@ -233,4 +250,117 @@ test('correct password must be provided to delete account', function () {
         ->assertRedirect(route('profile.edit'));
 
     expect($user->fresh())->not->toBeNull();
+});
+
+test('signature file is deleted when user deletes their account', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create([
+        'signature_path' => 'signatures/my_signature.png',
+    ]);
+    Storage::disk('public')->put('signatures/my_signature.png', 'signature-data');
+
+    $response = $this
+        ->actingAs($user)
+        ->delete(route('profile.destroy'), [
+            'password' => 'password',
+        ]);
+
+    $response
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('home'));
+
+    Storage::disk('public')->assertMissing('signatures/my_signature.png');
+    expect($user->fresh())->toBeNull();
+});
+
+test('profile update fails gracefully when signature optimizer throws validation exception', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create([
+        'signature_path' => 'signatures/keep_me.png',
+    ]);
+    Storage::disk('public')->put('signatures/keep_me.png', 'existing-signature');
+
+    $this->mock(SignatureOptimizerService::class, function ($mock) {
+        $mock->shouldReceive('optimizeAndStore')
+            ->once()
+            ->andThrow(ValidationException::withMessages([
+                'signature' => 'No se pudo procesar la imagen de firma.',
+            ]));
+    });
+
+    $file = UploadedFile::fake()->image('bad.png', 200, 100);
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'signature' => $file,
+        ]);
+
+    $response->assertSessionHasErrors('signature');
+
+    $user->refresh();
+    expect($user->signature_path)->toBe('signatures/keep_me.png');
+    Storage::disk('public')->assertExists('signatures/keep_me.png');
+});
+
+test('signature file is preserved on disk if profile deletion fails', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create([
+        'signature_path' => 'signatures/preserve_profile.png',
+    ]);
+    Storage::disk('public')->put('signatures/preserve_profile.png', 'signature-data');
+
+    $response = $this
+        ->actingAs($user)
+        ->delete(route('profile.destroy'), [
+            'password' => 'wrong-password',
+        ]);
+
+    $response->assertSessionHasErrors('password');
+
+    Storage::disk('public')->assertExists('signatures/preserve_profile.png');
+    expect($user->fresh())->not->toBeNull();
+});
+
+test('profile update normalizes uppercase email to lowercase', function () {
+    $user = User::factory()->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => 'UPPERCASE@EXAMPLE.COM',
+        ]);
+
+    $response
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('profile.edit'));
+
+    expect($user->fresh()->email)->toBe('uppercase@example.com');
+});
+
+test('user with pre-existing uppercase email can update profile without email error', function () {
+    $user = User::factory()->create(['email' => 'Admin@Company.com']);
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => 'Nuevo Nombre',
+            'email' => $user->email,
+            'phone' => '3001234567',
+        ]);
+
+    $response
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('profile.edit'));
+
+    $user->refresh();
+    expect($user->name)->toBe('Nuevo Nombre')
+        ->and($user->phone)->toBe('3001234567')
+        ->and($user->email)->toBe('admin@company.com');
 });

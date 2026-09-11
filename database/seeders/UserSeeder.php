@@ -10,11 +10,19 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        if (! app()->environment('local', 'testing')) {
+            $this->command?->warn('UserSeeder omitido en entornos de producción o compartidos.');
+
+            return;
+        }
+
+        $defaultPassword = config('app.default_user_password', env('SEED_USER_PASSWORD', 'Pintech_2026'));
+
         $admin = User::firstOrCreate(
             ['email' => 'pintech.sistemas@gmail.com'],
             [
                 'name' => 'Admin Sistemas',
-                'password' => Hash::make('Pintech_2026'),
+                'password' => Hash::make($defaultPassword),
                 'email_verified_at' => now(),
                 'is_active' => true,
                 'last_login_at' => now()->subMinutes(12),
@@ -26,7 +34,7 @@ class UserSeeder extends Seeder
             ['email' => 'pintech.auxiliar@gmail.com'],
             [
                 'name' => 'Auxiliar Producción',
-                'password' => Hash::make('Pintech_2026'),
+                'password' => Hash::make($defaultPassword),
                 'email_verified_at' => now(),
                 'is_active' => true,
                 'last_login_at' => now()->subHours(2),
@@ -38,7 +46,7 @@ class UserSeeder extends Seeder
             ['email' => 'pintech.comercial@gmail.com'],
             [
                 'name' => 'Gerente Comercial',
-                'password' => Hash::make('Pintech_2026'),
+                'password' => Hash::make($defaultPassword),
                 'email_verified_at' => now(),
                 'is_active' => false,
                 'last_login_at' => now()->subDays(3),
@@ -50,7 +58,7 @@ class UserSeeder extends Seeder
             ['email' => 'pintech.operador@gmail.com'],
             [
                 'name' => 'Operador Planta',
-                'password' => Hash::make('Pintech_2026'),
+                'password' => Hash::make($defaultPassword),
                 'email_verified_at' => now(),
                 'is_active' => true,
                 'last_login_at' => now()->subHours(1),
@@ -58,6 +66,6 @@ class UserSeeder extends Seeder
         );
         $operator->assignRole('operador');
 
-        $this->command->info('Created/Updated 4 users.');
+        $this->command?->info('Created/Updated 4 users.');
     }
 }

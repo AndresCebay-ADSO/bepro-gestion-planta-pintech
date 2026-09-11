@@ -85,6 +85,7 @@ class HandleInertiaRequests extends Middleware
                     'job_title' => $user->job_title,
                     'email_verified_at' => $user->email_verified_at,
                     'signature_url' => $user->signature_url,
+                    'is_active' => (bool) $user->is_active,
                     'role_names' => $user->getRoleNames()->values()->all(),
                 ] : null,
             ],
