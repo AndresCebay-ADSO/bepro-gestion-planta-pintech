@@ -340,6 +340,16 @@ Esto además mata C1 de raíz y hace los invariantes testeables sin usuario.
 - `php artisan permission:cache-reset` post-deploy.
 - Un comando de verificación (`rbac:audit`) que liste permisos en BD sin registrar en el `PermissionRegistry` y viceversa. Barato de escribir, evita meses de deriva.
 
+**✅ Decidido — quién manda sobre los permisos de cada rol:**
+- Los **5 roles del sistema** (`SystemRole`) se gestionan **solo en código**: el seeder les reasigna exactamente
+  sus permisos por defecto en cada despliegue (`syncPermissions`). Un cambio en esos roles pasa por git y revisión.
+  Consecuencia para la 2.4: la pantalla de roles muestra sus permisos en **solo lectura**.
+- Los **roles creados desde la UI** son los únicos editables en pantalla, y el seeder **nunca** los toca.
+- El seeder elimina los permisos de la BD que ya no existen en el enum `Permission`, así la BD no se desvía del código.
+
+**Nota sobre C7:** verificado que la caché de Spatie **no** contamina los tests: `phpunit.xml` usa `CACHE_STORE=array`
+y cada test arranca una aplicación nueva. No hace falta limpiarla en `TestCase`.
+
 **Criterio de aceptación:** ejecutar el seeder dos veces seguidas no cambia nada en la BD.
 **Estimación: 1 día** (contabilizado dentro de 2.2).
 
@@ -406,6 +416,7 @@ FASE 2A — RBAC  (≈13 días)
   8.  2.8  Rutas can: + páginas de error (4.1)         2 d
   9.  2.5  Asignación de roles + permisos al frontend  2 d
   10. 2.4  CRUD de roles en UI                         3 d
+  11. ---  Renombrar roles a inglés                    0,5 d   ← ver abajo
                                                      ────────
                                                       ≈15 días
 
@@ -413,6 +424,17 @@ FASE 2B — Integridad  (≈5 días)
   11. 2.6  Soft deletes (por grupos, con auditoría)    3 d
   12. 2.7  Eliminación inteligente (patrón extraído)   2 d
 ```
+
+**Paso 11 — renombrar los roles a inglés.** Los valores `'produccion'`, `'operador'` y `'comercial'` vienen del
+vibe coding e incumplen la regla de código en inglés (`CLAUDE.md`). Al llegar aquí, las policies (2.2), los
+middlewares (2.8), el sidebar (2.5) y los tests (helper `actingAsRole`) ya no usan esos textos: solo quedan en
+`SystemRole` y en la tabla `roles`. El cambio es:
+1. `SystemRole`: `'produccion'` → `'production'`, `'operador'` → `'operator'`, `'comercial'` → `'commercial'`.
+2. Una migración de datos que actualiza `roles.name`. Es segura: `model_has_roles` enlaza por `role_id`, así que
+   ningún usuario pierde su rol.
+3. Limpiar la caché de permisos y actualizar el test que hoy protege los nombres en español.
+
+**Regla desde ya:** el código nuevo nunca escribe el nombre de un rol a mano; siempre `SystemRole::X->value`.
 
 Dos cambios de orden importantes frente a tu plan:
 - **2.9 antes de 2.2** (sin permisos sembrados, migrar policies deja todo en 403).
