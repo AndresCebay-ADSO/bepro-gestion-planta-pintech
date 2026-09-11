@@ -12,6 +12,7 @@ use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Services\ProductionCostRecalculationService;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 
@@ -19,9 +20,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     if (Role::count() === 0) {
-        Role::create(['name' => 'admin']);
-        Role::create(['name' => 'produccion']);
-        Role::create(['name' => 'comercial']);
+        $this->seed(RolePermissionSeeder::class);
     }
 
     $this->admin = User::factory()->create([

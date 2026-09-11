@@ -73,6 +73,60 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:'.Permission::ProductionRemnantsView->value)
         ->name('production.remnants.index');
 
+    // Materias primas
+    Route::patch('raw-materials/{raw_material}/reactivate', [RawMaterialController::class, 'reactivate'])
+        ->middleware('can:'.Permission::RawMaterialsReactivate->value)
+        ->name('raw-materials.reactivate');
+    Route::resource('raw-materials', RawMaterialController::class)
+        ->middlewareFor(['index', 'show'], 'can:'.Permission::RawMaterialsView->value)
+        ->middlewareFor(['create', 'store'], 'can:'.Permission::RawMaterialsCreate->value)
+        ->middlewareFor(['edit', 'update'], 'can:'.Permission::RawMaterialsEdit->value)
+        // Desactiva; el borrado físico dentro exige además raw_materials.delete (tarea 2.7).
+        ->middlewareFor('destroy', 'can:'.Permission::RawMaterialsDeactivate->value);
+
+    // Fórmulas
+    Route::resource('formulas', FormulaController::class)
+        ->middlewareFor(['index', 'show'], 'can:'.Permission::FormulasView->value)
+        ->middlewareFor(['create', 'store'], 'can:'.Permission::FormulasCreate->value)
+        ->middlewareFor(['edit', 'update'], 'can:'.Permission::FormulasEdit->value)
+        ->middlewareFor('destroy', 'can:'.Permission::FormulasDelete->value);
+    Route::post('formulas/{formula}/activate', [FormulaController::class, 'activate'])
+        ->middleware('can:'.Permission::FormulasActivate->value)
+        ->name('formulas.activate');
+
+    // Bodegas
+    Route::get('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsersPage'])
+        ->middleware('can:'.Permission::WarehousesAssignUsers->value)
+        ->name('warehouses.assign-users.form');
+    Route::post('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsers'])
+        ->middleware('can:'.Permission::WarehousesAssignUsers->value)
+        ->name('warehouses.assign-users');
+    Route::resource('warehouses', WarehouseController::class)
+        ->middlewareFor(['index', 'show'], 'can:'.Permission::WarehousesView->value)
+        ->middlewareFor(['create', 'store'], 'can:'.Permission::WarehousesCreate->value)
+        ->middlewareFor(['edit', 'update'], 'can:'.Permission::WarehousesEdit->value)
+        ->middlewareFor('destroy', 'can:'.Permission::WarehousesDelete->value);
+
+    // Clientes
+    Route::get('clients', [ClientController::class, 'index'])
+        ->middleware('can:'.Permission::ClientsView->value)
+        ->name('clients.index');
+    Route::get('clients/create', [ClientController::class, 'create'])
+        ->middleware('can:'.Permission::ClientsCreate->value)
+        ->name('clients.create');
+    Route::post('clients', [ClientController::class, 'store'])
+        ->middleware('can:'.Permission::ClientsCreate->value)
+        ->name('clients.store');
+    Route::get('clients/{client}/edit', [ClientController::class, 'edit'])
+        ->middleware('can:'.Permission::ClientsEdit->value)
+        ->name('clients.edit');
+    Route::put('clients/{client}', [ClientController::class, 'update'])
+        ->middleware('can:'.Permission::ClientsEdit->value)
+        ->name('clients.update');
+    Route::delete('clients/{client}', [ClientController::class, 'destroy'])
+        ->middleware('can:'.Permission::ClientsDelete->value)
+        ->name('clients.destroy');
+
     // Inventario de producto terminado
     Route::get('finished-inventory', [FinishedInventoryController::class, 'index'])
         ->middleware('can:'.Permission::FinishedInventoryView->value)
@@ -91,24 +145,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/admin/costs', [CostController::class, 'index'])->name('admin.costs.index');
     Route::patch('/admin/costs/{product}', [CostController::class, 'update'])->name('admin.costs.update');
     Route::resource('users', UserController::class)->except(['show']);
-    Route::patch('raw-materials/{raw_material}/reactivate', [RawMaterialController::class, 'reactivate'])->name('raw-materials.reactivate');
-    Route::resource('raw-materials', RawMaterialController::class)->except(['index', 'show']);
-    Route::resource('warehouses', WarehouseController::class)->except(['index', 'show']);
-    Route::get('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsersPage'])->name('warehouses.assign-users.form');
-    Route::post('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsers'])->name('warehouses.assign-users');
-
-    // Edición/eliminación de clientes
-    Route::get('clients/{client}/edit', [ClientController::class, 'edit'])->name('clients.edit');
-    Route::put('clients/{client}', [ClientController::class, 'update'])->name('clients.update');
-    Route::delete('clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
-    Route::resource('raw-materials', RawMaterialController::class)->only(['index', 'show']);
-
-    Route::resource('formulas', FormulaController::class);
-    Route::post('formulas/{formula}/activate', [FormulaController::class, 'activate'])->name('formulas.activate');
-
     Route::get('production-orders/create', [ProductionOrderController::class, 'create'])->name('production-orders.create');
     Route::post('production-orders', [ProductionOrderController::class, 'store'])->name('production-orders.store');
     Route::post('production-orders/{production_order}/complete', [ProductionOrderController::class, 'complete'])->name('production-orders.complete');
@@ -136,9 +175,6 @@ Route::middleware(['auth', 'verified', 'role:admin,comercial'])->group(function 
     Route::post('quotations/{quotation}/convert-to-order', [QuotationController::class, 'convertToOrder'])->name('quotations.convert-to-order');
     Route::get('quotations/{quotation}/export-pdf', [QuotationController::class, 'exportPdf'])->name('quotations.export-pdf');
 
-    Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
-    Route::get('clients/create', [ClientController::class, 'create'])->name('clients.create');
-    Route::post('clients', [ClientController::class, 'store'])->name('clients.store');
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
@@ -162,7 +198,6 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
-    Route::resource('warehouses', WarehouseController::class)->only(['index', 'show']);
     Route::resource('products', ProductController::class);
     Route::post('products/{product}/documents', [ProductDocumentController::class, 'store'])->name('products.documents.store');
     Route::get('product-documents/{document}/download', [ProductDocumentController::class, 'download'])->name('products.documents.download');

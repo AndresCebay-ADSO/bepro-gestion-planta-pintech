@@ -14,6 +14,8 @@ export type NavItem = {
     isActive?: boolean;
     badge?: number | string;
     allowedRoles?: UserRole[];
+    /** Permisos que dan acceso (basta con uno). Tiene prioridad sobre allowedRoles. */
+    allowedPermissions?: string[];
     unauthorizedBehavior?: 'hide' | 'disable';
     disabled?: boolean;
     disabledLabel?: string;

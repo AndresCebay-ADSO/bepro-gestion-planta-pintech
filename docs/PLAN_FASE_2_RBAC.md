@@ -274,12 +274,18 @@ en toda ruta que ya no tenga `role:`. Con este método, la 2.8 se reduce a las p
 | 1 | Saldos de producción | ✅ Operador gana acceso (antes el sidebar se lo mostraba y la ruta daba 403). Costo por galón solo con `costs.view`. |
 | 1 | Códigos QR | ✅ Comercial gana la vista; Producción pierde la edición. |
 | 1 | Dashboard | ✅ Ruta con `can:dashboard.view`. |
-| 2+ | Materias primas, fórmulas, productos, bodegas, clientes, precios/costos, usuarios, auditoría | ⏳ |
+| 2 | Materias primas | ✅ Costos solo con `costs.view` (Producción los pierde). `destroy` exige `raw_materials.deactivate`: Admin desactiva y solo SuperAdmin borra físicamente (se separan en endpoints propios en la 2.7). |
+| 2 | Fórmulas | ✅ Producción pierde el módulo completo. `activate` pasa a tener su propia habilidad en la policy. |
+| 2 | Bodegas | ✅ `warehouses.view_all` sustituye al `hasRole('admin')` de `WarehouseContextService` (qué bodegas ve cada quien y el selector de la cabecera). Asignar usuarios tiene su propia habilidad. |
+| 2 | Clientes | ✅ Comercial ve y crea; editar y eliminar quedan en Admin. |
+| 3+ | Productos, precios/costos, movimientos MP, usuarios, auditoría | ⏳ |
 | — | Cotizaciones, pedidos, desarrollo de pinturas (con dueño) | ⏳ |
 | — | Órdenes de producción (máquina de estados) y movimientos MP | ⏳ |
 
-**Pendiente de la 2.5 que ya se nota:** el sidebar sigue decidiendo por rol, así que Operador aún no ve el enlace a
-Inventario PT ni Comercial el de Códigos QR, aunque ya tienen acceso.
+**Adelanto parcial de la 2.5:** `NavItem` acepta `allowedPermissions`, y el sidebar decide por permiso en los módulos
+ya migrados (dashboard, materias primas, fórmulas, bodegas, clientes, inventario PT y sus movimientos, saldos, alertas y
+QR). El resto de ítems sigue con `allowedRoles` **a propósito**: si decidieran por permiso antes de migrar su ruta,
+mostrarían enlaces que responden 403 (por ejemplo, movimientos de materia prima a Operador).
 
 **Criterio de aceptación:** `grep -rn "hasRole\|hasAnyRole" app/` devuelve **0 resultados** fuera de `UserController` (protección del último admin) y del futuro chequeo de `super-admin`. El test de matriz de acceso (ver 2.8) pasa en verde. Los tests existentes solo cambian donde la matriz modifica un acceso a propósito.
 

@@ -58,12 +58,14 @@ const navigationGroups: NavGroup[] = [
         items: [
             {
                 title: 'Dashboard',
+                allowedPermissions: ['dashboard.view'],
                 href: dashboard(),
                 icon: LayoutGrid,
                 allowedRoles: ['admin', 'produccion', 'comercial', 'operador'],
             },
             {
                 title: 'Materias Primas',
+                allowedPermissions: ['raw_materials.view'],
                 href: rawMaterialsIndex().url,
                 icon: Boxes,
                 allowedRoles: ['admin', 'produccion'],
@@ -76,12 +78,14 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Inventario PT',
+                allowedPermissions: ['finished_inventory.view'],
                 href: finishedInventoryIndex().url,
                 icon: Package,
                 allowedRoles: ['admin', 'produccion', 'comercial'],
             },
             {
                 title: 'Movimientos PT',
+                allowedPermissions: ['finished_inventory_movements.view'],
                 href: finishedInventoryMovementsIndex().url,
                 icon: ArrowLeftRight,
                 allowedRoles: ['admin', 'produccion'],
@@ -89,6 +93,7 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Bodegas',
+                allowedPermissions: ['warehouses.view'],
                 href: warehousesIndex().url,
                 icon: Warehouse,
                 allowedRoles: ['admin', 'produccion', 'comercial'],
@@ -101,6 +106,7 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Fórmulas',
+                allowedPermissions: ['formulas.view'],
                 href: formulasIndex().url,
                 icon: FlaskConical,
                 allowedRoles: ['admin', 'produccion'],
@@ -114,6 +120,7 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Saldos de Producción',
+                allowedPermissions: ['production_remnants.view'],
                 href: remnantsIndex().url,
                 icon: FlaskConical,
                 allowedRoles: ['admin', 'produccion', 'operador'],
@@ -138,6 +145,7 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Clientes',
+                allowedPermissions: ['clients.view'],
                 href: clientsIndex().url,
                 icon: Users,
                 allowedRoles: ['admin', 'comercial'],
@@ -167,6 +175,7 @@ const navigationGroups: NavGroup[] = [
         items: [
             {
                 title: 'Alertas',
+                allowedPermissions: ['alerts.view'],
                 href: alertsIndex().url,
                 icon: BellRing,
                 allowedRoles: ['admin', 'produccion'],
@@ -174,6 +183,7 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Códigos QR',
+                allowedPermissions: ['qr_codes.view'],
                 href: qrCodesIndex().url,
                 icon: QrCode,
                 allowedRoles: ['admin', 'produccion'],
@@ -252,8 +262,11 @@ function extractUserRoles(user: User | null): UserRole[] {
     );
 }
 
-function buildSidebarGroups(userRoles: UserRole[]): NavGroup[] {
-    if (userRoles.length === 0) {
+function buildSidebarGroups(
+    userRoles: UserRole[],
+    userPermissions: string[],
+): NavGroup[] {
+    if (userRoles.length === 0 && userPermissions.length === 0) {
         return navigationGroups;
     }
 
@@ -261,6 +274,24 @@ function buildSidebarGroups(userRoles: UserRole[]): NavGroup[] {
         .map((group) => {
             const items = group.items
                 .map((item) => {
+                    // Los módulos migrados a permisos (tarea 2.2) deciden por permiso.
+                    if (item.allowedPermissions?.length) {
+                        const hasPermission = item.allowedPermissions.some(
+                            (permission) =>
+                                userPermissions.includes(permission),
+                        );
+
+                        if (hasPermission) {
+                            return item;
+                        }
+
+                        if (item.unauthorizedBehavior === 'disable') {
+                            return { ...item, disabled: true };
+                        }
+
+                        return null;
+                    }
+
                     if (!item.allowedRoles?.length) {
                         return item;
                     }
@@ -299,22 +330,25 @@ export function AppSidebar() {
         unresolvedAlertsCount?: number;
     }>().props;
     const userRoles = extractUserRoles(auth.user);
-    const filteredGroups = buildSidebarGroups(userRoles).map((group) => ({
-        ...group,
-        items: group.items.map((item) => {
-            if (item.title !== 'Alertas') {
-                return item;
-            }
+    const userPermissions = auth.user?.permissions ?? [];
+    const filteredGroups = buildSidebarGroups(userRoles, userPermissions).map(
+        (group) => ({
+            ...group,
+            items: group.items.map((item) => {
+                if (item.title !== 'Alertas') {
+                    return item;
+                }
 
-            return {
-                ...item,
-                badge:
-                    unresolvedAlertsCount > 0
-                        ? unresolvedAlertsCount
-                        : undefined,
-            };
+                return {
+                    ...item,
+                    badge:
+                        unresolvedAlertsCount > 0
+                            ? unresolvedAlertsCount
+                            : undefined,
+                };
+            }),
         }),
-    }));
+    );
 
     return (
         <Sidebar collapsible="icon" variant="inset">

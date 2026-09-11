@@ -101,8 +101,8 @@ final class RoutePermissionMap
             'raw-materials.edit' => Permission::RawMaterialsEdit,
             'raw-materials.update' => Permission::RawMaterialsEdit,
             'raw-materials.reactivate' => Permission::RawMaterialsReactivate,
-            // Hoy desactiva o borra según el historial; en 2.7 se separa en deactivate/delete.
-            'raw-materials.destroy' => Permission::RawMaterialsDelete,
+            // Desactiva; el borrado físico dentro exige raw_materials.delete. Se separan en 2.7.
+            'raw-materials.destroy' => Permission::RawMaterialsDeactivate,
 
             // Órdenes de producción
             'production-orders.index' => Permission::ProductionOrdersView,
@@ -215,7 +215,7 @@ final class RoutePermissionMap
             Permission::CatalogsEdit->value => 'CRUDs de catálogos en la Fase 3 (3.1, 3.2).',
             Permission::CatalogsDelete->value => 'CRUDs de catálogos en la Fase 3 (3.1, 3.2).',
             Permission::ProductsDeactivate->value => 'Ruta nueva en la tarea 2.7.',
-            Permission::RawMaterialsDeactivate->value => 'Sale de raw-materials.destroy en la tarea 2.7.',
+            Permission::RawMaterialsDelete->value => 'Se aplica dentro de raw-materials.destroy; endpoint propio en la tarea 2.7.',
             Permission::WarehousesViewAll->value => 'Alcance de datos: bodegas visibles y selector de bodega.',
         ];
     }

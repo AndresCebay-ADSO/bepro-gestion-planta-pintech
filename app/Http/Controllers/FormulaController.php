@@ -210,7 +210,7 @@ class FormulaController extends Controller
      */
     public function activate(Formula $formula): RedirectResponse
     {
-        $this->authorize('update', $formula);
+        $this->authorize('activate', $formula);
 
         DB::transaction(function () use ($formula) {
             Formula::where('product_id', $formula->product_id)

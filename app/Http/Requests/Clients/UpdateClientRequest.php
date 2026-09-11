@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Clients;
 
+use App\Models\Client;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -11,7 +12,10 @@ class UpdateClientRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasRole('admin') ?? false;
+        $client = $this->route('client');
+
+        return $client instanceof Client
+            && ($this->user()?->can('update', $client) ?? false);
     }
 
     public function rules(): array

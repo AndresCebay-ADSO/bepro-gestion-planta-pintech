@@ -15,7 +15,7 @@ class AssignUsersRequest extends FormRequest
         $warehouse = $this->route('warehouse');
 
         return $warehouse instanceof Warehouse
-            && ($this->user()?->can('update', $warehouse) ?? false);
+            && ($this->user()?->can('assignUsers', $warehouse) ?? false);
     }
 
     public function rules(): array

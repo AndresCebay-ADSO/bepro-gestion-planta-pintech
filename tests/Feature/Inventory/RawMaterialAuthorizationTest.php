@@ -4,6 +4,7 @@ use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Role;
@@ -14,9 +15,7 @@ describe('Raw Material Authorization', function () {
     beforeEach(function () {
         // Crear roles si no existen
         if (Role::count() === 0) {
-            Role::create(['name' => 'admin']);
-            Role::create(['name' => 'produccion']);
-            Role::create(['name' => 'comercial']);
+            $this->seed(RolePermissionSeeder::class);
         }
 
         $this->unit = UnitOfMeasure::create([

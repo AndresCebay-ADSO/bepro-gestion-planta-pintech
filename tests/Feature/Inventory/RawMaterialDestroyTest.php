@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
@@ -12,6 +13,7 @@ use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Role;
@@ -27,9 +29,7 @@ uses(RefreshDatabase::class);
 describe('Raw Material Destroy', function () {
     beforeEach(function () {
         if (Role::count() === 0) {
-            Role::create(['name' => 'admin']);
-            Role::create(['name' => 'produccion']);
-            Role::create(['name' => 'comercial']);
+            $this->seed(RolePermissionSeeder::class);
         }
 
         $this->warehouse = Warehouse::create([
@@ -57,8 +57,23 @@ describe('Raw Material Destroy', function () {
         $this->admin->assignRole('admin');
     });
 
-    it('allows admin to physically delete raw material without activity', function () {
+    it('deactivates raw material without activity when the user cannot delete permanently', function () {
+        // Admin tiene raw_materials.deactivate pero no raw_materials.delete (docs/MATRIZ_RBAC.md).
         $response = $this->actingAs($this->admin)
+            ->delete(route('raw-materials.destroy', $this->rawMaterial));
+
+        $response->assertRedirect(route('raw-materials.index'));
+        $response->assertSessionHas('success', 'Materia prima desactivada exitosamente (conserva historial).');
+        $this->assertDatabaseHas('raw_materials', [
+            'id' => $this->rawMaterial->id,
+            'is_active' => false,
+        ]);
+    });
+
+    it('allows super-admin to physically delete raw material without activity', function () {
+        $superAdmin = userWithRole(SystemRole::SuperAdmin);
+
+        $response = $this->actingAs($superAdmin)
             ->delete(route('raw-materials.destroy', $this->rawMaterial));
 
         $response->assertRedirect(route('raw-materials.index'));
