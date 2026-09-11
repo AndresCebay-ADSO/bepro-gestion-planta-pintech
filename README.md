@@ -243,17 +243,19 @@ Incluye tablas de negocio y tablas de soporte (cache, jobs, auth, permisos).
 
 Carpeta `docs/`:
 
-- `SOFTWARE_OVERVIEW.md` - Mapa completo de capacidades del sistema (v1.2).
-- `production-exports.md` - **NUEVO** Guía técnica sobre el módulo de exportación a PDF y Excel.
-- `MER.md` - Modelo entidad relacion / diccionario de datos actualizado tras consolidacion.
-- `SISTEMA_AUDITORIA.md` - Guia técnica del registro de actividad y widgets de trazabilidad.
-- `COMPONENTES_UI.md` - Guía de uso de componentes reutilizables (FormattedNumber, FormattedDate, TableActions).
-- `ACTA_ACTUALIZACION_V1_2.md` - Historial de cambios técnicos v1.1 -> v1.2.
-- `RESUMEN_CAMBIOS_PINTECH_OS.md` - Resumen ejecutivo de ajustes tecnicos iniciales.
-- `ESPECIFICACION.md` - Detalle de requerimientos.
-- `PLAN_DESARROLLO.md` - Hoja de ruta.
+- `MER.md` - Modelo entidad-relación y diccionario de datos completo.
 - `STANDARDS.md` - Estándares de código, paginación y diseño.
-- `SISTEMA_TEMAS_UI.md` - Guía de implementación del tema visual.
+- `ARQUITECTURA.md` - Guía y decisiones de arquitectura del sistema.
+- `FLUJO_SISTEMA.md` - Flujo integral de operaciones de planta.
+- `SOFTWARE_OVERVIEW.md` - Mapa completo de capacidades del sistema.
+- `POLITICA_COSTOS_MATERIA_PRIMA.md` - Costeo FIFO y precios de referencia.
+- `MATRIZ_RBAC.md` - Matriz de roles y permisos del sistema.
+- `PLAN_FASE_2_RBAC.md` - Plan de implementación de roles y permisos (Fase 2).
+- `COMPONENTES_UI.md` - Componentes reutilizables (FormattedNumber, FormattedDate, TableActions).
+- `SISTEMA_TEMAS_UI.md` - Guía del sistema de temas visuales (claro/oscuro).
+- `SISTEMA_AUDITORIA.md` - Guía del registro de actividad y auditoría.
+- `LOGOS.md` - Guía de assets y branding corporativo.
+- `production-exports.md` - Módulo de exportación de órdenes a PDF y Excel.
 
 ## Autor
 
