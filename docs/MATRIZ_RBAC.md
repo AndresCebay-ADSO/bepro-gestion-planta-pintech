@@ -174,10 +174,12 @@ Viven en las policies/Actions junto al permiso, nunca en la matriz. Se listan aq
   (ruta `DELETE settings/profile`); una cuenta solo la desactiva un Admin.
 - **Cambio de bodega activa** (`warehouses.set-current`): todo usuario autenticado, pero solo entre sus bodegas asignadas
   (o todas, con `warehouses.view_all`).
-- **Dashboard:** no hay permisos `dashboard.*` por tarjeta. Cada tarjeta se muestra si el usuario tiene el permiso del
-  módulo que resume: órdenes → `production_orders.view`, alertas → `alerts.view`, stock bajo y lotes por vencer →
-  `raw_materials.view`, métricas comerciales → `quotations.view_own|view_all` / `sales_orders.view_own|view_all`. Un rol nuevo sin tarjetas ve un
-  dashboard vacío, **nunca un error 500** (hoy `DashboardService` lanza una excepción con cualquier rol desconocido).
+- **Dashboard:** no hay permisos `dashboard.*` por tarjeta. La entrada exige `dashboard.view`. Se conservan las 4 vistas,
+  elegidas por permiso: `users.view` → administración, `production_orders.create` → producción, `production_orders.view` →
+  planta, `quotations.view_own|view_all` o `sales_orders.view_own|view_all` → comercial; si no aplica ninguna, vista vacía.
+  Dentro de cada vista, cada tarjeta solo aparece si el usuario tiene el permiso del dato: órdenes →
+  `production_orders.view`, alertas → `alerts.view`, stock bajo y lotes por vencer → `raw_materials.view`, totales →
+  `users.view` / `products.view` / `warehouses.view` / `clients.view`. Un rol nuevo nunca recibe un error.
 - **Movimientos MP inmutables:** hay que retirar las rutas `inventory-movements.edit/update/destroy`. Hoy
   `InventoryMovementType` solo tiene `entry` y `exit`: para corregir un error hace falta un movimiento de reverso que
   referencie al original (nuevo tipo `adjustment` o columna `reverses_movement_id`). Queda como tarea de la Fase 2B.

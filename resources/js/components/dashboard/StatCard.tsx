@@ -5,7 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 interface StatCardProps {
     icon: LucideIcon;
     label: string;
-    value: number;
+    /** Sin valor (el usuario no tiene permiso sobre el dato), la tarjeta no se muestra. */
+    value?: number;
     iconClassName?: string;
 }
 
@@ -15,6 +16,10 @@ export function StatCard({
     value,
     iconClassName,
 }: StatCardProps) {
+    if (value === undefined) {
+        return null;
+    }
+
     return (
         <Card className="border-none shadow-lg">
             <CardContent className="flex items-center gap-4 p-5">

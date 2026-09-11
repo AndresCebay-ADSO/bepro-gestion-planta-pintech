@@ -63,7 +63,8 @@ import { index as usersIndex } from '@/routes/users';
 import { index as warehousesIndex } from '@/routes/warehouses';
 
 interface DashboardProps {
-    role: string;
+    profile: 'admin' | 'production' | 'plant' | 'commercial' | 'none';
+    roleLabel: string;
     userName: string;
     stats: DashboardStats;
     recent_orders?: RecentOrder[];
@@ -106,7 +107,8 @@ function salesOrderStatusClass(status: string): string {
 }
 
 export default function Dashboard({
-    role,
+    profile,
+    roleLabel,
     userName,
     stats,
     recent_orders,
@@ -119,11 +121,11 @@ export default function Dashboard({
         <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950">
             <Head title="Dashboard" />
 
-            {role === 'admin' && (
+            {profile === 'admin' && (
                 <>
                     <DashboardHeader
                         userName={userName}
-                        role={role}
+                        role={roleLabel}
                         title="Panel de Administración"
                         subtitle="Hola, {name}. Resumen general del sistema."
                         icon={Settings}
@@ -137,67 +139,71 @@ export default function Dashboard({
                             <StatCard
                                 icon={Users}
                                 label="Usuarios"
-                                value={stats.total_users ?? 0}
+                                value={stats.total_users}
                                 iconClassName="bg-blue-100 text-blue-600"
                             />
                             <StatCard
                                 icon={ShoppingBag}
                                 label="Productos"
-                                value={stats.total_products ?? 0}
+                                value={stats.total_products}
                                 iconClassName="bg-emerald-100 text-emerald-600"
                             />
                             <StatCard
                                 icon={Building2}
                                 label="Almacenes"
-                                value={stats.total_warehouses ?? 0}
+                                value={stats.total_warehouses}
                                 iconClassName="bg-violet-100 text-violet-600"
                             />
                             <StatCard
                                 icon={Timer}
                                 label="OP pendientes"
-                                value={stats.pending_orders ?? 0}
+                                value={stats.pending_orders}
                                 iconClassName="bg-slate-100 text-slate-600"
                             />
                             <StatCard
                                 icon={ClipboardList}
                                 label="OP en proceso"
-                                value={stats.active_orders ?? 0}
+                                value={stats.active_orders}
                                 iconClassName="bg-orange-100 text-orange-600"
                             />
                             <StatCard
                                 icon={CheckCircle2}
                                 label="Completadas hoy"
-                                value={stats.completed_today ?? 0}
+                                value={stats.completed_today}
                                 iconClassName="bg-emerald-100 text-emerald-600"
                             />
                             <StatCard
                                 icon={BellRing}
                                 label="Alertas activas"
-                                value={stats.unresolved_alerts ?? 0}
+                                value={stats.unresolved_alerts}
                                 iconClassName="bg-red-100 text-red-600"
                             />
                             <StatCard
                                 icon={PackageX}
                                 label="MP stock bajo"
-                                value={stats.low_stock_materials ?? 0}
+                                value={stats.low_stock_materials}
                                 iconClassName="bg-amber-100 text-amber-600"
                             />
                             <StatCard
                                 icon={AlertTriangle}
                                 label="Lotes por vencer"
-                                value={stats.expiring_batches ?? 0}
+                                value={stats.expiring_batches}
                                 iconClassName="bg-purple-100 text-purple-600"
                             />
                         </div>
                         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                             <div className="space-y-6 lg:col-span-2">
-                                <RecentOrdersList
-                                    orders={recent_orders ?? []}
-                                    viewAllHref={productionOrdersIndex().url}
-                                    showHref={(id) =>
-                                        productionOrderShow(id).url
-                                    }
-                                />
+                                {recent_orders && (
+                                    <RecentOrdersList
+                                        orders={recent_orders}
+                                        viewAllHref={
+                                            productionOrdersIndex().url
+                                        }
+                                        showHref={(id) =>
+                                            productionOrderShow(id).url
+                                        }
+                                    />
+                                )}
                                 <QuickAccessGrid
                                     items={[
                                         {
@@ -252,11 +258,11 @@ export default function Dashboard({
                 </>
             )}
 
-            {role === 'produccion' && (
+            {profile === 'production' && (
                 <>
                     <DashboardHeader
                         userName={userName}
-                        role={role}
+                        role={roleLabel}
                         title="Centro de Producción"
                         subtitle="Hola, {name}. Resumen operativo de planta."
                         icon={Factory}
@@ -270,55 +276,59 @@ export default function Dashboard({
                             <StatCard
                                 icon={Timer}
                                 label="OP pendientes"
-                                value={stats.pending_orders ?? 0}
+                                value={stats.pending_orders}
                                 iconClassName="bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-400"
                             />
                             <StatCard
                                 icon={ClipboardList}
                                 label="OP en proceso"
-                                value={stats.active_orders ?? 0}
+                                value={stats.active_orders}
                                 iconClassName="bg-orange-100 text-orange-600"
                             />
                             <StatCard
                                 icon={CheckCircle2}
                                 label="Completadas hoy"
-                                value={stats.completed_today ?? 0}
+                                value={stats.completed_today}
                                 iconClassName="bg-emerald-100 text-emerald-600"
                             />
                             <StatCard
                                 icon={Send}
                                 label="OP en revisión"
-                                value={stats.pending_review_orders ?? 0}
+                                value={stats.pending_review_orders}
                                 iconClassName="bg-blue-100 text-blue-600"
                             />
                             <StatCard
                                 icon={BellRing}
                                 label="Alertas activas"
-                                value={stats.unresolved_alerts ?? 0}
+                                value={stats.unresolved_alerts}
                                 iconClassName="bg-red-100 text-red-600"
                             />
                             <StatCard
                                 icon={PackageX}
                                 label="MP stock bajo"
-                                value={stats.low_stock_materials ?? 0}
+                                value={stats.low_stock_materials}
                                 iconClassName="bg-amber-100 text-amber-600"
                             />
                             <StatCard
                                 icon={AlertTriangle}
                                 label="Lotes por vencer"
-                                value={stats.expiring_batches ?? 0}
+                                value={stats.expiring_batches}
                                 iconClassName="bg-purple-100 text-purple-600"
                             />
                         </div>
                         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                             <div className="space-y-6 lg:col-span-2">
-                                <RecentOrdersList
-                                    orders={recent_orders ?? []}
-                                    viewAllHref={productionOrdersIndex().url}
-                                    showHref={(id) =>
-                                        productionOrderShow(id).url
-                                    }
-                                />
+                                {recent_orders && (
+                                    <RecentOrdersList
+                                        orders={recent_orders}
+                                        viewAllHref={
+                                            productionOrdersIndex().url
+                                        }
+                                        showHref={(id) =>
+                                            productionOrderShow(id).url
+                                        }
+                                    />
+                                )}
                                 <QuickAccessGrid
                                     items={[
                                         {
@@ -353,11 +363,11 @@ export default function Dashboard({
                 </>
             )}
 
-            {role === 'operador' && (
+            {profile === 'plant' && (
                 <>
                     <DashboardHeader
                         userName={userName}
-                        role={role}
+                        role={roleLabel}
                         title="Panel de Planta"
                         subtitle="Hola, {name}. Órdenes asignadas para ejecución y precierre."
                         icon={Factory}
@@ -371,42 +381,44 @@ export default function Dashboard({
                             <StatCard
                                 icon={Timer}
                                 label="Pendientes"
-                                value={stats.pending_orders ?? 0}
+                                value={stats.pending_orders}
                                 iconClassName="bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-400"
                             />
                             <StatCard
                                 icon={ClipboardList}
                                 label="En proceso"
-                                value={stats.active_orders ?? 0}
+                                value={stats.active_orders}
                                 iconClassName="bg-orange-100 text-orange-600"
                             />
                             <StatCard
                                 icon={Send}
                                 label="En revisión"
-                                value={stats.submitted_orders ?? 0}
+                                value={stats.submitted_orders}
                                 iconClassName="bg-blue-100 text-blue-600"
                             />
                             <StatCard
                                 icon={CheckCircle2}
                                 label="Completadas hoy"
-                                value={stats.completed_today ?? 0}
+                                value={stats.completed_today}
                                 iconClassName="bg-emerald-100 text-emerald-600"
                             />
                         </div>
-                        <RecentOrdersCompact
-                            orders={recent_orders ?? []}
-                            viewAllHref={productionOrdersIndex().url}
-                            showHref={(id) => productionOrderShow(id).url}
-                        />
+                        {recent_orders && (
+                            <RecentOrdersCompact
+                                orders={recent_orders}
+                                viewAllHref={productionOrdersIndex().url}
+                                showHref={(id) => productionOrderShow(id).url}
+                            />
+                        )}
                     </div>
                 </>
             )}
 
-            {role === 'comercial' && (
+            {profile === 'commercial' && (
                 <>
                     <DashboardHeader
                         userName={userName}
-                        role={role}
+                        role={roleLabel}
                         title="Panel Comercial"
                         subtitle="Hola, {name}. Resumen de cotizaciones, pedidos y clientes."
                         icon={WalletCards}
@@ -420,102 +432,115 @@ export default function Dashboard({
                             <StatCard
                                 icon={ShoppingBag}
                                 label="Productos disponibles"
-                                value={stats.available_products ?? 0}
+                                value={stats.available_products}
                                 iconClassName="bg-blue-100 text-blue-600"
                             />
                             <StatCard
                                 icon={FileText}
                                 label="Cotizaciones activas"
-                                value={stats.active_quotes ?? 0}
+                                value={stats.active_quotes}
                                 iconClassName="bg-orange-100 text-orange-600"
                             />
                             <StatCard
                                 icon={CheckCircle2}
                                 label="Cotizaciones aceptadas"
-                                value={stats.accepted_quotes ?? 0}
+                                value={stats.accepted_quotes}
                                 iconClassName="bg-emerald-100 text-emerald-600"
                             />
                             <StatCard
                                 icon={ShoppingCart}
                                 label="Pedidos pendientes"
-                                value={stats.pending_orders ?? 0}
+                                value={stats.pending_orders}
                                 iconClassName="bg-amber-100 text-amber-600"
                             />
                             <StatCard
                                 icon={Users}
                                 label="Total clientes"
-                                value={stats.total_clients ?? 0}
+                                value={stats.total_clients}
                                 iconClassName="bg-violet-100 text-violet-600"
                             />
                         </div>
                         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                            <Card className="border-none shadow-lg">
-                                <CardHeader className="flex flex-row items-center justify-between">
-                                    <CardTitle>
-                                        Cotizaciones recientes
-                                    </CardTitle>
-                                    <Button variant="ghost" size="sm" asChild>
-                                        <Link href={quotationsIndex().url}>
-                                            Ver todas
-                                            <ArrowRight className="ml-1 h-4 w-4" />
-                                        </Link>
-                                    </Button>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                    {(recent_quotes ?? []).length === 0 ? (
-                                        <p className="py-6 text-center text-sm text-muted-foreground">
-                                            No hay cotizaciones registradas.
-                                        </p>
-                                    ) : (
-                                        (recent_quotes ?? []).map((quote) => (
-                                            <Link
-                                                key={quote.id}
-                                                href={
-                                                    quotationShow(quote.id).url
-                                                }
-                                                className="flex items-center justify-between rounded-lg border border-border p-4 transition hover:bg-muted/40"
-                                            >
-                                                <div className="space-y-1">
-                                                    <p className="font-mono font-semibold">
-                                                        {quote.reference_number}
-                                                    </p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {quote.client_name}
-                                                        {quote.total !== null
-                                                            ? ` · ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(quote.total)}`
-                                                            : ''}
-                                                    </p>
-                                                </div>
-                                                <span
-                                                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${quoteStatusClass(quote.status)}`}
-                                                >
-                                                    {quote.status_label}
-                                                </span>
+                            {recent_quotes && (
+                                <Card className="border-none shadow-lg">
+                                    <CardHeader className="flex flex-row items-center justify-between">
+                                        <CardTitle>
+                                            Cotizaciones recientes
+                                        </CardTitle>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            asChild
+                                        >
+                                            <Link href={quotationsIndex().url}>
+                                                Ver todas
+                                                <ArrowRight className="ml-1 h-4 w-4" />
                                             </Link>
-                                        ))
-                                    )}
-                                </CardContent>
-                            </Card>
+                                        </Button>
+                                    </CardHeader>
+                                    <CardContent className="space-y-3">
+                                        {recent_quotes.length === 0 ? (
+                                            <p className="py-6 text-center text-sm text-muted-foreground">
+                                                No hay cotizaciones registradas.
+                                            </p>
+                                        ) : (
+                                            recent_quotes.map((quote) => (
+                                                <Link
+                                                    key={quote.id}
+                                                    href={
+                                                        quotationShow(quote.id)
+                                                            .url
+                                                    }
+                                                    className="flex items-center justify-between rounded-lg border border-border p-4 transition hover:bg-muted/40"
+                                                >
+                                                    <div className="space-y-1">
+                                                        <p className="font-mono font-semibold">
+                                                            {
+                                                                quote.reference_number
+                                                            }
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {quote.client_name}
+                                                            {quote.total !==
+                                                            null
+                                                                ? ` · ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(quote.total)}`
+                                                                : ''}
+                                                        </p>
+                                                    </div>
+                                                    <span
+                                                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${quoteStatusClass(quote.status)}`}
+                                                    >
+                                                        {quote.status_label}
+                                                    </span>
+                                                </Link>
+                                            ))
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            )}
 
-                            <Card className="border-none shadow-lg">
-                                <CardHeader className="flex flex-row items-center justify-between">
-                                    <CardTitle>Pedidos recientes</CardTitle>
-                                    <Button variant="ghost" size="sm" asChild>
-                                        <Link href={salesOrdersIndex().url}>
-                                            Ver todos
-                                            <ArrowRight className="ml-1 h-4 w-4" />
-                                        </Link>
-                                    </Button>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                    {(recent_sales_orders ?? []).length ===
-                                    0 ? (
-                                        <p className="py-6 text-center text-sm text-muted-foreground">
-                                            No hay pedidos registrados.
-                                        </p>
-                                    ) : (
-                                        (recent_sales_orders ?? []).map(
-                                            (order) => (
+                            {recent_sales_orders && (
+                                <Card className="border-none shadow-lg">
+                                    <CardHeader className="flex flex-row items-center justify-between">
+                                        <CardTitle>Pedidos recientes</CardTitle>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            asChild
+                                        >
+                                            <Link href={salesOrdersIndex().url}>
+                                                Ver todos
+                                                <ArrowRight className="ml-1 h-4 w-4" />
+                                            </Link>
+                                        </Button>
+                                    </CardHeader>
+                                    <CardContent className="space-y-3">
+                                        {recent_sales_orders.length === 0 ? (
+                                            <p className="py-6 text-center text-sm text-muted-foreground">
+                                                No hay pedidos registrados.
+                                            </p>
+                                        ) : (
+                                            recent_sales_orders.map((order) => (
                                                 <Link
                                                     key={order.id}
                                                     href={
@@ -541,11 +566,11 @@ export default function Dashboard({
                                                         {order.status_label}
                                                     </span>
                                                 </Link>
-                                            ),
-                                        )
-                                    )}
-                                </CardContent>
-                            </Card>
+                                            ))
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            )}
                         </div>
                         <QuickAccessGrid
                             items={[
@@ -578,6 +603,16 @@ export default function Dashboard({
                         />
                     </div>
                 </>
+            )}
+
+            {profile === 'none' && (
+                <DashboardHeader
+                    userName={userName}
+                    role={roleLabel}
+                    title="Bienvenido"
+                    subtitle="Hola, {name}. Tu rol todavía no tiene tarjetas en el dashboard."
+                    icon={ShieldCheck}
+                />
             )}
         </div>
     );

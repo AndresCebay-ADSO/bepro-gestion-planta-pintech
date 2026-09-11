@@ -66,7 +66,7 @@ Un `Gate::before` que devuelve `true` **corta la ejecución antes de llegar al i
 
 En cualquier caso, **antes** de esto hay que separar permiso de invariante dentro de cada policy (ver 2.2).
 
-### 🔴 C2 — `DashboardService` explota con cualquier rol nuevo
+### 🔴 C2 — `DashboardService` explota con cualquier rol nuevo — ✅ resuelto
 
 ```php
 // app/Services/DashboardService.php:31-38
@@ -77,7 +77,13 @@ return match ($role) {
 };
 ```
 
-El momento en que un SuperAdmin cree el rol `calidad` desde la UI de 2.4 y se lo asigne a alguien, **ese usuario recibe un 500 al entrar**. Y si creamos el rol `super-admin`, el propio SuperAdmin no puede ver el dashboard. **La tarea 2.4 es inviable sin arreglar esto primero.** Hay que pasar el dashboard a composición por permisos (cada tarjeta se muestra si su permiso está presente) o, como mínimo, a un fallback seguro.
+El momento en que un SuperAdmin cree el rol `calidad` desde la UI de 2.4 y se lo asigne a alguien, **ese usuario recibe un 403 al entrar** (corrección: no era un 500; `DashboardController` filtraba antes con una lista fija de 4 roles, así que la excepción nunca llegaba a lanzarse, pero el efecto es el mismo porque el dashboard es la página de llegada tras el login). Y si creamos el rol `super-admin`, el propio SuperAdmin no puede ver el dashboard. **La tarea 2.4 es inviable sin arreglar esto primero.**
+
+> **✅ Resuelto (paso previo a la 2.2):** la entrada exige `dashboard.view`. Las 4 vistas se conservan, pero se eligen
+> por permiso (`DashboardService::resolveProfile`): `users.view` → administración, `production_orders.create` → producción,
+> `production_orders.view` → planta, `quotations.*`/`sales_orders.*` → comercial, ninguno → vista vacía de bienvenida.
+> Cada dato solo se calcula si el usuario tiene su permiso, y la tarjeta sin dato se oculta. Super-admin recibe la vista
+> de administración. Hay que pasar el dashboard a composición por permisos (cada tarjeta se muestra si su permiso está presente) o, como mínimo, a un fallback seguro.
 
 > **📝 Tu nota:** en estos casos actualemtne el sofwtare sigue un flujo de permisos hechos por el vibecoding, realmente a penas a estas alturas haremos todo el tema de permisos reales, no es algo que digamos que actualemtne este bien por el momento tal vez por esas razones en perimosso o roles hay tanta cosa
 >
@@ -295,6 +301,8 @@ Esto además mata C1 de raíz y hace los invariantes testeables sin usuario.
 - Los 5 roles del sistema **no se pueden eliminar ni renombrar** (marca `is_system` o lista blanca) — si alguien borra `produccion`, se cae `DashboardService`, el sidebar y 60 tests.
 - No se puede eliminar un rol **con usuarios asignados** (o se exige reasignar). Esto es exactamente la lógica de 2.7 aplicada a roles.
 - Un rol no puede otorgar permisos que quien edita no posee (evita escalada).
+- Un rol nuevo sin `dashboard.view` deja a sus usuarios con un 403 en la página de llegada: el formulario de
+  crear rol debe traer `dashboard.view` **marcado por defecto**.
 - Al guardar permisos: `PermissionRegistrar::forgetCachedPermissions()`, o los cambios no se ven hasta 24 h después (caché de Spatie).
 - Registrar los cambios de permisos en el activity log (`security`), como ya se hace con los cambios de rol en `UserController:199-207`.
 
@@ -309,6 +317,9 @@ Esto además mata C1 de raíz y hace los invariantes testeables sin usuario.
 - `StoreUserRequest`/`UpdateUserRequest` → validar contra los roles asignables (hoy la regla es un `exists` genérico).
 - Decidir mono/multi-rol (C3) y adaptar `Create.tsx` / `Edit.tsx` (hoy `roles[0]`, `<Select>` simple).
 - **Propagar permisos al frontend**: añadir `permissions` (o un `can` plano) a `HandleInertiaRequests::share()` y migrar `app-sidebar.tsx` de `allowedRoles` a `allowedPermissions` — 24 ítems de menú. Sin esto, la UI sigue decidiendo por rol mientras el backend decide por permiso, y aparecen menús que llevan a 403.
+- Los **accesos rápidos del dashboard** (`QuickAccessGrid`) también están fijos por vista: hay que filtrarlos por
+  permiso. Ejemplo: el enlace "Auditoría" de la vista de administración dará 403 a Admin en cuanto la 2.8 aplique
+  `audit_logs.view` (solo SuperAdmin).
 - Cuidado con el tamaño del payload: ~100 permisos por usuario en **cada** respuesta Inertia. Usar un array plano de strings, no objetos.
 
 **Criterio de aceptación:** ningún ítem del sidebar visible para un rol lleva a un 403.

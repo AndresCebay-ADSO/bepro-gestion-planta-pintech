@@ -2,9 +2,12 @@
 
 use App\Enums\AlertSeverity;
 use App\Enums\AlertType;
+use App\Enums\DashboardProfile;
+use App\Enums\Permission;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\QuotationStatus;
 use App\Enums\SalesOrderStatus;
+use App\Enums\SystemRole;
 use App\Models\Alert;
 use App\Models\Client;
 use App\Models\Formula;
@@ -18,6 +21,7 @@ use App\Models\SalesOrder;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Role;
@@ -25,11 +29,6 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
-    Role::firstOrCreate(['name' => 'admin']);
-    Role::firstOrCreate(['name' => 'produccion']);
-    Role::firstOrCreate(['name' => 'operador']);
-    Role::firstOrCreate(['name' => 'comercial']);
-
     $systemUser = User::factory()->create();
 
     $this->unit = UnitOfMeasure::create([
@@ -129,15 +128,15 @@ test('guests are redirected to the login page', function () {
 });
 
 test('admin dashboard exposes global stats', function () {
-    $admin = User::factory()->create(['email_verified_at' => now()]);
-    $admin->assignRole('admin');
+    actingAsRole(SystemRole::Admin, ['email_verified_at' => now()]);
 
-    $this->actingAs($admin)
-        ->get(route('dashboard'))
+    $this->get(route('dashboard'))
         ->assertSuccessful()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Dashboard/Index')
-            ->where('role', 'admin')
+            ->where('profile', DashboardProfile::Admin->value)
+            ->where('roleLabel', SystemRole::Admin->label())
+            ->has('stats.total_users')
             ->where('stats.pending_orders', 1)
             ->where('stats.active_orders', 1)
             ->where('stats.completed_today', 0)
@@ -148,43 +147,40 @@ test('admin dashboard exposes global stats', function () {
 });
 
 test('production dashboard exposes operational stats', function () {
-    $productionUser = User::factory()->create(['email_verified_at' => now()]);
-    $productionUser->assignRole('produccion');
+    actingAsRole(SystemRole::Production, ['email_verified_at' => now()]);
 
-    $this->actingAs($productionUser)
-        ->get(route('dashboard'))
+    $this->get(route('dashboard'))
         ->assertSuccessful()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Dashboard/Index')
-            ->where('role', 'produccion')
+            ->where('profile', DashboardProfile::Production->value)
             ->where('stats.pending_orders', 1)
             ->where('stats.active_orders', 1)
             ->where('stats.pending_review_orders', 1)
             ->where('stats.unresolved_alerts', 1)
+            ->missing('stats.total_users')
             ->has('recent_orders', 3)
             ->has('recent_alerts', 1)
             ->where('alert_breakdown.stock_bajo', 1));
 });
 
 test('operator dashboard exposes plant stats', function () {
-    $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole('operador');
+    actingAsRole(SystemRole::Operator, ['email_verified_at' => now()]);
 
-    $this->actingAs($operator)
-        ->get(route('dashboard'))
+    $this->get(route('dashboard'))
         ->assertSuccessful()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Dashboard/Index')
-            ->where('role', 'operador')
+            ->where('profile', DashboardProfile::Plant->value)
             ->where('stats.pending_orders', 1)
             ->where('stats.active_orders', 1)
             ->where('stats.submitted_orders', 1)
-            ->has('recent_orders', 3));
+            ->has('recent_orders', 3)
+            ->missing('recent_alerts'));
 });
 
 test('comercial dashboard exposes sales stats', function () {
-    $comercial = User::factory()->create(['email_verified_at' => now()]);
-    $comercial->assignRole('comercial');
+    $comercial = userWithRole(SystemRole::Commercial, ['email_verified_at' => now()]);
 
     $client = Client::create([
         'business_name' => 'Cliente Test',
@@ -220,7 +216,7 @@ test('comercial dashboard exposes sales stats', function () {
         ->assertSuccessful()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Dashboard/Index')
-            ->where('role', 'comercial')
+            ->where('profile', DashboardProfile::Commercial->value)
             ->where('stats.available_products', 1)
             ->where('stats.active_quotes', 1)
             ->where('stats.pending_orders', 2)
@@ -230,7 +226,52 @@ test('comercial dashboard exposes sales stats', function () {
             ->has('recent_sales_orders', 2));
 });
 
-test('users without a recognized role receive a 403', function () {
+test('super-admin gets the admin dashboard', function () {
+    actingAsRole(SystemRole::SuperAdmin, ['email_verified_at' => now()]);
+
+    $this->get(route('dashboard'))
+        ->assertSuccessful()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('profile', DashboardProfile::Admin->value)
+            ->where('roleLabel', SystemRole::SuperAdmin->label()));
+});
+
+test('a custom role gets the view that matches its permissions and only its data', function () {
+    $this->seed(RolePermissionSeeder::class);
+    Role::create(['name' => 'calidad', 'guard_name' => 'web'])
+        ->givePermissionTo([Permission::DashboardView->value, Permission::ProductionOrdersView->value]);
+
+    $user = User::factory()->create(['email_verified_at' => now()]);
+    $user->assignRole('calidad');
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertSuccessful()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('profile', DashboardProfile::Plant->value)
+            ->where('roleLabel', 'calidad')
+            ->where('stats.pending_orders', 1)
+            ->missing('stats.total_users')
+            ->missing('recent_alerts'));
+});
+
+test('a custom role without dashboard data gets an empty dashboard instead of an error', function () {
+    $this->seed(RolePermissionSeeder::class);
+    Role::create(['name' => 'visitante', 'guard_name' => 'web'])
+        ->givePermissionTo(Permission::DashboardView->value);
+
+    $user = User::factory()->create(['email_verified_at' => now()]);
+    $user->assignRole('visitante');
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertSuccessful()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('profile', DashboardProfile::None->value)
+            ->where('stats', []));
+});
+
+test('users without the dashboard.view permission receive a 403', function () {
     $user = User::factory()->create(['email_verified_at' => now()]);
 
     $this->actingAs($user)
