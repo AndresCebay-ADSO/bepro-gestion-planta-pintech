@@ -137,3 +137,14 @@ it('exige el permiso del mapa en las rutas que ya no dependen de role:', functio
 
     expect($mismatches)->toBe([], 'Rutas sin su permiso: '.implode(', ', $mismatches));
 });
+
+it('no protege ninguna ruta por rol', function () {
+    $byRole = collect(applicationRoutes())
+        ->filter(fn (RoutingRoute $route) => collect($route->gatherMiddleware())
+            ->contains(fn ($item) => is_string($item) && str_starts_with($item, 'role:')))
+        ->map(fn (RoutingRoute $route) => $route->getName() ?? $route->uri())
+        ->values()
+        ->all();
+
+    expect($byRole)->toBe([], 'Rutas que aún usan role: '.implode(', ', $byRole));
+});

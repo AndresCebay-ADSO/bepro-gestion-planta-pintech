@@ -232,6 +232,8 @@ export default function Dashboard({
                                         },
                                         {
                                             label: 'Órdenes',
+                                            permission:
+                                                'production_orders.view',
                                             href: productionOrdersIndex().url,
                                             icon: ClipboardList,
                                         },
@@ -339,6 +341,8 @@ export default function Dashboard({
                                     items={[
                                         {
                                             label: 'Órdenes',
+                                            permission:
+                                                'production_orders.view',
                                             href: productionOrdersIndex().url,
                                             icon: ClipboardList,
                                         },

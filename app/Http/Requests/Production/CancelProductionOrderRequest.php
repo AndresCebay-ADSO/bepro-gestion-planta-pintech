@@ -14,7 +14,7 @@ class CancelProductionOrderRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('delete', $this->route('production_order')) ?? false;
+        return $this->user()?->can('cancel', $this->route('production_order')) ?? false;
     }
 
     /**

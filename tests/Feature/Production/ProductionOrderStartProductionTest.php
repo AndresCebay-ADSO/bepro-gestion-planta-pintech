@@ -15,16 +15,14 @@ use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
-use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Role::findOrCreate('operador', 'web');
-    Role::findOrCreate('produccion', 'web');
-    Role::findOrCreate('admin', 'web');
+    test()->seed(RolePermissionSeeder::class);
 
     $this->admin = User::factory()->create(['email_verified_at' => now()]);
     $this->admin->assignRole('admin');
@@ -157,7 +155,7 @@ test('cannot start an order that is already in progress', function () {
 test('commercial user cannot start production', function () {
     [$order] = createPendingOrderForStartTest($this);
 
-    Role::findOrCreate('comercial', 'web');
+    test()->seed(RolePermissionSeeder::class);
     $commercial = User::factory()->create(['email_verified_at' => now()]);
     $commercial->assignRole('comercial');
 

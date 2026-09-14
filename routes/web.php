@@ -48,7 +48,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // ============ RUTAS PROTEGIDAS POR PERMISO (docs/MATRIZ_RBAC.md) ============
-// Los módulos se mueven aquí a medida que su policy se migra a permisos (tarea 2.2).
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Alertas
@@ -262,6 +261,54 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:'.Permission::SalesOrdersUpdateStatus->value)
         ->name('sales-orders.update-status');
 
+    // Órdenes de producción (cada habilidad combina permiso y estado en ProductionOrderPolicy)
+    Route::get('production-orders', [ProductionOrderController::class, 'index'])
+        ->middleware('can:'.Permission::ProductionOrdersView->value)
+        ->name('production-orders.index');
+    Route::get('production-orders/create', [ProductionOrderController::class, 'create'])
+        ->middleware('can:'.Permission::ProductionOrdersCreate->value)
+        ->name('production-orders.create');
+    Route::post('production-orders', [ProductionOrderController::class, 'store'])
+        ->middleware('can:'.Permission::ProductionOrdersCreate->value)
+        ->name('production-orders.store');
+    Route::get('production-orders/{production_order}', [ProductionOrderController::class, 'show'])
+        ->middleware('can:'.Permission::ProductionOrdersView->value)
+        ->name('production-orders.show')
+        ->whereNumber('production_order');
+    Route::get('production-orders/{production_order}/export-pdf', [ProductionOrderController::class, 'exportPdf'])
+        ->middleware('can:'.Permission::ProductionOrdersExport->value)
+        ->name('production-orders.export-pdf');
+    Route::get('production-orders/{production_order}/export-excel', [ProductionOrderController::class, 'exportExcel'])
+        ->middleware('can:'.Permission::ProductionOrdersExport->value)
+        ->name('production-orders.export-excel');
+    Route::post('production-orders/{production_order}/start', [ProductionOrderController::class, 'startProduction'])
+        ->middleware('can:'.Permission::ProductionOrdersOperate->value)
+        ->name('production-orders.start')
+        ->whereNumber('production_order');
+    Route::post('production-orders/{production_order}/submit-for-review', [ProductionOrderController::class, 'submitForReview'])
+        ->middleware('can:'.Permission::ProductionOrdersSubmitForReview->value)
+        ->name('production-orders.submit-for-review');
+    Route::post('production-orders/{production_order}/reject-review', [ProductionOrderController::class, 'rejectReview'])
+        ->middleware('can:'.Permission::ProductionOrdersRejectReview->value)
+        ->name('production-orders.reject-review');
+    Route::post('production-orders/{production_order}/complete', [ProductionOrderController::class, 'complete'])
+        ->middleware('can:'.Permission::ProductionOrdersComplete->value)
+        ->name('production-orders.complete');
+    Route::post('production-orders/{production_order}/cancel', [ProductionOrderController::class, 'cancel'])
+        ->middleware('can:'.Permission::ProductionOrdersCancel->value)
+        ->name('production-orders.cancel');
+    Route::post('production-orders/{production_order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])
+        ->middleware(['throttle:production-preview-costs', 'can:'.Permission::CostsView->value])
+        ->name('production-orders.preview-costs');
+    Route::middleware('can:'.Permission::ProductionOrdersOperate->value)->group(function () {
+        Route::post('production-orders/{production_order}/line-adjustments', [LineAdjustmentController::class, 'store'])->name('production-orders.line-adjustments.store');
+        Route::delete('production-orders/{production_order}/line-adjustments/{adjustment}', [LineAdjustmentController::class, 'destroy'])->name('production-orders.line-adjustments.destroy');
+        Route::post('production-orders/{production_order}/packaging-plans', [PackagingPlanController::class, 'store'])->name('production-orders.packaging-plans.store');
+        Route::delete('production-orders/{production_order}/packaging-plans/{plan}', [PackagingPlanController::class, 'destroy'])->name('production-orders.packaging-plans.destroy');
+        Route::post('production-orders/{production_order}/consume-remnant', [RemnantConsumptionController::class, 'store'])->name('production-orders.consume-remnant');
+        Route::get('production-orders/{production_order}/available-remnants', [RemnantConsumptionController::class, 'availableRemnants'])->name('production-orders.available-remnants');
+    });
+
     // Inventario de producto terminado
     Route::get('finished-inventory', [FinishedInventoryController::class, 'index'])
         ->middleware('can:'.Permission::FinishedInventoryView->value)
@@ -271,38 +318,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->where(['finished_inventory_movement' => '[0-9]+'])
         ->middlewareFor(['index', 'show'], 'can:'.Permission::FinishedInventoryMovementsView->value)
         ->middlewareFor('store', 'can:'.Permission::FinishedInventoryMovementsCreate->value);
-});
-
-// ============ RUTAS PROTEGIDAS POR ROL ============
-
-Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
-    Route::get('production-orders/create', [ProductionOrderController::class, 'create'])->name('production-orders.create');
-    Route::post('production-orders', [ProductionOrderController::class, 'store'])->name('production-orders.store');
-    Route::post('production-orders/{production_order}/complete', [ProductionOrderController::class, 'complete'])->name('production-orders.complete');
-    Route::post('production-orders/{production_order}/cancel', [ProductionOrderController::class, 'cancel'])->name('production-orders.cancel');
-    Route::post('production-orders/{production_order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])
-        ->middleware('throttle:production-preview-costs')
-        ->name('production-orders.preview-costs');
-    Route::post('production-orders/{production_order}/reject-review', [ProductionOrderController::class, 'rejectReview'])->name('production-orders.reject-review');
-
-});
-
-Route::middleware(['auth', 'verified', 'role:admin,produccion,operador'])->group(function () {
-    Route::post('production-orders/{production_order}/line-adjustments', [LineAdjustmentController::class, 'store'])->name('production-orders.line-adjustments.store');
-    Route::delete('production-orders/{production_order}/line-adjustments/{adjustment}', [LineAdjustmentController::class, 'destroy'])->name('production-orders.line-adjustments.destroy');
-
-    Route::post('production-orders/{production_order}/packaging-plans', [PackagingPlanController::class, 'store'])->name('production-orders.packaging-plans.store');
-    Route::delete('production-orders/{production_order}/packaging-plans/{plan}', [PackagingPlanController::class, 'destroy'])->name('production-orders.packaging-plans.destroy');
-
-    Route::post('production-orders/{production_order}/consume-remnant', [RemnantConsumptionController::class, 'store'])->name('production-orders.consume-remnant');
-    Route::get('production-orders/{production_order}/available-remnants', [RemnantConsumptionController::class, 'availableRemnants'])->name('production-orders.available-remnants');
-
-    Route::get('production-orders', [ProductionOrderController::class, 'index'])->name('production-orders.index');
-    Route::get('production-orders/{production_order}', [ProductionOrderController::class, 'show'])->name('production-orders.show')->whereNumber('production_order');
-    Route::get('production-orders/{production_order}/export-pdf', [ProductionOrderController::class, 'exportPdf'])->name('production-orders.export-pdf');
-    Route::get('production-orders/{production_order}/export-excel', [ProductionOrderController::class, 'exportExcel'])->name('production-orders.export-excel');
-    Route::post('production-orders/{production_order}/start', [ProductionOrderController::class, 'startProduction'])->name('production-orders.start')->whereNumber('production_order');
-    Route::post('production-orders/{production_order}/submit-for-review', [ProductionOrderController::class, 'submitForReview'])->name('production-orders.submit-for-review');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

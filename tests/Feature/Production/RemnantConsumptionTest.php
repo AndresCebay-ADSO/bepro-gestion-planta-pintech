@@ -19,14 +19,13 @@ use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Role::create(['name' => 'admin']);
-    Role::create(['name' => 'produccion']);
+    test()->seed(RolePermissionSeeder::class);
     $this->user = User::factory()->create([
         'email_verified_at' => now(),
         'job_title' => 'Analista de Calidad',

@@ -20,10 +20,10 @@ use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia;
-use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -33,8 +33,8 @@ beforeEach(function () {
         'job_title' => 'Analista de Calidad',
         'signature_path' => 'signatures/test.png',
     ]);
-    Role::create(['name' => 'produccion']);
-    $this->user->assignRole(Role::create(['name' => 'admin']));
+    test()->seed(RolePermissionSeeder::class);
+    $this->user->assignRole('admin');
     $this->actingAs($this->user);
 
     // Planta Cali (ID 1 es forzado en el servicio, así que lo creamos así)

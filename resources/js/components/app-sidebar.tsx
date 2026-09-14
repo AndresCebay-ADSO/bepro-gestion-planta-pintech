@@ -116,6 +116,7 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Órdenes de Producción',
+                allowedPermissions: ['production_orders.view'],
                 href: productionOrdersIndex().url,
                 icon: ClipboardList,
                 allowedRoles: ['admin', 'produccion', 'operador'],

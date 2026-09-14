@@ -15,7 +15,7 @@ use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
-use Spatie\Permission\Models\Role;
+use Database\Seeders\RolePermissionSeeder;
 
 beforeEach(function () {
     $this->user = User::factory()->create([
@@ -23,8 +23,8 @@ beforeEach(function () {
         'job_title' => 'Analista de Calidad',
         'signature_path' => 'signatures/test.png',
     ]);
-    $this->adminRole = Role::firstOrCreate(['name' => 'admin']);
-    $this->user->assignRole($this->adminRole);
+    test()->seed(RolePermissionSeeder::class);
+    $this->user->assignRole('admin');
     $this->actingAs($this->user);
 
     $this->factory = Warehouse::create([

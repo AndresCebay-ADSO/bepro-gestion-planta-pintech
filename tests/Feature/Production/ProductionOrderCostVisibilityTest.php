@@ -17,16 +17,14 @@ use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
-use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    foreach (['admin', 'produccion', 'operador'] as $role) {
-        Role::findOrCreate($role, 'web');
-    }
+    test()->seed(RolePermissionSeeder::class);
 
     $unit = UnitOfMeasure::create(['code' => 'kg', 'name' => 'Kilo', 'symbol' => 'kg']);
     $rmCat = RawMaterialCategory::create(['code' => 'RMC', 'name' => 'RM Cat', 'is_active' => true]);
@@ -121,11 +119,27 @@ test('operator show payload does not expose cost fields', function () {
             ->missing('order.packaging_plans.0.package_unit_cost_estimate'));
 });
 
-test('production user show payload includes cost fields', function () {
+test('production user show payload does not expose cost fields', function () {
+    // Matriz: los costos de la orden solo con costs.view (Admin y SuperAdmin).
     $user = User::factory()->create(['email_verified_at' => now()]);
     $user->assignRole('produccion');
 
     $this->actingAs($user)
+        ->get(route('production-orders.show', $this->productionOrder))
+        ->assertSuccessful()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Production/Orders/Show')
+            ->where('can.previewCosts', false)
+            ->missing('order.total_bulk_cost')
+            ->missing('order.details.0.unit_cost')
+            ->missing('order.details.0.total_cost'));
+});
+
+test('admin show payload includes cost fields', function () {
+    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin->assignRole('admin');
+
+    $this->actingAs($admin)
         ->get(route('production-orders.show', $this->productionOrder))
         ->assertSuccessful()
         ->assertInertia(fn (AssertableInertia $page) => $page

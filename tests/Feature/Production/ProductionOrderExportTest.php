@@ -16,17 +16,15 @@ use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Role::create(['name' => 'admin']);
-    Role::create(['name' => 'produccion']);
-    Role::create(['name' => 'comercial']);
+    test()->seed(RolePermissionSeeder::class);
 });
 
 function createExportTestDependencies(): array
