@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Products;
 
+use App\Enums\Permission;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Role;
@@ -19,9 +21,9 @@ use function Pest\Laravel\actingAs;
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
-    $role = Role::findOrCreate('admin');
+    $this->seed(RolePermissionSeeder::class);
     $this->admin = User::factory()->create();
-    $this->admin->assignRole($role);
+    $this->admin->assignRole('admin');
 
     $this->category = ProductCategory::factory()->create(['name' => 'Pinturas Test']);
     $this->uom = UnitOfMeasure::factory()->create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
@@ -121,12 +123,38 @@ test('product variant update ignores manual current_cost and current_price sent 
     expect((float) $variant->current_price)->toBe(18.75);
 });
 
-test('production role user cannot modify cif_percentage or price_threshold', function (): void {
-    $produccionRole = Role::findOrCreate('produccion');
+/**
+ * Usuario con un rol personalizado que edita productos, sin costs.update ni products.deactivate.
+ */
+function catalogEditorUser(): User
+{
+    $role = Role::findOrCreate('editor-catalogo', 'web');
+    $role->syncPermissions([Permission::ProductsView->value, Permission::ProductsEdit->value]);
+
+    $user = User::factory()->create();
+    $user->assignRole($role);
+
+    return $user;
+}
+
+test('production role user cannot update products', function (): void {
     $produccionUser = User::factory()->create();
-    $produccionUser->assignRole($produccionRole);
+    $produccionUser->assignRole('produccion');
 
     actingAs($produccionUser)
+        ->put(route('products.update', $this->product), [
+            'code' => $this->product->code,
+            'name' => 'Intento de cambio',
+            'category_id' => $this->category->id,
+            'unit_of_measure_id' => $this->uom->id,
+            'cif_percentage' => 25,
+            'price_threshold' => 3,
+        ])
+        ->assertForbidden();
+});
+
+test('a product editor without costs.update cannot modify cif_percentage or price_threshold', function (): void {
+    actingAs(catalogEditorUser())
         ->put(route('products.update', $this->product), [
             'code' => $this->product->code,
             'name' => 'Intento de cambio CIF',
@@ -158,12 +186,8 @@ test('admin role user can modify cif_percentage and price_threshold', function (
     expect((float) $this->product->price_threshold)->toBe(5.0);
 });
 
-test('production role user can update product when cif_percentage matches numerically with different formatting', function (): void {
-    $produccionRole = Role::findOrCreate('produccion');
-    $produccionUser = User::factory()->create();
-    $produccionUser->assignRole($produccionRole);
-
-    actingAs($produccionUser)
+test('a product editor without costs.update can update product when cif_percentage matches numerically with different formatting', function (): void {
+    actingAs(catalogEditorUser())
         ->put(route('products.update', $this->product), [
             'code' => $this->product->code,
             'name' => 'Nombre Actualizado por Producción',
@@ -176,4 +200,22 @@ test('production role user can update product when cif_percentage matches numeri
 
     $this->product->refresh();
     expect($this->product->name)->toBe('Nombre Actualizado por Producción');
+});
+
+test('a product editor without products.deactivate cannot change is_active', function (): void {
+    $originalActive = (bool) $this->product->is_active;
+
+    actingAs(catalogEditorUser())
+        ->put(route('products.update', $this->product), [
+            'code' => $this->product->code,
+            'name' => $this->product->name,
+            'category_id' => $this->category->id,
+            'unit_of_measure_id' => $this->uom->id,
+            'cif_percentage' => 25,
+            'price_threshold' => 3,
+            'is_active' => ! $originalActive,
+        ])
+        ->assertForbidden();
+
+    expect((bool) $this->product->fresh()->is_active)->toBe($originalActive);
 });

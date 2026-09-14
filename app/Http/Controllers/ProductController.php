@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Permission;
 use App\Enums\QrDocumentType;
 use App\Filters\ProductFilter;
 use App\Http\Requests\Products\IndexProductRequest;
 use App\Http\Requests\Products\StoreProductRequest;
 use App\Http\Requests\Products\UpdateProductRequest;
-use App\Models\PriceList;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Services\DecimalCalculator;
@@ -26,6 +27,13 @@ use Inertia\Response;
 
 class ProductController extends Controller
 {
+    /**
+     * Atributos que revelan el costo (el CIF y el umbral lo derivan del precio). Solo con costs.view.
+     */
+    private const PRODUCT_COST_ATTRIBUTES = ['current_cost', 'cif_percentage', 'price_threshold'];
+
+    private const VARIANT_COST_ATTRIBUTES = ['current_cost'];
+
     public function __construct(
         private readonly ProductionCostRecalculationService $productionCostRecalculationService,
         private readonly DecimalCalculator $calculator,
@@ -68,7 +76,7 @@ class ProductController extends Controller
             'filters' => $request->validated(),
             'can' => [
                 'create' => Gate::allows('create', Product::class),
-                'managePrices' => Gate::allows('create', PriceList::class),
+                'managePrices' => Gate::allows(Permission::CostsUpdate->value),
             ],
         ]);
     }
@@ -81,7 +89,7 @@ class ProductController extends Controller
             'categories' => ProductCategory::query()->select('id', 'name')->orderBy('name')->get(),
             'units' => UnitOfMeasure::query()->select('id', 'name', 'symbol')->orderBy('name')->get(),
             'can' => [
-                'managePrices' => Gate::allows('create', PriceList::class),
+                'managePrices' => Gate::allows(Permission::CostsUpdate->value),
             ],
         ]);
     }
@@ -92,7 +100,7 @@ class ProductController extends Controller
 
         $validated = $request->validated();
 
-        if (! Gate::allows('create', PriceList::class)) {
+        if (! Gate::allows(Permission::CostsUpdate->value)) {
             $validated['cif_percentage'] = '0';
             $validated['price_threshold'] = '0';
         }
@@ -107,24 +115,22 @@ class ProductController extends Controller
         $this->authorize('view', $product);
 
         $user = $request->user();
+        $canViewCosts = $user?->can(Permission::CostsView->value) ?? false;
+        $canViewFormulas = $user?->can(Permission::FormulasView->value) ?? false;
 
         return Inertia::render('Products/Show', [
             'returnTo' => $this->resolveReturnTo($request),
             'finishedInventory' => $user !== null
                 ? $this->finishedInventoryQueryService->inventoryRowsForProduct($user, $product)
                 : [],
-            'product' => $product->load([
-                'category:id,name',
-                'unitOfMeasure:id,name,symbol',
-                'variants' => fn ($query) => $query
-                    ->with(['unitOfMeasure:id,name,symbol', 'packageRawMaterial:id,code,category_id'])
-                    ->orderBy('code'),
-                'formulas' => fn ($q) => $q->with('createdBy:id,name')->orderBy('version', 'desc'),
-                'productDocuments' => fn ($query) => $query->current()->latest('id'),
-            ]),
+            'product' => $this->productForShow($product, $canViewCosts, $canViewFormulas),
             'can' => [
                 'update' => Gate::allows('update', $product),
                 'delete' => Gate::allows('delete', $product),
+                'manageVariants' => Gate::allows('manageVariants', $product),
+                'manageDocuments' => Gate::allows('manageDocuments', $product),
+                'viewCosts' => $canViewCosts,
+                'viewFormulas' => $canViewFormulas,
             ],
             'documentTypes' => [
                 [
@@ -164,7 +170,7 @@ class ProductController extends Controller
             'categories' => ProductCategory::query()->select('id', 'name')->orderBy('name')->get(),
             'units' => UnitOfMeasure::query()->select('id', 'name', 'symbol')->orderBy('name')->get(),
             'can' => [
-                'managePrices' => Gate::allows('create', PriceList::class),
+                'managePrices' => Gate::allows(Permission::CostsUpdate->value),
             ],
         ]);
     }
@@ -180,8 +186,15 @@ class ProductController extends Controller
         $thresholdChanged = array_key_exists('price_threshold', $validated)
             && $this->hasDecimalChanged($product->price_threshold, $validated['price_threshold'] ?? null);
 
-        if (($cifChanged || $thresholdChanged) && ! Gate::allows('create', PriceList::class)) {
+        if (($cifChanged || $thresholdChanged) && ! Gate::allows(Permission::CostsUpdate->value)) {
             abort(403, __('No tienes autorización para modificar los márgenes CIF o umbrales de precio.'));
+        }
+
+        $activeChanged = array_key_exists('is_active', $validated)
+            && (bool) $validated['is_active'] !== (bool) $product->is_active;
+
+        if ($activeChanged && ! Gate::allows(Permission::ProductsDeactivate->value)) {
+            abort(403, __('No tienes autorización para activar o desactivar productos.'));
         }
 
         DB::transaction(function () use ($product, $validated): void {
@@ -220,6 +233,32 @@ class ProductController extends Controller
         });
 
         return redirect()->route('products.index')->with('success', __('Producto actualizado exitosamente.'));
+    }
+
+    /**
+     * Carga el producto para su ficha, sin costos ni fórmulas si el usuario no tiene el permiso.
+     */
+    private function productForShow(Product $product, bool $canViewCosts, bool $canViewFormulas): Product
+    {
+        $product->load([
+            'category:id,name',
+            'unitOfMeasure:id,name,symbol',
+            'variants' => fn ($query) => $query
+                ->with(['unitOfMeasure:id,name,symbol', 'packageRawMaterial:id,code,category_id'])
+                ->orderBy('code'),
+            'productDocuments' => fn ($query) => $query->current()->latest('id'),
+        ]);
+
+        if ($canViewFormulas) {
+            $product->load(['formulas' => fn ($query) => $query->with('createdBy:id,name')->orderBy('version', 'desc')]);
+        }
+
+        if (! $canViewCosts) {
+            $product->makeHidden(self::PRODUCT_COST_ATTRIBUTES);
+            $product->variants->each(fn (ProductVariant $variant) => $variant->makeHidden(self::VARIANT_COST_ATTRIBUTES));
+        }
+
+        return $product;
     }
 
     private function hasDecimalChanged(string|int|float|null $current, mixed $new): bool

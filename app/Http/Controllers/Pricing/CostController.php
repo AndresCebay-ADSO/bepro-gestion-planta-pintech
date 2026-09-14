@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Pricing;
 
+use App\Enums\Permission;
 use App\Filters\CostFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Pricing\IndexCostRequest;
@@ -43,7 +44,7 @@ class CostController extends Controller
         return Inertia::render('Costs/Index', [
             'products' => $products,
             'can' => [
-                'update_margin' => true,
+                'update_margin' => $request->user()?->can(Permission::CostsUpdate->value) ?? false,
             ],
             'filters' => $request->validated(),
         ]);
@@ -54,7 +55,7 @@ class CostController extends Controller
      */
     public function update(UpdateCostRequest $request, Product $product): RedirectResponse
     {
-        $this->authorize('update', $product);
+        $this->authorize(Permission::CostsUpdate->value);
 
         $validated = $request->validated();
 

@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Pricing;
 
-use App\Models\Product;
+use App\Enums\Permission;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateCostRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        /** @var Product|null $product */
-        $product = $this->route('product');
-
-        return $this->user()?->can('update', $product) ?? false;
+        return $this->user()?->can(Permission::CostsUpdate->value) ?? false;
     }
 
     /**

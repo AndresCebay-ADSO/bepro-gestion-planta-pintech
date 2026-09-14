@@ -3,21 +3,20 @@
 declare(strict_types=1);
 
 use App\Enums\QrDocumentType;
+use App\Enums\SystemRole;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductDocument;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Services\ProductDocumentService;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
-    Role::firstOrCreate(['name' => 'admin']);
-    Role::firstOrCreate(['name' => 'produccion']);
-    Role::firstOrCreate(['name' => 'comercial']);
+    $this->seed(RolePermissionSeeder::class);
 });
 
 function createProductDocumentFixture(): array
@@ -33,7 +32,7 @@ function createProductDocumentFixture(): array
         'email' => 'product-docs@example.com',
         'password' => Hash::make('password'),
     ]);
-    $user->assignRole('produccion');
+    $user->assignRole('admin');
     $product = Product::create([
         'code' => 'PNT-DOC',
         'name' => 'Pintura con Docs',
@@ -119,4 +118,12 @@ test('it deletes physical file from storage if transaction fails', function () {
         $files = Storage::disk('local')->allFiles("product-documents/{$product->id}");
         expect($files)->toBeEmpty();
     }
+});
+
+test('produccion cannot upload product documents', function () {
+    [, $product] = createProductDocumentFixture();
+
+    $this->actingAs(userWithRole(SystemRole::Production))
+        ->post(route('products.documents.store', $product), [])
+        ->assertForbidden();
 });

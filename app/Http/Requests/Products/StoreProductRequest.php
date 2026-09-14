@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Products;
 
+use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -12,7 +13,7 @@ class StoreProductRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasAnyRole(['admin', 'produccion']) ?? false;
+        return $this->user()?->can('create', Product::class) ?? false;
     }
 
     /**

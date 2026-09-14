@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\SystemRole;
 use App\Jobs\RecalculateRawMaterialReferencePrice;
 use App\Models\Formula;
 use App\Models\InventoryBatch;
@@ -13,19 +14,20 @@ use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia;
-use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $adminRole = Role::firstOrCreate(['name' => 'admin']);
-    Role::firstOrCreate(['name' => 'produccion']);
+    $this->seed(RolePermissionSeeder::class);
 
     $this->admin = User::factory()->create(['email_verified_at' => now()]);
-    $this->admin->assignRole($adminRole);
+    $this->admin->assignRole('admin');
     $this->actingAs($this->admin);
 
     $uom = UnitOfMeasure::create([
@@ -124,209 +126,6 @@ test('it requires a lot number when an entry creates a new batch', function () {
     $response->assertSessionHasErrors('lot_number');
     expect(InventoryMovement::count())->toBe(0);
     expect(InventoryBatch::count())->toBe(0);
-});
-
-test('it prevents editing movements linked to production orders', function () {
-    $batch = InventoryBatch::create([
-        'raw_material_id' => $this->rawMaterial->id,
-        'warehouse_id' => $this->warehouseA->id,
-        'initial_quantity' => 100,
-        'remaining_quantity' => 100,
-        'unit_price' => 8,
-        'entry_date' => now()->toDateString(),
-    ]);
-
-    $category = ProductCategory::create(['name' => 'General']);
-    $product = Product::create([
-        'code' => 'P-HARD-001',
-        'name' => 'Producto Hardening',
-        'category_id' => $category->id,
-        'unit_of_measure_id' => $this->rawMaterial->unit_of_measure_id,
-        'current_cost' => 1,
-        'current_price' => 1,
-    ]);
-    $formula = Formula::create([
-        'product_id' => $product->id,
-        'version' => 1,
-        'is_active' => true,
-        'created_by' => $this->admin->id,
-    ]);
-    $order = ProductionOrder::create([
-        'order_number' => 'OP-HARD-001',
-        'product_id' => $product->id,
-        'formula_id' => $formula->id,
-        'warehouse_id' => $this->warehouseA->id,
-        'quantity' => 10,
-        'status' => 'pending',
-        'planned_date' => now()->toDateString(),
-        'created_by' => $this->admin->id,
-    ]);
-
-    $movement = InventoryMovement::create([
-        'raw_material_id' => $this->rawMaterial->id,
-        'warehouse_id' => $this->warehouseA->id,
-        'batch_id' => $batch->id,
-        'production_order_id' => $order->id,
-        'type' => 'exit',
-        'quantity' => 5,
-        'cost_price' => 8,
-        'movement_date' => now()->toDateString(),
-        'created_by' => $this->admin->id,
-    ]);
-
-    $response = $this->from(route('inventory-movements.index'))
-        ->put(route('inventory-movements.update', $movement), [
-            'raw_material_id' => $this->rawMaterial->id,
-            'warehouse_id' => $this->warehouseA->id,
-            'batch_id' => $batch->id,
-            'type' => 'exit',
-            'quantity' => 4,
-            'movement_date' => now()->toDateString(),
-        ]);
-
-    $response->assertForbidden();
-});
-
-test('it prevents deleting movements linked to production orders', function () {
-    $batch = InventoryBatch::create([
-        'raw_material_id' => $this->rawMaterial->id,
-        'warehouse_id' => $this->warehouseA->id,
-        'initial_quantity' => 100,
-        'remaining_quantity' => 100,
-        'unit_price' => 8,
-        'entry_date' => now()->toDateString(),
-    ]);
-
-    $category = ProductCategory::create(['name' => 'General']);
-    $product = Product::create([
-        'code' => 'P-HARD-DEL',
-        'name' => 'Producto Hardening Delete',
-        'category_id' => $category->id,
-        'unit_of_measure_id' => $this->rawMaterial->unit_of_measure_id,
-        'current_cost' => 1,
-        'current_price' => 1,
-    ]);
-    $formula = Formula::create([
-        'product_id' => $product->id,
-        'version' => 1,
-        'is_active' => true,
-        'created_by' => $this->admin->id,
-    ]);
-    $order = ProductionOrder::create([
-        'order_number' => 'OP-HARD-DEL',
-        'product_id' => $product->id,
-        'formula_id' => $formula->id,
-        'warehouse_id' => $this->warehouseA->id,
-        'quantity' => 10,
-        'status' => 'pending',
-        'planned_date' => now()->toDateString(),
-        'created_by' => $this->admin->id,
-    ]);
-
-    $movement = InventoryMovement::create([
-        'raw_material_id' => $this->rawMaterial->id,
-        'warehouse_id' => $this->warehouseA->id,
-        'batch_id' => $batch->id,
-        'production_order_id' => $order->id,
-        'type' => 'exit',
-        'quantity' => 5,
-        'cost_price' => 8,
-        'movement_date' => now()->toDateString(),
-        'created_by' => $this->admin->id,
-    ]);
-
-    $response = $this->from(route('inventory-movements.index'))
-        ->delete(route('inventory-movements.destroy', $movement));
-
-    $response->assertForbidden();
-    $this->assertDatabaseHas('inventory_movements', ['id' => $movement->id]);
-});
-
-test('it updates batch quantities and cost when editing an entry movement', function () {
-    $batch = InventoryBatch::create([
-        'raw_material_id' => $this->rawMaterial->id,
-        'warehouse_id' => $this->warehouseA->id,
-        'initial_quantity' => 10,
-        'remaining_quantity' => 10,
-        'unit_price' => 10,
-        'entry_date' => now()->subDay()->toDateString(),
-    ]);
-
-    $movement = InventoryMovement::create([
-        'raw_material_id' => $this->rawMaterial->id,
-        'warehouse_id' => $this->warehouseA->id,
-        'batch_id' => $batch->id,
-        'type' => 'entry',
-        'quantity' => 10,
-        'cost_price' => 10,
-        'movement_date' => now()->subDay()->toDateString(),
-        'created_by' => $this->admin->id,
-    ]);
-
-    $response = $this->from(route('inventory-movements.index'))
-        ->put(route('inventory-movements.update', $movement), [
-            'raw_material_id' => $this->rawMaterial->id,
-            'warehouse_id' => $this->warehouseA->id,
-            'batch_id' => $batch->id,
-            'type' => 'entry',
-            'quantity' => 15,
-            'cost_price' => 25,
-            'movement_date' => now()->toDateString(),
-        ]);
-
-    $response->assertRedirect(route('inventory-movements.index'));
-
-    $batch->refresh();
-    $this->rawMaterial->refresh();
-    expect((float) $batch->initial_quantity)->toBe(15.0);
-    expect((float) $batch->remaining_quantity)->toBe(15.0);
-    expect((float) $batch->unit_price)->toBe(25.0);
-    expect((float) $this->rawMaterial->current_price)->toBe(25.0);
-});
-
-test('it does not duplicate quantities when editing an entry movement into a new batch', function () {
-    $oldBatch = InventoryBatch::create([
-        'raw_material_id' => $this->rawMaterial->id,
-        'warehouse_id' => $this->warehouseA->id,
-        'initial_quantity' => 10,
-        'remaining_quantity' => 10,
-        'unit_price' => 10,
-        'entry_date' => now()->subDay()->toDateString(),
-    ]);
-
-    $movement = InventoryMovement::create([
-        'raw_material_id' => $this->rawMaterial->id,
-        'warehouse_id' => $this->warehouseA->id,
-        'batch_id' => $oldBatch->id,
-        'type' => 'entry',
-        'quantity' => 10,
-        'cost_price' => 10,
-        'movement_date' => now()->subDay()->toDateString(),
-        'created_by' => $this->admin->id,
-    ]);
-
-    $response = $this->from(route('inventory-movements.index'))
-        ->put(route('inventory-movements.update', $movement), [
-            'raw_material_id' => $this->rawMaterial->id,
-            'warehouse_id' => $this->warehouseA->id,
-            'batch_id' => null,
-            'type' => 'entry',
-            'quantity' => 15,
-            'cost_price' => 25,
-            'lot_number' => 'LOT-EDIT-NEW',
-            'movement_date' => now()->toDateString(),
-        ]);
-
-    $response->assertRedirect(route('inventory-movements.index'));
-    $response->assertSessionHasNoErrors();
-
-    $movement->refresh();
-    $newBatch = InventoryBatch::query()->findOrFail($movement->batch_id);
-
-    $this->assertDatabaseMissing('inventory_batches', ['id' => $oldBatch->id]);
-    expect((float) $newBatch->initial_quantity)->toBe(15.0);
-    expect((float) $newBatch->remaining_quantity)->toBe(15.0);
-    expect((float) $newBatch->unit_price)->toBe(25.0);
 });
 
 test('it rejects adding stock with a different cost to an existing batch', function () {
@@ -464,80 +263,7 @@ test('it rejects manual movements linked to production orders', function () {
     expect(InventoryMovement::count())->toBe(0);
 });
 
-test('it allows metadata-only edits for consumed entry movements', function () {
-    $batch = InventoryBatch::create([
-        'raw_material_id' => $this->rawMaterial->id,
-        'warehouse_id' => $this->warehouseA->id,
-        'initial_quantity' => 10,
-        'remaining_quantity' => 5,
-        'unit_price' => 10,
-        'entry_date' => now()->subDay()->toDateString(),
-    ]);
-
-    $movement = InventoryMovement::create([
-        'raw_material_id' => $this->rawMaterial->id,
-        'warehouse_id' => $this->warehouseA->id,
-        'batch_id' => $batch->id,
-        'type' => 'entry',
-        'quantity' => 10,
-        'cost_price' => 10,
-        'movement_date' => now()->subDay()->toDateString(),
-        'notes' => 'Nota original',
-        'created_by' => $this->admin->id,
-    ]);
-
-    $response = $this->from(route('inventory-movements.index'))
-        ->put(route('inventory-movements.update', $movement), [
-            'raw_material_id' => $this->rawMaterial->id,
-            'warehouse_id' => $this->warehouseA->id,
-            'batch_id' => $batch->id,
-            'type' => 'entry',
-            'quantity' => 10,
-            'cost_price' => 10,
-            'movement_date' => now()->toDateString(),
-            'notes' => 'Nota corregida',
-        ]);
-
-    $response->assertRedirect(route('inventory-movements.index'));
-
-    $movement->refresh();
-    $batch->refresh();
-    expect($movement->notes)->toBe('Nota corregida');
-    expect($batch->entry_date->toDateString())->toBe(now()->toDateString());
-    expect((float) $batch->initial_quantity)->toBe(10.0);
-    expect((float) $batch->remaining_quantity)->toBe(5.0);
-});
-
-test('it removes orphaned batches when deleting their only entry movement', function () {
-    $movement = InventoryMovement::create([
-        'raw_material_id' => $this->rawMaterial->id,
-        'warehouse_id' => $this->warehouseA->id,
-        'type' => 'entry',
-        'quantity' => 12,
-        'cost_price' => 18,
-        'movement_date' => now()->toDateString(),
-        'created_by' => $this->admin->id,
-        'batch_id' => InventoryBatch::create([
-            'raw_material_id' => $this->rawMaterial->id,
-            'warehouse_id' => $this->warehouseA->id,
-            'initial_quantity' => 12,
-            'remaining_quantity' => 12,
-            'unit_price' => 18,
-            'entry_date' => now()->toDateString(),
-        ])->id,
-    ]);
-
-    $batchId = (int) $movement->batch_id;
-
-    $response = $this->from(route('inventory-movements.index'))
-        ->delete(route('inventory-movements.destroy', $movement));
-
-    $response->assertRedirect(route('inventory-movements.index'));
-    $this->assertDatabaseMissing('inventory_movements', ['id' => $movement->id]);
-    $this->assertDatabaseMissing('inventory_batches', ['id' => $batchId]);
-});
-
-test('it only exposes available batches for the current warehouse in inventory movements screens', function () {
+test('it resolves the current warehouse in the inventory movements screen', function () {
     $batchInCurrentWarehouse = InventoryBatch::create([
         'raw_material_id' => $this->rawMaterial->id,
         'warehouse_id' => $this->warehouseA->id,
@@ -575,10 +301,12 @@ test('it only exposes available batches for the current warehouse in inventory m
             ->where('currentWarehouseId', $this->warehouseA->id)
         );
 
+});
+
+test('it does not expose edit, update or delete routes for raw material movements', function () {
     $movement = InventoryMovement::create([
         'raw_material_id' => $this->rawMaterial->id,
         'warehouse_id' => $this->warehouseA->id,
-        'batch_id' => $batchInCurrentWarehouse->id,
         'type' => 'entry',
         'quantity' => 5,
         'cost_price' => 10,
@@ -586,14 +314,36 @@ test('it only exposes available batches for the current warehouse in inventory m
         'created_by' => $this->admin->id,
     ]);
 
-    $editResponse = $this->actingAs($this->admin)
-        ->get(route('inventory-movements.edit', $movement));
+    expect(Route::has('inventory-movements.edit'))->toBeFalse()
+        ->and(Route::has('inventory-movements.update'))->toBeFalse()
+        ->and(Route::has('inventory-movements.destroy'))->toBeFalse();
 
-    $editResponse->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
-            ->component('Inventory/Movements/Edit')
-            ->has('batches', 1)
-            ->where('batches.0.id', $batchInCurrentWarehouse->id)
-            ->where('batches.0.warehouse_id', $this->warehouseA->id)
-        );
+    $this->actingAs($this->admin)
+        ->get("/inventory-movements/{$movement->id}/edit")
+        ->assertNotFound();
+
+    $this->actingAs($this->admin)
+        ->put("/inventory-movements/{$movement->id}", [])
+        ->assertMethodNotAllowed();
+
+    $this->actingAs($this->admin)
+        ->delete("/inventory-movements/{$movement->id}")
+        ->assertMethodNotAllowed();
+});
+
+test('it denies update and delete abilities even for super-admin', function () {
+    $movement = InventoryMovement::create([
+        'raw_material_id' => $this->rawMaterial->id,
+        'warehouse_id' => $this->warehouseA->id,
+        'type' => 'entry',
+        'quantity' => 5,
+        'cost_price' => 10,
+        'movement_date' => now()->toDateString(),
+        'created_by' => $this->admin->id,
+    ]);
+
+    $superAdmin = userWithRole(SystemRole::SuperAdmin);
+
+    expect(Gate::forUser($superAdmin)->allows('update', $movement))->toBeFalse()
+        ->and(Gate::forUser($superAdmin)->allows('delete', $movement))->toBeFalse();
 });

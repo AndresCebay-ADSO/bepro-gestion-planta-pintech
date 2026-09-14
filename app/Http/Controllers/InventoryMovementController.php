@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\InventoryMovementType;
+use App\Enums\Permission;
 use App\Filters\InventoryMovementFilter;
 use App\Http\Requests\Inventory\IndexInventoryMovementRequest;
 use App\Http\Requests\Inventory\StoreInventoryMovementRequest;
-use App\Http\Requests\Inventory\UpdateInventoryMovementRequest;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
 use App\Models\RawMaterial;
@@ -31,6 +31,7 @@ class InventoryMovementController extends Controller
     public function index(IndexInventoryMovementRequest $request): Response
     {
         $user = $request->user();
+        $canViewCosts = $user?->can(Permission::CostsView->value) ?? false;
         $currentWarehouse = $user !== null
             ? $this->warehouseContextService->resolveCurrentWarehouse(
                 $user,
@@ -54,12 +55,14 @@ class InventoryMovementController extends Controller
             ->latest('id')
             ->paginate(20)
             ->onEachSide(1)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (InventoryMovement $movement) => $canViewCosts ? $movement : $movement->makeHidden('cost_price'));
 
         return Inertia::render('Inventory/Movements/Index', [
             'movements' => $movements,
             'rawMaterials' => Inertia::optional(fn () => RawMaterial::query()->select('id', 'code')->where('is_active', true)->orderBy('code')->get()),
-            'batches' => Inertia::optional(fn () => InventoryBatch::query()
+            // Lotes con precio para el formulario de alta: solo para quien puede registrar movimientos.
+            'batches' => Inertia::optional(fn () => Gate::denies('create', InventoryMovement::class) ? [] : InventoryBatch::query()
                 ->when(
                     $movementWarehouse !== null,
                     fn ($query) => $query->where('warehouse_id', $movementWarehouse->id),
@@ -81,6 +84,7 @@ class InventoryMovementController extends Controller
             'typeOptions' => EnumOptions::for(InventoryMovementType::cases()),
             'can' => [
                 'create' => Gate::allows('create', InventoryMovement::class),
+                'viewCosts' => $canViewCosts,
             ],
         ]);
     }
@@ -98,57 +102,24 @@ class InventoryMovementController extends Controller
     {
         $this->authorize('view', $inventoryMovement);
 
+        $canViewCosts = auth()->user()?->can(Permission::CostsView->value) ?? false;
+
+        $inventoryMovement->load([
+            'rawMaterial:id,code',
+            'batch:id,lot_number,remaining_quantity',
+            'productionOrder:id,order_number',
+            'createdBy:id,name',
+        ]);
+
+        if (! $canViewCosts) {
+            $inventoryMovement->makeHidden('cost_price');
+        }
+
         return Inertia::render('Inventory/Movements/Show', [
-            'movement' => $inventoryMovement->load([
-                'rawMaterial:id,code',
-                'batch:id,lot_number,remaining_quantity',
-                'productionOrder:id,order_number',
-                'createdBy:id,name',
-            ]),
+            'movement' => $inventoryMovement,
             'can' => [
-                'update' => Gate::allows('update', $inventoryMovement),
-                'delete' => Gate::allows('delete', $inventoryMovement),
+                'viewCosts' => $canViewCosts,
             ],
         ]);
-    }
-
-    public function edit(InventoryMovement $inventoryMovement): Response
-    {
-        $this->authorize('update', $inventoryMovement);
-
-        return Inertia::render('Inventory/Movements/Edit', [
-            'movement' => $inventoryMovement,
-            'rawMaterials' => RawMaterial::query()->select('id', 'code')->where('is_active', true)->orderBy('code')->get(),
-            'batches' => InventoryBatch::query()
-                ->where('warehouse_id', $inventoryMovement->warehouse_id)
-                ->where(function ($query) use ($inventoryMovement): void {
-                    $query->where('remaining_quantity', '>', 0);
-
-                    if ($inventoryMovement->batch_id !== null) {
-                        $query->orWhere('id', $inventoryMovement->batch_id);
-                    }
-                })
-                ->select('id', 'raw_material_id', 'warehouse_id', 'lot_number', 'remaining_quantity', 'unit_price')
-                ->orderByDesc('id')
-                ->get(),
-        ]);
-    }
-
-    public function update(UpdateInventoryMovementRequest $request, InventoryMovement $inventoryMovement): RedirectResponse
-    {
-        $this->authorize('update', $inventoryMovement);
-
-        $this->inventoryService->updateMovement($inventoryMovement, $request->validated());
-
-        return redirect()->route('inventory-movements.index')->with('success', __('Movimiento de inventario actualizado exitosamente.'));
-    }
-
-    public function destroy(InventoryMovement $inventoryMovement): RedirectResponse
-    {
-        $this->authorize('delete', $inventoryMovement);
-
-        $this->inventoryService->deleteMovement($inventoryMovement);
-
-        return redirect()->route('inventory-movements.index')->with('success', __('Movimiento de inventario eliminado exitosamente.'));
     }
 }

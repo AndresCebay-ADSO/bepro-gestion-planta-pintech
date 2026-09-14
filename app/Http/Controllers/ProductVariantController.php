@@ -20,7 +20,7 @@ class ProductVariantController extends Controller
 
     public function store(StoreProductVariantRequest $request, Product $product): RedirectResponse
     {
-        $this->authorize('update', $product);
+        $this->authorize('manageVariants', $product);
 
         $validated = $request->validated();
         $validated['product_id'] = $product->id;
@@ -37,7 +37,7 @@ class ProductVariantController extends Controller
 
     public function update(UpdateProductVariantRequest $request, Product $product, ProductVariant $variant): RedirectResponse
     {
-        $this->authorize('update', $product);
+        $this->authorize('manageVariants', $product);
 
         abort_if((int) $variant->product_id !== (int) $product->id, 404);
 
@@ -55,7 +55,7 @@ class ProductVariantController extends Controller
 
     public function destroy(Product $product, ProductVariant $variant): RedirectResponse
     {
-        $this->authorize('update', $product);
+        $this->authorize('manageVariants', $product);
 
         abort_if((int) $variant->product_id !== (int) $product->id, 404);
 

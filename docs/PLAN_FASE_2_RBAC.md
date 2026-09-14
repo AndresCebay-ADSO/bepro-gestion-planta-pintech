@@ -278,7 +278,11 @@ en toda ruta que ya no tenga `role:`. Con este método, la 2.8 se reduce a las p
 | 2 | Fórmulas | ✅ Producción pierde el módulo completo. `activate` pasa a tener su propia habilidad en la policy. |
 | 2 | Bodegas | ✅ `warehouses.view_all` sustituye al `hasRole('admin')` de `WarehouseContextService` (qué bodegas ve cada quien y el selector de la cabecera). Asignar usuarios tiene su propia habilidad. |
 | 2 | Clientes | ✅ Comercial ve y crea; editar y eliminar quedan en Admin. |
-| 3+ | Productos, precios/costos, movimientos MP, usuarios, auditoría | ⏳ |
+| 3 | Productos (variantes y documentos) | ✅ Producción pierde crear/editar productos y gestionar documentos; conserva las presentaciones. La ficha deja de enviar costo, CIF y umbral sin `costs.view`, y las fórmulas sin `formulas.view` (antes los recibían Comercial y Producción). CIF/umbral exigen `costs.update`; la casilla "Producto activo" exige `products.deactivate`. `UpdateProductRequest` autorizaba con *crear*: ahora con *editar*. |
+| 3 | Movimientos MP | ✅ Operador gana la vista; Producción pierde el registro. `cost_price` oculto sin `costs.view`; los lotes con precio solo se envían a quien puede registrar. **Editar y borrar retirados** (rutas, lógica de servicio, request, página placeholder y sus tests): la interfaz nunca los ofreció, pero el backend los aceptaba por petición directa. Policy inmutable, como PT. |
+| 3 | Costos | ✅ Adelantado del lote 4: el margen de venta exige `costs.update` (antes pasaba por la policy de producto). |
+| 3 | Fuga corregida del lote 1 | ✅ Movimientos PT: `cost_price` oculto sin `costs.view` en listado y detalle (Producción lo veía). |
+| 4+ | Listas de precios, usuarios, auditoría | ⏳ |
 | — | Cotizaciones, pedidos, desarrollo de pinturas (con dueño) | ⏳ |
 | — | Órdenes de producción (máquina de estados) y movimientos MP | ⏳ |
 
@@ -411,6 +415,17 @@ y cada test arranca una aplicación nueva. No hace falta limpiarla en `TestCase`
 
 **Decidido (tus notas):** `InventoryMovement` e `InventoryBatch` son libro mayor inmutable y **no** llevan SoftDeletes. Hace falta un movimiento de reverso (hoy `InventoryMovementType` solo tiene `entry`/`exit`).
 
+**Corrección de movimientos MP (paso 13 de la 2B).** La edición y el borrado ya se retiraron en la 2.2 (lote 3). Falta
+el flujo correcto de corrección:
+1. Columna `reason` en `inventory_movements` con un enum (compra, ajuste, devolución, corrección…), siguiendo
+   `FinishedInventoryMovementReason`. Los movimientos existentes se migran con un valor por defecto.
+2. Acción "Revertir movimiento": crea el movimiento compensatorio con `reverses_movement_id` hacia el original, motivo
+   *corrección* y nota obligatoria; permite volver a entrar a un lote que quedó vacío (hoy el selector solo lista lotes
+   con stock y obliga a crear otro). Un movimiento solo se puede revertir una vez y nunca si pertenece a una orden de
+   producción.
+3. Permiso nuevo en la matriz (p. ej. `inventory_movements.reverse`, solo Admin) y test de que la reversión recalcula
+   el precio de referencia.
+
 **Entregables:** una migración por grupo de tablas (no una gigante), auditoría de agregados, tests de que los borrados no aparecen en listados ni en cálculos de costo.
 
 **Riesgo: ALTO** (afecta dinero). **Estimación: 3 días**, y recomiendo revisión específica del módulo de inventario.
@@ -459,9 +474,10 @@ FASE 2A — RBAC  (≈13 días)
                                                      ────────
                                                       ≈15 días
 
-FASE 2B — Integridad  (≈5 días)
+FASE 2B — Integridad  (≈6,5 días)
   11. 2.6  Soft deletes (por grupos, con auditoría)    3 d
   12. 2.7  Eliminación inteligente (patrón extraído)   2 d
+  13. ---  Corrección de movimientos MP                1,5 d   ← motivo + "Revertir movimiento"
 ```
 
 **Paso 11 — renombrar los roles a inglés.** Los valores `'produccion'`, `'operador'` y `'comercial'` vienen del

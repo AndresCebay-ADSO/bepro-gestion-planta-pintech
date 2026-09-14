@@ -127,6 +127,42 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:'.Permission::ClientsDelete->value)
         ->name('clients.destroy');
 
+    // Productos, presentaciones y documentos
+    Route::resource('products', ProductController::class)
+        ->middlewareFor(['index', 'show'], 'can:'.Permission::ProductsView->value)
+        ->middlewareFor(['create', 'store'], 'can:'.Permission::ProductsCreate->value)
+        ->middlewareFor(['edit', 'update'], 'can:'.Permission::ProductsEdit->value)
+        ->middlewareFor('destroy', 'can:'.Permission::ProductsDelete->value);
+    Route::middleware('can:'.Permission::ProductsManageVariants->value)->group(function () {
+        Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
+        Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
+        Route::delete('products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
+    });
+    Route::post('products/{product}/documents', [ProductDocumentController::class, 'store'])
+        ->middleware('can:'.Permission::ProductsManageDocuments->value)
+        ->name('products.documents.store');
+    Route::delete('product-documents/{document}', [ProductDocumentController::class, 'destroy'])
+        ->middleware('can:'.Permission::ProductsManageDocuments->value)
+        ->name('products.documents.destroy');
+    Route::get('product-documents/{document}/download', [ProductDocumentController::class, 'download'])
+        ->middleware('can:'.Permission::ProductsDownloadDocuments->value)
+        ->name('products.documents.download');
+
+    // Movimientos de materia prima (inmutables: sin editar ni borrar)
+    Route::resource('inventory-movements', InventoryMovementController::class)
+        ->only(['index', 'store', 'show'])
+        ->where(['inventory_movement' => '[0-9]+'])
+        ->middlewareFor(['index', 'show'], 'can:'.Permission::InventoryMovementsView->value)
+        ->middlewareFor('store', 'can:'.Permission::InventoryMovementsCreate->value);
+
+    // Costos
+    Route::get('/admin/costs', [CostController::class, 'index'])
+        ->middleware('can:'.Permission::CostsView->value)
+        ->name('admin.costs.index');
+    Route::patch('/admin/costs/{product}', [CostController::class, 'update'])
+        ->middleware('can:'.Permission::CostsUpdate->value)
+        ->name('admin.costs.update');
+
     // Inventario de producto terminado
     Route::get('finished-inventory', [FinishedInventoryController::class, 'index'])
         ->middleware('can:'.Permission::FinishedInventoryView->value)
@@ -142,8 +178,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
-    Route::get('/admin/costs', [CostController::class, 'index'])->name('admin.costs.index');
-    Route::patch('/admin/costs/{product}', [CostController::class, 'update'])->name('admin.costs.update');
     Route::resource('users', UserController::class)->except(['show']);
 });
 
@@ -157,9 +191,6 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
         ->name('production-orders.preview-costs');
     Route::post('production-orders/{production_order}/reject-review', [ProductionOrderController::class, 'rejectReview'])->name('production-orders.reject-review');
 
-    Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
-    Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
-    Route::delete('products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,comercial'])->group(function () {
@@ -195,16 +226,6 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->grou
     Route::post('sales-orders', [SalesOrderController::class, 'store'])->name('sales-orders.store');
     Route::get('sales-orders/{sales_order}', [SalesOrderController::class, 'show'])->name('sales-orders.show');
     Route::patch('sales-orders/{sales_order}', [SalesOrderController::class, 'update'])->name('sales-orders.update');
-});
-
-Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
-    Route::resource('products', ProductController::class);
-    Route::post('products/{product}/documents', [ProductDocumentController::class, 'store'])->name('products.documents.store');
-    Route::get('product-documents/{document}/download', [ProductDocumentController::class, 'download'])->name('products.documents.download');
-    Route::delete('product-documents/{document}', [ProductDocumentController::class, 'destroy'])->name('products.documents.destroy');
-    Route::resource('inventory-movements', InventoryMovementController::class)
-        ->except(['create'])
-        ->where(['inventory_movement' => '[0-9]+']);
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,produccion,operador'])->group(function () {

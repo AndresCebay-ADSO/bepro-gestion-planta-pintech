@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Inventory;
 
 use App\Models\InventoryBatch;
+use App\Models\InventoryMovement;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -12,7 +13,7 @@ class StoreInventoryMovementRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasAnyRole(['admin', 'produccion']) ?? false;
+        return $this->user()?->can('create', InventoryMovement::class) ?? false;
     }
 
     public function rules(): array

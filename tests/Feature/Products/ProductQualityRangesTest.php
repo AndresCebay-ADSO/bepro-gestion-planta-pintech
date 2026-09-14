@@ -6,15 +6,15 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 
 use function Pest\Laravel\actingAs;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
-    Role::findOrCreate('admin');
+    $this->seed(RolePermissionSeeder::class);
     $this->user = User::factory()->create();
     $this->user->assignRole('admin');
     $this->category = ProductCategory::create(['name' => 'Industrial']);

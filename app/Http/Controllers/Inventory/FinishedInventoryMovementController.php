@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Enums\FinishedInventoryMovementReason;
 use App\Enums\InventoryMovementType;
+use App\Enums\Permission;
 use App\Filters\FinishedInventoryMovementFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\FinishedInventory\StoreFinishedInventoryMovementRequest;
@@ -30,6 +31,8 @@ class FinishedInventoryMovementController extends Controller
 
     public function index(IndexFinishedInventoryMovementRequest $request): Response
     {
+        $canViewCosts = $request->user()?->can(Permission::CostsView->value) ?? false;
+
         $user = $request->user();
         $currentWarehouse = $user !== null
             ? $this->warehouseContextService->resolveCurrentWarehouse(
@@ -55,7 +58,8 @@ class FinishedInventoryMovementController extends Controller
             ->latest('id')
             ->paginate(20)
             ->onEachSide(1)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (FinishedInventoryMovement $movement) => $canViewCosts ? $movement : $movement->makeHidden('cost_price'));
 
         return Inertia::render('Inventory/FinishedMovements/Index', [
             'movements' => $movements,
@@ -141,15 +145,22 @@ class FinishedInventoryMovementController extends Controller
     {
         $this->authorize('view', $finishedInventoryMovement);
 
+        $finishedInventoryMovement->load([
+            'product:id,code,name',
+            'productVariant:id,code,name,presentation_label',
+            'batch:id,entry_date,initial_quantity',
+            'warehouse:id,name,city',
+            'productionOrder:id,order_number',
+            'createdBy:id,name',
+        ]);
+
+        // El costo del movimiento solo con costs.view (docs/MATRIZ_RBAC.md, principio 1).
+        if (! (auth()->user()?->can(Permission::CostsView->value) ?? false)) {
+            $finishedInventoryMovement->makeHidden('cost_price');
+        }
+
         return Inertia::render('Inventory/FinishedMovements/Show', [
-            'movement' => $finishedInventoryMovement->load([
-                'product:id,code,name',
-                'productVariant:id,code,name,presentation_label',
-                'batch:id,entry_date,initial_quantity',
-                'warehouse:id,name,city',
-                'productionOrder:id,order_number',
-                'createdBy:id,name',
-            ]),
+            'movement' => $finishedInventoryMovement,
         ]);
     }
 }

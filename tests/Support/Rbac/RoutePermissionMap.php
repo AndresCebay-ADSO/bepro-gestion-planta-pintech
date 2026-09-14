@@ -129,9 +129,6 @@ final class RoutePermissionMap
             'inventory-movements.index' => Permission::InventoryMovementsView,
             'inventory-movements.show' => Permission::InventoryMovementsView,
             'inventory-movements.store' => Permission::InventoryMovementsCreate,
-            'inventory-movements.edit' => self::TO_REMOVE,
-            'inventory-movements.update' => self::TO_REMOVE,
-            'inventory-movements.destroy' => self::TO_REMOVE,
             'finished-inventory.index' => Permission::FinishedInventoryView,
             'finished-inventory-movements.index' => Permission::FinishedInventoryMovementsView,
             'finished-inventory-movements.show' => Permission::FinishedInventoryMovementsView,
@@ -214,7 +211,7 @@ final class RoutePermissionMap
             Permission::CatalogsCreate->value => 'CRUDs de catálogos en la Fase 3 (3.1, 3.2).',
             Permission::CatalogsEdit->value => 'CRUDs de catálogos en la Fase 3 (3.1, 3.2).',
             Permission::CatalogsDelete->value => 'CRUDs de catálogos en la Fase 3 (3.1, 3.2).',
-            Permission::ProductsDeactivate->value => 'Ruta nueva en la tarea 2.7.',
+            Permission::ProductsDeactivate->value => 'Casilla "Producto activo" dentro de products.update.',
             Permission::RawMaterialsDelete->value => 'Se aplica dentro de raw-materials.destroy; endpoint propio en la tarea 2.7.',
             Permission::WarehousesViewAll->value => 'Alcance de datos: bodegas visibles y selector de bodega.',
         ];

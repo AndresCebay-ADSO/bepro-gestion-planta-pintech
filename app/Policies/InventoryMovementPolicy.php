@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\Permission;
 use App\Models\InventoryMovement;
 use App\Models\User;
 
@@ -9,44 +10,39 @@ class InventoryMovementPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'produccion']);
+        return $user->can(Permission::InventoryMovementsView->value);
     }
 
     public function view(User $user, InventoryMovement $inventoryMovement): bool
     {
-        return $user->hasAnyRole(['admin', 'produccion']);
+        return $user->can(Permission::InventoryMovementsView->value);
     }
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'produccion']);
+        return $user->can(Permission::InventoryMovementsCreate->value);
     }
+
+    // Los movimientos de materia prima son inmutables (docs/MATRIZ_RBAC.md, principio 5).
+    // Un error se corrige con un movimiento compensatorio; el flujo de reverso llega en la Fase 2B.
 
     public function update(User $user, InventoryMovement $inventoryMovement): bool
     {
-        if ($inventoryMovement->production_order_id !== null) {
-            return false;
-        }
-
-        return $user->hasAnyRole(['admin', 'produccion']);
+        return false;
     }
 
     public function delete(User $user, InventoryMovement $inventoryMovement): bool
     {
-        if ($inventoryMovement->production_order_id !== null) {
-            return false;
-        }
-
-        return $user->hasRole('admin');
+        return false;
     }
 
     public function restore(User $user, InventoryMovement $inventoryMovement): bool
     {
-        return $user->hasRole('admin');
+        return false;
     }
 
     public function forceDelete(User $user, InventoryMovement $inventoryMovement): bool
     {
-        return $user->hasRole('admin');
+        return false;
     }
 }

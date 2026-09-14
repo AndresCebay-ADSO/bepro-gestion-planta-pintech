@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Products;
 
+use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -11,7 +12,10 @@ class StoreProductVariantRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasAnyRole(['admin', 'produccion']) ?? false;
+        $product = $this->route('product');
+
+        return $product instanceof Product
+            && ($this->user()?->can('manageVariants', $product) ?? false);
     }
 
     public function rules(): array

@@ -50,7 +50,7 @@ combinación, se crea un rol nuevo.
 4. **Los documentos transaccionales no se eliminan, se cancelan.** Órdenes de producción, pedidos y cotizaciones
    tienen un estado `cancelled`/`rejected`; borrarlos rompería la trazabilidad y dejaría huecos en el consecutivo.
 5. **Los movimientos de inventario son inmutables.** Movimientos MP y PT no se editan ni se eliminan; un error se
-   corrige con un movimiento de reverso. (PT ya es así; MP no — ver §5.)
+   corrige con un movimiento compensatorio. (MP y PT ya lo son; el flujo de reverso llega en la Fase 2B — ver §5.)
 6. **Permiso ≠ regla de estado.** El permiso dice *"este rol puede completar órdenes"*; la regla de estado dice
    *"esta orden está en un estado completable"*. Las reglas de estado y de dueño **no** son permisos (§4).
 
@@ -180,9 +180,13 @@ Viven en las policies/Actions junto al permiso, nunca en la matriz. Se listan aq
   Dentro de cada vista, cada tarjeta solo aparece si el usuario tiene el permiso del dato: órdenes →
   `production_orders.view`, alertas → `alerts.view`, stock bajo y lotes por vencer → `raw_materials.view`, totales →
   `users.view` / `products.view` / `warehouses.view` / `clients.view`. Un rol nuevo nunca recibe un error.
-- **Movimientos MP inmutables:** hay que retirar las rutas `inventory-movements.edit/update/destroy`. Hoy
-  `InventoryMovementType` solo tiene `entry` y `exit`: para corregir un error hace falta un movimiento de reverso que
-  referencie al original (nuevo tipo `adjustment` o columna `reverses_movement_id`). Queda como tarea de la Fase 2B.
+- **Movimientos MP inmutables — ✅ retirado (2026-09-14):** se eliminaron las rutas `inventory-movements.edit/update/destroy`,
+  su lógica en `InventoryService` y la página de edición, que era un placeholder desde el commit inicial: **la interfaz nunca
+  permitió editar ni borrar**, pero el backend lo aceptaba por petición directa y podía reescribir el costo de un lote.
+  Hoy un error se corrige con un movimiento compensatorio (salida o entrada sobre el mismo lote). Pendiente para la
+  **Fase 2B**: (1) campo *motivo* en los movimientos MP (compra, ajuste, devolución, corrección…), como ya tienen los de
+  producto terminado; (2) acción **"Revertir movimiento"** que cree el compensatorio enlazado al original
+  (`reverses_movement_id`) y permita volver a entrar a un lote que la salida errónea dejó vacío.
 - **Variantes:** siguen dentro de la página del producto. **Esto cambia la tarea 3.3** (ya no tendrán index ni
   páginas propias).
 

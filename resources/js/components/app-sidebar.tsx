@@ -72,6 +72,7 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Movimientos',
+                allowedPermissions: ['inventory_movements.view'],
                 href: inventoryMovementsIndex().url,
                 icon: ArrowLeftRight,
                 allowedRoles: ['admin', 'produccion'],
@@ -100,6 +101,7 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Portafolio de Productos',
+                allowedPermissions: ['products.view'],
                 href: productsIndex().url,
                 icon: Factory,
                 allowedRoles: ['admin', 'produccion', 'comercial'],
@@ -132,6 +134,7 @@ const navigationGroups: NavGroup[] = [
         items: [
             {
                 title: 'Costos',
+                allowedPermissions: ['costs.view'],
                 href: adminCostsIndex().url,
                 icon: Calculator,
                 allowedRoles: ['admin'],

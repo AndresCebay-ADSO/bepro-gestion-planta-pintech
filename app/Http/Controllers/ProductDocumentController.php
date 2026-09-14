@@ -37,7 +37,7 @@ class ProductDocumentController extends Controller
     public function download(ProductDocument $document): StreamedResponse
     {
         $document->loadMissing('product');
-        $this->authorize('view', $document->product);
+        $this->authorize('downloadDocuments', $document->product);
 
         abort_unless(Storage::disk('local')->exists($document->file_path), 404);
 
@@ -47,7 +47,7 @@ class ProductDocumentController extends Controller
     public function destroy(ProductDocument $document): RedirectResponse
     {
         $document->loadMissing('product');
-        $this->authorize('update', $document->product);
+        $this->authorize('manageDocuments', $document->product);
 
         $document->delete();
 

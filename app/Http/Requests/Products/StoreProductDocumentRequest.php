@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Products;
 
 use App\Enums\QrDocumentType;
+use App\Models\Product;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -18,7 +19,8 @@ class StoreProductDocumentRequest extends FormRequest
     {
         $product = $this->route('product');
 
-        return $this->user()?->can('update', $product) ?? false;
+        return $product instanceof Product
+            && ($this->user()?->can('manageDocuments', $product) ?? false);
     }
 
     /**
