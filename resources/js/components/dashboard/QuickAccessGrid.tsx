@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,8 @@ interface QuickAccessItem {
     label: string;
     href: string;
     icon: LucideIcon;
+    /** Permiso necesario para mostrar el acceso (módulos ya migrados a permisos). */
+    permission?: string;
 }
 
 interface QuickAccessGridProps {
@@ -19,13 +21,22 @@ export function QuickAccessGrid({
     items,
     title = 'Accesos rápidos',
 }: QuickAccessGridProps) {
+    const permissions = usePage().props.auth.user?.permissions ?? [];
+    const visibleItems = items.filter(
+        (item) => !item.permission || permissions.includes(item.permission),
+    );
+
+    if (visibleItems.length === 0) {
+        return null;
+    }
+
     return (
         <Card className="border-none shadow-lg">
             <CardHeader>
                 <CardTitle>{title}</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-4">
-                {items.map((item) => (
+                {visibleItems.map((item) => (
                     <Button
                         key={item.label}
                         asChild

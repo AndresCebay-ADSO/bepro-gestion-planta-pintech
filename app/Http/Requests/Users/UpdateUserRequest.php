@@ -16,7 +16,10 @@ class UpdateUserRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->user()?->hasRole('admin') ?? false;
+        $target = $this->route('user');
+
+        return $target instanceof User
+            && ($this->user()?->can('update', $target) ?? false);
     }
 
     /**

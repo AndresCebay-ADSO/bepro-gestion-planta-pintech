@@ -50,7 +50,6 @@ final class RoutePermissionMap
             'dashboard' => Permission::DashboardView,
             'profile.edit' => self::AUTHENTICATED,
             'profile.update' => self::AUTHENTICATED,
-            'profile.destroy' => self::TO_REMOVE,
             'appearance.edit' => self::AUTHENTICATED,
             'warehouses.set-current' => self::AUTHENTICATED,
 

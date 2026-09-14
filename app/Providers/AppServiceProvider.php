@@ -80,10 +80,6 @@ class AppServiceProvider extends ServiceProvider
                 'last_login_at' => now(),
             ]);
         });
-
-        Gate::define('view-audit-logs', function ($user) {
-            return $user->hasRole('admin');
-        });
     }
 
     /**

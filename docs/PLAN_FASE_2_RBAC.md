@@ -282,7 +282,10 @@ en toda ruta que ya no tenga `role:`. Con este método, la 2.8 se reduce a las p
 | 3 | Movimientos MP | ✅ Operador gana la vista; Producción pierde el registro. `cost_price` oculto sin `costs.view`; los lotes con precio solo se envían a quien puede registrar. **Editar y borrar retirados** (rutas, lógica de servicio, request, página placeholder y sus tests): la interfaz nunca los ofreció, pero el backend los aceptaba por petición directa. Policy inmutable, como PT. |
 | 3 | Costos | ✅ Adelantado del lote 4: el margen de venta exige `costs.update` (antes pasaba por la policy de producto). |
 | 3 | Fuga corregida del lote 1 | ✅ Movimientos PT: `cost_price` oculto sin `costs.view` en listado y detalle (Producción lo veía). |
-| 4+ | Listas de precios, usuarios, auditoría | ⏳ |
+| 4 | Listas de precios | ✅ Costos de la lista solo con `costs.view`. La policy se reduce a ver: las listas son históricas y nadie las edita a mano. |
+| 4 | Usuarios | ✅ Nueva `UserPolicy`. Admin pierde el borrado (solo SuperAdmin); nadie salvo un SuperAdmin modifica o elimina a otro SuperAdmin; cambiar el rol exige `users.manage_roles`. La pantalla de usuarios dejaba ver a Admin las 5 últimas entradas de auditoría: ahora solo con `audit_logs.view`. Los literales `'admin'` pasan a `SystemRole`. La protección "último admin activo" sigue igual hasta la 2.3. |
+| 4 | Auditoría | ✅ Solo SuperAdmin (Admin la pierde). Se elimina el `Gate::define('view-audit-logs')` suelto. Los accesos rápidos del dashboard se filtran por permiso en los módulos migrados, así que el enlace a Auditoría ya no le aparece a Admin. |
+| 4 | Perfil propio | ✅ Retirada la auto-eliminación de cuenta (ruta, método, request, componente `delete-user` y sus tests), como se decidió en la matriz. |
 | — | Cotizaciones, pedidos, desarrollo de pinturas (con dueño) | ⏳ |
 | — | Órdenes de producción (máquina de estados) y movimientos MP | ⏳ |
 

@@ -170,7 +170,7 @@ Viven en las policies/Actions junto al permiso, nunca en la matriz. Se listan aq
 
 ## 5. Accesos implícitos (sin permiso) y notas de implementación
 
-- **Perfil propio y apariencia:** todo usuario autenticado. **Se elimina la auto-eliminación de cuenta**
+- **Perfil propio y apariencia:** todo usuario autenticado. **Se elimina la auto-eliminación de cuenta** ✅ (retirada en la 2.2, lote 4)
   (ruta `DELETE settings/profile`); una cuenta solo la desactiva un Admin.
 - **Cambio de bodega activa** (`warehouses.set-current`): todo usuario autenticado, pero solo entre sus bodegas asignadas
   (o todas, con `warehouses.view_all`).

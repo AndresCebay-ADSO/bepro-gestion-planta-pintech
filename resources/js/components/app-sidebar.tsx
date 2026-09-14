@@ -142,6 +142,7 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Lista de Precios',
+                allowedPermissions: ['price_lists.view'],
                 href: pricesIndex().url,
                 icon: WalletCards,
                 allowedRoles: ['admin', 'comercial'],
@@ -208,6 +209,7 @@ const navigationGroups: NavGroup[] = [
         items: [
             {
                 title: 'Usuarios',
+                allowedPermissions: ['users.view'],
                 href: usersIndex(),
                 icon: Users,
                 allowedRoles: ['admin'],
@@ -215,6 +217,7 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Auditoría',
+                allowedPermissions: ['audit_logs.view'],
                 href: auditLogsIndex(),
                 icon: ShieldCheck,
                 allowedRoles: ['admin'],

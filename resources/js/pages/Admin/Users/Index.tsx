@@ -53,6 +53,8 @@ interface Props {
     filters: Record<string, string | null | undefined>;
     can?: {
         create?: boolean;
+        delete?: boolean;
+        viewActivity?: boolean;
     };
 }
 
@@ -213,7 +215,9 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                                                         actions={{
                                                             view: false,
                                                             edit: true,
-                                                            delete: true,
+                                                            delete:
+                                                                can?.delete ===
+                                                                true,
                                                         }}
                                                         onEdit={() =>
                                                             router.get(
@@ -266,36 +270,43 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                     </div>
 
                     {/* ACTIVITY */}
-                    <div className="lg:col-span-3">
-                        <Card className="bg-[#0a1a32] text-white">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Activity className="h-5 w-5 text-blue-400" />
-                                    Registro de Actividad
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {recentActivities.map((activity) => (
-                                    <div key={activity.id} className="mb-4">
-                                        <p className="text-xs text-blue-400">
-                                            {formatDistanceToNow(
-                                                new Date(activity.created_at),
-                                                { addSuffix: true, locale: es },
-                                            )}
-                                        </p>
-                                        <p className="text-sm font-bold">
-                                            {activity.description}
-                                        </p>
-                                    </div>
-                                ))}
-                                <Button asChild className="mt-4 w-full">
-                                    <Link href={auditLogsIndex().url}>
-                                        VER TODOS LOS LOGS
-                                    </Link>
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </div>
+                    {can?.viewActivity && (
+                        <div className="lg:col-span-3">
+                            <Card className="bg-[#0a1a32] text-white">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Activity className="h-5 w-5 text-blue-400" />
+                                        Registro de Actividad
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {recentActivities.map((activity) => (
+                                        <div key={activity.id} className="mb-4">
+                                            <p className="text-xs text-blue-400">
+                                                {formatDistanceToNow(
+                                                    new Date(
+                                                        activity.created_at,
+                                                    ),
+                                                    {
+                                                        addSuffix: true,
+                                                        locale: es,
+                                                    },
+                                                )}
+                                            </p>
+                                            <p className="text-sm font-bold">
+                                                {activity.description}
+                                            </p>
+                                        </div>
+                                    ))}
+                                    <Button asChild className="mt-4 w-full">
+                                        <Link href={auditLogsIndex().url}>
+                                            VER TODOS LOS LOGS
+                                        </Link>
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

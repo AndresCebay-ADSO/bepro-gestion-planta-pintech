@@ -208,21 +208,25 @@ export default function Dashboard({
                                     items={[
                                         {
                                             label: 'Usuarios',
+                                            permission: 'users.view',
                                             href: usersIndex().url,
                                             icon: Users,
                                         },
                                         {
                                             label: 'Productos',
+                                            permission: 'products.view',
                                             href: productsIndex().url,
                                             icon: ShoppingBag,
                                         },
                                         {
                                             label: 'Almacenes',
+                                            permission: 'warehouses.view',
                                             href: warehousesIndex().url,
                                             icon: Building2,
                                         },
                                         {
                                             label: 'Materias primas',
+                                            permission: 'raw_materials.view',
                                             href: rawMaterialsIndex().url,
                                             icon: Boxes,
                                         },
@@ -233,11 +237,13 @@ export default function Dashboard({
                                         },
                                         {
                                             label: 'Alertas',
+                                            permission: 'alerts.view',
                                             href: alertsIndex().url,
                                             icon: BellRing,
                                         },
                                         {
                                             label: 'Auditoría',
+                                            permission: 'audit_logs.view',
                                             href: auditLogsIndex().url,
                                             icon: ShieldCheck,
                                         },
@@ -338,11 +344,14 @@ export default function Dashboard({
                                         },
                                         {
                                             label: 'Materias primas',
+                                            permission: 'raw_materials.view',
                                             href: rawMaterialsIndex().url,
                                             icon: Boxes,
                                         },
                                         {
                                             label: 'Movimientos',
+                                            permission:
+                                                'inventory_movements.view',
                                             href: inventoryMovementsIndex().url,
                                             icon: TrendingUp,
                                         },
@@ -576,11 +585,13 @@ export default function Dashboard({
                             items={[
                                 {
                                     label: 'Lista de Precios',
+                                    permission: 'price_lists.view',
                                     href: pricesIndex().url,
                                     icon: WalletCards,
                                 },
                                 {
                                     label: 'Clientes',
+                                    permission: 'clients.view',
                                     href: clientsIndex().url,
                                     icon: Users,
                                 },
@@ -596,6 +607,7 @@ export default function Dashboard({
                                 },
                                 {
                                     label: 'Productos',
+                                    permission: 'products.view',
                                     href: productsIndex().url,
                                     icon: ShoppingBag,
                                 },

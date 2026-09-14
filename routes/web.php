@@ -163,6 +163,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:'.Permission::CostsUpdate->value)
         ->name('admin.costs.update');
 
+    // Listas de precios
+    Route::get('/prices', [PriceListController::class, 'index'])
+        ->middleware('can:'.Permission::PriceListsView->value)
+        ->name('prices.index');
+
+    // Usuarios
+    Route::resource('users', UserController::class)
+        ->except(['show'])
+        ->middlewareFor('index', 'can:'.Permission::UsersView->value)
+        ->middlewareFor(['create', 'store'], 'can:'.Permission::UsersCreate->value)
+        ->middlewareFor(['edit', 'update'], 'can:'.Permission::UsersEdit->value)
+        ->middlewareFor('destroy', 'can:'.Permission::UsersDelete->value);
+
+    // Auditoría
+    Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])
+        ->middleware('can:'.Permission::AuditLogsView->value)
+        ->name('audit-logs.index');
+
     // Inventario de producto terminado
     Route::get('finished-inventory', [FinishedInventoryController::class, 'index'])
         ->middleware('can:'.Permission::FinishedInventoryView->value)
@@ -175,11 +193,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // ============ RUTAS PROTEGIDAS POR ROL ============
-
-Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
-    Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
-    Route::resource('users', UserController::class)->except(['show']);
-});
 
 Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
     Route::get('production-orders/create', [ProductionOrderController::class, 'create'])->name('production-orders.create');
@@ -194,8 +207,6 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,comercial'])->group(function () {
-    Route::get('/prices', [PriceListController::class, 'index'])->name('prices.index');
-
     Route::get('quotations', [QuotationController::class, 'index'])->name('quotations.index');
     Route::get('quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
     Route::post('quotations', [QuotationController::class, 'store'])->name('quotations.store');

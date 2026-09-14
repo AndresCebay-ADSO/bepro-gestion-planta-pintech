@@ -21,7 +21,8 @@ beforeEach(function (): void {
         'email' => 'admin@pintech.com',
         'email_verified_at' => now(),
     ]);
-    $this->admin->assignRole('admin');
+    // audit_logs.view es exclusivo de SuperAdmin (docs/MATRIZ_RBAC.md).
+    $this->admin->assignRole('super-admin');
 
     $this->operator = User::factory()->create([
         'name' => 'Carlos Operador',
@@ -207,10 +208,13 @@ it('fails validation when date_to is before date_from', function (): void {
     $response->assertJsonValidationErrors(['date_to']);
 });
 
-it('forbids unauthorized users from accessing audit logs', function (): void {
+it('forbids users without audit_logs.view, including admin', function (): void {
     actingAs($this->operator);
+    get(route('audit-logs.index'))->assertForbidden();
 
-    $response = get(route('audit-logs.index'));
+    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin->assignRole('admin');
 
-    $response->assertForbidden();
+    actingAs($admin);
+    get(route('audit-logs.index'))->assertForbidden();
 });
