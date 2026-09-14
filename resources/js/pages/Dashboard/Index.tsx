@@ -597,11 +597,19 @@ export default function Dashboard({
                                 },
                                 {
                                     label: 'Cotizaciones',
+                                    permission: [
+                                        'quotations.view_own',
+                                        'quotations.view_all',
+                                    ],
                                     href: quotationsIndex().url,
                                     icon: FileText,
                                 },
                                 {
                                     label: 'Pedidos',
+                                    permission: [
+                                        'sales_orders.view_own',
+                                        'sales_orders.view_all',
+                                    ],
                                     href: salesOrdersIndex().url,
                                     icon: ShoppingCart,
                                 },

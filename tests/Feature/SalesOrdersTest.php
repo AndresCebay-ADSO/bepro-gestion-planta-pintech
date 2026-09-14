@@ -157,7 +157,7 @@ it('allows produccion to update sales order status', function () {
     $order = SalesOrder::factory()->create(['status' => 'pending']);
 
     $this->actingAs($user)
-        ->patch(route('sales-orders.update', $order), [
+        ->patch(route('sales-orders.update-status', $order), [
             'status' => 'in_progress',
         ])
         ->assertRedirect();
@@ -166,22 +166,48 @@ it('allows produccion to update sales order status', function () {
     expect($order->status->value)->toBe('in_progress');
 });
 
-it('allows produccion to update priority without changing status', function () {
+it('prevents produccion from editing order data', function () {
     $user = User::factory()->create();
     $user->assignRole('produccion');
 
     $order = SalesOrder::factory()->pending()->create(['priority' => 'low']);
 
     $this->actingAs($user)
+        ->patch(route('sales-orders.update', $order), ['priority' => 'high'])
+        ->assertForbidden();
+
+    expect($order->fresh()->priority->value)->toBe('low');
+});
+
+it('allows admin to edit data of a pending order without touching its status', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $order = SalesOrder::factory()->pending()->create(['priority' => 'low']);
+
+    $this->actingAs($admin)
         ->patch(route('sales-orders.update', $order), [
-            'status' => 'pending',
             'priority' => 'high',
+            'status' => 'in_progress',
         ])
         ->assertRedirect();
 
     $order->refresh();
-    expect($order->status->value)->toBe('pending');
-    expect($order->priority->value)->toBe('high');
+    expect($order->priority->value)->toBe('high')
+        ->and($order->status->value)->toBe('pending');
+});
+
+it('prevents editing order data once the order is in progress', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $order = SalesOrder::factory()->create(['status' => 'in_progress', 'priority' => 'low']);
+
+    $this->actingAs($admin)
+        ->patch(route('sales-orders.update', $order), ['priority' => 'high'])
+        ->assertForbidden();
+
+    expect($order->fresh()->priority->value)->toBe('low');
 });
 
 it('prevents invalid status transitions', function () {
@@ -191,7 +217,7 @@ it('prevents invalid status transitions', function () {
     $order = SalesOrder::factory()->pending()->create();
 
     $this->actingAs($user)
-        ->patch(route('sales-orders.update', $order), [
+        ->patch(route('sales-orders.update-status', $order), [
             'status' => 'delivered',
         ])
         ->assertSessionHasErrors(['status']);
@@ -261,7 +287,7 @@ it('prevents comercial from updating sales order status', function () {
     $order = SalesOrder::factory()->create();
 
     $this->actingAs($user)
-        ->patch(route('sales-orders.update', $order), [
+        ->patch(route('sales-orders.update-status', $order), [
             'status' => 'in_progress',
         ])
         ->assertForbidden();

@@ -156,18 +156,30 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Cotizaciones',
+                allowedPermissions: [
+                    'quotations.view_own',
+                    'quotations.view_all',
+                ],
                 href: quotationsIndex().url,
                 icon: FileText,
                 allowedRoles: ['admin', 'comercial'],
             },
             {
                 title: 'Desarrollo de pinturas',
+                allowedPermissions: [
+                    'paint_development_requests.view_own',
+                    'paint_development_requests.view_all',
+                ],
                 href: paintDevIndex().url,
                 icon: FlaskConical,
                 allowedRoles: ['admin', 'produccion', 'comercial'],
             },
             {
                 title: 'Pedidos',
+                allowedPermissions: [
+                    'sales_orders.view_own',
+                    'sales_orders.view_all',
+                ],
                 href: salesOrdersIndex().url,
                 icon: ShoppingCart,
                 allowedRoles: ['admin', 'produccion', 'comercial'],

@@ -286,7 +286,10 @@ en toda ruta que ya no tenga `role:`. Con este método, la 2.8 se reduce a las p
 | 4 | Usuarios | ✅ Nueva `UserPolicy`. Admin pierde el borrado (solo SuperAdmin); nadie salvo un SuperAdmin modifica o elimina a otro SuperAdmin; cambiar el rol exige `users.manage_roles`. La pantalla de usuarios dejaba ver a Admin las 5 últimas entradas de auditoría: ahora solo con `audit_logs.view`. Los literales `'admin'` pasan a `SystemRole`. La protección "último admin activo" sigue igual hasta la 2.3. |
 | 4 | Auditoría | ✅ Solo SuperAdmin (Admin la pierde). Se elimina el `Gate::define('view-audit-logs')` suelto. Los accesos rápidos del dashboard se filtran por permiso en los módulos migrados, así que el enlace a Auditoría ya no le aparece a Admin. |
 | 4 | Perfil propio | ✅ Retirada la auto-eliminación de cuenta (ruta, método, request, componente `delete-user` y sus tests), como se decidió en la matriz. |
-| — | Cotizaciones, pedidos, desarrollo de pinturas (con dueño) | ⏳ |
+| 5 | Cotizaciones | ✅ `view_own`/`view_all` con el trait `AuthorizesOwnedRecords` (compartido por los tres módulos con dueño): sin `view_all` solo se ve y se actúa sobre lo propio. Convertir en pedido exige además `sales_orders.create`. Listado y detalle se autorizan con la policy (`can:viewAny` / `can:view`). Se retira el `delete` de la policy (sin ruta ni permiso). |
+| 5 | Pedidos de venta | ✅ El PATCH único se separa: `sales-orders.update` (datos, `sales_orders.edit`, solo Admin y **solo en pendiente**) y `sales-orders.update-status` (estado, `sales_orders.update_status`, Admin y Producción). El panel lateral queda en dos formularios. **Producción pierde editar prioridad, fecha estimada, contacto y notas**: solo cambia el estado. |
+| 5 | Desarrollo de pinturas | ✅ Producción pierde el módulo completo (solo la jefa revisa). Enviar tiene su propia habilidad (`submit`). |
+| 5 | Scopes de visibilidad | ✅ `scopeVisibleTo` de `Quotation`, `SalesOrder` y `PaintDevelopmentRequest` usan `*.view_all` en vez del rol. |
 | — | Órdenes de producción (máquina de estados) y movimientos MP | ⏳ |
 
 **Adelanto parcial de la 2.5:** `NavItem` acepta `allowedPermissions`, y el sidebar decide por permiso en los módulos

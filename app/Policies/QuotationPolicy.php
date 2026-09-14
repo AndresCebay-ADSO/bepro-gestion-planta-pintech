@@ -4,69 +4,70 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\Permission;
 use App\Enums\QuotationStatus;
 use App\Models\Quotation;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesOwnedRecords;
 
 class QuotationPolicy
 {
+    use AuthorizesOwnedRecords;
+
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'comercial']);
+        return $user->canAny([Permission::QuotationsViewOwn->value, Permission::QuotationsViewAll->value]);
     }
 
     public function view(User $user, Quotation $quotation): bool
     {
-        return $user->hasRole('admin')
-            || ($user->hasRole('comercial') && $quotation->created_by === $user->id);
+        return $this->canAccess($user, $quotation);
     }
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'comercial']);
+        return $user->can(Permission::QuotationsCreate->value);
     }
 
     public function update(User $user, Quotation $quotation): bool
     {
-        if ($quotation->status !== QuotationStatus::Draft) {
-            return false;
-        }
-
-        return $user->hasRole('admin')
-            || ($user->hasRole('comercial') && $quotation->created_by === $user->id);
-    }
-
-    public function delete(User $user, Quotation $quotation): bool
-    {
-        return $user->hasRole('admin') && $quotation->status === QuotationStatus::Draft;
+        return $quotation->status === QuotationStatus::Draft
+            && $user->can(Permission::QuotationsEdit->value)
+            && $this->canAccess($user, $quotation);
     }
 
     public function exportPdf(User $user, Quotation $quotation): bool
     {
-        return $this->view($user, $quotation);
+        return $user->can(Permission::QuotationsExportPdf->value)
+            && $this->canAccess($user, $quotation);
     }
 
     public function updateStatus(User $user, Quotation $quotation): bool
     {
-        if ($quotation->convert_to_order_id !== null) {
-            return false;
-        }
-
-        return $user->hasRole('admin')
-            || ($user->hasRole('comercial') && $quotation->created_by === $user->id);
+        return $quotation->convert_to_order_id === null
+            && $user->can(Permission::QuotationsUpdateStatus->value)
+            && $this->canAccess($user, $quotation);
     }
 
+    /**
+     * Convertir crea un pedido de venta: exige también sales_orders.create.
+     */
     public function convertToOrder(User $user, Quotation $quotation): bool
     {
-        if ($quotation->status !== QuotationStatus::Accepted) {
-            return false;
-        }
+        return $quotation->status === QuotationStatus::Accepted
+            && $quotation->convert_to_order_id === null
+            && $user->can(Permission::QuotationsConvertToOrder->value)
+            && $user->can(Permission::SalesOrdersCreate->value)
+            && $this->canAccess($user, $quotation);
+    }
 
-        if ($quotation->convert_to_order_id !== null) {
-            return false;
-        }
-
-        return $user->hasRole('admin')
-            || ($user->hasRole('comercial') && $quotation->created_by === $user->id);
+    private function canAccess(User $user, Quotation $quotation): bool
+    {
+        return $this->canAccessOwnedRecord(
+            $user,
+            $quotation->created_by,
+            Permission::QuotationsViewAll,
+            Permission::QuotationsViewOwn,
+        );
     }
 }

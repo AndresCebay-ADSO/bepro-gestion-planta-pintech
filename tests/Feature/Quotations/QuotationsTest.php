@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\Quotations\BuildQuotationPdfDataAction;
+use App\Enums\Permission;
 use App\Enums\QuotationStatus;
 use App\Models\Client;
 use App\Models\Product;
@@ -16,7 +17,9 @@ use App\Services\QuotationService;
 use App\Services\VariantSalesPriceService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Testing\AssertableInertia;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -621,4 +624,35 @@ it('allows converting quotation without shipping_address', function () {
 
     expect($order)->not->toBeNull();
     expect($order->shipping_address)->toBeNull();
+});
+
+it('requires sales_orders.create to convert a quotation into an order', function () {
+    $role = Role::findOrCreate('cotizador', 'web');
+    $role->syncPermissions([
+        Permission::QuotationsViewOwn->value,
+        Permission::QuotationsConvertToOrder->value,
+    ]);
+
+    $user = User::factory()->create(['email_verified_at' => now()]);
+    $user->assignRole($role);
+
+    $quotation = Quotation::factory()->create([
+        'client_id' => $this->client->id,
+        'created_by' => $user->id,
+        'status' => QuotationStatus::Accepted,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('quotations.convert-to-order', $quotation), [
+            'priority' => 'medium',
+            'required_date' => now()->addDays(5)->format('Y-m-d'),
+        ])
+        ->assertForbidden();
+
+    expect($quotation->fresh()->convert_to_order_id)->toBeNull();
+
+    // Contraprueba: con sales_orders.create la policy sí lo permite, así que el 403 venía de ese permiso.
+    $role->givePermissionTo(Permission::SalesOrdersCreate->value);
+
+    expect(Gate::forUser($user->fresh())->allows('convertToOrder', $quotation->fresh()))->toBeTrue();
 });

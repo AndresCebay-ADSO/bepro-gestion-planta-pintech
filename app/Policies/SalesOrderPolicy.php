@@ -4,34 +4,55 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\Permission;
+use App\Enums\SalesOrderStatus;
 use App\Models\SalesOrder;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesOwnedRecords;
 
 class SalesOrderPolicy
 {
+    use AuthorizesOwnedRecords;
+
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'comercial', 'produccion']);
+        return $user->canAny([Permission::SalesOrdersViewOwn->value, Permission::SalesOrdersViewAll->value]);
     }
 
     public function view(User $user, SalesOrder $salesOrder): bool
     {
-        return $user->hasAnyRole(['admin', 'produccion'])
-            || ($user->hasRole('comercial') && $salesOrder->created_by === $user->id);
+        return $this->canAccess($user, $salesOrder);
     }
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'comercial']);
+        return $user->can(Permission::SalesOrdersCreate->value);
     }
 
-    public function update(User $user, SalesOrder $salesOrder): bool
+    /**
+     * Datos del pedido (contacto, dirección, prioridad, fechas, notas): solo mientras está pendiente.
+     */
+    public function edit(User $user, SalesOrder $salesOrder): bool
     {
-        return $user->hasAnyRole(['admin', 'produccion']);
+        return $salesOrder->status === SalesOrderStatus::Pending
+            && $user->can(Permission::SalesOrdersEdit->value)
+            && $this->canAccess($user, $salesOrder);
     }
 
-    public function delete(User $user, SalesOrder $salesOrder): bool
+    public function updateStatus(User $user, SalesOrder $salesOrder): bool
     {
-        return $user->hasRole('admin');
+        return $salesOrder->status->nextTransitions() !== []
+            && $user->can(Permission::SalesOrdersUpdateStatus->value)
+            && $this->canAccess($user, $salesOrder);
+    }
+
+    private function canAccess(User $user, SalesOrder $salesOrder): bool
+    {
+        return $this->canAccessOwnedRecord(
+            $user,
+            $salesOrder->created_by,
+            Permission::SalesOrdersViewAll,
+            Permission::SalesOrdersViewOwn,
+        );
     }
 }

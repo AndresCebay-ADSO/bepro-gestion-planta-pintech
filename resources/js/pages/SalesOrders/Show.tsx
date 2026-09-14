@@ -49,7 +49,8 @@ type Props = {
     order: SalesOrderDetail;
     statusTransitions: StatusTransition[];
     can: {
-        manage: boolean;
+        edit: boolean;
+        updateStatus: boolean;
         viewQuotation: boolean;
     };
 };
@@ -252,10 +253,11 @@ export default function SalesOrdersShow({
                         )}
                     </div>
 
-                    {can.manage && (
+                    {(can.edit || can.updateStatus) && (
                         <AdminOrderSidebar
                             order={order}
                             statusTransitions={statusTransitions}
+                            can={can}
                         />
                     )}
                 </div>

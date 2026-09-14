@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\PaintDevelopmentRequestStatus;
+use App\Enums\Permission;
 use App\Filters\PaintDevelopmentRequestFilter;
 use App\Http\Requests\PaintDevelopmentRequests\IndexPaintDevelopmentRequestRequest;
 use App\Http\Requests\PaintDevelopmentRequests\StorePaintDevelopmentRequest;
@@ -29,7 +30,7 @@ class PaintDevelopmentRequestController extends Controller
     public function index(IndexPaintDevelopmentRequestRequest $request): Response
     {
         $user = $request->user();
-        $isAdminOrProduction = $user?->hasAnyRole(['admin', 'produccion']) ?? false;
+        $canViewAll = $user?->can(Permission::PaintDevelopmentRequestsViewAll->value) ?? false;
 
         $requests = (new PaintDevelopmentRequestFilter($request))
             ->apply(PaintDevelopmentRequest::query())
@@ -43,7 +44,7 @@ class PaintDevelopmentRequestController extends Controller
                 'id' => $paintRequest->id,
                 'request_number' => $paintRequest->request_number,
                 'client_name' => $paintRequest->client_name,
-                'creator' => $isAdminOrProduction && $paintRequest->creator ? [
+                'creator' => $canViewAll && $paintRequest->creator ? [
                     'name' => $paintRequest->creator->name,
                 ] : null,
                 'status' => $paintRequest->status->value,
@@ -99,8 +100,7 @@ class PaintDevelopmentRequestController extends Controller
                 'update' => auth()->user()?->can('update', $paintDevelopmentRequest) ?? false,
                 'exportPdf' => auth()->user()?->can('exportPdf', $paintDevelopmentRequest) ?? false,
                 'updateStatus' => auth()->user()?->can('updateStatus', $paintDevelopmentRequest) ?? false,
-                'submit' => auth()->user()?->can('update', $paintDevelopmentRequest)
-                    && $paintDevelopmentRequest->status === PaintDevelopmentRequestStatus::Draft,
+                'submit' => auth()->user()?->can('submit', $paintDevelopmentRequest) ?? false,
             ],
             'nextStatusOptions' => EnumOptions::for($paintDevelopmentRequest->status->nextTransitions()),
         ]);
@@ -137,7 +137,7 @@ class PaintDevelopmentRequestController extends Controller
 
     public function submit(PaintDevelopmentRequest $paintDevelopmentRequest): RedirectResponse
     {
-        $this->authorize('update', $paintDevelopmentRequest);
+        $this->authorize('submit', $paintDevelopmentRequest);
 
         $this->service->submit($paintDevelopmentRequest);
 

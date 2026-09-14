@@ -27,6 +27,9 @@ use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\UserController;
+use App\Models\PaintDevelopmentRequest;
+use App\Models\Quotation;
+use App\Models\SalesOrder;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login')->name('home');
@@ -181,6 +184,84 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:'.Permission::AuditLogsView->value)
         ->name('audit-logs.index');
 
+    // Cotizaciones (listado y detalle: la policy decide propias o todas)
+    Route::get('quotations', [QuotationController::class, 'index'])
+        ->middleware('can:viewAny,'.Quotation::class)
+        ->name('quotations.index');
+    Route::get('quotations/create', [QuotationController::class, 'create'])
+        ->middleware('can:'.Permission::QuotationsCreate->value)
+        ->name('quotations.create');
+    Route::post('quotations', [QuotationController::class, 'store'])
+        ->middleware('can:'.Permission::QuotationsCreate->value)
+        ->name('quotations.store');
+    Route::get('quotations/{quotation}', [QuotationController::class, 'show'])
+        ->middleware('can:view,quotation')
+        ->name('quotations.show');
+    Route::get('quotations/{quotation}/edit', [QuotationController::class, 'edit'])
+        ->middleware('can:'.Permission::QuotationsEdit->value)
+        ->name('quotations.edit');
+    Route::put('quotations/{quotation}', [QuotationController::class, 'update'])
+        ->middleware('can:'.Permission::QuotationsEdit->value)
+        ->name('quotations.update');
+    Route::patch('quotations/{quotation}/status', [QuotationController::class, 'updateStatus'])
+        ->middleware('can:'.Permission::QuotationsUpdateStatus->value)
+        ->name('quotations.update-status');
+    Route::post('quotations/{quotation}/convert-to-order', [QuotationController::class, 'convertToOrder'])
+        ->middleware('can:'.Permission::QuotationsConvertToOrder->value)
+        ->name('quotations.convert-to-order');
+    Route::get('quotations/{quotation}/export-pdf', [QuotationController::class, 'exportPdf'])
+        ->middleware('can:'.Permission::QuotationsExportPdf->value)
+        ->name('quotations.export-pdf');
+
+    // Desarrollo de pinturas (listado y detalle: la policy decide propias o todas)
+    Route::get('paint-development-requests', [PaintDevelopmentRequestController::class, 'index'])
+        ->middleware('can:viewAny,'.PaintDevelopmentRequest::class)
+        ->name('paint-development-requests.index');
+    Route::get('paint-development-requests/create', [PaintDevelopmentRequestController::class, 'create'])
+        ->middleware('can:'.Permission::PaintDevelopmentRequestsCreate->value)
+        ->name('paint-development-requests.create');
+    Route::post('paint-development-requests', [PaintDevelopmentRequestController::class, 'store'])
+        ->middleware('can:'.Permission::PaintDevelopmentRequestsCreate->value)
+        ->name('paint-development-requests.store');
+    Route::get('paint-development-requests/{paintDevelopmentRequest}', [PaintDevelopmentRequestController::class, 'show'])
+        ->middleware('can:view,paintDevelopmentRequest')
+        ->name('paint-development-requests.show');
+    Route::get('paint-development-requests/{paintDevelopmentRequest}/edit', [PaintDevelopmentRequestController::class, 'edit'])
+        ->middleware('can:'.Permission::PaintDevelopmentRequestsEdit->value)
+        ->name('paint-development-requests.edit');
+    Route::put('paint-development-requests/{paintDevelopmentRequest}', [PaintDevelopmentRequestController::class, 'update'])
+        ->middleware('can:'.Permission::PaintDevelopmentRequestsEdit->value)
+        ->name('paint-development-requests.update');
+    Route::patch('paint-development-requests/{paintDevelopmentRequest}/submit', [PaintDevelopmentRequestController::class, 'submit'])
+        ->middleware('can:'.Permission::PaintDevelopmentRequestsSubmit->value)
+        ->name('paint-development-requests.submit');
+    Route::patch('paint-development-requests/{paintDevelopmentRequest}/status', [PaintDevelopmentRequestController::class, 'updateStatus'])
+        ->middleware('can:'.Permission::PaintDevelopmentRequestsUpdateStatus->value)
+        ->name('paint-development-requests.update-status');
+    Route::get('paint-development-requests/{paintDevelopmentRequest}/export-pdf', [PaintDevelopmentRequestController::class, 'exportPdf'])
+        ->middleware('can:'.Permission::PaintDevelopmentRequestsExportPdf->value)
+        ->name('paint-development-requests.export-pdf');
+
+    // Pedidos de venta (listado y detalle: la policy decide propios o todos)
+    Route::get('sales-orders', [SalesOrderController::class, 'index'])
+        ->middleware('can:viewAny,'.SalesOrder::class)
+        ->name('sales-orders.index');
+    Route::get('sales-orders/create', [SalesOrderController::class, 'create'])
+        ->middleware('can:'.Permission::SalesOrdersCreate->value)
+        ->name('sales-orders.create');
+    Route::post('sales-orders', [SalesOrderController::class, 'store'])
+        ->middleware('can:'.Permission::SalesOrdersCreate->value)
+        ->name('sales-orders.store');
+    Route::get('sales-orders/{sales_order}', [SalesOrderController::class, 'show'])
+        ->middleware('can:view,sales_order')
+        ->name('sales-orders.show');
+    Route::patch('sales-orders/{sales_order}', [SalesOrderController::class, 'update'])
+        ->middleware('can:'.Permission::SalesOrdersEdit->value)
+        ->name('sales-orders.update');
+    Route::patch('sales-orders/{sales_order}/status', [SalesOrderController::class, 'updateStatus'])
+        ->middleware('can:'.Permission::SalesOrdersUpdateStatus->value)
+        ->name('sales-orders.update-status');
+
     // Inventario de producto terminado
     Route::get('finished-inventory', [FinishedInventoryController::class, 'index'])
         ->middleware('can:'.Permission::FinishedInventoryView->value)
@@ -204,39 +285,6 @@ Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function
         ->name('production-orders.preview-costs');
     Route::post('production-orders/{production_order}/reject-review', [ProductionOrderController::class, 'rejectReview'])->name('production-orders.reject-review');
 
-});
-
-Route::middleware(['auth', 'verified', 'role:admin,comercial'])->group(function () {
-    Route::get('quotations', [QuotationController::class, 'index'])->name('quotations.index');
-    Route::get('quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
-    Route::post('quotations', [QuotationController::class, 'store'])->name('quotations.store');
-    Route::get('quotations/{quotation}', [QuotationController::class, 'show'])->name('quotations.show');
-    Route::get('quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
-    Route::put('quotations/{quotation}', [QuotationController::class, 'update'])->name('quotations.update');
-    Route::patch('quotations/{quotation}/status', [QuotationController::class, 'updateStatus'])->name('quotations.update-status');
-    Route::post('quotations/{quotation}/convert-to-order', [QuotationController::class, 'convertToOrder'])->name('quotations.convert-to-order');
-    Route::get('quotations/{quotation}/export-pdf', [QuotationController::class, 'exportPdf'])->name('quotations.export-pdf');
-
-});
-
-Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
-    Route::get('paint-development-requests', [PaintDevelopmentRequestController::class, 'index'])->name('paint-development-requests.index');
-    Route::get('paint-development-requests/create', [PaintDevelopmentRequestController::class, 'create'])->name('paint-development-requests.create');
-    Route::post('paint-development-requests', [PaintDevelopmentRequestController::class, 'store'])->name('paint-development-requests.store');
-    Route::get('paint-development-requests/{paintDevelopmentRequest}', [PaintDevelopmentRequestController::class, 'show'])->name('paint-development-requests.show');
-    Route::get('paint-development-requests/{paintDevelopmentRequest}/edit', [PaintDevelopmentRequestController::class, 'edit'])->name('paint-development-requests.edit');
-    Route::put('paint-development-requests/{paintDevelopmentRequest}', [PaintDevelopmentRequestController::class, 'update'])->name('paint-development-requests.update');
-    Route::patch('paint-development-requests/{paintDevelopmentRequest}/submit', [PaintDevelopmentRequestController::class, 'submit'])->name('paint-development-requests.submit');
-    Route::patch('paint-development-requests/{paintDevelopmentRequest}/status', [PaintDevelopmentRequestController::class, 'updateStatus'])->name('paint-development-requests.update-status');
-    Route::get('paint-development-requests/{paintDevelopmentRequest}/export-pdf', [PaintDevelopmentRequestController::class, 'exportPdf'])->name('paint-development-requests.export-pdf');
-});
-
-Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
-    Route::get('sales-orders', [SalesOrderController::class, 'index'])->name('sales-orders.index');
-    Route::get('sales-orders/create', [SalesOrderController::class, 'create'])->name('sales-orders.create');
-    Route::post('sales-orders', [SalesOrderController::class, 'store'])->name('sales-orders.store');
-    Route::get('sales-orders/{sales_order}', [SalesOrderController::class, 'show'])->name('sales-orders.show');
-    Route::patch('sales-orders/{sales_order}', [SalesOrderController::class, 'update'])->name('sales-orders.update');
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,produccion,operador'])->group(function () {

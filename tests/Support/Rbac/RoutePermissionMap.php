@@ -149,8 +149,8 @@ final class RoutePermissionMap
             'sales-orders.show' => [Permission::SalesOrdersViewOwn, Permission::SalesOrdersViewAll],
             'sales-orders.create' => Permission::SalesOrdersCreate,
             'sales-orders.store' => Permission::SalesOrdersCreate,
-            // Hoy un solo PATCH edita datos y cambia estado; en 2.2 se separa en dos endpoints.
-            'sales-orders.update' => [Permission::SalesOrdersEdit, Permission::SalesOrdersUpdateStatus],
+            'sales-orders.update' => Permission::SalesOrdersEdit,
+            'sales-orders.update-status' => Permission::SalesOrdersUpdateStatus,
 
             // Clientes
             'clients.index' => Permission::ClientsView,

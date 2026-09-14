@@ -109,8 +109,8 @@ it('exige el permiso del mapa en las rutas que ya no dependen de role:', functio
     foreach (applicationRoutes() as $route) {
         $entry = RoutePermissionMap::routes()[$route->getName()] ?? null;
 
-        // Los marcadores y las listas (basta con uno de varios permisos) se verifican al migrar su módulo.
-        if (! $entry instanceof Permission) {
+        // Los marcadores (pública, con sesión, a retirar) no llevan permiso.
+        if ($entry === null || is_string($entry)) {
             continue;
         }
 
@@ -118,6 +118,15 @@ it('exige el permiso del mapa en las rutas que ya no dependen de role:', functio
 
         // Ruta aún no migrada (tarea 2.2): sigue protegida por rol.
         if (collect($middleware)->contains(fn ($item) => is_string($item) && str_starts_with($item, 'role:'))) {
+            continue;
+        }
+
+        // Listas (basta con uno de varios permisos): se autorizan con la policy del modelo (can:viewAny / can:view).
+        if (is_array($entry)) {
+            if (! collect($middleware)->contains(fn ($item) => is_string($item) && str_starts_with($item, 'can:'))) {
+                $mismatches[] = "{$route->getName()} (esperado un middleware can: de policy)";
+            }
+
             continue;
         }
 

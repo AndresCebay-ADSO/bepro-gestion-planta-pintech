@@ -6,6 +6,7 @@ namespace App\Http\Requests\SalesOrders;
 
 use App\Enums\SalesOrderPriority;
 use App\Models\ProductVariant;
+use App\Models\SalesOrder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -13,7 +14,7 @@ class StoreSalesOrderRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasAnyRole(['admin', 'comercial']) ?? false;
+        return $this->user()?->can('create', SalesOrder::class) ?? false;
     }
 
     /**

@@ -9,7 +9,7 @@ interface QuickAccessItem {
     href: string;
     icon: LucideIcon;
     /** Permiso necesario para mostrar el acceso (módulos ya migrados a permisos). */
-    permission?: string;
+    permission?: string | string[];
 }
 
 interface QuickAccessGridProps {
@@ -22,9 +22,17 @@ export function QuickAccessGrid({
     title = 'Accesos rápidos',
 }: QuickAccessGridProps) {
     const permissions = usePage().props.auth.user?.permissions ?? [];
-    const visibleItems = items.filter(
-        (item) => !item.permission || permissions.includes(item.permission),
-    );
+    const visibleItems = items.filter((item) => {
+        if (!item.permission) {
+            return true;
+        }
+
+        const required = Array.isArray(item.permission)
+            ? item.permission
+            : [item.permission];
+
+        return required.some((permission) => permissions.includes(permission));
+    });
 
     if (visibleItems.length === 0) {
         return null;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Quotations;
 
+use App\Enums\Permission;
 use App\Enums\QuotationStatus;
 use App\Models\Quotation;
 use Illuminate\Foundation\Http\FormRequest;
@@ -18,7 +19,7 @@ class IndexQuotationRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if (! $this->user()?->hasRole('admin')) {
+        if (! ($this->user()?->can(Permission::QuotationsViewAll->value) ?? false)) {
             $this->merge(['created_by' => null]);
         }
     }
