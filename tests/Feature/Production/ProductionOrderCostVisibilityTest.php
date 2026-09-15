@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Actions\Production\BuildProductionOrderExportDataAction;
 use App\Enums\ProductionOrderStatus;
+use App\Enums\RemnantStatus;
+use App\Enums\SystemRole;
 use App\Enums\WarehouseType;
 use App\Models\Formula;
 use App\Models\Product;
@@ -11,9 +13,11 @@ use App\Models\ProductCategory;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderPackagingPlan;
+use App\Models\ProductionRemnant;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
+use App\Models\RemnantConsumption;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -148,6 +152,74 @@ test('admin show payload includes cost fields', function () {
             ->where('order.total_bulk_cost', '1000.0000')
             ->where('order.details.0.unit_cost', '10.0000')
             ->where('order.details.0.total_cost', '1000.0000'));
+});
+
+/**
+ * Saldo generado por la orden y consumo de ese saldo en la misma orden, ambos con costo.
+ */
+function attachRemnantWithConsumption(ProductionOrder $order): void
+{
+    $remnant = ProductionRemnant::forceCreate([
+        'source_order_id' => $order->id,
+        'product_id' => $order->product_id,
+        'warehouse_id' => $order->warehouse_id,
+        'original_quantity_gallons' => 10,
+        'original_quantity_kg' => 50,
+        'available_quantity_gallons' => 8,
+        'available_quantity_kg' => 40,
+        'density_kg_per_gallon' => 5,
+        'cost_per_gallon' => 5.5,
+        'status' => RemnantStatus::Available,
+        'created_by' => $order->created_by,
+    ]);
+
+    RemnantConsumption::forceCreate([
+        'remnant_id' => $remnant->id,
+        'target_order_id' => $order->id,
+        'quantity_gallons' => 2,
+        'quantity_kg' => 10,
+        'consumed_cost' => 11,
+        'consumed_by' => $order->created_by,
+        'consumed_at' => now(),
+    ]);
+}
+
+test('roles without costs.view do not receive remnant costs or CIF in the order detail', function (SystemRole $role) {
+    // Matriz, principio 1: el costo de los saldos y el CIF % solo con costs.view.
+    attachRemnantWithConsumption($this->productionOrder);
+
+    $this->actingAs(userWithRole($role, ['email_verified_at' => now()]))
+        ->get(route('production-orders.show', $this->productionOrder))
+        ->assertSuccessful()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('order.remnant.available_quantity_gallons', 8)
+            ->where('order.remnant_consumptions.0.quantity_gallons', 2)
+            ->missing('order.product.cif_percentage')
+            ->missing('order.remnant.cost_per_gallon')
+            ->missing('order.remnant_consumptions.0.consumed_cost'));
+})->with([SystemRole::Production, SystemRole::Operator]);
+
+test('admin receives remnant costs and CIF in the order detail', function () {
+    attachRemnantWithConsumption($this->productionOrder);
+
+    $this->actingAs(userWithRole(SystemRole::Admin, ['email_verified_at' => now()]))
+        ->get(route('production-orders.show', $this->productionOrder))
+        ->assertSuccessful()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('order.product.cif_percentage', 25)
+            ->where('order.remnant.cost_per_gallon', 5.5)
+            ->where('order.remnant_consumptions.0.consumed_cost', 11));
+});
+
+test('export payload without costs omits remnant costs and CIF', function () {
+    attachRemnantWithConsumption($this->productionOrder);
+
+    $payload = app(BuildProductionOrderExportDataAction::class)
+        ->execute($this->productionOrder, includeCosts: false);
+
+    expect($payload['product'])->not->toHaveKey('cif_percentage')
+        ->and($payload['remnant'])->not->toHaveKey('cost_per_gallon')
+        ->and($payload['remnant_consumptions'][0])->not->toHaveKey('consumed_cost');
 });
 
 test('operator export payload does not expose cost fields', function () {

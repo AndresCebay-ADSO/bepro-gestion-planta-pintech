@@ -29,9 +29,14 @@ ERP web para **Pintech Colombia S.A.S** (pinturas industriales, automotrices y a
 
 ## Roles del sistema
 
-- `admin`: acceso total (usuarios, configuracion, costos, reportes)
-- `produccion`: operacion de planta (inventarios, formulas, ordenes)
-- `comercial`: consulta de disponibilidad y precios (solo lectura operativa)
+El acceso se decide por **permisos** (Spatie), no por rol. Los permisos se declaran en `App\Enums\Permission` y los
+roles del sistema en `App\Enums\SystemRole`; la matriz completa está en `docs/MATRIZ_RBAC.md`.
+
+- `super-admin`: soporte / tecnología, todos los permisos.
+- `admin`: jefa de la empresa y de producción (catálogo técnico, costos, usuarios).
+- `produccion`: auxiliares de producción (crear, operar, revisar y completar órdenes).
+- `operador`: personal de planta (ejecuta las órdenes).
+- `comercial`: clientes, cotizaciones, pedidos y solicitudes de desarrollo; ve precios, nunca costos.
 
 ## Funcionalidades principales
 
@@ -230,6 +235,26 @@ Ejemplos:
 ./vendor/bin/pest
 ./vendor/bin/pest tests/Feature/Auth/PasswordResetTest.php
 ```
+
+## Despliegue a producción
+
+El entrypoint de producción **no** ejecuta migraciones ni seeders. En cada despliegue, después de levantar la nueva
+imagen, ejecutar en este orden:
+
+```bash
+php artisan migrate --force
+php artisan db:seed --class=RolePermissionSeeder --force   # sincroniza permisos y roles del sistema con el código
+php artisan permission:cache-reset
+```
+
+(El entrypoint ya ejecuta `config:cache`, `route:cache`, `view:cache` y `event:cache` al arrancar.)
+
+- **`RolePermissionSeeder` es obligatorio en cada despliegue**, no solo el primero: crea los permisos nuevos del enum,
+  elimina los retirados y reasigna a cada rol del sistema sus permisos por defecto. Si se omite, las pantallas nuevas
+  responden 403; en una base recién creada, **todos** los usuarios reciben 403.
+- Es idempotente y nunca toca los roles creados desde la UI.
+- **Nunca** ejecutar `php artisan db:seed` sin `--class` en producción: `DatabaseSeeder` también carga datos de negocio.
+- Usuario de soporte: `php artisan users:grant-super-admin {email}` sobre un usuario existente y activo.
 
 ## Base de datos
 

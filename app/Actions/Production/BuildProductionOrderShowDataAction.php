@@ -149,7 +149,9 @@ class BuildProductionOrderShowDataAction
                 'id' => $productionOrder->product->id,
                 'name' => $productionOrder->product->name,
                 'code' => $productionOrder->product->code,
-                'cif_percentage' => $productionOrder->product->cif_percentage !== null ? (float) $productionOrder->product->cif_percentage : null,
+                ...($includeCosts ? [
+                    'cif_percentage' => $productionOrder->product->cif_percentage !== null ? (float) $productionOrder->product->cif_percentage : null,
+                ] : []),
                 'quality_solids_lower' => $productionOrder->product->quality_solids_lower !== null
                     ? (float) $productionOrder->product->quality_solids_lower
                     : null,
@@ -266,7 +268,9 @@ class BuildProductionOrderShowDataAction
                 'original_quantity_kg' => (float) $productionOrder->remnant->original_quantity_kg,
                 'available_quantity_kg' => (float) $productionOrder->remnant->available_quantity_kg,
                 'density_kg_per_gallon' => (float) $productionOrder->remnant->density_kg_per_gallon,
-                'cost_per_gallon' => $productionOrder->remnant->cost_per_gallon !== null ? (float) $productionOrder->remnant->cost_per_gallon : null,
+                ...($includeCosts ? [
+                    'cost_per_gallon' => $productionOrder->remnant->cost_per_gallon !== null ? (float) $productionOrder->remnant->cost_per_gallon : null,
+                ] : []),
                 'status' => $productionOrder->remnant->status->value,
                 'status_label' => $productionOrder->remnant->status->label(),
             ] : null,
@@ -276,7 +280,9 @@ class BuildProductionOrderShowDataAction
                 'source_order_number' => $consumption->remnant?->sourceOrder?->order_number,
                 'quantity_gallons' => (float) $consumption->quantity_gallons,
                 'quantity_kg' => (float) $consumption->quantity_kg,
-                'consumed_cost' => $consumption->consumed_cost !== null ? (float) $consumption->consumed_cost : null,
+                ...($includeCosts ? [
+                    'consumed_cost' => $consumption->consumed_cost !== null ? (float) $consumption->consumed_cost : null,
+                ] : []),
                 'notes' => $consumption->notes,
                 'consumed_at' => $consumption->consumed_at->toISOString(),
                 'consumed_by' => $consumption->consumedBy ? [

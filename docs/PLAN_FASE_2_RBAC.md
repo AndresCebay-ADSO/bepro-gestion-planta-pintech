@@ -423,6 +423,8 @@ mostrarían enlaces que responden 403 (por ejemplo, movimientos de materia prima
 > - Tests en `tests/Feature/ErrorPagesTest.php`.
 > - El test de matriz de acceso `[rol, ruta, código]` no se escribió como dataset: su función la cumplen
 >   `RoutePermissionMapTest` (cada ruta con su permiso) y `RolePermissionSeederTest` (permisos por rol).
+>   **Límite conocido:** en las rutas que aceptan varios permisos (`can:viewAny`, `can:view`) el test solo comprueba que
+>   exista un middleware de policy, no cuál; y ningún test recorre roles contra rutas reales. Queda como B17.
 
 ---
 
@@ -447,6 +449,13 @@ y cada test arranca una aplicación nueva. No hace falta limpiarla en `TestCase`
 
 **Criterio de aceptación:** ejecutar el seeder dos veces seguidas no cambia nada en la BD.
 **Estimación: 1 día** (contabilizado dentro de 2.2).
+
+> **✅ Cierre de pendientes de la 2.9 (2026-09-15, lote A3 de `docs/REVISION_RAMA_RBAC.md`):**
+> - **Procedimiento de despliegue documentado** en el `README` (sección *Despliegue a producción*): `migrate`,
+>   `db:seed --class=RolePermissionSeeder`, `permission:cache-reset`. Hasta ahora no estaba escrito en ningún sitio, y el
+>   entrypoint de producción no lo ejecuta. Automatizarlo queda para la 5.3 (CI/CD).
+> - **`rbac:audit` descartado:** el seeder ya elimina de la BD los permisos que no existen en el enum, y
+>   `PermissionRegistryTest` falla si el tipo `Permission` del frontend (`resources/js/types/permissions.ts`) difiere del enum.
 
 ---
 
@@ -540,6 +549,11 @@ middlewares (2.8), el sidebar (2.5) y los tests (helper `actingAsRole`) ya no us
 2. Una migración de datos que actualiza `roles.name`. Es segura: `model_has_roles` enlaza por `role_id`, así que
    ningún usuario pierde su rol.
 3. Limpiar la caché de permisos y actualizar el test que hoy protege los nombres en español.
+
+> **⚠️ Reestimación (auditoría 2026-09-15):** la premisa de que los tests ya no usan los nombres no se cumple: quedan
+> **245 literales de rol en 38 archivos de test** (`assignRole('produccion')` y similares) que hay que pasar a
+> `userWithRole(SystemRole::X)`. Además, el paso incluye retirar `UserRole` de `resources/js/types/auth.ts` y la prop
+> compartida `role_names`, que ya nadie consume. Los seeders ya usan `SystemRole` (lote A3). **Estimación: 1,5 días.**
 
 **Regla desde ya:** el código nuevo nunca escribe el nombre de un rol a mano; siempre `SystemRole::X->value`.
 

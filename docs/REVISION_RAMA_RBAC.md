@@ -112,6 +112,39 @@ Después de A1–A4: repetir `/ultrareview develop`, hacer la prueba manual por 
 | A2.1 | `sales_margin` se oculta junto al resto de costos en la ficha de producto sin `costs.view` | AG-02 | Test: Comercial abre la ficha de un producto y el payload no contiene `sales_margin` (ni el resto de `PRODUCT_COST_ATTRIBUTES`); Admin sí lo recibe. |
 | A2.2 | `scopeVisibleTo` de `Quotation`/`SalesOrder`/`PaintDevelopmentRequest`: sin usuario, no devuelve ningún registro | AG-01 | Test: `Modelo::visibleTo(null)` devuelve 0 registros con datos de por medio en la tabla; `view_own` solo ve lo propio; `view_all` ve todo. |
 
+### Lote A3 — Auditoría de la Fase 2 completa (en `feature/rbac-permissions-2`)
+
+Revisión propia de todo lo hecho desde el inicio de la fase (`4adccdb`..`bc41bb5`), verificada contra el código.
+
+| ID | Hallazgo | Veredicto | Origen | Severidad | Nota |
+| --- | --- | --- | --- | --- | --- |
+| AU-01 | La ficha de la orden envía `remnant.cost_per_gallon` y `remnant_consumptions.*.consumed_cost` sin `costs.view`, y la tarjeta de saldos consumidos muestra la columna *Costo* | ✅ | previo (el lote 1 corrigió solo la página de saldos) | **Alta** | Viola el principio 1 y la decisión C5. `BuildProductionOrderShowDataAction` también alimenta el PDF y el Excel. |
+| AU-02 | La ficha de la orden envía `product.cif_percentage` sin `costs.view` | ✅ | previo | Media | Es un atributo de costo (`ProductController::PRODUCT_COST_ATTRIBUTES`). La pantalla solo lo usaba para costos ocultos, pero llegaba en el payload. |
+| AU-03 | El seeder de permisos no figura en ningún procedimiento de despliegue | ✅ | rama (2.9) | **Alta** (al desplegar) | Ni el `README`, ni `compose.prod.yaml`, ni el entrypoint, ni CI. Sin él, una base nueva deja a todos en 403. |
+| AU-04 | `SalesOrderSeeder` y `WarehouseUserSeeder` escriben los nombres de rol a mano | ✅ | previo | Media | Incumple la regla del paso 11 y rompería el seeder al renombrar los roles. |
+| AU-05 | `DashboardService::COMMERCIAL_PERMISSIONS` con strings en vez del enum | ✅ | rama | Baja | |
+| AU-06 | Permisos del frontend como strings sin tipo (menú, dashboard, página de error, campana) | ✅ | rama | Media (escalabilidad) | Un permiso renombrado en el backend ocultaría un menú sin ningún error. |
+| AU-07 | 245 literales de rol en 38 archivos de test | ✅ | mixto | Media (paso 11) | Reestima el paso 11 (ver `PLAN_FASE_2_RBAC.md`). |
+| AU-08 | `UserRole` (TS) con nombres en español y `role_names` compartido sin consumidores | ✅ | mixto | Baja | Se resuelve en el paso 11. |
+| AU-09 | `DashboardService` usa `Carbon::today('America/Bogota')` en vez de `config('app.plant_timezone')` | ✅ | rama | Baja | Invariante 5 de `CLAUDE.md`. |
+| AU-10 | `rbac:audit` (2.9) y el test de matriz `[rol, ruta, código]` (2.8) nunca se hicieron | ⚠️ | rama | Baja | `rbac:audit` se descarta (ver 2.9). El test de matriz tiene huecos conocidos (B17). |
+| AU-11 | `ProductPolicy::restore` y `forceDelete` sin ruta ni uso | ✅ | previo | Muy baja | Código muerto. |
+
+> **✅ Aplicado (2026-09-15):** AU-01 a AU-06 y el descarte de `rbac:audit`.
+
+| # | Tarea | Hallazgos | Criterio de aceptación |
+| --- | --- | --- | --- |
+| A3.1 | Costo de saldos y CIF % de la orden solo con `costs.view` (payload, PDF/Excel y columna *Costo* de la tarjeta de saldos consumidos) | AU-01, AU-02 | Test: Producción y Operador no reciben `cif_percentage`, `cost_per_gallon` ni `consumed_cost`; Admin sí; la exportación sin costos tampoco los incluye. |
+| A3.2 | Seeders y `DashboardService` con `SystemRole` / `Permission` | AU-04, AU-05 | `grep` de nombres de rol en `app/` y `database/` solo encuentra `SystemRole`. |
+| A3.3 | Tipo `Permission` en `resources/js/types/permissions.ts`, aplicado a `auth.user.permissions`, `NavItem.allowedPermissions` y los accesos rápidos del dashboard | AU-06 | `tsc` rechaza un permiso inexistente; `PermissionRegistryTest` falla si el tipo y el enum difieren. |
+| A3.4 | Procedimiento de despliegue en el `README` y roles del sistema actualizados | AU-03 | Sección *Despliegue a producción* con el seeder obligatorio en cada despliegue. |
+
+**Cambio de acceso a comunicar:** Producción y Operador dejan de ver la columna *Costo* de los saldos consumidos en la
+ficha de la orden de producción.
+
+**Verificación:** 907 tests OK (5 nuevos: 4 en `ProductionOrderCostVisibilityTest`, 1 en `PermissionRegistryTest`), Pint,
+ESLint, Prettier y TypeScript limpios.
+
 ### Lote B — Limpieza técnica (rama nueva `chore/…`, tras el merge)
 
 | # | Tarea | Hallazgos | Esfuerzo |
@@ -130,6 +163,9 @@ Después de A1–A4: repetir `/ultrareview develop`, hacer la prueba manual por 
 | B12 | Botón "Volver" de `ErrorPage.tsx`: si no hay historial, navegar a `homeHref` (o `/` si tampoco hay) | AG-09 | 15 min |
 | B13 | `useMemo` en `buildSidebarGroups` dentro de `AppSidebar` | AG-10 | 15 min |
 | B14 | Uniformar `href` del menú: siempre objeto Wayfinder o siempre `.url` | AG-12 | 15 min |
+| B15 | `DashboardService`: zona horaria de planta desde `config('app.plant_timezone')` | AU-09 | 10 min |
+| B16 | Retirar `ProductPolicy::restore` y `forceDelete` (o implementarlos con la 2.6) | AU-11 | 10 min |
+| B17 | Test de acceso por rol: dataset `[rol, ruta, código]` sobre las rutas principales, y verificar la ability exacta en las rutas `can:viewAny` / `can:view` | AU-10 | 3 h |
 
 ### Lote C — Refactors de arquitectura (backlog, fuera de la Fase 2)
 

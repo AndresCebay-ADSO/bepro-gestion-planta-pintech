@@ -17,6 +17,18 @@ it('declara los 84 permisos de la matriz con keys únicas en formato modulo.acci
     }
 });
 
+it('mantiene el tipo Permission del frontend idéntico al enum', function () {
+    $source = file_get_contents(resource_path('js/types/permissions.ts'));
+    preg_match_all("/\|\s*'([a-z_]+\.[a-z_]+)'/", (string) $source, $matches);
+
+    $backend = array_map(fn (Permission $permission) => $permission->value, Permission::cases());
+    $frontend = $matches[1];
+
+    expect(array_values(array_diff($backend, $frontend)))->toBe([], 'Faltan en resources/js/types/permissions.ts')
+        ->and(array_values(array_diff($frontend, $backend)))->toBe([], 'Sobran en resources/js/types/permissions.ts')
+        ->and($frontend)->toHaveCount(count(array_unique($frontend)));
+});
+
 it('da a cada permiso una etiqueta propia y distinta de su key', function () {
     $labels = array_map(fn (Permission $permission) => $permission->label(), Permission::cases());
 

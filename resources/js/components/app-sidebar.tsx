@@ -50,6 +50,7 @@ import { index as salesOrdersIndex } from '@/routes/sales-orders';
 import { index as usersIndex } from '@/routes/users';
 import { index as warehousesIndex } from '@/routes/warehouses';
 import type { NavGroup } from '@/types/navigation';
+import type { Permission } from '@/types/permissions';
 
 const navigationGroups: NavGroup[] = [
     {
@@ -229,7 +230,7 @@ const navigationGroups: NavGroup[] = [
  * Filtra el menú por permisos (docs/MATRIZ_RBAC.md). Un ítem sin `allowedPermissions` es visible para todo
  * usuario con sesión (p. ej. Configuración: perfil y apariencia).
  */
-function buildSidebarGroups(userPermissions: string[]): NavGroup[] {
+function buildSidebarGroups(userPermissions: Permission[]): NavGroup[] {
     return navigationGroups
         .map((group) => {
             const items = group.items

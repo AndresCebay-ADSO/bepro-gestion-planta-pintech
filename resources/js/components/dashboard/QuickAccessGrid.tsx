@@ -3,13 +3,14 @@ import type { LucideIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { Permission } from '@/types';
 
 interface QuickAccessItem {
     label: string;
     href: string;
     icon: LucideIcon;
-    /** Permiso necesario para mostrar el acceso (módulos ya migrados a permisos). */
-    permission?: string | string[];
+    /** Permiso necesario para mostrar el acceso (basta con uno de la lista). */
+    permission?: Permission | Permission[];
 }
 
 interface QuickAccessGridProps {
