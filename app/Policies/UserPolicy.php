@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Enums\Permission;
-use App\Enums\SystemRole;
 use App\Models\User;
 
 class UserPolicy
@@ -40,7 +39,6 @@ class UserPolicy
      */
     private function canManageTarget(User $user, User $target): bool
     {
-        return ! $target->hasRole(SystemRole::SuperAdmin->value)
-            || $user->hasRole(SystemRole::SuperAdmin->value);
+        return ! $target->isSuperAdmin() || $user->isSuperAdmin();
     }
 }

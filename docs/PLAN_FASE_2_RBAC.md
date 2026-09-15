@@ -327,6 +327,16 @@ mostrarían enlaces que responden 403 (por ejemplo, movimientos de materia prima
 
 ---
 
+> **✅ Estado 2.3 (2026-09-14):**
+> - `User::isSuperAdmin()` centraliza la regla; lo usan `UserPolicy`, las requests y `UserController`.
+> - Solo un SuperAdmin ve y asigna el rol `super-admin` (selector y validación). Admin nunca lo ve ni puede enviarlo a mano.
+> - Protecciones al editar usuarios: nadie cambia su propio rol ni se desactiva; no se puede desactivar ni degradar al
+>   **único SuperAdmin activo** ni al **único Admin activo** (se conserva la de Admin para que la empresa no se quede sin
+>   su jefa por error). No se elimina a un SuperAdmin ni a un Admin: se desactivan.
+> - Usuario de soporte: en local/testing, `UserSeeder` crea `soporte@pintech.test` como SuperAdmin. En producción,
+>   `php artisan users:grant-super-admin {email}` otorga el rol a un usuario existente y activo, con confirmación y
+>   registro en auditoría (no crea usuarios ni contraseñas por consola).
+
 ### 2.4 — CRUD de Roles en la UI
 
 **Bloqueada por C2.** Antes de la primera línea: arreglar `DashboardService`, o el primer rol nuevo produce un 500.

@@ -587,7 +587,7 @@ test('admin cannot deactivate their own account in update', function () {
     expect($admin->fresh()->is_active)->toBeTrue();
 });
 
-test('admin cannot revoke their own admin role in update', function () {
+test('users cannot change their own role in update', function () {
     $admin = User::factory()->create(['is_active' => true]);
     $admin->assignRole('admin');
 
@@ -599,7 +599,7 @@ test('admin cannot revoke their own admin role in update', function () {
             'is_active' => true,
         ])
         ->assertRedirect()
-        ->assertSessionHas('error', 'No puedes revocar tu propio rol de administrador.');
+        ->assertSessionHas('error', 'No puedes cambiar tu propio rol.');
 
     expect($admin->fresh()->hasRole('admin'))->toBeTrue();
 });
@@ -773,4 +773,40 @@ test('only users with audit_logs.view receive recent activity on the users index
         ->assertInertia(fn ($page) => $page
             ->where('can.viewActivity', true)
             ->has('recentActivities'));
+});
+
+test('the last active super-admin cannot be deactivated or demoted', function () {
+    $activeSuperAdmin = User::factory()->create(['is_active' => true]);
+    $activeSuperAdmin->assignRole('super-admin');
+
+    $inactiveSuperAdmin = User::factory()->create(['is_active' => false]);
+    $inactiveSuperAdmin->assignRole('super-admin');
+
+    $this->actingAs($inactiveSuperAdmin)
+        ->put(route('users.update', $activeSuperAdmin), [
+            'name' => $activeSuperAdmin->name,
+            'email' => $activeSuperAdmin->email,
+            'role' => 'admin',
+            'is_active' => true,
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
+
+    expect($activeSuperAdmin->fresh()->isSuperAdmin())->toBeTrue();
+});
+
+test('a super-admin cannot be deleted', function () {
+    $superAdmin = User::factory()->create();
+    $superAdmin->assignRole('super-admin');
+
+    $otherSuperAdmin = User::factory()->create();
+    $otherSuperAdmin->assignRole('super-admin');
+    Activity::where('causer_id', $otherSuperAdmin->id)->delete();
+
+    $this->actingAs($superAdmin)
+        ->delete(route('users.destroy', $otherSuperAdmin))
+        ->assertRedirect()
+        ->assertSessionHas('error', 'No se puede eliminar un administrador. Desactiva su cuenta en su lugar.');
+
+    $this->assertDatabaseHas('users', ['id' => $otherSuperAdmin->id]);
 });

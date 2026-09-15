@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SystemRole;
 use App\Models\Concerns\HasAuditDescription;
 use App\Notifications\ResetPasswordNotification;
 use Database\Factories\UserFactory;
@@ -166,5 +167,13 @@ class User extends Authenticatable
             || DB::table('qr_documents')->where('uploaded_by', $this->id)->exists()
             || DB::table('product_documents')->where('uploaded_by', $this->id)->exists()
             || Activity::where('causer_type', self::class)->where('causer_id', $this->id)->exists();
+    }
+
+    /**
+     * Usuario de soporte técnico con acceso total (docs/MATRIZ_RBAC.md §0).
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole(SystemRole::SuperAdmin->value);
     }
 }

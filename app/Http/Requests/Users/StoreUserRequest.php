@@ -27,8 +27,9 @@ class StoreUserRequest extends FormRequest
     {
         return array_merge($this->profileRules(), [
             'password' => ['bail', 'required', 'string', Password::default(), 'confirmed'],
-            // super-admin no se asigna desde el formulario (blindaje de la tarea 2.3).
-            'role' => ['bail', 'required', 'string', Rule::exists('roles', 'name')->whereNot('name', SystemRole::SuperAdmin->value)],
+            // Solo un SuperAdmin puede asignar el rol super-admin.
+            'role' => ['bail', 'required', 'string', Rule::exists('roles', 'name')
+                ->when(! ($this->user()?->isSuperAdmin() ?? false), fn ($rule) => $rule->whereNot('name', SystemRole::SuperAdmin->value))],
             'is_active' => ['bail', 'required', 'boolean'],
         ]);
     }

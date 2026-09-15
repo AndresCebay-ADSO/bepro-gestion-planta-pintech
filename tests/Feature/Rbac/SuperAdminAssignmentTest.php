@@ -39,3 +39,27 @@ it('sigue aceptando los demás roles del sistema', function () {
     $this->post(route('users.store'), ['role' => SystemRole::Production->value])
         ->assertSessionDoesntHaveErrors('role');
 });
+
+it('ofrece el rol super-admin en el formulario a un SuperAdmin', function (string $routeName) {
+    actingAsRole(SystemRole::SuperAdmin);
+    $target = userWithRole(SystemRole::Operator);
+
+    $url = $routeName === 'users.edit' ? route($routeName, $target) : route($routeName);
+
+    $this->get($url)->assertInertia(fn (Assert $page) => $page
+        ->where('roles', fn ($roles) => collect($roles)->pluck('name')->contains(SystemRole::SuperAdmin->value)));
+})->with(['users.create', 'users.edit']);
+
+it('permite a un SuperAdmin asignar el rol super-admin', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+    $target = userWithRole(SystemRole::Operator, ['is_active' => true]);
+
+    $this->put(route('users.update', $target), [
+        'name' => $target->name,
+        'email' => $target->email,
+        'role' => SystemRole::SuperAdmin->value,
+        'is_active' => true,
+    ])->assertSessionHasNoErrors();
+
+    expect($target->fresh()->isSuperAdmin())->toBeTrue();
+});

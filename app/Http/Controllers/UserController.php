@@ -12,6 +12,7 @@ use App\Http\Requests\Users\StoreUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Models\User;
 use App\Services\SignatureOptimizerService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -58,7 +59,7 @@ class UserController extends Controller
      */
     public function create(): Response
     {
-        $roles = Role::query()->where('name', '!=', SystemRole::SuperAdmin->value)->get();
+        $roles = $this->assignableRoles();
 
         return Inertia::render('Admin/Users/Create', [
             'roles' => $roles,
@@ -110,7 +111,7 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
 
-        $roles = Role::query()->where('name', '!=', SystemRole::SuperAdmin->value)->get();
+        $roles = $this->assignableRoles();
 
         $user->load('roles');
 
@@ -128,7 +129,9 @@ class UserController extends Controller
         $validated = $request->validated();
 
         $currentRole = $user->roles->first()?->name;
-        if ($validated['role'] !== $currentRole && ! ($request->user()?->can('manageRoles', User::class) ?? false)) {
+        $roleChanged = $validated['role'] !== $currentRole;
+
+        if ($roleChanged && ! ($request->user()?->can('manageRoles', User::class) ?? false)) {
             abort(403, 'No tienes autorización para cambiar el rol de los usuarios.');
         }
 
@@ -137,22 +140,18 @@ class UserController extends Controller
                 return back()->with('error', 'No puedes desactivar tu propia cuenta de usuario.');
             }
 
-            if ($validated['role'] !== SystemRole::Admin->value) {
-                return back()->with('error', 'No puedes revocar tu propio rol de administrador.');
+            if ($roleChanged) {
+                return back()->with('error', 'No puedes cambiar tu propio rol.');
             }
         }
 
-        $isDemotingOrDeactivatingAdmin = $user->hasRole(SystemRole::Admin->value)
-            && (! $validated['is_active'] || $validated['role'] !== SystemRole::Admin->value);
+        // Siempre debe quedar al menos un SuperAdmin y un Admin activos (docs/MATRIZ_RBAC.md §4).
+        foreach ([SystemRole::SuperAdmin, SystemRole::Admin] as $protectedRole) {
+            $losesProtectedRole = $user->hasRole($protectedRole->value)
+                && (! $validated['is_active'] || $validated['role'] !== $protectedRole->value);
 
-        if ($isDemotingOrDeactivatingAdmin) {
-            $hasOtherActiveAdmin = User::role(SystemRole::Admin->value)
-                ->where('is_active', true)
-                ->where('id', '!=', $user->id)
-                ->exists();
-
-            if (! $hasOtherActiveAdmin) {
-                return back()->with('error', 'No se puede desactivar o degradar al único administrador activo del sistema.');
+            if ($losesProtectedRole && ! $this->hasOtherActiveUserWithRole($protectedRole, $user)) {
+                return back()->with('error', 'No se puede desactivar o degradar al único '.mb_strtolower($protectedRole->label()).' activo del sistema.');
             }
         }
 
@@ -226,7 +225,7 @@ class UserController extends Controller
             return back()->with('error', 'No puedes eliminar tu propia cuenta.');
         }
 
-        if ($user->hasRole(SystemRole::Admin->value)) {
+        if ($user->hasAnyRole([SystemRole::Admin->value, SystemRole::SuperAdmin->value])) {
             return back()->with('error', 'No se puede eliminar un administrador. Desactiva su cuenta en su lugar.');
         }
 
@@ -245,5 +244,28 @@ class UserController extends Controller
         }
 
         return redirect()->route('users.index')->with('message', 'Usuario eliminado exitosamente.');
+    }
+
+    /**
+     * Roles que el usuario autenticado puede asignar: super-admin solo lo asigna un SuperAdmin.
+     *
+     * @return Collection<int, Role>
+     */
+    private function assignableRoles(): Collection
+    {
+        return Role::query()
+            ->when(
+                ! (auth()->user()?->isSuperAdmin() ?? false),
+                fn ($query) => $query->where('name', '!=', SystemRole::SuperAdmin->value),
+            )
+            ->get();
+    }
+
+    private function hasOtherActiveUserWithRole(SystemRole $role, User $user): bool
+    {
+        return User::role($role->value)
+            ->where('is_active', true)
+            ->where('id', '!=', $user->id)
+            ->exists();
     }
 }
