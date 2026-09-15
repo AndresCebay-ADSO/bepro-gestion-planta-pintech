@@ -15,12 +15,15 @@ type ConsumeRemnantsCardProps = {
     orderId: number;
     order: ProductionOrder;
     canConsume: boolean;
+    /** El costo consumido solo se muestra con costs.view. */
+    showCosts: boolean;
 };
 
 export function ConsumeRemnantsCard({
     orderId,
     order,
     canConsume,
+    showCosts,
 }: ConsumeRemnantsCardProps) {
     const consumedRemnants = order.remnant_consumptions ?? [];
     const availableRemnants = order.available_remnants ?? [];
@@ -143,9 +146,11 @@ export function ConsumeRemnantsCard({
                                             <th className="p-3 text-right">
                                                 Kilogramos
                                             </th>
-                                            <th className="p-3 text-right">
-                                                Costo
-                                            </th>
+                                            {showCosts && (
+                                                <th className="p-3 text-right">
+                                                    Costo
+                                                </th>
+                                            )}
                                             <th className="p-3 text-left">
                                                 Operario
                                             </th>
@@ -178,18 +183,20 @@ export function ConsumeRemnantsCard({
                                                     />{' '}
                                                     kg
                                                 </td>
-                                                <td className="p-3 text-right">
-                                                    {consumption.consumed_cost !=
-                                                        null && (
-                                                        <FormattedNumber
-                                                            value={
-                                                                consumption.consumed_cost
-                                                            }
-                                                            currency
-                                                            maxDecimals={2}
-                                                        />
-                                                    )}
-                                                </td>
+                                                {showCosts && (
+                                                    <td className="p-3 text-right">
+                                                        {consumption.consumed_cost !=
+                                                            null && (
+                                                            <FormattedNumber
+                                                                value={
+                                                                    consumption.consumed_cost
+                                                                }
+                                                                currency
+                                                                maxDecimals={2}
+                                                            />
+                                                        )}
+                                                    </td>
+                                                )}
                                                 <td className="p-3">
                                                     {consumption.consumed_by
                                                         ?.name ?? '---'}

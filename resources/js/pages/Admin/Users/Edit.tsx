@@ -14,24 +14,26 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import UserIdentityFields from '@/components/users/user-identity-fields';
-import type { Role, User } from '@/types';
+import type { Role, RoleOption, User } from '@/types';
 
 interface Props {
     user: User & { roles: Role[] };
-    roles: Role[];
+    roles: RoleOption[];
 }
 
 const UsersEdit: FC<Props> = ({ user, roles }) => {
-    const { data, setData, post, put, transform, processing, errors } = useForm({
-        name: user.name,
-        email: user.email ? user.email.toLowerCase() : '',
-        job_title: user.job_title ?? '',
-        phone: user.phone ?? '',
-        signature: null as File | null,
-        remove_signature: false,
-        role: user.roles[0]?.name ?? '',
-        is_active: user.is_active ?? true,
-    });
+    const { data, setData, post, put, transform, processing, errors } = useForm(
+        {
+            name: user.name,
+            email: user.email ? user.email.toLowerCase() : '',
+            job_title: user.job_title ?? '',
+            phone: user.phone ?? '',
+            signature: null as File | null,
+            remove_signature: false,
+            role: user.roles[0]?.name ?? '',
+            is_active: user.is_active ?? true,
+        },
+    );
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -83,7 +85,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                         disabled={processing}
                     />
 
-                    <div className="border-t border-border pt-6 space-y-6">
+                    <div className="space-y-6 border-t border-border pt-6">
                         {/* Rol */}
                         <div className="grid gap-2">
                             <Label htmlFor="role">
@@ -99,9 +101,11 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                                 </SelectTrigger>
                                 <SelectContent>
                                     {roles.map((role) => (
-                                        <SelectItem key={role.id} value={role.name}>
-                                            {role.name.charAt(0).toUpperCase() +
-                                                role.name.slice(1)}
+                                        <SelectItem
+                                            key={role.id}
+                                            value={role.name}
+                                        >
+                                            {role.label}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -119,7 +123,10 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                                 }
                                 disabled={processing}
                             />
-                            <Label htmlFor="is_active" className="cursor-pointer">
+                            <Label
+                                htmlFor="is_active"
+                                className="cursor-pointer"
+                            >
                                 Usuario activo
                             </Label>
                         </div>
@@ -128,7 +135,8 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                     {/* Info */}
                     <div className="rounded-lg border border-primary/30 bg-primary/10 p-4">
                         <p className="text-sm text-primary">
-                            💡 Para cambiar la contraseña, el usuario debe usar la opción "Olvidé mi contraseña" en el login.
+                            💡 Para cambiar la contraseña, el usuario debe usar
+                            la opción "Olvidé mi contraseña" en el login.
                         </p>
                     </div>
 
@@ -159,4 +167,3 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
 };
 
 export default UsersEdit;
-

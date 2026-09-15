@@ -66,7 +66,7 @@ export type ProductionOrderRemnant = {
     original_quantity_kg: FormNumberValue;
     available_quantity_kg: FormNumberValue;
     density_kg_per_gallon: FormNumberValue;
-    cost_per_gallon: FormNumberValue | null;
+    cost_per_gallon?: FormNumberValue | null;
     status: string;
     status_label: string;
 };

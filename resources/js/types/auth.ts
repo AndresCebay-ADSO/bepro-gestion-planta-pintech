@@ -1,3 +1,5 @@
+import type { Permission } from './permissions';
+
 export type UserRole =
     | 'super-admin'
     | 'admin'
@@ -10,6 +12,13 @@ export type Role = {
     name: string;
     guard_name?: string;
     [key: string]: unknown;
+};
+
+/** Rol asignable en los formularios de usuario: `name` es el valor interno, `label` el texto visible. */
+export type RoleOption = {
+    id: number;
+    name: string;
+    label: string;
 };
 
 export type UserRoleRecord = {
@@ -30,7 +39,7 @@ export type User = {
     roles?: UserRoleRecord[] | string[];
     role_names?: string[];
     /** Permisos efectivos del usuario (docs/MATRIZ_RBAC.md). */
-    permissions?: string[];
+    permissions?: Permission[];
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
     created_at: string;

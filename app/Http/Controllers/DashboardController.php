@@ -29,7 +29,7 @@ class DashboardController extends Controller
         $roleName = $user->getRoleNames()->first();
 
         return Inertia::render('Dashboard/Index', [
-            'roleLabel' => $roleName === null ? '' : (SystemRole::tryFrom($roleName)?->label() ?? $roleName),
+            'roleLabel' => $roleName === null ? '' : SystemRole::labelFor($roleName),
             'userName' => $user->name,
             ...$this->dashboardService->build($user),
         ]);

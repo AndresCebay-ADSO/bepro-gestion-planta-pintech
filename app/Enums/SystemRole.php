@@ -29,6 +29,14 @@ enum SystemRole: string
     }
 
     /**
+     * Etiqueta visible de un rol por su nombre. Los roles creados desde la UI no tienen etiqueta y se muestran por nombre.
+     */
+    public static function labelFor(string $name): string
+    {
+        return self::tryFrom($name)?->label() ?? $name;
+    }
+
+    /**
      * Permisos que el seeder asigna a este rol.
      *
      * SuperAdmin recibe todos los permisos (sin Gate::before, ver docs/PLAN_FASE_2_RBAC.md C1).

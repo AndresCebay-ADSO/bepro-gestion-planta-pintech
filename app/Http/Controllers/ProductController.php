@@ -30,7 +30,7 @@ class ProductController extends Controller
     /**
      * Atributos que revelan el costo (el CIF y el umbral lo derivan del precio). Solo con costs.view.
      */
-    private const PRODUCT_COST_ATTRIBUTES = ['current_cost', 'cif_percentage', 'price_threshold'];
+    private const PRODUCT_COST_ATTRIBUTES = ['current_cost', 'cif_percentage', 'price_threshold', 'sales_margin'];
 
     private const VARIANT_COST_ATTRIBUTES = ['current_cost'];
 

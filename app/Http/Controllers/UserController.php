@@ -12,7 +12,6 @@ use App\Http\Requests\Users\StoreUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Models\User;
 use App\Services\SignatureOptimizerService;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -34,7 +33,16 @@ class UserController extends Controller
             ->latest()
             ->paginate(15)
             ->onEachSide(1)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (User $user): array => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role_label' => $user->roles->isEmpty() ? null : SystemRole::labelFor($user->roles->first()->name),
+                'is_active' => (bool) $user->is_active,
+                'last_login_at' => $user->last_login_at,
+                'created_at' => $user->created_at,
+            ]);
 
         // La actividad reciente es auditoría: solo con audit_logs.view (docs/MATRIZ_RBAC.md).
         $canViewActivity = $request->user()?->can(Permission::AuditLogsView->value) ?? false;
@@ -59,10 +67,9 @@ class UserController extends Controller
      */
     public function create(): Response
     {
-        $roles = $this->assignableRoles();
-
         return Inertia::render('Admin/Users/Create', [
-            'roles' => $roles,
+            'roles' => $this->assignableRoles(),
+            'defaultRole' => SystemRole::Production->value,
         ]);
     }
 
@@ -249,16 +256,23 @@ class UserController extends Controller
     /**
      * Roles que el usuario autenticado puede asignar: super-admin solo lo asigna un SuperAdmin.
      *
-     * @return Collection<int, Role>
+     * @return array<int, array{id: int, name: string, label: string}>
      */
-    private function assignableRoles(): Collection
+    private function assignableRoles(): array
     {
         return Role::query()
             ->when(
                 ! (auth()->user()?->isSuperAdmin() ?? false),
                 fn ($query) => $query->where('name', '!=', SystemRole::SuperAdmin->value),
             )
-            ->get();
+            ->get()
+            ->map(fn (Role $role): array => [
+                'id' => $role->id,
+                'name' => $role->name,
+                'label' => SystemRole::labelFor($role->name),
+            ])
+            ->values()
+            ->all();
     }
 
     private function hasOtherActiveUserWithRole(SystemRole $role, User $user): bool

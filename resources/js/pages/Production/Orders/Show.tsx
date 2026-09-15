@@ -395,6 +395,7 @@ export default function ProductionOrderShow({
                         <ConsumeRemnantsCard
                             orderId={order.id}
                             order={order}
+                            showCosts={can.previewCosts}
                             canConsume={
                                 can.updateOperationalData &&
                                 !isPending &&

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\SystemRole;
 use App\Enums\WarehouseType;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -24,7 +25,7 @@ class WarehouseUserSeeder extends Seeder
             ->where('type', WarehouseType::Factory->value)
             ->first();
 
-        $adminUsers = User::query()->role('admin')->get();
+        $adminUsers = User::query()->role(SystemRole::Admin->value)->get();
         foreach ($adminUsers as $admin) {
             $sync = [];
             foreach ($warehouses as $warehouse) {
@@ -36,7 +37,7 @@ class WarehouseUserSeeder extends Seeder
             $admin->warehouses()->syncWithoutDetaching($sync);
         }
 
-        foreach (User::query()->role('produccion')->get() as $productionUser) {
+        foreach (User::query()->role(SystemRole::Production->value)->get() as $productionUser) {
             if ($factoryWarehouse !== null) {
                 $productionUser->warehouses()->syncWithoutDetaching([
                     $factoryWarehouse->id => ['is_default' => true],
@@ -44,7 +45,7 @@ class WarehouseUserSeeder extends Seeder
             }
         }
 
-        $commercialUsers = User::query()->role('comercial')->get();
+        $commercialUsers = User::query()->role(SystemRole::Commercial->value)->get();
         foreach ($commercialUsers as $commercialUser) {
             $sync = [];
             foreach ($warehouses as $warehouse) {

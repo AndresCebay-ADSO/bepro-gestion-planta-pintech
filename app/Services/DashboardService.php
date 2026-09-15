@@ -25,10 +25,10 @@ class DashboardService
      * Cualquiera de estos permisos da acceso a la vista comercial.
      */
     private const COMMERCIAL_PERMISSIONS = [
-        'quotations.view_own',
-        'quotations.view_all',
-        'sales_orders.view_own',
-        'sales_orders.view_all',
+        Permission::QuotationsViewOwn->value,
+        Permission::QuotationsViewAll->value,
+        Permission::SalesOrdersViewOwn->value,
+        Permission::SalesOrdersViewAll->value,
     ];
 
     public function __construct(

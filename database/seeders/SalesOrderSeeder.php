@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\SystemRole;
 use App\Models\Client;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderItem;
@@ -20,8 +21,8 @@ class SalesOrderSeeder extends Seeder
             return;
         }
 
-        $creator = User::query()->role('comercial')->first()
-            ?? User::query()->role('admin')->first();
+        $creator = User::query()->role(SystemRole::Commercial->value)->first()
+            ?? User::query()->role(SystemRole::Admin->value)->first();
 
         if ($creator === null) {
             return;

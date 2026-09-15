@@ -384,6 +384,18 @@ mostrarían enlaces que responden 403 (por ejemplo, movimientos de materia prima
 
 **Estimación: 2 días.**
 
+> **✅ Estado 2.5 (2026-09-15):** cerrada.
+> - **Etiquetas de rol:** los formularios de crear y editar usuario y el listado muestran la etiqueta del rol
+>   ("Producción", "Super administrador") en lugar del nombre interno. `SystemRole::labelFor()` centraliza la
+>   traducción (la usan también el dashboard y `UserController`); un rol creado desde la UI (2.4) se muestra por su nombre.
+> - Los roles asignables llegan como `{id, name, label}`; `name` sigue siendo el valor que se envía y valida.
+> - El rol por defecto al crear (`defaultRole`) llega del servidor: el frontend ya no escribe `'produccion'` a mano,
+>   que se habría roto en el paso 11.
+> - El listado de usuarios envía arrays explícitos (id, nombre, correo, etiqueta del rol, estado, último acceso) en vez
+>   del modelo completo: deja de enviar teléfono, cargo y ruta de la firma, que la tabla no usaba.
+> - **Fuera de alcance:** la auditoría (`role_changed`) sigue guardando los nombres internos; es dato histórico.
+> - Tests en `tests/Feature/Admin/UserRoleLabelsTest.php`.
+
 ---
 
 ### 2.8 — Middleware de rutas
@@ -397,6 +409,22 @@ mostrarían enlaces que responden 403 (por ejemplo, movimientos de materia prima
 - **Test de matriz de acceso**: un dataset Pest `[rol, ruta, código esperado]` que recorra las ~125 rutas × 5 roles. Son ~600 aserciones generadas, tarda segundos y es la única forma real de verificar que la migración no abrió ni cerró nada por accidente. **Este test se escribe ANTES de 2.2 y se genera a partir de `MATRIZ_RBAC.md`**, no del comportamiento actual. Arranca en rojo en las celdas de su §6 y se va poniendo en verde a medida que avanza la migración.
 
 **Estimación: 1,5 días** (+0,5 si se incluyen las páginas de error).
+
+> **✅ Estado 2.8 (2026-09-15):** cerrada. Las rutas ya usaban `can:` desde la 2.2 y `CheckRole` se retiró en el lote A.
+> - **Páginas de error:** 403, 404, 500 y 503 se renderizan con el componente Inertia `ErrorPage`, sin layout, desde el
+>   `respond` que ya existía en `bootstrap/app.php`. No se usa `Inertia::handleExceptionsUsing()` porque Laravel
+>   admite un único callback de respuesta y borraría el manejo del 429.
+> - 403 y 404 siempre usan la página. 500 y 503 solo con `APP_DEBUG` desactivado: en local se conserva la traza.
+> - Las peticiones que esperan JSON siguen recibiendo JSON. Si la página de error falla al renderizar, se entrega la
+>   respuesta original de Laravel.
+> - La página no muestra el mensaje de la excepción, porque un 404 de modelo expone nombres de clases. Los tres
+>   `abort(403, '…')` con texto propio (`UserController`, `ProductController`) muestran el texto genérico de acceso denegado.
+> - "Ir al inicio" solo aparece si el usuario tiene `dashboard.view`; sin sesión, el botón lleva al login.
+> - Tests en `tests/Feature/ErrorPagesTest.php`.
+> - El test de matriz de acceso `[rol, ruta, código]` no se escribió como dataset: su función la cumplen
+>   `RoutePermissionMapTest` (cada ruta con su permiso) y `RolePermissionSeederTest` (permisos por rol).
+>   **Límite conocido:** en las rutas que aceptan varios permisos (`can:viewAny`, `can:view`) el test solo comprueba que
+>   exista un middleware de policy, no cuál; y ningún test recorre roles contra rutas reales. Queda como B17.
 
 ---
 
@@ -421,6 +449,13 @@ y cada test arranca una aplicación nueva. No hace falta limpiarla en `TestCase`
 
 **Criterio de aceptación:** ejecutar el seeder dos veces seguidas no cambia nada en la BD.
 **Estimación: 1 día** (contabilizado dentro de 2.2).
+
+> **✅ Cierre de pendientes de la 2.9 (2026-09-15, lote A3 de `docs/REVISION_RAMA_RBAC.md`):**
+> - **Procedimiento de despliegue documentado** en el `README` (sección *Despliegue a producción*): `migrate`,
+>   `db:seed --class=RolePermissionSeeder`, `permission:cache-reset`. Hasta ahora no estaba escrito en ningún sitio, y el
+>   entrypoint de producción no lo ejecuta. Automatizarlo queda para la 5.3 (CI/CD).
+> - **`rbac:audit` descartado:** el seeder ya elimina de la BD los permisos que no existen en el enum, y
+>   `PermissionRegistryTest` falla si el tipo `Permission` del frontend (`resources/js/types/permissions.ts`) difiere del enum.
 
 ---
 
@@ -514,6 +549,11 @@ middlewares (2.8), el sidebar (2.5) y los tests (helper `actingAsRole`) ya no us
 2. Una migración de datos que actualiza `roles.name`. Es segura: `model_has_roles` enlaza por `role_id`, así que
    ningún usuario pierde su rol.
 3. Limpiar la caché de permisos y actualizar el test que hoy protege los nombres en español.
+
+> **⚠️ Reestimación (auditoría 2026-09-15):** la premisa de que los tests ya no usan los nombres no se cumple: quedan
+> **245 literales de rol en 38 archivos de test** (`assignRole('produccion')` y similares) que hay que pasar a
+> `userWithRole(SystemRole::X)`. Además, el paso incluye retirar `UserRole` de `resources/js/types/auth.ts` y la prop
+> compartida `role_names`, que ya nadie consume. Los seeders ya usan `SystemRole` (lote A3). **Estimación: 1,5 días.**
 
 **Regla desde ya:** el código nuevo nunca escribe el nombre de un rol a mano; siempre `SystemRole::X->value`.
 
