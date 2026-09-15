@@ -12,6 +12,13 @@ export type Role = {
     [key: string]: unknown;
 };
 
+/** Rol asignable en los formularios de usuario: `name` es el valor interno, `label` el texto visible. */
+export type RoleOption = {
+    id: number;
+    name: string;
+    label: string;
+};
+
 export type UserRoleRecord = {
     name: UserRole | string;
     [key: string]: unknown;

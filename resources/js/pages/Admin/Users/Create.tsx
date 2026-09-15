@@ -15,13 +15,14 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import UserIdentityFields from '@/components/users/user-identity-fields';
-import type { Role } from '@/types';
+import type { RoleOption } from '@/types';
 
 interface Props {
-    roles: Role[];
+    roles: RoleOption[];
+    defaultRole: string;
 }
 
-const UsersCreate: FC<Props> = ({ roles }) => {
+const UsersCreate: FC<Props> = ({ roles, defaultRole }) => {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
@@ -31,7 +32,9 @@ const UsersCreate: FC<Props> = ({ roles }) => {
         remove_signature: false,
         password: '',
         password_confirmation: '',
-        role: roles.find((r) => r.name === 'produccion')?.name || 'produccion',
+        role: roles.some((r) => r.name === defaultRole)
+            ? defaultRole
+            : (roles[0]?.name ?? ''),
         is_active: true,
     });
 
@@ -39,7 +42,8 @@ const UsersCreate: FC<Props> = ({ roles }) => {
         e.preventDefault();
         post(UserController.store.url(), {
             forceFormData: true,
-            onSuccess: () => reset('password', 'password_confirmation', 'signature'),
+            onSuccess: () =>
+                reset('password', 'password_confirmation', 'signature'),
         });
     };
 
@@ -58,7 +62,8 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         Crear Nuevo Usuario
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Agrega un nuevo usuario al sistema con sus credenciales y permisos
+                        Agrega un nuevo usuario al sistema con sus credenciales
+                        y permisos
                     </p>
                 </div>
 
@@ -75,7 +80,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         disabled={processing}
                     />
 
-                    <div className="border-t border-border pt-6 space-y-6">
+                    <div className="space-y-6 border-t border-border pt-6">
                         {/* Rol */}
                         <div className="grid gap-2">
                             <Label htmlFor="role">
@@ -91,9 +96,11 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                                 </SelectTrigger>
                                 <SelectContent>
                                     {roles.map((role) => (
-                                        <SelectItem key={role.id} value={role.name}>
-                                            {role.name.charAt(0).toUpperCase() +
-                                                role.name.slice(1)}
+                                        <SelectItem
+                                            key={role.id}
+                                            value={role.name}
+                                        >
+                                            {role.label}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -111,17 +118,21 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                                 }
                                 disabled={processing}
                             />
-                            <Label htmlFor="is_active" className="cursor-pointer">
+                            <Label
+                                htmlFor="is_active"
+                                className="cursor-pointer"
+                            >
                                 Usuario activo
                             </Label>
                         </div>
                     </div>
 
-                    <div className="border-t border-border pt-6 space-y-6">
+                    <div className="space-y-6 border-t border-border pt-6">
                         {/* Contraseña */}
                         <div className="grid gap-2">
                             <Label htmlFor="password">
-                                Contraseña <span className="text-destructive">*</span>
+                                Contraseña{' '}
+                                <span className="text-destructive">*</span>
                             </Label>
                             <PasswordInput
                                 id="password"
@@ -139,19 +150,25 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         {/* Confirmar Contraseña */}
                         <div className="grid gap-2">
                             <Label htmlFor="password_confirmation">
-                                Confirmar Contraseña <span className="text-destructive">*</span>
+                                Confirmar Contraseña{' '}
+                                <span className="text-destructive">*</span>
                             </Label>
                             <PasswordInput
                                 id="password_confirmation"
                                 name="password_confirmation"
                                 value={data.password_confirmation}
                                 onChange={(e) =>
-                                    setData('password_confirmation', e.target.value)
+                                    setData(
+                                        'password_confirmation',
+                                        e.target.value,
+                                    )
                                 }
                                 placeholder="Repite la contraseña"
                                 disabled={processing}
                             />
-                            <InputError message={errors.password_confirmation} />
+                            <InputError
+                                message={errors.password_confirmation}
+                            />
                         </div>
                     </div>
 
@@ -182,4 +199,3 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 };
 
 export default UsersCreate;
-

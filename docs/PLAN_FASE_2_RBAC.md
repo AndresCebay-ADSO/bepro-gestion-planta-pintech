@@ -384,6 +384,18 @@ mostrarían enlaces que responden 403 (por ejemplo, movimientos de materia prima
 
 **Estimación: 2 días.**
 
+> **✅ Estado 2.5 (2026-09-15):** cerrada.
+> - **Etiquetas de rol:** los formularios de crear y editar usuario y el listado muestran la etiqueta del rol
+>   ("Producción", "Super administrador") en lugar del nombre interno. `SystemRole::labelFor()` centraliza la
+>   traducción (la usan también el dashboard y `UserController`); un rol creado desde la UI (2.4) se muestra por su nombre.
+> - Los roles asignables llegan como `{id, name, label}`; `name` sigue siendo el valor que se envía y valida.
+> - El rol por defecto al crear (`defaultRole`) llega del servidor: el frontend ya no escribe `'produccion'` a mano,
+>   que se habría roto en el paso 11.
+> - El listado de usuarios envía arrays explícitos (id, nombre, correo, etiqueta del rol, estado, último acceso) en vez
+>   del modelo completo: deja de enviar teléfono, cargo y ruta de la firma, que la tabla no usaba.
+> - **Fuera de alcance:** la auditoría (`role_changed`) sigue guardando los nombres internos; es dato histórico.
+> - Tests en `tests/Feature/Admin/UserRoleLabelsTest.php`.
+
 ---
 
 ### 2.8 — Middleware de rutas

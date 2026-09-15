@@ -24,7 +24,7 @@ interface User {
     id: number;
     name: string;
     email: string;
-    roles: { name: string }[];
+    role_label: string | null;
     is_active: boolean;
     last_login_at: string | null;
     created_at: string;
@@ -178,7 +178,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                                                         variant="secondary"
                                                         className="font-bold uppercase"
                                                     >
-                                                        {user.roles[0]?.name ||
+                                                        {user.role_label ??
                                                             'Invitado'}
                                                     </Badge>
                                                 </td>
