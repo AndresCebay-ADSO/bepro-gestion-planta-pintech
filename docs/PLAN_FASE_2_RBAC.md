@@ -398,6 +398,20 @@ mostrarían enlaces que responden 403 (por ejemplo, movimientos de materia prima
 
 **Estimación: 1,5 días** (+0,5 si se incluyen las páginas de error).
 
+> **✅ Estado 2.8 (2026-09-15):** cerrada. Las rutas ya usaban `can:` desde la 2.2 y `CheckRole` se retiró en el lote A.
+> - **Páginas de error:** 403, 404, 500 y 503 se renderizan con el componente Inertia `ErrorPage`, sin layout, desde el
+>   `respond` que ya existía en `bootstrap/app.php`. No se usa `Inertia::handleExceptionsUsing()` porque Laravel
+>   admite un único callback de respuesta y borraría el manejo del 429.
+> - 403 y 404 siempre usan la página. 500 y 503 solo con `APP_DEBUG` desactivado: en local se conserva la traza.
+> - Las peticiones que esperan JSON siguen recibiendo JSON. Si la página de error falla al renderizar, se entrega la
+>   respuesta original de Laravel.
+> - La página no muestra el mensaje de la excepción, porque un 404 de modelo expone nombres de clases. Los tres
+>   `abort(403, '…')` con texto propio (`UserController`, `ProductController`) muestran el texto genérico de acceso denegado.
+> - "Ir al inicio" solo aparece si el usuario tiene `dashboard.view`; sin sesión, el botón lleva al login.
+> - Tests en `tests/Feature/ErrorPagesTest.php`.
+> - El test de matriz de acceso `[rol, ruta, código]` no se escribió como dataset: su función la cumplen
+>   `RoutePermissionMapTest` (cada ruta con su permiso) y `RolePermissionSeederTest` (permisos por rol).
+
 ---
 
 ### 2.9 — Migrar roles existentes a los nuevos permisos

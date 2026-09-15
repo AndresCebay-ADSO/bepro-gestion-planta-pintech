@@ -28,6 +28,7 @@ createInertiaApp({
     layout: (name) => {
         switch (true) {
             case name === 'welcome':
+            case name === 'ErrorPage':
                 return null;
             // Login y recuperación tienen UI propia (split)
             case name === 'auth/login':

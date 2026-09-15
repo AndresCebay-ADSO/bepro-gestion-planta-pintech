@@ -7,6 +7,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -35,6 +36,22 @@ return Application::configure(basePath: dirname(__DIR__))
                 return back()->with([
                     'error' => __('auth.throttle', ['seconds' => 60]),
                 ]);
+            }
+
+            // Páginas de error con Inertia. 500 y 503 conservan la traza de Laravel mientras APP_DEBUG está activo.
+            $status = $response->getStatusCode();
+            $rendersErrorPage = in_array($status, [403, 404], true)
+                || (in_array($status, [500, 503], true) && ! config('app.debug'));
+
+            if ($rendersErrorPage && ($request->header('X-Inertia') || ! $request->expectsJson())) {
+                try {
+                    return Inertia::render('ErrorPage', ['status' => $status])
+                        ->toResponse($request)
+                        ->setStatusCode($status);
+                } catch (Throwable) {
+                    // Si la página de error también falla, se entrega la respuesta original de Laravel.
+                    return $response;
+                }
             }
 
             return $response;
