@@ -3,9 +3,11 @@
 > **Fecha:** 2026-09-15 · **Base correcta de comparación:** `develop` (la rama sale de su punta; `main` lleva meses sin
 > actualizarse e infla el diff de ~150 a ~690 archivos).
 >
-> Consolida dos revisiones y la verificación de cada hallazgo contra el código:
+> Consolida tres revisiones y la verificación de cada hallazgo contra el código:
 > - **UR** — `/ultrareview develop` (revisión en la nube, 5 hallazgos).
 > - **CR** — revisión manual "Tech Lead" (20 hallazgos, hecha contra `main`).
+> - **AG** — revisión de un agente (Antigravity/Gemini) sobre `feature/rbac-permissions-2`, la rama posterior
+>   al merge de #141 (15 hallazgos).
 >
 > **Veredicto:** ✅ real · ⚠️ real pero con matiz (severidad o alcance distinto al reportado) · ❌ no se sostiene.
 > **Origen:** *rama* = introducido o tocado por esta rama · *previo* = ya existía en `develop`.
@@ -60,7 +62,33 @@ tiene tests de frontend): **revisarlo en la prueba manual por rol**.
 
 ---
 
-## 3. Plan de trabajo
+## 3. Verificación de la tercera revisión (AG)
+
+| ID | Hallazgo reportado | Veredicto | Severidad real | Nota de la verificación |
+| --- | --- | --- | --- | --- |
+| AG-01 | `scopeVisibleTo` trata `$user === null` como admin sin restricción (`Quotation`, `SalesOrder`, `PaintDevelopmentRequest`) | ✅ | Alta (defensiva) | Confirmé los 8 sitios donde se llama `visibleTo()`: los 3 controladores y `DashboardService`, todos detrás de `auth`+`verified`, y `DashboardController` valida `$user instanceof User` antes de nada. **Hoy no es explotable**, pero es una mina para el futuro (un job, un comando artisan, una ruta pública que se agregue después). **Corregido**: sin usuario, el scope ahora no devuelve ningún registro. |
+| AG-02 | `sales_margin` no está oculto en la ficha de producto para roles sin `costs.view` | ✅ | **Alta** | Confirmado: `Product::sales_margin` existe (columna real, con cast) y no estaba en `PRODUCT_COST_ATTRIBUTES`. Con el precio de venta y el margen, cualquiera puede despejar el costo interno — viola el principio 1 de la matriz. **Corregido**: agregado a la constante. |
+| AG-03 | Un 404 de asset dispara `HandleInertiaRequests` completo (consultas de bodega, alertas, permisos): riesgo de sobrecarga/DoS | ❌ | — | **Descartado con prueba empírica**, no solo lectura de código: escribí un test que pide una ruta 100 % inexistente y cuenta las consultas SQL ejecutadas → **0 consultas**. El middleware del grupo `web` (donde vive `HandleInertiaRequests`) solo corre para rutas que coincidieron con alguna definida; si el enrutador no encuentra ninguna, lanza `NotFoundHttpException` antes de correr cualquier middleware de grupo. El escenario descrito (bots escaneando `.png`, `favicon.ico`) no es alcanzable en esta app. |
+| AG-04 | Sin manejo del código 419 (sesión/CSRF expirado) | ✅ | Baja | Real y previo a esta rama; se nota más ahora que sí se personalizan otros códigos en el mismo `respond()`. |
+| AG-05 | `SalesOrderPolicy::edit()` en vez de `update()`, inconsistente con `QuotationPolicy`/`PaintDevelopmentRequestPolicy` | ✅ | Baja | Confirmé que los otros dos módulos sí usan `update()`. La ruta ya usa `can:edit,sales_order` explícito, así que **no hay bug activo hoy**; sí es un riesgo si alguien reutiliza el patrón `update` de los otros dos módulos. |
+| AG-06 | Eager load de `client` sin usar en `SalesOrderController::show` | ✅ | Baja (rendimiento) | Confirmado: `buildOrderData()` solo usa las columnas desnormalizadas `client_business_name`/`client_nit`/`client_contact_name`/`client_phone`, nunca la relación `client`. |
+| AG-07 | `User::hasActivity()` con 16 consultas seriadas | ✅ | Baja (rendimiento) | Conteo exacto confirmado: 15 `DB::table()->exists()` + 1 `Activity::where()->exists()`. |
+| AG-08 | `Products/Show.tsx` con 1.463 líneas, componente monolítico | ✅ | Baja (deuda, frontend) | Dato exacto confirmado. **Preexistente**: el archivo ya tenía ese tamaño antes de esta rama. |
+| AG-09 | Botón "Volver" de `ErrorPage.tsx` sin alternativa si no hay historial ni `homeHref` | ✅ | Baja | Confirmado en el código. |
+| AG-10 | `buildSidebarGroups` sin `useMemo` | ✅ | Baja (rendimiento, frontend) | Confirmado: se recalcula en cada render de `AppSidebar`. |
+| AG-11 | `warehouseContext` sin tipar en `global.d.ts` | ✅ | Baja | Mismo hallazgo que **CR-14**. |
+| AG-12 | Mezcla de `.url` y objeto Wayfinder en `href` del menú | ✅ | Muy baja (estilo) | Cosmético. |
+| AG-13 | `CostController::update` autoriza con un permiso, no con una ability de policy | ✅ | Baja | Mismo hallazgo que **CR-13**. |
+| AG-14 | `verify_production_lock.php` es un script manual, no un test Pest | ✅ | Baja | Mismo hallazgo que **CR-10**. |
+| AG-15 | Mezcla de `auth()->user()` y `$request->user()` | ✅ | Baja (estilo) | Mismo hallazgo que **CR-12**; confirmé 2 casos nuevos en `SalesOrderController`. |
+
+**Verificación:** 897 tests OK (9 nuevos: `VisibleToScopeTest` y `ProductShowCostVisibilityTest`), Pint limpio. Para
+AG-03, la verificación no fue solo lectura de código: se escribió y ejecutó un test que mide consultas SQL reales antes
+de descartar el hallazgo.
+
+---
+
+## 4. Plan de trabajo
 
 ### Lote A — Antes del merge a `develop` (en esta rama)
 
@@ -75,6 +103,15 @@ tiene tests de frontend): **revisarlo en la prueba manual por rol**.
 
 Después de A1–A4: repetir `/ultrareview develop`, hacer la prueba manual por rol y el merge a `develop`.
 
+### Lote A2 — Fuga de margen y fail-safe de visibilidad (en `feature/rbac-permissions-2`)
+
+> **✅ Aplicado (2026-09-15).**
+
+| # | Tarea | Hallazgos | Criterio de aceptación |
+| --- | --- | --- | --- |
+| A2.1 | `sales_margin` se oculta junto al resto de costos en la ficha de producto sin `costs.view` | AG-02 | Test: Comercial abre la ficha de un producto y el payload no contiene `sales_margin` (ni el resto de `PRODUCT_COST_ATTRIBUTES`); Admin sí lo recibe. |
+| A2.2 | `scopeVisibleTo` de `Quotation`/`SalesOrder`/`PaintDevelopmentRequest`: sin usuario, no devuelve ningún registro | AG-01 | Test: `Modelo::visibleTo(null)` devuelve 0 registros con datos de por medio en la tabla; `view_own` solo ve lo propio; `view_all` ve todo. |
+
 ### Lote B — Limpieza técnica (rama nueva `chore/…`, tras el merge)
 
 | # | Tarea | Hallazgos | Esfuerzo |
@@ -85,7 +122,14 @@ Después de A1–A4: repetir `/ultrareview develop`, hacer la prueba manual por 
 | B4 | Tipar `warehouseContext` (y los demás props compartidos) en `global.d.ts` | CR-14 | 20 min |
 | B5 | `CostController`: ability de policy (`ProductPolicy::updateCost`) y validación del margen en `UpdateCostRequest` | CR-13 | 45 min |
 | B6 | Detalles: enum directo en `store`, PHPDoc de `clientOptions()` | CR-18, CR-17 | 10 min |
-| B7 | Convertir `verify_production_lock.php` en test Pest o eliminarlo si ya está cubierto | CR-10 | 30 min |
+| B7 | Convertir `verify_production_lock.php` en test Pest o eliminarlo si ya está cubierto | CR-10, AG-14 | 30 min |
+| B8 | Manejar el código 419 (sesión/CSRF expirado) en el `respond()` de `bootstrap/app.php`, igual que el 429 | AG-04 | 20 min |
+| B9 | `SalesOrderPolicy`: añadir `update()` como alias de `edit()` para que el patrón sea intercambiable con `QuotationPolicy`/`PaintDevelopmentRequestPolicy` | AG-05 | 15 min |
+| B10 | `SalesOrderController::show`: quitar `client` del `load()`, no se usa (se leen las columnas desnormalizadas) | AG-06 | 10 min |
+| B11 | `User::hasActivity()`: condensar las 16 consultas en una sola (`UNION` o tabla de auditoría agregada) | AG-07 | 45 min |
+| B12 | Botón "Volver" de `ErrorPage.tsx`: si no hay historial, navegar a `homeHref` (o `/` si tampoco hay) | AG-09 | 15 min |
+| B13 | `useMemo` en `buildSidebarGroups` dentro de `AppSidebar` | AG-10 | 15 min |
+| B14 | Uniformar `href` del menú: siempre objeto Wayfinder o siempre `.url` | AG-12 | 15 min |
 
 ### Lote C — Refactors de arquitectura (backlog, fuera de la Fase 2)
 
@@ -95,6 +139,7 @@ Después de A1–A4: repetir `/ultrareview develop`, hacer la prueba manual por 
 | C2 | Materias primas de la ficha de orden como prop diferida o solo si la orden es operable | CR-06 |
 | C3 | Unificar `enumOptions()` con `EnumOptions::for()` y adaptar el `Combobox` | CR-09 |
 | C4 | Reorganizar controladores de la raíz en subcarpetas por dominio | CR-15 |
+| C5 | Partir `Products/Show.tsx` (1.463 líneas) en componentes: variantes, documentos, fórmulas, calidad | AG-08 |
 
 ### Decisiones pendientes
 
@@ -103,4 +148,5 @@ Después de A1–A4: repetir `/ultrareview develop`, hacer la prueba manual por 
 ### Descartados
 
 - **CR-19** y **CR-20**: no se sostienen tras verificar el código.
+- **AG-03**: descartado con prueba empírica (0 consultas SQL en una ruta 100 % inexistente).
 - **Caché de permisos de CR-02**: introduciría permisos desactualizados tras un cambio de rol.

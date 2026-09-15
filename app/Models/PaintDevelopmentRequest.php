@@ -106,13 +106,18 @@ class PaintDevelopmentRequest extends Model
     }
 
     /**
-     * Scope to restrict visibility based on user role.
-     * Admin/produccion see all; comercial sees only their own.
-     * Null user is treated as admin (no restriction).
+     * Registros con dueño (docs/MATRIZ_RBAC.md §1): view_all ve todos; view_own solo los propios.
+     * Sin usuario autenticado no se ve nada (fail-safe): este scope solo se llama detrás de 'auth',
+     * pero no debe asumir eso silenciosamente si algún día se reutiliza desde un job o comando.
      */
     public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
-        if ($user === null || $user->can(Permission::PaintDevelopmentRequestsViewAll->value)) {
+        if ($user === null) {
+            // Fail-safe: sin usuario, no se devuelve ningún registro (nunca "todo").
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($user->can(Permission::PaintDevelopmentRequestsViewAll->value)) {
             return $query;
         }
 
