@@ -6,6 +6,7 @@ use App\Models\ProductCategory;
 use App\Models\ProductVariant;
 use App\Models\Quotation;
 use App\Models\SalesOrder;
+use App\Models\SalesOrderItem;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -345,4 +346,49 @@ it('filters orders by status', function () {
             ->has('orders.data', 1)
             ->where('orders.data.0.status', 'pending')
         );
+});
+
+it('does not expose product costs or creator contact data on the sales order screens', function () {
+    $user = User::factory()->create();
+    $user->assignRole('comercial');
+
+    [$product, $variant] = createTestProduct();
+    $product->forceFill([
+        'current_cost' => 50,
+        'cif_percentage' => 20,
+        'price_threshold' => 5,
+        'sales_margin' => 30,
+    ])->save();
+
+    $order = SalesOrder::factory()->create(['created_by' => $user->id, 'status' => 'pending']);
+    SalesOrderItem::create([
+        'sales_order_id' => $order->id,
+        'product_id' => $product->id,
+        'product_variant_id' => $variant->id,
+        'quantity' => 5,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('sales-orders.show', $order))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('order.items.0.product.name', 'Test Product')
+            ->missing('order.items.0.product.current_cost')
+            ->missing('order.items.0.product.cif_percentage')
+            ->missing('order.items.0.product.price_threshold')
+            ->missing('order.items.0.product.sales_margin')
+            ->missing('order.items.0.product_variant.current_cost')
+            ->where('order.creator.name', $user->name)
+            ->missing('order.creator.email'));
+
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $this->actingAs($admin)
+        ->get(route('sales-orders.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('orders.data.0.creator.name', $user->name)
+            ->missing('orders.data.0.creator.email')
+            ->missing('orders.data.0.client.nit'));
 });

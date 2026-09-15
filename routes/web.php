@@ -197,19 +197,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:view,quotation')
         ->name('quotations.show');
     Route::get('quotations/{quotation}/edit', [QuotationController::class, 'edit'])
-        ->middleware('can:'.Permission::QuotationsEdit->value)
+        ->middleware(['can:'.Permission::QuotationsEdit->value, 'can:update,quotation'])
         ->name('quotations.edit');
     Route::put('quotations/{quotation}', [QuotationController::class, 'update'])
-        ->middleware('can:'.Permission::QuotationsEdit->value)
+        ->middleware(['can:'.Permission::QuotationsEdit->value, 'can:update,quotation'])
         ->name('quotations.update');
     Route::patch('quotations/{quotation}/status', [QuotationController::class, 'updateStatus'])
-        ->middleware('can:'.Permission::QuotationsUpdateStatus->value)
+        ->middleware(['can:'.Permission::QuotationsUpdateStatus->value, 'can:updateStatus,quotation'])
         ->name('quotations.update-status');
     Route::post('quotations/{quotation}/convert-to-order', [QuotationController::class, 'convertToOrder'])
-        ->middleware('can:'.Permission::QuotationsConvertToOrder->value)
+        ->middleware(['can:'.Permission::QuotationsConvertToOrder->value, 'can:convertToOrder,quotation'])
         ->name('quotations.convert-to-order');
     Route::get('quotations/{quotation}/export-pdf', [QuotationController::class, 'exportPdf'])
-        ->middleware('can:'.Permission::QuotationsExportPdf->value)
+        ->middleware(['can:'.Permission::QuotationsExportPdf->value, 'can:exportPdf,quotation'])
         ->name('quotations.export-pdf');
 
     // Desarrollo de pinturas (listado y detalle: la policy decide propias o todas)
@@ -226,19 +226,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:view,paintDevelopmentRequest')
         ->name('paint-development-requests.show');
     Route::get('paint-development-requests/{paintDevelopmentRequest}/edit', [PaintDevelopmentRequestController::class, 'edit'])
-        ->middleware('can:'.Permission::PaintDevelopmentRequestsEdit->value)
+        ->middleware(['can:'.Permission::PaintDevelopmentRequestsEdit->value, 'can:update,paintDevelopmentRequest'])
         ->name('paint-development-requests.edit');
     Route::put('paint-development-requests/{paintDevelopmentRequest}', [PaintDevelopmentRequestController::class, 'update'])
-        ->middleware('can:'.Permission::PaintDevelopmentRequestsEdit->value)
+        ->middleware(['can:'.Permission::PaintDevelopmentRequestsEdit->value, 'can:update,paintDevelopmentRequest'])
         ->name('paint-development-requests.update');
     Route::patch('paint-development-requests/{paintDevelopmentRequest}/submit', [PaintDevelopmentRequestController::class, 'submit'])
-        ->middleware('can:'.Permission::PaintDevelopmentRequestsSubmit->value)
+        ->middleware(['can:'.Permission::PaintDevelopmentRequestsSubmit->value, 'can:submit,paintDevelopmentRequest'])
         ->name('paint-development-requests.submit');
     Route::patch('paint-development-requests/{paintDevelopmentRequest}/status', [PaintDevelopmentRequestController::class, 'updateStatus'])
-        ->middleware('can:'.Permission::PaintDevelopmentRequestsUpdateStatus->value)
+        ->middleware(['can:'.Permission::PaintDevelopmentRequestsUpdateStatus->value, 'can:updateStatus,paintDevelopmentRequest'])
         ->name('paint-development-requests.update-status');
     Route::get('paint-development-requests/{paintDevelopmentRequest}/export-pdf', [PaintDevelopmentRequestController::class, 'exportPdf'])
-        ->middleware('can:'.Permission::PaintDevelopmentRequestsExportPdf->value)
+        ->middleware(['can:'.Permission::PaintDevelopmentRequestsExportPdf->value, 'can:exportPdf,paintDevelopmentRequest'])
         ->name('paint-development-requests.export-pdf');
 
     // Pedidos de venta (listado y detalle: la policy decide propios o todos)
@@ -255,10 +255,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:view,sales_order')
         ->name('sales-orders.show');
     Route::patch('sales-orders/{sales_order}', [SalesOrderController::class, 'update'])
-        ->middleware('can:'.Permission::SalesOrdersEdit->value)
+        ->middleware(['can:'.Permission::SalesOrdersEdit->value, 'can:edit,sales_order'])
         ->name('sales-orders.update');
     Route::patch('sales-orders/{sales_order}/status', [SalesOrderController::class, 'updateStatus'])
-        ->middleware('can:'.Permission::SalesOrdersUpdateStatus->value)
+        ->middleware(['can:'.Permission::SalesOrdersUpdateStatus->value, 'can:updateStatus,sales_order'])
         ->name('sales-orders.update-status');
 
     // Órdenes de producción (cada habilidad combina permiso y estado en ProductionOrderPolicy)

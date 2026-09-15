@@ -40,8 +40,11 @@ class SalesOrderController extends Controller
             ->withQueryString()
             ->through(fn (SalesOrder $order) => [
                 'id' => $order->id,
-                'client' => $order->client,
-                'creator' => $canManage ? $order->creator : null,
+                'client' => $order->client ? [
+                    'id' => $order->client->id,
+                    'business_name' => $order->client->business_name,
+                ] : null,
+                'creator' => $canManage && $order->creator ? ['name' => $order->creator->name] : null,
                 'status' => $order->status->value,
                 'status_label' => $order->status->label(),
                 'priority' => $order->priority->value,
@@ -194,14 +197,23 @@ class SalesOrderController extends Controller
             'notes' => $salesOrder->notes,
             'shipping_address' => $salesOrder->shipping_address,
             'quotation_id' => $salesOrder->quotation_id,
+            // Solo los campos que usa la vista: el modelo completo expondría costos y márgenes (docs/MATRIZ_RBAC.md).
             'items' => $salesOrder->items->map(fn ($item) => [
                 'id' => $item->id,
-                'product' => $item->product,
-                'product_variant' => $item->productVariant,
+                'product' => $item->product ? [
+                    'id' => $item->product->id,
+                    'code' => $item->product->code,
+                    'name' => $item->product->name,
+                ] : null,
+                'product_variant' => $item->productVariant ? [
+                    'id' => $item->productVariant->id,
+                    'name' => $item->productVariant->name,
+                    'presentation_label' => $item->productVariant->presentation_label,
+                ] : null,
                 'quantity' => $item->quantity,
             ]),
             'created_at' => $salesOrder->created_at?->toIso8601String(),
-            'creator' => $salesOrder->creator,
+            'creator' => $salesOrder->creator ? ['name' => $salesOrder->creator->name] : null,
         ];
     }
 }

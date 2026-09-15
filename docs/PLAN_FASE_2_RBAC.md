@@ -337,6 +337,15 @@ mostrarían enlaces que responden 403 (por ejemplo, movimientos de materia prima
 >   `php artisan users:grant-super-admin {email}` otorga el rol a un usuario existente y activo, con confirmación y
 >   registro en auditoría (no crea usuarios ni contraseñas por consola).
 
+> **✅ Adelantos tras la revisión de la rama (2026-09-15, ver `docs/REVISION_RAMA_RBAC.md`):**
+> - **2.5 (menú):** el sidebar decide **solo por permisos**; se eliminaron `allowedRoles` y la lógica por rol.
+>   "Configuración" es visible para todo usuario con sesión; "Reportes" usa `production_orders.create`.
+> - **2.8 (parcial):** retirado el middleware `CheckRole` y su alias `role`. Quedan las páginas de error 403/404/500.
+> - Dashboard comercial: respeta `view_own` / `view_all` mediante los scopes `visibleTo()`.
+> - **Decisión sobre los permisos compartidos con el frontend (`auth.user.permissions`):** se mantiene la lista completa
+>   y **sin caché**. Son 3 consultas pequeñas por petición; un caché por usuario dejaría permisos desactualizados tras un
+>   cambio de rol (Spatie solo invalida su propio caché). La autorización real siempre se decide en servidor.
+
 ### 2.4 — CRUD de Roles en la UI
 
 **Bloqueada por C2.** Antes de la primera línea: arreglar `DashboardService`, o el primer rol nuevo produce un 500.

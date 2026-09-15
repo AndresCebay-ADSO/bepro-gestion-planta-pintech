@@ -148,3 +148,19 @@ it('no protege ninguna ruta por rol', function () {
 
     expect($byRole)->toBe([], 'Rutas que aún usan role: '.implode(', ', $byRole));
 });
+
+it('autoriza con la policy del registro las acciones sobre registros con dueño', function (string $routeName) {
+    $middleware = Route::getRoutes()->getByName($routeName)?->gatherMiddleware() ?? [];
+
+    // Además del permiso, la policy del modelo comprueba dueño y estado ya en la ruta (defensa en profundidad).
+    $policyMiddleware = collect($middleware)
+        ->filter(fn ($item) => is_string($item) && str_starts_with($item, 'can:') && str_contains($item, ','));
+
+    expect($policyMiddleware)->not->toBeEmpty("{$routeName} no autoriza con la policy del registro");
+})->with([
+    'quotations.show', 'quotations.edit', 'quotations.update', 'quotations.update-status',
+    'quotations.convert-to-order', 'quotations.export-pdf',
+    'sales-orders.show', 'sales-orders.update', 'sales-orders.update-status',
+    'paint-development-requests.show', 'paint-development-requests.edit', 'paint-development-requests.update',
+    'paint-development-requests.submit', 'paint-development-requests.update-status', 'paint-development-requests.export-pdf',
+]);
