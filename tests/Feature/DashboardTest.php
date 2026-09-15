@@ -271,6 +271,49 @@ test('a custom role without dashboard data gets an empty dashboard instead of an
             ->where('stats', []));
 });
 
+test('a commercial-profile role with view_all sees everyone\'s quotations and orders', function () {
+    $this->seed(RolePermissionSeeder::class);
+    Role::create(['name' => 'jefe-ventas', 'guard_name' => 'web'])->givePermissionTo([
+        Permission::DashboardView->value,
+        Permission::QuotationsViewAll->value,
+        Permission::SalesOrdersViewAll->value,
+    ]);
+
+    $manager = User::factory()->create(['email_verified_at' => now()]);
+    $manager->assignRole('jefe-ventas');
+    $seller = User::factory()->create();
+
+    $client = Client::create(['business_name' => 'Cliente Ventas', 'nit' => '900111', 'is_active' => true]);
+
+    Quotation::create([
+        'client_id' => $client->id,
+        'quotation_number' => 'COT-VA-001',
+        'status' => QuotationStatus::Draft,
+        'subtotal' => 100,
+        'iva_percentage' => 19,
+        'iva_amount' => 19,
+        'total' => 119,
+        'created_by' => $seller->id,
+    ]);
+
+    SalesOrder::create([
+        'client_id' => $client->id,
+        'status' => SalesOrderStatus::Pending,
+        'created_by' => $seller->id,
+    ]);
+
+    $this->actingAs($manager)
+        ->get(route('dashboard'))
+        ->assertSuccessful()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('profile', DashboardProfile::Commercial->value)
+            ->where('stats.active_quotes', 1)
+            ->where('stats.pending_orders', 1)
+            ->has('recent_quotes', 1)
+            ->has('recent_sales_orders', 1)
+            ->missing('stats.total_clients'));
+});
+
 test('users without the dashboard.view permission receive a 403', function () {
     $user = User::factory()->create(['email_verified_at' => now()]);
 

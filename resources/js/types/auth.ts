@@ -1,4 +1,9 @@
-export type UserRole = 'admin' | 'produccion' | 'comercial' | 'operador';
+export type UserRole =
+    | 'super-admin'
+    | 'admin'
+    | 'produccion'
+    | 'comercial'
+    | 'operador';
 
 export type Role = {
     id: number;

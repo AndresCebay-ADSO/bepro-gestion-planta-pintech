@@ -137,28 +137,55 @@ class DashboardService
         ];
     }
 
+    /**
+     * Vista comercial: cada dato se calcula solo con su permiso y respeta view_own / view_all (scopes visibleTo).
+     */
     private function buildForCommercial(User $user): array
     {
-        $userId = $user->id;
+        $canSeeQuotes = $user->canAny([Permission::QuotationsViewOwn->value, Permission::QuotationsViewAll->value]);
+        $canSeeSalesOrders = $user->canAny([Permission::SalesOrdersViewOwn->value, Permission::SalesOrdersViewAll->value]);
 
-        $activeQuotes = Quotation::query()
-            ->where('created_by', $userId)
-            ->whereIn('status', [QuotationStatus::Draft->value, QuotationStatus::Sent->value])
-            ->count();
+        return [
+            'stats' => [
+                ...($user->can(Permission::ProductsView->value)
+                    ? ['available_products' => Product::query()->where('is_active', true)->count()]
+                    : []),
+                ...($canSeeQuotes ? $this->quotationStats($user) : []),
+                ...($canSeeSalesOrders
+                    ? ['pending_orders' => SalesOrder::query()->visibleTo($user)->pending()->count()]
+                    : []),
+                ...($user->can(Permission::ClientsView->value) ? ['total_clients' => Client::query()->count()] : []),
+            ],
+            ...($canSeeQuotes ? ['recent_quotes' => $this->recentQuotes($user)] : []),
+            ...($canSeeSalesOrders ? ['recent_sales_orders' => $this->recentSalesOrders($user)] : []),
+        ];
+    }
 
-        $acceptedQuotes = Quotation::query()
-            ->where('created_by', $userId)
-            ->where('status', QuotationStatus::Accepted->value)
-            ->count();
+    /**
+     * @return array{active_quotes: int, accepted_quotes: int}
+     */
+    private function quotationStats(User $user): array
+    {
+        return [
+            'active_quotes' => Quotation::query()
+                ->visibleTo($user)
+                ->whereIn('status', [QuotationStatus::Draft->value, QuotationStatus::Sent->value])
+                ->count(),
+            'accepted_quotes' => Quotation::query()
+                ->visibleTo($user)
+                ->where('status', QuotationStatus::Accepted->value)
+                ->count(),
+        ];
+    }
 
-        $pendingOrders = SalesOrder::query()
-            ->where('created_by', $userId)
-            ->pending()
-            ->count();
-
-        $recentQuotes = Quotation::query()
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function recentQuotes(User $user): array
+    {
+        return Quotation::query()
             ->with('client:id,business_name')
-            ->where('created_by', $userId)
+            ->visibleTo($user)
             ->latest('id')
             ->limit(5)
             ->get()
@@ -173,10 +200,16 @@ class DashboardService
             ])
             ->values()
             ->all();
+    }
 
-        $recentOrders = SalesOrder::query()
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function recentSalesOrders(User $user): array
+    {
+        return SalesOrder::query()
             ->with('client:id,business_name')
-            ->where('created_by', $userId)
+            ->visibleTo($user)
             ->latest('id')
             ->limit(5)
             ->get()
@@ -190,22 +223,6 @@ class DashboardService
             ])
             ->values()
             ->all();
-
-        $canSeeQuotes = $user->canAny([Permission::QuotationsViewOwn->value, Permission::QuotationsViewAll->value]);
-        $canSeeSalesOrders = $user->canAny([Permission::SalesOrdersViewOwn->value, Permission::SalesOrdersViewAll->value]);
-
-        return [
-            'stats' => [
-                ...($user->can(Permission::ProductsView->value)
-                    ? ['available_products' => Product::query()->where('is_active', true)->count()]
-                    : []),
-                ...($canSeeQuotes ? ['active_quotes' => $activeQuotes, 'accepted_quotes' => $acceptedQuotes] : []),
-                ...($canSeeSalesOrders ? ['pending_orders' => $pendingOrders] : []),
-                ...($user->can(Permission::ClientsView->value) ? ['total_clients' => Client::query()->count()] : []),
-            ],
-            ...($canSeeQuotes ? ['recent_quotes' => $recentQuotes] : []),
-            ...($canSeeSalesOrders ? ['recent_sales_orders' => $recentOrders] : []),
-        ];
     }
 
     /**
