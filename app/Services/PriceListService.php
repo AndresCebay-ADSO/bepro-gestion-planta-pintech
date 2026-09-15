@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\Permission;
 use App\Filters\PriceListFilter;
 use App\Http\Requests\Pricing\IndexPriceListRequest;
 use App\Models\Product;
@@ -21,7 +22,7 @@ class PriceListService
      */
     public function buildList(User $user, IndexPriceListRequest $request): array
     {
-        $isAdmin = $user?->hasRole('admin') ?? false;
+        $canViewCosts = $user?->can(Permission::CostsView->value) ?? false;
 
         $baseQuery = Product::query()
             ->select([
@@ -65,7 +66,7 @@ class PriceListService
             ? $this->finishedInventoryQueryService->sumQuantityByVariant($user, $variantIds)
             : collect();
 
-        $products->through(function (Product $product) use ($isAdmin, $variantStockTotals) {
+        $products->through(function (Product $product) use ($canViewCosts, $variantStockTotals) {
             $resolvedProductPrice = $this->salesPriceService->resolveForProduct($product);
             $productSalesPrice = $resolvedProductPrice !== null ? (float) $resolvedProductPrice : null;
 
@@ -77,7 +78,7 @@ class PriceListService
                 'sales_price' => $productSalesPrice,
             ];
 
-            if ($isAdmin) {
+            if ($canViewCosts) {
                 $productData = array_merge($productData, [
                     'current_cost' => $product->current_cost,
                     'cif_percentage' => $product->cif_percentage,
@@ -85,7 +86,7 @@ class PriceListService
                 ]);
             }
 
-            $variants = $product->variants->map(function ($variant) use ($isAdmin, $variantStockTotals) {
+            $variants = $product->variants->map(function ($variant) use ($canViewCosts, $variantStockTotals) {
                 $resolvedVariantPrice = $this->salesPriceService->resolveForVariant($variant);
                 $variantSalesPrice = $resolvedVariantPrice !== null ? (float) $resolvedVariantPrice : null;
                 $availableStock = $variantStockTotals->get($variant->id);
@@ -100,7 +101,7 @@ class PriceListService
                     'available_stock' => $availableStock !== null ? (float) $availableStock : 0.0,
                 ];
 
-                if ($isAdmin) {
+                if ($canViewCosts) {
                     $variantData = array_merge($variantData, [
                         'current_price' => $variant->current_price,
                     ]);
@@ -117,7 +118,7 @@ class PriceListService
         return [
             'products' => $products,
             'can' => [
-                'view_costs' => $isAdmin,
+                'view_costs' => $canViewCosts,
                 'view_prices' => true,
             ],
             'filters' => $request->validated(),

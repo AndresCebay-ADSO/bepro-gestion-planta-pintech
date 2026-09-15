@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Permission;
 use App\Enums\SalesOrderPriority;
 use App\Enums\SalesOrderStatus;
 use App\Models\Concerns\HasAuditDescription;
@@ -102,7 +103,7 @@ class SalesOrder extends Model
      */
     public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
-        if ($user === null || $user->hasAnyRole(['admin', 'produccion'])) {
+        if ($user === null || $user->can(Permission::SalesOrdersViewAll->value)) {
             return $query;
         }
 

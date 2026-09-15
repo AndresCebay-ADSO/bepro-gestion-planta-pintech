@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\SystemRole;
+use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +47,30 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Crea un usuario con un rol del sistema y los permisos de la matriz ya sembrados.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function userWithRole(SystemRole $role, array $attributes = []): User
 {
-    // ..
+    test()->seed(RolePermissionSeeder::class);
+
+    $user = User::factory()->create($attributes);
+    $user->assignRole($role->value);
+
+    return $user;
+}
+
+/**
+ * Autentica un usuario con un rol del sistema y lo devuelve.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function actingAsRole(SystemRole $role, array $attributes = []): User
+{
+    $user = userWithRole($role, $attributes);
+    test()->actingAs($user);
+
+    return $user;
 }

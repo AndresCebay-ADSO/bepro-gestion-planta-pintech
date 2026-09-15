@@ -71,111 +71,6 @@ class InventoryService
         });
     }
 
-    public function updateMovement(InventoryMovement $movement, array $data): InventoryMovement
-    {
-        return DB::transaction(function () use ($movement, $data) {
-            if ($movement->production_order_id !== null) {
-                throw ValidationException::withMessages([
-                    'movement' => __('No se permite editar movimientos vinculados a órdenes de producción.'),
-                ]);
-            }
-
-            if ($this->isMetadataOnlyUpdate($movement, $data)) {
-                $movement->update([
-                    'movement_date' => $data['movement_date'],
-                    'notes' => $data['notes'] ?? null,
-                ]);
-                $this->syncBatchEntryDateForSoleEntryMovement($movement);
-
-                // No se despacha recálculo: notas y fecha no afectan precio de referencia.
-                // TODO: Si la política "last_lot" estuviera activa y la fecha cambiara,
-                //       podría necesitarse un dispatch condicional aquí.
-                return $movement->refresh();
-            }
-
-            $this->rejectManualProductionOrderLink($data['production_order_id'] ?? null);
-
-            $previousRawMaterialId = (int) $movement->raw_material_id;
-            $previousBatchId = $movement->batch_id;
-
-            $this->reverseMovement($movement);
-
-            $typeValue = $data['type'] instanceof InventoryMovementType ? $data['type']->value : $data['type'];
-            $batchId = $this->resolveBatchIdForEntry($data, $typeValue);
-
-            $movementData = [
-                'raw_material_id' => $data['raw_material_id'],
-                'warehouse_id' => $data['warehouse_id'],
-                'batch_id' => $batchId,
-                'production_order_id' => $data['production_order_id'] ?? null,
-                'type' => $data['type'],
-                'quantity' => $data['quantity'],
-                'cost_price' => $data['cost_price'] ?? null,
-                'movement_date' => $data['movement_date'],
-                'notes' => $data['notes'] ?? null,
-            ];
-
-            $lockedBatch = $batchId !== null
-                ? $this->getValidatedBatchForMovement(
-                    (int) $movementData['raw_material_id'],
-                    (int) $movementData['warehouse_id'],
-                    (int) $batchId
-                )
-                : null;
-
-            $movementData['cost_price'] = $this->resolveMovementCostPrice(
-                typeValue: $typeValue,
-                requestedCostPrice: $movementData['cost_price'],
-                lockedBatch: $lockedBatch,
-            );
-
-            $this->applyMovement(
-                type: $movementData['type'],
-                quantity: $movementData['quantity'],
-                costPrice: $movementData['cost_price'],
-                lockedBatch: $lockedBatch,
-            );
-
-            $movement->update($movementData);
-            $this->syncBatchEntryDateForSoleEntryMovement($movement);
-            $this->deleteBatchIfOrphaned($previousBatchId);
-
-            $updatedRawMaterialId = (int) $movementData['raw_material_id'];
-            collect([$previousRawMaterialId, $updatedRawMaterialId])
-                ->unique()
-                ->each(function (int $rawMaterialId) use ($batchId, $previousBatchId): void {
-                    $this->dispatchReferencePriceAndDependentCosts($rawMaterialId);
-                    $this->evaluateAlertsAfterMovement($rawMaterialId, $batchId);
-
-                    if ($previousBatchId !== null && (int) $previousBatchId !== (int) ($batchId ?? 0)) {
-                        $this->alertService->evaluateBatchExpiry((int) $previousBatchId);
-                    }
-                });
-
-            return $movement->refresh();
-        });
-    }
-
-    public function deleteMovement(InventoryMovement $movement): void
-    {
-        DB::transaction(function () use ($movement) {
-            if ($movement->production_order_id !== null) {
-                throw ValidationException::withMessages([
-                    'movement' => __('No se permite eliminar movimientos vinculados a órdenes de producción.'),
-                ]);
-            }
-
-            $rawMaterialId = (int) $movement->raw_material_id;
-
-            $this->reverseMovement($movement);
-            $movement->delete();
-            $this->deleteBatchIfOrphaned($movement->batch_id);
-
-            $this->dispatchReferencePriceAndDependentCosts($rawMaterialId);
-            $this->evaluateAlertsAfterMovement($rawMaterialId, $movement->batch_id);
-        });
-    }
-
     private function evaluateAlertsAfterMovement(int $rawMaterialId, int|string|null $batchId): void
     {
         $this->alertService->evaluateLowStock($rawMaterialId);
@@ -247,37 +142,6 @@ class InventoryService
         $batch->save();
     }
 
-    private function reverseMovement(InventoryMovement $movement): void
-    {
-        if ($movement->batch_id === null) {
-            return;
-        }
-
-        $batch = $this->getValidatedBatchForMovement(
-            rawMaterialId: (int) $movement->raw_material_id,
-            warehouseId: (int) $movement->warehouse_id,
-            batchId: (int) $movement->batch_id
-        );
-        $quantity = (string) $movement->quantity;
-
-        if ($movement->type === InventoryMovementType::Entry) {
-            if ($this->calculator->cmp($batch->remaining_quantity, $quantity) < 0) {
-                throw ValidationException::withMessages([
-                    'batch_id' => __('No es posible revertir el movimiento porque el lote no tiene stock suficiente.'),
-                ]);
-            }
-
-            $batch->initial_quantity = $this->calculator->sub($batch->initial_quantity, $quantity);
-            $batch->remaining_quantity = $this->calculator->sub($batch->remaining_quantity, $quantity);
-            $batch->save();
-
-            return;
-        }
-
-        $batch->remaining_quantity = $this->calculator->add($batch->remaining_quantity, $quantity);
-        $batch->save();
-    }
-
     private function getValidatedBatchForMovement(int $rawMaterialId, int $warehouseId, int $batchId): InventoryBatch
     {
         $batch = InventoryBatch::query()->lockForUpdate()->findOrFail($batchId);
@@ -324,63 +188,6 @@ class InventoryService
         return (string) $requestedCostPrice;
     }
 
-    private function syncBatchEntryDateForSoleEntryMovement(InventoryMovement $movement): void
-    {
-        if ($movement->type !== InventoryMovementType::Entry || $movement->batch_id === null) {
-            return;
-        }
-
-        $batch = InventoryBatch::query()
-            ->lockForUpdate()
-            ->find($movement->batch_id);
-
-        if ($batch === null) {
-            return;
-        }
-
-        $hasOtherMovements = $batch->inventoryMovements()
-            ->whereKeyNot($movement->id)
-            ->exists();
-
-        if ($hasOtherMovements) {
-            return;
-        }
-
-        $batch->update(['entry_date' => $movement->movement_date]);
-    }
-
-    private function isMetadataOnlyUpdate(InventoryMovement $movement, array $data): bool
-    {
-        return (int) $movement->raw_material_id === (int) $data['raw_material_id']
-            && (int) $movement->warehouse_id === (int) $data['warehouse_id']
-            && $this->nullableIntegersAreEqual($movement->batch_id, $data['batch_id'] ?? null)
-            && $this->movementTypesAreEqual($movement->type, $data['type'])
-            && $this->decimalValuesAreEqual($movement->quantity, $data['quantity'])
-            && $this->decimalValuesAreEqual($movement->cost_price, $data['cost_price'] ?? null)
-            && $this->nullableIntegersAreEqual($movement->production_order_id, $data['production_order_id'] ?? null);
-    }
-
-    private function nullableIntegersAreEqual(int|string|null $valueA, int|string|null $valueB): bool
-    {
-        if ($valueA === null || $valueA === '') {
-            return $valueB === null || $valueB === '';
-        }
-
-        if ($valueB === null || $valueB === '') {
-            return false;
-        }
-
-        return (int) $valueA === (int) $valueB;
-    }
-
-    private function movementTypesAreEqual(string|InventoryMovementType $typeA, string|InventoryMovementType $typeB): bool
-    {
-        $typeAValue = $typeA instanceof InventoryMovementType ? $typeA->value : $typeA;
-        $typeBValue = $typeB instanceof InventoryMovementType ? $typeB->value : $typeB;
-
-        return $typeAValue === $typeBValue;
-    }
-
     private function decimalValuesAreEqual(float|int|string|null $valueA, float|int|string|null $valueB): bool
     {
         if ($valueA === null || $valueA === '') {
@@ -394,8 +201,7 @@ class InventoryService
         return $this->calculator->cmp($valueA, $valueB) === 0;
     }
 
-    // TODO: [Deuda arquitectónica] Extraer resolveBatchIdForEntry(), deleteBatchIfOrphaned(),
-    //       syncBatchEntryDateForSoleEntryMovement() y getValidatedBatchForMovement()
+    // TODO: [Deuda arquitectónica] Extraer resolveBatchIdForEntry() y getValidatedBatchForMovement()
     //       a un InventoryBatchService dedicado. InventoryService debería ser orquestador.
     private function resolveBatchIdForEntry(array $data, string $typeValue): ?int
     {
@@ -425,28 +231,6 @@ class InventoryService
         ]);
 
         return (int) $batch->id;
-    }
-
-    private function deleteBatchIfOrphaned(int|string|null $batchId): void
-    {
-        if ($batchId === null) {
-            return;
-        }
-
-        $batch = InventoryBatch::query()->find((int) $batchId);
-        if ($batch === null) {
-            return;
-        }
-
-        $hasMovements = $batch->inventoryMovements()->exists();
-
-        if (
-            ! $hasMovements
-            && ! $this->calculator->isPositive($batch->initial_quantity)
-            && ! $this->calculator->isPositive($batch->remaining_quantity)
-        ) {
-            $batch->delete();
-        }
     }
 
     private function shouldSyncBatchUnitPrice(string|InventoryMovementType $type, string $quantity, ?string $costPrice): bool

@@ -2,43 +2,22 @@
 
 namespace App\Policies;
 
+use App\Enums\Permission;
 use App\Models\PriceList;
 use App\Models\User;
 
+/**
+ * Las listas de precios son históricas: las genera el recálculo de costos y nadie las edita a mano.
+ */
 class PriceListPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'comercial']);
+        return $user->can(Permission::PriceListsView->value);
     }
 
     public function view(User $user, PriceList $priceList): bool
     {
-        return $user->hasAnyRole(['admin', 'comercial']);
-    }
-
-    public function create(User $user): bool
-    {
-        return $user->hasRole('admin');
-    }
-
-    public function update(User $user, PriceList $priceList): bool
-    {
-        return $user->hasRole('admin');
-    }
-
-    public function delete(User $user, PriceList $priceList): bool
-    {
-        return $user->hasRole('admin');
-    }
-
-    public function restore(User $user, PriceList $priceList): bool
-    {
-        return $user->hasRole('admin');
-    }
-
-    public function forceDelete(User $user, PriceList $priceList): bool
-    {
-        return $user->hasRole('admin');
+        return $user->can(Permission::PriceListsView->value);
     }
 }

@@ -4,10 +4,19 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Products;
 
+use App\Models\Product;
 use Illuminate\Validation\Rule;
 
 class UpdateProductRequest extends StoreProductRequest
 {
+    public function authorize(): bool
+    {
+        $product = $this->route('product');
+
+        return $product instanceof Product
+            && ($this->user()?->can('update', $product) ?? false);
+    }
+
     /**
      * @return array<int|string, mixed>
      */

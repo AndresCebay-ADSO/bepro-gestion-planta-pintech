@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Production;
 
+use App\Enums\Permission;
 use App\Models\ProductionOrderPackagingPlan;
 use App\Models\User;
 use App\Services\DecimalCalculator;
@@ -167,8 +168,9 @@ class CompleteProductionOrderRequest extends FormRequest
                     return;
                 }
 
-                if (! $user->hasAnyRole(['admin', 'produccion'])) {
-                    $validator->errors()->add('quality_responsible_user_id', 'El usuario seleccionado debe tener rol administrador o producción.');
+                // Firma el certificado quien puede completar órdenes (docs/MATRIZ_RBAC.md).
+                if (! $user->can(Permission::ProductionOrdersComplete->value)) {
+                    $validator->errors()->add('quality_responsible_user_id', 'El usuario seleccionado no tiene permiso para completar órdenes de producción.');
                 }
 
                 if ($user->job_title === null || $user->job_title === '') {

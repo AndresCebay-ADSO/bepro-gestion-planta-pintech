@@ -49,7 +49,6 @@ import { index as rawMaterialsIndex } from '@/routes/raw-materials';
 import { index as salesOrdersIndex } from '@/routes/sales-orders';
 import { index as usersIndex } from '@/routes/users';
 import { index as warehousesIndex } from '@/routes/warehouses';
-import type { User, UserRole } from '@/types/auth';
 import type { NavGroup } from '@/types/navigation';
 
 const navigationGroups: NavGroup[] = [
@@ -58,65 +57,65 @@ const navigationGroups: NavGroup[] = [
         items: [
             {
                 title: 'Dashboard',
+                allowedPermissions: ['dashboard.view'],
                 href: dashboard(),
                 icon: LayoutGrid,
-                allowedRoles: ['admin', 'produccion', 'comercial', 'operador'],
             },
             {
                 title: 'Materias Primas',
+                allowedPermissions: ['raw_materials.view'],
                 href: rawMaterialsIndex().url,
                 icon: Boxes,
-                allowedRoles: ['admin', 'produccion'],
             },
             {
                 title: 'Movimientos',
+                allowedPermissions: ['inventory_movements.view'],
                 href: inventoryMovementsIndex().url,
                 icon: ArrowLeftRight,
-                allowedRoles: ['admin', 'produccion'],
             },
             {
                 title: 'Inventario PT',
+                allowedPermissions: ['finished_inventory.view'],
                 href: finishedInventoryIndex().url,
                 icon: Package,
-                allowedRoles: ['admin', 'produccion', 'comercial'],
             },
             {
                 title: 'Movimientos PT',
+                allowedPermissions: ['finished_inventory_movements.view'],
                 href: finishedInventoryMovementsIndex().url,
                 icon: ArrowLeftRight,
-                allowedRoles: ['admin', 'produccion'],
                 unauthorizedBehavior: 'hide',
             },
             {
                 title: 'Bodegas',
+                allowedPermissions: ['warehouses.view'],
                 href: warehousesIndex().url,
                 icon: Warehouse,
-                allowedRoles: ['admin', 'produccion', 'comercial'],
             },
             {
                 title: 'Portafolio de Productos',
+                allowedPermissions: ['products.view'],
                 href: productsIndex().url,
                 icon: Factory,
-                allowedRoles: ['admin', 'produccion', 'comercial'],
             },
             {
                 title: 'Fórmulas',
+                allowedPermissions: ['formulas.view'],
                 href: formulasIndex().url,
                 icon: FlaskConical,
-                allowedRoles: ['admin', 'produccion'],
                 unauthorizedBehavior: 'hide',
             },
             {
                 title: 'Órdenes de Producción',
+                allowedPermissions: ['production_orders.view'],
                 href: productionOrdersIndex().url,
                 icon: ClipboardList,
-                allowedRoles: ['admin', 'produccion', 'operador'],
             },
             {
                 title: 'Saldos de Producción',
+                allowedPermissions: ['production_remnants.view'],
                 href: remnantsIndex().url,
                 icon: FlaskConical,
-                allowedRoles: ['admin', 'produccion', 'operador'],
             },
         ],
     },
@@ -125,40 +124,49 @@ const navigationGroups: NavGroup[] = [
         items: [
             {
                 title: 'Costos',
+                allowedPermissions: ['costs.view'],
                 href: adminCostsIndex().url,
                 icon: Calculator,
-                allowedRoles: ['admin'],
                 unauthorizedBehavior: 'hide',
             },
             {
                 title: 'Lista de Precios',
+                allowedPermissions: ['price_lists.view'],
                 href: pricesIndex().url,
                 icon: WalletCards,
-                allowedRoles: ['admin', 'comercial'],
             },
             {
                 title: 'Clientes',
+                allowedPermissions: ['clients.view'],
                 href: clientsIndex().url,
                 icon: Users,
-                allowedRoles: ['admin', 'comercial'],
             },
             {
                 title: 'Cotizaciones',
+                allowedPermissions: [
+                    'quotations.view_own',
+                    'quotations.view_all',
+                ],
                 href: quotationsIndex().url,
                 icon: FileText,
-                allowedRoles: ['admin', 'comercial'],
             },
             {
                 title: 'Desarrollo de pinturas',
+                allowedPermissions: [
+                    'paint_development_requests.view_own',
+                    'paint_development_requests.view_all',
+                ],
                 href: paintDevIndex().url,
                 icon: FlaskConical,
-                allowedRoles: ['admin', 'produccion', 'comercial'],
             },
             {
                 title: 'Pedidos',
+                allowedPermissions: [
+                    'sales_orders.view_own',
+                    'sales_orders.view_all',
+                ],
                 href: salesOrdersIndex().url,
                 icon: ShoppingCart,
-                allowedRoles: ['admin', 'produccion', 'comercial'],
             },
         ],
     },
@@ -167,23 +175,23 @@ const navigationGroups: NavGroup[] = [
         items: [
             {
                 title: 'Alertas',
+                allowedPermissions: ['alerts.view'],
                 href: alertsIndex().url,
                 icon: BellRing,
-                allowedRoles: ['admin', 'produccion'],
                 unauthorizedBehavior: 'hide',
             },
             {
                 title: 'Códigos QR',
+                allowedPermissions: ['qr_codes.view'],
                 href: qrCodesIndex().url,
                 icon: QrCode,
-                allowedRoles: ['admin', 'produccion'],
                 unauthorizedBehavior: 'hide',
             },
             {
                 title: 'Reportes',
                 href: '/reports',
                 icon: LayoutGrid,
-                allowedRoles: ['admin', 'produccion'],
+                allowedPermissions: ['production_orders.create'],
                 unauthorizedBehavior: 'hide',
                 disabled: true,
                 disabledLabel: 'Módulo en desarrollo',
@@ -195,81 +203,46 @@ const navigationGroups: NavGroup[] = [
         items: [
             {
                 title: 'Usuarios',
+                allowedPermissions: ['users.view'],
                 href: usersIndex(),
                 icon: Users,
-                allowedRoles: ['admin'],
                 unauthorizedBehavior: 'hide',
             },
             {
                 title: 'Auditoría',
+                allowedPermissions: ['audit_logs.view'],
                 href: auditLogsIndex(),
                 icon: ShieldCheck,
-                allowedRoles: ['admin'],
                 unauthorizedBehavior: 'hide',
             },
             {
                 title: 'Configuración',
                 href: editAppearance(),
                 icon: Settings,
-                allowedRoles: ['admin', 'operador'],
                 unauthorizedBehavior: 'hide',
             },
         ],
     },
 ];
 
-function extractUserRoles(user: User | null): UserRole[] {
-    if (!user) {
-        return [];
-    }
-
-    const roleCandidates = new Set<string>();
-
-    if (Array.isArray(user.role_names)) {
-        user.role_names.forEach((role) => roleCandidates.add(String(role)));
-    }
-
-    if (Array.isArray(user.roles)) {
-        user.roles.forEach((role) => {
-            if (typeof role === 'string') {
-                roleCandidates.add(role);
-
-                return;
-            }
-
-            if (role?.name) {
-                roleCandidates.add(String(role.name));
-            }
-        });
-    }
-
-    if (typeof user.role === 'string') {
-        roleCandidates.add(user.role);
-    }
-
-    return Array.from(roleCandidates).filter((role): role is UserRole =>
-        ['admin', 'produccion', 'comercial', 'operador'].includes(role),
-    );
-}
-
-function buildSidebarGroups(userRoles: UserRole[]): NavGroup[] {
-    if (userRoles.length === 0) {
-        return navigationGroups;
-    }
-
+/**
+ * Filtra el menú por permisos (docs/MATRIZ_RBAC.md). Un ítem sin `allowedPermissions` es visible para todo
+ * usuario con sesión (p. ej. Configuración: perfil y apariencia).
+ */
+function buildSidebarGroups(userPermissions: string[]): NavGroup[] {
     return navigationGroups
         .map((group) => {
             const items = group.items
                 .map((item) => {
-                    if (!item.allowedRoles?.length) {
+                    if (!item.allowedPermissions?.length) {
                         return item;
                     }
 
-                    const isAllowed = item.allowedRoles.some((allowedRole) =>
-                        userRoles.includes(allowedRole),
+                    const hasPermission = item.allowedPermissions.some(
+                        (permission) => userPermissions.includes(permission),
                     );
 
-                    if (isAllowed) {
+                    if (hasPermission) {
                         return item;
                     }
 
@@ -298,8 +271,8 @@ export function AppSidebar() {
     const { auth, unresolvedAlertsCount = 0 } = usePage<{
         unresolvedAlertsCount?: number;
     }>().props;
-    const userRoles = extractUserRoles(auth.user);
-    const filteredGroups = buildSidebarGroups(userRoles).map((group) => ({
+    const userPermissions = auth.user?.permissions ?? [];
+    const filteredGroups = buildSidebarGroups(userPermissions).map((group) => ({
         ...group,
         items: group.items.map((item) => {
             if (item.title !== 'Alertas') {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\PaymentMethod;
+use App\Enums\Permission;
 use App\Enums\QuotationStatus;
 use App\Enums\QuotationValidity;
 use App\Models\Concerns\HasAuditDescription;
@@ -137,7 +138,7 @@ class Quotation extends Model
      */
     public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
-        if ($user === null || $user->hasRole('admin')) {
+        if ($user === null || $user->can(Permission::QuotationsViewAll->value)) {
             return $query;
         }
 

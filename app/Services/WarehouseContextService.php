@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\Permission;
 use App\Enums\WarehouseType;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -14,7 +15,7 @@ class WarehouseContextService
      */
     public function availableWarehouses(User $user): Collection
     {
-        if ($user->hasRole('admin')) {
+        if ($user->can(Permission::WarehousesViewAll->value)) {
             return Warehouse::query()
                 ->select('id', 'name', 'city', 'is_active')
                 ->where('is_active', true)

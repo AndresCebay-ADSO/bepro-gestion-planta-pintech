@@ -273,3 +273,22 @@ it('validates temperature range on store', function () {
 
     $response->assertSessionHasErrors('context_payload.temp_max');
 });
+
+it('prevents produccion from accessing paint development requests', function () {
+    $request = PaintDevelopmentRequest::factory()->create([
+        'created_by' => $this->comercialUser->id,
+        'status' => PaintDevelopmentRequestStatus::Submitted,
+    ]);
+
+    $this->actingAs($this->produccionUser)
+        ->get(route('paint-development-requests.index'))
+        ->assertForbidden();
+
+    $this->actingAs($this->produccionUser)
+        ->get(route('paint-development-requests.show', $request))
+        ->assertForbidden();
+
+    $this->actingAs($this->produccionUser)
+        ->post(route('paint-development-requests.store'), paintDevPayload())
+        ->assertForbidden();
+});

@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Permission;
+use App\Enums\SystemRole;
 use App\Filters\UserFilter;
 use App\Http\Requests\Admin\IndexUserRequest;
 use App\Http\Requests\Users\StoreUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Models\User;
 use App\Services\SignatureOptimizerService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -33,17 +36,20 @@ class UserController extends Controller
             ->onEachSide(1)
             ->withQueryString();
 
-        $activities = Activity::with('causer')
-            ->latest()
-            ->take(5)
-            ->get();
+        // La actividad reciente es auditoría: solo con audit_logs.view (docs/MATRIZ_RBAC.md).
+        $canViewActivity = $request->user()?->can(Permission::AuditLogsView->value) ?? false;
+        $activities = $canViewActivity
+            ? Activity::with('causer')->latest()->take(5)->get()
+            : collect();
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
             'filters' => $request->validated(),
             'recentActivities' => $activities,
             'can' => [
-                'create' => $request->user()?->hasRole('admin') ?? false,
+                'create' => $request->user()?->can('create', User::class) ?? false,
+                'delete' => $request->user()?->can(Permission::UsersDelete->value) ?? false,
+                'viewActivity' => $canViewActivity,
             ],
         ]);
     }
@@ -53,7 +59,7 @@ class UserController extends Controller
      */
     public function create(): Response
     {
-        $roles = Role::all();
+        $roles = $this->assignableRoles();
 
         return Inertia::render('Admin/Users/Create', [
             'roles' => $roles,
@@ -103,7 +109,9 @@ class UserController extends Controller
      */
     public function edit(User $user): Response
     {
-        $roles = Role::all();
+        $this->authorize('update', $user);
+
+        $roles = $this->assignableRoles();
 
         $user->load('roles');
 
@@ -120,27 +128,30 @@ class UserController extends Controller
     {
         $validated = $request->validated();
 
+        $currentRole = $user->roles->first()?->name;
+        $roleChanged = $validated['role'] !== $currentRole;
+
+        if ($roleChanged && ! ($request->user()?->can('manageRoles', User::class) ?? false)) {
+            abort(403, 'No tienes autorización para cambiar el rol de los usuarios.');
+        }
+
         if ($user->id === $request->user()?->id) {
             if (! $validated['is_active']) {
                 return back()->with('error', 'No puedes desactivar tu propia cuenta de usuario.');
             }
 
-            if ($validated['role'] !== 'admin') {
-                return back()->with('error', 'No puedes revocar tu propio rol de administrador.');
+            if ($roleChanged) {
+                return back()->with('error', 'No puedes cambiar tu propio rol.');
             }
         }
 
-        $isDemotingOrDeactivatingAdmin = $user->hasRole('admin')
-            && (! $validated['is_active'] || $validated['role'] !== 'admin');
+        // Siempre debe quedar al menos un SuperAdmin y un Admin activos (docs/MATRIZ_RBAC.md §4).
+        foreach ([SystemRole::SuperAdmin, SystemRole::Admin] as $protectedRole) {
+            $losesProtectedRole = $user->hasRole($protectedRole->value)
+                && (! $validated['is_active'] || $validated['role'] !== $protectedRole->value);
 
-        if ($isDemotingOrDeactivatingAdmin) {
-            $hasOtherActiveAdmin = User::role('admin')
-                ->where('is_active', true)
-                ->where('id', '!=', $user->id)
-                ->exists();
-
-            if (! $hasOtherActiveAdmin) {
-                return back()->with('error', 'No se puede desactivar o degradar al único administrador activo del sistema.');
+            if ($losesProtectedRole && ! $this->hasOtherActiveUserWithRole($protectedRole, $user)) {
+                return back()->with('error', 'No se puede desactivar o degradar al único '.mb_strtolower($protectedRole->label()).' activo del sistema.');
             }
         }
 
@@ -208,11 +219,13 @@ class UserController extends Controller
      */
     public function destroy(User $user): RedirectResponse
     {
+        $this->authorize('delete', $user);
+
         if ($user->id === auth()->id()) {
             return back()->with('error', 'No puedes eliminar tu propia cuenta.');
         }
 
-        if ($user->hasRole('admin')) {
+        if ($user->hasAnyRole([SystemRole::Admin->value, SystemRole::SuperAdmin->value])) {
             return back()->with('error', 'No se puede eliminar un administrador. Desactiva su cuenta en su lugar.');
         }
 
@@ -231,5 +244,28 @@ class UserController extends Controller
         }
 
         return redirect()->route('users.index')->with('message', 'Usuario eliminado exitosamente.');
+    }
+
+    /**
+     * Roles que el usuario autenticado puede asignar: super-admin solo lo asigna un SuperAdmin.
+     *
+     * @return Collection<int, Role>
+     */
+    private function assignableRoles(): Collection
+    {
+        return Role::query()
+            ->when(
+                ! (auth()->user()?->isSuperAdmin() ?? false),
+                fn ($query) => $query->where('name', '!=', SystemRole::SuperAdmin->value),
+            )
+            ->get();
+    }
+
+    private function hasOtherActiveUserWithRole(SystemRole $role, User $user): bool
+    {
+        return User::role($role->value)
+            ->where('is_active', true)
+            ->where('id', '!=', $user->id)
+            ->exists();
     }
 }

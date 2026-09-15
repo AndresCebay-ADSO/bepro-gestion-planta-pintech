@@ -15,18 +15,19 @@ use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    test()->seed(RolePermissionSeeder::class);
     $this->user = User::factory()->create([
         'email_verified_at' => now(),
         'job_title' => 'Analista de Calidad',
         'signature_path' => 'signatures/test.png',
     ]);
-    $this->user->assignRole(Role::create(['name' => 'admin']));
+    $this->user->assignRole('admin');
     $this->actingAs($this->user);
 
     $this->factory = Warehouse::create([
@@ -188,8 +189,7 @@ test('it rejects completing an already completed order', function () {
 });
 
 test('it records final approver after submit reject resubmit complete cycle', function () {
-    Role::findOrCreate('operador', 'web');
-    Role::findOrCreate('produccion', 'web');
+    test()->seed(RolePermissionSeeder::class);
 
     $operator = User::factory()->create(['email_verified_at' => now()]);
     $operator->assignRole('operador');

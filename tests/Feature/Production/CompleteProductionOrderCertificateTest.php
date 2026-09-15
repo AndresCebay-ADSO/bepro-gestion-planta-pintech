@@ -16,15 +16,13 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\QualityInspectionCertificateService;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
-use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
-    Role::create(['name' => 'admin']);
-    Role::create(['name' => 'produccion']);
-    Role::create(['name' => 'comercial']);
+    test()->seed(RolePermissionSeeder::class);
 });
 
 function createCertificateCompletionFixture(): array

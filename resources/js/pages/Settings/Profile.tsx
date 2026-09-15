@@ -2,7 +2,6 @@ import { Transition } from '@headlessui/react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import UserIdentityFields from '@/components/users/user-identity-fields';
@@ -130,8 +129,6 @@ export default function Profile({
                     </div>
                 </form>
             </div>
-
-            <DeleteUser />
         </>
     );
 }
@@ -144,4 +141,3 @@ Profile.layout = {
         },
     ],
 };
-

@@ -11,7 +11,5 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
     Route::inertia('settings/appearance', 'Settings/Appearance')->name('appearance.edit');
 });

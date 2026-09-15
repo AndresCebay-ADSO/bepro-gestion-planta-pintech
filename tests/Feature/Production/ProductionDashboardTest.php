@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\AlertSeverity;
 use App\Enums\AlertType;
 use App\Enums\ProductionOrderStatus;
+use App\Enums\SystemRole;
 use App\Models\Alert;
 use App\Models\Formula;
 use App\Models\Product;
@@ -13,20 +14,14 @@ use App\Models\ProductionOrder;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
-use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
-use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
-    Role::firstOrCreate(['name' => 'admin']);
-    Role::firstOrCreate(['name' => 'produccion']);
-
-    $this->productionUser = User::factory()->create(['email_verified_at' => now()]);
-    $this->productionUser->assignRole('produccion');
+    $this->productionUser = userWithRole(SystemRole::Production, ['email_verified_at' => now()]);
 
     $this->unit = UnitOfMeasure::create([
         'code' => 'KG',
@@ -135,8 +130,7 @@ test('production dashboard exposes real operational stats', function (): void {
 });
 
 test('raw materials index includes active alert indicators', function (): void {
-    $admin = User::factory()->create(['email_verified_at' => now()]);
-    $admin->assignRole('admin');
+    $admin = userWithRole(SystemRole::Admin, ['email_verified_at' => now()]);
 
     $this->actingAs($admin)
         ->get(route('raw-materials.index'))

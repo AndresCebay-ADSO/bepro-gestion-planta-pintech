@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Products;
 
+use App\Enums\SystemRole;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 
 use function Pest\Laravel\actingAs;
 
@@ -18,10 +19,10 @@ uses(RefreshDatabase::class);
 
 function setupVariantManagementDependencies(): array
 {
-    $role = Role::findOrCreate('admin');
+    test()->seed(RolePermissionSeeder::class);
 
     $user = User::factory()->create();
-    $user->assignRole($role);
+    $user->assignRole('admin');
 
     $category = ProductCategory::factory()->create(['name' => 'Arquitectura']);
     $uom = UnitOfMeasure::factory()->create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
@@ -107,4 +108,17 @@ test('admin can delete a product variant', function () {
     $this->assertSoftDeleted('product_variants', [
         'id' => $variant->id,
     ]);
+});
+
+test('produccion can manage variants but comercial cannot', function () {
+    [, $product] = setupVariantManagementDependencies();
+
+    // Producción supera la autorización y llega a la validación (payload vacío).
+    actingAs(userWithRole(SystemRole::Production))
+        ->post(route('products.variants.store', $product), [])
+        ->assertSessionHasErrors();
+
+    actingAs(userWithRole(SystemRole::Commercial))
+        ->post(route('products.variants.store', $product), [])
+        ->assertForbidden();
 });

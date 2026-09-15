@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Quotations\BuildQuotationPdfDataAction;
 use App\Enums\PaymentMethod;
+use App\Enums\Permission;
 use App\Enums\QuotationItemType;
 use App\Enums\QuotationStatus;
 use App\Enums\QuotationValidity;
@@ -37,7 +38,7 @@ class QuotationController extends Controller
     public function index(IndexQuotationRequest $request): Response
     {
         $user = $request->user();
-        $fullVisibility = $user?->hasRole('admin');
+        $fullVisibility = $user?->can(Permission::QuotationsViewAll->value) ?? false;
 
         $quotations = (new QuotationFilter($request))
             ->apply(Quotation::query())

@@ -11,7 +11,10 @@ class UpdateWarehouseRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasRole('admin') ?? false;
+        $warehouse = $this->route('warehouse');
+
+        return $warehouse instanceof Warehouse
+            && ($this->user()?->can('update', $warehouse) ?? false);
     }
 
     public function rules(): array

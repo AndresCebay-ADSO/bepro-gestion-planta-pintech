@@ -16,17 +16,15 @@ use App\Services\AlertService;
 use App\Services\InventoryService;
 use App\Services\ProductionCostRecalculationService;
 use App\Services\RawMaterialReferencePriceService;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia;
-use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
-    Role::firstOrCreate(['name' => 'admin']);
-    Role::firstOrCreate(['name' => 'produccion']);
-    Role::firstOrCreate(['name' => 'comercial']);
+    $this->seed(RolePermissionSeeder::class);
 
     $this->unit = UnitOfMeasure::create([
         'code' => 'KG',
@@ -259,14 +257,35 @@ test('admin can view alerts index and resolve an alert', function (): void {
             ->has('alerts.data', 1)
             ->where('stats.unresolved_count', 1));
 
-    $this->actingAs($this->productionUser)
+    $this->actingAs($this->admin)
         ->patch(route('alerts.resolve', $alert))
         ->assertRedirect();
 
     $alert->refresh();
 
     expect($alert->is_resolved)->toBeTrue()
-        ->and($alert->resolved_by)->toBe($this->productionUser->id);
+        ->and($alert->resolved_by)->toBe($this->admin->id);
+});
+
+test('produccion can view alerts but cannot resolve them', function (): void {
+    $rawMaterial = createRawMaterialForAlerts();
+
+    $alert = Alert::factory()->create([
+        'type' => AlertType::StockBajo,
+        'raw_material_id' => $rawMaterial->id,
+        'severity' => AlertSeverity::Media,
+        'message' => 'Alerta de prueba',
+    ]);
+
+    $this->actingAs($this->productionUser)
+        ->get(route('alerts.index'))
+        ->assertSuccessful();
+
+    $this->actingAs($this->productionUser)
+        ->patch(route('alerts.resolve', $alert))
+        ->assertForbidden();
+
+    expect($alert->fresh()->is_resolved)->toBeFalse();
 });
 
 test('comercial user cannot access alerts module', function (): void {

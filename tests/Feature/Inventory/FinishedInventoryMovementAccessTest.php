@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\FinishedInventoryMovementReason;
+use App\Enums\InventoryMovementType;
+use App\Models\FinishedInventoryMovement;
 use App\Models\FinishedProductBatch;
 use App\Models\FinishedProductBatchStock;
 use App\Models\Product;
@@ -7,15 +10,13 @@ use App\Models\ProductCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 use Inertia\Testing\AssertableInertia;
-use Spatie\Permission\Models\Role;
 
 use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
-    Role::firstOrCreate(['name' => 'admin']);
-    Role::firstOrCreate(['name' => 'produccion']);
-    Role::firstOrCreate(['name' => 'comercial']);
+    $this->seed(RolePermissionSeeder::class);
 });
 
 it('allows admin and produccion to access finished inventory movements index', function () {
@@ -55,6 +56,18 @@ it('allows comercial to access finished inventory index', function () {
     actingAs($comercial)
         ->get(route('finished-inventory.index'))
         ->assertOk();
+});
+
+it('allows operador to see finished inventory but not its movements', function () {
+    $operador = User::factory()->create()->assignRole('operador');
+
+    actingAs($operador)
+        ->get(route('finished-inventory.index'))
+        ->assertOk();
+
+    actingAs($operador)
+        ->get(route('finished-inventory-movements.index'))
+        ->assertForbidden();
 });
 
 it('exposes finished product batches from all warehouses for movement forms', function () {
@@ -111,4 +124,53 @@ it('exposes finished product batches from all warehouses for movement forms', fu
                 ->where('batches.1.stocks.0.warehouse_id', $warehouseB->id)
             )
         );
+});
+
+it('shows finished inventory movement costs only to users with costs.view', function () {
+    $admin = User::factory()->create()->assignRole('admin');
+    $produccion = User::factory()->create()->assignRole('produccion');
+    $warehouse = Warehouse::factory()->create();
+    $unit = UnitOfMeasure::factory()->create();
+    $category = ProductCategory::create(['name' => 'PT costos']);
+    $product = Product::create([
+        'code' => 'PT-COST-001',
+        'name' => 'Producto con costo',
+        'brand' => 'BEPRO',
+        'unit_of_measure_id' => $unit->id,
+        'category_id' => $category->id,
+        'is_active' => true,
+    ]);
+    $batch = FinishedProductBatch::create([
+        'product_id' => $product->id,
+        'initial_quantity' => '10',
+        'entry_date' => now()->toDateString(),
+    ]);
+    $movement = FinishedInventoryMovement::create([
+        'product_id' => $product->id,
+        'warehouse_id' => $warehouse->id,
+        'finished_product_batch_id' => $batch->id,
+        'type' => InventoryMovementType::Entry,
+        'reason' => FinishedInventoryMovementReason::Production,
+        'quantity' => '10',
+        'cost_price' => '12.5',
+        'movement_date' => now()->toDateString(),
+        'created_by' => $admin->id,
+    ]);
+
+    actingAs($produccion)
+        ->get(route('finished-inventory-movements.show', $movement))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->missing('movement.cost_price'));
+
+    actingAs($produccion)
+        ->get(route('finished-inventory-movements.index'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('movements.data', 1)
+            ->missing('movements.data.0.cost_price'));
+
+    actingAs($admin)
+        ->get(route('finished-inventory-movements.show', $movement))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->has('movement.cost_price'));
 });

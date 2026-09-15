@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Formulas;
 
+use App\Models\Formula;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,7 +29,7 @@ class StoreFormulaRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->user()?->hasAnyRole(['admin', 'produccion']) ?? false;
+        return $this->user()?->can('create', Formula::class) ?? false;
     }
 
     /**

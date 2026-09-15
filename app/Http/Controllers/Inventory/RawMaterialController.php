@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Enums\Permission;
 use App\Filters\RawMaterialFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RawMaterials\IndexRawMaterialRequest;
@@ -25,7 +26,7 @@ class RawMaterialController extends Controller
     public function index(IndexRawMaterialRequest $request): Response
     {
         $user = $request->user();
-        $canViewCosts = $user?->hasAnyRole(['admin', 'produccion']) ?? false;
+        $canViewCosts = $user?->can(Permission::CostsView->value) ?? false;
 
         $rawMaterials = (new RawMaterialFilter($request))
             ->apply(RawMaterial::query())
@@ -75,8 +76,8 @@ class RawMaterialController extends Controller
                     'can' => [
                         'view' => Gate::forUser($user)->allows('view', $rawMaterial),
                         'update' => Gate::forUser($user)->allows('update', $rawMaterial),
-                        'delete' => Gate::forUser($user)->allows('delete', $rawMaterial) && $rawMaterial->is_active,
-                        'reactivate' => Gate::forUser($user)->allows('update', $rawMaterial) && ! $rawMaterial->is_active,
+                        'delete' => Gate::forUser($user)->allows('deactivate', $rawMaterial) && $rawMaterial->is_active,
+                        'reactivate' => Gate::forUser($user)->allows('reactivate', $rawMaterial) && ! $rawMaterial->is_active,
                     ],
                 ];
             });
@@ -165,8 +166,8 @@ class RawMaterialController extends Controller
             'hasActivity' => $hasActivity,
             'can' => [
                 'update' => Gate::allows('update', $rawMaterial),
-                'delete' => Gate::allows('delete', $rawMaterial) && $rawMaterial->is_active,
-                'reactivate' => Gate::allows('update', $rawMaterial) && ! $rawMaterial->is_active,
+                'delete' => Gate::allows('deactivate', $rawMaterial) && $rawMaterial->is_active,
+                'reactivate' => Gate::allows('reactivate', $rawMaterial) && ! $rawMaterial->is_active,
             ],
         ]);
     }
@@ -206,9 +207,12 @@ class RawMaterialController extends Controller
      */
     public function destroy(RawMaterial $rawMaterial): RedirectResponse
     {
-        $this->authorize('delete', $rawMaterial);
+        $this->authorize('deactivate', $rawMaterial);
 
-        return DB::transaction(function () use ($rawMaterial): RedirectResponse {
+        // El borrado físico exige además raw_materials.delete (SuperAdmin); si no, se desactiva.
+        $canDeletePermanently = auth()->user()?->can('delete', $rawMaterial) ?? false;
+
+        return DB::transaction(function () use ($rawMaterial, $canDeletePermanently): RedirectResponse {
             /** @var RawMaterial $lockedRawMaterial */
             $lockedRawMaterial = RawMaterial::query()
                 ->lockForUpdate()
@@ -223,7 +227,7 @@ class RawMaterialController extends Controller
                 || $lockedRawMaterial->formulaDetails()->exists()
                 || $lockedRawMaterial->productionOrderDetails()->exists();
 
-            if (! $hasActivity) {
+            if (! $hasActivity && $canDeletePermanently) {
                 $lockedRawMaterial->delete();
 
                 return redirect()
@@ -249,7 +253,7 @@ class RawMaterialController extends Controller
 
     public function reactivate(RawMaterial $rawMaterial): RedirectResponse
     {
-        $this->authorize('update', $rawMaterial);
+        $this->authorize('reactivate', $rawMaterial);
 
         if ($rawMaterial->is_active) {
             return back()->with('error', __('La materia prima ya se encuentra activa.'));

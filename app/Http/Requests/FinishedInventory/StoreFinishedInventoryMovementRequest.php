@@ -6,6 +6,7 @@ namespace App\Http\Requests\FinishedInventory;
 
 use App\Enums\FinishedInventoryMovementReason;
 use App\Enums\InventoryMovementType;
+use App\Models\FinishedInventoryMovement;
 use App\Models\FinishedProductBatch;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -15,7 +16,7 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasAnyRole(['admin', 'produccion']) ?? false;
+        return $this->user()?->can('create', FinishedInventoryMovement::class) ?? false;
     }
 
     /**

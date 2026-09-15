@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\PaintDevelopmentRequestStatus;
+use App\Enums\Permission;
 use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\PaintDevelopmentRequestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -111,7 +112,7 @@ class PaintDevelopmentRequest extends Model
      */
     public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
-        if ($user === null || $user->hasAnyRole(['admin', 'produccion'])) {
+        if ($user === null || $user->can(Permission::PaintDevelopmentRequestsViewAll->value)) {
             return $query;
         }
 

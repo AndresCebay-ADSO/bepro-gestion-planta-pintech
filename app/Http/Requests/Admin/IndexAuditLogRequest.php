@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\Permission;
 use Illuminate\Foundation\Http\FormRequest;
 
 class IndexAuditLogRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('view-audit-logs') ?? false;
+        return $this->user()?->can(Permission::AuditLogsView->value) ?? false;
     }
 
     /**

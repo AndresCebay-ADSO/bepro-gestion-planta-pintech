@@ -13,6 +13,7 @@ use App\Actions\Production\PreviewProductionOrderCostsAction;
 use App\Actions\Production\RejectProductionOrderReviewAction;
 use App\Actions\Production\StartProductionOrderAction;
 use App\Actions\Production\SubmitProductionOrderForReviewAction;
+use App\Enums\Permission;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\WarehouseType;
 use App\Exports\ProductionOrderExport;
@@ -111,7 +112,8 @@ class ProductionOrderController extends Controller
         $user = auth()->user();
         $includeCosts = $user?->can('previewCosts', $productionOrder) ?? false;
 
-        $qualitySigners = User::role(['admin', 'produccion'])
+        // Firmantes del certificado: quien puede completar órdenes (misma regla que CompleteProductionOrderRequest).
+        $qualitySigners = User::permission(Permission::ProductionOrdersComplete->value)
             ->active()
             ->whereNotNull('job_title')
             ->whereNotNull('signature_path')

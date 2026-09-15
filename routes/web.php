@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Permission;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\ClientController;
@@ -26,6 +27,9 @@ use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\UserController;
+use App\Models\PaintDevelopmentRequest;
+use App\Models\Quotation;
+use App\Models\SalesOrder;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login')->name('home');
@@ -38,134 +42,282 @@ Route::get('/c/{token}/product-documents/{document}', [PublicQrLandingController
     ->name('qr.public.product-documents.download');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->middleware('can:'.Permission::DashboardView->value)
+        ->name('dashboard');
 });
 
-// ============ RUTAS PROTEGIDAS POR ROL ============
+// ============ RUTAS PROTEGIDAS POR PERMISO (docs/MATRIZ_RBAC.md) ============
 
-Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
-    Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
-    Route::get('/admin/costs', [CostController::class, 'index'])->name('admin.costs.index');
-    Route::patch('/admin/costs/{product}', [CostController::class, 'update'])->name('admin.costs.update');
-    Route::resource('users', UserController::class)->except(['show']);
-    Route::patch('raw-materials/{raw_material}/reactivate', [RawMaterialController::class, 'reactivate'])->name('raw-materials.reactivate');
-    Route::resource('raw-materials', RawMaterialController::class)->except(['index', 'show']);
-    Route::resource('warehouses', WarehouseController::class)->except(['index', 'show']);
-    Route::get('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsersPage'])->name('warehouses.assign-users.form');
-    Route::post('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsers'])->name('warehouses.assign-users');
-
-    // Edición/eliminación de clientes
-    Route::get('clients/{client}/edit', [ClientController::class, 'edit'])->name('clients.edit');
-    Route::put('clients/{client}', [ClientController::class, 'update'])->name('clients.update');
-    Route::delete('clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
-});
-
-Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     // Alertas
-    Route::get('alerts', [AlertController::class, 'index'])->name('alerts.index');
-    Route::patch('alerts/{alert}/resolve', [AlertController::class, 'resolve'])->name('alerts.resolve');
+    Route::get('alerts', [AlertController::class, 'index'])
+        ->middleware('can:'.Permission::AlertsView->value)
+        ->name('alerts.index');
+    Route::patch('alerts/{alert}/resolve', [AlertController::class, 'resolve'])
+        ->middleware('can:'.Permission::AlertsResolve->value)
+        ->name('alerts.resolve');
 
     // Códigos QR
-    Route::get('qr-codes', [QrCodeController::class, 'index'])->name('qr-codes.index');
-    Route::get('qr-codes/{qrCode}', [QrCodeController::class, 'show'])->name('qr-codes.show');
-    Route::patch('qr-codes/{qrCode}', [QrCodeController::class, 'update'])->name('qr-codes.update');
-    Route::get('qr-codes/{qrCode}/qr.png', [QrCodeController::class, 'qrImage'])->name('qr-codes.qr-image');
-    Route::get('qr-codes/{qrCode}/documents/{document}/download', [QrCodeController::class, 'downloadDocument'])
-        ->name('qr-codes.documents.download');
+    Route::middleware('can:'.Permission::QrCodesView->value)->group(function () {
+        Route::get('qr-codes', [QrCodeController::class, 'index'])->name('qr-codes.index');
+        Route::get('qr-codes/{qrCode}', [QrCodeController::class, 'show'])->name('qr-codes.show');
+        Route::get('qr-codes/{qrCode}/qr.png', [QrCodeController::class, 'qrImage'])->name('qr-codes.qr-image');
+        Route::get('qr-codes/{qrCode}/documents/{document}/download', [QrCodeController::class, 'downloadDocument'])
+            ->name('qr-codes.documents.download');
+    });
+    Route::patch('qr-codes/{qrCode}', [QrCodeController::class, 'update'])
+        ->middleware('can:'.Permission::QrCodesUpdate->value)
+        ->name('qr-codes.update');
 
-    Route::resource('raw-materials', RawMaterialController::class)->only(['index', 'show']);
+    // Saldos de producción
+    Route::get('production/remnants', [RemnantController::class, 'index'])
+        ->middleware('can:'.Permission::ProductionRemnantsView->value)
+        ->name('production.remnants.index');
 
-    Route::resource('formulas', FormulaController::class);
-    Route::post('formulas/{formula}/activate', [FormulaController::class, 'activate'])->name('formulas.activate');
+    // Materias primas
+    Route::patch('raw-materials/{raw_material}/reactivate', [RawMaterialController::class, 'reactivate'])
+        ->middleware('can:'.Permission::RawMaterialsReactivate->value)
+        ->name('raw-materials.reactivate');
+    Route::resource('raw-materials', RawMaterialController::class)
+        ->middlewareFor(['index', 'show'], 'can:'.Permission::RawMaterialsView->value)
+        ->middlewareFor(['create', 'store'], 'can:'.Permission::RawMaterialsCreate->value)
+        ->middlewareFor(['edit', 'update'], 'can:'.Permission::RawMaterialsEdit->value)
+        // Desactiva; el borrado físico dentro exige además raw_materials.delete (tarea 2.7).
+        ->middlewareFor('destroy', 'can:'.Permission::RawMaterialsDeactivate->value);
 
-    Route::get('production-orders/create', [ProductionOrderController::class, 'create'])->name('production-orders.create');
-    Route::post('production-orders', [ProductionOrderController::class, 'store'])->name('production-orders.store');
-    Route::post('production-orders/{production_order}/complete', [ProductionOrderController::class, 'complete'])->name('production-orders.complete');
-    Route::post('production-orders/{production_order}/cancel', [ProductionOrderController::class, 'cancel'])->name('production-orders.cancel');
-    Route::post('production-orders/{production_order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])
-        ->middleware('throttle:production-preview-costs')
-        ->name('production-orders.preview-costs');
-    Route::post('production-orders/{production_order}/reject-review', [ProductionOrderController::class, 'rejectReview'])->name('production-orders.reject-review');
+    // Fórmulas
+    Route::resource('formulas', FormulaController::class)
+        ->middlewareFor(['index', 'show'], 'can:'.Permission::FormulasView->value)
+        ->middlewareFor(['create', 'store'], 'can:'.Permission::FormulasCreate->value)
+        ->middlewareFor(['edit', 'update'], 'can:'.Permission::FormulasEdit->value)
+        ->middlewareFor('destroy', 'can:'.Permission::FormulasDelete->value);
+    Route::post('formulas/{formula}/activate', [FormulaController::class, 'activate'])
+        ->middleware('can:'.Permission::FormulasActivate->value)
+        ->name('formulas.activate');
 
-    Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
-    Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
-    Route::delete('products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
+    // Bodegas
+    Route::get('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsersPage'])
+        ->middleware('can:'.Permission::WarehousesAssignUsers->value)
+        ->name('warehouses.assign-users.form');
+    Route::post('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsers'])
+        ->middleware('can:'.Permission::WarehousesAssignUsers->value)
+        ->name('warehouses.assign-users');
+    Route::resource('warehouses', WarehouseController::class)
+        ->middlewareFor(['index', 'show'], 'can:'.Permission::WarehousesView->value)
+        ->middlewareFor(['create', 'store'], 'can:'.Permission::WarehousesCreate->value)
+        ->middlewareFor(['edit', 'update'], 'can:'.Permission::WarehousesEdit->value)
+        ->middlewareFor('destroy', 'can:'.Permission::WarehousesDelete->value);
 
-    Route::get('production/remnants', [RemnantController::class, 'index'])->name('production.remnants.index');
-});
+    // Clientes
+    Route::get('clients', [ClientController::class, 'index'])
+        ->middleware('can:'.Permission::ClientsView->value)
+        ->name('clients.index');
+    Route::get('clients/create', [ClientController::class, 'create'])
+        ->middleware('can:'.Permission::ClientsCreate->value)
+        ->name('clients.create');
+    Route::post('clients', [ClientController::class, 'store'])
+        ->middleware('can:'.Permission::ClientsCreate->value)
+        ->name('clients.store');
+    Route::get('clients/{client}/edit', [ClientController::class, 'edit'])
+        ->middleware('can:'.Permission::ClientsEdit->value)
+        ->name('clients.edit');
+    Route::put('clients/{client}', [ClientController::class, 'update'])
+        ->middleware('can:'.Permission::ClientsEdit->value)
+        ->name('clients.update');
+    Route::delete('clients/{client}', [ClientController::class, 'destroy'])
+        ->middleware('can:'.Permission::ClientsDelete->value)
+        ->name('clients.destroy');
 
-Route::middleware(['auth', 'verified', 'role:admin,comercial'])->group(function () {
-    Route::get('/prices', [PriceListController::class, 'index'])->name('prices.index');
+    // Productos, presentaciones y documentos
+    Route::resource('products', ProductController::class)
+        ->middlewareFor(['index', 'show'], 'can:'.Permission::ProductsView->value)
+        ->middlewareFor(['create', 'store'], 'can:'.Permission::ProductsCreate->value)
+        ->middlewareFor(['edit', 'update'], 'can:'.Permission::ProductsEdit->value)
+        ->middlewareFor('destroy', 'can:'.Permission::ProductsDelete->value);
+    Route::middleware('can:'.Permission::ProductsManageVariants->value)->group(function () {
+        Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
+        Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
+        Route::delete('products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
+    });
+    Route::post('products/{product}/documents', [ProductDocumentController::class, 'store'])
+        ->middleware('can:'.Permission::ProductsManageDocuments->value)
+        ->name('products.documents.store');
+    Route::delete('product-documents/{document}', [ProductDocumentController::class, 'destroy'])
+        ->middleware('can:'.Permission::ProductsManageDocuments->value)
+        ->name('products.documents.destroy');
+    Route::get('product-documents/{document}/download', [ProductDocumentController::class, 'download'])
+        ->middleware('can:'.Permission::ProductsDownloadDocuments->value)
+        ->name('products.documents.download');
 
-    Route::get('quotations', [QuotationController::class, 'index'])->name('quotations.index');
-    Route::get('quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
-    Route::post('quotations', [QuotationController::class, 'store'])->name('quotations.store');
-    Route::get('quotations/{quotation}', [QuotationController::class, 'show'])->name('quotations.show');
-    Route::get('quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
-    Route::put('quotations/{quotation}', [QuotationController::class, 'update'])->name('quotations.update');
-    Route::patch('quotations/{quotation}/status', [QuotationController::class, 'updateStatus'])->name('quotations.update-status');
-    Route::post('quotations/{quotation}/convert-to-order', [QuotationController::class, 'convertToOrder'])->name('quotations.convert-to-order');
-    Route::get('quotations/{quotation}/export-pdf', [QuotationController::class, 'exportPdf'])->name('quotations.export-pdf');
-
-    Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
-    Route::get('clients/create', [ClientController::class, 'create'])->name('clients.create');
-    Route::post('clients', [ClientController::class, 'store'])->name('clients.store');
-});
-
-Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
-    Route::get('paint-development-requests', [PaintDevelopmentRequestController::class, 'index'])->name('paint-development-requests.index');
-    Route::get('paint-development-requests/create', [PaintDevelopmentRequestController::class, 'create'])->name('paint-development-requests.create');
-    Route::post('paint-development-requests', [PaintDevelopmentRequestController::class, 'store'])->name('paint-development-requests.store');
-    Route::get('paint-development-requests/{paintDevelopmentRequest}', [PaintDevelopmentRequestController::class, 'show'])->name('paint-development-requests.show');
-    Route::get('paint-development-requests/{paintDevelopmentRequest}/edit', [PaintDevelopmentRequestController::class, 'edit'])->name('paint-development-requests.edit');
-    Route::put('paint-development-requests/{paintDevelopmentRequest}', [PaintDevelopmentRequestController::class, 'update'])->name('paint-development-requests.update');
-    Route::patch('paint-development-requests/{paintDevelopmentRequest}/submit', [PaintDevelopmentRequestController::class, 'submit'])->name('paint-development-requests.submit');
-    Route::patch('paint-development-requests/{paintDevelopmentRequest}/status', [PaintDevelopmentRequestController::class, 'updateStatus'])->name('paint-development-requests.update-status');
-    Route::get('paint-development-requests/{paintDevelopmentRequest}/export-pdf', [PaintDevelopmentRequestController::class, 'exportPdf'])->name('paint-development-requests.export-pdf');
-});
-
-Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
-    Route::get('sales-orders', [SalesOrderController::class, 'index'])->name('sales-orders.index');
-    Route::get('sales-orders/create', [SalesOrderController::class, 'create'])->name('sales-orders.create');
-    Route::post('sales-orders', [SalesOrderController::class, 'store'])->name('sales-orders.store');
-    Route::get('sales-orders/{sales_order}', [SalesOrderController::class, 'show'])->name('sales-orders.show');
-    Route::patch('sales-orders/{sales_order}', [SalesOrderController::class, 'update'])->name('sales-orders.update');
-});
-
-Route::middleware(['auth', 'verified', 'role:admin,produccion,comercial'])->group(function () {
-    Route::get('finished-inventory', [FinishedInventoryController::class, 'index'])->name('finished-inventory.index');
-    Route::resource('warehouses', WarehouseController::class)->only(['index', 'show']);
-    Route::resource('products', ProductController::class);
-    Route::post('products/{product}/documents', [ProductDocumentController::class, 'store'])->name('products.documents.store');
-    Route::get('product-documents/{document}/download', [ProductDocumentController::class, 'download'])->name('products.documents.download');
-    Route::delete('product-documents/{document}', [ProductDocumentController::class, 'destroy'])->name('products.documents.destroy');
+    // Movimientos de materia prima (inmutables: sin editar ni borrar)
     Route::resource('inventory-movements', InventoryMovementController::class)
-        ->except(['create'])
-        ->where(['inventory_movement' => '[0-9]+']);
-});
+        ->only(['index', 'store', 'show'])
+        ->where(['inventory_movement' => '[0-9]+'])
+        ->middlewareFor(['index', 'show'], 'can:'.Permission::InventoryMovementsView->value)
+        ->middlewareFor('store', 'can:'.Permission::InventoryMovementsCreate->value);
 
-Route::middleware(['auth', 'verified', 'role:admin,produccion'])->group(function () {
+    // Costos
+    Route::get('/admin/costs', [CostController::class, 'index'])
+        ->middleware('can:'.Permission::CostsView->value)
+        ->name('admin.costs.index');
+    Route::patch('/admin/costs/{product}', [CostController::class, 'update'])
+        ->middleware('can:'.Permission::CostsUpdate->value)
+        ->name('admin.costs.update');
+
+    // Listas de precios
+    Route::get('/prices', [PriceListController::class, 'index'])
+        ->middleware('can:'.Permission::PriceListsView->value)
+        ->name('prices.index');
+
+    // Usuarios
+    Route::resource('users', UserController::class)
+        ->except(['show'])
+        ->middlewareFor('index', 'can:'.Permission::UsersView->value)
+        ->middlewareFor(['create', 'store'], 'can:'.Permission::UsersCreate->value)
+        ->middlewareFor(['edit', 'update'], 'can:'.Permission::UsersEdit->value)
+        ->middlewareFor('destroy', 'can:'.Permission::UsersDelete->value);
+
+    // Auditoría
+    Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])
+        ->middleware('can:'.Permission::AuditLogsView->value)
+        ->name('audit-logs.index');
+
+    // Cotizaciones (listado y detalle: la policy decide propias o todas)
+    Route::get('quotations', [QuotationController::class, 'index'])
+        ->middleware('can:viewAny,'.Quotation::class)
+        ->name('quotations.index');
+    Route::get('quotations/create', [QuotationController::class, 'create'])
+        ->middleware('can:'.Permission::QuotationsCreate->value)
+        ->name('quotations.create');
+    Route::post('quotations', [QuotationController::class, 'store'])
+        ->middleware('can:'.Permission::QuotationsCreate->value)
+        ->name('quotations.store');
+    Route::get('quotations/{quotation}', [QuotationController::class, 'show'])
+        ->middleware('can:view,quotation')
+        ->name('quotations.show');
+    Route::get('quotations/{quotation}/edit', [QuotationController::class, 'edit'])
+        ->middleware(['can:'.Permission::QuotationsEdit->value, 'can:update,quotation'])
+        ->name('quotations.edit');
+    Route::put('quotations/{quotation}', [QuotationController::class, 'update'])
+        ->middleware(['can:'.Permission::QuotationsEdit->value, 'can:update,quotation'])
+        ->name('quotations.update');
+    Route::patch('quotations/{quotation}/status', [QuotationController::class, 'updateStatus'])
+        ->middleware(['can:'.Permission::QuotationsUpdateStatus->value, 'can:updateStatus,quotation'])
+        ->name('quotations.update-status');
+    Route::post('quotations/{quotation}/convert-to-order', [QuotationController::class, 'convertToOrder'])
+        ->middleware(['can:'.Permission::QuotationsConvertToOrder->value, 'can:convertToOrder,quotation'])
+        ->name('quotations.convert-to-order');
+    Route::get('quotations/{quotation}/export-pdf', [QuotationController::class, 'exportPdf'])
+        ->middleware(['can:'.Permission::QuotationsExportPdf->value, 'can:exportPdf,quotation'])
+        ->name('quotations.export-pdf');
+
+    // Desarrollo de pinturas (listado y detalle: la policy decide propias o todas)
+    Route::get('paint-development-requests', [PaintDevelopmentRequestController::class, 'index'])
+        ->middleware('can:viewAny,'.PaintDevelopmentRequest::class)
+        ->name('paint-development-requests.index');
+    Route::get('paint-development-requests/create', [PaintDevelopmentRequestController::class, 'create'])
+        ->middleware('can:'.Permission::PaintDevelopmentRequestsCreate->value)
+        ->name('paint-development-requests.create');
+    Route::post('paint-development-requests', [PaintDevelopmentRequestController::class, 'store'])
+        ->middleware('can:'.Permission::PaintDevelopmentRequestsCreate->value)
+        ->name('paint-development-requests.store');
+    Route::get('paint-development-requests/{paintDevelopmentRequest}', [PaintDevelopmentRequestController::class, 'show'])
+        ->middleware('can:view,paintDevelopmentRequest')
+        ->name('paint-development-requests.show');
+    Route::get('paint-development-requests/{paintDevelopmentRequest}/edit', [PaintDevelopmentRequestController::class, 'edit'])
+        ->middleware(['can:'.Permission::PaintDevelopmentRequestsEdit->value, 'can:update,paintDevelopmentRequest'])
+        ->name('paint-development-requests.edit');
+    Route::put('paint-development-requests/{paintDevelopmentRequest}', [PaintDevelopmentRequestController::class, 'update'])
+        ->middleware(['can:'.Permission::PaintDevelopmentRequestsEdit->value, 'can:update,paintDevelopmentRequest'])
+        ->name('paint-development-requests.update');
+    Route::patch('paint-development-requests/{paintDevelopmentRequest}/submit', [PaintDevelopmentRequestController::class, 'submit'])
+        ->middleware(['can:'.Permission::PaintDevelopmentRequestsSubmit->value, 'can:submit,paintDevelopmentRequest'])
+        ->name('paint-development-requests.submit');
+    Route::patch('paint-development-requests/{paintDevelopmentRequest}/status', [PaintDevelopmentRequestController::class, 'updateStatus'])
+        ->middleware(['can:'.Permission::PaintDevelopmentRequestsUpdateStatus->value, 'can:updateStatus,paintDevelopmentRequest'])
+        ->name('paint-development-requests.update-status');
+    Route::get('paint-development-requests/{paintDevelopmentRequest}/export-pdf', [PaintDevelopmentRequestController::class, 'exportPdf'])
+        ->middleware(['can:'.Permission::PaintDevelopmentRequestsExportPdf->value, 'can:exportPdf,paintDevelopmentRequest'])
+        ->name('paint-development-requests.export-pdf');
+
+    // Pedidos de venta (listado y detalle: la policy decide propios o todos)
+    Route::get('sales-orders', [SalesOrderController::class, 'index'])
+        ->middleware('can:viewAny,'.SalesOrder::class)
+        ->name('sales-orders.index');
+    Route::get('sales-orders/create', [SalesOrderController::class, 'create'])
+        ->middleware('can:'.Permission::SalesOrdersCreate->value)
+        ->name('sales-orders.create');
+    Route::post('sales-orders', [SalesOrderController::class, 'store'])
+        ->middleware('can:'.Permission::SalesOrdersCreate->value)
+        ->name('sales-orders.store');
+    Route::get('sales-orders/{sales_order}', [SalesOrderController::class, 'show'])
+        ->middleware('can:view,sales_order')
+        ->name('sales-orders.show');
+    Route::patch('sales-orders/{sales_order}', [SalesOrderController::class, 'update'])
+        ->middleware(['can:'.Permission::SalesOrdersEdit->value, 'can:edit,sales_order'])
+        ->name('sales-orders.update');
+    Route::patch('sales-orders/{sales_order}/status', [SalesOrderController::class, 'updateStatus'])
+        ->middleware(['can:'.Permission::SalesOrdersUpdateStatus->value, 'can:updateStatus,sales_order'])
+        ->name('sales-orders.update-status');
+
+    // Órdenes de producción (cada habilidad combina permiso y estado en ProductionOrderPolicy)
+    Route::get('production-orders', [ProductionOrderController::class, 'index'])
+        ->middleware('can:'.Permission::ProductionOrdersView->value)
+        ->name('production-orders.index');
+    Route::get('production-orders/create', [ProductionOrderController::class, 'create'])
+        ->middleware('can:'.Permission::ProductionOrdersCreate->value)
+        ->name('production-orders.create');
+    Route::post('production-orders', [ProductionOrderController::class, 'store'])
+        ->middleware('can:'.Permission::ProductionOrdersCreate->value)
+        ->name('production-orders.store');
+    Route::get('production-orders/{production_order}', [ProductionOrderController::class, 'show'])
+        ->middleware('can:'.Permission::ProductionOrdersView->value)
+        ->name('production-orders.show')
+        ->whereNumber('production_order');
+    Route::get('production-orders/{production_order}/export-pdf', [ProductionOrderController::class, 'exportPdf'])
+        ->middleware('can:'.Permission::ProductionOrdersExport->value)
+        ->name('production-orders.export-pdf');
+    Route::get('production-orders/{production_order}/export-excel', [ProductionOrderController::class, 'exportExcel'])
+        ->middleware('can:'.Permission::ProductionOrdersExport->value)
+        ->name('production-orders.export-excel');
+    Route::post('production-orders/{production_order}/start', [ProductionOrderController::class, 'startProduction'])
+        ->middleware('can:'.Permission::ProductionOrdersOperate->value)
+        ->name('production-orders.start')
+        ->whereNumber('production_order');
+    Route::post('production-orders/{production_order}/submit-for-review', [ProductionOrderController::class, 'submitForReview'])
+        ->middleware('can:'.Permission::ProductionOrdersSubmitForReview->value)
+        ->name('production-orders.submit-for-review');
+    Route::post('production-orders/{production_order}/reject-review', [ProductionOrderController::class, 'rejectReview'])
+        ->middleware('can:'.Permission::ProductionOrdersRejectReview->value)
+        ->name('production-orders.reject-review');
+    Route::post('production-orders/{production_order}/complete', [ProductionOrderController::class, 'complete'])
+        ->middleware('can:'.Permission::ProductionOrdersComplete->value)
+        ->name('production-orders.complete');
+    Route::post('production-orders/{production_order}/cancel', [ProductionOrderController::class, 'cancel'])
+        ->middleware('can:'.Permission::ProductionOrdersCancel->value)
+        ->name('production-orders.cancel');
+    Route::post('production-orders/{production_order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])
+        ->middleware(['throttle:production-preview-costs', 'can:'.Permission::CostsView->value])
+        ->name('production-orders.preview-costs');
+    Route::middleware('can:'.Permission::ProductionOrdersOperate->value)->group(function () {
+        Route::post('production-orders/{production_order}/line-adjustments', [LineAdjustmentController::class, 'store'])->name('production-orders.line-adjustments.store');
+        Route::delete('production-orders/{production_order}/line-adjustments/{adjustment}', [LineAdjustmentController::class, 'destroy'])->name('production-orders.line-adjustments.destroy');
+        Route::post('production-orders/{production_order}/packaging-plans', [PackagingPlanController::class, 'store'])->name('production-orders.packaging-plans.store');
+        Route::delete('production-orders/{production_order}/packaging-plans/{plan}', [PackagingPlanController::class, 'destroy'])->name('production-orders.packaging-plans.destroy');
+        Route::post('production-orders/{production_order}/consume-remnant', [RemnantConsumptionController::class, 'store'])->name('production-orders.consume-remnant');
+        Route::get('production-orders/{production_order}/available-remnants', [RemnantConsumptionController::class, 'availableRemnants'])->name('production-orders.available-remnants');
+    });
+
+    // Inventario de producto terminado
+    Route::get('finished-inventory', [FinishedInventoryController::class, 'index'])
+        ->middleware('can:'.Permission::FinishedInventoryView->value)
+        ->name('finished-inventory.index');
     Route::resource('finished-inventory-movements', FinishedInventoryMovementController::class)
         ->only(['index', 'store', 'show'])
-        ->where(['finished_inventory_movement' => '[0-9]+']);
-});
-
-Route::middleware(['auth', 'verified', 'role:admin,produccion,operador'])->group(function () {
-    Route::post('production-orders/{production_order}/line-adjustments', [LineAdjustmentController::class, 'store'])->name('production-orders.line-adjustments.store');
-    Route::delete('production-orders/{production_order}/line-adjustments/{adjustment}', [LineAdjustmentController::class, 'destroy'])->name('production-orders.line-adjustments.destroy');
-
-    Route::post('production-orders/{production_order}/packaging-plans', [PackagingPlanController::class, 'store'])->name('production-orders.packaging-plans.store');
-    Route::delete('production-orders/{production_order}/packaging-plans/{plan}', [PackagingPlanController::class, 'destroy'])->name('production-orders.packaging-plans.destroy');
-
-    Route::post('production-orders/{production_order}/consume-remnant', [RemnantConsumptionController::class, 'store'])->name('production-orders.consume-remnant');
-    Route::get('production-orders/{production_order}/available-remnants', [RemnantConsumptionController::class, 'availableRemnants'])->name('production-orders.available-remnants');
-
-    Route::get('production-orders', [ProductionOrderController::class, 'index'])->name('production-orders.index');
-    Route::get('production-orders/{production_order}', [ProductionOrderController::class, 'show'])->name('production-orders.show')->whereNumber('production_order');
-    Route::get('production-orders/{production_order}/export-pdf', [ProductionOrderController::class, 'exportPdf'])->name('production-orders.export-pdf');
-    Route::get('production-orders/{production_order}/export-excel', [ProductionOrderController::class, 'exportExcel'])->name('production-orders.export-excel');
-    Route::post('production-orders/{production_order}/start', [ProductionOrderController::class, 'startProduction'])->name('production-orders.start')->whereNumber('production_order');
-    Route::post('production-orders/{production_order}/submit-for-review', [ProductionOrderController::class, 'submitForReview'])->name('production-orders.submit-for-review');
+        ->where(['finished_inventory_movement' => '[0-9]+'])
+        ->middlewareFor(['index', 'show'], 'can:'.Permission::FinishedInventoryMovementsView->value)
+        ->middlewareFor('store', 'can:'.Permission::FinishedInventoryMovementsCreate->value);
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

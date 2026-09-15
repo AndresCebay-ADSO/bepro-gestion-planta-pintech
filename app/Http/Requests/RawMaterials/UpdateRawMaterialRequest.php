@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\RawMaterials;
 
+use App\Models\RawMaterial;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -11,7 +12,10 @@ class UpdateRawMaterialRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasRole('admin') ?? false;
+        $rawMaterial = $this->route('raw_material');
+
+        return $rawMaterial instanceof RawMaterial
+            && ($this->user()?->can('update', $rawMaterial) ?? false);
     }
 
     public function rules(): array

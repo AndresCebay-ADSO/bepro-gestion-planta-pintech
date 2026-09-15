@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Permission;
 use App\Filters\ClientFilter;
 use App\Http\Requests\Clients\IndexClientRequest;
 use App\Http\Requests\Clients\StoreClientRequest;
@@ -29,7 +30,7 @@ class ClientController extends Controller
         return Inertia::render('Clients/Index', [
             'clients' => $clients,
             'filters' => $request->validated(),
-            'can' => ['edit' => $user?->hasRole('admin') ?? false],
+            'can' => ['edit' => $user?->can(Permission::ClientsEdit->value) ?? false],
         ]);
     }
 

@@ -5,26 +5,25 @@ use App\Models\Quotation;
 use App\Models\SalesOrder;
 use App\Models\User;
 use App\Services\SignatureOptimizerService;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Spatie\Activitylog\Models\Activity;
-use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
-    Role::findOrCreate('admin', 'web');
-    Role::findOrCreate('operador', 'web');
+    $this->seed(RolePermissionSeeder::class);
 });
 
 // ──────────────────────────────────────────────
 // destroy()
 // ──────────────────────────────────────────────
 
-test('admin cannot delete their own account', function () {
+test('super-admin cannot delete their own account', function () {
     $admin = User::factory()->create();
-    $admin->assignRole('admin');
+    $admin->assignRole('super-admin');
 
     $this->actingAs($admin)
         ->delete(route('users.destroy', $admin))
@@ -34,9 +33,9 @@ test('admin cannot delete their own account', function () {
     $this->assertDatabaseHas('users', ['id' => $admin->id]);
 });
 
-test('admin cannot delete a user that has activity logs', function () {
+test('super-admin cannot delete a user that has activity logs', function () {
     $admin = User::factory()->create();
-    $admin->assignRole('admin');
+    $admin->assignRole('super-admin');
 
     $target = User::factory()->create();
     $target->assignRole('operador');
@@ -53,9 +52,9 @@ test('admin cannot delete a user that has activity logs', function () {
     $this->assertDatabaseHas('users', ['id' => $target->id]);
 });
 
-test('admin cannot delete a user that has records via created_by in system tables', function () {
+test('super-admin cannot delete a user that has records via created_by in system tables', function () {
     $admin = User::factory()->create();
-    $admin->assignRole('admin');
+    $admin->assignRole('super-admin');
 
     $target = User::factory()->create();
     $target->assignRole('operador');
@@ -85,9 +84,9 @@ test('admin cannot delete a user that has records via created_by in system table
     $this->assertDatabaseHas('users', ['id' => $target->id]);
 });
 
-test('admin can delete a user with no activity', function () {
+test('super-admin can delete a user with no activity', function () {
     $admin = User::factory()->create();
-    $admin->assignRole('admin');
+    $admin->assignRole('super-admin');
 
     $target = User::factory()->create();
     $target->assignRole('operador');
@@ -374,7 +373,7 @@ test('signature file is deleted when user is deleted', function () {
     Storage::fake('public');
 
     $admin = User::factory()->create();
-    $admin->assignRole('admin');
+    $admin->assignRole('super-admin');
 
     $target = User::factory()->create([
         'signature_path' => 'signatures/delete_me.png',
@@ -447,7 +446,7 @@ test('signature file is preserved on disk if user deletion fails', function () {
     Storage::fake('public');
 
     $admin = User::factory()->create();
-    $admin->assignRole('admin');
+    $admin->assignRole('super-admin');
 
     $target = User::factory()->create([
         'signature_path' => 'signatures/preserve_me.png',
@@ -588,7 +587,7 @@ test('admin cannot deactivate their own account in update', function () {
     expect($admin->fresh()->is_active)->toBeTrue();
 });
 
-test('admin cannot revoke their own admin role in update', function () {
+test('users cannot change their own role in update', function () {
     $admin = User::factory()->create(['is_active' => true]);
     $admin->assignRole('admin');
 
@@ -600,7 +599,7 @@ test('admin cannot revoke their own admin role in update', function () {
             'is_active' => true,
         ])
         ->assertRedirect()
-        ->assertSessionHas('error', 'No puedes revocar tu propio rol de administrador.');
+        ->assertSessionHas('error', 'No puedes cambiar tu propio rol.');
 
     expect($admin->fresh()->hasRole('admin'))->toBeTrue();
 });
@@ -627,7 +626,7 @@ test('hasActivity returns true when user is assigned in quotations, sales orders
 
 test('destroy catches QueryException with code 23503 and redirects back with error', function () {
     $admin = User::factory()->create();
-    $admin->assignRole('admin');
+    $admin->assignRole('super-admin');
 
     $target = User::factory()->create();
     $target->assignRole('operador');
@@ -713,4 +712,101 @@ test('admin cannot demote or deactivate another admin if they are the only other
         ->assertSessionHas('error', 'No se puede desactivar o degradar al único administrador activo del sistema.');
 
     expect($admin1->fresh()->hasRole('admin'))->toBeTrue();
+});
+
+test('admin cannot delete users', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $target = User::factory()->create();
+    $target->assignRole('operador');
+    Activity::where('causer_id', $target->id)->delete();
+
+    $this->actingAs($admin)
+        ->delete(route('users.destroy', $target))
+        ->assertForbidden();
+
+    $this->assertDatabaseHas('users', ['id' => $target->id]);
+});
+
+test('admin cannot edit or update a super-admin user', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $superAdmin = User::factory()->create();
+    $superAdmin->assignRole('super-admin');
+
+    $this->actingAs($admin)
+        ->get(route('users.edit', $superAdmin))
+        ->assertForbidden();
+
+    $this->actingAs($admin)
+        ->put(route('users.update', $superAdmin), [
+            'name' => 'Intento',
+            'email' => $superAdmin->email,
+            'is_active' => false,
+            'role' => 'admin',
+        ])
+        ->assertForbidden();
+
+    expect($superAdmin->fresh()->hasRole('super-admin'))->toBeTrue()
+        ->and((bool) $superAdmin->fresh()->is_active)->toBeTrue();
+});
+
+test('only users with audit_logs.view receive recent activity on the users index', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $this->actingAs($admin)
+        ->get(route('users.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('can.viewActivity', false)
+            ->where('recentActivities', []));
+
+    $superAdmin = User::factory()->create();
+    $superAdmin->assignRole('super-admin');
+
+    $this->actingAs($superAdmin)
+        ->get(route('users.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('can.viewActivity', true)
+            ->has('recentActivities'));
+});
+
+test('the last active super-admin cannot be deactivated or demoted', function () {
+    $activeSuperAdmin = User::factory()->create(['is_active' => true]);
+    $activeSuperAdmin->assignRole('super-admin');
+
+    $inactiveSuperAdmin = User::factory()->create(['is_active' => false]);
+    $inactiveSuperAdmin->assignRole('super-admin');
+
+    $this->actingAs($inactiveSuperAdmin)
+        ->put(route('users.update', $activeSuperAdmin), [
+            'name' => $activeSuperAdmin->name,
+            'email' => $activeSuperAdmin->email,
+            'role' => 'admin',
+            'is_active' => true,
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
+
+    expect($activeSuperAdmin->fresh()->isSuperAdmin())->toBeTrue();
+});
+
+test('a super-admin cannot be deleted', function () {
+    $superAdmin = User::factory()->create();
+    $superAdmin->assignRole('super-admin');
+
+    $otherSuperAdmin = User::factory()->create();
+    $otherSuperAdmin->assignRole('super-admin');
+    Activity::where('causer_id', $otherSuperAdmin->id)->delete();
+
+    $this->actingAs($superAdmin)
+        ->delete(route('users.destroy', $otherSuperAdmin))
+        ->assertRedirect()
+        ->assertSessionHas('error', 'No se puede eliminar un administrador. Desactiva su cuenta en su lugar.');
+
+    $this->assertDatabaseHas('users', ['id' => $otherSuperAdmin->id]);
 });

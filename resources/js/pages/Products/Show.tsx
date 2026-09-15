@@ -140,6 +140,10 @@ type Props = {
     can: {
         update: boolean;
         delete: boolean;
+        manageVariants: boolean;
+        manageDocuments: boolean;
+        viewCosts: boolean;
+        viewFormulas: boolean;
     };
     documentTypes: Array<{
         value: 'technical_data_sheet' | 'safety_data_sheet';
@@ -511,7 +515,7 @@ export default function ProductsShow({
                                     junto al certificado de calidad del lote.
                                 </CardDescription>
                             </div>
-                            {can.update && (
+                            {can.manageDocuments && (
                                 <Dialog
                                     open={isDocumentDialogOpen}
                                     onOpenChange={setIsDocumentDialogOpen}
@@ -665,7 +669,7 @@ export default function ProductsShow({
                                         coherentes con tu catálogo.
                                     </p>
                                 </div>
-                                {can.update && (
+                                {can.manageDocuments && (
                                     <Button
                                         size="sm"
                                         variant="outline"
@@ -761,7 +765,7 @@ export default function ProductsShow({
                                                         Descargar PDF
                                                     </TooltipContent>
                                                 </Tooltip>
-                                                {can.update && (
+                                                {can.manageDocuments && (
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
                                                             <Button
@@ -916,7 +920,7 @@ export default function ProductsShow({
                                 etc. El valor se define en galones.
                             </p>
                         </div>
-                        {can.update && (
+                        {can.manageVariants && (
                             <Dialog
                                 open={dialogMode !== null}
                                 onOpenChange={(open) => {
@@ -1080,32 +1084,34 @@ export default function ProductsShow({
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="current_cost">
-                                                    Costo Actual
-                                                </Label>
-                                                <Input
-                                                    id="current_cost"
-                                                    type="number"
-                                                    step="0.0001"
-                                                    value={
-                                                        editingVariant?.current_cost !=
-                                                        null
-                                                            ? String(
-                                                                  editingVariant.current_cost,
-                                                              )
-                                                            : ''
-                                                    }
-                                                    readOnly
-                                                    className="bg-muted/50 cursor-not-allowed"
-                                                    placeholder="0.00"
-                                                />
-                                                <p className="text-xs text-muted-foreground">
-                                                    {activeFormula
-                                                        ? 'Calculado por la fórmula activa y el envase.'
-                                                        : 'Se calculará al registrar la fórmula de producción.'}
-                                                </p>
-                                            </div>
+                                            {can.viewCosts && (
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="current_cost">
+                                                        Costo Actual
+                                                    </Label>
+                                                    <Input
+                                                        id="current_cost"
+                                                        type="number"
+                                                        step="0.0001"
+                                                        value={
+                                                            editingVariant?.current_cost !=
+                                                            null
+                                                                ? String(
+                                                                      editingVariant.current_cost,
+                                                                  )
+                                                                : ''
+                                                        }
+                                                        readOnly
+                                                        className="cursor-not-allowed bg-muted/50"
+                                                        placeholder="0.00"
+                                                    />
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {activeFormula
+                                                            ? 'Calculado por la fórmula activa y el envase.'
+                                                            : 'Se calculará al registrar la fórmula de producción.'}
+                                                    </p>
+                                                </div>
+                                            )}
                                             <div className="space-y-2">
                                                 <Label htmlFor="current_price">
                                                     Precio Interno
@@ -1123,7 +1129,7 @@ export default function ProductsShow({
                                                             : ''
                                                     }
                                                     readOnly
-                                                    className="bg-muted/50 cursor-not-allowed"
+                                                    className="cursor-not-allowed bg-muted/50"
                                                     placeholder="0.00"
                                                 />
                                                 <p className="text-xs text-muted-foreground">
@@ -1154,18 +1160,16 @@ export default function ProductsShow({
                                                     <SelectValue placeholder="Selecciona el envase (opcional)" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {rawMaterials?.map(
-                                                        (rm) => (
-                                                            <SelectItem
-                                                                key={rm.id}
-                                                                value={String(
-                                                                    rm.id,
-                                                                )}
-                                                            >
-                                                                {rm.code}
-                                                            </SelectItem>
-                                                        ),
-                                                    )}
+                                                    {rawMaterials?.map((rm) => (
+                                                        <SelectItem
+                                                            key={rm.id}
+                                                            value={String(
+                                                                rm.id,
+                                                            )}
+                                                        >
+                                                            {rm.code}
+                                                        </SelectItem>
+                                                    ))}
                                                 </SelectContent>
                                             </Select>
                                             <p className="text-xs text-muted-foreground">
@@ -1221,7 +1225,7 @@ export default function ProductsShow({
                                 <th className="p-4 text-left font-medium">
                                     Estado
                                 </th>
-                                {can.update && (
+                                {can.manageVariants && (
                                     <th className="p-4 text-right font-medium">
                                         Acciones
                                     </th>
@@ -1270,7 +1274,7 @@ export default function ProductsShow({
                                                 : 'Inactiva'}
                                         </Badge>
                                     </td>
-                                    {can.update && (
+                                    {can.manageVariants && (
                                         <td className="p-4 text-right">
                                             <div className="flex items-center justify-end gap-1">
                                                 <Button
@@ -1303,7 +1307,7 @@ export default function ProductsShow({
                             {(product.variants ?? []).length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={can.update ? 6 : 5}
+                                        colSpan={can.manageVariants ? 6 : 5}
                                         className="p-8 text-center text-sm text-muted-foreground"
                                     >
                                         Este producto aún no tiene variantes
@@ -1315,129 +1319,132 @@ export default function ProductsShow({
                     </table>
                 </div>
 
-                <div className="rounded-lg border border-border bg-card">
-                    <div className="flex items-center justify-between border-b border-border px-6 py-4">
-                        <div>
-                            <h2 className="font-medium text-foreground">
-                                Fórmulas
-                            </h2>
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                                {activeFormula
-                                    ? `Versión activa: v${activeFormula.version}`
-                                    : 'Sin fórmula activa'}
-                            </p>
-                        </div>
-                        <Button size="sm" asChild>
-                            <Link
-                                href={
-                                    formulasCreate({
-                                        query: {
-                                            product_id: product.id,
-                                            return_to: withReturnTo(
-                                                productsShow({
-                                                    product: product.id,
-                                                }).url,
-                                                returnTo,
-                                            ),
-                                        },
-                                    }).url
-                                }
-                            >
-                                Nueva Fórmula
-                            </Link>
-                        </Button>
-                    </div>
-
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/40">
-                            <tr>
-                                <th className="p-4 text-left font-medium">
-                                    Versión
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Estado
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Notas
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Creada por
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Fecha
-                                </th>
-                                <th className="p-4 text-right font-medium">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {(product.formulas ?? []).map((formula) => (
-                                <tr
-                                    key={formula.id}
-                                    className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30"
+                {can.viewFormulas && (
+                    <div className="rounded-lg border border-border bg-card">
+                        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+                            <div>
+                                <h2 className="font-medium text-foreground">
+                                    Fórmulas
+                                </h2>
+                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                    {activeFormula
+                                        ? `Versión activa: v${activeFormula.version}`
+                                        : 'Sin fórmula activa'}
+                                </p>
+                            </div>
+                            <Button size="sm" asChild>
+                                <Link
+                                    href={
+                                        formulasCreate({
+                                            query: {
+                                                product_id: product.id,
+                                                return_to: withReturnTo(
+                                                    productsShow({
+                                                        product: product.id,
+                                                    }).url,
+                                                    returnTo,
+                                                ),
+                                            },
+                                        }).url
+                                    }
                                 >
-                                    <td className="p-4 font-mono font-medium">
-                                        v{formula.version}
-                                    </td>
-                                    <td className="p-4">
-                                        <Badge
-                                            variant={
-                                                formula.is_active
-                                                    ? 'default'
-                                                    : 'secondary'
-                                            }
-                                        >
-                                            {formula.is_active
-                                                ? 'Activa'
-                                                : 'Inactiva'}
-                                        </Badge>
-                                    </td>
-                                    <td className="p-4 text-muted-foreground">
-                                        {formula.notes ?? '-'}
-                                    </td>
-                                    <td className="p-4 text-muted-foreground">
-                                        {formula.created_by?.name ?? '-'}
-                                    </td>
-                                    <td className="p-4 text-xs text-muted-foreground">
-                                        <FormattedDate
-                                            value={formula.created_at}
-                                            format="datetime"
-                                        />
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            asChild
-                                        >
-                                            <Link
-                                                href={
-                                                    formulasShow({
-                                                        formula: formula.id,
-                                                    }).url
+                                    Nueva Fórmula
+                                </Link>
+                            </Button>
+                        </div>
+
+                        <table className="w-full text-sm">
+                            <thead className="border-b border-border bg-muted/40">
+                                <tr>
+                                    <th className="p-4 text-left font-medium">
+                                        Versión
+                                    </th>
+                                    <th className="p-4 text-left font-medium">
+                                        Estado
+                                    </th>
+                                    <th className="p-4 text-left font-medium">
+                                        Notas
+                                    </th>
+                                    <th className="p-4 text-left font-medium">
+                                        Creada por
+                                    </th>
+                                    <th className="p-4 text-left font-medium">
+                                        Fecha
+                                    </th>
+                                    <th className="p-4 text-right font-medium">
+                                        Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {(product.formulas ?? []).map((formula) => (
+                                    <tr
+                                        key={formula.id}
+                                        className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30"
+                                    >
+                                        <td className="p-4 font-mono font-medium">
+                                            v{formula.version}
+                                        </td>
+                                        <td className="p-4">
+                                            <Badge
+                                                variant={
+                                                    formula.is_active
+                                                        ? 'default'
+                                                        : 'secondary'
                                                 }
                                             >
-                                                Ver
-                                            </Link>
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {(product.formulas ?? []).length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={6}
-                                        className="p-8 text-center text-sm text-muted-foreground"
-                                    >
-                                        No hay fórmulas registradas. Crea la
-                                        primera usando el botón "Nueva Fórmula".
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                                {formula.is_active
+                                                    ? 'Activa'
+                                                    : 'Inactiva'}
+                                            </Badge>
+                                        </td>
+                                        <td className="p-4 text-muted-foreground">
+                                            {formula.notes ?? '-'}
+                                        </td>
+                                        <td className="p-4 text-muted-foreground">
+                                            {formula.created_by?.name ?? '-'}
+                                        </td>
+                                        <td className="p-4 text-xs text-muted-foreground">
+                                            <FormattedDate
+                                                value={formula.created_at}
+                                                format="datetime"
+                                            />
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                asChild
+                                            >
+                                                <Link
+                                                    href={
+                                                        formulasShow({
+                                                            formula: formula.id,
+                                                        }).url
+                                                    }
+                                                >
+                                                    Ver
+                                                </Link>
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {(product.formulas ?? []).length === 0 && (
+                                    <tr>
+                                        <td
+                                            colSpan={6}
+                                            className="p-8 text-center text-sm text-muted-foreground"
+                                        >
+                                            No hay fórmulas registradas. Crea la
+                                            primera usando el botón "Nueva
+                                            Fórmula".
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         </>
     );

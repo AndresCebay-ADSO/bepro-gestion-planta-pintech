@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Enums\Permission;
 use App\Filters\WarehouseFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Inventory\IndexWarehouseRequest;
@@ -30,7 +31,7 @@ class WarehouseController extends Controller
             ->withCount('users')
             ->latest('id');
 
-        if (! $user->hasRole('admin')) {
+        if (! $user->can(Permission::WarehousesViewAll->value)) {
             $query->whereHas('users', fn ($usersQuery) => $usersQuery->where('users.id', $user->id));
         }
 
@@ -104,7 +105,7 @@ class WarehouseController extends Controller
             'can' => [
                 'update' => Gate::allows('update', $warehouse),
                 'delete' => Gate::allows('delete', $warehouse),
-                'assignUsers' => Gate::allows('update', $warehouse),
+                'assignUsers' => Gate::allows('assignUsers', $warehouse),
             ],
         ]);
     }
@@ -147,7 +148,7 @@ class WarehouseController extends Controller
 
     public function assignUsersPage(Warehouse $warehouse): Response
     {
-        $this->authorize('update', $warehouse);
+        $this->authorize('assignUsers', $warehouse);
 
         $warehouse->load('users:id,name,email');
 
@@ -182,7 +183,7 @@ class WarehouseController extends Controller
 
     public function assignUsers(AssignUsersRequest $request, Warehouse $warehouse): RedirectResponse
     {
-        $this->authorize('update', $warehouse);
+        $this->authorize('assignUsers', $warehouse);
 
         $validated = $request->validated();
         $userItems = collect($validated['users'])

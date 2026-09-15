@@ -3,6 +3,7 @@
 use App\Models\User;
 use App\Services\SignatureOptimizerService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -218,62 +219,6 @@ test('email verification status is unchanged when the email address is unchanged
     expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
 
-test('user can delete their account', function () {
-    $user = User::factory()->create();
-
-    $response = $this
-        ->actingAs($user)
-        ->delete(route('profile.destroy'), [
-            'password' => 'password',
-        ]);
-
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect(route('home'));
-
-    $this->assertGuest();
-    expect($user->fresh())->toBeNull();
-});
-
-test('correct password must be provided to delete account', function () {
-    $user = User::factory()->create();
-
-    $response = $this
-        ->actingAs($user)
-        ->from(route('profile.edit'))
-        ->delete(route('profile.destroy'), [
-            'password' => 'wrong-password',
-        ]);
-
-    $response
-        ->assertSessionHasErrors('password')
-        ->assertRedirect(route('profile.edit'));
-
-    expect($user->fresh())->not->toBeNull();
-});
-
-test('signature file is deleted when user deletes their account', function () {
-    Storage::fake('public');
-
-    $user = User::factory()->create([
-        'signature_path' => 'signatures/my_signature.png',
-    ]);
-    Storage::disk('public')->put('signatures/my_signature.png', 'signature-data');
-
-    $response = $this
-        ->actingAs($user)
-        ->delete(route('profile.destroy'), [
-            'password' => 'password',
-        ]);
-
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect(route('home'));
-
-    Storage::disk('public')->assertMissing('signatures/my_signature.png');
-    expect($user->fresh())->toBeNull();
-});
-
 test('profile update fails gracefully when signature optimizer throws validation exception', function () {
     Storage::fake('public');
 
@@ -305,26 +250,6 @@ test('profile update fails gracefully when signature optimizer throws validation
     $user->refresh();
     expect($user->signature_path)->toBe('signatures/keep_me.png');
     Storage::disk('public')->assertExists('signatures/keep_me.png');
-});
-
-test('signature file is preserved on disk if profile deletion fails', function () {
-    Storage::fake('public');
-
-    $user = User::factory()->create([
-        'signature_path' => 'signatures/preserve_profile.png',
-    ]);
-    Storage::disk('public')->put('signatures/preserve_profile.png', 'signature-data');
-
-    $response = $this
-        ->actingAs($user)
-        ->delete(route('profile.destroy'), [
-            'password' => 'wrong-password',
-        ]);
-
-    $response->assertSessionHasErrors('password');
-
-    Storage::disk('public')->assertExists('signatures/preserve_profile.png');
-    expect($user->fresh())->not->toBeNull();
 });
 
 test('profile update normalizes uppercase email to lowercase', function () {
@@ -363,4 +288,16 @@ test('user with pre-existing uppercase email can update profile without email er
     expect($user->name)->toBe('Nuevo Nombre')
         ->and($user->phone)->toBe('3001234567')
         ->and($user->email)->toBe('admin@company.com');
+});
+
+test('users cannot delete their own account', function () {
+    $user = User::factory()->create();
+
+    expect(Route::has('profile.destroy'))->toBeFalse();
+
+    $this->actingAs($user)
+        ->delete('/settings/profile')
+        ->assertMethodNotAllowed();
+
+    expect($user->fresh())->not->toBeNull();
 });

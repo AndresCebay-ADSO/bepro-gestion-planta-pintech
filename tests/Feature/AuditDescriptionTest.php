@@ -12,9 +12,9 @@ use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Activitylog\Models\Activity;
-use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -322,12 +322,13 @@ test('failed login listener logs description in Spanish', function () {
 // --- Role change manual log stays in Spanish ---
 
 test('role change manual log remains in Spanish', function () {
+    $this->seed(RolePermissionSeeder::class);
     $admin = User::factory()->create();
-    $admin->assignRole(Role::create(['name' => 'admin']));
+    $admin->assignRole('admin');
     $this->actingAs($admin);
 
     $target = User::factory()->create(['name' => 'Target User']);
-    $target->assignRole(Role::create(['name' => 'operador']));
+    $target->assignRole('operador');
 
     Activity::query()->delete();
 

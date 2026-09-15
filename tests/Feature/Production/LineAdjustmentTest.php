@@ -6,7 +6,6 @@ use App\Models\ProductionOrderLineAdjustment;
 use App\Models\RawMaterial;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -17,14 +16,10 @@ use App\Models\ProductCategory;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\Warehouse;
+use Database\Seeders\RolePermissionSeeder;
 
 beforeEach(function () {
-    if (Role::count() === 0) {
-        Role::create(['name' => 'admin']);
-        Role::create(['name' => 'produccion']);
-        Role::create(['name' => 'comercial']);
-        Role::create(['name' => 'operador']);
-    }
+    test()->seed(RolePermissionSeeder::class);
 
     $this->user = User::factory()->create([
         'email_verified_at' => now(),

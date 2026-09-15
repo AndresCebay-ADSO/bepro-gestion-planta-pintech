@@ -1,6 +1,5 @@
 import type { InertiaLinkProps } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
-import type { UserRole } from '@/types/auth';
 
 export type BreadcrumbItem = {
     title: string;
@@ -13,7 +12,8 @@ export type NavItem = {
     icon?: LucideIcon | null;
     isActive?: boolean;
     badge?: number | string;
-    allowedRoles?: UserRole[];
+    /** Permisos que dan acceso (basta con uno). Sin permisos, el ítem es visible para todo usuario con sesión. */
+    allowedPermissions?: string[];
     unauthorizedBehavior?: 'hide' | 'disable';
     disabled?: boolean;
     disabledLabel?: string;

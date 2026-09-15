@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\AlertType;
+use App\Enums\DashboardProfile;
+use App\Enums\Permission;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\QuotationStatus;
 use App\Models\Alert;
@@ -19,73 +21,106 @@ use Illuminate\Support\Carbon;
 
 class DashboardService
 {
+    /**
+     * Cualquiera de estos permisos da acceso a la vista comercial.
+     */
+    private const COMMERCIAL_PERMISSIONS = [
+        'quotations.view_own',
+        'quotations.view_all',
+        'sales_orders.view_own',
+        'sales_orders.view_all',
+    ];
+
     public function __construct(
         private readonly AlertService $alertService,
     ) {}
 
     /**
-     * Construye los datos del dashboard según el rol del usuario.
+     * Construye los datos del dashboard. La vista y cada dato dependen de los permisos del usuario.
      */
     public function build(User $user): array
     {
-        $role = $user->getRoleNames()->first();
+        $profile = $this->resolveProfile($user);
 
-        return match ($role) {
-            'admin' => $this->buildForAdmin(),
-            'produccion' => $this->buildForProduction(),
-            'operador' => $this->buildForOperator(),
-            'comercial' => $this->buildForComercial($user),
-            default => throw new \LogicException("Dashboard: rol no soportado: {$role}"),
+        return [
+            'profile' => $profile->value,
+            ...match ($profile) {
+                DashboardProfile::Admin => $this->buildForAdmin($user),
+                DashboardProfile::Production => $this->buildForProduction($user),
+                DashboardProfile::Plant => $this->buildForPlant(),
+                DashboardProfile::Commercial => $this->buildForCommercial($user),
+                DashboardProfile::None => ['stats' => []],
+            },
+        ];
+    }
+
+    /**
+     * Elige la vista del dashboard: la primera cuyo permiso tenga el usuario.
+     */
+    public function resolveProfile(User $user): DashboardProfile
+    {
+        return match (true) {
+            $user->can(Permission::UsersView->value) => DashboardProfile::Admin,
+            $user->can(Permission::ProductionOrdersCreate->value) => DashboardProfile::Production,
+            $user->can(Permission::ProductionOrdersView->value) => DashboardProfile::Plant,
+            $user->canAny(self::COMMERCIAL_PERMISSIONS) => DashboardProfile::Commercial,
+            default => DashboardProfile::None,
         };
     }
 
-    private function buildForAdmin(): array
+    private function buildForAdmin(User $user): array
     {
         $today = Carbon::today('America/Bogota')->format('Y-m-d');
+        $canSeeOrders = $user->can(Permission::ProductionOrdersView->value);
+        $canSeeAlerts = $user->can(Permission::AlertsView->value);
 
         $stats = [
-            'total_users' => User::query()->count(),
-            'total_products' => Product::query()->count(),
-            'total_warehouses' => Warehouse::query()->count(),
-            'pending_orders' => $this->pendingOrdersCount(),
-            'active_orders' => $this->activeOrdersCount(),
-            'completed_today' => $this->completedTodayCount($today),
-            'unresolved_alerts' => $this->alertService->unresolvedCount(),
-            'low_stock_materials' => $this->lowStockCount(),
-            'expiring_batches' => $this->expiringBatchesCount(),
+            ...($user->can(Permission::UsersView->value) ? ['total_users' => User::query()->count()] : []),
+            ...($user->can(Permission::ProductsView->value) ? ['total_products' => Product::query()->count()] : []),
+            ...($user->can(Permission::WarehousesView->value) ? ['total_warehouses' => Warehouse::query()->count()] : []),
+            ...($canSeeOrders ? [
+                'pending_orders' => $this->pendingOrdersCount(),
+                'active_orders' => $this->activeOrdersCount(),
+                'completed_today' => $this->completedTodayCount($today),
+            ] : []),
+            ...($canSeeAlerts ? ['unresolved_alerts' => $this->alertService->unresolvedCount()] : []),
+            ...$this->stockStats($user),
         ];
 
         return [
             'stats' => $stats,
-            'recent_orders' => $this->recentProductionOrders(5),
-            'recent_alerts' => $this->alertService->recentUnresolved(5),
-            'alert_breakdown' => $this->alertService->unresolvedBreakdown(),
+            ...($canSeeOrders ? ['recent_orders' => $this->recentProductionOrders(5)] : []),
+            ...$this->alertBlock($user),
         ];
     }
 
-    private function buildForProduction(): array
+    private function buildForProduction(User $user): array
     {
         $today = Carbon::today('America/Bogota')->format('Y-m-d');
+        $canSeeOrders = $user->can(Permission::ProductionOrdersView->value);
 
         $stats = [
-            'pending_orders' => $this->pendingOrdersCount(),
-            'active_orders' => $this->activeOrdersCount(),
-            'pending_review_orders' => $this->pendingReviewOrdersCount(),
-            'completed_today' => $this->completedTodayCount($today),
-            'unresolved_alerts' => $this->alertService->unresolvedCount(),
-            'low_stock_materials' => $this->lowStockCount(),
-            'expiring_batches' => $this->expiringBatchesCount(),
+            ...($canSeeOrders ? [
+                'pending_orders' => $this->pendingOrdersCount(),
+                'active_orders' => $this->activeOrdersCount(),
+                'pending_review_orders' => $this->pendingReviewOrdersCount(),
+                'completed_today' => $this->completedTodayCount($today),
+            ] : []),
+            ...($user->can(Permission::AlertsView->value) ? ['unresolved_alerts' => $this->alertService->unresolvedCount()] : []),
+            ...$this->stockStats($user),
         ];
 
         return [
             'stats' => $stats,
-            'recent_orders' => $this->recentProductionOrders(5),
-            'recent_alerts' => $this->alertService->recentUnresolved(5),
-            'alert_breakdown' => $this->alertService->unresolvedBreakdown(),
+            ...($canSeeOrders ? ['recent_orders' => $this->recentProductionOrders(5)] : []),
+            ...$this->alertBlock($user),
         ];
     }
 
-    private function buildForOperator(): array
+    /**
+     * Vista de planta: su permiso de entrada (production_orders.view) cubre todos sus datos.
+     */
+    private function buildForPlant(): array
     {
         $today = Carbon::today('America/Bogota')->format('Y-m-d');
 
@@ -102,28 +137,55 @@ class DashboardService
         ];
     }
 
-    private function buildForComercial(User $user): array
+    /**
+     * Vista comercial: cada dato se calcula solo con su permiso y respeta view_own / view_all (scopes visibleTo).
+     */
+    private function buildForCommercial(User $user): array
     {
-        $userId = $user->id;
+        $canSeeQuotes = $user->canAny([Permission::QuotationsViewOwn->value, Permission::QuotationsViewAll->value]);
+        $canSeeSalesOrders = $user->canAny([Permission::SalesOrdersViewOwn->value, Permission::SalesOrdersViewAll->value]);
 
-        $activeQuotes = Quotation::query()
-            ->where('created_by', $userId)
-            ->whereIn('status', [QuotationStatus::Draft->value, QuotationStatus::Sent->value])
-            ->count();
+        return [
+            'stats' => [
+                ...($user->can(Permission::ProductsView->value)
+                    ? ['available_products' => Product::query()->where('is_active', true)->count()]
+                    : []),
+                ...($canSeeQuotes ? $this->quotationStats($user) : []),
+                ...($canSeeSalesOrders
+                    ? ['pending_orders' => SalesOrder::query()->visibleTo($user)->pending()->count()]
+                    : []),
+                ...($user->can(Permission::ClientsView->value) ? ['total_clients' => Client::query()->count()] : []),
+            ],
+            ...($canSeeQuotes ? ['recent_quotes' => $this->recentQuotes($user)] : []),
+            ...($canSeeSalesOrders ? ['recent_sales_orders' => $this->recentSalesOrders($user)] : []),
+        ];
+    }
 
-        $acceptedQuotes = Quotation::query()
-            ->where('created_by', $userId)
-            ->where('status', QuotationStatus::Accepted->value)
-            ->count();
+    /**
+     * @return array{active_quotes: int, accepted_quotes: int}
+     */
+    private function quotationStats(User $user): array
+    {
+        return [
+            'active_quotes' => Quotation::query()
+                ->visibleTo($user)
+                ->whereIn('status', [QuotationStatus::Draft->value, QuotationStatus::Sent->value])
+                ->count(),
+            'accepted_quotes' => Quotation::query()
+                ->visibleTo($user)
+                ->where('status', QuotationStatus::Accepted->value)
+                ->count(),
+        ];
+    }
 
-        $pendingOrders = SalesOrder::query()
-            ->where('created_by', $userId)
-            ->pending()
-            ->count();
-
-        $recentQuotes = Quotation::query()
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function recentQuotes(User $user): array
+    {
+        return Quotation::query()
             ->with('client:id,business_name')
-            ->where('created_by', $userId)
+            ->visibleTo($user)
             ->latest('id')
             ->limit(5)
             ->get()
@@ -138,10 +200,16 @@ class DashboardService
             ])
             ->values()
             ->all();
+    }
 
-        $recentOrders = SalesOrder::query()
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function recentSalesOrders(User $user): array
+    {
+        return SalesOrder::query()
             ->with('client:id,business_name')
-            ->where('created_by', $userId)
+            ->visibleTo($user)
             ->latest('id')
             ->limit(5)
             ->get()
@@ -155,17 +223,35 @@ class DashboardService
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function stockStats(User $user): array
+    {
+        if (! $user->can(Permission::RawMaterialsView->value)) {
+            return [];
+        }
 
         return [
-            'stats' => [
-                'available_products' => Product::query()->where('is_active', true)->count(),
-                'active_quotes' => $activeQuotes,
-                'accepted_quotes' => $acceptedQuotes,
-                'pending_orders' => $pendingOrders,
-                'total_clients' => Client::query()->count(),
-            ],
-            'recent_quotes' => $recentQuotes,
-            'recent_sales_orders' => $recentOrders,
+            'low_stock_materials' => $this->lowStockCount(),
+            'expiring_batches' => $this->expiringBatchesCount(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function alertBlock(User $user): array
+    {
+        if (! $user->can(Permission::AlertsView->value)) {
+            return [];
+        }
+
+        return [
+            'recent_alerts' => $this->alertService->recentUnresolved(5),
+            'alert_breakdown' => $this->alertService->unresolvedBreakdown(),
         ];
     }
 
