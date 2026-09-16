@@ -111,6 +111,8 @@ it('allows comercial to view price list without cost data', function () {
             ->where('can.view_prices', true)
             ->where('products.data.0.id', $this->product->id)
             ->where('products.data.0.sales_price', 122.6667)
+            // Con precio de venta y margen se despeja el precio interno: el margen es costo.
+            ->missing('products.data.0.sales_margin')
             ->has('products.data.0.variants', 1)
             ->where('products.data.0.variants.0.sales_price', 613.3333)
         );

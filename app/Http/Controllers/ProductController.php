@@ -28,11 +28,12 @@ use Inertia\Response;
 class ProductController extends Controller
 {
     /**
-     * Atributos que revelan el costo (el CIF y el umbral lo derivan del precio). Solo con costs.view.
+     * Atributos que revelan el costo. Solo con costs.view.
+     * current_price es el precio interno (costo × (1 + CIF %)), no el de venta; el CIF, el umbral y el margen lo derivan.
      */
-    private const PRODUCT_COST_ATTRIBUTES = ['current_cost', 'cif_percentage', 'price_threshold', 'sales_margin'];
+    private const PRODUCT_COST_ATTRIBUTES = ['current_cost', 'current_price', 'cif_percentage', 'price_threshold', 'sales_margin'];
 
-    private const VARIANT_COST_ATTRIBUTES = ['current_cost'];
+    private const VARIANT_COST_ATTRIBUTES = ['current_cost', 'current_price'];
 
     public function __construct(
         private readonly ProductionCostRecalculationService $productionCostRecalculationService,
@@ -42,6 +43,8 @@ class ProductController extends Controller
 
     public function index(IndexProductRequest $request): Response
     {
+        $canViewCosts = $request->user()?->can(Permission::CostsView->value) ?? false;
+
         $products = (new ProductFilter($request))
             ->apply(Product::query())
             ->with(['category:id,name', 'unitOfMeasure:id,name,symbol'])
@@ -54,7 +57,7 @@ class ProductController extends Controller
                 'code' => $product->code,
                 'name' => $product->name,
                 'is_active' => $product->is_active,
-                'current_price' => $product->current_price,
+                ...($canViewCosts ? ['current_price' => $product->current_price] : []),
                 'category' => $product->category ? [
                     'id' => $product->category->id,
                     'name' => $product->category->name,
@@ -160,12 +163,37 @@ class ProductController extends Controller
         ]);
     }
 
-    public function edit(Product $product): Response
+    public function edit(Request $request, Product $product): Response
     {
         $this->authorize('update', $product);
 
+        $canViewCosts = $request->user()?->can(Permission::CostsView->value) ?? false;
+
         return Inertia::render('Products/Edit', [
-            'product' => $product,
+            // Array explícito: solo viaja lo que el formulario usa. CIF y umbral se envían siempre porque el formulario
+            // los reenvía y la validación los exige (pendiente B18); los montos de costo, solo con costs.view.
+            'product' => [
+                'id' => $product->id,
+                'code' => $product->code,
+                'name' => $product->name,
+                'brand' => $product->brand,
+                'description' => $product->description,
+                'category_id' => $product->category_id,
+                'unit_of_measure_id' => $product->unit_of_measure_id,
+                ...($canViewCosts ? [
+                    'current_cost' => $product->current_cost,
+                    'current_price' => $product->current_price,
+                ] : []),
+                'cif_percentage' => $product->cif_percentage,
+                'price_threshold' => $product->price_threshold,
+                'quality_viscosity_lower' => $product->quality_viscosity_lower,
+                'quality_viscosity_upper' => $product->quality_viscosity_upper,
+                'quality_fineness_lower' => $product->quality_fineness_lower,
+                'quality_fineness_upper' => $product->quality_fineness_upper,
+                'quality_solids_lower' => $product->quality_solids_lower,
+                'quality_solids_upper' => $product->quality_solids_upper,
+                'is_active' => $product->is_active,
+            ],
             'hasActiveFormula' => $product->activeFormula()->exists(),
             'categories' => ProductCategory::query()->select('id', 'name')->orderBy('name')->get(),
             'units' => UnitOfMeasure::query()->select('id', 'name', 'symbol')->orderBy('name')->get(),

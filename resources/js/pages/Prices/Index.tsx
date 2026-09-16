@@ -14,7 +14,7 @@ type VariantRow = {
     name: string;
     presentation_label: string | null;
     presentation_value: number | null;
-    current_price: number | null;
+    current_price?: number | null;
     sales_price: number | null;
     available_stock: number;
 };
@@ -23,10 +23,10 @@ type ProductRow = {
     id: number;
     code: string | null;
     name: string;
-    current_cost: number | null;
-    cif_percentage: number | null;
-    current_price: number | null;
-    sales_margin: number | null;
+    current_cost?: number | null;
+    cif_percentage?: number | null;
+    current_price?: number | null;
+    sales_margin?: number | null;
     sales_price: number | null;
     variants: VariantRow[];
 };

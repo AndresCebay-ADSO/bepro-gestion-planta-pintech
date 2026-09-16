@@ -28,9 +28,9 @@ type Props = {
         description: string | null;
         category_id: number | null;
         unit_of_measure_id: number | null;
-        current_cost: string | null;
+        current_cost?: string | null;
         cif_percentage: string | null;
-        current_price: string | null;
+        current_price?: string | null;
         price_threshold: string | null;
         quality_viscosity_lower: number | string | null;
         quality_viscosity_upper: number | string | null;
@@ -489,7 +489,7 @@ export default function ProductsEdit({
                                         min="0"
                                         value={toInput(product.current_cost)}
                                         readOnly
-                                        className="bg-muted/50 cursor-not-allowed"
+                                        className="cursor-not-allowed bg-muted/50"
                                     />
                                     <p className="text-xs text-muted-foreground">
                                         {hasActiveFormula
@@ -509,10 +509,11 @@ export default function ProductsEdit({
                                         min="0"
                                         value={toInput(product.current_price)}
                                         readOnly
-                                        className="bg-muted/50 cursor-not-allowed"
+                                        className="cursor-not-allowed bg-muted/50"
                                     />
                                     <p className="text-xs text-muted-foreground">
-                                        Calculado automáticamente: Costo actual × (1 + CIF %).
+                                        Calculado automáticamente: Costo actual
+                                        × (1 + CIF %).
                                     </p>
                                 </div>
 
