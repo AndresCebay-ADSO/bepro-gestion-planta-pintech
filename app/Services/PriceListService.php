@@ -74,12 +74,13 @@ class PriceListService
                 'id' => $product->id,
                 'code' => $product->code,
                 'name' => $product->name,
-                'sales_margin' => $product->sales_margin,
                 'sales_price' => $productSalesPrice,
             ];
 
+            // Con el precio de venta y el margen se despeja el precio interno: el margen también es costo.
             if ($canViewCosts) {
                 $productData = array_merge($productData, [
+                    'sales_margin' => $product->sales_margin,
                     'current_cost' => $product->current_cost,
                     'cif_percentage' => $product->cif_percentage,
                     'current_price' => $product->current_price,

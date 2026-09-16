@@ -45,6 +45,9 @@ combinación, se crea un rol nuevo.
 2. **Precio ≠ costo.** El *costo* es lo que le cuesta a Pintech producir (materia prima, envase, CIF). El *precio* es lo
    que paga el cliente. Comercial ve precios (los necesita para cotizar), pero **nunca** ve costos ni márgenes.
    Ejemplo real: `PriceListService` ya muestra los precios a comercial y oculta los costos si no es admin.
+   **Ojo con los nombres de columna:** `current_price` de productos y presentaciones es el *precio interno*
+   (costo × (1 + CIF %)) y cuenta como costo, igual que `sales_margin`; el precio de venta es `sales_price`, calculado en
+   servidor. En materias primas, `current_price`, `previous_price` y el `unit_price` de los lotes también son costo.
 3. **Admin desactiva, SuperAdmin elimina.** Donde existe `deactivate`, el borrado físico queda solo para SuperAdmin
    y **solo si el registro está intacto** (sin relaciones). Si tiene historial, la eliminación se niega y se ofrece desactivar.
 4. **Los documentos transaccionales no se eliminan, se cancelan.** Órdenes de producción, pedidos y cotizaciones

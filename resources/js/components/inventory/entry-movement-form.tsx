@@ -58,8 +58,7 @@ export function EntryMovementForm({
             warehouse_id: Number(data.warehouse_id),
             batch_id: data.batch_id === '' ? null : Number(data.batch_id),
             quantity: Number(data.quantity),
-            cost_price:
-                data.cost_price === '' ? null : Number(data.cost_price),
+            cost_price: data.cost_price === '' ? null : Number(data.cost_price),
             lot_number: data.batch_id === '' ? data.lot_number : null,
             supplier:
                 data.batch_id === '' && data.supplier !== ''
@@ -116,7 +115,7 @@ export function EntryMovementForm({
                         readOnly={isCostReadOnly}
                         className={
                             isCostReadOnly
-                                ? 'bg-muted/50 cursor-not-allowed'
+                                ? 'cursor-not-allowed bg-muted/50'
                                 : ''
                         }
                         placeholder="0.00"

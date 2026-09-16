@@ -253,3 +253,28 @@ test('operator can still export pdf and excel without cost data', function () {
         ->get(route('production-orders.export-excel', $this->productionOrder))
         ->assertSuccessful();
 });
+
+test('orders index sends only the product identity, never its costs', function (SystemRole $role) {
+    // El listado enviaba el producto completo: costo, precio interno, CIF, umbral y margen.
+    $this->productionOrder->product->forceFill([
+        'current_cost' => 80,
+        'current_price' => 100,
+        'sales_margin' => 30,
+    ])->saveQuietly();
+
+    $this->actingAs(userWithRole($role, ['email_verified_at' => now()]))
+        ->get(route('production-orders.index'))
+        ->assertSuccessful()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Production/Orders/Index')
+            ->where('orders.data.0.order_number', 'OP-COST-001')
+            ->where('orders.data.0.product.name', 'Pintura Cost Test')
+            ->where('orders.data.0.formula.version', 1)
+            ->where('orders.data.0.warehouse.name', 'Planta')
+            ->where('orders.data.0.status', 'pending')
+            ->missing('orders.data.0.product.current_cost')
+            ->missing('orders.data.0.product.current_price')
+            ->missing('orders.data.0.product.cif_percentage')
+            ->missing('orders.data.0.product.price_threshold')
+            ->missing('orders.data.0.product.sales_margin'));
+})->with([SystemRole::Production, SystemRole::Operator, SystemRole::Admin]);

@@ -86,6 +86,52 @@ tiene tests de frontend): **revisarlo en la prueba manual por rol**.
 AG-03, la verificación no fue solo lectura de código: se escribió y ejecutó un test que mide consultas SQL reales antes
 de descartar el hallazgo.
 
+## 3b. Verificación de la cuarta revisión (RV, 2026-09-16)
+
+Revisión de un agente sobre `feature/rbac-permissions-2` frente a `develop`, hecha **después** del lote A4 (14 hallazgos,
+3 marcados como críticos). Ninguno es una fuga de datos.
+
+| ID | Hallazgo reportado | Veredicto | Origen | Severidad real | Nota de la verificación |
+| --- | --- | --- | --- | --- | --- |
+| RV-01 | `ProductController::edit` usa `makeHidden`, que "se puede saltar" | ⚠️ | lote A4 | Baja | **Que se pueda saltar no es cierto**: Inertia serializa con `toArray()`, que respeta los atributos ocultos. Sí es cierto que `makeHidden` es una lista negra: un atributo de costo nuevo se enviaría si nadie lo añade a la constante. Hoy solo Admin tiene `products.edit`, y también `costs.view`. **Corregido**: array explícito. CIF y umbral siguen (B18). |
+| RV-02 | Literales de rol (`'operador'`, `'produccion'`, `'admin'`) en `ProductionOrderCostVisibilityTest`, "nuevos en esta rama" | ⚠️ | previo (`55fa71e`, jun-2026) | Baja | **No son nuevos**: ya estaban en `develop`. Los tests añadidos en A3 y A4 usan `SystemRole`. Parte de AU-07 (paso 11). |
+| RV-03 | `'dashboard.view'` como texto en `ErrorPage.tsx` sin el tipo `Permission` | ❌ | — | — | `auth.user.permissions` está tipado como `Permission[]`: `includes('dashboard.view')` ya lo comprueba `tsc`, y un permiso renombrado haría fallar la compilación. |
+| RV-04 | Tres estrategias de filtrado de costos (arrays explícitos, spread condicional, `makeHidden`) | ✅ | mixto | Baja (mantenibilidad) | `edit` pasa a array explícito. Queda `ProductController::show` (presentaciones, documentos y fórmulas anidados): B22. |
+| RV-05 | `UserController::index` carga `roles` con todas sus columnas | ✅ | rama (2.5) | Muy baja | Nada se envía de más (`through()` descarta el modelo). B23. |
+| RV-06 | Tipos de `Prices/Index.tsx`: campos condicionales marcados como obligatorios | ✅ | lote A4 | Baja | El razonamiento de la revisión falla (Comercial no recibe esos campos), pero la conclusión es correcta: A4 solo marcó `sales_margin`. **Corregido**: `current_cost`, `cif_percentage` y `current_price` (producto y presentación) pasan a opcionales. |
+| RV-07 | El 419 no tiene página propia | ✅ | previo | Baja | Mismo hallazgo que **AG-04** (B8). |
+| RV-08 | "Volver" de `ErrorPage.tsx` sin alternativa | ✅ | rama | Baja | Mismo hallazgo que **AG-09** (B12). |
+| RV-09 | `const` con `Permission::X->value` no sería portable a PHP 8.1 | ❌ | — | — | `composer.json` exige PHP `^8.3`. |
+| RV-10 | Mezcla de `auth()->user()` y `$request->user()` | ✅ | mixto | Baja (estilo) | Mismo hallazgo que **CR-12** (B2). Los cambios de A4 usan `$request->user()`. |
+| RV-11 | `UserRole` (TS) con nombres en español | ✅ | mixto | Baja | Mismo hallazgo que **AU-08** (paso 11). |
+| RV-12 | Formato de Prettier mezclado con cambios de lógica | ✅ | lote A4 | Baja (revisión) | Los 4 archivos solo tienen formato: se commitean aparte (`style:`). |
+| RV-13 | `beforeEach` de 77 líneas sin factories en `ProductionOrderCostVisibilityTest` | ⚠️ | previo (`55fa71e`) | Muy baja | Las factories existen. Deuda de tests: B24. |
+| RV-14 | Ruta registrada dentro de `ErrorPagesTest` que "persiste" y podría colisionar en paralelo | ❌ | — | — | Cada test arranca una aplicación nueva, así que la ruta no persiste. Pest no se ejecuta en paralelo en este proyecto (`--parallel` solo está en Pint). |
+
+**Verificación:** 920 tests OK y 5 omitidos; Pint, ESLint, Prettier y TypeScript limpios. El test del formulario de
+edición comprueba ahora que el margen no se envía a nadie (el formulario no lo usa).
+
+## 3c. Verificación de CodeRabbit (PR #143, 2026-09-16)
+
+| ID | Hallazgo reportado | Veredicto | Origen | Severidad real | Nota de la verificación |
+| --- | --- | --- | --- | --- | --- |
+| CB-01 | `ProductController::edit` envía `cif_percentage` y `price_threshold` sin `costs.view` (marcado 🟠 *Major*, riesgo de merge *High*) | ✅ latente | lote A4 (era B18) | Baja hoy | Cierto: la policy solo exige `products.edit`, la validación exigía ambos campos y el formulario los enviaba en `'0'` si faltaban. **Exagera el riesgo:** solo Admin tiene `products.edit`, y también `costs.view`. **Su propuesta mezcla permisos:** pide que modificar dependa de `costs.view`, pero modificar ya lo controla `costs.update` (403 en `update()`). **Corregido** (ver lote A5). |
+| CB-02 | Usar factories en `RawMaterialCostVisibilityTest` | ⚠️ | lote A4 | Muy baja (estilo) | Las factories existen, pero `CLAUDE.md` no lo exige y 38 archivos de test usan `::create()`. Su ejemplo (`WarehouseFactory::factory()`) no existe: sería `Warehouse::factory()`. Se suma a B24. |
+| CB-03 | *Docstring coverage* 30 % < 80 % | ❌ | — | — | Umbral por defecto de CodeRabbit, no es regla del proyecto. Aviso, no bloquea. |
+
+### Lote A5 — CIF y umbral en el formulario de producto (B18)
+
+> **✅ Aplicado (2026-09-16).**
+
+| # | Tarea | Hallazgos | Criterio de aceptación |
+| --- | --- | --- | --- |
+| A5.1 | `ProductController::edit` envía CIF y umbral solo con `costs.view`, y expone `can.viewCosts` | CB-01, PC-05 | `ProductShowCostVisibilityTest`: un editor sin `costs.view` no recibe CIF, umbral, costo ni precio interno; Admin sí. |
+| A5.2 | `UpdateProductRequest`: CIF y umbral pasan a `sometimes`; si faltan, se conservan los guardados. Al crear siguen obligatorios | CB-01 | `ProductEditTest`: el editor guarda sin enviarlos y los valores no cambian; crear sin ellos da error de validación. |
+| A5.3 | `Products/Edit.tsx`: sin `can.viewCosts` no muestra la sección de precios y no envía CIF ni umbral | CB-01 | `tsc` y ESLint limpios. |
+
+La regla queda: **ver** CIF y umbral exige `costs.view`; **cambiarlos** exige `costs.update` (sin cambios).
+**Cambios de acceso:** ninguno para los roles del sistema.
+
 ---
 
 ## 4. Plan de trabajo
@@ -145,6 +191,71 @@ ficha de la orden de producción.
 **Verificación:** 907 tests OK (5 nuevos: 4 en `ProductionOrderCostVisibilityTest`, 1 en `PermissionRegistryTest`), Pint,
 ESLint, Prettier y TypeScript limpios.
 
+### Lote A4 — Auditoría sistemática de precios y costos (en `feature/rbac-permissions-2`)
+
+La misma fuga apareció cuatro veces en módulos distintos (`sales_margin` en productos, CIF % y costo de saldos en la
+orden, precios en la ficha de materia prima), siempre corregida de forma reactiva. Esta vez se recorrió **toda** respuesta
+que devuelve datos de `RawMaterial`, `Product`, `ProductVariant` o `Formula`: los 52 `Inertia::render` de la aplicación
+(más los 7 de autenticación de Fortify, que no tocan estos modelos), las 2 respuestas JSON, los PDF (orden, cotización, desarrollo de pinturas, certificado de calidad) y el Excel de la orden, más los
+servicios que alimentan esas respuestas (`PriceListService`, `QuotationService`, `FinishedInventoryQueryService`,
+`DashboardService`, `AlertService` y los props compartidos de `HandleInertiaRequests`).
+
+**Criterio (matriz, principios 1 y 2):** en materias primas `current_price`, `previous_price` y el `unit_price` de los
+lotes son costo. En productos y presentaciones son costo `current_cost`, `cif_percentage`, `price_threshold`,
+`sales_margin` y **también `current_price`**: verificado en el código, es el *precio interno* (costo × (1 + CIF %)), así
+lo rotula la interfaz y así lo trata `PriceListService`. El precio que paga el cliente es `sales_price` = precio interno
+÷ (1 − margen), que Comercial ya ve en Lista de precios. **Decisión del usuario (2026-09-15):** `current_price` de
+productos y presentaciones es costo y queda bajo `costs.view`.
+
+**Veredicto:** ✅ fuga real con los roles del sistema · ⚠️ latente (hoy solo la reciben roles que ya tienen `costs.view`;
+afectaría a un rol creado desde la pantalla de roles de la 2.4) · ❌ no se sostiene.
+
+| ID | Hallazgo | Veredicto | Origen | Severidad | Nota |
+| --- | --- | --- | --- | --- | --- |
+| PC-01 | `RawMaterialController::show` envía el modelo completo: `current_price`, `previous_price` y el `unit_price` de cada lote, sin `costs.view` | ✅ | previo (el lote 2 corrigió solo `index`) | **Alta** | Producción lo recibía y lo veía en la ficha: *Precio actual*, *Precio anterior* y la columna *Precio unitario* de los lotes. |
+| PC-02 | `ProductionOrderController::index` envía `product`, `formula` y `warehouse` completos | ✅ | previo | **Alta** | Producción y Operador recibían `current_cost`, `current_price`, `cif_percentage`, `price_threshold` y `sales_margin` de cada producto. La pantalla no los pintaba. |
+| PC-03 | `current_price` de producto y presentación es el precio interno, pero la ficha de producto se lo muestra a Comercial y Producción, y el listado de productos lo envía | ✅ | previo | **Alta** | Con él se conoce el costo con CIF de cada producto. Resuelto según la decisión del usuario. |
+| PC-04 | `PriceListService` envía `sales_margin` a Comercial | ✅ | previo | Media | Con `sales_price` y el margen se despeja el precio interno. La pantalla solo lo pintaba con `view_costs`. **Cierra V-01.** |
+| PC-05 | `ProductController::edit` envía el modelo completo (costo, precio interno y margen) | ⚠️ | previo | Baja hoy | Solo Admin tiene `products.edit`, y también tiene `costs.view`. Se ocultan los montos. (Tras RV-01: array explícito con los campos del formulario; el margen ya no se envía a nadie.) CIF y umbral siguen en el payload: el formulario los reenvía siempre y `StoreProductRequest` los exige, así que ocultarlos haría que se enviaran en 0 y el guardado diera 403 (ver B18). |
+| PC-06 | `RawMaterialController::edit` envía el modelo completo | ⚠️ | previo | Baja hoy | Solo Admin tiene `raw_materials.edit`. El formulario no usa precios: pasa a array explícito. |
+| PC-07 | Lotes con `unit_price` en el formulario de movimientos MP (`InventoryMovementController::index`, prop `batches`) | ⚠️ | previo | Baja | Solo se envían con `inventory_movements.create` (Admin). El formulario de entrada usa el precio del lote, así que ocultarlo cambia el flujo: queda como B19. |
+| PC-08 | La auditoría muestra `properties` con `current_price`, `unit_price`, `cost_price`, `price` y `cost_at_time` (`AuditLogController` y las últimas entradas de `UserController`) | ⚠️ | previo | Baja | Solo SuperAdmin tiene `audit_logs.view`. Queda como B20, a resolver con la 2.4. |
+| PC-09 | `ProductionOrderIngredientsSheet` y `ProductionOrderGeneralSheet` son código muerto, y la de ingredientes lee `unit_cost`/`total_cost` del modelo sin `includeCosts` | ⚠️ | previo | Muy baja | Nadie las usa: el Excel sale de `ProductionOrderExport` con la vista Blade, que sí respeta los costos. Si alguien las conectara, filtrarían costos. Queda como B21. |
+| PC-10 | V-01: `QuotationService::catalogProducts()` envía `sales_margin` a las pantallas de cotización | ❌ | — | — | Hoy selecciona el margen para calcular `sales_price` en servidor, pero **no lo envía**: el payload lleva `id`, `code`, `name`, `description` y las presentaciones con `sales_price`. |
+
+**Revisado sin hallazgos:** materias primas `index`/`create` · productos `create` · fórmulas `index`/`create`/`show`/`edit`
+(solo el código de la MP y código y nombre del producto) · órdenes de producción `create`, `show`, PDF y Excel (lote A3),
+`previewCosts` (policy con `costs.view`) y saldos disponibles en JSON (sin costo) · saldos · movimientos MP y PT
+(`cost_price` oculto y relaciones con columnas explícitas) · inventario PT · bodegas `show` · costos (exige
+`costs.view`) · cotizaciones (solo precios de venta) · pedidos (lote A1) · códigos QR y landing pública · dashboard y
+alertas compartidas · certificado de calidad · desarrollo de pinturas.
+
+> **✅ Aplicado (2026-09-15):** PC-01 a PC-06.
+
+| # | Tarea | Hallazgos | Criterio de aceptación |
+| --- | --- | --- | --- |
+| A4.1 | Ficha y formulario de edición de materia prima con arrays explícitos; precios y `unit_price` de los lotes solo con `costs.view`, y la ficha oculta esos datos sin el permiso | PC-01, PC-06 | `RawMaterialCostVisibilityTest`: Producción no recibe precios y sí el código y los lotes; Admin sí los recibe; el formulario de edición no envía precios, tampoco a un rol personalizado sin `costs.view`. |
+| A4.2 | Listado de órdenes con array explícito (producto: `id`, `code`, `name`; fórmula: `id`, `version`; bodega: `id`, `name`) | PC-02 | `ProductionOrderCostVisibilityTest`: Producción, Operador y Admin reciben la identidad del producto y ninguno de sus costos. |
+| A4.3 | `current_price` de producto y presentación bajo `costs.view` en listado y ficha de producto (payload y pantalla); montos de costo ocultos en el formulario de edición sin `costs.view` | PC-03, PC-05 | `ProductShowCostVisibilityTest`: Comercial y Producción no reciben el precio interno ni en el listado ni en la ficha, y siguen viendo nombre y presentaciones; Admin sí lo recibe; un editor sin `costs.view` no recibe costo, precio interno ni margen en el formulario. |
+| A4.4 | `sales_margin` de la lista de precios solo con `costs.view` | PC-04 | `PriceListControllerTest`: Comercial recibe `sales_price` y no `sales_margin`; Admin sí. |
+
+Los tests negativos se ejecutaron también contra el código anterior a la corrección: los 12 casos fallaron, lo que
+confirma que cada uno detecta su fuga.
+
+**Cambios de acceso a comunicar:**
+- **Producción** deja de ver en la ficha de materia prima el *Precio actual*, el *Precio anterior* y el *Precio unitario*
+  de los lotes. El listado ya se los ocultaba desde el lote 2.
+- **Comercial y Producción** dejan de ver el *Precio Interno* en la ficha de producto, tanto del producto como de cada
+  presentación. Comercial sigue viendo el precio de venta en *Lista de precios*.
+- Sin cambio visible: el listado de órdenes y el margen de la lista de precios (las pantallas ya no los mostraban; solo
+  viajaban en el payload).
+
+**Verificación:** 920 tests OK y 5 omitidos, ninguno de este lote (13 casos nuevos: 4 en `RawMaterialCostVisibilityTest`,
+6 más en `ProductShowCostVisibilityTest` y 3 en `ProductionOrderCostVisibilityTest`; `PriceListControllerTest` amplía
+un caso). Pint, ESLint, Prettier y TypeScript limpios. Prettier también corrigió el formato de 4 archivos que ya
+fallaban en `a30b896` sin que este lote los tocara (`entry-movement-form.tsx`, `user-identity-fields.tsx`,
+`date-time-helpers.ts`, `Products/Create.tsx`); son cambios de formato, sin lógica.
+
 ### Lote B — Limpieza técnica (rama nueva `chore/…`, tras el merge)
 
 | # | Tarea | Hallazgos | Esfuerzo |
@@ -166,6 +277,13 @@ ESLint, Prettier y TypeScript limpios.
 | B15 | `DashboardService`: zona horaria de planta desde `config('app.plant_timezone')` | AU-09 | 10 min |
 | B16 | Retirar `ProductPolicy::restore` y `forceDelete` (o implementarlos con la 2.6) | AU-11 | 10 min |
 | B17 | Test de acceso por rol: dataset `[rol, ruta, código]` sobre las rutas principales, y verificar la ability exacta en las rutas `can:viewAny` / `can:view` | AU-10 | 3 h |
+| ~~B18~~ | ✅ Aplicado en A5. Formulario de edición de producto: enviar CIF y umbral solo con `can.managePrices` y hacerlos `sometimes` en `UpdateProductRequest`; después, ocultarlos también sin `costs.view` | PC-05 | 45 min |
+| B19 | Formulario de movimientos MP: decidir qué ve del precio del lote un rol con `inventory_movements.create` sin `costs.view` (antes de la 2.4) | PC-07 | 30 min |
+| B20 | Auditoría: filtrar de `properties` los atributos de costo sin `costs.view`, o impedir en la 2.4 que un rol reciba `audit_logs.view` sin `costs.view` | PC-08 | 1 h |
+| B21 | Eliminar `ProductionOrderIngredientsSheet` y `ProductionOrderGeneralSheet` (sin uso) | PC-09 | 10 min |
+| B22 | `ProductController::show` con arrays explícitos en lugar de `makeHidden` (producto, presentaciones, documentos y fórmulas) | RV-04 | 1 h |
+| B23 | `UserController::index`: `with('roles:id,name')` | RV-05 | 5 min |
+| B24 | `ProductionOrderCostVisibilityTest`: preparar datos con factories y pasar los literales de rol a `SystemRole` | RV-13, RV-02 | 30 min |
 
 ### Lote C — Refactors de arquitectura (backlog, fuera de la Fase 2)
 
@@ -179,7 +297,8 @@ ESLint, Prettier y TypeScript limpios.
 
 ### Decisiones pendientes
 
-1. **V-01:** ¿Comercial debe recibir el margen de venta de cada producto en las cotizaciones?
+Ninguna. **V-01 cerrada (2026-09-15, lote A4):** el margen de venta es costo y solo se envía con `costs.view`. Las
+cotizaciones ya no lo enviaban (PC-10) y la lista de precios deja de hacerlo (PC-04).
 
 ### Descartados
 

@@ -121,8 +121,8 @@ type Props = {
             unit_of_measure_id: number;
             presentation_value: number | null;
             presentation_label: string | null;
-            current_cost: number | null;
-            current_price: string | null;
+            current_cost?: number | null;
+            current_price?: string | null;
             package_raw_material_id: number | null;
             is_active: boolean;
             unit_of_measure?: { name: string; symbol: string } | null;
@@ -396,23 +396,25 @@ export default function ProductsShow({
                                 : '-'}
                         </p>
                     </div>
-                    <div>
-                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                            Precio Interno
-                        </p>
-                        <p className="text-sm font-medium text-foreground">
-                            {product.current_price ? (
-                                <FormattedNumber
-                                    value={product.current_price}
-                                    currency
-                                    maxDecimals={2}
-                                    trimTrailingZeros
-                                />
-                            ) : (
-                                'No asignado'
-                            )}
-                        </p>
-                    </div>
+                    {can.viewCosts && (
+                        <div>
+                            <p className="text-xs tracking-wide text-muted-foreground uppercase">
+                                Precio Interno
+                            </p>
+                            <p className="text-sm font-medium text-foreground">
+                                {product.current_price ? (
+                                    <FormattedNumber
+                                        value={product.current_price}
+                                        currency
+                                        maxDecimals={2}
+                                        trimTrailingZeros
+                                    />
+                                ) : (
+                                    'No asignado'
+                                )}
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {(product.description || hasCertificateRanges) && (
@@ -1112,32 +1114,34 @@ export default function ProductsShow({
                                                     </p>
                                                 </div>
                                             )}
-                                            <div className="space-y-2">
-                                                <Label htmlFor="current_price">
-                                                    Precio Interno
-                                                </Label>
-                                                <Input
-                                                    id="current_price"
-                                                    type="number"
-                                                    step="0.0001"
-                                                    value={
-                                                        editingVariant?.current_price !=
-                                                        null
-                                                            ? String(
-                                                                  editingVariant.current_price,
-                                                              )
-                                                            : ''
-                                                    }
-                                                    readOnly
-                                                    className="cursor-not-allowed bg-muted/50"
-                                                    placeholder="0.00"
-                                                />
-                                                <p className="text-xs text-muted-foreground">
-                                                    {activeFormula
-                                                        ? 'Calculado con el factor CIF al guardar.'
-                                                        : 'Se calculará al registrar la fórmula de producción.'}
-                                                </p>
-                                            </div>
+                                            {can.viewCosts && (
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="current_price">
+                                                        Precio Interno
+                                                    </Label>
+                                                    <Input
+                                                        id="current_price"
+                                                        type="number"
+                                                        step="0.0001"
+                                                        value={
+                                                            editingVariant?.current_price !=
+                                                            null
+                                                                ? String(
+                                                                      editingVariant.current_price,
+                                                                  )
+                                                                : ''
+                                                        }
+                                                        readOnly
+                                                        className="cursor-not-allowed bg-muted/50"
+                                                        placeholder="0.00"
+                                                    />
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {activeFormula
+                                                            ? 'Calculado con el factor CIF al guardar.'
+                                                            : 'Se calculará al registrar la fórmula de producción.'}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="space-y-2">
@@ -1219,9 +1223,11 @@ export default function ProductsShow({
                                 <th className="p-4 text-left font-medium">
                                     Presentación
                                 </th>
-                                <th className="p-4 text-left font-medium">
-                                    Precio Interno
-                                </th>
+                                {can.viewCosts && (
+                                    <th className="p-4 text-left font-medium">
+                                        Precio Interno
+                                    </th>
+                                )}
                                 <th className="p-4 text-left font-medium">
                                     Estado
                                 </th>
@@ -1250,17 +1256,21 @@ export default function ProductsShow({
                                             ? ` (${variant.unit_of_measure.symbol})`
                                             : ''}
                                     </td>
-                                    <td className="p-4 text-muted-foreground">
-                                        {variant.current_price ? (
-                                            <FormattedNumber
-                                                value={variant.current_price}
-                                                currency
-                                                maxDecimals={2}
-                                            />
-                                        ) : (
-                                            '-'
-                                        )}
-                                    </td>
+                                    {can.viewCosts && (
+                                        <td className="p-4 text-muted-foreground">
+                                            {variant.current_price ? (
+                                                <FormattedNumber
+                                                    value={
+                                                        variant.current_price
+                                                    }
+                                                    currency
+                                                    maxDecimals={2}
+                                                />
+                                            ) : (
+                                                '-'
+                                            )}
+                                        </td>
+                                    )}
                                     <td className="p-4">
                                         <Badge
                                             variant={
@@ -1307,7 +1317,10 @@ export default function ProductsShow({
                             {(product.variants ?? []).length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={can.manageVariants ? 6 : 5}
+                                        colSpan={
+                                            (can.manageVariants ? 6 : 5) -
+                                            (can.viewCosts ? 0 : 1)
+                                        }
                                         className="p-8 text-center text-sm text-muted-foreground"
                                     >
                                         Este producto aún no tiene variantes

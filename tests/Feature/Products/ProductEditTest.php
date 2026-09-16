@@ -202,6 +202,34 @@ test('a product editor without costs.update can update product when cif_percenta
     expect($this->product->name)->toBe('Nombre Actualizado por Producción');
 });
 
+test('a product editor without costs.view can save without sending cif_percentage or price_threshold', function (): void {
+    // El formulario no recibe CIF ni umbral sin costs.view y no los envía: se conservan los guardados.
+    actingAs(catalogEditorUser())
+        ->put(route('products.update', $this->product), [
+            'code' => $this->product->code,
+            'name' => 'Nombre sin costos',
+            'category_id' => $this->category->id,
+            'unit_of_measure_id' => $this->uom->id,
+        ])
+        ->assertRedirect(route('products.index'));
+
+    $this->product->refresh();
+    expect($this->product->name)->toBe('Nombre sin costos')
+        ->and((float) $this->product->cif_percentage)->toBe(25.0)
+        ->and((float) $this->product->price_threshold)->toBe(3.0);
+});
+
+test('creating a product still requires cif_percentage and price_threshold', function (): void {
+    actingAs($this->admin)
+        ->post(route('products.store'), [
+            'code' => 'P-NUEVO-01',
+            'name' => 'Producto nuevo',
+            'category_id' => $this->category->id,
+            'unit_of_measure_id' => $this->uom->id,
+        ])
+        ->assertSessionHasErrors(['cif_percentage', 'price_threshold']);
+});
+
 test('a product editor without products.deactivate cannot change is_active', function (): void {
     $originalActive = (bool) $this->product->is_active;
 

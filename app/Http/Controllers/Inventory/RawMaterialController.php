@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\RawMaterials\IndexRawMaterialRequest;
 use App\Http\Requests\RawMaterials\StoreRawMaterialRequest;
 use App\Http\Requests\RawMaterials\UpdateRawMaterialRequest;
+use App\Models\InventoryBatch;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
@@ -128,6 +129,8 @@ class RawMaterialController extends Controller
     {
         $this->authorize('view', $rawMaterial);
 
+        $canViewCosts = $request->user()?->can(Permission::CostsView->value) ?? false;
+
         $rawMaterial->load([
             'category:id,name,code',
             'unitOfMeasure:id,name,symbol',
@@ -161,13 +164,46 @@ class RawMaterialController extends Controller
 
         return Inertia::render('Inventory/RawMaterials/Show', [
             'returnTo' => $this->resolveReturnTo($request),
-            'rawMaterial' => $rawMaterial,
+            // Array explícito: en materias primas el precio actual, el anterior y el de cada lote son costo
+            // (docs/MATRIZ_RBAC.md, principio 1).
+            'rawMaterial' => [
+                'id' => $rawMaterial->id,
+                'code' => $rawMaterial->code,
+                ...($canViewCosts ? [
+                    'current_price' => $rawMaterial->current_price,
+                    'previous_price' => $rawMaterial->previous_price,
+                ] : []),
+                'minimum_stock' => $rawMaterial->minimum_stock,
+                'alert_days_before_expiry' => $rawMaterial->alert_days_before_expiry,
+                'is_active' => $rawMaterial->is_active,
+                'category' => $rawMaterial->category ? [
+                    'id' => $rawMaterial->category->id,
+                    'name' => $rawMaterial->category->name,
+                    'code' => $rawMaterial->category->code,
+                ] : null,
+                'unit_of_measure' => $rawMaterial->unitOfMeasure ? [
+                    'id' => $rawMaterial->unitOfMeasure->id,
+                    'name' => $rawMaterial->unitOfMeasure->name,
+                    'symbol' => $rawMaterial->unitOfMeasure->symbol,
+                ] : null,
+                'inventory_batches' => $rawMaterial->inventoryBatches->map(fn (InventoryBatch $batch): array => [
+                    'id' => $batch->id,
+                    'lot_number' => $batch->lot_number,
+                    'supplier' => $batch->supplier,
+                    'initial_quantity' => $batch->initial_quantity,
+                    'remaining_quantity' => $batch->remaining_quantity,
+                    ...($canViewCosts ? ['unit_price' => $batch->unit_price] : []),
+                    'entry_date' => $batch->entry_date?->format('Y-m-d'),
+                    'expiry_date' => $batch->expiry_date?->format('Y-m-d'),
+                ])->values(),
+            ],
             'hasAvailableStock' => $hasAvailableStock,
             'hasActivity' => $hasActivity,
             'can' => [
                 'update' => Gate::allows('update', $rawMaterial),
                 'delete' => Gate::allows('deactivate', $rawMaterial) && $rawMaterial->is_active,
                 'reactivate' => Gate::allows('reactivate', $rawMaterial) && ! $rawMaterial->is_active,
+                'viewCosts' => $canViewCosts,
             ],
         ]);
     }
@@ -177,7 +213,17 @@ class RawMaterialController extends Controller
         $this->authorize('update', $rawMaterial);
 
         return Inertia::render('Inventory/RawMaterials/Edit', [
-            'rawMaterial' => $rawMaterial,
+            // Solo los campos del formulario: los precios son costo y el formulario no los edita.
+            'rawMaterial' => [
+                'id' => $rawMaterial->id,
+                'code' => $rawMaterial->code,
+                'category_id' => $rawMaterial->category_id,
+                'unit_of_measure_id' => $rawMaterial->unit_of_measure_id,
+                'minimum_stock' => $rawMaterial->minimum_stock,
+                'alert_days_before_expiry' => $rawMaterial->alert_days_before_expiry,
+                'price_variation_threshold' => $rawMaterial->price_variation_threshold,
+                'is_active' => $rawMaterial->is_active,
+            ],
             'categories' => RawMaterialCategory::query()
                 ->select('id', 'name', 'code')
                 ->where('is_active', true)

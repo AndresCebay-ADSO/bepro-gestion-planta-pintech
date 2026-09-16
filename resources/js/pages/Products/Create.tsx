@@ -461,11 +461,12 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                         min="0"
                                         value=""
                                         readOnly
-                                        className="bg-muted/50 cursor-not-allowed"
+                                        className="cursor-not-allowed bg-muted/50"
                                         placeholder="0.0000"
                                     />
                                     <p className="text-xs text-muted-foreground">
-                                        Se calculará automáticamente cuando se registre la fórmula de producción.
+                                        Se calculará automáticamente cuando se
+                                        registre la fórmula de producción.
                                     </p>
                                 </div>
 
@@ -480,11 +481,12 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                         min="0"
                                         value=""
                                         readOnly
-                                        className="bg-muted/50 cursor-not-allowed"
+                                        className="cursor-not-allowed bg-muted/50"
                                         placeholder="0.0000"
                                     />
                                     <p className="text-xs text-muted-foreground">
-                                        Se calculará automáticamente: Costo actual × (1 + CIF %).
+                                        Se calculará automáticamente: Costo
+                                        actual × (1 + CIF %).
                                     </p>
                                 </div>
 

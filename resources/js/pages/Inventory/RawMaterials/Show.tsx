@@ -17,7 +17,7 @@ type InventoryBatch = {
     supplier: string | null;
     initial_quantity: string;
     remaining_quantity: string;
-    unit_price: string;
+    unit_price?: string;
     entry_date: string;
     expiry_date: string | null;
 };
@@ -27,8 +27,8 @@ type Props = {
     rawMaterial: {
         id: number;
         code: string;
-        current_price: string | null;
-        previous_price: string | null;
+        current_price?: string | null;
+        previous_price?: string | null;
         minimum_stock: string;
         alert_days_before_expiry: number;
         is_active: boolean;
@@ -39,6 +39,7 @@ type Props = {
         update: boolean;
         delete: boolean;
         reactivate: boolean;
+        viewCosts: boolean;
     };
     hasAvailableStock: boolean;
     hasActivity: boolean;
@@ -182,31 +183,35 @@ export default function RawMaterialsShow({
                         }
                     />
 
-                    <InfoItem
-                        label="Precio actual"
-                        value={
-                            <FormattedNumber
-                                value={rawMaterial.current_price}
-                                currency
-                                maxDecimals={4}
-                                trimTrailingZeros
-                                emptyValue="Sin precio de referencia"
+                    {can.viewCosts && (
+                        <>
+                            <InfoItem
+                                label="Precio actual"
+                                value={
+                                    <FormattedNumber
+                                        value={rawMaterial.current_price}
+                                        currency
+                                        maxDecimals={4}
+                                        trimTrailingZeros
+                                        emptyValue="Sin precio de referencia"
+                                    />
+                                }
                             />
-                        }
-                    />
 
-                    <InfoItem
-                        label="Precio anterior"
-                        value={
-                            <FormattedNumber
-                                value={rawMaterial.previous_price}
-                                currency
-                                maxDecimals={4}
-                                trimTrailingZeros
-                                emptyValue="-"
+                            <InfoItem
+                                label="Precio anterior"
+                                value={
+                                    <FormattedNumber
+                                        value={rawMaterial.previous_price}
+                                        currency
+                                        maxDecimals={4}
+                                        trimTrailingZeros
+                                        emptyValue="-"
+                                    />
+                                }
                             />
-                        }
-                    />
+                        </>
+                    )}
 
                     <InfoItem
                         label="Stock mínimo"
@@ -251,9 +256,11 @@ export default function RawMaterialsShow({
                                 <th className="p-3 text-left">Proveedor</th>
                                 <th className="p-3 text-left">Entrada</th>
                                 <th className="p-3 text-left">Vence</th>
-                                <th className="p-3 text-right">
-                                    Precio unitario
-                                </th>
+                                {can.viewCosts && (
+                                    <th className="p-3 text-right">
+                                        Precio unitario
+                                    </th>
+                                )}
                                 <th className="p-3 text-right">
                                     Cantidad inicial
                                 </th>
@@ -287,14 +294,16 @@ export default function RawMaterialsShow({
                                         />
                                     </td>
 
-                                    <td className="p-3 text-right">
-                                        <FormattedNumber
-                                            value={batch.unit_price}
-                                            currency
-                                            maxDecimals={4}
-                                            trimTrailingZeros
-                                        />
-                                    </td>
+                                    {can.viewCosts && (
+                                        <td className="p-3 text-right">
+                                            <FormattedNumber
+                                                value={batch.unit_price}
+                                                currency
+                                                maxDecimals={4}
+                                                trimTrailingZeros
+                                            />
+                                        </td>
+                                    )}
 
                                     <td className="p-3 text-right">
                                         <FormattedNumber
@@ -317,7 +326,7 @@ export default function RawMaterialsShow({
                             {rawMaterial.inventory_batches.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={7}
+                                        colSpan={can.viewCosts ? 7 : 6}
                                         className="p-10 text-center text-sm text-muted-foreground"
                                     >
                                         No hay lotes registrados para esta
@@ -331,7 +340,7 @@ export default function RawMaterialsShow({
                             <tfoot>
                                 <tr className="border-t border-border bg-muted/30">
                                     <td
-                                        colSpan={6}
+                                        colSpan={can.viewCosts ? 6 : 5}
                                         className="p-3 text-right font-medium text-foreground"
                                     >
                                         Total Disponible

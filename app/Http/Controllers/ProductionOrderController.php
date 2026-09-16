@@ -66,11 +66,35 @@ class ProductionOrderController extends Controller
     {
         $orders = (new ProductionOrderFilter($request))
             ->apply(ProductionOrder::query())
-            ->with(['product', 'formula', 'warehouse'])
+            ->with(['product:id,code,name', 'formula:id,version', 'warehouse:id,name'])
             ->latest()
             ->paginate(15)
             ->onEachSide(1)
-            ->withQueryString();
+            ->withQueryString()
+            // Array explícito: el producto completo expondría costo, CIF, margen y precio interno (docs/MATRIZ_RBAC.md, principio 1).
+            ->through(fn (ProductionOrder $order): array => [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'lot_number' => $order->lot_number,
+                'product' => $order->product ? [
+                    'id' => $order->product->id,
+                    'code' => $order->product->code,
+                    'name' => $order->product->name,
+                ] : null,
+                'formula' => $order->formula ? [
+                    'id' => $order->formula->id,
+                    'version' => $order->formula->version,
+                ] : null,
+                'warehouse' => $order->warehouse ? [
+                    'id' => $order->warehouse->id,
+                    'name' => $order->warehouse->name,
+                ] : null,
+                'quantity' => $order->quantity,
+                'status' => $order->status->value,
+                'planned_date' => $order->planned_date?->format('Y-m-d'),
+                'completion_date' => $order->completion_date?->format('Y-m-d'),
+                'created_at' => $order->created_at?->toJSON(),
+            ]);
 
         return Inertia::render('Production/Orders/Index', [
             'orders' => $orders,
