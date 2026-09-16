@@ -12,7 +12,9 @@ export interface UserIdentityData {
     remove_signature?: boolean;
 }
 
-export interface UserIdentityFieldsProps<T extends UserIdentityData = UserIdentityData> {
+export interface UserIdentityFieldsProps<
+    T extends UserIdentityData = UserIdentityData,
+> {
     data: T;
     setData: {
         <K extends keyof T>(field: K, value: T[K]): void;
@@ -26,7 +28,9 @@ export interface UserIdentityFieldsProps<T extends UserIdentityData = UserIdenti
     showSignature?: boolean;
 }
 
-export const UserIdentityFields = <T extends UserIdentityData = UserIdentityData>({
+export const UserIdentityFields = <
+    T extends UserIdentityData = UserIdentityData,
+>({
     data,
     setData,
     errors,
@@ -46,7 +50,9 @@ export const UserIdentityFields = <T extends UserIdentityData = UserIdentityData
                     id="name"
                     name="name"
                     value={data.name}
-                    onChange={(e) => setData('name', e.target.value as T['name'])}
+                    onChange={(e) =>
+                        setData('name', e.target.value as T['name'])
+                    }
                     required
                     autoComplete="name"
                     placeholder="Ej: Juan Pérez"
@@ -58,14 +64,20 @@ export const UserIdentityFields = <T extends UserIdentityData = UserIdentityData
             {/* Correo Electrónico */}
             <div className="grid gap-2">
                 <Label htmlFor="email">
-                    Correo Electrónico <span className="text-destructive">*</span>
+                    Correo Electrónico{' '}
+                    <span className="text-destructive">*</span>
                 </Label>
                 <Input
                     id="email"
                     name="email"
                     type="email"
                     value={data.email}
-                    onChange={(e) => setData('email', e.target.value.toLowerCase() as T['email'])}
+                    onChange={(e) =>
+                        setData(
+                            'email',
+                            e.target.value.toLowerCase() as T['email'],
+                        )
+                    }
                     required
                     autoComplete="username"
                     placeholder="juan@pintech.com"
@@ -81,7 +93,9 @@ export const UserIdentityFields = <T extends UserIdentityData = UserIdentityData
                     id="job_title"
                     name="job_title"
                     value={data.job_title ?? ''}
-                    onChange={(e) => setData('job_title', e.target.value as T['job_title'])}
+                    onChange={(e) =>
+                        setData('job_title', e.target.value as T['job_title'])
+                    }
                     placeholder="Ej: Gerente de Producción"
                     disabled={disabled}
                 />
@@ -96,7 +110,9 @@ export const UserIdentityFields = <T extends UserIdentityData = UserIdentityData
                     name="phone"
                     type="tel"
                     value={data.phone ?? ''}
-                    onChange={(e) => setData('phone', e.target.value as T['phone'])}
+                    onChange={(e) =>
+                        setData('phone', e.target.value as T['phone'])
+                    }
                     placeholder="Ej: 3001234567"
                     disabled={disabled}
                 />
@@ -106,7 +122,9 @@ export const UserIdentityFields = <T extends UserIdentityData = UserIdentityData
             {/* Firma Digital */}
             {showSignature && (
                 <SignatureUploadField
-                    currentSignatureUrl={data.remove_signature ? null : currentSignatureUrl}
+                    currentSignatureUrl={
+                        data.remove_signature ? null : currentSignatureUrl
+                    }
                     signatureFile={data.signature}
                     onSignatureChange={(file) => {
                         setData((prev) => ({
