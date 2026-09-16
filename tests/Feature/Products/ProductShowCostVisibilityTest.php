@@ -113,9 +113,10 @@ it('hides cost amounts from the edit form for a product editor without costs.vie
         ->assertInertia(fn (Assert $page) => $page
             ->component('Products/Edit')
             ->where('can.managePrices', false)
+            ->where('can.viewCosts', false)
             ->where('product.name', 'Producto Show')
-            // CIF y umbral viajan en el formulario: si faltaran, se enviarían en 0 y el guardado daría 403.
-            ->has('product.cif_percentage')
+            ->missing('product.cif_percentage')
+            ->missing('product.price_threshold')
             ->missing('product.current_cost')
             ->missing('product.current_price')
             ->missing('product.sales_margin'));
@@ -128,7 +129,9 @@ it('sends cost amounts to the edit form for users with costs.view', function ():
         ->assertInertia(fn (Assert $page) => $page
             ->where('product.current_cost', '100.0000')
             ->where('product.current_price', '150.0000')
+            ->where('can.viewCosts', true)
             ->where('product.cif_percentage', '20.00')
+            ->where('product.price_threshold', '5.00')
             // El formulario no usa el margen: el array explícito no lo envía a nadie.
             ->missing('product.sales_margin'));
 });

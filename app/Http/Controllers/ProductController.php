@@ -170,8 +170,7 @@ class ProductController extends Controller
         $canViewCosts = $request->user()?->can(Permission::CostsView->value) ?? false;
 
         return Inertia::render('Products/Edit', [
-            // Array explícito: solo viaja lo que el formulario usa. CIF y umbral se envían siempre porque el formulario
-            // los reenvía y la validación los exige (pendiente B18); los montos de costo, solo con costs.view.
+            // Array explícito: solo viaja lo que el formulario usa; los costos, CIF y umbral incluidos, solo con costs.view.
             'product' => [
                 'id' => $product->id,
                 'code' => $product->code,
@@ -183,9 +182,9 @@ class ProductController extends Controller
                 ...($canViewCosts ? [
                     'current_cost' => $product->current_cost,
                     'current_price' => $product->current_price,
+                    'cif_percentage' => $product->cif_percentage,
+                    'price_threshold' => $product->price_threshold,
                 ] : []),
-                'cif_percentage' => $product->cif_percentage,
-                'price_threshold' => $product->price_threshold,
                 'quality_viscosity_lower' => $product->quality_viscosity_lower,
                 'quality_viscosity_upper' => $product->quality_viscosity_upper,
                 'quality_fineness_lower' => $product->quality_fineness_lower,
@@ -199,6 +198,7 @@ class ProductController extends Controller
             'units' => UnitOfMeasure::query()->select('id', 'name', 'symbol')->orderBy('name')->get(),
             'can' => [
                 'managePrices' => Gate::allows(Permission::CostsUpdate->value),
+                'viewCosts' => $canViewCosts,
             ],
         ]);
     }

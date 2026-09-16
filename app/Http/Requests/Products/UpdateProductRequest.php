@@ -25,7 +25,7 @@ class UpdateProductRequest extends StoreProductRequest
         $product = $this->route('product');
         $productId = is_object($product) ? $product->id : $product;
 
-        return array_merge(
+        $rules = array_merge(
             [
                 'code' => [
                     'bail',
@@ -37,5 +37,12 @@ class UpdateProductRequest extends StoreProductRequest
             ],
             $this->baseRules()
         );
+
+        // Quien no ve costos no recibe CIF ni umbral y no los envía: si faltan, se conservan los guardados.
+        foreach (['cif_percentage', 'price_threshold'] as $field) {
+            $rules[$field] = ['sometimes', ...$rules[$field]];
+        }
+
+        return $rules;
     }
 }

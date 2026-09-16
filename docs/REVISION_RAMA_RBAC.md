@@ -111,6 +111,27 @@ Revisión de un agente sobre `feature/rbac-permissions-2` frente a `develop`, he
 **Verificación:** 920 tests OK y 5 omitidos; Pint, ESLint, Prettier y TypeScript limpios. El test del formulario de
 edición comprueba ahora que el margen no se envía a nadie (el formulario no lo usa).
 
+## 3c. Verificación de CodeRabbit (PR #143, 2026-09-16)
+
+| ID | Hallazgo reportado | Veredicto | Origen | Severidad real | Nota de la verificación |
+| --- | --- | --- | --- | --- | --- |
+| CB-01 | `ProductController::edit` envía `cif_percentage` y `price_threshold` sin `costs.view` (marcado 🟠 *Major*, riesgo de merge *High*) | ✅ latente | lote A4 (era B18) | Baja hoy | Cierto: la policy solo exige `products.edit`, la validación exigía ambos campos y el formulario los enviaba en `'0'` si faltaban. **Exagera el riesgo:** solo Admin tiene `products.edit`, y también `costs.view`. **Su propuesta mezcla permisos:** pide que modificar dependa de `costs.view`, pero modificar ya lo controla `costs.update` (403 en `update()`). **Corregido** (ver lote A5). |
+| CB-02 | Usar factories en `RawMaterialCostVisibilityTest` | ⚠️ | lote A4 | Muy baja (estilo) | Las factories existen, pero `CLAUDE.md` no lo exige y 38 archivos de test usan `::create()`. Su ejemplo (`WarehouseFactory::factory()`) no existe: sería `Warehouse::factory()`. Se suma a B24. |
+| CB-03 | *Docstring coverage* 30 % < 80 % | ❌ | — | — | Umbral por defecto de CodeRabbit, no es regla del proyecto. Aviso, no bloquea. |
+
+### Lote A5 — CIF y umbral en el formulario de producto (B18)
+
+> **✅ Aplicado (2026-09-16).**
+
+| # | Tarea | Hallazgos | Criterio de aceptación |
+| --- | --- | --- | --- |
+| A5.1 | `ProductController::edit` envía CIF y umbral solo con `costs.view`, y expone `can.viewCosts` | CB-01, PC-05 | `ProductShowCostVisibilityTest`: un editor sin `costs.view` no recibe CIF, umbral, costo ni precio interno; Admin sí. |
+| A5.2 | `UpdateProductRequest`: CIF y umbral pasan a `sometimes`; si faltan, se conservan los guardados. Al crear siguen obligatorios | CB-01 | `ProductEditTest`: el editor guarda sin enviarlos y los valores no cambian; crear sin ellos da error de validación. |
+| A5.3 | `Products/Edit.tsx`: sin `can.viewCosts` no muestra la sección de precios y no envía CIF ni umbral | CB-01 | `tsc` y ESLint limpios. |
+
+La regla queda: **ver** CIF y umbral exige `costs.view`; **cambiarlos** exige `costs.update` (sin cambios).
+**Cambios de acceso:** ninguno para los roles del sistema.
+
 ---
 
 ## 4. Plan de trabajo
@@ -256,7 +277,7 @@ fallaban en `a30b896` sin que este lote los tocara (`entry-movement-form.tsx`, `
 | B15 | `DashboardService`: zona horaria de planta desde `config('app.plant_timezone')` | AU-09 | 10 min |
 | B16 | Retirar `ProductPolicy::restore` y `forceDelete` (o implementarlos con la 2.6) | AU-11 | 10 min |
 | B17 | Test de acceso por rol: dataset `[rol, ruta, código]` sobre las rutas principales, y verificar la ability exacta en las rutas `can:viewAny` / `can:view` | AU-10 | 3 h |
-| B18 | Formulario de edición de producto: enviar CIF y umbral solo con `can.managePrices` y hacerlos `sometimes` en `UpdateProductRequest`; después, ocultarlos también sin `costs.view` | PC-05 | 45 min |
+| ~~B18~~ | ✅ Aplicado en A5. Formulario de edición de producto: enviar CIF y umbral solo con `can.managePrices` y hacerlos `sometimes` en `UpdateProductRequest`; después, ocultarlos también sin `costs.view` | PC-05 | 45 min |
 | B19 | Formulario de movimientos MP: decidir qué ve del precio del lote un rol con `inventory_movements.create` sin `costs.view` (antes de la 2.4) | PC-07 | 30 min |
 | B20 | Auditoría: filtrar de `properties` los atributos de costo sin `costs.view`, o impedir en la 2.4 que un rol reciba `audit_logs.view` sin `costs.view` | PC-08 | 1 h |
 | B21 | Eliminar `ProductionOrderIngredientsSheet` y `ProductionOrderGeneralSheet` (sin uso) | PC-09 | 10 min |

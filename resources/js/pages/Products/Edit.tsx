@@ -29,9 +29,9 @@ type Props = {
         category_id: number | null;
         unit_of_measure_id: number | null;
         current_cost?: string | null;
-        cif_percentage: string | null;
+        cif_percentage?: string | null;
         current_price?: string | null;
-        price_threshold: string | null;
+        price_threshold?: string | null;
         quality_viscosity_lower: number | string | null;
         quality_viscosity_upper: number | string | null;
         quality_fineness_lower: number | string | null;
@@ -42,7 +42,7 @@ type Props = {
     };
     categories: Option[];
     units: Option[];
-    can: { managePrices: boolean };
+    can: { managePrices: boolean; viewCosts: boolean };
     hasActiveFormula?: boolean;
 };
 
@@ -76,28 +76,40 @@ export default function ProductsEdit({
             ? String(value)
             : '';
 
-    const { data, setData, put, processing, errors } = useForm<ProductForm>({
-        code: product.code,
-        name: product.name,
-        brand: product.brand ?? 'BEPRO',
-        description: product.description ?? '',
-        category_id: product.category_id ? String(product.category_id) : '',
-        unit_of_measure_id: product.unit_of_measure_id
-            ? String(product.unit_of_measure_id)
-            : '',
-        cif_percentage: product.cif_percentage ?? '0',
-        price_threshold: product.price_threshold ?? '0',
-        quality_viscosity_lower: toInput(product.quality_viscosity_lower),
-        quality_viscosity_upper: toInput(product.quality_viscosity_upper),
-        quality_fineness_lower: toInput(product.quality_fineness_lower),
-        quality_fineness_upper: toInput(product.quality_fineness_upper),
-        quality_solids_lower: toInput(product.quality_solids_lower),
-        quality_solids_upper: toInput(product.quality_solids_upper),
-        is_active: product.is_active,
-    });
+    const { data, setData, put, transform, processing, errors } =
+        useForm<ProductForm>({
+            code: product.code,
+            name: product.name,
+            brand: product.brand ?? 'BEPRO',
+            description: product.description ?? '',
+            category_id: product.category_id ? String(product.category_id) : '',
+            unit_of_measure_id: product.unit_of_measure_id
+                ? String(product.unit_of_measure_id)
+                : '',
+            cif_percentage: product.cif_percentage ?? '0',
+            price_threshold: product.price_threshold ?? '0',
+            quality_viscosity_lower: toInput(product.quality_viscosity_lower),
+            quality_viscosity_upper: toInput(product.quality_viscosity_upper),
+            quality_fineness_lower: toInput(product.quality_fineness_lower),
+            quality_fineness_upper: toInput(product.quality_fineness_upper),
+            quality_solids_lower: toInput(product.quality_solids_lower),
+            quality_solids_upper: toInput(product.quality_solids_upper),
+            is_active: product.is_active,
+        });
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        // Sin costs.view no llegan CIF ni umbral: no se envían y el servidor conserva los guardados.
+        transform((form) => {
+            if (can.viewCosts) {
+                return form;
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { cif_percentage, price_threshold, ...rest } = form;
+
+            return rest;
+        });
         put(productsShow({ product: product.id }).url);
     };
 
@@ -471,7 +483,7 @@ export default function ProductsEdit({
                     </div>
 
                     {/* Precios */}
-                    {can.managePrices && (
+                    {can.managePrices && can.viewCosts && (
                         <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                             <h2 className="font-medium text-foreground">
                                 Precios y Costos
