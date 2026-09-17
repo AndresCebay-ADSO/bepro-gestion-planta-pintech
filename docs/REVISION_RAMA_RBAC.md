@@ -256,6 +256,66 @@ un caso). Pint, ESLint, Prettier y TypeScript limpios. Prettier también corrigi
 fallaban en `a30b896` sin que este lote los tocara (`entry-movement-form.tsx`, `user-identity-fields.tsx`,
 `date-time-helpers.ts`, `Products/Create.tsx`); son cambios de formato, sin lógica.
 
+### Lote A6 — Revisión de la 2.4 (en `feature/rbac-roles`, 2026-09-17)
+
+Revisión propia de la pantalla de roles (commit `7cbbe10`), verificada contra el código y con la suite completa.
+
+| ID | Hallazgo | Veredicto | Origen | Severidad | Nota |
+| --- | --- | --- | --- | --- | --- |
+| RR-01 | Las alertas de variación de precio guardan en el mensaje el precio anterior y el nuevo de la materia prima, y el mensaje lo ve todo el que tiene `alerts.view` (Producción, sin `costs.view`) en la página de alertas, el dashboard y la notificación emergente | ✅ | previo (se escapó en el lote A4, que revisó las relaciones de la alerta pero no el texto) | **Alta** | Además, `new_alerts` se entregaba sin comprobar `alerts.view`. |
+| RR-02 | Un rol personalizado puede llamarse `production`, `operator` o `commercial`, los nombres en inglés del paso 11 | ✅ | rama (2.4) | Media | El renombrado fallaría o el seeder tomaría ese rol como del sistema y le reasignaría permisos. |
+| RR-03 | El nombre de un rol personalizado admite `\|`, que Spatie usa como separador en `hasRole()` y en el scope `role()` | ✅ | rama (2.4) | Media | |
+| RR-04 | Los roles personalizados solo se validan al guardarlos: si el código cambia las reglas (permisos reservados, dependencias), los existentes quedan inválidos sin aviso | ✅ | rama (2.4) | Media | |
+| RR-05 | Un rol personalizado sin `dashboard.view` deja a sus usuarios en un 403 al iniciar sesión | ✅ | rama (2.4) | Media | Venía marcado por defecto pero se podía desmarcar. |
+| RR-06 | Faltan tests: editar con dependencias incompletas, 403 de `show`/`edit`/`update`/`destroy` fuera de SuperAdmin y conservar el rol actual al editar un usuario | ✅ | rama (2.4) | Media | |
+| RR-07 | `RoleController::create` y `show` no llaman a `authorize` (sí `edit` y `destroy`) | ✅ | rama (2.4) | Baja | La ruta ya lo exige. |
+| RR-08 | Guard `'web'` escrito a mano en `RoleController`, las Actions, `AssignableRoleService` y `UserController::lockRole` | ✅ | rama (2.4) | Baja | Lote B. |
+| RR-09 | La 2.4 documenta B20 como resuelto por la reserva **y** por la dependencia `audit_logs.view` → `costs.view`, pero esa dependencia nunca actúa | ⚠️ | rama (2.4) | Muy baja | Solo documentación. |
+| RR-10 | Tras aplicar una plantilla al crear un rol no se puede volver a "Empezar desde cero" | ✅ | rama (2.4) | Baja | |
+| RR-11 | `String(role.id)` innecesario en las rutas de Wayfinder | ✅ | rama (2.4) | Muy baja | |
+| RR-12 | `filters: Record<string, …>` en `Roles/Index.tsx`, menos tipado que otros listados | ✅ | rama (2.4) | Muy baja | |
+| RR-13 | La búsqueda no encuentra los roles del sistema por su etiqueta ("Administrador") | ✅ | rama (2.4) | Baja | Estaba documentado como límite; arreglo barato: buscar también por etiqueta. |
+| RR-14 | Las alertas de solicitudes de desarrollo de pinturas (con el cliente en el mensaje) las ve Producción con `alerts.view`, aunque la matriz le retiró ese módulo | ✅ | previo | Media | Hallado al rediseñar RR-01: el problema de fondo es que ningún tipo de alerta comprobaba el permiso de su módulo. |
+| RR-15 | Al editar un usuario cuyo rol no puede asignar quien edita, el selector de rol queda vacío | ⚠️ | rama (2.4) | Baja hoy | Latente: con las reglas actuales Admin puede asignar todos los roles personalizados y no edita SuperAdmin. Se vuelve real si cambian las reglas (RR-04). |
+| RR-16 | Borrar un rol desde el listado no conserva la posición (`preserveScroll`) | ✅ | rama (2.4) | Muy baja | |
+
+**Decisiones del usuario (2026-09-17):** **cada tipo de alerta exige el permiso de su módulo** además de `alerts.view`
+(variación de precio → `costs.view`; desarrollo de pinturas → `paint_development_requests.view_all`; stock bajo y
+vencimientos → `raw_materials.view`). Sustituye a una primera solución, descartada sin commitear, que quitaba los montos
+del mensaje con una columna `data` y migraciones: era más código y solo resolvía un tipo; `dashboard.view` es obligatorio en todo rol personalizado; si un rol personalizado queda
+inválido, el despliegue **solo avisa** (nunca cambia permisos solo).
+
+| # | Tarea | Hallazgos | Estado |
+| --- | --- | --- | --- |
+| A6.1 | Visibilidad de alertas por tipo | RR-01, RR-14 | ✅ |
+| A6.2 | Nombres reservados y caracteres permitidos en roles personalizados | RR-02, RR-03 | Pendiente |
+| A6.3 | `dashboard.view` obligatorio en roles personalizados | RR-05 | Pendiente |
+| A6.4 | Comando `roles:audit`, ejecutado por el seeder | RR-04 | Pendiente |
+| A6.5 | Tests que faltaban y rol actual en el selector de usuarios | RR-06, RR-15 | Pendiente |
+| A6.6 | Detalles de la pantalla de roles | RR-07, RR-09 a RR-13, RR-16 | Pendiente |
+
+**A6.1 — aplicado:**
+- `AlertType::requiredPermission()` (un `match` sin `default`: un tipo nuevo obliga a decidir quién lo ve).
+- `Alert::scopeVisibleTo()` y `Alert::visibleTypesFor()`, con el mismo patrón que los scopes de cotizaciones, pedidos
+  y desarrollo de pinturas: sin usuario no devuelve nada.
+- Se aplica en todas las salidas: listado de alertas y sus opciones de tipo, `AlertPolicy::view` (y `resolve`),
+  contador de la campana, desglose y alertas recientes del dashboard, alertas recientes compartidas y notificación de
+  alerta nueva (`new_alerts`, que además ya no se entrega sin `alerts.view`).
+- Los mensajes no cambian: quien ve la alerta de precio ve los montos. Sin migraciones.
+- Tests: `AlertVisibilityTest` (11 casos; 9 fallaban antes de la corrección).
+
+**Cambio de acceso a comunicar:** Producción deja de ver las alertas de variación de precio (incluían los precios de la
+materia prima) y las de solicitudes de desarrollo de pinturas. Sigue viendo las de stock bajo y vencimientos.
+
+**Verificación de la revisión externa de la 2.4 (2026-09-17):** sus 15 puntos se verificaron contra el código.
+Coinciden con RR-02, RR-03, RR-05, RR-07, RR-08, RR-10 a RR-13; aportan RR-15 y RR-16. Además:
+- `formatPrice` con negativos y `json` en vez de `jsonb`: reales, pero afectaban a la solución descartada.
+- `session()` "lanza excepción en consola": **no se sostiene** (probado con tinker; `alerts:check-expiry` ya corre a
+  diario por ese camino).
+- Doble consulta de alertas recientes en el dashboard: real y previa → B26.
+- Accesibilidad del componente de permisos (módulo anunciado dos veces, casillas deshabilitadas en solo lectura) → B27.
+- Lógica de `UserController` en el controlador: previa, fuera del alcance (Lote C).
+
 ### Lote B — Limpieza técnica (rama nueva `chore/…`, tras el merge)
 
 | # | Tarea | Hallazgos | Esfuerzo |
@@ -284,6 +344,9 @@ fallaban en `a30b896` sin que este lote los tocara (`entry-movement-form.tsx`, `
 | B22 | `ProductController::show` con arrays explícitos en lugar de `makeHidden` (producto, presentaciones, documentos y fórmulas) | RV-04 | 1 h |
 | B23 | `UserController::index`: `with('roles:id,name')` | RV-05 | 5 min |
 | B24 | `ProductionOrderCostVisibilityTest`: preparar datos con factories y pasar los literales de rol a `SystemRole` | RV-13, RV-02 | 30 min |
+| B25 | Constante o configuración para el guard `web` en roles y usuarios | RR-08 | 15 min |
+| B26 | Dashboard: reutilizar las alertas recientes compartidas en lugar de volver a consultarlas | Revisión 2.4 | 20 min |
+| B27 | `role-permissions-fields`: no anunciar dos veces el módulo y mostrar los permisos en solo lectura sin casillas deshabilitadas | Revisión 2.4 | 45 min |
 
 ### Lote C — Refactors de arquitectura (backlog, fuera de la Fase 2)
 

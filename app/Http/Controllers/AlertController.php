@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\AlertSeverity;
-use App\Enums\AlertType;
 use App\Filters\AlertFilter;
 use App\Http\Requests\Alerts\IndexAlertRequest;
 use App\Models\Alert;
@@ -26,7 +25,7 @@ class AlertController extends Controller
     public function index(IndexAlertRequest $request): Response
     {
         $alerts = (new AlertFilter($request))
-            ->apply(Alert::query())
+            ->apply(Alert::query()->visibleTo($request->user()))
             ->with([
                 'rawMaterial:id,code',
                 'batch:id,lot_number,expiry_date',
@@ -74,10 +73,10 @@ class AlertController extends Controller
                 ['value' => 'active', 'label' => __('Activas')],
                 ['value' => 'resolved', 'label' => __('Resueltas')],
             ],
-            'typeOptions' => EnumOptions::for(AlertType::cases()),
+            'typeOptions' => EnumOptions::for(Alert::visibleTypesFor($request->user())),
             'severityOptions' => EnumOptions::for(AlertSeverity::cases()),
             'stats' => [
-                'unresolved_count' => $this->alertService->unresolvedCount(),
+                'unresolved_count' => $this->alertService->unresolvedCount($request->user()),
             ],
         ]);
     }
