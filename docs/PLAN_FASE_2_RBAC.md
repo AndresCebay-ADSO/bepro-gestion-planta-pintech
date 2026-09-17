@@ -404,8 +404,9 @@ mostrarían enlaces que responden 403 (por ejemplo, movimientos de materia prima
 >   escalada) y 4 casos nuevos en `PermissionRegistryTest`.
 >
 > **Sin cambios de acceso** para los roles del sistema: la pantalla es solo de SuperAdmin.
-> **Límite conocido:** la búsqueda del listado usa el nombre interno, así que un rol del sistema se encuentra por
-> `produccion`, no por "Producción" (se corrige solo en el paso 11).
+> **Ajustes tras la revisión (lote A6 de `docs/REVISION_RAMA_RBAC.md`):** la búsqueda encuentra los roles del sistema
+> también por su etiqueta; todo rol personalizado incluye `dashboard.view`; su nombre no admite `|` ni los nombres
+> reservados (`SystemRole::reservedNames()`); y cada tipo de alerta exige el permiso de su módulo.
 
 ---
 
@@ -587,6 +588,9 @@ vibe coding e incumplen la regla de código en inglés (`CLAUDE.md`). Al llegar 
 middlewares (2.8), el sidebar (2.5) y los tests (helper `actingAsRole`) ya no usan esos textos: solo quedan en
 `SystemRole` y en la tabla `roles`. El cambio es:
 1. `SystemRole`: `'produccion'` → `'production'`, `'operador'` → `'operator'`, `'comercial'` → `'commercial'`.
+   Esos nombres en inglés están reservados desde la 2.4 (`SystemRole::reservedNames()`), así que ningún rol personalizado
+   puede ocuparlos. Al renombrar, retirar `FUTURE_NAMES` y comprobar que los nombres antiguos en español siguen reservados
+   o no hacen falta.
 2. Una migración de datos que actualiza `roles.name`. Es segura: `model_has_roles` enlaza por `role_id`, así que
    ningún usuario pierde su rol.
 3. Limpiar la caché de permisos y actualizar el test que hoy protege los nombres en español.

@@ -2,7 +2,7 @@
  * Permisos de un rol agrupados por módulo (docs/PLAN_FASE_2_RBAC.md, 2.4).
  *
  * Al marcar un permiso se marcan sus dependencias; al desmarcarlo se desmarcan los que dependen de él.
- * El servidor valida las mismas reglas (RoleFormRequest).
+ * Los permisos obligatorios no se pueden desmarcar. El servidor valida las mismas reglas (RoleFormRequest).
  */
 import { useMemo } from 'react';
 
@@ -39,6 +39,16 @@ export default function RolePermissionsFields({
         [options],
     );
 
+    const requiredSet = useMemo(
+        () =>
+            new Set(
+                options
+                    .filter((option) => option.required)
+                    .map((option) => option.name),
+            ),
+        [options],
+    );
+
     const selectedSet = new Set(selected);
     const locked = readOnly || disabled;
 
@@ -56,11 +66,12 @@ export default function RolePermissionsFields({
     };
 
     const revoke = (names: Permission[]) => {
-        const removed = new Set(names);
+        const removed = new Set(names.filter((name) => !requiredSet.has(name)));
 
-        // Quien depende de un permiso retirado también se retira.
+        // Quien depende de un permiso retirado también se retira (salvo los obligatorios).
         for (const option of options) {
             if (
+                !requiredSet.has(option.name) &&
                 option.dependencies.some((dependency) =>
                     removed.has(dependency),
                 )
@@ -134,10 +145,13 @@ export default function RolePermissionsFields({
                                     >
                                         <Checkbox
                                             id={id}
-                                            checked={selectedSet.has(
-                                                permission.name,
-                                            )}
-                                            disabled={locked}
+                                            checked={
+                                                permission.required ||
+                                                selectedSet.has(permission.name)
+                                            }
+                                            disabled={
+                                                locked || permission.required
+                                            }
                                             onCheckedChange={(checked) =>
                                                 checked === true
                                                     ? grant([permission.name])
@@ -151,6 +165,14 @@ export default function RolePermissionsFields({
                                             >
                                                 {permission.label}
                                             </Label>
+                                            {!readOnly &&
+                                                permission.required && (
+                                                    <span className="text-xs text-muted-foreground">
+                                                        Obligatorio: sin él, los
+                                                        usuarios no pueden
+                                                        entrar al inicio.
+                                                    </span>
+                                                )}
                                             {!readOnly &&
                                                 dependencyLabels.length > 0 && (
                                                     <span className="text-xs text-muted-foreground">

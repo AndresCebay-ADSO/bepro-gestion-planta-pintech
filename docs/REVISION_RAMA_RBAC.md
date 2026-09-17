@@ -288,11 +288,11 @@ inválido, el despliegue **solo avisa** (nunca cambia permisos solo).
 | # | Tarea | Hallazgos | Estado |
 | --- | --- | --- | --- |
 | A6.1 | Visibilidad de alertas por tipo | RR-01, RR-14 | ✅ |
-| A6.2 | Nombres reservados y caracteres permitidos en roles personalizados | RR-02, RR-03 | Pendiente |
-| A6.3 | `dashboard.view` obligatorio en roles personalizados | RR-05 | Pendiente |
+| A6.2 | Nombres reservados y caracteres permitidos en roles personalizados | RR-02, RR-03 | ✅ |
+| A6.3 | `dashboard.view` obligatorio en roles personalizados | RR-05 | ✅ |
 | A6.4 | Comando `roles:audit`, ejecutado por el seeder | RR-04 | Pendiente |
-| A6.5 | Tests que faltaban y rol actual en el selector de usuarios | RR-06, RR-15 | Pendiente |
-| A6.6 | Detalles de la pantalla de roles | RR-07, RR-09 a RR-13, RR-16 | Pendiente |
+| A6.5 | Tests que faltaban y rol actual en el selector de usuarios | RR-06, RR-15 | Parcial: RR-15 ✅; faltan los tests de RR-06 |
+| A6.6 | Detalles de la pantalla de roles | RR-07, RR-09 a RR-13, RR-16 | Parcial: RR-10, RR-13 y RR-16 ✅; faltan RR-07, RR-09, RR-11 y RR-12 |
 
 **A6.1 — aplicado:**
 - `AlertType::requiredPermission()` (un `match` sin `default`: un tipo nuevo obliga a decidir quién lo ve).
@@ -306,6 +306,22 @@ inválido, el despliegue **solo avisa** (nunca cambia permisos solo).
 
 **Cambio de acceso a comunicar:** Producción deja de ver las alertas de variación de precio (incluían los precios de la
 materia prima) y las de solicitudes de desarrollo de pinturas. Sigue viendo las de stock bajo y vencimientos.
+
+**A6.2, A6.3, RR-15 y parte de A6.6 — aplicados:**
+- **Nombres (A6.2):** `SystemRole::reservedNames()` reúne nombre y etiqueta de los roles del sistema y los nombres en
+  inglés del paso 11 (`production`, `operator`, `commercial`). El nombre solo admite letras (con tildes), números,
+  espacios, guiones y guion bajo, así que `|` queda fuera.
+- **`dashboard.view` obligatorio (A6.3):** `PermissionCatalogService::requiredForCustomRoles()` es la fuente única. La
+  validación lo exige al crear y al editar; el catálogo marca el permiso como `required` y el formulario lo muestra
+  marcado y bloqueado. Al editar un rol que no lo tuviera, el formulario lo añade.
+- **Rol actual en el formulario de usuario (RR-15):** `UserController::edit` añade el rol actual del usuario a las
+  opciones cuando quien edita no puede asignarlo, así que el selector nunca queda vacío. En el alta no aparece.
+- **Pantalla de roles (RR-10, RR-13, RR-16):** "Empezar desde cero" en el selector de plantillas (y tras un cambio
+  manual el selector deja de mostrar la plantilla); la búsqueda encuentra los roles del sistema por su etiqueta; borrar
+  conserva la posición.
+- Tests: 11 casos nuevos en `RoleManagementTest` (todos fallaban antes de la corrección) y 3 ajustados para que el
+  error de dependencias no se confunda con el del permiso obligatorio.
+- **Sin cambios de acceso** para los roles del sistema.
 
 **Verificación de la revisión externa de la 2.4 (2026-09-17):** sus 15 puntos se verificaron contra el código.
 Coinciden con RR-02, RR-03, RR-05, RR-07, RR-08, RR-10 a RR-13; aportan RR-15 y RR-16. Además:

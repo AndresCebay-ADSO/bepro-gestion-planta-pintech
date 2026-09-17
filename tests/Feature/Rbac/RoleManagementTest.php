@@ -116,18 +116,87 @@ it('rechaza un permiso sin sus dependencias', function (array $permissions) {
 
     expect(Role::where('name', 'Incompleto')->exists())->toBeFalse();
 })->with([
-    'registrar movimientos MP sin ver costos' => [[Permission::InventoryMovementsView, Permission::InventoryMovementsCreate]],
-    'desactivar productos sin editarlos' => [[Permission::ProductsView, Permission::ProductsDeactivate]],
-    'convertir cotizaciones sin crear pedidos' => [[Permission::QuotationsViewOwn, Permission::QuotationsConvertToOrder]],
+    'registrar movimientos MP sin ver costos' => [[Permission::DashboardView, Permission::InventoryMovementsView, Permission::InventoryMovementsCreate]],
+    'desactivar productos sin editarlos' => [[Permission::DashboardView, Permission::ProductsView, Permission::ProductsDeactivate]],
+    'convertir cotizaciones sin crear pedidos' => [[Permission::DashboardView, Permission::QuotationsViewOwn, Permission::QuotationsConvertToOrder]],
 ]);
 
-it('rechaza nombres de roles del sistema o ya usados', function (string $name) {
+it('rechaza nombres de roles del sistema, reservados para el paso 11 o ya usados', function (string $name) {
     actingAsRole(SystemRole::SuperAdmin);
     createCustomRole('Jefe de calidad', []);
 
-    $this->post(route('roles.store'), ['name' => $name, 'permissions' => []])
+    $this->post(route('roles.store'), ['name' => $name, 'permissions' => [Permission::DashboardView->value]])
         ->assertSessionHasErrors('name');
-})->with(['admin', 'Producción', 'SUPER ADMINISTRADOR', 'jefe de calidad']);
+})->with(['admin', 'Producción', 'SUPER ADMINISTRADOR', 'jefe de calidad', 'production', 'Operator', 'COMMERCIAL']);
+
+it('rechaza caracteres que Spatie o la interfaz no admiten en el nombre', function (string $name) {
+    actingAsRole(SystemRole::SuperAdmin);
+
+    $this->post(route('roles.store'), ['name' => $name, 'permissions' => [Permission::DashboardView->value]])
+        ->assertSessionHasErrors('name');
+
+    expect(Role::where('name', $name)->exists())->toBeFalse();
+})->with(['Calidad|Planta', '<script>', 'Calidad; Planta', 'Jefe.calidad']);
+
+it('acepta nombres con letras con tilde, números, espacios, guiones y guion bajo', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+
+    $this->post(route('roles.store'), [
+        'name' => 'Auxiliar-2 de_producción',
+        'permissions' => [Permission::DashboardView->value],
+    ])->assertSessionHasNoErrors()->assertRedirect(route('roles.index'));
+
+    expect(Role::where('name', 'Auxiliar-2 de_producción')->exists())->toBeTrue();
+});
+
+it('exige dashboard.view en todo rol personalizado, al crear y al editar', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+
+    $this->post(route('roles.store'), ['name' => 'Sin inicio', 'permissions' => [Permission::AlertsView->value]])
+        ->assertSessionHasErrors('permissions');
+
+    $role = createCustomRole('Calidad', [Permission::DashboardView]);
+
+    $this->put(route('roles.update', $role), ['name' => 'Calidad', 'permissions' => []])
+        ->assertSessionHasErrors('permissions');
+
+    expect(Role::where('name', 'Sin inicio')->exists())->toBeFalse()
+        ->and($role->fresh()->hasPermissionTo(Permission::DashboardView->value))->toBeTrue();
+});
+
+it('marca dashboard.view como obligatorio en el catálogo de permisos', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+
+    $this->get(route('roles.create'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('modules', function ($modules) {
+                $required = collect($modules)
+                    ->flatMap(fn ($module) => $module['permissions'])
+                    ->filter(fn ($permission) => $permission['required'])
+                    ->pluck('name')
+                    ->all();
+
+                return $required === [Permission::DashboardView->value];
+            }));
+});
+
+it('busca los roles del sistema también por su etiqueta', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+    createCustomRole('Jefe de calidad', [Permission::DashboardView]);
+
+    $this->get(route('roles.index', ['search' => 'administrador']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('roles.data', fn ($roles) => collect($roles)->pluck('label')->sort()->values()->all()
+                === ['Administrador', 'Super administrador']));
+
+    $this->get(route('roles.index', ['search' => 'calidad']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('roles.data', 1)
+            ->where('roles.data.0.label', 'Jefe de calidad'));
+});
 
 it('no permite editar ni eliminar un rol del sistema', function () {
     actingAsRole(SystemRole::SuperAdmin);
@@ -225,4 +294,22 @@ it('permite a Admin asignar un rol personalizado que no supera sus permisos', fu
     ])->assertRedirect(route('users.index'));
 
     expect(User::where('email', 'calidad@test.com')->first()->hasRole('Calidad'))->toBeTrue();
+});
+
+it('muestra el rol actual del usuario en el formulario aunque quien edita no pueda asignarlo', function () {
+    actingAsRole(SystemRole::Admin);
+    $auditor = createCustomRole('Auditor', [Permission::DashboardView, Permission::CostsView, Permission::AuditLogsView]);
+    $member = userWithRole(SystemRole::Operator);
+    $member->syncRoles([$auditor->name]);
+
+    $this->get(route('users.edit', $member))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('roles', fn ($roles) => collect($roles)->pluck('name')->contains('Auditor')));
+
+    // Solo en el formulario de ese usuario: al crear otro no aparece.
+    $this->get(route('users.create'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('roles', fn ($roles) => collect($roles)->pluck('name')->doesntContain('Auditor')));
 });

@@ -124,13 +124,18 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
 
-        $roles = $this->assignableRoles();
-
         $user->load('roles');
+
+        // El rol actual siempre es una opción, aunque quien edita no pueda asignarlo (UpdateUserRequest lo permite
+        // conservar): si no, el selector quedaría vacío y guardar otros datos obligaría a cambiar el rol.
+        $roles = collect($this->assignableRoles());
+        $currentRoles = $user->roles
+            ->reject(fn (Role $role): bool => $roles->contains('name', $role->name))
+            ->map(fn (Role $role): array => $this->roleOption($role));
 
         return Inertia::render('Admin/Users/Edit', [
             'user' => $user,
-            'roles' => $roles,
+            'roles' => $roles->concat($currentRoles)->values()->all(),
         ]);
     }
 
@@ -274,13 +279,21 @@ class UserController extends Controller
         }
 
         return $this->assignableRoleService->for($actor)
-            ->map(fn (Role $role): array => [
-                'id' => $role->id,
-                'name' => $role->name,
-                'label' => SystemRole::labelFor($role->name),
-            ])
+            ->map(fn (Role $role): array => $this->roleOption($role))
             ->values()
             ->all();
+    }
+
+    /**
+     * @return array{id: int, name: string, label: string}
+     */
+    private function roleOption(Role $role): array
+    {
+        return [
+            'id' => $role->id,
+            'name' => $role->name,
+            'label' => SystemRole::labelFor($role->name),
+        ];
     }
 
     /**

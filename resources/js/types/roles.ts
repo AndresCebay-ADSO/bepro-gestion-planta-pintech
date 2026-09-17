@@ -4,6 +4,8 @@ import type { Permission } from '@/types/permissions';
 export type PermissionOption = {
     name: Permission;
     label: string;
+    /** Obligatorio en todo rol personalizado (`PermissionCatalogService::requiredForCustomRoles()`). */
+    required: boolean;
     dependencies: Permission[];
 };
 

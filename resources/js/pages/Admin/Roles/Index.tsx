@@ -175,6 +175,9 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
                                                                         role.id,
                                                                     ),
                                                                 ).url,
+                                                                {
+                                                                    preserveScroll: true,
+                                                                },
                                                             );
                                                         }
                                                     }}

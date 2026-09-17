@@ -29,6 +29,30 @@ enum SystemRole: string
     }
 
     /**
+     * Nombres que tomarán los roles del sistema al pasarlos a inglés (docs/PLAN_FASE_2_RBAC.md, paso 11).
+     */
+    private const FUTURE_NAMES = ['production', 'operator', 'commercial'];
+
+    /**
+     * Nombres que un rol personalizado no puede usar (en minúsculas): nombre y etiqueta de cada rol del sistema y los
+     * nombres del paso 11. Si un rol personalizado se llamara `production`, el renombrado fallaría o el seeder lo
+     * tomaría por el rol del sistema y le reasignaría sus permisos.
+     *
+     * @return array<int, string>
+     */
+    public static function reservedNames(): array
+    {
+        $names = self::FUTURE_NAMES;
+
+        foreach (self::cases() as $role) {
+            $names[] = mb_strtolower($role->value);
+            $names[] = mb_strtolower($role->label());
+        }
+
+        return array_values(array_unique($names));
+    }
+
+    /**
      * Indica si un nombre de rol pertenece a un rol del sistema (gestionado solo en código).
      */
     public static function isSystem(string $name): bool

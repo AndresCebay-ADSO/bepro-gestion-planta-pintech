@@ -24,6 +24,9 @@ interface Props {
     defaultPermissions: Permission[];
 }
 
+/** Valor del selector de plantillas para volver a los permisos por defecto. */
+const FROM_SCRATCH = 'none';
+
 const RolesCreate: FC<Props> = ({ modules, templates, defaultPermissions }) => {
     const { data, setData, post, processing, errors } = useForm<{
         name: string;
@@ -32,7 +35,7 @@ const RolesCreate: FC<Props> = ({ modules, templates, defaultPermissions }) => {
         name: '',
         permissions: defaultPermissions,
     });
-    const [templateId, setTemplateId] = useState('');
+    const [templateId, setTemplateId] = useState(FROM_SCRATCH);
 
     const permissionErrors = Object.entries(errors)
         .filter(([key]) => key.startsWith('permissions'))
@@ -41,10 +44,19 @@ const RolesCreate: FC<Props> = ({ modules, templates, defaultPermissions }) => {
     const applyTemplate = (value: string) => {
         setTemplateId(value);
 
+        if (value === FROM_SCRATCH) {
+            setData('permissions', defaultPermissions);
+
+            return;
+        }
+
         const template = templates.find((t) => String(t.id) === value);
 
         if (template) {
-            setData('permissions', template.permissions);
+            // Los permisos por defecto son obligatorios: se conservan aunque la plantilla no los tenga.
+            setData('permissions', [
+                ...new Set([...defaultPermissions, ...template.permissions]),
+            ]);
         }
     };
 
@@ -105,9 +117,12 @@ const RolesCreate: FC<Props> = ({ modules, templates, defaultPermissions }) => {
                                 disabled={processing}
                             >
                                 <SelectTrigger id="template" className="w-full">
-                                    <SelectValue placeholder="Empezar desde cero" />
+                                    <SelectValue placeholder="Selección personalizada" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value={FROM_SCRATCH}>
+                                        Empezar desde cero
+                                    </SelectItem>
                                     {templates.map((template) => (
                                         <SelectItem
                                             key={template.id}
@@ -138,9 +153,11 @@ const RolesCreate: FC<Props> = ({ modules, templates, defaultPermissions }) => {
                         <RolePermissionsFields
                             modules={modules}
                             selected={data.permissions}
-                            onChange={(permissions) =>
-                                setData('permissions', permissions)
-                            }
+                            onChange={(permissions) => {
+                                // Tras un cambio manual ya no es la plantilla elegida.
+                                setTemplateId('');
+                                setData('permissions', permissions);
+                            }}
                             disabled={processing}
                         />
                     </div>

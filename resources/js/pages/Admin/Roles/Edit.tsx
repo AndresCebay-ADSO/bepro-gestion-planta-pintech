@@ -20,12 +20,20 @@ interface Props {
 }
 
 const RolesEdit: FC<Props> = ({ role, modules }) => {
+    // Un rol creado antes de que un permiso fuera obligatorio lo recibe al editarlo.
+    const requiredPermissions = modules
+        .flatMap((module) => module.permissions)
+        .filter((permission) => permission.required)
+        .map((permission) => permission.name);
+
     const { data, setData, put, processing, errors } = useForm<{
         name: string;
         permissions: Permission[];
     }>({
         name: role.name,
-        permissions: role.permissions,
+        permissions: [
+            ...new Set([...requiredPermissions, ...role.permissions]),
+        ],
     });
 
     const permissionErrors = Object.entries(errors)

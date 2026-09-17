@@ -35,14 +35,17 @@ abstract class RoleFormRequest extends FormRequest
      */
     public function rules(): array
     {
+        $catalog = app(PermissionCatalogService::class);
+
         return [
-            'name' => ['bail', 'required', 'string', 'max:50', $this->availableNameRule()],
-            'permissions' => ['present', 'array'],
+            // Sin `|`: Spatie lo usa como separador de roles en hasRole() y en el scope role().
+            'name' => ['bail', 'required', 'string', 'max:50', 'regex:/^[\pL\pN]+(?:[ _-][\pL\pN]+)*$/u', $this->availableNameRule()],
+            'permissions' => ['present', 'array', 'contains:'.implode(',', $catalog->requiredForCustomRoles())],
             'permissions.*' => [
                 'bail',
                 'string',
                 'distinct',
-                Rule::in(app(PermissionCatalogService::class)->assignableToCustomRoles()),
+                Rule::in($catalog->assignableToCustomRoles()),
             ],
         ];
     }
@@ -53,6 +56,10 @@ abstract class RoleFormRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'name.regex' => __('El nombre solo admite letras, números, espacios, guiones y guion bajo.'),
+            'permissions.contains' => __('Todo rol debe incluir ":permission": sin él, sus usuarios no pueden entrar al inicio.', [
+                'permission' => Permission::DashboardView->label(),
+            ]),
             'permissions.*.in' => __('Ese permiso no se puede asignar a un rol personalizado.'),
         ];
     }
@@ -96,18 +103,15 @@ abstract class RoleFormRequest extends FormRequest
     }
 
     /**
-     * El nombre no puede repetir otro rol ni el nombre o la etiqueta de un rol del sistema (sin distinguir mayúsculas).
+     * El nombre no puede repetir otro rol ni un nombre reservado (SystemRole::reservedNames), sin distinguir mayúsculas.
      */
     private function availableNameRule(): Closure
     {
         return function (string $attribute, mixed $value, Closure $fail): void {
             $normalized = mb_strtolower((string) $value);
 
-            $systemNames = collect(SystemRole::cases())
-                ->flatMap(fn (SystemRole $role): array => [mb_strtolower($role->value), mb_strtolower($role->label())]);
-
-            if ($systemNames->contains($normalized)) {
-                $fail(__('Ese nombre pertenece a un rol del sistema.'));
+            if (in_array($normalized, SystemRole::reservedNames(), true)) {
+                $fail(__('Ese nombre está reservado para un rol del sistema.'));
 
                 return;
             }

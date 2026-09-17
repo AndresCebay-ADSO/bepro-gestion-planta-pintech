@@ -7,7 +7,6 @@ namespace App\Http\Controllers;
 use App\Actions\Roles\CreateRoleAction;
 use App\Actions\Roles\DeleteRoleAction;
 use App\Actions\Roles\UpdateRoleAction;
-use App\Enums\Permission;
 use App\Enums\SystemRole;
 use App\Filters\RoleFilter;
 use App\Http\Requests\Roles\IndexRoleRequest;
@@ -67,7 +66,7 @@ class RoleController extends Controller
         return Inertia::render('Admin/Roles/Create', [
             'modules' => $this->permissionCatalog->modules(),
             'templates' => $this->templates(),
-            'defaultPermissions' => [Permission::DashboardView->value],
+            'defaultPermissions' => $this->permissionCatalog->requiredForCustomRoles(),
         ]);
     }
 
