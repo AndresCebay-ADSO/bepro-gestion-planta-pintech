@@ -9,6 +9,7 @@ use App\Enums\AlertType;
 use App\Models\Alert;
 use App\Models\InventoryBatch;
 use App\Models\RawMaterial;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 
 class AlertService
@@ -20,9 +21,10 @@ class AlertService
         private readonly DecimalCalculator $calculator
     ) {}
 
-    public function unresolvedCount(): int
+    public function unresolvedCount(?User $user): int
     {
         return Alert::query()
+            ->visibleTo($user)
             ->where('is_resolved', false)
             ->count();
     }
@@ -30,9 +32,10 @@ class AlertService
     /**
      * @return array{stock_bajo: int, vencimiento_proximo: int, variacion_precio: int, paint_development_request: int}
      */
-    public function unresolvedBreakdown(): array
+    public function unresolvedBreakdown(?User $user): array
     {
         $counts = Alert::query()
+            ->visibleTo($user)
             ->selectRaw('type, COUNT(*) as total')
             ->where('is_resolved', false)
             ->groupBy('type')
@@ -58,9 +61,10 @@ class AlertService
      *     raw_material_code: string|null
      * }>
      */
-    public function recentUnresolved(int $limit = 5): array
+    public function recentUnresolved(?User $user, int $limit = 5): array
     {
         return Alert::query()
+            ->visibleTo($user)
             ->with(['rawMaterial:id,code'])
             ->where('is_resolved', false)
             ->latest('id')

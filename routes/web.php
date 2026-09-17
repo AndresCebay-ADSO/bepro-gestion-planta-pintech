@@ -25,6 +25,7 @@ use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\PublicQrLandingController;
 use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\UserController;
 use App\Models\PaintDevelopmentRequest;
@@ -177,6 +178,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middlewareFor(['create', 'store'], 'can:'.Permission::UsersCreate->value)
         ->middlewareFor(['edit', 'update'], 'can:'.Permission::UsersEdit->value)
         ->middlewareFor('destroy', 'can:'.Permission::UsersDelete->value);
+
+    // Roles (los del sistema, en solo lectura: RolePolicy)
+    Route::resource('roles', RoleController::class)
+        ->middlewareFor(['index', 'show'], 'can:'.Permission::RolesView->value)
+        ->middlewareFor(['create', 'store'], 'can:'.Permission::RolesCreate->value)
+        ->middlewareFor(['edit', 'update'], ['can:'.Permission::RolesEdit->value, 'can:update,role'])
+        ->middlewareFor('destroy', ['can:'.Permission::RolesDelete->value, 'can:delete,role']);
 
     // Auditoría
     Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])

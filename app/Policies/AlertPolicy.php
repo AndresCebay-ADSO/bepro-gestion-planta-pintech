@@ -13,13 +13,17 @@ class AlertPolicy
         return $user->can(Permission::AlertsView->value);
     }
 
+    /**
+     * Cada tipo de alerta exige además el permiso de su módulo (AlertType::requiredPermission).
+     */
     public function view(User $user, Alert $alert): bool
     {
-        return $user->can(Permission::AlertsView->value);
+        return $user->can(Permission::AlertsView->value)
+            && $user->can($alert->type->requiredPermission()->value);
     }
 
     public function resolve(User $user, Alert $alert): bool
     {
-        return $user->can(Permission::AlertsResolve->value);
+        return $user->can(Permission::AlertsResolve->value) && $this->view($user, $alert);
     }
 }

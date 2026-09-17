@@ -320,6 +320,134 @@ enum Permission: string
     }
 
     /**
+     * Permisos reservados a SuperAdmin: un rol creado desde la UI nunca puede tenerlos (docs/PLAN_FASE_2_RBAC.md, 2.4).
+     */
+    public function isReserved(): bool
+    {
+        return match ($this) {
+            self::RolesView,
+            self::RolesCreate,
+            self::RolesEdit,
+            self::RolesDelete,
+            self::AuditLogsView,
+            self::CatalogsCreate,
+            self::CatalogsEdit,
+            self::CatalogsDelete,
+            self::UsersDelete,
+            self::ProductsDelete,
+            self::FormulasDelete,
+            self::RawMaterialsDelete,
+            self::WarehousesDelete => true,
+            default => false,
+        };
+    }
+
+    /**
+     * Dependencias directas: un rol no puede tener este permiso sin ellas, porque dejaría pantallas o acciones que
+     * responden 403 o, en el caso de los costos, formularios que no se pueden completar.
+     *
+     * @return array<int, Permission>
+     */
+    public function requires(): array
+    {
+        return match ($this) {
+            self::UsersCreate,
+            self::UsersEdit,
+            self::UsersDelete,
+            self::UsersManageRoles => [self::UsersView],
+            self::RolesCreate,
+            self::RolesEdit,
+            self::RolesDelete => [self::RolesView],
+            // Las entradas de auditoría incluyen precios y costos (B20).
+            self::AuditLogsView => [self::CostsView],
+            self::CatalogsCreate,
+            self::CatalogsEdit,
+            self::CatalogsDelete => [self::CatalogsView],
+            self::ProductsCreate,
+            self::ProductsEdit,
+            self::ProductsDelete,
+            self::ProductsManageVariants,
+            self::ProductsManageDocuments,
+            self::ProductsDownloadDocuments => [self::ProductsView],
+            // La casilla "Producto activo" vive en el formulario de edición.
+            self::ProductsDeactivate => [self::ProductsEdit],
+            self::CostsUpdate => [self::CostsView],
+            self::FormulasCreate,
+            self::FormulasEdit,
+            self::FormulasActivate,
+            self::FormulasDelete => [self::FormulasView],
+            self::RawMaterialsCreate,
+            self::RawMaterialsEdit,
+            self::RawMaterialsDeactivate,
+            self::RawMaterialsReactivate,
+            self::RawMaterialsDelete => [self::RawMaterialsView],
+            self::ProductionOrdersCreate,
+            self::ProductionOrdersOperate,
+            self::ProductionOrdersSubmitForReview,
+            self::ProductionOrdersRejectReview,
+            self::ProductionOrdersComplete,
+            self::ProductionOrdersCancel,
+            self::ProductionOrdersExport => [self::ProductionOrdersView],
+            // Registrar una entrada exige escribir el precio del lote (B19).
+            self::InventoryMovementsCreate => [self::InventoryMovementsView, self::CostsView],
+            self::FinishedInventoryMovementsView => [self::FinishedInventoryView],
+            self::FinishedInventoryMovementsCreate => [self::FinishedInventoryMovementsView],
+            self::QuotationsViewAll,
+            self::QuotationsCreate,
+            self::QuotationsEdit,
+            self::QuotationsUpdateStatus,
+            self::QuotationsExportPdf => [self::QuotationsViewOwn],
+            // QuotationPolicy::convertToOrder exige además crear pedidos.
+            self::QuotationsConvertToOrder => [self::QuotationsViewOwn, self::SalesOrdersCreate],
+            self::SalesOrdersViewAll,
+            self::SalesOrdersCreate,
+            self::SalesOrdersEdit,
+            self::SalesOrdersUpdateStatus => [self::SalesOrdersViewOwn],
+            self::ClientsCreate,
+            self::ClientsEdit,
+            self::ClientsDelete => [self::ClientsView],
+            self::PaintDevelopmentRequestsViewAll,
+            self::PaintDevelopmentRequestsCreate,
+            self::PaintDevelopmentRequestsEdit,
+            self::PaintDevelopmentRequestsSubmit,
+            self::PaintDevelopmentRequestsUpdateStatus,
+            self::PaintDevelopmentRequestsExportPdf => [self::PaintDevelopmentRequestsViewOwn],
+            self::AlertsResolve => [self::AlertsView],
+            self::QrCodesUpdate => [self::QrCodesView],
+            self::WarehousesViewAll,
+            self::WarehousesCreate,
+            self::WarehousesEdit,
+            self::WarehousesAssignUsers,
+            self::WarehousesDelete => [self::WarehousesView],
+            default => [],
+        };
+    }
+
+    /**
+     * Dependencias directas e indirectas (p. ej. `products.deactivate` → `products.edit` → `products.view`).
+     *
+     * @return array<int, Permission>
+     */
+    public function dependencies(): array
+    {
+        $resolved = [];
+        $pending = $this->requires();
+
+        while ($pending !== []) {
+            $permission = array_shift($pending);
+
+            if (in_array($permission, $resolved, true)) {
+                continue;
+            }
+
+            $resolved[] = $permission;
+            array_push($pending, ...$permission->requires());
+        }
+
+        return $resolved;
+    }
+
+    /**
      * Roles del sistema que reciben este permiso por defecto.
      *
      * SuperAdmin no aparece: recibe todos los permisos por definición (ver SystemRole).

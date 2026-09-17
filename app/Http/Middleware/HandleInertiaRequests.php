@@ -2,7 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\AlertType;
 use App\Enums\Permission;
+use App\Models\Alert;
+use App\Models\User;
 use App\Services\AlertService;
 use App\Services\WarehouseContextService;
 use Illuminate\Http\Request;
@@ -95,16 +98,33 @@ class HandleInertiaRequests extends Middleware
                 'message' => $request->session()->get('message'),
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
-                'new_alerts' => $request->session()->pull('new_alerts', []),
+                'new_alerts' => $this->visibleNewAlerts($request, $user),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'warehouseContext' => $warehouseContext,
             'unresolvedAlertsCount' => $user?->can(Permission::AlertsView->value)
-                ? $this->alertService->unresolvedCount()
+                ? $this->alertService->unresolvedCount($user)
                 : 0,
             'recentAlerts' => $user?->can(Permission::AlertsView->value)
-                ? $this->alertService->recentUnresolved(5)
+                ? $this->alertService->recentUnresolved($user, 5)
                 : [],
         ];
+    }
+
+    /**
+     * Alertas creadas en la petición anterior (notificación emergente), solo de los tipos que ve el usuario.
+     * Se retiran de la sesión igualmente.
+     *
+     * @return array<int, mixed>
+     */
+    private function visibleNewAlerts(Request $request, ?User $user): array
+    {
+        $newAlerts = $request->session()->pull('new_alerts', []);
+        $visibleTypes = array_map(fn (AlertType $type): string => $type->value, Alert::visibleTypesFor($user));
+
+        return array_values(array_filter(
+            is_array($newAlerts) ? $newAlerts : [],
+            fn (mixed $alert): bool => is_array($alert) && in_array($alert['type'] ?? null, $visibleTypes, true),
+        ));
     }
 }

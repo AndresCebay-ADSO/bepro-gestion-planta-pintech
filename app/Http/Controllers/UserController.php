@@ -11,6 +11,7 @@ use App\Http\Requests\Admin\IndexUserRequest;
 use App\Http\Requests\Users\StoreUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Models\User;
+use App\Services\AssignableRoleService;
 use App\Services\SignatureOptimizerService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
@@ -23,6 +24,10 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
+    public function __construct(
+        private readonly AssignableRoleService $assignableRoleService,
+    ) {}
+
     /**
      * Mostrar lista de usuarios.
      */
@@ -98,6 +103,7 @@ class UserController extends Controller
                     'signature_path' => $signaturePath,
                 ]);
 
+                $this->lockRole($validated['role']);
                 $user->assignRole($validated['role']);
             });
         } catch (\Throwable $e) {
@@ -118,13 +124,18 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
 
-        $roles = $this->assignableRoles();
-
         $user->load('roles');
+
+        // El rol actual siempre es una opción, aunque quien edita no pueda asignarlo (UpdateUserRequest lo permite
+        // conservar): si no, el selector quedaría vacío y guardar otros datos obligaría a cambiar el rol.
+        $roles = collect($this->assignableRoles());
+        $currentRoles = $user->roles
+            ->reject(fn (Role $role): bool => $roles->contains('name', $role->name))
+            ->map(fn (Role $role): array => $this->roleOption($role));
 
         return Inertia::render('Admin/Users/Edit', [
             'user' => $user,
-            'roles' => $roles,
+            'roles' => $roles->concat($currentRoles)->values()->all(),
         ]);
     }
 
@@ -188,6 +199,7 @@ class UserController extends Controller
                         : []),
                 ]);
 
+                $this->lockRole($validated['role']);
                 $user->syncRoles([$validated['role']]);
             });
         } catch (\Throwable $e) {
@@ -254,25 +266,46 @@ class UserController extends Controller
     }
 
     /**
-     * Roles que el usuario autenticado puede asignar: super-admin solo lo asigna un SuperAdmin.
+     * Roles que el usuario autenticado puede asignar, sin escalada de privilegios (AssignableRoleService).
      *
      * @return array<int, array{id: int, name: string, label: string}>
      */
     private function assignableRoles(): array
     {
-        return Role::query()
-            ->when(
-                ! (auth()->user()?->isSuperAdmin() ?? false),
-                fn ($query) => $query->where('name', '!=', SystemRole::SuperAdmin->value),
-            )
-            ->get()
-            ->map(fn (Role $role): array => [
-                'id' => $role->id,
-                'name' => $role->name,
-                'label' => SystemRole::labelFor($role->name),
-            ])
+        $actor = auth()->user();
+
+        if (! $actor instanceof User) {
+            return [];
+        }
+
+        return $this->assignableRoleService->for($actor)
+            ->map(fn (Role $role): array => $this->roleOption($role))
             ->values()
             ->all();
+    }
+
+    /**
+     * @return array{id: int, name: string, label: string}
+     */
+    private function roleOption(Role $role): array
+    {
+        return [
+            'id' => $role->id,
+            'name' => $role->name,
+            'label' => SystemRole::labelFor($role->name),
+        ];
+    }
+
+    /**
+     * Bloquea la fila del rol: serializa la asignación con DeleteRoleAction, que no elimina un rol con usuarios.
+     */
+    private function lockRole(string $name): void
+    {
+        Role::query()
+            ->where('name', $name)
+            ->where('guard_name', 'web')
+            ->lockForUpdate()
+            ->firstOrFail();
     }
 
     private function hasOtherActiveUserWithRole(SystemRole $role, User $user): bool

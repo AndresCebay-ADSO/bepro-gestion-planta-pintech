@@ -366,6 +366,49 @@ mostrarían enlaces que responden 403 (por ejemplo, movimientos de materia prima
 
 **Estimación: 3 días** (1,5 backend + 1,5 frontend).
 
+> **✅ Estado 2.4 (2026-09-16, rama `feature/rbac-roles`):** implementada.
+>
+> **Decisiones del usuario:**
+> 1. **Nombre del rol personalizado:** se guarda en `roles.name` tal como se escribe ("Jefe de calidad"), sin migración.
+>    `SystemRole::labelFor()` lo muestra por su nombre. No puede repetir otro rol ni el nombre o la etiqueta de un rol
+>    del sistema (sin distinguir mayúsculas).
+> 2. **Permisos reservados:** un rol personalizado nunca tiene los 13 permisos que solo tiene SuperAdmin (gestión de
+>    roles, auditoría, gestión de catálogos y borrados físicos). `Permission::isReserved()`; un test exige que coincidan
+>    con los permisos sin roles por defecto. **Resuelve B20** (la reserva es la protección efectiva: la dependencia
+>    `audit_logs.view` → `costs.view` nunca llega a actuar en un rol personalizado).
+> 3. **Dependencias entre permisos:** `Permission::requires()` / `dependencies()`. Cada acción exige el `view` de su
+>    módulo (`view_own` en los módulos con dueño; `view_all` también exige `view_own`); `products.deactivate` exige
+>    `products.edit`; `costs.update` exige `costs.view`; `quotations.convert_to_order` exige `sales_orders.create`; y
+>    **`inventory_movements.create` exige `costs.view`**, porque registrar una entrada implica escribir el precio del
+>    lote. **Resuelve B19.** Un test exige que los 5 roles del sistema cumplan todas las dependencias.
+> 4. **Crear a partir de un rol existente:** selector que copia los permisos de otro rol, sin los reservados.
+>
+> **Implementación:**
+> - Rutas `roles.*` (resource) con `can:roles.*`; editar y eliminar además con la policy (`can:update,role` /
+>   `can:delete,role`). `RolePolicy` registrada con `Gate::policy` (el modelo es de Spatie).
+> - Los roles del sistema se ven en solo lectura (`roles.show`): la policy impide editarlos y eliminarlos, y las Actions
+>   lo vuelven a comprobar.
+> - `RoleFormRequest` valida nombre, permisos asignables y dependencias en servidor; el formulario marca las
+>   dependencias al activar un permiso y retira a sus dependientes al desactivarlo.
+> - `Create/Update/DeleteRoleAction` en transacción con bloqueo de la fila del rol, y auditoría `security`
+>   (`role_created`, `role_updated` con permisos añadidos y retirados, `role_deleted`).
+> - **No se elimina un rol con usuarios** (también inactivos): `model_has_roles` borra en cascada y los dejaría sin
+>   acceso. `UserController` bloquea la misma fila al asignar un rol, así que asignar y eliminar no se cruzan.
+> - **Escalada de privilegios al asignar roles:** `AssignableRoleService` (formularios y validación de usuarios). Salvo
+>   un SuperAdmin, nadie asigna un rol con permisos que él no tiene; al editar, el rol actual del usuario se puede
+>   conservar. Con los roles actuales Admin sigue viendo los mismos 4 roles.
+> - La caché de Spatie se limpia sola (`syncPermissions` y los eventos del modelo `Role`), y los permisos compartidos
+>   se leen en cada petición: un cambio se aplica a los usuarios del rol en su siguiente petición.
+> - Frontend: `Admin/Roles/{Index,Show,Create,Edit}`, componente `roles/role-permissions-fields` e ítem "Roles" en
+>   SISTEMA (`roles.view`).
+> - Tests: `RoleManagementTest` (acceso, listado, plantillas, validación, roles del sistema, auditoría, borrado y
+>   escalada) y 4 casos nuevos en `PermissionRegistryTest`.
+>
+> **Sin cambios de acceso** para los roles del sistema: la pantalla es solo de SuperAdmin.
+> **Ajustes tras la revisión (lote A6 de `docs/REVISION_RAMA_RBAC.md`):** la búsqueda encuentra los roles del sistema
+> también por su etiqueta; todo rol personalizado incluye `dashboard.view`; su nombre no admite `|` ni los nombres
+> reservados (`SystemRole::reservedNames()`); y cada tipo de alerta exige el permiso de su módulo.
+
 ---
 
 ### 2.5 — Asignación de roles a usuarios
@@ -546,6 +589,9 @@ vibe coding e incumplen la regla de código en inglés (`CLAUDE.md`). Al llegar 
 middlewares (2.8), el sidebar (2.5) y los tests (helper `actingAsRole`) ya no usan esos textos: solo quedan en
 `SystemRole` y en la tabla `roles`. El cambio es:
 1. `SystemRole`: `'produccion'` → `'production'`, `'operador'` → `'operator'`, `'comercial'` → `'commercial'`.
+   Esos nombres en inglés están reservados desde la 2.4 (`SystemRole::reservedNames()`), así que ningún rol personalizado
+   puede ocuparlos. Al renombrar, retirar `FUTURE_NAMES` y comprobar que los nombres antiguos en español siguen reservados
+   o no hacen falta.
 2. Una migración de datos que actualiza `roles.name`. Es segura: `model_has_roles` enlaza por `role_id`, así que
    ningún usuario pierde su rol.
 3. Limpiar la caché de permisos y actualizar el test que hoy protege los nombres en español.

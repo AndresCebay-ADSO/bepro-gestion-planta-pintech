@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\AlertSeverity;
 use App\Enums\AlertType;
+use App\Enums\Permission;
 use Database\Factories\AlertFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -54,6 +55,41 @@ class Alert extends Model
             'is_resolved' => 'boolean',
             'resolved_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Tipos de alerta que ve el usuario: exige alerts.view y el permiso del módulo de cada tipo.
+     *
+     * @return array<int, AlertType>
+     */
+    public static function visibleTypesFor(?User $user): array
+    {
+        if ($user === null || ! $user->can(Permission::AlertsView->value)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            AlertType::cases(),
+            fn (AlertType $type): bool => $user->can($type->requiredPermission()->value),
+        ));
+    }
+
+    /**
+     * Solo las alertas de los tipos que ve el usuario; sin usuario, ninguna.
+     *
+     * @param  Builder<Alert>  $query
+     */
+    public function scopeVisibleTo(Builder $query, ?User $user): void
+    {
+        $types = self::visibleTypesFor($user);
+
+        if ($types === []) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->whereIn('type', array_map(fn (AlertType $type): string => $type->value, $types));
     }
 
     /**

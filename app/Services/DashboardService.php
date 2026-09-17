@@ -83,7 +83,7 @@ class DashboardService
                 'active_orders' => $this->activeOrdersCount(),
                 'completed_today' => $this->completedTodayCount($today),
             ] : []),
-            ...($canSeeAlerts ? ['unresolved_alerts' => $this->alertService->unresolvedCount()] : []),
+            ...($canSeeAlerts ? ['unresolved_alerts' => $this->alertService->unresolvedCount($user)] : []),
             ...$this->stockStats($user),
         ];
 
@@ -106,7 +106,7 @@ class DashboardService
                 'pending_review_orders' => $this->pendingReviewOrdersCount(),
                 'completed_today' => $this->completedTodayCount($today),
             ] : []),
-            ...($user->can(Permission::AlertsView->value) ? ['unresolved_alerts' => $this->alertService->unresolvedCount()] : []),
+            ...($user->can(Permission::AlertsView->value) ? ['unresolved_alerts' => $this->alertService->unresolvedCount($user)] : []),
             ...$this->stockStats($user),
         ];
 
@@ -250,8 +250,8 @@ class DashboardService
         }
 
         return [
-            'recent_alerts' => $this->alertService->recentUnresolved(5),
-            'alert_breakdown' => $this->alertService->unresolvedBreakdown(),
+            'recent_alerts' => $this->alertService->recentUnresolved($user, 5),
+            'alert_breakdown' => $this->alertService->unresolvedBreakdown($user),
         ];
     }
 
