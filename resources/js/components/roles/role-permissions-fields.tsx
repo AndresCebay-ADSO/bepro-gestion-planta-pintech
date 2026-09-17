@@ -146,8 +146,11 @@ export default function RolePermissionsFields({
                                         <Checkbox
                                             id={id}
                                             checked={
-                                                permission.required ||
-                                                selectedSet.has(permission.name)
+                                                selectedSet.has(
+                                                    permission.name,
+                                                ) ||
+                                                (!readOnly &&
+                                                    permission.required)
                                             }
                                             disabled={
                                                 locked || permission.required

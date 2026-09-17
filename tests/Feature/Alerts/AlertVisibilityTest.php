@@ -8,7 +8,6 @@ use App\Enums\Permission;
 use App\Enums\SystemRole;
 use App\Models\Alert;
 use App\Models\RawMaterial;
-use App\Models\UnitOfMeasure;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -16,29 +15,28 @@ use Inertia\Testing\AssertableInertia as Assert;
  * Cada tipo de alerta pertenece a un módulo: solo la ve quien tiene su permiso, además de alerts.view.
  */
 beforeEach(function (): void {
-    $unit = UnitOfMeasure::create(['code' => 'KG-VIS', 'name' => 'Kilogramo', 'symbol' => 'kg']);
-    $rawMaterial = RawMaterial::create([
+    $rawMaterial = RawMaterial::factory()->create([
         'code' => 'MP-VIS-01',
-        'unit_of_measure_id' => $unit->id,
         'minimum_stock' => 5,
         'alert_days_before_expiry' => 30,
         'is_active' => true,
     ]);
 
-    $this->stockAlert = Alert::create([
+    $this->stockAlert = Alert::factory()->create([
         'type' => AlertType::StockBajo,
         'raw_material_id' => $rawMaterial->id,
         'severity' => AlertSeverity::Media,
         'message' => 'MP-VIS-01: stock bajo (1 / mínimo 5)',
     ]);
-    $this->priceAlert = Alert::create([
+    $this->priceAlert = Alert::factory()->create([
         'type' => AlertType::VariacionPrecio,
         'raw_material_id' => $rawMaterial->id,
         'severity' => AlertSeverity::Alta,
         'message' => 'MP-VIS-01: +20% ($10.00 → $12.00)',
     ]);
-    $this->paintAlert = Alert::create([
+    $this->paintAlert = Alert::factory()->create([
         'type' => AlertType::PaintDevelopmentRequest,
+        'raw_material_id' => null,
         'severity' => AlertSeverity::Media,
         'message' => 'Nueva solicitud de desarrollo DP-2026-0001 — Cliente Reservado',
     ]);

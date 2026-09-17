@@ -22,6 +22,7 @@ beforeEach(function (): void {
  */
 function storedCustomRole(string $name, array $permissions): Role
 {
+    /** @var Role $role */
     $role = Role::create(['name' => $name, 'guard_name' => 'web']);
     $role->syncPermissions(array_map(fn (Permission $permission) => $permission->value, $permissions));
 

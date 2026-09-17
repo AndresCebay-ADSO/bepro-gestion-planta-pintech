@@ -15,6 +15,7 @@ class CreateRoleAction
     public function execute(string $name, array $permissions): Role
     {
         return DB::transaction(function () use ($name, $permissions): Role {
+            /** @var Role $role */
             $role = Role::create(['name' => $name, 'guard_name' => 'web']);
             $role->syncPermissions($permissions);
 
