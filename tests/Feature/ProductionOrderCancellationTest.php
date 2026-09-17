@@ -54,7 +54,7 @@ beforeEach(function () {
 function makeOrderForCancellationTest(object $context, ProductionOrderStatus $status, ?string $notes = null): ProductionOrder
 {
     return ProductionOrder::create([
-        'order_number' => 'OP-CANCEL-'.$status->value.'-'.fake()->unique()->numerify('###'),
+        'order_number' => 'OP-CAN-'.fake()->unique()->numerify('####'),
         'product_id' => $context->formula->product_id,
         'formula_id' => $context->formula->id,
         'warehouse_id' => $context->warehouse->id,

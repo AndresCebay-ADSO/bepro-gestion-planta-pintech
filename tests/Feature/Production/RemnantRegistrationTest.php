@@ -85,7 +85,7 @@ beforeEach(function () {
     ]);
 
     $this->order = ProductionOrder::create([
-        'order_number' => 'OP-REMNANT-'.uniqid(),
+        'order_number' => 'OP-REMNANT-'.substr(uniqid(), -6),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->warehouse->id,

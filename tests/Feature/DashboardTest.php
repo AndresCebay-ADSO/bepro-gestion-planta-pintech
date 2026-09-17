@@ -190,7 +190,7 @@ test('comercial dashboard exposes sales stats', function () {
 
     Quotation::create([
         'client_id' => $client->id,
-        'quotation_number' => 'COT-001',
+        'quotation_number' => 1,
         'status' => QuotationStatus::Draft,
         'subtotal' => 1000,
         'iva_percentage' => 19,
@@ -287,7 +287,7 @@ test('a commercial-profile role with view_all sees everyone\'s quotations and or
 
     Quotation::create([
         'client_id' => $client->id,
-        'quotation_number' => 'COT-VA-001',
+        'quotation_number' => 2,
         'status' => QuotationStatus::Draft,
         'subtotal' => 100,
         'iva_percentage' => 19,

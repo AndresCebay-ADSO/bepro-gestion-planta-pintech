@@ -236,6 +236,35 @@ Ejemplos:
 ./vendor/bin/pest tests/Feature/Auth/PasswordResetTest.php
 ```
 
+### Tests contra PostgreSQL
+
+SQLite no tiene los advisory locks de los consecutivos, ni las restricciones CHECK de inventario, ni los índices
+parciales. CI ejecuta la suite en ambos motores; en local, con el contenedor de desarrollo levantado:
+
+```bash
+docker compose -f compose.dev.yaml up -d postgres
+docker compose -f compose.dev.yaml exec -T postgres psql -U postgres -c "CREATE DATABASE pintech_erp_test"
+
+DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_PORT=5432 DB_DATABASE=pintech_erp_test \
+  DB_USERNAME=postgres DB_PASSWORD="$(grep '^DB_PASSWORD=' .env | cut -d= -f2-)" ./vendor/bin/pest
+```
+
+Las variables de entorno mandan sobre `phpunit.xml`, que fija SQLite. Usa una base aparte (`pintech_erp_test`):
+`RefreshDatabase` recrea el esquema en cada test.
+
+## Integración continua
+
+Dos workflows, en cada push y PR a `develop` y `main`:
+
+- **calidad**: Pint, Prettier, ESLint y TypeScript **en modo comprobación** (fallan, no corrigen), más `composer audit`
+  y `npm audit` como aviso. Levanta PostgreSQL y migra antes de generar las rutas de Wayfinder, que tipa los parámetros
+  leyendo el esquema: sin base de datos los tipos cambian y `tsc` falla sin motivo real.
+- **tests**: la suite en SQLite y en PostgreSQL 16, ambas con `--parallel`.
+
+Los tres jobs corren a la vez y cachean `vendor` y `node_modules`, así que el tiempo total es el del más lento.
+
+Para que sirvan de barrera hay que **proteger `develop` y `main`** en GitHub exigiendo ambos checks antes de fusionar.
+
 ## Despliegue a producción
 
 El entrypoint de producción **no** ejecuta migraciones ni seeders. En cada despliegue, después de levantar la nueva

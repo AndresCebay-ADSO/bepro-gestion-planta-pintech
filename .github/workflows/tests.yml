@@ -1,25 +1,106 @@
 name: tests
 
+# La suite corre dos veces, en paralelo: SQLite (como en local) y PostgreSQL 16 (el motor de producción).
+# PostgreSQL es el único que ejercita los advisory locks de los consecutivos, las restricciones CHECK de
+# inventario y los índices parciales, que en SQLite no existen o se comportan distinto.
 on:
   push:
     branches:
       - develop
       - main
-      - master
-      - workos
   pull_request:
     branches:
       - develop
       - main
-      - master
-      - workos
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  ci:
+  sqlite:
+    name: pest (sqlite)
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php-version: ['8.3', '8.4']
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.13.0'
+          cache: 'npm'
+
+      - name: Cache de vendor
+        id: vendor-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: vendor-${{ runner.os }}-php8.3-${{ hashFiles('composer.lock') }}
+
+      - name: Instalar dependencias PHP
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Cache de node_modules
+        id: node-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Instalar dependencias Node
+        if: steps.node-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Preparar entorno
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # El layout raíz usa @vite: sin el manifest, las páginas Inertia no se renderizan en los tests.
+      - name: Compilar assets
+        run: npm run build
+
+      # --parallel reparte la suite entre procesos (paratest): ~5x más rápida.
+      - name: Tests
+        run: ./vendor/bin/pest --parallel
+
+  postgres:
+    name: pest (postgresql 16)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: pintech_erp_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: pintech_erp_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
 
     steps:
       - name: Checkout code
@@ -28,29 +109,48 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-version }}
+          php-version: '8.3'
           tools: composer:v2
-          coverage: xdebug
+          coverage: none
+          extensions: pdo_pgsql, bcmath
 
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
           node-version: '22.13.0'
+          cache: 'npm'
 
-      - name: Install Node Dependencies
-        run: npm i
+      - name: Cache de vendor
+        id: vendor-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: vendor-${{ runner.os }}-php8.3-${{ hashFiles('composer.lock') }}
 
-      - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+      - name: Instalar dependencias PHP
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
+        run: composer install --no-interaction --prefer-dist --no-progress
 
-      - name: Copy Environment File
-        run: cp .env.example .env
+      - name: Cache de node_modules
+        id: node-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      - name: Generate Application Key
-        run: php artisan key:generate
+      - name: Instalar dependencias Node
+        if: steps.node-cache.outputs.cache-hit != 'true'
+        run: npm ci
 
-      - name: Build Assets
+      - name: Preparar entorno
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Compilar assets
         run: npm run build
 
+      # Las variables de entorno mandan sobre phpunit.xml, que fija SQLite.
+      # En paralelo, Laravel crea una base por proceso (pintech_erp_test_1, _2, …).
       - name: Tests
-        run: ./vendor/bin/pest
+        run: ./vendor/bin/pest --parallel

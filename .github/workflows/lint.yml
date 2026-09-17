@@ -1,25 +1,51 @@
-name: linter
+name: calidad
 
+# Comprueba formato, estilo y tipos. Nunca corrige: si algo no cumple, el job falla.
 on:
   push:
     branches:
       - develop
       - main
-      - master
-      - workos
   pull_request:
     branches:
       - develop
       - main
-      - master
-      - workos
 
-permissions:
-  contents: write
+# Una ejecución por rama: al empujar de nuevo se cancela la anterior.
+concurrency:
+  group: calidad-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Wayfinder tipa los parámetros de ruta leyendo el esquema; sin base de datos cae al docblock del modelo y,
+    # por ejemplo, el id de rol (`@property int|string $id` en Spatie) pasa de `number` a `string` y tsc falla.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: pintech_erp
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: pintech_erp
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
     steps:
       - uses: actions/checkout@v6
 
@@ -27,28 +53,66 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+          tools: composer:v2
+          coverage: none
+          extensions: pdo_pgsql, bcmath
 
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
           node-version: '22.13.0'
+          cache: 'npm'
 
-      - name: Install Dependencies
+      # Se cachean las carpetas instaladas, no solo las descargas: con acierto, no hay que instalar nada.
+      - name: Cache de vendor
+        id: vendor-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: vendor-${{ runner.os }}-php8.3-${{ hashFiles('composer.lock') }}
+
+      - name: Instalar dependencias PHP
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Cache de node_modules
+        id: node-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Instalar dependencias Node
+        if: steps.node-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Preparar entorno
         run: |
-          composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-          npm install
+          cp .env.example .env
+          php artisan key:generate
 
-      - name: Run Pint
-        run: composer lint
+      - name: Migrar la base de datos
+        run: php artisan migrate --force
 
-      - name: Format Frontend
-        run: npm run format
+      # Las rutas tipadas de Wayfinder no están en git: sin ellas, tsc no puede comprobar nada.
+      - name: Generar rutas de Wayfinder
+        run: php artisan wayfinder:generate
 
-      - name: Lint Frontend
-        run: npm run lint
+      - name: Pint (PHP)
+        run: ./vendor/bin/pint --test
 
-      # - name: Commit Changes
-      #   uses: stefanzweifel/git-auto-commit-action@v7
-      #   with:
-      #     commit_message: fix code style
-      #     commit_options: '--no-verify'
+      - name: Prettier
+        run: npm run format:check
+
+      - name: ESLint
+        run: npm run lint:check
+
+      - name: TypeScript
+        run: npm run types:check
+
+      # Informativo: avisa de vulnerabilidades conocidas sin bloquear la rama.
+      - name: Auditoría de dependencias
+        continue-on-error: true
+        run: |
+          composer audit --no-interaction
+          npm audit --omit=dev

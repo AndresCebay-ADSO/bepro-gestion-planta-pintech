@@ -45,7 +45,7 @@ beforeEach(function () {
     ]);
 
     $sourceOrder = ProductionOrder::create([
-        'order_number' => 'OP-SOURCE-'.uniqid(),
+        'order_number' => 'OP-SOURCE-'.substr(uniqid(), -6),
         'product_id' => $product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $warehouse->id,
@@ -70,7 +70,7 @@ beforeEach(function () {
     ]);
 
     $this->targetOrder = ProductionOrder::create([
-        'order_number' => 'OP-TARGET-'.uniqid(),
+        'order_number' => 'OP-TARGET-'.substr(uniqid(), -6),
         'product_id' => $product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $warehouse->id,
