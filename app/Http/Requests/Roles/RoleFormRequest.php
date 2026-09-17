@@ -77,26 +77,16 @@ abstract class RoleFormRequest extends FormRequest
                     return;
                 }
 
-                $granted = array_map(
-                    fn (string $name): Permission => Permission::from($name),
-                    $this->input('permissions', []),
-                );
+                $violations = app(PermissionCatalogService::class)->customRoleViolations($this->input('permissions', []));
 
-                foreach ($granted as $permission) {
-                    $missing = array_filter(
-                        $permission->dependencies(),
-                        fn (Permission $dependency): bool => ! in_array($dependency, $granted, true),
-                    );
-
-                    if ($missing !== []) {
-                        $validator->errors()->add('permissions', __('":permission" necesita también: :dependencies.', [
-                            'permission' => $permission->label(),
-                            'dependencies' => implode(', ', array_map(
-                                fn (Permission $dependency): string => $dependency->label(),
-                                $missing,
-                            )),
-                        ]));
-                    }
+                foreach ($violations['missing_dependencies'] as $permission => $dependencies) {
+                    $validator->errors()->add('permissions', __('":permission" necesita también: :dependencies.', [
+                        'permission' => Permission::from($permission)->label(),
+                        'dependencies' => implode(', ', array_map(
+                            fn (string $dependency): string => Permission::from($dependency)->label(),
+                            $dependencies,
+                        )),
+                    ]));
                 }
             },
         ];

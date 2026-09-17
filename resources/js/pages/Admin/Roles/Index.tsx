@@ -15,6 +15,7 @@ import {
     index as rolesIndex,
     show as rolesShow,
 } from '@/routes/roles';
+import type { RoleFilters } from '@/types/roles';
 import type { PaginationLink } from '@/types/ui';
 
 interface RoleRow {
@@ -35,7 +36,7 @@ interface Props {
         total: number;
         links: PaginationLink[];
     };
-    filters: Record<string, string | null | undefined>;
+    filters: RoleFilters;
     can: {
         create: boolean;
     };
@@ -151,16 +152,14 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
                                                     }}
                                                     onView={() =>
                                                         router.get(
-                                                            rolesShow(
-                                                                String(role.id),
-                                                            ).url,
+                                                            rolesShow(role.id)
+                                                                .url,
                                                         )
                                                     }
                                                     onEdit={() =>
                                                         router.get(
-                                                            rolesEdit(
-                                                                String(role.id),
-                                                            ).url,
+                                                            rolesEdit(role.id)
+                                                                .url,
                                                         )
                                                     }
                                                     onDelete={() => {
@@ -171,9 +170,7 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
                                                         ) {
                                                             router.delete(
                                                                 rolesDestroy(
-                                                                    String(
-                                                                        role.id,
-                                                                    ),
+                                                                    role.id,
                                                                 ).url,
                                                                 {
                                                                     preserveScroll: true,

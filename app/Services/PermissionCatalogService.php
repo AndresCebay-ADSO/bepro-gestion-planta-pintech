@@ -67,6 +67,72 @@ class PermissionCatalogService
     }
 
     /**
+     * Reglas que incumplen los permisos de un rol personalizado. Lo usan la validación de la pantalla de roles y
+     * `roles:audit`, que revisa los roles ya guardados cuando cambian las reglas en código.
+     *
+     * @param  array<int, string>  $permissionNames
+     * @return array{reserved: array<int, string>, missing_required: array<int, string>, missing_dependencies: array<string, array<int, string>>}
+     */
+    public function customRoleViolations(array $permissionNames): array
+    {
+        $granted = array_values(array_filter(array_map(
+            fn (string $name): ?Permission => Permission::tryFrom($name),
+            $permissionNames,
+        )));
+
+        $missingDependencies = [];
+
+        foreach ($granted as $permission) {
+            $missing = array_filter(
+                $permission->dependencies(),
+                fn (Permission $dependency): bool => ! in_array($dependency, $granted, true),
+            );
+
+            if ($missing !== []) {
+                $missingDependencies[$permission->value] = array_values(array_map(
+                    fn (Permission $dependency): string => $dependency->value,
+                    $missing,
+                ));
+            }
+        }
+
+        return [
+            'reserved' => array_values(array_map(
+                fn (Permission $permission): string => $permission->value,
+                array_filter($granted, fn (Permission $permission): bool => $permission->isReserved()),
+            )),
+            'missing_required' => array_values(array_diff($this->requiredForCustomRoles(), $permissionNames)),
+            'missing_dependencies' => $missingDependencies,
+        ];
+    }
+
+    /**
+     * Descripción legible de las reglas incumplidas; vacía si el rol es válido.
+     *
+     * @param  array<int, string>  $permissionNames
+     * @return array<int, string>
+     */
+    public function describeCustomRoleViolations(array $permissionNames): array
+    {
+        $violations = $this->customRoleViolations($permissionNames);
+        $lines = [];
+
+        if ($violations['reserved'] !== []) {
+            $lines[] = 'Permisos reservados a SuperAdmin: '.implode(', ', $violations['reserved']);
+        }
+
+        if ($violations['missing_required'] !== []) {
+            $lines[] = 'Faltan permisos obligatorios: '.implode(', ', $violations['missing_required']);
+        }
+
+        foreach ($violations['missing_dependencies'] as $permission => $dependencies) {
+            $lines[] = "{$permission} necesita: ".implode(', ', $dependencies);
+        }
+
+        return $lines;
+    }
+
+    /**
      * Permisos que puede tener un rol creado desde la UI.
      *
      * @return array<int, string>

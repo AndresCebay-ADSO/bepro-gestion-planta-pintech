@@ -16,6 +16,11 @@ export type PermissionModuleGroup = {
     permissions: PermissionOption[];
 };
 
+/** Filtros del listado de roles (`IndexRoleRequest`). */
+export type RoleFilters = {
+    search?: string;
+};
+
 /** Rol existente que sirve como punto de partida al crear uno nuevo. */
 export type RoleTemplate = {
     id: number;

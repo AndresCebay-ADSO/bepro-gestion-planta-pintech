@@ -252,7 +252,9 @@ php artisan permission:cache-reset
 - **`RolePermissionSeeder` es obligatorio en cada despliegue**, no solo el primero: crea los permisos nuevos del enum,
   elimina los retirados y reasigna a cada rol del sistema sus permisos por defecto. Si se omite, las pantallas nuevas
   responden 403; en una base recién creada, **todos** los usuarios reciben 403.
-- Es idempotente y nunca toca los roles creados desde la UI.
+- Es idempotente y nunca toca los roles creados desde la UI. Si un cambio de reglas deja alguno inválido (permisos
+  reservados, obligatorios o dependencias), lo avisa en la salida; el detalle se ve con `php artisan roles:audit`, que
+  termina con error mientras quede alguno. Se corrigen a mano desde la pantalla de roles.
 - **Nunca** ejecutar `php artisan db:seed` sin `--class` en producción: `DatabaseSeeder` también carga datos de negocio.
 - Usuario de soporte: `php artisan users:grant-super-admin {email}` sobre un usuario existente y activo.
 

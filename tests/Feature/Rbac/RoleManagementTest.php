@@ -198,6 +198,43 @@ it('busca los roles del sistema también por su etiqueta', function () {
             ->where('roles.data.0.label', 'Jefe de calidad'));
 });
 
+it('reserva a SuperAdmin ver, editar y eliminar roles', function (SystemRole $role) {
+    actingAsRole($role);
+    $custom = createCustomRole('Calidad', [Permission::DashboardView]);
+
+    $this->get(route('roles.show', $custom))->assertForbidden();
+    $this->get(route('roles.edit', $custom))->assertForbidden();
+    $this->put(route('roles.update', $custom), ['name' => 'Calidad', 'permissions' => [Permission::DashboardView->value]])
+        ->assertForbidden();
+    $this->delete(route('roles.destroy', $custom))->assertForbidden();
+
+    expect(Role::whereKey($custom->id)->exists())->toBeTrue();
+})->with([SystemRole::Admin, SystemRole::Production, SystemRole::Operator, SystemRole::Commercial]);
+
+it('rechaza editar un rol dejando un permiso sin sus dependencias', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+    $role = createCustomRole('Catálogo', [Permission::DashboardView, Permission::ProductsView]);
+
+    $this->put(route('roles.update', $role), [
+        'name' => 'Catálogo',
+        'permissions' => [Permission::DashboardView->value, Permission::ProductsView->value, Permission::ProductsDeactivate->value],
+    ])->assertSessionHasErrors('permissions');
+
+    expect($role->fresh()->hasPermissionTo(Permission::ProductsDeactivate->value))->toBeFalse();
+});
+
+it('permite conservar el nombre al editar un rol', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+    $role = createCustomRole('Calidad', [Permission::DashboardView]);
+
+    $this->put(route('roles.update', $role), [
+        'name' => 'Calidad',
+        'permissions' => [Permission::DashboardView->value, Permission::AlertsView->value],
+    ])->assertSessionHasNoErrors()->assertRedirect(route('roles.index'));
+
+    expect($role->fresh()->hasPermissionTo(Permission::AlertsView->value))->toBeTrue();
+});
+
 it('no permite editar ni eliminar un rol del sistema', function () {
     actingAsRole(SystemRole::SuperAdmin);
     $admin = Role::findByName(SystemRole::Admin->value, 'web');
@@ -312,4 +349,28 @@ it('muestra el rol actual del usuario en el formulario aunque quien edita no pue
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('roles', fn ($roles) => collect($roles)->pluck('name')->doesntContain('Auditor')));
+});
+
+it('impide que Admin cambie el rol de un usuario por uno que no puede asignar, y le deja conservar el actual', function () {
+    actingAsRole(SystemRole::Admin);
+    $auditor = createCustomRole('Auditor', [Permission::DashboardView, Permission::CostsView, Permission::AuditLogsView]);
+    $operator = userWithRole(SystemRole::Operator);
+    $member = userWithRole(SystemRole::Operator);
+    $member->syncRoles([$auditor->name]);
+
+    $payload = fn (User $user, string $role): array => [
+        'name' => $user->name,
+        'email' => $user->email,
+        'role' => $role,
+        'is_active' => true,
+    ];
+
+    $this->put(route('users.update', $operator), $payload($operator, 'Auditor'))->assertSessionHasErrors('role');
+    expect($operator->fresh()->hasRole('Auditor'))->toBeFalse();
+
+    $this->put(route('users.update', $member), [...$payload($member, 'Auditor'), 'phone' => '3001234567'])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('users.index'));
+    expect($member->fresh()->hasRole('Auditor'))->toBeTrue()
+        ->and($member->fresh()->phone)->toBe('3001234567');
 });

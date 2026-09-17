@@ -290,9 +290,9 @@ inválido, el despliegue **solo avisa** (nunca cambia permisos solo).
 | A6.1 | Visibilidad de alertas por tipo | RR-01, RR-14 | ✅ |
 | A6.2 | Nombres reservados y caracteres permitidos en roles personalizados | RR-02, RR-03 | ✅ |
 | A6.3 | `dashboard.view` obligatorio en roles personalizados | RR-05 | ✅ |
-| A6.4 | Comando `roles:audit`, ejecutado por el seeder | RR-04 | Pendiente |
-| A6.5 | Tests que faltaban y rol actual en el selector de usuarios | RR-06, RR-15 | Parcial: RR-15 ✅; faltan los tests de RR-06 |
-| A6.6 | Detalles de la pantalla de roles | RR-07, RR-09 a RR-13, RR-16 | Parcial: RR-10, RR-13 y RR-16 ✅; faltan RR-07, RR-09, RR-11 y RR-12 |
+| A6.4 | Comando `roles:audit`, ejecutado por el seeder | RR-04 | ✅ |
+| A6.5 | Tests que faltaban y rol actual en el selector de usuarios | RR-06, RR-15 | ✅ |
+| A6.6 | Detalles de la pantalla de roles | RR-07, RR-09 a RR-13, RR-16 | ✅ (RR-08 queda como B25) |
 
 **A6.1 — aplicado:**
 - `AlertType::requiredPermission()` (un `match` sin `default`: un tipo nuevo obliga a decidir quién lo ve).
@@ -321,6 +321,21 @@ materia prima) y las de solicitudes de desarrollo de pinturas. Sigue viendo las 
   conserva la posición.
 - Tests: 11 casos nuevos en `RoleManagementTest` (todos fallaban antes de la corrección) y 3 ajustados para que el
   error de dependencias no se confunda con el del permiso obligatorio.
+- **Sin cambios de acceso** para los roles del sistema.
+
+**A6.4, A6.5 y el resto de A6.6 — aplicados:**
+- **`roles:audit` (A6.4):** lista los roles personalizados con permisos reservados, obligatorios faltantes o dependencias
+  incompletas, y termina con error mientras quede alguno. `RolePermissionSeeder` avisa en la salida del despliegue sin
+  fallar ni tocar permisos (decisión del usuario). Las reglas viven en un único sitio,
+  `PermissionCatalogService::customRoleViolations()`, que usan también la validación de la pantalla y el seeder.
+  Documentado en el `README` (*Despliegue a producción*).
+- **Tests de RR-06 (A6.5):** 403 fuera de SuperAdmin en `show`, `edit`, `update` y `destroy`; editar un rol con
+  dependencias incompletas; conservar el nombre al editar; Admin no puede cambiar el rol de un usuario por uno que no
+  puede asignar, pero sí conservar el actual. Estos casos ya funcionaban: faltaba cubrirlos.
+- **A6.6:** `authorize` también en `RoleController::create` y `show` (RR-07); `String(role.id)` retirado en las rutas de
+  Wayfinder (RR-11); tipo `RoleFilters` (RR-12); B20 descrito como resuelto por la reserva del permiso (RR-09).
+- Tests: `RoleAuditTest` (4 casos, fallaban antes de crear el comando) y 7 casos nuevos en `RoleManagementTest`.
+- **Verificación del lote A6 completo:** 997 tests OK; Pint, ESLint, Prettier y TypeScript limpios.
 - **Sin cambios de acceso** para los roles del sistema.
 
 **Verificación de la revisión externa de la 2.4 (2026-09-17):** sus 15 puntos se verificaron contra el código.
@@ -355,7 +370,7 @@ Coinciden con RR-02, RR-03, RR-05, RR-07, RR-08, RR-10 a RR-13; aportan RR-15 y 
 | B17 | Test de acceso por rol: dataset `[rol, ruta, código]` sobre las rutas principales, y verificar la ability exacta en las rutas `can:viewAny` / `can:view` | AU-10 | 3 h |
 | ~~B18~~ | ✅ Aplicado en A5. Formulario de edición de producto: enviar CIF y umbral solo con `can.managePrices` y hacerlos `sometimes` en `UpdateProductRequest`; después, ocultarlos también sin `costs.view` | PC-05 | 45 min |
 | ~~B19~~ | ✅ Resuelto en la 2.4: `inventory_movements.create` exige `costs.view` (dependencia validada al guardar un rol). Formulario de movimientos MP: decidir qué ve del precio del lote un rol con `inventory_movements.create` sin `costs.view` | PC-07 | 30 min |
-| ~~B20~~ | ✅ Resuelto en la 2.4: `audit_logs.view` es un permiso reservado a SuperAdmin y además exige `costs.view`. Auditoría: filtrar de `properties` los atributos de costo sin `costs.view`, o impedir que un rol reciba `audit_logs.view` sin `costs.view` | PC-08 | 1 h |
+| ~~B20~~ | ✅ Resuelto en la 2.4: `audit_logs.view` es un permiso reservado a SuperAdmin, así que ningún rol personalizado lo recibe (la dependencia de `costs.view` queda como documentación: no llega a actuar). Auditoría: filtrar de `properties` los atributos de costo sin `costs.view`, o impedir que un rol reciba `audit_logs.view` sin `costs.view` | PC-08 | 1 h |
 | B21 | Eliminar `ProductionOrderIngredientsSheet` y `ProductionOrderGeneralSheet` (sin uso) | PC-09 | 10 min |
 | B22 | `ProductController::show` con arrays explícitos en lugar de `makeHidden` (producto, presentaciones, documentos y fórmulas) | RV-04 | 1 h |
 | B23 | `UserController::index`: `with('roles:id,name')` | RV-05 | 5 min |

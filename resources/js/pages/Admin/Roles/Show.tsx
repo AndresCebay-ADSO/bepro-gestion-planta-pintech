@@ -58,7 +58,7 @@ const RolesShow: FC<Props> = ({ role, modules, can }) => {
                         </div>
                         {can.update && (
                             <Button asChild>
-                                <Link href={rolesEdit(String(role.id)).url}>
+                                <Link href={rolesEdit(role.id).url}>
                                     <Pencil className="mr-2 h-4 w-4" />
                                     Editar rol
                                 </Link>

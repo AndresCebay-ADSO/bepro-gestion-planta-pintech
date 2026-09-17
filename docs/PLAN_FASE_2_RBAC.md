@@ -374,7 +374,8 @@ mostrarían enlaces que responden 403 (por ejemplo, movimientos de materia prima
 >    del sistema (sin distinguir mayúsculas).
 > 2. **Permisos reservados:** un rol personalizado nunca tiene los 13 permisos que solo tiene SuperAdmin (gestión de
 >    roles, auditoría, gestión de catálogos y borrados físicos). `Permission::isReserved()`; un test exige que coincidan
->    con los permisos sin roles por defecto. **Resuelve B20.**
+>    con los permisos sin roles por defecto. **Resuelve B20** (la reserva es la protección efectiva: la dependencia
+>    `audit_logs.view` → `costs.view` nunca llega a actuar en un rol personalizado).
 > 3. **Dependencias entre permisos:** `Permission::requires()` / `dependencies()`. Cada acción exige el `view` de su
 >    módulo (`view_own` en los módulos con dueño; `view_all` también exige `view_own`); `products.deactivate` exige
 >    `products.edit`; `costs.update` exige `costs.view`; `quotations.convert_to_order` exige `sales_orders.create`; y

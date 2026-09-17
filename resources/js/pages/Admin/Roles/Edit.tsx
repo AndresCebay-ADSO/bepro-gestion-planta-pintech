@@ -42,7 +42,7 @@ const RolesEdit: FC<Props> = ({ role, modules }) => {
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        put(rolesUpdate(String(role.id)).url);
+        put(rolesUpdate(role.id).url);
     };
 
     return (

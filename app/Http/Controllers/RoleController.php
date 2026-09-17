@@ -63,6 +63,8 @@ class RoleController extends Controller
 
     public function create(): Response
     {
+        $this->authorize('create', Role::class);
+
         return Inertia::render('Admin/Roles/Create', [
             'modules' => $this->permissionCatalog->modules(),
             'templates' => $this->templates(),
@@ -81,6 +83,8 @@ class RoleController extends Controller
 
     public function show(Request $request, Role $role): Response
     {
+        $this->authorize('view', $role);
+
         $user = $request->user();
 
         return Inertia::render('Admin/Roles/Show', [
