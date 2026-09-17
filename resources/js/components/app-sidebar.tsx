@@ -8,6 +8,7 @@ import {
     FileText,
     Factory,
     FlaskConical,
+    KeyRound,
     LayoutGrid,
     Package,
     QrCode,
@@ -46,6 +47,7 @@ import { index as productsIndex } from '@/routes/products';
 import { index as qrCodesIndex } from '@/routes/qr-codes';
 import { index as quotationsIndex } from '@/routes/quotations';
 import { index as rawMaterialsIndex } from '@/routes/raw-materials';
+import { index as rolesIndex } from '@/routes/roles';
 import { index as salesOrdersIndex } from '@/routes/sales-orders';
 import { index as usersIndex } from '@/routes/users';
 import { index as warehousesIndex } from '@/routes/warehouses';
@@ -207,6 +209,13 @@ const navigationGroups: NavGroup[] = [
                 allowedPermissions: ['users.view'],
                 href: usersIndex(),
                 icon: Users,
+                unauthorizedBehavior: 'hide',
+            },
+            {
+                title: 'Roles',
+                allowedPermissions: ['roles.view'],
+                href: rolesIndex(),
+                icon: KeyRound,
                 unauthorizedBehavior: 'hide',
             },
             {

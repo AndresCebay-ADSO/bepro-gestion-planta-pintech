@@ -102,6 +102,52 @@ it('reserva a SuperAdmin la gestión de roles, la auditoría, los catálogos y l
     Permission::WarehousesDelete,
 ]);
 
+it('reserva para los roles personalizados exactamente los permisos que solo tiene SuperAdmin', function () {
+    $reserved = array_values(array_filter(Permission::cases(), fn (Permission $permission) => $permission->isReserved()));
+    $superAdminOnly = array_values(array_filter(Permission::cases(), fn (Permission $permission) => $permission->defaultRoles() === []));
+
+    expect($reserved)->toBe($superAdminOnly);
+});
+
+it('cumple las dependencias de cada permiso en los roles del sistema', function (SystemRole $role) {
+    $granted = $role->defaultPermissions();
+    $missing = [];
+
+    foreach ($granted as $permission) {
+        foreach ($permission->dependencies() as $dependency) {
+            if (! in_array($dependency, $granted, true)) {
+                $missing[] = "{$permission->value} → {$dependency->value}";
+            }
+        }
+    }
+
+    expect($missing)->toBe([]);
+})->with(SystemRole::cases());
+
+it('no hace depender un permiso asignable de uno reservado', function () {
+    $invalid = [];
+
+    foreach (Permission::cases() as $permission) {
+        if ($permission->isReserved()) {
+            continue;
+        }
+
+        foreach ($permission->dependencies() as $dependency) {
+            if ($dependency->isReserved()) {
+                $invalid[] = "{$permission->value} → {$dependency->value}";
+            }
+        }
+    }
+
+    expect($invalid)->toBe([]);
+});
+
+it('exige ver costos para registrar movimientos de materia prima y para ver la auditoría', function () {
+    expect(Permission::InventoryMovementsCreate->dependencies())->toContain(Permission::CostsView)
+        ->and(Permission::AuditLogsView->dependencies())->toContain(Permission::CostsView)
+        ->and(Permission::ProductsDeactivate->dependencies())->toContain(Permission::ProductsEdit, Permission::ProductsView);
+});
+
 it('nunca muestra costos fuera de SuperAdmin y Admin', function (Permission $permission) {
     expect($permission->defaultRoles())->toBe([SystemRole::Admin]);
 })->with([

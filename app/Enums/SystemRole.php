@@ -29,6 +29,14 @@ enum SystemRole: string
     }
 
     /**
+     * Indica si un nombre de rol pertenece a un rol del sistema (gestionado solo en código).
+     */
+    public static function isSystem(string $name): bool
+    {
+        return self::tryFrom($name) !== null;
+    }
+
+    /**
      * Etiqueta visible de un rol por su nombre. Los roles creados desde la UI no tienen etiqueta y se muestran por nombre.
      */
     public static function labelFor(string $name): string

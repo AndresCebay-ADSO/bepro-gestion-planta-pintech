@@ -278,8 +278,8 @@ fallaban en `a30b896` sin que este lote los tocara (`entry-movement-form.tsx`, `
 | B16 | Retirar `ProductPolicy::restore` y `forceDelete` (o implementarlos con la 2.6) | AU-11 | 10 min |
 | B17 | Test de acceso por rol: dataset `[rol, ruta, código]` sobre las rutas principales, y verificar la ability exacta en las rutas `can:viewAny` / `can:view` | AU-10 | 3 h |
 | ~~B18~~ | ✅ Aplicado en A5. Formulario de edición de producto: enviar CIF y umbral solo con `can.managePrices` y hacerlos `sometimes` en `UpdateProductRequest`; después, ocultarlos también sin `costs.view` | PC-05 | 45 min |
-| B19 | Formulario de movimientos MP: decidir qué ve del precio del lote un rol con `inventory_movements.create` sin `costs.view` (antes de la 2.4) | PC-07 | 30 min |
-| B20 | Auditoría: filtrar de `properties` los atributos de costo sin `costs.view`, o impedir en la 2.4 que un rol reciba `audit_logs.view` sin `costs.view` | PC-08 | 1 h |
+| ~~B19~~ | ✅ Resuelto en la 2.4: `inventory_movements.create` exige `costs.view` (dependencia validada al guardar un rol). Formulario de movimientos MP: decidir qué ve del precio del lote un rol con `inventory_movements.create` sin `costs.view` | PC-07 | 30 min |
+| ~~B20~~ | ✅ Resuelto en la 2.4: `audit_logs.view` es un permiso reservado a SuperAdmin y además exige `costs.view`. Auditoría: filtrar de `properties` los atributos de costo sin `costs.view`, o impedir que un rol reciba `audit_logs.view` sin `costs.view` | PC-08 | 1 h |
 | B21 | Eliminar `ProductionOrderIngredientsSheet` y `ProductionOrderGeneralSheet` (sin uso) | PC-09 | 10 min |
 | B22 | `ProductController::show` con arrays explícitos en lugar de `makeHidden` (producto, presentaciones, documentos y fórmulas) | RV-04 | 1 h |
 | B23 | `UserController::index`: `with('roles:id,name')` | RV-05 | 5 min |

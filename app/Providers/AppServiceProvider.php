@@ -24,6 +24,7 @@ use App\Policies\ProductionOrderPolicy;
 use App\Policies\ProductionRemnantPolicy;
 use App\Policies\QrCodePolicy;
 use App\Policies\RawMaterialPolicy;
+use App\Policies\RolePolicy;
 use App\Policies\WarehousePolicy;
 use App\Services\DecimalCalculator;
 use App\Services\FormulaService;
@@ -40,6 +41,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -99,6 +101,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(FinishedInventoryMovement::class, FinishedInventoryMovementPolicy::class);
         Gate::policy(QrCode::class, QrCodePolicy::class);
         Gate::policy(RawMaterial::class, RawMaterialPolicy::class);
+        // El modelo Role es de Spatie: la policy no se descubre por convención.
+        Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(Warehouse::class, WarehousePolicy::class);
 
         DB::prohibitDestructiveCommands(

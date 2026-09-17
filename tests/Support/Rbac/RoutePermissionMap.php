@@ -53,13 +53,20 @@ final class RoutePermissionMap
             'appearance.edit' => self::AUTHENTICATED,
             'warehouses.set-current' => self::AUTHENTICATED,
 
-            // Usuarios y auditoría
+            // Usuarios, roles y auditoría
             'users.index' => Permission::UsersView,
             'users.create' => Permission::UsersCreate,
             'users.store' => Permission::UsersCreate,
             'users.edit' => Permission::UsersEdit,
             'users.update' => Permission::UsersEdit,
             'users.destroy' => Permission::UsersDelete,
+            'roles.index' => Permission::RolesView,
+            'roles.show' => Permission::RolesView,
+            'roles.create' => Permission::RolesCreate,
+            'roles.store' => Permission::RolesCreate,
+            'roles.edit' => Permission::RolesEdit,
+            'roles.update' => Permission::RolesEdit,
+            'roles.destroy' => Permission::RolesDelete,
             'audit-logs.index' => Permission::AuditLogsView,
 
             // Productos
@@ -202,10 +209,6 @@ final class RoutePermissionMap
     {
         return [
             Permission::UsersManageRoles->value => 'Campo del formulario de usuario.',
-            Permission::RolesView->value => 'Rutas nuevas en la tarea 2.4.',
-            Permission::RolesCreate->value => 'Rutas nuevas en la tarea 2.4.',
-            Permission::RolesEdit->value => 'Rutas nuevas en la tarea 2.4.',
-            Permission::RolesDelete->value => 'Rutas nuevas en la tarea 2.4.',
             Permission::CatalogsView->value => 'CRUDs de catálogos en la Fase 3 (3.1, 3.2).',
             Permission::CatalogsCreate->value => 'CRUDs de catálogos en la Fase 3 (3.1, 3.2).',
             Permission::CatalogsEdit->value => 'CRUDs de catálogos en la Fase 3 (3.1, 3.2).',
