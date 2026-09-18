@@ -86,6 +86,7 @@ export type Permission =
     | 'clients.view'
     | 'clients.create'
     | 'clients.edit'
+    | 'clients.deactivate'
     | 'clients.delete'
     // Listas de precios
     | 'price_lists.view'

@@ -28,6 +28,14 @@ class ProductPolicy
         return $user->can(Permission::ProductsEdit->value);
     }
 
+    /**
+     * Activar o desactivar (docs/POLITICA_ELIMINACION.md §3.1).
+     */
+    public function deactivate(User $user, Product $product): bool
+    {
+        return $user->can(Permission::ProductsDeactivate->value);
+    }
+
     public function manageVariants(User $user, Product $product): bool
     {
         return $user->can(Permission::ProductsManageVariants->value);
@@ -44,16 +52,6 @@ class ProductPolicy
     }
 
     public function delete(User $user, Product $product): bool
-    {
-        return $user->can(Permission::ProductsDelete->value);
-    }
-
-    public function restore(User $user, Product $product): bool
-    {
-        return $user->can(Permission::ProductsDelete->value);
-    }
-
-    public function forceDelete(User $user, Product $product): bool
     {
         return $user->can(Permission::ProductsDelete->value);
     }

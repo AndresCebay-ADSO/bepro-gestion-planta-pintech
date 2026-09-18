@@ -36,14 +36,4 @@ class FinishedInventoryMovementPolicy
     {
         return false;
     }
-
-    public function restore(User $user, FinishedInventoryMovement $movement): bool
-    {
-        return false;
-    }
-
-    public function forceDelete(User $user, FinishedInventoryMovement $movement): bool
-    {
-        return false;
-    }
 }

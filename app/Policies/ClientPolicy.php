@@ -30,6 +30,14 @@ class ClientPolicy
         return $user->can(Permission::ClientsEdit->value);
     }
 
+    /**
+     * Activar o desactivar (docs/POLITICA_ELIMINACION.md §3.1).
+     */
+    public function deactivate(User $user, Client $client): bool
+    {
+        return $user->can(Permission::ClientsDeactivate->value);
+    }
+
     public function delete(User $user, Client $client): bool
     {
         return $user->can(Permission::ClientsDelete->value);

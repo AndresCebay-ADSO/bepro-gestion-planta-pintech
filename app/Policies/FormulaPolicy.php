@@ -37,14 +37,4 @@ class FormulaPolicy
     {
         return $user->can(Permission::FormulasDelete->value);
     }
-
-    public function restore(User $user, Formula $formula): bool
-    {
-        return $user->can(Permission::FormulasDelete->value);
-    }
-
-    public function forceDelete(User $user, Formula $formula): bool
-    {
-        return $user->can(Permission::FormulasDelete->value);
-    }
 }

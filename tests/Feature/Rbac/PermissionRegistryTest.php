@@ -6,11 +6,11 @@ use App\Enums\Permission;
 use App\Enums\PermissionModule;
 use App\Enums\SystemRole;
 
-it('declara los 84 permisos de la matriz con keys únicas en formato modulo.accion', function () {
+it('declara los 85 permisos de la matriz con keys únicas en formato modulo.accion', function () {
     $values = array_map(fn (Permission $permission) => $permission->value, Permission::cases());
 
-    expect($values)->toHaveCount(84)
-        ->and(array_unique($values))->toHaveCount(84);
+    expect($values)->toHaveCount(85)
+        ->and(array_unique($values))->toHaveCount(85);
 
     foreach ($values as $value) {
         expect($value)->toMatch('/^[a-z_]+\.[a-z_]+$/');
@@ -58,7 +58,7 @@ it('asigna a SuperAdmin todos los permisos', function () {
 it('asigna a cada rol el número de permisos de la matriz', function (SystemRole $role, int $expected) {
     expect($role->defaultPermissions())->toHaveCount($expected);
 })->with([
-    'admin' => [SystemRole::Admin, 71],
+    'admin' => [SystemRole::Admin, 72],
     'producción' => [SystemRole::Production, 23],
     'operador' => [SystemRole::Operator, 8],
     'comercial' => [SystemRole::Commercial, 22],
