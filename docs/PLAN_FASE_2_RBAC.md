@@ -366,7 +366,7 @@ mostrarían enlaces que responden 403 (por ejemplo, movimientos de materia prima
 
 **Estimación: 3 días** (1,5 backend + 1,5 frontend).
 
-> **✅ Estado 2.4 (2026-09-16, rama `feature/rbac-roles`):** implementada.
+> **✅ Estado 2.4 (2026-09-16):** implementada y en `develop` (PR #144, 2026-09-18).
 >
 > **Decisiones del usuario:**
 > 1. **Nombre del rol personalizado:** se guarda en `roles.name` tal como se escribe ("Jefe de calidad"), sin migración.
@@ -510,7 +510,8 @@ y cada test arranca una aplicación nueva. No hace falta limpiarla en `TestCase`
 
 **Los cuatro riesgos que hay que resolver ANTES de escribir la primera migración**
 
-1. **Índices únicos (C6).** `raw_materials.code` es `unique` sin condición. Al añadir SoftDeletes, un código borrado queda quemado para siempre. Se necesita índice único parcial (`WHERE deleted_at IS NULL`) en PostgreSQL — y `phpunit.xml` corre en **SQLite**, donde el soporte de índices parciales difiere. Hay que probar ambos motores. **El bug ya existe hoy en `products.code`.**
+1. **Índices únicos (C6).** `raw_materials.code` es `unique` sin condición. Al añadir SoftDeletes, un código borrado queda quemado para siempre. Se necesita índice único parcial (`WHERE deleted_at IS NULL`) en PostgreSQL — y `phpunit.xml` corre en **SQLite**, donde el soporte de índices parciales difiere. Hay que probar ambos motores: desde el PR #145 el CI corre la suite en SQLite y en PostgreSQL 16 en cada PR, así que
+   cada migración de esta tarea queda probada en los dos. **El bug ya existe hoy en `products.code`.**
 2. **Integridad del costeo FIFO.** `InventoryBatch` e `InventoryMovement` son la base del costo. Un `SoftDeletes` aplica `WHERE deleted_at IS NULL` **automáticamente a todas las consultas**, incluidas las sumas de `FifoStockAllocatorService` y los agregados de `InventoryService`. Borrar lógicamente un lote **cambia silenciosamente costos históricos ya facturados**. Mi recomendación: **NO poner SoftDeletes en `InventoryMovement` ni `InventoryBatch`** — son un libro mayor, y un libro mayor no se borra, se reversa con un movimiento de signo contrario. Si aun así se añade, hay que auditar cada agregado del módulo de inventario.
 3. **`User` + FKs.** `users.id` está referenciado por `created_by` en media docena de tablas. El soft delete de usuario es lo correcto (`UserController::destroy` ya intenta esa política a mano, atrapando el `23503` de Postgres) — pero hay que revisar que `->with('creator')` no devuelva `null` en listados y PDFs cuando el usuario esté borrado. Bonus: `User::booted()` ya tiene escrita la guarda de firma para cuando llegue SoftDeletes (`app/Models/User.php:58-66`).
 4. **`activity_log`** tiene retención de 180 días. Un registro borrado lógicamente sobrevive a su propio historial de auditoría. No es bloqueante, pero conviene documentarlo.
@@ -519,7 +520,7 @@ y cada test arranca una aplicación nueva. No hace falta limpiarla en `TestCase`
 
 **Decidido (tus notas):** `InventoryMovement` e `InventoryBatch` son libro mayor inmutable y **no** llevan SoftDeletes. Hace falta un movimiento de reverso (hoy `InventoryMovementType` solo tiene `entry`/`exit`).
 
-**Corrección de movimientos MP (paso 13 de la 2B).** La edición y el borrado ya se retiraron en la 2.2 (lote 3). Falta
+**Corrección de movimientos MP (paso 14 de la 2B).** La edición y el borrado ya se retiraron en la 2.2 (lote 3). Falta
 el flujo correcto de corrección:
 1. Columna `reason` en `inventory_movements` con un enum (compra, ajuste, devolución, corrección…), siguiendo
    `FinishedInventoryMovementReason`. Los movimientos existentes se migran con un valor por defecto.
@@ -579,9 +580,9 @@ FASE 2A — RBAC  (≈13 días)
                                                       ≈15 días
 
 FASE 2B — Integridad  (≈6,5 días)
-  11. 2.6  Soft deletes (por grupos, con auditoría)    3 d
-  12. 2.7  Eliminación inteligente (patrón extraído)   2 d
-  13. ---  Corrección de movimientos MP                1,5 d   ← motivo + "Revertir movimiento"
+  12. 2.6  Soft deletes (por grupos, con auditoría)    3 d
+  13. 2.7  Eliminación inteligente (patrón extraído)   2 d
+  14. ---  Corrección de movimientos MP                1,5 d   ← motivo + "Revertir movimiento"
 ```
 
 **Paso 11 — renombrar los roles a inglés.** Los valores `'produccion'`, `'operador'` y `'comercial'` vienen del
@@ -600,6 +601,11 @@ middlewares (2.8), el sidebar (2.5) y los tests (helper `actingAsRole`) ya no us
 > **245 literales de rol en 38 archivos de test** (`assignRole('produccion')` y similares) que hay que pasar a
 > `userWithRole(SystemRole::X)`. Además, el paso incluye retirar `UserRole` de `resources/js/types/auth.ts` y la prop
 > compartida `role_names`, que ya nadie consume. Los seeders ya usan `SystemRole` (lote A3). **Estimación: 1,5 días.**
+>
+> **Recuento (2026-09-18):** de esos 245, solo **133 en 38 archivos** son nombres en español (`'produccion'`,
+> `'operador'`, `'comercial'`); el resto son `'admin'` y `'super-admin'`, que no cambian de nombre. Fuera de los tests,
+> los nombres en español solo quedan en `SystemRole` y en el tipo `UserRole` de `resources/js/types/auth.ts`.
+> **Estimación: 1 día.**
 
 **Regla desde ya:** el código nuevo nunca escribe el nombre de un rol a mano; siempre `SystemRole::X->value`.
 

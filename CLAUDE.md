@@ -38,10 +38,13 @@ DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_DATABASE=pintech_erp_test DB_USERNAME=p
 
 # Build & Routes
 npm run build                  # Production build (triggers Wayfinder vite plugin)
-php artisan wayfinder:generate # Regenerate typed route helpers if dev server is off.
+php artisan wayfinder:generate --with-form   # Regenerate typed route helpers if dev server is off.
                                # Needs a reachable DB: Wayfinder types route params from the schema and falls back
                                # to the model docblock otherwise (Spatie's Role declares `int|string $id` -> string,
-                               # which breaks tsc). Bring up compose.dev.yaml before regenerating.
+                               # which breaks tsc). `.env` uses DB_HOST=postgres, which only resolves inside Docker:
+                               # from the host run `DB_HOST=127.0.0.1 php artisan wayfinder:generate --with-form`
+                               # (same for `npm run dev` / `npm run build`, whose Vite plugin regenerates the routes).
+                               # Missing `resources/js/actions` also shows up as ESLint import/order errors.
 
 # Docker
 docker compose -f compose.dev.yaml up -d

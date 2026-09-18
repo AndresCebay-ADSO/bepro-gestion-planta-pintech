@@ -378,6 +378,7 @@ Coinciden con RR-02, RR-03, RR-05, RR-07, RR-08, RR-10 a RR-13; aportan RR-15 y 
 | B25 | Constante o configuración para el guard `web` en roles y usuarios | RR-08 | 15 min |
 | B26 | Dashboard: reutilizar las alertas recientes compartidas en lugar de volver a consultarlas | Revisión 2.4 | 20 min |
 | B27 | `role-permissions-fields`: no anunciar dos veces el módulo y mostrar los permisos en solo lectura sin casillas deshabilitadas | Revisión 2.4 | 45 min |
+| B28 | Modelo `App\Models\Role` propio que extienda el de Spatie (registrado en `config/permission.php`), con `@property int $id` y los helpers de rol del sistema. **Solo cuando haga falta** (añadir relaciones, scopes o lógica al rol): hoy los tipos de Wayfinder ya salen bien porque el CI genera las rutas contra PostgreSQL | CI (PR #145) | 30 min |
 
 ### Lote C — Refactors de arquitectura (backlog, fuera de la Fase 2)
 
