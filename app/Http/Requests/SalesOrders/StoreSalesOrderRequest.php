@@ -23,7 +23,7 @@ class StoreSalesOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'client_id' => ['required', Rule::exists('clients', 'id')->whereNull('deleted_at')],
+            'client_id' => ['required', Rule::exists('clients', 'id')->where('is_active', true)],
             'priority' => ['required', Rule::enum(SalesOrderPriority::class)],
             'required_date' => ['required', 'date', 'after_or_equal:today'],
             'notes' => ['nullable', 'string', 'max:2000'],
@@ -53,7 +53,6 @@ class StoreSalesOrderRequest extends FormRequest
 
                     $exists = ProductVariant::where('id', $value)
                         ->where('is_active', true)
-                        ->whereNull('deleted_at')
                         ->where('product_id', $productId)
                         ->exists();
 
