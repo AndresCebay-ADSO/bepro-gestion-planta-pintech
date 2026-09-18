@@ -511,6 +511,8 @@ y cada test arranca una aplicación nueva. No hace falta limpiarla en `TestCase`
 > producto) y bloqueaba los códigos. El análisis de abajo se conserva como antecedente; los riesgos 1 (índices únicos),
 > 2 (costeo FIFO) y 5 (auditoría de claves foráneas) quedan resueltos por la política. La corrección de movimientos MP
 > (paso 14) sigue igual.
+>
+> **✅ Implementada (2026-09-18):** ver el estado en `docs/POLITICA_ELIMINACION.md` §5.1.
 
 ⚠️ **Esta tarea no es RBAC.** Comparte fase con lo anterior pero no comparte nada técnico. Recomiendo tratarla como **Fase 2B**, después de que 2.1-2.5/2.8/2.9 estén estables y mergeadas. Mezclar ambas en la misma rama hace la revisión imposible.
 

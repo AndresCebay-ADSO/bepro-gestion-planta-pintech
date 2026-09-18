@@ -53,7 +53,7 @@ y es lo correcto, porque el historial lo referencia.
 | --- | --- | --- | --- |
 | Producto | `products.deactivate` (Admin) | `products.delete` (SuperAdmin). Se lleva sus variantes y documentos si tampoco tienen historial | tiene órdenes de producción en curso |
 | Variante (presentación) | `products.manage_variants` (Admin, Producción) | `products.manage_variants` | tiene stock de producto terminado |
-| Fórmula | `formulas.activate`: activar una versión desactiva la anterior (una activa por producto) | `formulas.delete` (SuperAdmin) | hay órdenes en curso que la usan |
+| Fórmula | `formulas.activate`: activar una versión desactiva la anterior (una activa por producto) | `formulas.delete` (SuperAdmin). En la práctica, solo una versión sin costos calculados ni órdenes | nunca: una orden en curso conserva sus propios detalles y no necesita que su fórmula siga activa |
 | Materia prima | `raw_materials.deactivate` (Admin) — ya implementado | `raw_materials.delete` (SuperAdmin) — ya implementado | tiene lotes con stock — ya implementado |
 | Bodega | `warehouses.edit` (Admin) | `warehouses.delete` (SuperAdmin) | tiene stock de materia prima o de producto terminado, u órdenes en curso |
 | Cliente | 🆕 `clients.deactivate` (Admin); 🆕 columna `is_active` | `clients.delete` (Admin) | nunca: sus cotizaciones y pedidos abiertos siguen su curso |
@@ -156,6 +156,44 @@ fórmulas, clientes, documentos · (4) selectores · (5) usuarios (`hasActivity`
 
 ---
 
+### 5.1 Estado de la implementación (2026-09-18, rama `feature/data-integrity-soft-deletes`)
+
+- ✅ Esquema: 15 claves foráneas en `CASCADE` (las del §4.1) y 82 en `RESTRICT`; ningún `SET NULL`. `clients.is_active`.
+- ✅ Retirado `SoftDeletes` de los 14 modelos, los filtros `whereNull('deleted_at')`, el `withTrashed()` y las
+  policies `restore` / `forceDelete` (B16).
+- ✅ `App\Actions\Shared\DeleteUnusedRecordAction` (intenta el borrado; traduce el `23503` de PostgreSQL y el
+  `FOREIGN KEY constraint failed` de SQLite).
+- ✅ `App\Services\DeactivationGuardService`: bloqueos de producto (órdenes en curso), presentación (stock de producto
+  terminado) y bodega (stock u órdenes en curso). `ProductionOrderStatus::open()`.
+- ✅ Productos (se llevan sus presentaciones y documentos sin historial), presentaciones, bodegas, fórmulas y clientes
+  (permiso `clients.deactivate`, casilla "Cliente activo", listado con estado y `<TableActions />`).
+- ✅ Documentos de producto: auditados; el archivo se borra con `DB::afterCommit` (si la transacción se revierte, se
+  conserva). La firma de usuario sigue el mismo patrón.
+- ✅ Usuarios: `hasActivity()` solo consulta la auditoría; el resto lo protegen las claves foráneas (B11).
+- ✅ Selectores: bodegas activas en los formularios de movimientos (MP y PT) y en su validación; envases activos en el
+  formulario de presentaciones. Los filtros de historial siguen mostrando todo.
+- ✅ Tests en `tests/Feature/Deletion/` (SQLite y PostgreSQL).
+- Materias primas conserva su comprobación explícita de relaciones: la pantalla la usa para ofrecer "Desactivar" o
+  "Eliminar" antes de intentarlo.
+- **Corrección respecto al §3.1 original:** las fórmulas no bloquean su desactivación (ver la tabla).
+- **Tras la revisión de la rama:**
+  - Un documento abierto conserva lo que ya usa: al editar una cotización se aceptan y se ofrecen su cliente, sus
+    productos y sus presentaciones aunque estén inactivos (`Quotation::keptRecords()`). Con productos y presentaciones
+    el bloqueo ya existía antes de esta rama.
+  - Materias primas elimina con `DeleteUnusedRecordAction` y, si tiene historial, desactiva: su lista manual omitía el
+    uso como envase y los ajustes de línea, y el borrado respondía 500. El diálogo cuenta ahora esas dos relaciones.
+  - Listados de clientes, bodegas y productos con filtro de estado (`QueryFilter::applyActiveStatus`).
+  - Desactivar producto, presentación o bodega comprueba y guarda en una transacción con la fila bloqueada, y
+    `CreateProductionOrderAction` toma un bloqueo compartido sobre el producto y la bodega y vuelve a comprobar que
+    siguen activos: una orden y una desactivación simultáneas se serializan.
+  - `ClientPolicy::deactivate` y `ProductPolicy::deactivate`.
+  - **Riesgo aceptado:** los movimientos de inventario (MP, PT y traslados) no toman el bloqueo compartido sobre la
+    bodega. Una bodega podría quedar desactivada con stock que entró en el mismo instante; no se pierde nada (el stock
+    sigue visible y basta reactivarla) y evitarlo exigiría tocar los servicios de movimientos, la parte más delicada del
+    costeo. Las órdenes de producción sí lo toman, porque una orden en curso en una bodega inactiva rompe el flujo.
+- **Bug previo corregido:** `UpdateWarehouseRequest` no importaba `App\Models\Warehouse` y respondía 403 a toda
+  edición de bodega.
+
 ## 6. Guía para una tabla o módulo nuevo
 
 1. **¿Otros registros lo usan o lo usarán?** → `is_active` + eliminar solo sin historial (§3.1).
@@ -171,4 +209,5 @@ se puede eliminar físicamente debe usar `LogsActivity`.
 
 ## 7. Fuera de alcance (anotado)
 
-- `clients.nit` no es único: dos clientes pueden tener el mismo NIT. Decidir en otra tarea.
+- `clients.nit` es único solo en la validación (`Store/UpdateClientRequest`), no en la base de datos. Decidir en otra
+  tarea si se añade el índice único.
