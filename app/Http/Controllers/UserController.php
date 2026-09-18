@@ -266,13 +266,32 @@ class UserController extends Controller
         }
 
         try {
-            $user->delete();
+            $deleted = DB::transaction(function () use ($user): bool {
+                // Mismo bloqueo que update(): dos SuperAdmins que se eliminan o desactivan a la vez no pueden dejar el
+                // sistema sin ninguno activo. Hoy lo impide también hasActivity() (iniciar sesión deja actividad), pero
+                // esa garantía dependería de lo que registra y conserva el log de auditoría.
+                if ($user->isSuperAdmin() && $user->is_active) {
+                    $this->lockRole(SystemRole::SuperAdmin->value);
+
+                    if (! $this->hasOtherActiveSuperAdmin($user)) {
+                        return false;
+                    }
+                }
+
+                $user->delete();
+
+                return true;
+            });
         } catch (QueryException $e) {
             if ((string) $e->getCode() === '23503') {
                 return back()->with('error', 'No se puede eliminar el usuario porque tiene registros asociados en el sistema. Desactiva su cuenta en su lugar.');
             }
 
             throw $e;
+        }
+
+        if (! $deleted) {
+            return back()->with('error', 'No se puede eliminar al único super administrador activo del sistema.');
         }
 
         return redirect()->route('users.index')->with('message', 'Usuario eliminado exitosamente.');

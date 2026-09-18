@@ -637,7 +637,8 @@ middlewares (2.8), el sidebar (2.5) y los tests (helper `actingAsRole`) ya no us
 >   que es lo que le deja gestionar a cualquier usuario salvo a los SuperAdmin.
 > - **"Último SuperAdmin activo" dentro de la transacción**, con el rol `super-admin` bloqueado: dos SuperAdmins que se
 >   desactivan a la vez ya no pueden dejar el sistema sin ninguno. Al editar sin cambiar el rol ya no se bloquea ni se
->   resincroniza.
+>   resincroniza. `destroy` aplica la misma regla y el mismo bloqueo (hallazgo de CodeRabbit en la PR #147): hasta
+>   ahora lo impedía solo `hasActivity()`, porque iniciar sesión deja actividad, pero el log se purga a los 180 días.
 
 **Regla desde ya:** el código nuevo nunca escribe el nombre de un rol a mano; siempre `SystemRole::X->value`.
 

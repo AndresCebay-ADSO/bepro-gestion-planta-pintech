@@ -827,6 +827,38 @@ test('a blocked super-admin demotion changes nothing and discards the uploaded s
         ->and($activeSuperAdmin->signature_path)->toBeNull();
 });
 
+test('the last active super-admin cannot be deleted', function () {
+    $activeSuperAdmin = User::factory()->create(['is_active' => true]);
+    $activeSuperAdmin->assignRole(SystemRole::SuperAdmin->value);
+
+    // Quien borra es un SuperAdmin con la cuenta desactivada: el objetivo es el único activo.
+    $inactiveSuperAdmin = User::factory()->create(['is_active' => false]);
+    $inactiveSuperAdmin->assignRole(SystemRole::SuperAdmin->value);
+    Activity::where('causer_id', $activeSuperAdmin->id)->delete();
+
+    $this->actingAs($inactiveSuperAdmin)
+        ->delete(route('users.destroy', $activeSuperAdmin))
+        ->assertRedirect()
+        ->assertSessionHas('error', 'No se puede eliminar al único super administrador activo del sistema.');
+
+    $this->assertDatabaseHas('users', ['id' => $activeSuperAdmin->id]);
+});
+
+test('an inactive super-admin can be deleted while another one stays active', function () {
+    $superAdmin = User::factory()->create(['is_active' => true]);
+    $superAdmin->assignRole(SystemRole::SuperAdmin->value);
+
+    $inactiveSuperAdmin = User::factory()->create(['is_active' => false]);
+    $inactiveSuperAdmin->assignRole(SystemRole::SuperAdmin->value);
+    Activity::where('causer_id', $inactiveSuperAdmin->id)->delete();
+
+    $this->actingAs($superAdmin)
+        ->delete(route('users.destroy', $inactiveSuperAdmin))
+        ->assertRedirect(route('users.index'));
+
+    $this->assertDatabaseMissing('users', ['id' => $inactiveSuperAdmin->id]);
+});
+
 test('a super-admin without activity can be deleted by another super-admin', function () {
     $superAdmin = User::factory()->create();
     $superAdmin->assignRole(SystemRole::SuperAdmin->value);

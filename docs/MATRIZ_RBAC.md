@@ -163,7 +163,7 @@ Viven en las policies/Actions junto al permiso, nunca en la matriz. Se listan aq
 | Nadie edita, desactiva ni elimina a un usuario con permisos que él no tiene (así, Admin no toca a un SuperAdmin) | `UserPolicy` (`User::holdsAllPermissions`) |
 | Nadie asigna un rol con permisos que él no tiene | `AssignableRoleService` |
 | Nadie puede desactivarse, eliminarse ni quitarse el rol a sí mismo | `UserController::update/destroy` |
-| Siempre debe quedar al menos un SuperAdmin activo (única regla ligada a un rol) | `UserController::update` |
+| Siempre debe quedar al menos un SuperAdmin activo (única regla ligada a un rol) | `UserController::update/destroy` |
 | Cotización: editar solo en `draft`; cambiar estado bloqueado si ya se convirtió; convertir solo si `accepted` | `QuotationPolicy` |
 | Registros con dueño: sin `view_all` solo se actúa sobre los propios | `scopeVisibleTo` en `Quotation`, `SalesOrder`, `PaintDevelopmentRequest` |
 | Orden: `operate` solo en `in_progress`/`pending_review`; `complete` solo en `in_progress`/`pending_review`; `reject_review` solo en `pending_review` | `ProductionOrderPolicy` |
