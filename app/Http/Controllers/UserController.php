@@ -43,7 +43,7 @@ class UserController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role_label' => $user->roles->isEmpty() ? null : SystemRole::labelFor($user->roles->first()->name),
+                'role_label' => SystemRole::labelFor($user->roles->first()?->name),
                 'is_active' => (bool) $user->is_active,
                 'last_login_at' => $user->last_login_at,
                 'created_at' => $user->created_at,
@@ -74,7 +74,6 @@ class UserController extends Controller
     {
         return Inertia::render('Admin/Users/Create', [
             'roles' => $this->assignableRoles(),
-            'defaultRole' => SystemRole::Production->value,
         ]);
     }
 
@@ -173,7 +172,7 @@ class UserController extends Controller
             }
         }
 
-        $oldRole = $user->roles->first()?->name ?? 'none';
+        $oldRole = $currentRole;
         $oldSignatureToDelete = null;
         $newSignaturePath = null;
 
@@ -222,7 +221,8 @@ class UserController extends Controller
                     'old_role' => $oldRole,
                     'new_role' => $validated['role'],
                 ])
-                ->log("Rol de usuario modificado de {$oldRole} a ".$validated['role']);
+                ->log('Rol de usuario modificado de '.SystemRole::labelFor($oldRole).' a '
+                    .SystemRole::labelFor($validated['role']));
         }
 
         return redirect()->route('users.index')->with('message', 'Usuario actualizado exitosamente.');

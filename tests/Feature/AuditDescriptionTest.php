@@ -345,5 +345,6 @@ test('role change manual log remains in Spanish', function () {
         ->first();
 
     expect($log)->not->toBeNull()
-        ->and($log->description)->toContain('Rol de usuario modificado de operator a admin');
+        ->and($log->description)->toBe('Rol de usuario modificado de Operador a Administrador')
+        ->and($log->properties['old_role'])->toBe(SystemRole::Operator->value);
 });

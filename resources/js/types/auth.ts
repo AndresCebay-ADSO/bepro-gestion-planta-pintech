@@ -1,12 +1,5 @@
 import type { Permission } from './permissions';
 
-export type UserRole =
-    | 'super-admin'
-    | 'admin'
-    | 'produccion'
-    | 'comercial'
-    | 'operador';
-
 export type Role = {
     id: number;
     name: string;
@@ -21,11 +14,6 @@ export type RoleOption = {
     label: string;
 };
 
-export type UserRoleRecord = {
-    name: UserRole | string;
-    [key: string]: unknown;
-};
-
 export type User = {
     id: number;
     name: string;
@@ -35,9 +23,6 @@ export type User = {
     signature_url?: string | null;
     is_active?: boolean;
     avatar?: string;
-    role?: UserRole | string;
-    roles?: UserRoleRecord[] | string[];
-    role_names?: string[];
     /** Permisos efectivos del usuario (docs/MATRIZ_RBAC.md). */
     permissions?: Permission[];
     email_verified_at: string | null;

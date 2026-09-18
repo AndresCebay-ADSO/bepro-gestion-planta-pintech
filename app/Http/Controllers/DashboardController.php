@@ -26,10 +26,8 @@ class DashboardController extends Controller
 
         abort_unless($user instanceof User && $user->can(Permission::DashboardView->value), 403);
 
-        $roleName = $user->getRoleNames()->first();
-
         return Inertia::render('Dashboard/Index', [
-            'roleLabel' => $roleName === null ? '' : SystemRole::labelFor($roleName),
+            'roleLabel' => SystemRole::labelFor($user->getRoleNames()->first()),
             'userName' => $user->name,
             ...$this->dashboardService->build($user),
         ]);

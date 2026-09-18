@@ -575,7 +575,7 @@ FASE 2A — RBAC  (≈13 días)
   8.  2.8  Rutas can: + páginas de error (4.1)         2 d
   9.  2.5  Asignación de roles + permisos al frontend  2 d
   10. 2.4  CRUD de roles en UI                         3 d
-  11. ---  Renombrar roles a inglés                    0,5 d   ← ver abajo
+  11. ---  Renombrar roles a inglés                    0,5 d   ← ✅ hecho
                                                      ────────
                                                       ≈15 días
 
@@ -590,12 +590,8 @@ vibe coding e incumplen la regla de código en inglés (`CLAUDE.md`). Al llegar 
 middlewares (2.8), el sidebar (2.5) y los tests (helper `actingAsRole`) ya no usan esos textos: solo quedan en
 `SystemRole` y en la tabla `roles`. El cambio es:
 1. `SystemRole`: `'produccion'` → `'production'`, `'operador'` → `'operator'`, `'comercial'` → `'commercial'`.
-   Esos nombres en inglés están reservados desde la 2.4 (`SystemRole::reservedNames()`), así que ningún rol personalizado
-   puede ocuparlos. Al renombrar, retirar `FUTURE_NAMES` y comprobar que los nombres antiguos en español siguen reservados
-   o no hacen falta.
-2. Una migración de datos que actualiza `roles.name`. Es segura: `model_has_roles` enlaza por `role_id`, así que
-   ningún usuario pierde su rol.
-3. Limpiar la caché de permisos y actualizar el test que hoy protege los nombres en español.
+2. ~~Una migración de datos que actualiza `roles.name`~~: descartada, no hay producción (ver el estado abajo).
+3. Actualizar el test que hoy protege los nombres en español.
 
 > **⚠️ Reestimación (auditoría 2026-09-15):** la premisa de que los tests ya no usan los nombres no se cumple: quedan
 > **245 literales de rol en 38 archivos de test** (`assignRole('produccion')` y similares) que hay que pasar a
@@ -606,6 +602,18 @@ middlewares (2.8), el sidebar (2.5) y los tests (helper `actingAsRole`) ya no us
 > `'operador'`, `'comercial'`); el resto son `'admin'` y `'super-admin'`, que no cambian de nombre. Fuera de los tests,
 > los nombres en español solo quedan en `SystemRole` y en el tipo `UserRole` de `resources/js/types/auth.ts`.
 > **Estimación: 1 día.**
+
+> **✅ Estado paso 11 (2026-09-18, rama `feature/rbac-role-rename`):** implementado.
+> - `SystemRole` en inglés (`production`, `operator`, `commercial`); las etiquetas visibles no cambian.
+> - **Sin migración de datos:** el software aún no está en producción, así que las bases se recrean con
+>   `migrate:fresh --seed` y el seeder crea los roles ya en inglés. Desde producción, cualquier renombrado de datos
+>   existentes necesita su migración (el seeder crea filas nuevas, no renombra, y los usuarios se enlazan por `role_id`).
+> - Los 133 literales de los tests pasan a `SystemRole::X->value`.
+> - Retirados el tipo `UserRole` (TS), `User.role`/`User.roles`/`UserRoleRecord` sin uso y la prop compartida
+>   `role_names` (**AU-08**, **RV-11**).
+> - La descripción del log `role_changed` y la confirmación de `users:grant-super-admin` muestran la etiqueta del rol
+>   ("de Operador a Administrador"); `properties.old_role/new_role` guardan el nombre interno. `SystemRole::labelFor()`
+>   acepta `null` ("Sin rol") y sustituye al centinela `'none'`.
 
 **Regla desde ya:** el código nuevo nunca escribe el nombre de un rol a mano; siempre `SystemRole::X->value`.
 

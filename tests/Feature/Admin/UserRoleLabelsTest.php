@@ -22,12 +22,11 @@ it('envía la etiqueta de cada rol asignable en los formularios de usuario', fun
             ->where('roles', fn ($roles) => collect($roles)->pluck('label', 'name')->sortKeys()->all() === $expected));
 })->with(['users.create', 'users.edit']);
 
-it('propone Producción como rol por defecto al crear un usuario', function () {
+it('no preselecciona ningún rol al crear un usuario', function () {
     actingAsRole(SystemRole::Admin);
 
     $this->get(route('users.create'))
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('defaultRole', SystemRole::Production->value));
+        ->assertInertia(fn (Assert $page) => $page->missing('defaultRole'));
 });
 
 it('muestra la etiqueta del rol en el listado de usuarios, sin enviar el modelo completo', function () {

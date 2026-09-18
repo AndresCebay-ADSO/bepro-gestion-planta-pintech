@@ -51,8 +51,12 @@ enum SystemRole: string
     /**
      * Etiqueta visible de un rol por su nombre. Los roles creados desde la UI no tienen etiqueta y se muestran por nombre.
      */
-    public static function labelFor(string $name): string
+    public static function labelFor(?string $name): string
     {
+        if ($name === null) {
+            return __('Sin rol');
+        }
+
         return self::tryFrom($name)?->label() ?? $name;
     }
 

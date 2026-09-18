@@ -90,7 +90,6 @@ class HandleInertiaRequests extends Middleware
                     'email_verified_at' => $user->email_verified_at,
                     'signature_url' => $user->signature_url,
                     'is_active' => (bool) $user->is_active,
-                    'role_names' => $user->getRoleNames()->values()->all(),
                     'permissions' => $user->getAllPermissions()->pluck('name')->values()->all(),
                 ] : null,
             ],
