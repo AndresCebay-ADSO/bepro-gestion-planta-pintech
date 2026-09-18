@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use Illuminate\Support\Str;
+
 /**
  * Roles protegidos del sistema: no se pueden eliminar ni renombrar desde la UI.
  *
@@ -13,9 +15,9 @@ enum SystemRole: string
 {
     case SuperAdmin = 'super-admin';
     case Admin = 'admin';
-    case Production = 'produccion';
-    case Operator = 'operador';
-    case Commercial = 'comercial';
+    case Production = 'production';
+    case Operator = 'operator';
+    case Commercial = 'commercial';
 
     public function label(): string
     {
@@ -29,27 +31,15 @@ enum SystemRole: string
     }
 
     /**
-     * Nombres que tomarán los roles del sistema al pasarlos a inglés (docs/PLAN_FASE_2_RBAC.md, paso 11).
+     * Indica si un nombre repite la etiqueta de un rol del sistema, sin distinguir mayúsculas ni tildes: un rol
+     * personalizado llamado "produccion" se vería junto a "Producción" como si fueran el mismo. Los nombres internos
+     * no hace falta reservarlos: los roles del sistema ya existen y la validación de nombre repetido los rechaza.
      */
-    private const FUTURE_NAMES = ['production', 'operator', 'commercial'];
-
-    /**
-     * Nombres que un rol personalizado no puede usar (en minúsculas): nombre y etiqueta de cada rol del sistema y los
-     * nombres del paso 11. Si un rol personalizado se llamara `production`, el renombrado fallaría o el seeder lo
-     * tomaría por el rol del sistema y le reasignaría sus permisos.
-     *
-     * @return array<int, string>
-     */
-    public static function reservedNames(): array
+    public static function isReservedLabel(string $name): bool
     {
-        $names = self::FUTURE_NAMES;
+        $normalize = fn (string $value): string => mb_strtolower(Str::ascii($value));
 
-        foreach (self::cases() as $role) {
-            $names[] = mb_strtolower($role->value);
-            $names[] = mb_strtolower($role->label());
-        }
-
-        return array_values(array_unique($names));
+        return in_array($normalize($name), array_map(fn (self $role): string => $normalize($role->label()), self::cases()), true);
     }
 
     /**
@@ -63,8 +53,12 @@ enum SystemRole: string
     /**
      * Etiqueta visible de un rol por su nombre. Los roles creados desde la UI no tienen etiqueta y se muestran por nombre.
      */
-    public static function labelFor(string $name): string
+    public static function labelFor(?string $name): string
     {
+        if ($name === null) {
+            return __('Sin rol');
+        }
+
         return self::tryFrom($name)?->label() ?? $name;
     }
 

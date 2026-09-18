@@ -33,8 +33,11 @@ class UserController extends Controller
      */
     public function index(IndexUserRequest $request): Response
     {
+        $actor = $request->user();
+
+        // roles.permissions y permissions: la policy compara los permisos de cada fila con los de quien consulta.
         $users = (new UserFilter($request))
-            ->apply(User::with('roles'))
+            ->apply(User::with(['roles.permissions', 'permissions']))
             ->latest()
             ->paginate(15)
             ->onEachSide(1)
@@ -43,14 +46,20 @@ class UserController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role_label' => $user->roles->isEmpty() ? null : SystemRole::labelFor($user->roles->first()->name),
+                'role_label' => SystemRole::labelFor($user->roles->first()?->name),
                 'is_active' => (bool) $user->is_active,
                 'last_login_at' => $user->last_login_at,
                 'created_at' => $user->created_at,
+                // Por fila, como en roles: sin esto la tabla ofrece acciones que la policy rechaza con 403. La propia
+                // cuenta no se elimina (destroy).
+                'can' => [
+                    'update' => $actor?->can('update', $user) ?? false,
+                    'delete' => ($actor?->can('delete', $user) ?? false) && $user->id !== $actor?->id,
+                ],
             ]);
 
         // La actividad reciente es auditoría: solo con audit_logs.view (docs/MATRIZ_RBAC.md).
-        $canViewActivity = $request->user()?->can(Permission::AuditLogsView->value) ?? false;
+        $canViewActivity = $actor?->can(Permission::AuditLogsView->value) ?? false;
         $activities = $canViewActivity
             ? Activity::with('causer')->latest()->take(5)->get()
             : collect();
@@ -60,8 +69,7 @@ class UserController extends Controller
             'filters' => $request->validated(),
             'recentActivities' => $activities,
             'can' => [
-                'create' => $request->user()?->can('create', User::class) ?? false,
-                'delete' => $request->user()?->can(Permission::UsersDelete->value) ?? false,
+                'create' => $actor?->can('create', User::class) ?? false,
                 'viewActivity' => $canViewActivity,
             ],
         ]);
@@ -74,7 +82,6 @@ class UserController extends Controller
     {
         return Inertia::render('Admin/Users/Create', [
             'roles' => $this->assignableRoles(),
-            'defaultRole' => SystemRole::Production->value,
         ]);
     }
 
@@ -126,16 +133,9 @@ class UserController extends Controller
 
         $user->load('roles');
 
-        // El rol actual siempre es una opción, aunque quien edita no pueda asignarlo (UpdateUserRequest lo permite
-        // conservar): si no, el selector quedaría vacío y guardar otros datos obligaría a cambiar el rol.
-        $roles = collect($this->assignableRoles());
-        $currentRoles = $user->roles
-            ->reject(fn (Role $role): bool => $roles->contains('name', $role->name))
-            ->map(fn (Role $role): array => $this->roleOption($role));
-
         return Inertia::render('Admin/Users/Edit', [
             'user' => $user,
-            'roles' => $roles->concat($currentRoles)->values()->all(),
+            'roles' => $this->assignableRoles(),
         ]);
     }
 
@@ -163,17 +163,11 @@ class UserController extends Controller
             }
         }
 
-        // Siempre debe quedar al menos un SuperAdmin y un Admin activos (docs/MATRIZ_RBAC.md §4).
-        foreach ([SystemRole::SuperAdmin, SystemRole::Admin] as $protectedRole) {
-            $losesProtectedRole = $user->hasRole($protectedRole->value)
-                && (! $validated['is_active'] || $validated['role'] !== $protectedRole->value);
+        // Siempre debe quedar al menos un SuperAdmin activo, o nadie podría recuperar el acceso (docs/MATRIZ_RBAC.md §4).
+        // Es la única regla ligada a un rol: los demás usuarios se protegen por permisos (UserPolicy).
+        $losesSuperAdmin = $user->isSuperAdmin()
+            && (! $validated['is_active'] || $validated['role'] !== SystemRole::SuperAdmin->value);
 
-            if ($losesProtectedRole && ! $this->hasOtherActiveUserWithRole($protectedRole, $user)) {
-                return back()->with('error', 'No se puede desactivar o degradar al único '.mb_strtolower($protectedRole->label()).' activo del sistema.');
-            }
-        }
-
-        $oldRole = $user->roles->first()?->name ?? 'none';
         $oldSignatureToDelete = null;
         $newSignaturePath = null;
 
@@ -187,7 +181,17 @@ class UserController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($user, $validated) {
+            $updated = DB::transaction(function () use ($user, $validated, $roleChanged, $losesSuperAdmin): bool {
+                if ($losesSuperAdmin) {
+                    // Bloquear el rol serializa las degradaciones simultáneas: sin esto, dos SuperAdmins que se
+                    // desactivan a la vez verían al otro todavía activo y no quedaría ninguno.
+                    $this->lockRole(SystemRole::SuperAdmin->value);
+
+                    if (! $this->hasOtherActiveSuperAdmin($user)) {
+                        return false;
+                    }
+                }
+
                 $user->update([
                     'name' => $validated['name'],
                     'email' => $validated['email'],
@@ -199,8 +203,12 @@ class UserController extends Controller
                         : []),
                 ]);
 
-                $this->lockRole($validated['role']);
-                $user->syncRoles([$validated['role']]);
+                if ($roleChanged) {
+                    $this->lockRole($validated['role']);
+                    $user->syncRoles([$validated['role']]);
+                }
+
+                return true;
             });
         } catch (\Throwable $e) {
             if ($newSignaturePath) {
@@ -210,19 +218,28 @@ class UserController extends Controller
             throw $e;
         }
 
+        if (! $updated) {
+            if ($newSignaturePath) {
+                Storage::disk('public')->delete($newSignaturePath);
+            }
+
+            return back()->with('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
+        }
+
         if ($oldSignatureToDelete) {
             Storage::disk('public')->delete($oldSignatureToDelete);
         }
 
-        if ($oldRole !== $validated['role']) {
+        if ($roleChanged) {
             activity('security')
                 ->performedOn($user)
                 ->event('role_changed')
                 ->withProperties([
-                    'old_role' => $oldRole,
+                    'old_role' => $currentRole,
                     'new_role' => $validated['role'],
                 ])
-                ->log("Rol de usuario modificado de {$oldRole} a ".$validated['role']);
+                ->log('Rol de usuario modificado de '.SystemRole::labelFor($currentRole).' a '
+                    .SystemRole::labelFor($validated['role']));
         }
 
         return redirect()->route('users.index')->with('message', 'Usuario actualizado exitosamente.');
@@ -244,22 +261,37 @@ class UserController extends Controller
             return back()->with('error', 'No puedes eliminar tu propia cuenta.');
         }
 
-        if ($user->hasAnyRole([SystemRole::Admin->value, SystemRole::SuperAdmin->value])) {
-            return back()->with('error', 'No se puede eliminar un administrador. Desactiva su cuenta en su lugar.');
-        }
-
         if ($user->hasActivity()) {
             return back()->with('error', 'No se puede eliminar el usuario porque tiene actividad registrada en el sistema. Desactiva su cuenta en su lugar.');
         }
 
         try {
-            $user->delete();
+            $deleted = DB::transaction(function () use ($user): bool {
+                // Mismo bloqueo que update(): dos SuperAdmins que se eliminan o desactivan a la vez no pueden dejar el
+                // sistema sin ninguno activo. Hoy lo impide también hasActivity() (iniciar sesión deja actividad), pero
+                // esa garantía dependería de lo que registra y conserva el log de auditoría.
+                if ($user->isSuperAdmin() && $user->is_active) {
+                    $this->lockRole(SystemRole::SuperAdmin->value);
+
+                    if (! $this->hasOtherActiveSuperAdmin($user)) {
+                        return false;
+                    }
+                }
+
+                $user->delete();
+
+                return true;
+            });
         } catch (QueryException $e) {
             if ((string) $e->getCode() === '23503') {
                 return back()->with('error', 'No se puede eliminar el usuario porque tiene registros asociados en el sistema. Desactiva su cuenta en su lugar.');
             }
 
             throw $e;
+        }
+
+        if (! $deleted) {
+            return back()->with('error', 'No se puede eliminar al único super administrador activo del sistema.');
         }
 
         return redirect()->route('users.index')->with('message', 'Usuario eliminado exitosamente.');
@@ -308,11 +340,8 @@ class UserController extends Controller
             ->firstOrFail();
     }
 
-    private function hasOtherActiveUserWithRole(SystemRole $role, User $user): bool
+    private function hasOtherActiveSuperAdmin(User $user): bool
     {
-        return User::role($role->value)
-            ->where('is_active', true)
-            ->where('id', '!=', $user->id)
-            ->exists();
+        return User::superAdmins()->active()->whereKeyNot($user->id)->exists();
     }
 }

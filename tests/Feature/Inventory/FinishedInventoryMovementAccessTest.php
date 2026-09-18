@@ -2,6 +2,7 @@
 
 use App\Enums\FinishedInventoryMovementReason;
 use App\Enums\InventoryMovementType;
+use App\Enums\SystemRole;
 use App\Models\FinishedInventoryMovement;
 use App\Models\FinishedProductBatch;
 use App\Models\FinishedProductBatchStock;
@@ -21,7 +22,7 @@ beforeEach(function () {
 
 it('allows admin and produccion to access finished inventory movements index', function () {
     $admin = User::factory()->create()->assignRole('admin');
-    $produccion = User::factory()->create()->assignRole('produccion');
+    $produccion = User::factory()->create()->assignRole(SystemRole::Production->value);
 
     actingAs($admin)
         ->get(route('finished-inventory-movements.index'))
@@ -43,7 +44,7 @@ it('allows admin and produccion to access finished inventory movements index', f
 });
 
 it('forbids comercial from accessing finished inventory movements index', function () {
-    $comercial = User::factory()->create()->assignRole('comercial');
+    $comercial = User::factory()->create()->assignRole(SystemRole::Commercial->value);
 
     actingAs($comercial)
         ->get(route('finished-inventory-movements.index'))
@@ -51,7 +52,7 @@ it('forbids comercial from accessing finished inventory movements index', functi
 });
 
 it('allows comercial to access finished inventory index', function () {
-    $comercial = User::factory()->create()->assignRole('comercial');
+    $comercial = User::factory()->create()->assignRole(SystemRole::Commercial->value);
 
     actingAs($comercial)
         ->get(route('finished-inventory.index'))
@@ -59,7 +60,7 @@ it('allows comercial to access finished inventory index', function () {
 });
 
 it('allows operador to see finished inventory but not its movements', function () {
-    $operador = User::factory()->create()->assignRole('operador');
+    $operador = User::factory()->create()->assignRole(SystemRole::Operator->value);
 
     actingAs($operador)
         ->get(route('finished-inventory.index'))
@@ -128,7 +129,7 @@ it('exposes finished product batches from all warehouses for movement forms', fu
 
 it('shows finished inventory movement costs only to users with costs.view', function () {
     $admin = User::factory()->create()->assignRole('admin');
-    $produccion = User::factory()->create()->assignRole('produccion');
+    $produccion = User::factory()->create()->assignRole(SystemRole::Production->value);
     $warehouse = Warehouse::factory()->create();
     $unit = UnitOfMeasure::factory()->create();
     $category = ProductCategory::create(['name' => 'PT costos']);

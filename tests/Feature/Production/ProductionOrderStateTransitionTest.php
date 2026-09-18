@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\ProductionOrderStatus;
+use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
@@ -192,14 +193,14 @@ test('it records final approver after submit reject resubmit complete cycle', fu
     test()->seed(RolePermissionSeeder::class);
 
     $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole('operador');
+    $operator->assignRole(SystemRole::Operator->value);
 
     $reviewer = User::factory()->create([
         'email_verified_at' => now(),
         'job_title' => 'Analista de Calidad',
         'signature_path' => 'signatures/test.png',
     ]);
-    $reviewer->assignRole('produccion');
+    $reviewer->assignRole(SystemRole::Production->value);
 
     [$order, $detail] = createOrderInState($this, ProductionOrderStatus::InProgress);
 

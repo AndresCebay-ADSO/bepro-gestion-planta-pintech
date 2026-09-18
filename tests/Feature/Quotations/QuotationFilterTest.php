@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\QuotationStatus;
+use App\Enums\SystemRole;
 use App\Models\Client;
 use App\Models\Quotation;
 use App\Models\User;
@@ -18,10 +19,10 @@ beforeEach(function (): void {
     $this->admin->assignRole('admin');
 
     $this->comercial = User::factory()->create(['email_verified_at' => now()]);
-    $this->comercial->assignRole('comercial');
+    $this->comercial->assignRole(SystemRole::Commercial->value);
 
     $this->produccion = User::factory()->create(['email_verified_at' => now()]);
-    $this->produccion->assignRole('produccion');
+    $this->produccion->assignRole(SystemRole::Production->value);
 
     $this->clientA = Client::factory()->create([
         'business_name' => 'Acme Corp',

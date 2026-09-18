@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\AlertType;
 use App\Enums\PaintDevelopmentRequestStatus;
+use App\Enums\SystemRole;
 use App\Models\PaintDevelopmentRequest;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -15,16 +16,16 @@ beforeEach(function (): void {
     $this->seed(RolePermissionSeeder::class);
 
     $this->comercialUser = User::factory()->create(['email_verified_at' => now()]);
-    $this->comercialUser->assignRole('comercial');
+    $this->comercialUser->assignRole(SystemRole::Commercial->value);
 
     $this->otherComercial = User::factory()->create(['email_verified_at' => now()]);
-    $this->otherComercial->assignRole('comercial');
+    $this->otherComercial->assignRole(SystemRole::Commercial->value);
 
     $this->adminUser = User::factory()->create(['email_verified_at' => now()]);
     $this->adminUser->assignRole('admin');
 
     $this->produccionUser = User::factory()->create(['email_verified_at' => now()]);
-    $this->produccionUser->assignRole('produccion');
+    $this->produccionUser->assignRole(SystemRole::Production->value);
 });
 
 function paintDevPayload(array $overrides = []): array

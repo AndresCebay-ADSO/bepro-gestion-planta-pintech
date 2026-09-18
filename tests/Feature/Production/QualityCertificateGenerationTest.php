@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\QrDocumentType;
+use App\Enums\SystemRole;
 use App\Jobs\GenerateQualityInspectionCertificateJob;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
@@ -320,7 +321,7 @@ test('quality signer must have job_title and signature', function () {
         'job_title' => null,
         'signature_path' => null,
     ]);
-    $incompleteUser->assignRole('produccion');
+    $incompleteUser->assignRole(SystemRole::Production->value);
 
     $batch = InventoryBatch::create([
         'raw_material_id' => $this->material->id,
@@ -375,7 +376,7 @@ test('quality signer must have admin or produccion role', function () {
         'job_title' => 'Operario de Planta',
         'signature_path' => 'signatures/operator.png',
     ]);
-    $operatorUser->assignRole('operador');
+    $operatorUser->assignRole(SystemRole::Operator->value);
 
     Storage::disk('public')->put('signatures/operator.png', 'fake-signature-content');
 
@@ -433,7 +434,7 @@ test('quality signer must be active', function () {
         'job_title' => 'Jefe de Calidad',
         'signature_path' => 'signatures/inactive.png',
     ]);
-    $inactiveUser->assignRole('produccion');
+    $inactiveUser->assignRole(SystemRole::Production->value);
 
     Storage::disk('public')->put('signatures/inactive.png', 'fake-signature-content');
 

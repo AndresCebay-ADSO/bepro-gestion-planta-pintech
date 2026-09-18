@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\SystemRole;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Models\Role;
@@ -12,8 +11,8 @@ use Spatie\Permission\Models\Role;
 /**
  * Roles que un usuario puede asignar a otros (docs/PLAN_FASE_2_RBAC.md, 2.4).
  *
- * Evita la escalada de privilegios: salvo un SuperAdmin, nadie asigna un rol con permisos que él mismo no tiene,
- * y el rol super-admin solo lo asigna un SuperAdmin.
+ * Evita la escalada de privilegios: nadie asigna un rol con permisos que él mismo no tiene. El rol super-admin tiene
+ * todos los permisos, así que solo lo asigna otro SuperAdmin.
  */
 class AssignableRoleService
 {
@@ -28,15 +27,8 @@ class AssignableRoleService
             ->orderBy('id')
             ->get();
 
-        if ($actor->isSuperAdmin()) {
-            return $roles;
-        }
-
-        $actorPermissions = $actor->getAllPermissions()->pluck('name');
-
         return $roles
-            ->reject(fn (Role $role): bool => $role->name === SystemRole::SuperAdmin->value)
-            ->filter(fn (Role $role): bool => $role->permissions->pluck('name')->diff($actorPermissions)->isEmpty())
+            ->filter(fn (Role $role): bool => $actor->holdsAllPermissions($role->permissions->pluck('name')))
             ->values();
     }
 

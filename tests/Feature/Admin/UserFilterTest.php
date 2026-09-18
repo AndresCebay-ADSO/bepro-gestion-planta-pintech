@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\SystemRole;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -101,7 +102,7 @@ test('pagination preserves query string', function (): void {
 
 test('non admin users cannot access users index', function (): void {
     $unauthorizedUser = User::factory()->create();
-    $unauthorizedUser->assignRole('comercial');
+    $unauthorizedUser->assignRole(SystemRole::Commercial->value);
 
     $this->actingAs($unauthorizedUser)
         ->get(route('users.index'))

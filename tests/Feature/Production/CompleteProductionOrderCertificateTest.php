@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\QrDocumentType;
+use App\Enums\SystemRole;
 use App\Jobs\GenerateQualityInspectionCertificateJob;
 use App\Models\Formula;
 use App\Models\InventoryBatch;
@@ -40,7 +41,7 @@ function createCertificateCompletionFixture(): array
         'job_title' => 'Analista de Calidad',
         'signature_path' => 'signatures/test.png',
     ]);
-    $user->assignRole('produccion');
+    $user->assignRole(SystemRole::Production->value);
 
     $product = Product::create([
         'code' => 'PNT-CERT-01',

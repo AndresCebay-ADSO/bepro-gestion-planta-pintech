@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Products;
 
 use App\Enums\Permission;
+use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -139,7 +140,7 @@ function catalogEditorUser(): User
 
 test('production role user cannot update products', function (): void {
     $produccionUser = User::factory()->create();
-    $produccionUser->assignRole('produccion');
+    $produccionUser->assignRole(SystemRole::Production->value);
 
     actingAs($produccionUser)
         ->put(route('products.update', $this->product), [

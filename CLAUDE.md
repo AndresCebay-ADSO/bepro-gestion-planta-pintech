@@ -104,6 +104,9 @@ Route (routes/web.php, role: middleware)
 
 - **Language**: Code in English (classes, methods, variables, DB columns). User-facing strings, UI text, and inline comments in Spanish (`lang/es.json`, `lang/es/`).
 - **PHP**: PHP 8.3+, PSR-12 via Laravel Pint. Include `declare(strict_types=1);` at the top of new PHP files.
+- **Authorization**: decide by permission (`$user->can(Permission::X->value)`, `can:` middleware, policies), never by
+  role name. The only role checks live in `User` (`isSuperAdmin()`, `superAdmins()`), enforced by a test. Role names
+  are written as `SystemRole::X->value`, never as string literals.
 - **SQL**: Database-agnostic (`LOWER()` instead of Postgres-specific `ILIKE`).
 - **Seeders**: Must be idempotent (`updateOrCreate` / `firstOrCreate`). Gate test/mock data with `app()->environment('local', 'testing')`.
 - **Git**: Conventional Commits (`feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`). Main branch: `main`; development: `develop`.

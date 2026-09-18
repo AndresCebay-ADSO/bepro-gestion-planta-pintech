@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\SystemRole;
 use App\Models\ProductionOrder;
 use App\Models\Quotation;
 use App\Models\SalesOrder;
@@ -38,7 +39,7 @@ test('super-admin cannot delete a user that has activity logs', function () {
     $admin->assignRole('super-admin');
 
     $target = User::factory()->create();
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
 
     activity('test')
         ->causedBy($target)
@@ -57,7 +58,7 @@ test('super-admin cannot delete a user that has records via created_by in system
     $admin->assignRole('super-admin');
 
     $target = User::factory()->create();
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
 
     // Simula el bug scenario: sin activity_log pero con registro directo
     // en activity_log con el causer_id del target (tabla sin FK constraints).
@@ -89,7 +90,7 @@ test('super-admin can delete a user with no activity', function () {
     $admin->assignRole('super-admin');
 
     $target = User::factory()->create();
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
 
     // Garantizar que no tiene ningún registro en el sistema
     Activity::where('causer_id', $target->id)->delete();
@@ -117,7 +118,7 @@ test('admin can create user with is_active = true', function () {
             'phone' => '3001234567',
             'password' => 'password',
             'password_confirmation' => 'password',
-            'role' => 'operador',
+            'role' => SystemRole::Operator->value,
             'is_active' => true,
         ])
         ->assertRedirect(route('users.index'))
@@ -141,7 +142,7 @@ test('admin can create user with is_active = false', function () {
             'phone' => '3007654321',
             'password' => 'password',
             'password_confirmation' => 'password',
-            'role' => 'operador',
+            'role' => SystemRole::Operator->value,
             'is_active' => false,
         ])
         ->assertRedirect(route('users.index'))
@@ -161,14 +162,14 @@ test('admin can update user is_active from true to false', function () {
     $target = User::factory()->create([
         'is_active' => true,
     ]);
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
 
     $this->actingAs($admin)
         ->put(route('users.update', $target), [
             'name' => $target->name,
             'email' => $target->email,
             'phone' => '3001112222',
-            'role' => 'operador',
+            'role' => SystemRole::Operator->value,
             'is_active' => false,
         ])
         ->assertRedirect(route('users.index'))
@@ -188,14 +189,14 @@ test('admin can update user is_active from false to true', function () {
     $target = User::factory()->create([
         'is_active' => false,
     ]);
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
 
     $this->actingAs($admin)
         ->put(route('users.update', $target), [
             'name' => $target->name,
             'email' => $target->email,
             'phone' => '3003334444',
-            'role' => 'operador',
+            'role' => SystemRole::Operator->value,
             'is_active' => true,
         ])
         ->assertRedirect(route('users.index'))
@@ -227,7 +228,7 @@ test('admin can create user with signature', function () {
             'phone' => '3001234567',
             'password' => 'password',
             'password_confirmation' => 'password',
-            'role' => 'operador',
+            'role' => SystemRole::Operator->value,
             'is_active' => true,
             'signature' => $file,
         ])
@@ -249,7 +250,7 @@ test('admin can update user signature', function () {
     $target = User::factory()->create([
         'signature_path' => 'signatures/old.png',
     ]);
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
     Storage::disk('public')->put('signatures/old.png', 'old-content');
 
     $newFile = UploadedFile::fake()->image('new_signature.png', 200, 100);
@@ -259,7 +260,7 @@ test('admin can update user signature', function () {
             '_method' => 'put',
             'name' => $target->name,
             'email' => $target->email,
-            'role' => 'operador',
+            'role' => SystemRole::Operator->value,
             'is_active' => true,
             'signature' => $newFile,
         ])
@@ -294,7 +295,7 @@ test('user creation fails gracefully when signature optimizer throws exception',
             'email' => 'fallido@test.com',
             'password' => 'password',
             'password_confirmation' => 'password',
-            'role' => 'operador',
+            'role' => SystemRole::Operator->value,
             'is_active' => true,
             'signature' => $file,
         ])
@@ -312,7 +313,7 @@ test('user update preserves existing signature when optimizer throws exception',
     $target = User::factory()->create([
         'signature_path' => 'signatures/original.png',
     ]);
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
     Storage::disk('public')->put('signatures/original.png', 'original-content');
 
     $this->mock(SignatureOptimizerService::class, function ($mock) {
@@ -330,7 +331,7 @@ test('user update preserves existing signature when optimizer throws exception',
             '_method' => 'put',
             'name' => $target->name,
             'email' => $target->email,
-            'role' => 'operador',
+            'role' => SystemRole::Operator->value,
             'is_active' => true,
             'signature' => $newFile,
         ])
@@ -350,14 +351,14 @@ test('admin can remove user signature', function () {
     $target = User::factory()->create([
         'signature_path' => 'signatures/old.png',
     ]);
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
     Storage::disk('public')->put('signatures/old.png', 'old-content');
 
     $this->actingAs($admin)
         ->put(route('users.update', $target), [
             'name' => $target->name,
             'email' => $target->email,
-            'role' => 'operador',
+            'role' => SystemRole::Operator->value,
             'is_active' => true,
             'remove_signature' => true,
         ])
@@ -378,7 +379,7 @@ test('signature file is deleted when user is deleted', function () {
     $target = User::factory()->create([
         'signature_path' => 'signatures/delete_me.png',
     ]);
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
     Storage::disk('public')->put('signatures/delete_me.png', 'content');
 
     // Sin logs de actividad
@@ -426,7 +427,7 @@ test('orphaned signature file is cleaned up if database transaction fails during
                 'email' => 'falla_bd@test.com',
                 'password' => 'password',
                 'password_confirmation' => 'password',
-                'role' => 'operador',
+                'role' => SystemRole::Operator->value,
                 'is_active' => true,
                 'signature' => $file,
             ]);
@@ -451,7 +452,7 @@ test('signature file is preserved on disk if user deletion fails', function () {
     $target = User::factory()->create([
         'signature_path' => 'signatures/preserve_me.png',
     ]);
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
     Storage::disk('public')->put('signatures/preserve_me.png', 'preserve-content');
 
     // El usuario tiene actividad, por lo que destroy() aborta
@@ -477,7 +478,7 @@ test('orphaned signature file is cleaned up and database rolled back if transact
     $target = User::factory()->create([
         'signature_path' => 'signatures/keep_original.png',
     ]);
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
     Storage::disk('public')->put('signatures/keep_original.png', 'original-content');
 
     $storedSignaturePath = null;
@@ -505,7 +506,7 @@ test('orphaned signature file is cleaned up and database rolled back if transact
             ->put(route('users.update', $target), [
                 'name' => 'Falla Update',
                 'email' => $target->email,
-                'role' => 'operador',
+                'role' => SystemRole::Operator->value,
                 'is_active' => true,
                 'signature' => $file,
             ]);
@@ -536,7 +537,7 @@ test('user creation normalizes uppercase email to lowercase', function () {
             'email' => 'MAYUSCULAS@TEST.COM',
             'password' => 'password',
             'password_confirmation' => 'password',
-            'role' => 'operador',
+            'role' => SystemRole::Operator->value,
             'is_active' => true,
         ])
         ->assertRedirect(route('users.index'));
@@ -552,14 +553,14 @@ test('user update allows pre-existing uppercase email and normalizes it to lower
         'email' => 'Legacy.Admin@Pintech.com',
         'name' => 'Legacy Name',
     ]);
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
 
     $this->actingAs($admin)
         ->post(route('users.update', $target), [
             '_method' => 'put',
             'name' => 'Updated Name',
             'email' => 'Legacy.Admin@Pintech.com',
-            'role' => 'operador',
+            'role' => SystemRole::Operator->value,
             'is_active' => true,
         ])
         ->assertRedirect(route('users.index'))
@@ -595,7 +596,7 @@ test('users cannot change their own role in update', function () {
         ->put(route('users.update', $admin), [
             'name' => $admin->name,
             'email' => $admin->email,
-            'role' => 'operador',
+            'role' => SystemRole::Operator->value,
             'is_active' => true,
         ])
         ->assertRedirect()
@@ -629,7 +630,7 @@ test('destroy catches QueryException with code 23503 and redirects back with err
     $admin->assignRole('super-admin');
 
     $target = User::factory()->create();
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
 
     try {
         User::deleting(function ($user) use ($target) {
@@ -659,59 +660,25 @@ test('destroy catches QueryException with code 23503 and redirects back with err
     $this->assertDatabaseHas('users', ['id' => $target->id]);
 });
 
-test('admin cannot deactivate the last remaining active administrator', function () {
+test('an admin can deactivate another admin: only the last super-admin is protected by role', function () {
     $admin1 = User::factory()->create(['is_active' => true]);
-    $admin1->assignRole('admin');
-
-    $admin2 = User::factory()->create(['is_active' => false]);
-    $admin2->assignRole('admin');
-
-    $this->actingAs($admin2)
-        ->put(route('users.update', $admin1), [
-            'name' => $admin1->name,
-            'email' => $admin1->email,
-            'role' => 'admin',
-            'is_active' => false,
-        ])
-        ->assertRedirect()
-        ->assertSessionHas('error', 'No se puede desactivar o degradar al único administrador activo del sistema.');
-
-    expect($admin1->fresh()->is_active)->toBeTrue();
-});
-
-test('admin cannot demote or deactivate another admin if they are the only other active admin', function () {
-    $admin1 = User::factory()->create(['is_active' => true]);
-    $admin1->assignRole('admin');
+    $admin1->assignRole(SystemRole::Admin->value);
 
     $admin2 = User::factory()->create(['is_active' => true]);
-    $admin2->assignRole('admin');
+    $admin2->assignRole(SystemRole::Admin->value);
 
-    // With 2 active admins, admin1 can deactivate admin2:
+    // Mismos permisos: la policy lo permite, y ya no hay una regla de "último administrador".
     $this->actingAs($admin1)
         ->put(route('users.update', $admin2), [
             'name' => $admin2->name,
             'email' => $admin2->email,
-            'role' => 'admin',
+            'role' => SystemRole::Admin->value,
             'is_active' => false,
         ])
         ->assertRedirect(route('users.index'))
         ->assertSessionHas('message');
 
     expect($admin2->fresh()->is_active)->toBeFalse();
-
-    // Now admin2 is inactive, only admin1 is active.
-    // If admin2 tries to demote admin1, it is blocked:
-    $this->actingAs($admin2)
-        ->put(route('users.update', $admin1), [
-            'name' => $admin1->name,
-            'email' => $admin1->email,
-            'role' => 'operador',
-            'is_active' => true,
-        ])
-        ->assertRedirect()
-        ->assertSessionHas('error', 'No se puede desactivar o degradar al único administrador activo del sistema.');
-
-    expect($admin1->fresh()->hasRole('admin'))->toBeTrue();
 });
 
 test('admin cannot delete users', function () {
@@ -719,7 +686,7 @@ test('admin cannot delete users', function () {
     $admin->assignRole('admin');
 
     $target = User::factory()->create();
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
     Activity::where('causer_id', $target->id)->delete();
 
     $this->actingAs($admin)
@@ -775,6 +742,36 @@ test('only users with audit_logs.view receive recent activity on the users index
             ->has('recentActivities'));
 });
 
+test('the users index only offers the row actions the policy allows', function () {
+    $superAdmin = User::factory()->create();
+    $superAdmin->assignRole(SystemRole::SuperAdmin->value);
+
+    $admin = User::factory()->create();
+    $admin->assignRole(SystemRole::Admin->value);
+
+    $operator = User::factory()->create();
+    $operator->assignRole(SystemRole::Operator->value);
+
+    $rowCan = fn ($users, User $user) => collect($users)->firstWhere('id', $user->id)['can'];
+
+    // Admin gestiona a cualquiera salvo a un SuperAdmin, y no tiene users.delete.
+    $this->actingAs($admin)
+        ->get(route('users.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->missing('can.delete')
+            ->where('users.data', fn ($users) => $rowCan($users, $operator) === ['update' => true, 'delete' => false]
+                && $rowCan($users, $superAdmin) === ['update' => false, 'delete' => false]));
+
+    // SuperAdmin elimina a otros, nunca su propia cuenta.
+    $this->actingAs($superAdmin)
+        ->get(route('users.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('users.data', fn ($users) => $rowCan($users, $operator) === ['update' => true, 'delete' => true]
+                && $rowCan($users, $superAdmin) === ['update' => true, 'delete' => false]));
+});
+
 test('the last active super-admin cannot be deactivated or demoted', function () {
     $activeSuperAdmin = User::factory()->create(['is_active' => true]);
     $activeSuperAdmin->assignRole('super-admin');
@@ -795,18 +792,85 @@ test('the last active super-admin cannot be deactivated or demoted', function ()
     expect($activeSuperAdmin->fresh()->isSuperAdmin())->toBeTrue();
 });
 
-test('a super-admin cannot be deleted', function () {
-    $superAdmin = User::factory()->create();
-    $superAdmin->assignRole('super-admin');
+test('a blocked super-admin demotion changes nothing and discards the uploaded signature', function () {
+    Storage::fake('public');
 
-    $otherSuperAdmin = User::factory()->create();
-    $otherSuperAdmin->assignRole('super-admin');
-    Activity::where('causer_id', $otherSuperAdmin->id)->delete();
+    $activeSuperAdmin = User::factory()->create(['is_active' => true, 'name' => 'Nombre original']);
+    $activeSuperAdmin->assignRole(SystemRole::SuperAdmin->value);
+
+    $inactiveSuperAdmin = User::factory()->create(['is_active' => false]);
+    $inactiveSuperAdmin->assignRole(SystemRole::SuperAdmin->value);
+
+    $this->mock(SignatureOptimizerService::class, function ($mock) {
+        $mock->shouldReceive('optimizeAndStore')->once()->andReturnUsing(function () {
+            Storage::disk('public')->put('signatures/blocked.png', 'new-content');
+
+            return 'signatures/blocked.png';
+        });
+    });
+
+    $this->actingAs($inactiveSuperAdmin)
+        ->put(route('users.update', $activeSuperAdmin), [
+            'name' => 'Nombre nuevo',
+            'email' => $activeSuperAdmin->email,
+            'role' => SystemRole::SuperAdmin->value,
+            'is_active' => false,
+            'signature' => UploadedFile::fake()->image('firma.png', 200, 100),
+        ])
+        ->assertSessionHas('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
+
+    Storage::disk('public')->assertMissing('signatures/blocked.png');
+
+    $activeSuperAdmin->refresh();
+    expect($activeSuperAdmin->name)->toBe('Nombre original')
+        ->and((bool) $activeSuperAdmin->is_active)->toBeTrue()
+        ->and($activeSuperAdmin->signature_path)->toBeNull();
+});
+
+test('the last active super-admin cannot be deleted', function () {
+    $activeSuperAdmin = User::factory()->create(['is_active' => true]);
+    $activeSuperAdmin->assignRole(SystemRole::SuperAdmin->value);
+
+    // Quien borra es un SuperAdmin con la cuenta desactivada: el objetivo es el único activo.
+    $inactiveSuperAdmin = User::factory()->create(['is_active' => false]);
+    $inactiveSuperAdmin->assignRole(SystemRole::SuperAdmin->value);
+    Activity::where('causer_id', $activeSuperAdmin->id)->delete();
+
+    $this->actingAs($inactiveSuperAdmin)
+        ->delete(route('users.destroy', $activeSuperAdmin))
+        ->assertRedirect()
+        ->assertSessionHas('error', 'No se puede eliminar al único super administrador activo del sistema.');
+
+    $this->assertDatabaseHas('users', ['id' => $activeSuperAdmin->id]);
+});
+
+test('an inactive super-admin can be deleted while another one stays active', function () {
+    $superAdmin = User::factory()->create(['is_active' => true]);
+    $superAdmin->assignRole(SystemRole::SuperAdmin->value);
+
+    $inactiveSuperAdmin = User::factory()->create(['is_active' => false]);
+    $inactiveSuperAdmin->assignRole(SystemRole::SuperAdmin->value);
+    Activity::where('causer_id', $inactiveSuperAdmin->id)->delete();
 
     $this->actingAs($superAdmin)
-        ->delete(route('users.destroy', $otherSuperAdmin))
-        ->assertRedirect()
-        ->assertSessionHas('error', 'No se puede eliminar un administrador. Desactiva su cuenta en su lugar.');
+        ->delete(route('users.destroy', $inactiveSuperAdmin))
+        ->assertRedirect(route('users.index'));
 
-    $this->assertDatabaseHas('users', ['id' => $otherSuperAdmin->id]);
+    $this->assertDatabaseMissing('users', ['id' => $inactiveSuperAdmin->id]);
+});
+
+test('a super-admin without activity can be deleted by another super-admin', function () {
+    $superAdmin = User::factory()->create();
+    $superAdmin->assignRole(SystemRole::SuperAdmin->value);
+
+    $otherSuperAdmin = User::factory()->create();
+    $otherSuperAdmin->assignRole(SystemRole::SuperAdmin->value);
+    Activity::where('causer_id', $otherSuperAdmin->id)->delete();
+
+    // Quien borra no puede borrarse a sí mismo, así que siempre queda al menos un SuperAdmin.
+    $this->actingAs($superAdmin)
+        ->delete(route('users.destroy', $otherSuperAdmin))
+        ->assertRedirect(route('users.index'));
+
+    $this->assertDatabaseMissing('users', ['id' => $otherSuperAdmin->id]);
 });

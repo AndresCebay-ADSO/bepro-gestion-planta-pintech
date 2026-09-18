@@ -50,10 +50,11 @@ class GrantSuperAdminCommand extends Command
             return self::SUCCESS;
         }
 
-        $oldRole = $user->getRoleNames()->first() ?? 'none';
+        $oldRole = $user->getRoleNames()->first();
+        $oldLabel = SystemRole::labelFor($oldRole);
 
         $confirmed = $this->option('force') || $this->confirm(
-            "¿Asignar SuperAdmin a {$user->name} <{$user->email}>? Reemplaza su rol actual ({$oldRole})."
+            "¿Asignar SuperAdmin a {$user->name} <{$user->email}>? Reemplaza su rol actual ({$oldLabel})."
         );
 
         if (! $confirmed) {
@@ -73,7 +74,7 @@ class GrantSuperAdminCommand extends Command
                 'new_role' => SystemRole::SuperAdmin->value,
                 'source' => 'console',
             ])
-            ->log('Rol de usuario modificado de '.$oldRole.' a '.SystemRole::SuperAdmin->value);
+            ->log('Rol de usuario modificado de '.$oldLabel.' a '.SystemRole::SuperAdmin->label());
 
         $this->info("{$user->name} ahora es SuperAdmin.");
 

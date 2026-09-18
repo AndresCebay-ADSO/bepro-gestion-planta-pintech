@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use App\Enums\Permission;
 use Illuminate\Routing\Route as RoutingRoute;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+use Symfony\Component\Finder\SplFileInfo;
 use Tests\Support\Rbac\RoutePermissionMap;
 
 /**
@@ -147,6 +149,21 @@ it('no protege ninguna ruta por rol', function () {
         ->all();
 
     expect($byRole)->toBe([], 'Rutas que aún usan role: '.implode(', ', $byRole));
+});
+
+it('no decide por nombre de rol fuera de User', function () {
+    // Solo User::isSuperAdmin() y User::superAdmins() consultan un rol: el resto del código decide por permisos. Los
+    // seeders (database/) sí asignan roles concretos para los datos de demo.
+    $pattern = '/->(hasRole|hasAnyRole|hasAllRoles|hasExactRoles|role|withoutRole)\(|::(role|withoutRole)\(/';
+
+    $offenders = collect(File::allFiles(app_path()))
+        ->reject(fn (SplFileInfo $file) => $file->getRealPath() === app_path('Models/User.php'))
+        ->filter(fn (SplFileInfo $file) => preg_match($pattern, $file->getContents()) === 1)
+        ->map(fn (SplFileInfo $file) => str_replace(base_path().'/', '', $file->getRealPath()))
+        ->values()
+        ->all();
+
+    expect($offenders)->toBe([], 'Comprobaciones por rol fuera de User: '.implode(', ', $offenders));
 });
 
 it('autoriza con la policy del registro las acciones sobre registros con dueño', function (string $routeName) {

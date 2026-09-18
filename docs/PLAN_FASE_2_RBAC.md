@@ -575,7 +575,7 @@ FASE 2A — RBAC  (≈13 días)
   8.  2.8  Rutas can: + páginas de error (4.1)         2 d
   9.  2.5  Asignación de roles + permisos al frontend  2 d
   10. 2.4  CRUD de roles en UI                         3 d
-  11. ---  Renombrar roles a inglés                    0,5 d   ← ver abajo
+  11. ---  Renombrar roles a inglés                    0,5 d   ← ✅ hecho
                                                      ────────
                                                       ≈15 días
 
@@ -590,12 +590,8 @@ vibe coding e incumplen la regla de código en inglés (`CLAUDE.md`). Al llegar 
 middlewares (2.8), el sidebar (2.5) y los tests (helper `actingAsRole`) ya no usan esos textos: solo quedan en
 `SystemRole` y en la tabla `roles`. El cambio es:
 1. `SystemRole`: `'produccion'` → `'production'`, `'operador'` → `'operator'`, `'comercial'` → `'commercial'`.
-   Esos nombres en inglés están reservados desde la 2.4 (`SystemRole::reservedNames()`), así que ningún rol personalizado
-   puede ocuparlos. Al renombrar, retirar `FUTURE_NAMES` y comprobar que los nombres antiguos en español siguen reservados
-   o no hacen falta.
-2. Una migración de datos que actualiza `roles.name`. Es segura: `model_has_roles` enlaza por `role_id`, así que
-   ningún usuario pierde su rol.
-3. Limpiar la caché de permisos y actualizar el test que hoy protege los nombres en español.
+2. ~~Una migración de datos que actualiza `roles.name`~~: descartada, no hay producción (ver el estado abajo).
+3. Actualizar el test que hoy protege los nombres en español.
 
 > **⚠️ Reestimación (auditoría 2026-09-15):** la premisa de que los tests ya no usan los nombres no se cumple: quedan
 > **245 literales de rol en 38 archivos de test** (`assignRole('produccion')` y similares) que hay que pasar a
@@ -606,6 +602,43 @@ middlewares (2.8), el sidebar (2.5) y los tests (helper `actingAsRole`) ya no us
 > `'operador'`, `'comercial'`); el resto son `'admin'` y `'super-admin'`, que no cambian de nombre. Fuera de los tests,
 > los nombres en español solo quedan en `SystemRole` y en el tipo `UserRole` de `resources/js/types/auth.ts`.
 > **Estimación: 1 día.**
+
+> **✅ Estado paso 11 (2026-09-18, rama `feature/rbac-role-rename`):** implementado.
+> - `SystemRole` en inglés (`production`, `operator`, `commercial`); las etiquetas visibles no cambian.
+> - **Sin migración de datos:** el software aún no está en producción, así que las bases se recrean con
+>   `migrate:fresh --seed` y el seeder crea los roles ya en inglés. Desde producción, cualquier renombrado de datos
+>   existentes necesita su migración (el seeder crea filas nuevas, no renombra, y los usuarios se enlazan por `role_id`).
+> - Los 133 literales de los tests pasan a `SystemRole::X->value`.
+> - Retirados el tipo `UserRole` (TS), `User.role`/`User.roles`/`UserRoleRecord` sin uso y la prop compartida
+>   `role_names` (**AU-08**, **RV-11**).
+> - La descripción del log `role_changed` y la confirmación de `users:grant-super-admin` muestran la etiqueta del rol
+>   ("de Operador a Administrador"); `properties.old_role/new_role` guardan el nombre interno. `SystemRole::labelFor()`
+>   acepta `null` ("Sin rol") y sustituye al centinela `'none'`.
+>
+> **Revisión de la rama: la lógica deja de decidir por nombre de rol.** Solo quedan dos consultas por rol, ambas de
+> SuperAdmin y ambas en `User` (`isSuperAdmin()` y el scope `superAdmins()`); un test lo exige ("no decide por nombre
+> de rol fuera de User"). Cambios:
+> - **Regla general contra la escalada (`User::holdsAllPermissions`)**: nadie edita, desactiva ni elimina a un usuario
+>   con permisos que él no tiene (`UserPolicy`), y nadie asigna un rol con permisos que él no tiene
+>   (`AssignableRoleService`, que ya no necesita casos especiales para SuperAdmin). Sustituye a "solo un SuperAdmin
+>   gestiona a otro SuperAdmin" y cubre además a la Admin frente a un rol personalizado con `users.edit`.
+> - **Se retira la protección "último Admin activo"**: protegía un nombre, no una capacidad. Queda solo "último
+>   SuperAdmin activo", que evita quedarse sin acceso de recuperación.
+> - **Se retira "no se elimina a un Admin ni a un SuperAdmin"**: nadie se elimina a sí mismo (siempre queda un
+>   SuperAdmin) y `hasActivity()` ya bloquea el borrado de quien trabajó en el sistema.
+> - **Se retira la excepción "conservar el rol actual"** al editar (`UserController::edit`, `UpdateUserRequest`): con la
+>   regla general, quien puede editar a un usuario tiene todos sus permisos y, por tanto, puede asignar su rol.
+> - **Sin rol preseleccionado** al crear un usuario (antes, Producción).
+> - `SystemRole::reservedNames()` pasa a `isReservedLabel()`: reserva solo las etiquetas, sin distinguir mayúsculas ni
+>   tildes (rechaza `produccion` junto a `Producción`). Los nombres internos ya los rechaza la validación de nombre
+>   repetido, porque los roles del sistema existen antes que cualquier personalizado.
+> - **Acciones por fila en el listado de usuarios** (`can.update` / `can.delete`, como en roles): la tabla ya no ofrece
+>   editar o eliminar a quien la policy protege. Un test garantiza que Admin tiene todos los permisos no reservados,
+>   que es lo que le deja gestionar a cualquier usuario salvo a los SuperAdmin.
+> - **"Último SuperAdmin activo" dentro de la transacción**, con el rol `super-admin` bloqueado: dos SuperAdmins que se
+>   desactivan a la vez ya no pueden dejar el sistema sin ninguno. Al editar sin cambiar el rol ya no se bloquea ni se
+>   resincroniza. `destroy` aplica la misma regla y el mismo bloqueo (hallazgo de CodeRabbit en la PR #147): hasta
+>   ahora lo impedía solo `hasActivity()`, porque iniciar sesión deja actividad, pero el log se purga a los 180 días.
 
 **Regla desde ya:** el código nuevo nunca escribe el nombre de un rol a mano; siempre `SystemRole::X->value`.
 
@@ -633,3 +666,5 @@ Tu estimación era de 8 días (días 6-13). El alcance real, incluyendo lo que l
 | — | Nomenclatura en módulos con dueño | ✅ `view_own` / `view_all` (no existe `view` a secas) |
 | — | 2.4 (CRUD de roles) | ✅ Entra antes de producción |
 | — | ¿La auditoría impide el borrado físico? (2.7) | ✅ No como historial; sí como autor (usuarios) |
+| — | Roles base en código o editables en la UI | ✅ En código (`SystemRole` + `Permission::defaultRoles()`), reconciliados por el seeder; los casos especiales son roles personalizados (2.4). La lógica decide solo por permisos. Revisar si algún día la empresa necesita cambiar los permisos de un rol base sin desplegar |
+| — | Protecciones de usuarios | ✅ Por permisos (`holdsAllPermissions`); la única regla por rol es "último SuperAdmin activo" |

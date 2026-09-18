@@ -28,7 +28,7 @@ it('pide confirmación y no cambia nada si se cancela', function () {
     $user = userWithRole(SystemRole::Operator, ['email' => 'operador@empresa.com', 'is_active' => true]);
 
     $this->artisan('users:grant-super-admin', ['email' => 'operador@empresa.com'])
-        ->expectsConfirmation("¿Asignar SuperAdmin a {$user->name} <operador@empresa.com>? Reemplaza su rol actual (operador).", 'no')
+        ->expectsConfirmation("¿Asignar SuperAdmin a {$user->name} <operador@empresa.com>? Reemplaza su rol actual (Operador).", 'no')
         ->assertFailed();
 
     expect($user->fresh()->isSuperAdmin())->toBeFalse();

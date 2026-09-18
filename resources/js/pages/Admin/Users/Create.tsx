@@ -19,10 +19,9 @@ import type { RoleOption } from '@/types';
 
 interface Props {
     roles: RoleOption[];
-    defaultRole: string;
 }
 
-const UsersCreate: FC<Props> = ({ roles, defaultRole }) => {
+const UsersCreate: FC<Props> = ({ roles }) => {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
@@ -32,9 +31,8 @@ const UsersCreate: FC<Props> = ({ roles, defaultRole }) => {
         remove_signature: false,
         password: '',
         password_confirmation: '',
-        role: roles.some((r) => r.name === defaultRole)
-            ? defaultRole
-            : (roles[0]?.name ?? ''),
+        // Sin rol preseleccionado: quien crea el usuario lo elige siempre.
+        role: '',
         is_active: true,
     });
 

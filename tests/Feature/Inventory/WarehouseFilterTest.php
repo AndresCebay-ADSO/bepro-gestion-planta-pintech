@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\SystemRole;
 use App\Models\User;
 use App\Models\Warehouse;
 use Database\Seeders\RolePermissionSeeder;
@@ -16,7 +17,7 @@ beforeEach(function (): void {
     $this->admin->assignRole('admin');
 
     $this->produccion = User::factory()->create(['email_verified_at' => now()]);
-    $this->produccion->assignRole('produccion');
+    $this->produccion->assignRole(SystemRole::Production->value);
 
     $this->warehouseA = Warehouse::factory()->create([
         'name' => 'Bodega Principal',

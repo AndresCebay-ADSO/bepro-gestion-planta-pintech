@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ProductionOrderStatus;
+use App\Enums\SystemRole;
 use App\Enums\WarehouseType;
 use App\Models\Formula;
 use App\Models\Product;
@@ -148,7 +149,7 @@ test('cannot add a packaging plan to a cancelled order', function () {
 
 test('operator cannot add a packaging plan to a pending review order', function () {
     $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole('operador');
+    $operator->assignRole(SystemRole::Operator->value);
     $this->actingAs($operator);
 
     $this->productionOrder->update(['status' => ProductionOrderStatus::PendingReview]);
@@ -225,7 +226,7 @@ test('operator cannot delete a packaging plan from a pending review order', func
     $this->productionOrder->update(['status' => ProductionOrderStatus::PendingReview]);
 
     $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole('operador');
+    $operator->assignRole(SystemRole::Operator->value);
     $this->actingAs($operator);
 
     $response = $this->delete(route('production-orders.packaging-plans.destroy', [

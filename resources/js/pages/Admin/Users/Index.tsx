@@ -24,10 +24,14 @@ interface User {
     id: number;
     name: string;
     email: string;
-    role_label: string | null;
+    role_label: string;
     is_active: boolean;
     last_login_at: string | null;
     created_at: string;
+    can: {
+        update: boolean;
+        delete: boolean;
+    };
 }
 
 interface ActivityLog {
@@ -53,7 +57,6 @@ interface Props {
     filters: Record<string, string | null | undefined>;
     can?: {
         create?: boolean;
-        delete?: boolean;
         viewActivity?: boolean;
     };
 }
@@ -178,8 +181,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                                                         variant="secondary"
                                                         className="font-bold uppercase"
                                                     >
-                                                        {user.role_label ??
-                                                            'Invitado'}
+                                                        {user.role_label}
                                                     </Badge>
                                                 </td>
 
@@ -214,10 +216,10 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                                                     <TableActions
                                                         actions={{
                                                             view: false,
-                                                            edit: true,
-                                                            delete:
-                                                                can?.delete ===
-                                                                true,
+                                                            edit: user.can
+                                                                .update,
+                                                            delete: user.can
+                                                                .delete,
                                                         }}
                                                         onEdit={() =>
                                                             router.get(

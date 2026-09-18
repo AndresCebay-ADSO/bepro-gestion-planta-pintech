@@ -31,8 +31,9 @@ class UpdateUserRequest extends FormRequest
         $userId = $user instanceof User ? $user->id : (is_numeric($user) ? (int) $user : null);
 
         return array_merge($this->profileRules($userId), [
-            // Sin escalada de privilegios (AssignableRoleService); el rol actual del usuario siempre se puede conservar.
-            'role' => ['bail', 'required', 'string', Rule::in($this->allowedRoleNames($user))],
+            // Sin escalada de privilegios (AssignableRoleService). El rol actual siempre está entre los asignables: la
+            // policy solo deja editar a quien tiene todos los permisos del usuario, y esos son los de su rol.
+            'role' => ['bail', 'required', 'string', Rule::in($this->assignableRoleNames())],
             'is_active' => ['bail', 'required', 'boolean'],
         ]);
     }
@@ -40,12 +41,10 @@ class UpdateUserRequest extends FormRequest
     /**
      * @return array<int, string>
      */
-    private function allowedRoleNames(mixed $target): array
+    private function assignableRoleNames(): array
     {
         $actor = $this->user();
-        $assignable = $actor instanceof User ? app(AssignableRoleService::class)->namesFor($actor) : [];
-        $current = $target instanceof User ? $target->getRoleNames()->all() : [];
 
-        return array_values(array_unique([...$assignable, ...$current]));
+        return $actor instanceof User ? app(AssignableRoleService::class)->namesFor($actor) : [];
     }
 }

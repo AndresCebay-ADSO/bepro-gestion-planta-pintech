@@ -64,11 +64,12 @@ it('asigna a cada rol el número de permisos de la matriz', function (SystemRole
     'comercial' => [SystemRole::Commercial, 22],
 ]);
 
-it('conserva los nombres de los roles que ya existen en la base de datos', function () {
-    expect(SystemRole::Admin->value)->toBe('admin')
-        ->and(SystemRole::Production->value)->toBe('produccion')
-        ->and(SystemRole::Operator->value)->toBe('operador')
-        ->and(SystemRole::Commercial->value)->toBe('comercial');
+it('nombra los roles del sistema en inglés', function () {
+    expect(SystemRole::SuperAdmin->value)->toBe('super-admin')
+        ->and(SystemRole::Admin->value)->toBe('admin')
+        ->and(SystemRole::Production->value)->toBe('production')
+        ->and(SystemRole::Operator->value)->toBe('operator')
+        ->and(SystemRole::Commercial->value)->toBe('commercial');
 });
 
 it('usa view_own y view_all en los módulos con dueño, nunca view a secas', function (PermissionModule $module) {
@@ -107,6 +108,17 @@ it('reserva para los roles personalizados exactamente los permisos que solo tien
     $superAdminOnly = array_values(array_filter(Permission::cases(), fn (Permission $permission) => $permission->defaultRoles() === []));
 
     expect($reserved)->toBe($superAdminOnly);
+});
+
+it('da a Admin todos los permisos que no están reservados', function () {
+    // UserPolicy deja gestionar a un usuario solo a quien tiene todos sus permisos. Como un rol personalizado no puede
+    // tener permisos reservados, esto garantiza que Admin gestiona a cualquier usuario salvo a los SuperAdmin.
+    $assignable = array_filter(Permission::cases(), fn (Permission $permission) => ! $permission->isReserved());
+
+    expect(array_values(array_diff(
+        array_map(fn (Permission $permission) => $permission->value, $assignable),
+        array_map(fn (Permission $permission) => $permission->value, SystemRole::Admin->defaultPermissions()),
+    )))->toBe([]);
 });
 
 it('cumple las dependencias de cada permiso en los roles del sistema', function (SystemRole $role) {

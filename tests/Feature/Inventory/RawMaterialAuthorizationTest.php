@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\SystemRole;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
@@ -43,7 +44,7 @@ describe('Raw Material Authorization', function () {
 
         it('allows produccion to view raw materials list', function () {
             $user = User::factory()->create();
-            $user->assignRole('produccion');
+            $user->assignRole(SystemRole::Production->value);
 
             $response = $this->actingAs($user)
                 ->get(route('raw-materials.index'));
@@ -53,7 +54,7 @@ describe('Raw Material Authorization', function () {
 
         it('forbids comercial to view raw materials list', function () {
             $user = User::factory()->create();
-            $user->assignRole('comercial');
+            $user->assignRole(SystemRole::Commercial->value);
 
             $response = $this->actingAs($user)
                 ->get(route('raw-materials.index'));
@@ -124,7 +125,7 @@ describe('Raw Material Authorization', function () {
 
         it('allows produccion to view raw material detail', function () {
             $user = User::factory()->create();
-            $user->assignRole('produccion');
+            $user->assignRole(SystemRole::Production->value);
 
             $response = $this->actingAs($user)
                 ->get(route('raw-materials.show', $this->rawMaterial));
@@ -134,7 +135,7 @@ describe('Raw Material Authorization', function () {
 
         it('forbids comercial to view raw material detail', function () {
             $user = User::factory()->create();
-            $user->assignRole('comercial');
+            $user->assignRole(SystemRole::Commercial->value);
 
             $response = $this->actingAs($user)
                 ->get(route('raw-materials.show', $this->rawMaterial));
@@ -156,7 +157,7 @@ describe('Raw Material Authorization', function () {
 
         it('forbids produccion to access create form', function () {
             $user = User::factory()->create();
-            $user->assignRole('produccion');
+            $user->assignRole(SystemRole::Production->value);
 
             $response = $this->actingAs($user)
                 ->get(route('raw-materials.create'));
@@ -166,7 +167,7 @@ describe('Raw Material Authorization', function () {
 
         it('forbids comercial to access create form', function () {
             $user = User::factory()->create();
-            $user->assignRole('comercial');
+            $user->assignRole(SystemRole::Commercial->value);
 
             $response = $this->actingAs($user)
                 ->get(route('raw-materials.create'));
@@ -197,7 +198,7 @@ describe('Raw Material Authorization', function () {
 
         it('forbids produccion to create raw material', function () {
             $user = User::factory()->create();
-            $user->assignRole('produccion');
+            $user->assignRole(SystemRole::Production->value);
 
             $response = $this->actingAs($user)
                 ->post(route('raw-materials.store'), [
@@ -239,7 +240,7 @@ describe('Raw Material Authorization', function () {
 
         it('forbids produccion from reactivating a raw material', function () {
             $user = User::factory()->create();
-            $user->assignRole('produccion');
+            $user->assignRole(SystemRole::Production->value);
 
             $response = $this->actingAs($user)
                 ->patch(route('raw-materials.reactivate', $this->rawMaterial));

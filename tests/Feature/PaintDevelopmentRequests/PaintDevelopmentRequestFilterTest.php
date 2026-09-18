@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\PaintDevelopmentRequestStatus;
+use App\Enums\SystemRole;
 use App\Models\PaintDevelopmentRequest;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -17,7 +18,7 @@ beforeEach(function (): void {
     $this->admin->assignRole('admin');
 
     $this->comercial = User::factory()->create(['email_verified_at' => now()]);
-    $this->comercial->assignRole('comercial');
+    $this->comercial->assignRole(SystemRole::Commercial->value);
 
     $this->requestA = PaintDevelopmentRequest::factory()->create([
         'status' => PaintDevelopmentRequestStatus::Draft->value,
