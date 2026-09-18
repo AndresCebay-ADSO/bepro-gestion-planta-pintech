@@ -72,7 +72,8 @@ class InventoryMovementController extends Controller
                 ->select('id', 'raw_material_id', 'warehouse_id', 'lot_number', 'remaining_quantity', 'unit_price')
                 ->orderByDesc('id')
                 ->get()),
-            'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->get()),
+            // Formulario de alta: solo bodegas activas. `warehouseOptions` es el filtro del historial y muestra todas.
+            'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->where('is_active', true)->get()),
             'warehouseOptions' => Warehouse::query()
                 ->select('id', 'name')
                 ->orderBy('name')

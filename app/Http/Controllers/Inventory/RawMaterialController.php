@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Actions\Shared\DeleteUnusedRecordAction;
 use App\Enums\Permission;
 use App\Filters\RawMaterialFilter;
 use App\Http\Controllers\Controller;
@@ -21,6 +22,8 @@ use Inertia\Response;
 
 class RawMaterialController extends Controller
 {
+    public function __construct(private readonly DeleteUnusedRecordAction $deleteUnused) {}
+
     /**
      * Display a listing of the raw materials.
      */
@@ -40,6 +43,8 @@ class RawMaterialController extends Controller
             ->withExists(['inventoryMovements as has_movements'])
             ->withExists(['formulaDetails as has_formulas'])
             ->withExists(['productionOrderDetails as has_orders'])
+            ->withExists(['packagedVariants as has_variants'])
+            ->withExists(['lineAdjustments as has_adjustments'])
             ->withCount(['alerts as active_alerts_count' => fn ($query) => $query->where('is_resolved', false)])
             ->withExists(['alerts as has_critical_alert' => fn ($query) => $query
                 ->where('is_resolved', false)
@@ -60,7 +65,9 @@ class RawMaterialController extends Controller
                     'has_activity' => (bool) ($rawMaterial->has_batches
                         || $rawMaterial->has_movements
                         || $rawMaterial->has_formulas
-                        || $rawMaterial->has_orders),
+                        || $rawMaterial->has_orders
+                        || $rawMaterial->has_variants
+                        || $rawMaterial->has_adjustments),
                     'alert_days_before_expiry' => $rawMaterial->alert_days_before_expiry,
                     'active_alerts_count' => (int) ($rawMaterial->active_alerts_count ?? 0),
                     'has_critical_alert' => (bool) ($rawMaterial->has_critical_alert ?? false),
@@ -152,6 +159,8 @@ class RawMaterialController extends Controller
             'inventoryMovements as has_movements',
             'formulaDetails as has_formulas',
             'productionOrderDetails as has_orders',
+            'packagedVariants as has_variants',
+            'lineAdjustments as has_adjustments',
         ]);
 
         $hasAvailableStock = $rawMaterial->inventoryBatches
@@ -160,7 +169,9 @@ class RawMaterialController extends Controller
         $hasActivity = (bool) ($rawMaterial->inventoryBatches->isNotEmpty()
             || $rawMaterial->has_movements
             || $rawMaterial->has_formulas
-            || $rawMaterial->has_orders);
+            || $rawMaterial->has_orders
+            || $rawMaterial->has_variants
+            || $rawMaterial->has_adjustments);
 
         return Inertia::render('Inventory/RawMaterials/Show', [
             'returnTo' => $this->resolveReturnTo($request),
@@ -268,14 +279,8 @@ class RawMaterialController extends Controller
                 return back()->with('error', __('La materia prima ya se encuentra inactiva.'));
             }
 
-            $hasActivity = $lockedRawMaterial->inventoryBatches()->exists()
-                || $lockedRawMaterial->inventoryMovements()->exists()
-                || $lockedRawMaterial->formulaDetails()->exists()
-                || $lockedRawMaterial->productionOrderDetails()->exists();
-
-            if (! $hasActivity && $canDeletePermanently) {
-                $lockedRawMaterial->delete();
-
+            // Las claves foráneas deciden si tiene historial (docs/POLITICA_ELIMINACION.md §4); si lo tiene, se desactiva.
+            if ($canDeletePermanently && $this->deleteUnused->execute($lockedRawMaterial)) {
                 return redirect()
                     ->route('raw-materials.index')
                     ->with('success', __('Materia prima eliminada físicamente exitosamente.'));

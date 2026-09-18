@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Warehouses;
 
+use App\Models\Warehouse;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,7 +29,7 @@ class UpdateWarehouseRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
-                Rule::unique('warehouses', 'name')->ignore($warehouseId)->whereNull('deleted_at'),
+                Rule::unique('warehouses', 'name')->ignore($warehouseId),
             ],
             'city' => ['bail', 'required', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:255'],

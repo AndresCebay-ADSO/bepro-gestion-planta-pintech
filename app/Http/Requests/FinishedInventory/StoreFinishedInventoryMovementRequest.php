@@ -31,7 +31,7 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
                 'integer',
                 Rule::exists('finished_product_batches', 'id'),
             ],
-            'warehouse_id' => ['bail', 'required', 'integer', Rule::exists('warehouses', 'id')],
+            'warehouse_id' => ['bail', 'required', 'integer', Rule::exists('warehouses', 'id')->where('is_active', true)],
             'type' => [
                 'bail',
                 Rule::requiredIf(fn () => $this->input('reason') !== FinishedInventoryMovementReason::Transfer->value),
@@ -44,7 +44,7 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
             ],
             'quantity' => ['bail', 'required', 'numeric', 'gt:0', 'decimal:0,4', 'max:99999999.9999'],
             'movement_date' => ['bail', 'required', 'date'],
-            'destination_warehouse_id' => ['nullable', 'integer', Rule::exists('warehouses', 'id')],
+            'destination_warehouse_id' => ['nullable', 'integer', Rule::exists('warehouses', 'id')->where('is_active', true)],
             'notes' => ['nullable', 'string', 'max:2000'],
             'production_order_id' => ['prohibited'],
             'created_by' => ['prohibited'],
