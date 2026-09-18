@@ -97,7 +97,7 @@ beforeEach(function () {
 
     // Source order — completed, with a remnant
     $this->sourceOrder = ProductionOrder::create([
-        'order_number' => 'OP-SOURCE-'.uniqid(),
+        'order_number' => 'OP-SOURCE-'.substr(uniqid(), -6),
         'product_id' => $this->sourceProduct->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $this->warehouse->id,
@@ -133,7 +133,7 @@ beforeEach(function () {
 
     // Another source order + remnant (for FIFO testing)
     $this->sourceOrder2 = ProductionOrder::create([
-        'order_number' => 'OP-SOURCE2-'.uniqid(),
+        'order_number' => 'OP-SOURCE2-'.substr(uniqid(), -6),
         'product_id' => $this->sourceProduct->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $this->warehouse->id,
@@ -174,7 +174,7 @@ beforeEach(function () {
     ]);
 
     $this->targetOrder = ProductionOrder::create([
-        'order_number' => 'OP-TARGET-'.uniqid(),
+        'order_number' => 'OP-TARGET-'.substr(uniqid(), -6),
         'product_id' => $this->targetProduct->id,
         'formula_id' => $targetFormula->id,
         'warehouse_id' => $this->warehouse->id,
@@ -288,7 +288,7 @@ it('validates warehouse mismatch', function () {
     ]);
 
     $otherWarehouseOrder = ProductionOrder::create([
-        'order_number' => 'OP-OTHER-WH-'.uniqid(),
+        'order_number' => 'OP-OTHER-WH-'.substr(uniqid(), -6),
         'product_id' => $this->targetProduct->id,
         'formula_id' => Formula::create([
             'product_id' => $this->targetProduct->id,

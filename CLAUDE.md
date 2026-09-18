@@ -19,17 +19,29 @@ npm run lint / lint:check      # ESLint fix / check
 npm run types:check            # tsc --noEmit
 npm run format / format:check  # Prettier fix / check
 php artisan optimize:clear     # Clear all application caches
+php artisan roles:audit        # Custom roles with reserved permissions or broken dependencies (run on deploy)
 
-# Testing (Pest on SQLite :memory: in phpunit.xml; dev/prod uses PostgreSQL)
+# Testing (Pest on SQLite :memory: in phpunit.xml; dev/prod uses PostgreSQL 16)
 ./vendor/bin/pest                                          # All tests
+./vendor/bin/pest --parallel                               # Same suite, ~6x faster (paratest)
 ./vendor/bin/pest tests/Feature/Quotations                 # Specific directory
 ./vendor/bin/pest tests/Feature/Auth/PasswordResetTest.php # Single file
 ./vendor/bin/pest --filter="creates a production order"    # Filter by name
 php artisan test --compact
 
+# Testing against PostgreSQL. CI runs the suite on both engines: SQLite has no CHECK constraints,
+# no advisory locks and no partial indexes, so those paths are only exercised here.
+docker compose -f compose.dev.yaml up -d postgres
+docker compose -f compose.dev.yaml exec -T postgres psql -U postgres -c "CREATE DATABASE pintech_erp_test"
+DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_DATABASE=pintech_erp_test DB_USERNAME=postgres \
+  DB_PASSWORD="$(grep '^DB_PASSWORD=' .env | cut -d= -f2-)" ./vendor/bin/pest   # env vars override phpunit.xml
+
 # Build & Routes
 npm run build                  # Production build (triggers Wayfinder vite plugin)
-php artisan wayfinder:generate # Regenerate typed route helpers if dev server is off
+php artisan wayfinder:generate # Regenerate typed route helpers if dev server is off.
+                               # Needs a reachable DB: Wayfinder types route params from the schema and falls back
+                               # to the model docblock otherwise (Spatie's Role declares `int|string $id` -> string,
+                               # which breaks tsc). Bring up compose.dev.yaml before regenerating.
 
 # Docker
 docker compose -f compose.dev.yaml up -d
@@ -75,6 +87,9 @@ Route (routes/web.php, role: middleware)
 4. **PostgreSQL Advisory Locks vs SQLite Tests**:
    - Numbering sequences (`OP-YYYY-XXXX`, `COT-YYYY-XXXX`) use `pg_advisory_xact_lock` for concurrency safety.
    - Always guard advisory locks with `if (DB::connection()->getDriverName() === 'pgsql')` so SQLite in-memory tests pass.
+   - Test data must satisfy PostgreSQL too: `order_number` is `varchar(20)`, `quotation_number` is an integer, and
+     `inventory_batches` has CHECK constraints (`remaining_quantity <= initial_quantity`) that SQLite ignores.
+   - Introspect the schema with `Schema::` (portable), never with `PRAGMA`.
 5. **Timezone Handling**:
    - Application & DB timezone is UTC. Plant timezone is `config('app.plant_timezone')` (`America/Bogota`).
    - Use `TimezoneService` for server-side user-facing exports (PDF, Excel) and `FormattedDate` / `date-time-helpers` in the frontend.

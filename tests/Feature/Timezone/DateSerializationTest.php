@@ -179,7 +179,7 @@ test('plantilla de exportacion PDF de SDR renderiza fechas formateadas para huma
 
 test('BuildQuotationPdfDataAction preserva la fecha de cotizacion en d/m/Y sin desfase de zona horaria', function () {
     $quotation = Quotation::factory()->make([
-        'quotation_number' => 'COT-001',
+        'quotation_number' => 1,
         'quotation_date' => '2026-09-04',
     ]);
 

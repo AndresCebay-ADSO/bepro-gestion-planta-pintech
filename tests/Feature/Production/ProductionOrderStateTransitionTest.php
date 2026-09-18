@@ -96,7 +96,7 @@ function createOrderInState(object $context, ProductionOrderStatus $status): arr
     ]);
 
     $order = ProductionOrder::create([
-        'order_number' => 'OP-STATE-'.$status->value,
+        'order_number' => 'OP-ST-'.substr(md5($status->value), 0, 6),
         'product_id' => $context->formula->product_id,
         'formula_id' => $context->formula->id,
         'warehouse_id' => $context->factory->id,

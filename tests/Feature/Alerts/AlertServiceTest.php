@@ -109,7 +109,7 @@ test('it auto resolves low stock alert when stock recovers', function (): void {
     $this->alertService->evaluateLowStock((int) $rawMaterial->id);
     expect(Alert::query()->where('is_resolved', false)->count())->toBe(1);
 
-    $batch->update(['remaining_quantity' => 20]);
+    $batch->update(['initial_quantity' => 20, 'remaining_quantity' => 20]);
     $this->alertService->evaluateLowStock((int) $rawMaterial->id);
 
     expect(Alert::query()->where('is_resolved', false)->count())->toBe(0)
