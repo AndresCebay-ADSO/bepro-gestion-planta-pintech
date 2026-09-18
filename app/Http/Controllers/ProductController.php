@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Shared\DeleteUnusedRecordAction;
 use App\Enums\Permission;
 use App\Enums\QrDocumentType;
 use App\Filters\ProductFilter;
@@ -15,6 +16,7 @@ use App\Models\ProductCategory;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
+use App\Services\DeactivationGuardService;
 use App\Services\DecimalCalculator;
 use App\Services\FinishedInventoryQueryService;
 use App\Services\ProductionCostRecalculationService;
@@ -39,6 +41,8 @@ class ProductController extends Controller
         private readonly ProductionCostRecalculationService $productionCostRecalculationService,
         private readonly DecimalCalculator $calculator,
         private readonly FinishedInventoryQueryService $finishedInventoryQueryService,
+        private readonly DeactivationGuardService $deactivationGuard,
+        private readonly DeleteUnusedRecordAction $deleteUnused,
     ) {}
 
     public function index(IndexProductRequest $request): Response
@@ -152,6 +156,7 @@ class ProductController extends Controller
                 ->get(),
             'rawMaterials' => RawMaterial::query()
                 ->with('category:id,name')
+                ->where('is_active', true)
                 ->where(fn ($q) => $q
                     ->whereHas('category', fn ($cq) => $cq->whereRaw('LOWER(name) LIKE ?', ['%envase%']))
                     ->orWhere('code', 'like', '%bidón%')
@@ -221,11 +226,23 @@ class ProductController extends Controller
         $activeChanged = array_key_exists('is_active', $validated)
             && (bool) $validated['is_active'] !== (bool) $product->is_active;
 
-        if ($activeChanged && ! Gate::allows(Permission::ProductsDeactivate->value)) {
+        if ($activeChanged && ! Gate::allows('deactivate', $product)) {
             abort(403, __('No tienes autorización para activar o desactivar productos.'));
         }
 
-        DB::transaction(function () use ($product, $validated): void {
+        $deactivating = $activeChanged && ! $validated['is_active'];
+
+        $blocker = DB::transaction(function () use ($product, $validated, $deactivating): ?string {
+            // Con la fila bloqueada, una orden que se crea a la vez espera (CreateProductionOrderAction toma un bloqueo
+            // compartido sobre el producto) y no puede colarse entre la comprobación y la desactivación.
+            if ($deactivating) {
+                $blocker = $this->deactivationGuard->productBlocker(Product::query()->lockForUpdate()->findOrFail($product->id));
+
+                if ($blocker !== null) {
+                    return $blocker;
+                }
+            }
+
             $product->update($validated);
 
             if ($product->wasChanged('cif_percentage') || $product->wasChanged('price_threshold')) {
@@ -258,7 +275,13 @@ class ProductController extends Controller
                     }
                 }
             }
+
+            return null;
         });
+
+        if ($blocker !== null) {
+            return back()->with('error', $blocker);
+        }
 
         return redirect()->route('products.index')->with('success', __('Producto actualizado exitosamente.'));
     }
@@ -306,7 +329,16 @@ class ProductController extends Controller
     {
         $this->authorize('delete', $product);
 
-        $product->delete();
+        // Sus variantes y documentos se van con él si tampoco tienen historial; si algo lo referencia, la clave foránea
+        // rechaza el borrado y todo se revierte (docs/POLITICA_ELIMINACION.md §3.1).
+        $deleted = $this->deleteUnused->execute($product, function (Product $locked): void {
+            $locked->variants()->get()->each->delete();
+            $locked->productDocuments()->get()->each->delete();
+        });
+
+        if (! $deleted) {
+            return back()->with('error', __('El producto tiene historial (fórmulas, costos, órdenes, cotizaciones o inventario). Desactívalo en su lugar.'));
+        }
 
         return redirect()->route('products.index')->with('success', __('Producto eliminado exitosamente.'));
     }

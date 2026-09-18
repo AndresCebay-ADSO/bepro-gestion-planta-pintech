@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -284,14 +285,12 @@ export default function ProductsEdit({
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <input
+                            <Checkbox
                                 id="is_active"
-                                type="checkbox"
                                 checked={data.is_active}
-                                onChange={(e) =>
-                                    setData('is_active', e.target.checked)
+                                onCheckedChange={(checked) =>
+                                    setData('is_active', checked === true)
                                 }
-                                className="h-4 w-4 rounded border-input"
                             />
                             <Label htmlFor="is_active">Producto activo</Label>
                         </div>

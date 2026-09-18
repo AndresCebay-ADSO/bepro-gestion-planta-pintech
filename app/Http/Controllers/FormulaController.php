@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Shared\DeleteUnusedRecordAction;
 use App\Filters\FormulaFilter;
 use App\Http\Requests\Formulas\IndexFormulaRequest;
 use App\Http\Requests\Formulas\StoreFormulaRequest;
@@ -24,7 +25,8 @@ use Inertia\Response;
 class FormulaController extends Controller
 {
     public function __construct(
-        private readonly ProductionCostRecalculationService $productionCostRecalculationService
+        private readonly ProductionCostRecalculationService $productionCostRecalculationService,
+        private readonly DeleteUnusedRecordAction $deleteUnused,
     ) {}
 
     public function index(IndexFormulaRequest $request): Response
@@ -66,7 +68,6 @@ class FormulaController extends Controller
         $formula = DB::transaction(function () use ($validated, $request): Formula {
             // Auto-increment version for this product
             $nextVersion = Formula::where('product_id', $validated['product_id'])
-                ->withTrashed()
                 ->max('version') + 1;
 
             $formula = Formula::create([
@@ -199,7 +200,10 @@ class FormulaController extends Controller
     {
         $this->authorize('delete', $formula);
 
-        $formula->delete();
+        // Solo si ninguna orden ni ningún costo la usó; sus ingredientes se van con ella (docs/POLITICA_ELIMINACION.md).
+        if (! $this->deleteUnused->execute($formula)) {
+            return back()->with('error', __('La fórmula tiene historial (órdenes de producción o costos calculados). Activa otra versión en su lugar.'));
+        }
 
         return redirect()->route('formulas.index')
             ->with('success', 'Fórmula eliminada exitosamente.');

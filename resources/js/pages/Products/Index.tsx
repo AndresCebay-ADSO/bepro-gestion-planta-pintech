@@ -44,6 +44,7 @@ export default function ProductsIndex({
         routeUrl: productsIndex().url,
         initialFilters: {
             search: filters.search ?? '',
+            status: filters.status ?? '',
         },
     });
 
@@ -77,6 +78,15 @@ export default function ProductsIndex({
                             name: 'search',
                             label: 'Buscar',
                             placeholder: 'Buscar por nombre o código...',
+                        },
+                        {
+                            type: 'select',
+                            name: 'status',
+                            label: 'Estado',
+                            options: [
+                                { value: 'active', label: 'Activos' },
+                                { value: 'inactive', label: 'Inactivos' },
+                            ],
                         },
                     ]}
                     filters={filterState}

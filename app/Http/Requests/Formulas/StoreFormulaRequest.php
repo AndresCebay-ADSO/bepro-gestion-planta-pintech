@@ -42,7 +42,7 @@ class StoreFormulaRequest extends FormRequest
                 'product_id' => [
                     'required',
                     'integer',
-                    Rule::exists('products', 'id')->whereNull('deleted_at'),
+                    Rule::exists('products', 'id'),
                 ],
                 'is_active' => ['boolean'],
                 'return_to' => ['nullable', 'string', 'max:2048'],
@@ -69,8 +69,7 @@ class StoreFormulaRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('unit_of_measures', 'id')
-                    ->where('is_active', true)
-                    ->whereNull('deleted_at'),
+                    ->where('is_active', true),
             ],
         ];
     }
