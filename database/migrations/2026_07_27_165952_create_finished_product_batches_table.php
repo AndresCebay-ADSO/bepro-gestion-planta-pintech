@@ -16,8 +16,8 @@ return new class extends Migration
         Schema::create('finished_product_batches', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained('products')->restrictOnDelete();
-            $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
-            $table->foreignId('production_order_id')->nullable()->constrained('production_orders')->nullOnDelete();
+            $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->restrictOnDelete();
+            $table->foreignId('production_order_id')->nullable()->constrained('production_orders')->restrictOnDelete();
             $table->decimal('initial_quantity', 12, 4);
             $table->date('entry_date');
 

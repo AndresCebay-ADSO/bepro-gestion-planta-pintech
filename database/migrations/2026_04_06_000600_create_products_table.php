@@ -32,7 +32,6 @@ return new class extends Migration
             $table->decimal('quality_solids_upper', 4, 1)->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->softDeletes();
 
             $table->index('is_active');
             $table->index('category_id');

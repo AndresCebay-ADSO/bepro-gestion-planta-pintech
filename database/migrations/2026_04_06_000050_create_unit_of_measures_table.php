@@ -21,7 +21,6 @@ return new class extends Migration
             $table->decimal('to_liter_conversion', 10, 4)->nullable(); // Para conversiones de volumen
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->softDeletes();
 
             $table->index('code');
             $table->index('is_active');

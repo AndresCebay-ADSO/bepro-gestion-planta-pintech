@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('product_variants', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained('products')->restrictOnDelete();
             $table->string('code', 80)->unique();
             $table->string('name', 100);
             $table->foreignId('unit_of_measure_id')->constrained('unit_of_measures')->restrictOnDelete();
@@ -24,10 +24,9 @@ return new class extends Migration
             $table->foreignId('package_raw_material_id')
                 ->nullable()
                 ->constrained('raw_materials')
-                ->nullOnDelete();
+                ->restrictOnDelete();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->softDeletes();
 
             $table->index(['product_id', 'is_active']);
             $table->index('name');

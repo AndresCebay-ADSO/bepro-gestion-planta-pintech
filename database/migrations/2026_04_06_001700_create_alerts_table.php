@@ -19,9 +19,9 @@ return new class extends Migration
             $table->enum('severity', ['baja', 'media', 'alta'])->default('media');
             $table->text('message');
             $table->boolean('is_resolved')->default(false);
-            $table->foreignId('resolved_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('resolved_by')->nullable()->constrained('users')->restrictOnDelete();
             $table->timestamp('resolved_at')->nullable();
-            $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('updated_by')->nullable()->constrained('users')->restrictOnDelete();
             $table->timestamps();
 
             $table->index(['is_resolved', 'type']);

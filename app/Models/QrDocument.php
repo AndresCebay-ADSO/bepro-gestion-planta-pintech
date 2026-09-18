@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
@@ -25,7 +24,6 @@ use Illuminate\Support\Carbon;
  * @property int $uploaded_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property Carbon|null $deleted_at
  * @property-read QrCode $qrCode
  * @property-read User $uploadedBy
  */
@@ -43,7 +41,7 @@ use Illuminate\Support\Carbon;
 class QrDocument extends Model
 {
     /** @use HasFactory<QrDocumentFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected function casts(): array
     {

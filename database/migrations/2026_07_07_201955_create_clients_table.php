@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('contact_name')->nullable();
             $table->string('phone')->nullable();
             $table->string('shipping_address')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->softDeletes(); // un cliente no se borra, se desactiva
         });
     }
 

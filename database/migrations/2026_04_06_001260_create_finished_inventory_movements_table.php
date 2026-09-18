@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('finished_inventory_movements', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained('products')->restrictOnDelete();
-            $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
+            $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->restrictOnDelete();
             $table->foreignId('warehouse_id')->constrained('warehouses')->restrictOnDelete();
-            $table->foreignId('production_order_id')->nullable()->constrained('production_orders')->nullOnDelete();
+            $table->foreignId('production_order_id')->nullable()->constrained('production_orders')->restrictOnDelete();
             $table->enum('type', ['entry', 'exit']);
             $table->string('reason', 50);
             $table->decimal('quantity', 12, 4);

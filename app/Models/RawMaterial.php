@@ -121,6 +121,19 @@ class RawMaterial extends Model
         return $this->hasMany(ProductionOrderDetail::class, 'raw_material_id');
     }
 
+    /**
+     * Presentaciones que usan esta materia prima como envase.
+     */
+    public function packagedVariants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class, 'package_raw_material_id');
+    }
+
+    public function lineAdjustments(): HasMany
+    {
+        return $this->hasMany(ProductionOrderLineAdjustment::class, 'raw_material_id');
+    }
+
     public function alerts(): HasMany
     {
         return $this->hasMany(Alert::class, 'raw_material_id');

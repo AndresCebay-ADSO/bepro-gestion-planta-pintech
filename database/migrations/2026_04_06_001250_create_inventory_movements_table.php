@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('raw_material_id')->constrained('raw_materials')->restrictOnDelete();
             $table->foreignId('warehouse_id')->constrained('warehouses')->restrictOnDelete();
             $table->foreignId('batch_id')->nullable()->constrained('inventory_batches')->restrictOnDelete();
-            $table->foreignId('production_order_id')->nullable()->constrained('production_orders')->nullOnDelete();
+            $table->foreignId('production_order_id')->nullable()->constrained('production_orders')->restrictOnDelete();
             $table->enum('type', ['entry', 'exit']);
             $table->decimal('quantity', 12, 4);
             $table->decimal('cost_price', 12, 4);

@@ -18,7 +18,7 @@ return new class extends Migration
                 ->nullable()
                 ->after('production_order_id')
                 ->constrained('finished_product_batches')
-                ->nullOnDelete();
+                ->restrictOnDelete();
         });
     }
 

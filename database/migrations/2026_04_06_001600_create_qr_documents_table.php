@@ -23,7 +23,6 @@ return new class extends Migration
             $table->boolean('is_current')->default(true);
             $table->foreignId('uploaded_by')->constrained('users')->restrictOnDelete();
             $table->timestamps();
-            $table->softDeletes();
 
             $table->index(['qr_code_id', 'document_type']);
             $table->index('is_current');

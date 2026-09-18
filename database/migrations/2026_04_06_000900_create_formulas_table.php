@@ -13,13 +13,12 @@ return new class extends Migration
     {
         Schema::create('formulas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained('products')->restrictOnDelete();
             $table->integer('version')->default(1);
             $table->boolean('is_active')->default(true);
             $table->text('notes')->nullable();
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
             $table->timestamps();
-            $table->softDeletes();
 
             $table->index(['product_id', 'is_active']);
             $table->index('version');

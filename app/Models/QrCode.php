@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
@@ -23,7 +22,6 @@ use Illuminate\Support\Carbon;
  * @property int $created_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property Carbon|null $deleted_at
  * @property-read Product $product
  * @property-read ProductionOrder $productionOrder
  * @property-read User $createdBy
@@ -40,7 +38,7 @@ use Illuminate\Support\Carbon;
 class QrCode extends Model
 {
     /** @use HasFactory<QrCodeFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected function casts(): array
     {

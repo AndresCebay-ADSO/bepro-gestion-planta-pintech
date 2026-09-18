@@ -36,10 +36,9 @@ return new class extends Migration
             $table->decimal('total', 16, 4);
             $table->string('status', 20)->default(QuotationStatus::Draft->value)->index();
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
-            $table->foreignId('convert_to_order_id')->nullable()->constrained('sales_orders')->nullOnDelete();
+            $table->foreignId('convert_to_order_id')->nullable()->constrained('sales_orders')->restrictOnDelete();
             $table->index(['status', 'created_by']);
             $table->timestamps();
-            $table->softDeletes();
         });
 
         if (DB::connection()->getDriverName() === 'pgsql') {

@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -22,9 +21,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string|null $contact_name
  * @property string|null $phone
  * @property string|null $shipping_address
+ * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property Carbon|null $deleted_at
  * @property-read Collection|SalesOrder[] $salesOrders
  */
 #[Fillable([
@@ -33,11 +32,12 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'contact_name',
     'phone',
     'shipping_address',
+    'is_active',
 ])]
 class Client extends Model
 {
     /** @use HasFactory<ClientFactory> */
-    use HasAuditDescription, HasFactory, LogsActivity, SoftDeletes;
+    use HasAuditDescription, HasFactory, LogsActivity;
 
     protected string $auditLabel = 'Cliente';
 
@@ -48,14 +48,24 @@ class Client extends Model
         return LogOptions::defaults()
             ->useLogName('clientes')
             ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
-            ->logOnly(['business_name', 'nit', 'contact_name', 'phone', 'shipping_address'])
+            ->logOnly(['business_name', 'nit', 'contact_name', 'phone', 'shipping_address', 'is_active'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
 
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
+
     public function scopeActive(Builder $query): void
     {
-        $query->whereNull('deleted_at');
+        $query->where('is_active', true);
     }
 
     public function salesOrders(): HasMany
