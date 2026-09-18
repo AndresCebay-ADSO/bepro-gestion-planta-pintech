@@ -10,6 +10,17 @@ enum ProductionOrderStatus: string
     case Completed = 'completed';
     case Cancelled = 'cancelled';
 
+    /**
+     * Estados de una orden en curso: bloquean desactivar su producto o su bodega
+     * (docs/POLITICA_ELIMINACION.md §3.1).
+     *
+     * @return array<int, self>
+     */
+    public static function open(): array
+    {
+        return [self::Pending, self::InProgress, self::PendingReview];
+    }
+
     public function label(): string
     {
         return match ($this) {

@@ -103,6 +103,18 @@ abstract class QueryFilter
         }
     }
 
+    /**
+     * Filtro de estado de los datos maestros (docs/POLITICA_ELIMINACION.md): `active`, `inactive` o `all` (sin filtro).
+     */
+    protected function applyActiveStatus(string $value): void
+    {
+        match ($value) {
+            'active' => $this->builder->where('is_active', true),
+            'inactive' => $this->builder->where('is_active', false),
+            default => null,
+        };
+    }
+
     protected function applyExact(string $column, mixed $value): void
     {
         $this->builder->where($column, $value);
