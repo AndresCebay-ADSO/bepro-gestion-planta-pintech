@@ -128,7 +128,7 @@ it('rechaza nombres o etiquetas de roles del sistema y nombres ya usados', funct
 
     $this->post(route('roles.store'), ['name' => $name, 'permissions' => [Permission::DashboardView->value]])
         ->assertSessionHasErrors('name');
-})->with(['admin', 'Producción', 'SUPER ADMINISTRADOR', 'jefe de calidad', 'production', 'Operator', 'COMMERCIAL']);
+})->with(['admin', 'Producción', 'produccion', 'SUPER ADMINISTRADOR', 'jefe de calidad', 'production', 'Operator', 'COMMERCIAL']);
 
 it('rechaza caracteres que Spatie o la interfaz no admiten en el nombre', function (string $name) {
     actingAsRole(SystemRole::SuperAdmin);
@@ -335,7 +335,8 @@ it('permite a Admin asignar un rol personalizado que no supera sus permisos', fu
 });
 
 it('no deja editar a un usuario con permisos que quien edita no tiene', function () {
-    // La única Admin (userWithRole siembra antes los permisos). RRHH tiene users.edit, pero no todos sus permisos.
+    // userWithRole siembra los permisos antes de crear el rol personalizado. RRHH tiene users.edit, pero no todos
+    // los permisos de Admin.
     $admin = userWithRole(SystemRole::Admin);
     $hr = createCustomRole('Recursos Humanos', [Permission::DashboardView, Permission::UsersView, Permission::UsersEdit]);
     $actor = User::factory()->create();

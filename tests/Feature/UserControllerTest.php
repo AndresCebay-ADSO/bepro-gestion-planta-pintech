@@ -742,6 +742,36 @@ test('only users with audit_logs.view receive recent activity on the users index
             ->has('recentActivities'));
 });
 
+test('the users index only offers the row actions the policy allows', function () {
+    $superAdmin = User::factory()->create();
+    $superAdmin->assignRole(SystemRole::SuperAdmin->value);
+
+    $admin = User::factory()->create();
+    $admin->assignRole(SystemRole::Admin->value);
+
+    $operator = User::factory()->create();
+    $operator->assignRole(SystemRole::Operator->value);
+
+    $rowCan = fn ($users, User $user) => collect($users)->firstWhere('id', $user->id)['can'];
+
+    // Admin gestiona a cualquiera salvo a un SuperAdmin, y no tiene users.delete.
+    $this->actingAs($admin)
+        ->get(route('users.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->missing('can.delete')
+            ->where('users.data', fn ($users) => $rowCan($users, $operator) === ['update' => true, 'delete' => false]
+                && $rowCan($users, $superAdmin) === ['update' => false, 'delete' => false]));
+
+    // SuperAdmin elimina a otros, nunca su propia cuenta.
+    $this->actingAs($superAdmin)
+        ->get(route('users.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('users.data', fn ($users) => $rowCan($users, $operator) === ['update' => true, 'delete' => true]
+                && $rowCan($users, $superAdmin) === ['update' => true, 'delete' => false]));
+});
+
 test('the last active super-admin cannot be deactivated or demoted', function () {
     $activeSuperAdmin = User::factory()->create(['is_active' => true]);
     $activeSuperAdmin->assignRole('super-admin');
@@ -760,6 +790,41 @@ test('the last active super-admin cannot be deactivated or demoted', function ()
         ->assertSessionHas('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
 
     expect($activeSuperAdmin->fresh()->isSuperAdmin())->toBeTrue();
+});
+
+test('a blocked super-admin demotion changes nothing and discards the uploaded signature', function () {
+    Storage::fake('public');
+
+    $activeSuperAdmin = User::factory()->create(['is_active' => true, 'name' => 'Nombre original']);
+    $activeSuperAdmin->assignRole(SystemRole::SuperAdmin->value);
+
+    $inactiveSuperAdmin = User::factory()->create(['is_active' => false]);
+    $inactiveSuperAdmin->assignRole(SystemRole::SuperAdmin->value);
+
+    $this->mock(SignatureOptimizerService::class, function ($mock) {
+        $mock->shouldReceive('optimizeAndStore')->once()->andReturnUsing(function () {
+            Storage::disk('public')->put('signatures/blocked.png', 'new-content');
+
+            return 'signatures/blocked.png';
+        });
+    });
+
+    $this->actingAs($inactiveSuperAdmin)
+        ->put(route('users.update', $activeSuperAdmin), [
+            'name' => 'Nombre nuevo',
+            'email' => $activeSuperAdmin->email,
+            'role' => SystemRole::SuperAdmin->value,
+            'is_active' => false,
+            'signature' => UploadedFile::fake()->image('firma.png', 200, 100),
+        ])
+        ->assertSessionHas('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
+
+    Storage::disk('public')->assertMissing('signatures/blocked.png');
+
+    $activeSuperAdmin->refresh();
+    expect($activeSuperAdmin->name)->toBe('Nombre original')
+        ->and((bool) $activeSuperAdmin->is_active)->toBeTrue()
+        ->and($activeSuperAdmin->signature_path)->toBeNull();
 });
 
 test('a super-admin without activity can be deleted by another super-admin', function () {

@@ -629,8 +629,15 @@ middlewares (2.8), el sidebar (2.5) y los tests (helper `actingAsRole`) ya no us
 > - **Se retira la excepción "conservar el rol actual"** al editar (`UserController::edit`, `UpdateUserRequest`): con la
 >   regla general, quien puede editar a un usuario tiene todos sus permisos y, por tanto, puede asignar su rol.
 > - **Sin rol preseleccionado** al crear un usuario (antes, Producción).
-> - `SystemRole::reservedNames()` pasa a `reservedLabels()`: los nombres internos ya los rechaza la validación de nombre
->   repetido (sin distinguir mayúsculas), porque los roles del sistema existen antes que cualquier personalizado.
+> - `SystemRole::reservedNames()` pasa a `isReservedLabel()`: reserva solo las etiquetas, sin distinguir mayúsculas ni
+>   tildes (rechaza `produccion` junto a `Producción`). Los nombres internos ya los rechaza la validación de nombre
+>   repetido, porque los roles del sistema existen antes que cualquier personalizado.
+> - **Acciones por fila en el listado de usuarios** (`can.update` / `can.delete`, como en roles): la tabla ya no ofrece
+>   editar o eliminar a quien la policy protege. Un test garantiza que Admin tiene todos los permisos no reservados,
+>   que es lo que le deja gestionar a cualquier usuario salvo a los SuperAdmin.
+> - **"Último SuperAdmin activo" dentro de la transacción**, con el rol `super-admin` bloqueado: dos SuperAdmins que se
+>   desactivan a la vez ya no pueden dejar el sistema sin ninguno. Al editar sin cambiar el rol ya no se bloquea ni se
+>   resincroniza.
 
 **Regla desde ya:** el código nuevo nunca escribe el nombre de un rol a mano; siempre `SystemRole::X->value`.
 

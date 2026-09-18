@@ -51,7 +51,6 @@ export function AlertToastNotifier() {
         recentAlerts = [],
         flash,
     } = usePage<{
-        auth: { user: { permissions?: string[] } | null };
         recentAlerts?: AlertToast[];
         flash?: {
             new_alerts?: AlertToast[];

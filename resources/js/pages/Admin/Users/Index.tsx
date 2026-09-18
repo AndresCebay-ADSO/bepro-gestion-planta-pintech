@@ -28,6 +28,10 @@ interface User {
     is_active: boolean;
     last_login_at: string | null;
     created_at: string;
+    can: {
+        update: boolean;
+        delete: boolean;
+    };
 }
 
 interface ActivityLog {
@@ -53,7 +57,6 @@ interface Props {
     filters: Record<string, string | null | undefined>;
     can?: {
         create?: boolean;
-        delete?: boolean;
         viewActivity?: boolean;
     };
 }
@@ -213,10 +216,10 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                                                     <TableActions
                                                         actions={{
                                                             view: false,
-                                                            edit: true,
-                                                            delete:
-                                                                can?.delete ===
-                                                                true,
+                                                            edit: user.can
+                                                                .update,
+                                                            delete: user.can
+                                                                .delete,
                                                         }}
                                                         onEdit={() =>
                                                             router.get(

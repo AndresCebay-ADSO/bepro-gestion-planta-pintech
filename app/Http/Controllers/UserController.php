@@ -33,8 +33,11 @@ class UserController extends Controller
      */
     public function index(IndexUserRequest $request): Response
     {
+        $actor = $request->user();
+
+        // roles.permissions y permissions: la policy compara los permisos de cada fila con los de quien consulta.
         $users = (new UserFilter($request))
-            ->apply(User::with('roles'))
+            ->apply(User::with(['roles.permissions', 'permissions']))
             ->latest()
             ->paginate(15)
             ->onEachSide(1)
@@ -47,10 +50,16 @@ class UserController extends Controller
                 'is_active' => (bool) $user->is_active,
                 'last_login_at' => $user->last_login_at,
                 'created_at' => $user->created_at,
+                // Por fila, como en roles: sin esto la tabla ofrece acciones que la policy rechaza con 403. La propia
+                // cuenta no se elimina (destroy).
+                'can' => [
+                    'update' => $actor?->can('update', $user) ?? false,
+                    'delete' => ($actor?->can('delete', $user) ?? false) && $user->id !== $actor?->id,
+                ],
             ]);
 
         // La actividad reciente es auditoría: solo con audit_logs.view (docs/MATRIZ_RBAC.md).
-        $canViewActivity = $request->user()?->can(Permission::AuditLogsView->value) ?? false;
+        $canViewActivity = $actor?->can(Permission::AuditLogsView->value) ?? false;
         $activities = $canViewActivity
             ? Activity::with('causer')->latest()->take(5)->get()
             : collect();
@@ -60,8 +69,7 @@ class UserController extends Controller
             'filters' => $request->validated(),
             'recentActivities' => $activities,
             'can' => [
-                'create' => $request->user()?->can('create', User::class) ?? false,
-                'delete' => $request->user()?->can(Permission::UsersDelete->value) ?? false,
+                'create' => $actor?->can('create', User::class) ?? false,
                 'viewActivity' => $canViewActivity,
             ],
         ]);
@@ -160,11 +168,6 @@ class UserController extends Controller
         $losesSuperAdmin = $user->isSuperAdmin()
             && (! $validated['is_active'] || $validated['role'] !== SystemRole::SuperAdmin->value);
 
-        if ($losesSuperAdmin && ! $this->hasOtherActiveSuperAdmin($user)) {
-            return back()->with('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
-        }
-
-        $oldRole = $currentRole;
         $oldSignatureToDelete = null;
         $newSignaturePath = null;
 
@@ -178,7 +181,17 @@ class UserController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($user, $validated) {
+            $updated = DB::transaction(function () use ($user, $validated, $roleChanged, $losesSuperAdmin): bool {
+                if ($losesSuperAdmin) {
+                    // Bloquear el rol serializa las degradaciones simultáneas: sin esto, dos SuperAdmins que se
+                    // desactivan a la vez verían al otro todavía activo y no quedaría ninguno.
+                    $this->lockRole(SystemRole::SuperAdmin->value);
+
+                    if (! $this->hasOtherActiveSuperAdmin($user)) {
+                        return false;
+                    }
+                }
+
                 $user->update([
                     'name' => $validated['name'],
                     'email' => $validated['email'],
@@ -190,8 +203,12 @@ class UserController extends Controller
                         : []),
                 ]);
 
-                $this->lockRole($validated['role']);
-                $user->syncRoles([$validated['role']]);
+                if ($roleChanged) {
+                    $this->lockRole($validated['role']);
+                    $user->syncRoles([$validated['role']]);
+                }
+
+                return true;
             });
         } catch (\Throwable $e) {
             if ($newSignaturePath) {
@@ -201,19 +218,27 @@ class UserController extends Controller
             throw $e;
         }
 
+        if (! $updated) {
+            if ($newSignaturePath) {
+                Storage::disk('public')->delete($newSignaturePath);
+            }
+
+            return back()->with('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
+        }
+
         if ($oldSignatureToDelete) {
             Storage::disk('public')->delete($oldSignatureToDelete);
         }
 
-        if ($oldRole !== $validated['role']) {
+        if ($roleChanged) {
             activity('security')
                 ->performedOn($user)
                 ->event('role_changed')
                 ->withProperties([
-                    'old_role' => $oldRole,
+                    'old_role' => $currentRole,
                     'new_role' => $validated['role'],
                 ])
-                ->log('Rol de usuario modificado de '.SystemRole::labelFor($oldRole).' a '
+                ->log('Rol de usuario modificado de '.SystemRole::labelFor($currentRole).' a '
                     .SystemRole::labelFor($validated['role']));
         }
 

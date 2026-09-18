@@ -110,6 +110,17 @@ it('reserva para los roles personalizados exactamente los permisos que solo tien
     expect($reserved)->toBe($superAdminOnly);
 });
 
+it('da a Admin todos los permisos que no están reservados', function () {
+    // UserPolicy deja gestionar a un usuario solo a quien tiene todos sus permisos. Como un rol personalizado no puede
+    // tener permisos reservados, esto garantiza que Admin gestiona a cualquier usuario salvo a los SuperAdmin.
+    $assignable = array_filter(Permission::cases(), fn (Permission $permission) => ! $permission->isReserved());
+
+    expect(array_values(array_diff(
+        array_map(fn (Permission $permission) => $permission->value, $assignable),
+        array_map(fn (Permission $permission) => $permission->value, SystemRole::Admin->defaultPermissions()),
+    )))->toBe([]);
+});
+
 it('cumple las dependencias de cada permiso en los roles del sistema', function (SystemRole $role) {
     $granted = $role->defaultPermissions();
     $missing = [];

@@ -93,14 +93,14 @@ abstract class RoleFormRequest extends FormRequest
     }
 
     /**
-     * El nombre no puede repetir otro rol ni la etiqueta de un rol del sistema, sin distinguir mayúsculas.
+     * El nombre no puede repetir otro rol ni la etiqueta de un rol del sistema, sin distinguir mayúsculas (ni tildes, en las etiquetas).
      */
     private function availableNameRule(): Closure
     {
         return function (string $attribute, mixed $value, Closure $fail): void {
             $normalized = mb_strtolower((string) $value);
 
-            if (in_array($normalized, SystemRole::reservedLabels(), true)) {
+            if (SystemRole::isReservedLabel((string) $value)) {
                 $fail(__('Ese nombre está reservado para un rol del sistema.'));
 
                 return;

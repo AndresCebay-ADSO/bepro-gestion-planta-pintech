@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use Illuminate\Support\Str;
+
 /**
  * Roles protegidos del sistema: no se pueden eliminar ni renombrar desde la UI.
  *
@@ -29,15 +31,15 @@ enum SystemRole: string
     }
 
     /**
-     * Etiquetas de los roles del sistema (en minúsculas): un rol personalizado no puede llamarse igual, o habría dos
-     * roles con el mismo nombre visible. Los nombres internos no hace falta reservarlos: los roles del sistema ya
-     * existen y la validación de nombre repetido los rechaza.
-     *
-     * @return array<int, string>
+     * Indica si un nombre repite la etiqueta de un rol del sistema, sin distinguir mayúsculas ni tildes: un rol
+     * personalizado llamado "produccion" se vería junto a "Producción" como si fueran el mismo. Los nombres internos
+     * no hace falta reservarlos: los roles del sistema ya existen y la validación de nombre repetido los rechaza.
      */
-    public static function reservedLabels(): array
+    public static function isReservedLabel(string $name): bool
     {
-        return array_map(fn (self $role): string => mb_strtolower($role->label()), self::cases());
+        $normalize = fn (string $value): string => mb_strtolower(Str::ascii($value));
+
+        return in_array($normalize($name), array_map(fn (self $role): string => $normalize($role->label()), self::cases()), true);
     }
 
     /**
