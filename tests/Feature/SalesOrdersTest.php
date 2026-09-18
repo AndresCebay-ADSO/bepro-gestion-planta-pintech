@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\SystemRole;
 use App\Models\Client;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -44,7 +45,7 @@ function createTestProduct(): array
 
 it('allows comercial to create a sales order', function () {
     $user = User::factory()->create();
-    $user->assignRole('comercial');
+    $user->assignRole(SystemRole::Commercial->value);
 
     $client = Client::factory()->create();
     [$product, $variant] = createTestProduct();
@@ -75,7 +76,7 @@ it('allows comercial to create a sales order', function () {
 
 it('validates required fields when creating a sales order', function () {
     $user = User::factory()->create();
-    $user->assignRole('comercial');
+    $user->assignRole(SystemRole::Commercial->value);
 
     $this->actingAs($user)
         ->post(route('sales-orders.store'), [])
@@ -84,7 +85,7 @@ it('validates required fields when creating a sales order', function () {
 
 it('allows comercial to view their own orders', function () {
     $user = User::factory()->create();
-    $user->assignRole('comercial');
+    $user->assignRole(SystemRole::Commercial->value);
 
     $order = SalesOrder::factory()->create(['created_by' => $user->id]);
 
@@ -99,10 +100,10 @@ it('allows comercial to view their own orders', function () {
 
 it('prevents comercial from viewing other users orders', function () {
     $userA = User::factory()->create();
-    $userA->assignRole('comercial');
+    $userA->assignRole(SystemRole::Commercial->value);
 
     $userB = User::factory()->create();
-    $userB->assignRole('comercial');
+    $userB->assignRole(SystemRole::Commercial->value);
 
     $order = SalesOrder::factory()->create(['created_by' => $userB->id]);
 
@@ -131,7 +132,7 @@ it('exposes viewQuotation permission on order linked to quotation', function () 
     $admin->assignRole('admin');
 
     $comercial = User::factory()->create();
-    $comercial->assignRole('comercial');
+    $comercial->assignRole(SystemRole::Commercial->value);
 
     $quotation = Quotation::factory()->create(['created_by' => $comercial->id]);
     $order = SalesOrder::factory()->create(['quotation_id' => $quotation->id, 'created_by' => $comercial->id]);
@@ -153,7 +154,7 @@ it('exposes viewQuotation permission on order linked to quotation', function () 
 
 it('allows produccion to update sales order status', function () {
     $user = User::factory()->create();
-    $user->assignRole('produccion');
+    $user->assignRole(SystemRole::Production->value);
 
     $order = SalesOrder::factory()->create(['status' => 'pending']);
 
@@ -169,7 +170,7 @@ it('allows produccion to update sales order status', function () {
 
 it('prevents produccion from editing order data', function () {
     $user = User::factory()->create();
-    $user->assignRole('produccion');
+    $user->assignRole(SystemRole::Production->value);
 
     $order = SalesOrder::factory()->pending()->create(['priority' => 'low']);
 
@@ -213,7 +214,7 @@ it('prevents editing order data once the order is in progress', function () {
 
 it('prevents invalid status transitions', function () {
     $user = User::factory()->create();
-    $user->assignRole('produccion');
+    $user->assignRole(SystemRole::Production->value);
 
     $order = SalesOrder::factory()->pending()->create();
 
@@ -226,7 +227,7 @@ it('prevents invalid status transitions', function () {
 
 it('prevents produccion from accessing sales order create', function () {
     $user = User::factory()->create();
-    $user->assignRole('produccion');
+    $user->assignRole(SystemRole::Production->value);
 
     $this->actingAs($user)
         ->get(route('sales-orders.create'))
@@ -235,7 +236,7 @@ it('prevents produccion from accessing sales order create', function () {
 
 it('rejects orders for soft-deleted clients', function () {
     $user = User::factory()->create();
-    $user->assignRole('comercial');
+    $user->assignRole(SystemRole::Commercial->value);
 
     $client = Client::factory()->create();
     $client->delete();
@@ -259,7 +260,7 @@ it('rejects orders for soft-deleted clients', function () {
 
 it('rejects orders with inactive products', function () {
     $user = User::factory()->create();
-    $user->assignRole('comercial');
+    $user->assignRole(SystemRole::Commercial->value);
 
     $client = Client::factory()->create();
     [$product, $variant] = createTestProduct();
@@ -283,7 +284,7 @@ it('rejects orders with inactive products', function () {
 
 it('prevents comercial from updating sales order status', function () {
     $user = User::factory()->create();
-    $user->assignRole('comercial');
+    $user->assignRole(SystemRole::Commercial->value);
 
     $order = SalesOrder::factory()->create();
 
@@ -296,7 +297,7 @@ it('prevents comercial from updating sales order status', function () {
 
 it('prevents operador from accessing sales order routes', function () {
     $user = User::factory()->create();
-    $user->assignRole('operador');
+    $user->assignRole(SystemRole::Operator->value);
 
     $this->actingAs($user)
         ->get(route('sales-orders.index'))
@@ -305,7 +306,7 @@ it('prevents operador from accessing sales order routes', function () {
 
 it('saves client snapshot data on order creation', function () {
     $user = User::factory()->create();
-    $user->assignRole('comercial');
+    $user->assignRole(SystemRole::Commercial->value);
 
     $client = Client::factory()->create();
     [$product, $variant] = createTestProduct();
@@ -334,7 +335,7 @@ it('saves client snapshot data on order creation', function () {
 
 it('filters orders by status', function () {
     $user = User::factory()->create();
-    $user->assignRole('comercial');
+    $user->assignRole(SystemRole::Commercial->value);
 
     SalesOrder::factory()->pending()->create(['created_by' => $user->id]);
     SalesOrder::factory()->delivered()->create(['created_by' => $user->id]);
@@ -350,7 +351,7 @@ it('filters orders by status', function () {
 
 it('does not expose product costs or creator contact data on the sales order screens', function () {
     $user = User::factory()->create();
-    $user->assignRole('comercial');
+    $user->assignRole(SystemRole::Commercial->value);
 
     [$product, $variant] = createTestProduct();
     $product->forceFill([

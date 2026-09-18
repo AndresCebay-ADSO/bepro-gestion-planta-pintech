@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Actions\Production\BuildProductionOrderShowDataAction;
 use App\Actions\Quotations\BuildQuotationPdfDataAction;
 use App\Enums\PaintDevelopmentRequestStatus;
+use App\Enums\SystemRole;
 use App\Models\Client;
 use App\Models\PaintDevelopmentRequest;
 use App\Models\ProductionOrder;
@@ -47,7 +48,7 @@ test('BuildProductionOrderShowDataAction serializa fechas de negocio como Y-m-d 
 test('SalesOrders index serializa created_at en ISO 8601 y required_date en Y-m-d', function () {
     $isoTimestampRegex = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/';
     $user = User::factory()->create();
-    $user->assignRole('comercial');
+    $user->assignRole(SystemRole::Commercial->value);
 
     $client = Client::factory()->create();
 
@@ -74,7 +75,7 @@ test('SalesOrders index serializa created_at en ISO 8601 y required_date en Y-m-
 test('Quotations index serializa quotation_date en Y-m-d y created_at en ISO 8601', function () {
     $isoTimestampRegex = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/';
     $user = User::factory()->create();
-    $user->assignRole('comercial');
+    $user->assignRole(SystemRole::Commercial->value);
 
     $client = Client::factory()->create();
 

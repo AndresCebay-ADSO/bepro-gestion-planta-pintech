@@ -122,7 +122,7 @@ it('rechaza un permiso sin sus dependencias', function (array $permissions) {
     'convertir cotizaciones sin crear pedidos' => [[Permission::DashboardView, Permission::QuotationsViewOwn, Permission::QuotationsConvertToOrder]],
 ]);
 
-it('rechaza nombres de roles del sistema, reservados para el paso 11 o ya usados', function (string $name) {
+it('rechaza nombres o etiquetas de roles del sistema y nombres ya usados', function (string $name) {
     actingAsRole(SystemRole::SuperAdmin);
     createCustomRole('Jefe de calidad', []);
 

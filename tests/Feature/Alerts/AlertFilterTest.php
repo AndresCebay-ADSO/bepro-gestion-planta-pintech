@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\AlertSeverity;
 use App\Enums\AlertType;
+use App\Enums\SystemRole;
 use App\Models\Alert;
 use App\Models\RawMaterial;
 use App\Models\User;
@@ -23,10 +24,10 @@ beforeEach(function (): void {
     $this->admin->assignRole('admin');
 
     $this->produccion = User::factory()->create(['email_verified_at' => now()]);
-    $this->produccion->assignRole('produccion');
+    $this->produccion->assignRole(SystemRole::Production->value);
 
     $this->comercial = User::factory()->create(['email_verified_at' => now()]);
-    $this->comercial->assignRole('comercial');
+    $this->comercial->assignRole(SystemRole::Commercial->value);
 
     $this->rmA = RawMaterial::factory()->create(['code' => 'RM-ALERTA-01']);
     $this->rmB = RawMaterial::factory()->create(['code' => 'RM-ALERTA-02']);

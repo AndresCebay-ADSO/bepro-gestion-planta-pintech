@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Actions\Production\BuildProductionOrderExportDataAction;
 use App\Actions\Production\BuildProductionOrderPdfMaterialsAction;
 use App\Actions\Production\BuildProductionOrderShowDataAction;
+use App\Enums\SystemRole;
 use App\Exports\ProductionOrderExport;
 use App\Models\Formula;
 use App\Models\Product;
@@ -46,7 +47,7 @@ function createExportTestDependencies(): array
         'email' => 'export-test@example.com',
         'password' => Hash::make('password'),
     ]);
-    $user->assignRole('produccion');
+    $user->assignRole(SystemRole::Production->value);
 
     $product = Product::create([
         'code' => 'PNT-EXP-01',

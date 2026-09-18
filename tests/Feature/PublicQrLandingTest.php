@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\QrDocumentType;
+use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -20,8 +21,8 @@ use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     Role::create(['name' => 'admin']);
-    Role::create(['name' => 'produccion']);
-    Role::create(['name' => 'comercial']);
+    Role::create(['name' => SystemRole::Production->value]);
+    Role::create(['name' => SystemRole::Commercial->value]);
 });
 
 function createPublicQrFixture(): array
@@ -39,7 +40,7 @@ function createPublicQrFixture(): array
         'email' => 'public-qr@example.com',
         'password' => Hash::make('password'),
     ]);
-    $user->assignRole('produccion');
+    $user->assignRole(SystemRole::Production->value);
     $product = Product::create([
         'code' => 'PT-PUBLIC',
         'name' => 'Pintura Pública',

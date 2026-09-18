@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\ProductionOrderStatus;
+use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
@@ -116,7 +117,7 @@ test('operator can start a pending production order', function () {
     [$order] = createPendingOrderForStartTest($this);
 
     $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole('operador');
+    $operator->assignRole(SystemRole::Operator->value);
 
     $this->actingAs($operator)
         ->post(route('production-orders.start', $order))
@@ -145,7 +146,7 @@ test('cannot start an order that is already in progress', function () {
     $order->update(['status' => ProductionOrderStatus::InProgress]);
 
     $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole('operador');
+    $operator->assignRole(SystemRole::Operator->value);
 
     $this->actingAs($operator)
         ->post(route('production-orders.start', $order))
@@ -157,7 +158,7 @@ test('commercial user cannot start production', function () {
 
     test()->seed(RolePermissionSeeder::class);
     $commercial = User::factory()->create(['email_verified_at' => now()]);
-    $commercial->assignRole('comercial');
+    $commercial->assignRole(SystemRole::Commercial->value);
 
     $this->actingAs($commercial)
         ->post(route('production-orders.start', $order))
@@ -171,7 +172,7 @@ test('operator cannot submit for review while order is still pending', function 
     [$order, $detail] = createPendingOrderForStartTest($this);
 
     $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole('operador');
+    $operator->assignRole(SystemRole::Operator->value);
 
     $this->actingAs($operator)
         ->post(route('production-orders.submit-for-review', $order), [
@@ -188,7 +189,7 @@ test('operator show exposes start production capability for pending orders', fun
     [$order] = createPendingOrderForStartTest($this);
 
     $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole('operador');
+    $operator->assignRole(SystemRole::Operator->value);
 
     $this->actingAs($operator)
         ->get(route('production-orders.show', $order))
@@ -204,7 +205,7 @@ test('operator show hides start production after order is in progress', function
     $order->update(['status' => ProductionOrderStatus::InProgress]);
 
     $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole('operador');
+    $operator->assignRole(SystemRole::Operator->value);
 
     $this->actingAs($operator)
         ->get(route('production-orders.show', $order))
@@ -218,7 +219,7 @@ test('full operator flow start then submit for review', function () {
     [$order, $detail] = createPendingOrderForStartTest($this);
 
     $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole('operador');
+    $operator->assignRole(SystemRole::Operator->value);
 
     $payload = [
         'actual_yield_quantity' => 100,

@@ -64,11 +64,12 @@ it('asigna a cada rol el número de permisos de la matriz', function (SystemRole
     'comercial' => [SystemRole::Commercial, 22],
 ]);
 
-it('conserva los nombres de los roles que ya existen en la base de datos', function () {
-    expect(SystemRole::Admin->value)->toBe('admin')
-        ->and(SystemRole::Production->value)->toBe('produccion')
-        ->and(SystemRole::Operator->value)->toBe('operador')
-        ->and(SystemRole::Commercial->value)->toBe('comercial');
+it('nombra los roles del sistema en inglés', function () {
+    expect(SystemRole::SuperAdmin->value)->toBe('super-admin')
+        ->and(SystemRole::Admin->value)->toBe('admin')
+        ->and(SystemRole::Production->value)->toBe('production')
+        ->and(SystemRole::Operator->value)->toBe('operator')
+        ->and(SystemRole::Commercial->value)->toBe('commercial');
 });
 
 it('usa view_own y view_all en los módulos con dueño, nunca view a secas', function (PermissionModule $module) {

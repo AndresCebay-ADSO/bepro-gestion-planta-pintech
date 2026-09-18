@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\AlertSeverity;
 use App\Enums\AlertType;
+use App\Enums\SystemRole;
 use App\Jobs\RecalculateRawMaterialReferencePrice;
 use App\Models\Alert;
 use App\Models\InventoryBatch;
@@ -50,7 +51,7 @@ beforeEach(function (): void {
     $this->admin->assignRole('admin');
 
     $this->productionUser = User::factory()->create(['email_verified_at' => now()]);
-    $this->productionUser->assignRole('produccion');
+    $this->productionUser->assignRole(SystemRole::Production->value);
 
     $this->alertService = app(AlertService::class);
 });
@@ -290,7 +291,7 @@ test('produccion can view alerts but cannot resolve them', function (): void {
 
 test('comercial user cannot access alerts module', function (): void {
     $commercial = User::factory()->create(['email_verified_at' => now()]);
-    $commercial->assignRole('comercial');
+    $commercial->assignRole(SystemRole::Commercial->value);
 
     $this->actingAs($commercial)
         ->get(route('alerts.index'))

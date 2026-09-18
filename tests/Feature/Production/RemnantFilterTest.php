@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\ProductionOrderStatus;
 use App\Enums\RemnantStatus;
+use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -28,13 +29,13 @@ beforeEach(function (): void {
     $this->admin->assignRole('admin');
 
     $this->produccion = User::factory()->create(['email_verified_at' => now()]);
-    $this->produccion->assignRole('produccion');
+    $this->produccion->assignRole(SystemRole::Production->value);
 
     $this->operador = User::factory()->create(['email_verified_at' => now()]);
-    $this->operador->assignRole('operador');
+    $this->operador->assignRole(SystemRole::Operator->value);
 
     $this->comercial = User::factory()->create(['email_verified_at' => now()]);
-    $this->comercial->assignRole('comercial');
+    $this->comercial->assignRole(SystemRole::Commercial->value);
 
     $category = ProductCategory::factory()->create(['name' => 'Categoría Pinturas']);
     $uom = UnitOfMeasure::factory()->create(['code' => 'gal', 'name' => 'Galón', 'symbol' => 'gal']);

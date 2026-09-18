@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -30,7 +31,7 @@ function adminUser(): User
 function produccionUser(): User
 {
     $user = User::factory()->create();
-    $user->assignRole('produccion');
+    $user->assignRole(SystemRole::Production->value);
 
     return $user;
 }
@@ -38,7 +39,7 @@ function produccionUser(): User
 function comercialUser(): User
 {
     $user = User::factory()->create();
-    $user->assignRole('comercial');
+    $user->assignRole(SystemRole::Commercial->value);
 
     return $user;
 }
@@ -122,7 +123,7 @@ test('index is accessible to admin, produccion and comercial', function () {
         ->assertOk();
 
     $operador = User::factory()->create();
-    $operador->assignRole('operador');
+    $operador->assignRole(SystemRole::Operator->value);
 
     $this->actingAs($operador)
         ->get(route('qr-codes.index'))
@@ -200,7 +201,7 @@ test('show displays qr code detail with documents', function () {
 
 test('show is blocked for unauthorized roles', function () {
     $operador = User::factory()->create();
-    $operador->assignRole('operador');
+    $operador->assignRole(SystemRole::Operator->value);
     $qrCode = createQrFixture(['created_by' => adminUser()->id]);
 
     $this->actingAs($operador)

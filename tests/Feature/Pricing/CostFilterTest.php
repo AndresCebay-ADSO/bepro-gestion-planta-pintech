@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\SystemRole;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\UnitOfMeasure;
@@ -117,7 +118,7 @@ test('only active products are shown in costs', function (): void {
 
 test('unauthorized users cannot access costs index', function (): void {
     $unauthorizedUser = User::factory()->create();
-    $unauthorizedUser->assignRole('comercial');
+    $unauthorizedUser->assignRole(SystemRole::Commercial->value);
 
     $this->actingAs($unauthorizedUser)
         ->get(route('admin.costs.index'))

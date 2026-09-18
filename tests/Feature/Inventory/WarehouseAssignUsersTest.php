@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\SystemRole;
 use App\Models\User;
 use App\Models\Warehouse;
 use Database\Seeders\RolePermissionSeeder;
@@ -56,7 +57,7 @@ test('admin can assign active users to a warehouse', function () {
 
 test('non admin user cannot access assign users page or submit assignments', function () {
     $comercial = User::factory()->create();
-    $comercial->assignRole('comercial');
+    $comercial->assignRole(SystemRole::Commercial->value);
     $warehouse = Warehouse::factory()->create();
 
     $this->actingAs($comercial)

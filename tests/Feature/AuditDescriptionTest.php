@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
@@ -328,7 +329,7 @@ test('role change manual log remains in Spanish', function () {
     $this->actingAs($admin);
 
     $target = User::factory()->create(['name' => 'Target User']);
-    $target->assignRole('operador');
+    $target->assignRole(SystemRole::Operator->value);
 
     Activity::query()->delete();
 
@@ -344,5 +345,5 @@ test('role change manual log remains in Spanish', function () {
         ->first();
 
     expect($log)->not->toBeNull()
-        ->and($log->description)->toContain('Rol de usuario modificado de operador a admin');
+        ->and($log->description)->toContain('Rol de usuario modificado de operator a admin');
 });

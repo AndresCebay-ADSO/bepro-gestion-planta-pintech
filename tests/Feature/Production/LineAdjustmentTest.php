@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
+use App\Enums\SystemRole;
 use App\Enums\WarehouseType;
 use App\Models\Formula;
 use App\Models\Product;
@@ -110,7 +111,7 @@ test('cannot add a line adjustment to a completed order', function () {
 
 test('operator cannot add a line adjustment to a pending review order', function () {
     $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole('operador');
+    $operator->assignRole(SystemRole::Operator->value);
     $this->actingAs($operator);
 
     $this->productionOrder->update(['status' => ProductionOrderStatus::PendingReview]);
@@ -195,7 +196,7 @@ test('operator cannot delete a line adjustment from a pending review order', fun
     $this->productionOrder->update(['status' => ProductionOrderStatus::PendingReview]);
 
     $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole('operador');
+    $operator->assignRole(SystemRole::Operator->value);
     $this->actingAs($operator);
 
     $response = $this->delete(route('production-orders.line-adjustments.destroy', [

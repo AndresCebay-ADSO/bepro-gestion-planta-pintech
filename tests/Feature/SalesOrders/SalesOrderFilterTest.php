@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\SalesOrderPriority;
 use App\Enums\SalesOrderStatus;
+use App\Enums\SystemRole;
 use App\Models\Client;
 use App\Models\SalesOrder;
 use App\Models\User;
@@ -19,7 +20,7 @@ beforeEach(function (): void {
     $this->admin->assignRole('admin');
 
     $this->comercial = User::factory()->create(['email_verified_at' => now()]);
-    $this->comercial->assignRole('comercial');
+    $this->comercial->assignRole(SystemRole::Commercial->value);
 
     $this->clientA = Client::factory()->create(['business_name' => 'Alpha Corporation']);
     $this->clientB = Client::factory()->create(['business_name' => 'Beta Logistics']);

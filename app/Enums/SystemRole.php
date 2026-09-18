@@ -13,9 +13,9 @@ enum SystemRole: string
 {
     case SuperAdmin = 'super-admin';
     case Admin = 'admin';
-    case Production = 'produccion';
-    case Operator = 'operador';
-    case Commercial = 'comercial';
+    case Production = 'production';
+    case Operator = 'operator';
+    case Commercial = 'commercial';
 
     public function label(): string
     {
@@ -29,27 +29,15 @@ enum SystemRole: string
     }
 
     /**
-     * Nombres que tomarán los roles del sistema al pasarlos a inglés (docs/PLAN_FASE_2_RBAC.md, paso 11).
-     */
-    private const FUTURE_NAMES = ['production', 'operator', 'commercial'];
-
-    /**
-     * Nombres que un rol personalizado no puede usar (en minúsculas): nombre y etiqueta de cada rol del sistema y los
-     * nombres del paso 11. Si un rol personalizado se llamara `production`, el renombrado fallaría o el seeder lo
-     * tomaría por el rol del sistema y le reasignaría sus permisos.
+     * Etiquetas de los roles del sistema (en minúsculas): un rol personalizado no puede llamarse igual, o habría dos
+     * roles con el mismo nombre visible. Los nombres internos no hace falta reservarlos: los roles del sistema ya
+     * existen y la validación de nombre repetido los rechaza.
      *
      * @return array<int, string>
      */
-    public static function reservedNames(): array
+    public static function reservedLabels(): array
     {
-        $names = self::FUTURE_NAMES;
-
-        foreach (self::cases() as $role) {
-            $names[] = mb_strtolower($role->value);
-            $names[] = mb_strtolower($role->label());
-        }
-
-        return array_values(array_unique($names));
+        return array_map(fn (self $role): string => mb_strtolower($role->label()), self::cases());
     }
 
     /**

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\SystemRole;
 use App\Models\Client;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -40,7 +41,7 @@ it('allows admin to create a client', function () {
 
 it('allows comercial to create a client', function () {
     $user = User::factory()->create();
-    $user->assignRole('comercial');
+    $user->assignRole(SystemRole::Commercial->value);
 
     $this->actingAs($user)
         ->post(route('clients.store'), [
@@ -51,7 +52,7 @@ it('allows comercial to create a client', function () {
 
 it('prevents comercial from editing a client', function () {
     $user = User::factory()->create();
-    $user->assignRole('comercial');
+    $user->assignRole(SystemRole::Commercial->value);
 
     $client = Client::factory()->create();
 

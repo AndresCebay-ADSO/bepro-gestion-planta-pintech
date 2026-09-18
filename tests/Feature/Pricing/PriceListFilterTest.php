@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\SystemRole;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
@@ -24,10 +25,10 @@ beforeEach(function (): void {
     $this->admin->assignRole('admin');
 
     $this->comercial = User::factory()->create(['email_verified_at' => now()]);
-    $this->comercial->assignRole('comercial');
+    $this->comercial->assignRole(SystemRole::Commercial->value);
 
     $this->production = User::factory()->create(['email_verified_at' => now()]);
-    $this->production->assignRole('produccion');
+    $this->production->assignRole(SystemRole::Production->value);
 
     $this->unit = UnitOfMeasure::create([
         'code' => 'gl',

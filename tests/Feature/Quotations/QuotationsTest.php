@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Actions\Quotations\BuildQuotationPdfDataAction;
 use App\Enums\Permission;
 use App\Enums\QuotationStatus;
+use App\Enums\SystemRole;
 use App\Models\Client;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -57,10 +58,10 @@ beforeEach(function (): void {
     ]);
 
     $this->comercialUser = User::factory()->create(['email_verified_at' => now()]);
-    $this->comercialUser->assignRole('comercial');
+    $this->comercialUser->assignRole(SystemRole::Commercial->value);
 
     $this->otherComercial = User::factory()->create(['email_verified_at' => now()]);
-    $this->otherComercial->assignRole('comercial');
+    $this->otherComercial->assignRole(SystemRole::Commercial->value);
 
     $this->client = Client::factory()->create();
 });

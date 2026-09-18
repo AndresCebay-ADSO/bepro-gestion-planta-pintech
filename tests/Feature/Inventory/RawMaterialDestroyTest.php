@@ -170,7 +170,7 @@ describe('Raw Material Destroy', function () {
 
     it('forbids non-admin to delete raw materials', function () {
         $user = User::factory()->create();
-        $user->assignRole('produccion');
+        $user->assignRole(SystemRole::Production->value);
 
         $response = $this->actingAs($user)
             ->delete(route('raw-materials.destroy', $this->rawMaterial));

@@ -30,13 +30,14 @@ ERP web para **Pintech Colombia S.A.S** (pinturas industriales, automotrices y a
 ## Roles del sistema
 
 El acceso se decide por **permisos** (Spatie), no por rol. Los permisos se declaran en `App\Enums\Permission` y los
-roles del sistema en `App\Enums\SystemRole`; la matriz completa está en `docs/MATRIZ_RBAC.md`.
+roles del sistema en `App\Enums\SystemRole` (nombre interno en inglés, etiqueta en español); la matriz completa está
+en `docs/MATRIZ_RBAC.md`.
 
 - `super-admin`: soporte / tecnología, todos los permisos.
 - `admin`: jefa de la empresa y de producción (catálogo técnico, costos, usuarios).
-- `produccion`: auxiliares de producción (crear, operar, revisar y completar órdenes).
-- `operador`: personal de planta (ejecuta las órdenes).
-- `comercial`: clientes, cotizaciones, pedidos y solicitudes de desarrollo; ve precios, nunca costos.
+- `production` (Producción): auxiliares de producción (crear, operar, revisar y completar órdenes).
+- `operator` (Operador): personal de planta (ejecuta las órdenes).
+- `commercial` (Comercial): clientes, cotizaciones, pedidos y solicitudes de desarrollo; ve precios, nunca costos.
 
 ## Funcionalidades principales
 
