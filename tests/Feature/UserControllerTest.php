@@ -605,25 +605,27 @@ test('users cannot change their own role in update', function () {
     expect($admin->fresh()->hasRole('admin'))->toBeTrue();
 });
 
-test('hasActivity returns true when user is assigned in quotations, sales orders, or quality responsible', function () {
-    $user1 = User::factory()->create();
-    expect($user1->hasActivity())->toBeFalse();
+test('a user referenced by quotations, sales orders or as quality responsible cannot be deleted', function (string $relation) {
+    $superAdmin = User::factory()->create();
+    $superAdmin->assignRole(SystemRole::SuperAdmin->value);
 
-    Quotation::factory()->create(['created_by' => $user1->id]);
-    expect($user1->hasActivity())->toBeTrue();
+    $target = User::factory()->create();
+    $target->assignRole(SystemRole::Operator->value);
 
-    $user2 = User::factory()->create();
-    expect($user2->hasActivity())->toBeFalse();
+    // Sin actividad auditada: el borrado lo impide la clave foránea (docs/POLITICA_ELIMINACION.md §4).
+    match ($relation) {
+        'quotation' => Quotation::factory()->create(['created_by' => $target->id]),
+        'sales_order' => SalesOrder::factory()->create(['created_by' => $target->id]),
+        'quality_responsible' => ProductionOrder::factory()->create(['quality_responsible_user_id' => $target->id]),
+    };
+    Activity::where('causer_id', $target->id)->delete();
 
-    SalesOrder::factory()->create(['created_by' => $user2->id]);
-    expect($user2->hasActivity())->toBeTrue();
+    $this->actingAs($superAdmin)
+        ->delete(route('users.destroy', $target))
+        ->assertSessionHas('error', 'No se puede eliminar el usuario porque tiene registros asociados en el sistema. Desactiva su cuenta en su lugar.');
 
-    $user3 = User::factory()->create();
-    expect($user3->hasActivity())->toBeFalse();
-
-    ProductionOrder::factory()->create(['quality_responsible_user_id' => $user3->id]);
-    expect($user3->hasActivity())->toBeTrue();
-});
+    $this->assertDatabaseHas('users', ['id' => $target->id]);
+})->with(['quotation', 'sales_order', 'quality_responsible']);
 
 test('destroy catches QueryException with code 23503 and redirects back with error', function () {
     $admin = User::factory()->create();
