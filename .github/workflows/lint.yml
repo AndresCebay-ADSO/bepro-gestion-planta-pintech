@@ -1,4 +1,4 @@
-name: calidad
+name: quality
 
 # Comprueba formato, estilo y tipos. Nunca corrige: si algo no cumple, el job falla.
 on:
@@ -11,10 +11,14 @@ on:
       - develop
       - main
 
-# Una ejecución por rama: al empujar de nuevo se cancela la anterior.
+permissions:
+  contents: read
+
+# En los PR, una ejecución por rama: un push nuevo cancela la anterior. En develop y main, un grupo por commit,
+# para que ninguna ejecución se cancele ni quede en cola y cada commit fusionado conserve su resultado.
 concurrency:
-  group: calidad-${{ github.ref }}
-  cancel-in-progress: true
+  group: quality-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   quality:
@@ -48,6 +52,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -69,7 +75,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: vendor
-          key: vendor-${{ runner.os }}-php8.3-${{ hashFiles('composer.lock') }}
+          key: vendor-${{ runner.os }}-php8.3-${{ hashFiles('composer.lock', 'composer.json') }}
 
       - name: Instalar dependencias PHP
         if: steps.vendor-cache.outputs.cache-hit != 'true'
@@ -96,7 +102,7 @@ jobs:
 
       # Las rutas tipadas de Wayfinder no están en git: sin ellas, tsc no puede comprobar nada.
       - name: Generar rutas de Wayfinder
-        run: php artisan wayfinder:generate
+        run: php artisan wayfinder:generate --with-form
 
       - name: Pint (PHP)
         run: ./vendor/bin/pint --test
@@ -111,8 +117,11 @@ jobs:
         run: npm run types:check
 
       # Informativo: avisa de vulnerabilidades conocidas sin bloquear la rama.
-      - name: Auditoría de dependencias
+      # Pasos separados: con bash -e, un fallo de composer impediría ejecutar npm audit.
+      - name: Auditoría de dependencias PHP
         continue-on-error: true
-        run: |
-          composer audit --no-interaction
-          npm audit --omit=dev
+        run: composer audit --no-interaction
+
+      - name: Auditoría de dependencias Node
+        continue-on-error: true
+        run: npm audit --omit=dev

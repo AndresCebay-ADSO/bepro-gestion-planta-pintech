@@ -112,7 +112,7 @@ it('remnant status label returns correct translation', function () {
 
 it('scope available returns only remnants with stock', function () {
     $order2 = ProductionOrder::create([
-        'order_number' => 'OP-SCOPE-'.substr(uniqid(), -6),
+        'order_number' => 'OP-SCOPE-1',
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->warehouse->id,
@@ -135,7 +135,7 @@ it('scope available returns only remnants with stock', function () {
     ]);
 
     $order3 = ProductionOrder::create([
-        'order_number' => 'OP-SCOPE-'.substr(uniqid(), -6),
+        'order_number' => 'OP-SCOPE-2',
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->warehouse->id,

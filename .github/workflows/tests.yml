@@ -13,9 +13,12 @@ on:
       - develop
       - main
 
+permissions:
+  contents: read
+
 concurrency:
-  group: tests-${{ github.ref }}
-  cancel-in-progress: true
+  group: tests-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   sqlite:
@@ -25,6 +28,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -44,7 +49,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: vendor
-          key: vendor-${{ runner.os }}-php8.3-${{ hashFiles('composer.lock') }}
+          key: vendor-${{ runner.os }}-php8.3-${{ hashFiles('composer.lock', 'composer.json') }}
 
       - name: Instalar dependencias PHP
         if: steps.vendor-cache.outputs.cache-hit != 'true'
@@ -105,6 +110,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -125,7 +132,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: vendor
-          key: vendor-${{ runner.os }}-php8.3-${{ hashFiles('composer.lock') }}
+          key: vendor-${{ runner.os }}-php8.3-${{ hashFiles('composer.lock', 'composer.json') }}
 
       - name: Instalar dependencias PHP
         if: steps.vendor-cache.outputs.cache-hit != 'true'
@@ -151,6 +158,6 @@ jobs:
         run: npm run build
 
       # Las variables de entorno mandan sobre phpunit.xml, que fija SQLite.
-      # En paralelo, Laravel crea una base por proceso (pintech_erp_test_1, _2, …).
+      # En paralelo, Laravel crea una base por proceso (pintech_erp_test_test_1, _test_2, …).
       - name: Tests
         run: ./vendor/bin/pest --parallel

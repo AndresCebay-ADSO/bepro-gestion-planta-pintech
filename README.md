@@ -256,7 +256,7 @@ Las variables de entorno mandan sobre `phpunit.xml`, que fija SQLite. Usa una ba
 
 Dos workflows, en cada push y PR a `develop` y `main`:
 
-- **calidad**: Pint, Prettier, ESLint y TypeScript **en modo comprobación** (fallan, no corrigen), más `composer audit`
+- **quality**: Pint, Prettier, ESLint y TypeScript **en modo comprobación** (fallan, no corrigen), más `composer audit`
   y `npm audit` como aviso. Levanta PostgreSQL y migra antes de generar las rutas de Wayfinder, que tipa los parámetros
   leyendo el esquema: sin base de datos los tipos cambian y `tsc` falla sin motivo real.
 - **tests**: la suite en SQLite y en PostgreSQL 16, ambas con `--parallel`.
