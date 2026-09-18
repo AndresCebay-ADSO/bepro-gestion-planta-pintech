@@ -27,6 +27,8 @@ interface ClientFormProps {
     processing: boolean;
     onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
     submitLabel: string;
+    /** Campos adicionales al final de la tarjeta (p. ej., "Cliente activo" al editar). */
+    children?: React.ReactNode;
 }
 
 export default function ClientForm({
@@ -36,6 +38,7 @@ export default function ClientForm({
     processing,
     onSubmit,
     submitLabel,
+    children,
 }: ClientFormProps) {
     return (
         <form onSubmit={onSubmit} className="space-y-6">
@@ -139,6 +142,8 @@ export default function ClientForm({
                             </p>
                         )}
                     </div>
+
+                    {children}
                 </CardContent>
             </Card>
 

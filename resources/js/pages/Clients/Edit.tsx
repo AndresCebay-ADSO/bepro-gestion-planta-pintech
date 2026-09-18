@@ -4,6 +4,8 @@ import { ArrowLeft, Building2 } from 'lucide-react';
 import { update as clientUpdate } from '@/actions/App/Http/Controllers/ClientController';
 import ClientForm from '@/components/clients/ClientForm';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { index as clientsIndex } from '@/routes/clients';
 
 type ClientData = {
@@ -13,19 +15,22 @@ type ClientData = {
     contact_name: string | null;
     phone: string | null;
     shipping_address: string | null;
+    is_active: boolean;
 };
 
 type Props = {
     client: ClientData;
+    can: { deactivate: boolean };
 };
 
-export default function ClientsEdit({ client }: Props) {
+export default function ClientsEdit({ client, can }: Props) {
     const { data, setData, put, processing, errors } = useForm({
         business_name: client.business_name,
         nit: client.nit ?? '',
         contact_name: client.contact_name ?? '',
         phone: client.phone ?? '',
         shipping_address: client.shipping_address ?? '',
+        is_active: client.is_active,
     });
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -60,7 +65,29 @@ export default function ClientsEdit({ client }: Props) {
                     processing={processing}
                     onSubmit={handleSubmit}
                     submitLabel="Actualizar Cliente"
-                />
+                >
+                    {can.deactivate && (
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-3">
+                                <Checkbox
+                                    id="is_active"
+                                    checked={data.is_active}
+                                    onCheckedChange={(checked) =>
+                                        setData('is_active', checked === true)
+                                    }
+                                />
+                                <Label htmlFor="is_active">
+                                    Cliente activo
+                                </Label>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Un cliente inactivo no aparece al crear
+                                cotizaciones ni pedidos; los que ya tiene siguen
+                                su curso.
+                            </p>
+                        </div>
+                    )}
+                </ClientForm>
             </div>
         </>
     );
