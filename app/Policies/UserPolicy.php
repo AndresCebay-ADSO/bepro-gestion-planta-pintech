@@ -35,10 +35,11 @@ class UserPolicy
     }
 
     /**
-     * Solo un SuperAdmin puede modificar o eliminar a otro SuperAdmin (docs/MATRIZ_RBAC.md §4).
+     * Nadie modifica ni elimina a un usuario con permisos que él no tiene (docs/MATRIZ_RBAC.md §4). Así un rol con
+     * `users.edit` no puede desactivar a quien tiene más acceso que él, y a un SuperAdmin solo lo gestiona otro.
      */
     private function canManageTarget(User $user, User $target): bool
     {
-        return ! $target->isSuperAdmin() || $user->isSuperAdmin();
+        return $user->holdsAllPermissions($target->getAllPermissions()->pluck('name'));
     }
 }

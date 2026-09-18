@@ -660,34 +660,14 @@ test('destroy catches QueryException with code 23503 and redirects back with err
     $this->assertDatabaseHas('users', ['id' => $target->id]);
 });
 
-test('admin cannot deactivate the last remaining active administrator', function () {
+test('an admin can deactivate another admin: only the last super-admin is protected by role', function () {
     $admin1 = User::factory()->create(['is_active' => true]);
-    $admin1->assignRole('admin');
-
-    $admin2 = User::factory()->create(['is_active' => false]);
-    $admin2->assignRole('admin');
-
-    $this->actingAs($admin2)
-        ->put(route('users.update', $admin1), [
-            'name' => $admin1->name,
-            'email' => $admin1->email,
-            'role' => 'admin',
-            'is_active' => false,
-        ])
-        ->assertRedirect()
-        ->assertSessionHas('error', 'No se puede desactivar o degradar al único administrador activo del sistema.');
-
-    expect($admin1->fresh()->is_active)->toBeTrue();
-});
-
-test('admin cannot demote or deactivate another admin if they are the only other active admin', function () {
-    $admin1 = User::factory()->create(['is_active' => true]);
-    $admin1->assignRole('admin');
+    $admin1->assignRole(SystemRole::Admin->value);
 
     $admin2 = User::factory()->create(['is_active' => true]);
     $admin2->assignRole(SystemRole::Admin->value);
 
-    // With 2 active admins, admin1 can deactivate admin2:
+    // Mismos permisos: la policy lo permite, y ya no hay una regla de "último administrador".
     $this->actingAs($admin1)
         ->put(route('users.update', $admin2), [
             'name' => $admin2->name,
@@ -699,20 +679,6 @@ test('admin cannot demote or deactivate another admin if they are the only other
         ->assertSessionHas('message');
 
     expect($admin2->fresh()->is_active)->toBeFalse();
-
-    // Now admin2 is inactive, only admin1 is active.
-    // If admin2 tries to demote admin1, it is blocked:
-    $this->actingAs($admin2)
-        ->put(route('users.update', $admin1), [
-            'name' => $admin1->name,
-            'email' => $admin1->email,
-            'role' => SystemRole::Operator->value,
-            'is_active' => true,
-        ])
-        ->assertRedirect()
-        ->assertSessionHas('error', 'No se puede desactivar o degradar al único administrador activo del sistema.');
-
-    expect($admin1->fresh()->hasRole('admin'))->toBeTrue();
 });
 
 test('admin cannot delete users', function () {
@@ -796,7 +762,7 @@ test('the last active super-admin cannot be deactivated or demoted', function ()
     expect($activeSuperAdmin->fresh()->isSuperAdmin())->toBeTrue();
 });
 
-test('a super-admin cannot be deleted', function () {
+test('a super-admin without activity can be deleted by another super-admin', function () {
     $superAdmin = User::factory()->create();
     $superAdmin->assignRole(SystemRole::SuperAdmin->value);
 
@@ -804,10 +770,10 @@ test('a super-admin cannot be deleted', function () {
     $otherSuperAdmin->assignRole(SystemRole::SuperAdmin->value);
     Activity::where('causer_id', $otherSuperAdmin->id)->delete();
 
+    // Quien borra no puede borrarse a sí mismo, así que siempre queda al menos un SuperAdmin.
     $this->actingAs($superAdmin)
         ->delete(route('users.destroy', $otherSuperAdmin))
-        ->assertRedirect()
-        ->assertSessionHas('error', 'No se puede eliminar un administrador. Desactiva su cuenta en su lugar.');
+        ->assertRedirect(route('users.index'));
 
-    $this->assertDatabaseHas('users', ['id' => $otherSuperAdmin->id]);
+    $this->assertDatabaseMissing('users', ['id' => $otherSuperAdmin->id]);
 });

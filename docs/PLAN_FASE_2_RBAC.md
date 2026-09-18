@@ -614,6 +614,23 @@ middlewares (2.8), el sidebar (2.5) y los tests (helper `actingAsRole`) ya no us
 > - La descripción del log `role_changed` y la confirmación de `users:grant-super-admin` muestran la etiqueta del rol
 >   ("de Operador a Administrador"); `properties.old_role/new_role` guardan el nombre interno. `SystemRole::labelFor()`
 >   acepta `null` ("Sin rol") y sustituye al centinela `'none'`.
+>
+> **Revisión de la rama: la lógica deja de decidir por nombre de rol.** Solo quedan dos consultas por rol, ambas de
+> SuperAdmin y ambas en `User` (`isSuperAdmin()` y el scope `superAdmins()`); un test lo exige ("no decide por nombre
+> de rol fuera de User"). Cambios:
+> - **Regla general contra la escalada (`User::holdsAllPermissions`)**: nadie edita, desactiva ni elimina a un usuario
+>   con permisos que él no tiene (`UserPolicy`), y nadie asigna un rol con permisos que él no tiene
+>   (`AssignableRoleService`, que ya no necesita casos especiales para SuperAdmin). Sustituye a "solo un SuperAdmin
+>   gestiona a otro SuperAdmin" y cubre además a la Admin frente a un rol personalizado con `users.edit`.
+> - **Se retira la protección "último Admin activo"**: protegía un nombre, no una capacidad. Queda solo "último
+>   SuperAdmin activo", que evita quedarse sin acceso de recuperación.
+> - **Se retira "no se elimina a un Admin ni a un SuperAdmin"**: nadie se elimina a sí mismo (siempre queda un
+>   SuperAdmin) y `hasActivity()` ya bloquea el borrado de quien trabajó en el sistema.
+> - **Se retira la excepción "conservar el rol actual"** al editar (`UserController::edit`, `UpdateUserRequest`): con la
+>   regla general, quien puede editar a un usuario tiene todos sus permisos y, por tanto, puede asignar su rol.
+> - **Sin rol preseleccionado** al crear un usuario (antes, Producción).
+> - `SystemRole::reservedNames()` pasa a `reservedLabels()`: los nombres internos ya los rechaza la validación de nombre
+>   repetido (sin distinguir mayúsculas), porque los roles del sistema existen antes que cualquier personalizado.
 
 **Regla desde ya:** el código nuevo nunca escribe el nombre de un rol a mano; siempre `SystemRole::X->value`.
 
@@ -641,3 +658,5 @@ Tu estimación era de 8 días (días 6-13). El alcance real, incluyendo lo que l
 | — | Nomenclatura en módulos con dueño | ✅ `view_own` / `view_all` (no existe `view` a secas) |
 | — | 2.4 (CRUD de roles) | ✅ Entra antes de producción |
 | — | ¿La auditoría impide el borrado físico? (2.7) | ✅ No como historial; sí como autor (usuarios) |
+| — | Roles base en código o editables en la UI | ✅ En código (`SystemRole` + `Permission::defaultRoles()`), reconciliados por el seeder; los casos especiales son roles personalizados (2.4). La lógica decide solo por permisos. Revisar si algún día la empresa necesita cambiar los permisos de un rol base sin desplegar |
+| — | Protecciones de usuarios | ✅ Por permisos (`holdsAllPermissions`); la única regla por rol es "último SuperAdmin activo" |

@@ -115,6 +115,15 @@ class User extends Authenticatable
     }
 
     /**
+     * Usuarios con el rol SuperAdmin. Junto a isSuperAdmin(), es la única consulta por rol de la aplicación: el resto
+     * decide por permisos (test "no decide por nombre de rol").
+     */
+    public function scopeSuperAdmins(Builder $query): void
+    {
+        $query->role(SystemRole::SuperAdmin->value);
+    }
+
+    /**
      * Send the password reset notification.
      */
     public function sendPasswordResetNotification($token): void
@@ -167,6 +176,17 @@ class User extends Authenticatable
             || DB::table('qr_documents')->where('uploaded_by', $this->id)->exists()
             || DB::table('product_documents')->where('uploaded_by', $this->id)->exists()
             || Activity::where('causer_type', self::class)->where('causer_id', $this->id)->exists();
+    }
+
+    /**
+     * Indica si este usuario tiene, al menos, todos los permisos de otro. Es la regla contra la escalada de
+     * privilegios: nadie gestiona a un usuario ni asigna un rol con permisos que él mismo no tiene.
+     *
+     * @param  iterable<string>  $permissions
+     */
+    public function holdsAllPermissions(iterable $permissions): bool
+    {
+        return collect($permissions)->diff($this->getAllPermissions()->pluck('name'))->isEmpty();
     }
 
     /**

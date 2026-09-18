@@ -334,44 +334,43 @@ it('permite a Admin asignar un rol personalizado que no supera sus permisos', fu
     expect(User::where('email', 'calidad@test.com')->first()->hasRole('Calidad'))->toBeTrue();
 });
 
-it('muestra el rol actual del usuario en el formulario aunque quien edita no pueda asignarlo', function () {
-    actingAsRole(SystemRole::Admin);
-    $auditor = createCustomRole('Auditor', [Permission::DashboardView, Permission::CostsView, Permission::AuditLogsView]);
-    $member = userWithRole(SystemRole::Operator);
-    $member->syncRoles([$auditor->name]);
+it('no deja editar a un usuario con permisos que quien edita no tiene', function () {
+    // La única Admin (userWithRole siembra antes los permisos). RRHH tiene users.edit, pero no todos sus permisos.
+    $admin = userWithRole(SystemRole::Admin);
+    $hr = createCustomRole('Recursos Humanos', [Permission::DashboardView, Permission::UsersView, Permission::UsersEdit]);
+    $actor = User::factory()->create();
+    $actor->assignRole($hr->name);
+    $this->actingAs($actor);
 
-    $this->get(route('users.edit', $member))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('roles', fn ($roles) => collect($roles)->pluck('name')->contains('Auditor')));
+    $this->get(route('users.edit', $admin))->assertForbidden();
+    $this->put(route('users.update', $admin), [
+        'name' => $admin->name,
+        'email' => $admin->email,
+        'role' => SystemRole::Admin->value,
+        'is_active' => false,
+    ])->assertForbidden();
 
-    // Solo en el formulario de ese usuario: al crear otro no aparece.
-    $this->get(route('users.create'))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('roles', fn ($roles) => collect($roles)->pluck('name')->doesntContain('Auditor')));
+    expect((bool) $admin->fresh()->is_active)->toBeTrue();
+
+    // A quien tiene solo permisos que RRHH también tiene sí lo puede editar.
+    $viewer = createCustomRole('Consulta', [Permission::DashboardView]);
+    $member = User::factory()->create();
+    $member->assignRole($viewer->name);
+
+    $this->get(route('users.edit', $member))->assertOk();
 });
 
-it('impide que Admin cambie el rol de un usuario por uno que no puede asignar, y le deja conservar el actual', function () {
+it('impide que Admin asigne un rol con permisos que no tiene', function () {
     actingAsRole(SystemRole::Admin);
     $auditor = createCustomRole('Auditor', [Permission::DashboardView, Permission::CostsView, Permission::AuditLogsView]);
     $operator = userWithRole(SystemRole::Operator);
-    $member = userWithRole(SystemRole::Operator);
-    $member->syncRoles([$auditor->name]);
 
-    $payload = fn (User $user, string $role): array => [
-        'name' => $user->name,
-        'email' => $user->email,
-        'role' => $role,
+    $this->put(route('users.update', $operator), [
+        'name' => $operator->name,
+        'email' => $operator->email,
+        'role' => $auditor->name,
         'is_active' => true,
-    ];
+    ])->assertSessionHasErrors('role');
 
-    $this->put(route('users.update', $operator), $payload($operator, 'Auditor'))->assertSessionHasErrors('role');
     expect($operator->fresh()->hasRole('Auditor'))->toBeFalse();
-
-    $this->put(route('users.update', $member), [...$payload($member, 'Auditor'), 'phone' => '3001234567'])
-        ->assertSessionHasNoErrors()
-        ->assertRedirect(route('users.index'));
-    expect($member->fresh()->hasRole('Auditor'))->toBeTrue()
-        ->and($member->fresh()->phone)->toBe('3001234567');
 });

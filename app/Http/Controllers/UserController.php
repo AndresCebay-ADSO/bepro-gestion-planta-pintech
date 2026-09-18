@@ -125,16 +125,9 @@ class UserController extends Controller
 
         $user->load('roles');
 
-        // El rol actual siempre es una opción, aunque quien edita no pueda asignarlo (UpdateUserRequest lo permite
-        // conservar): si no, el selector quedaría vacío y guardar otros datos obligaría a cambiar el rol.
-        $roles = collect($this->assignableRoles());
-        $currentRoles = $user->roles
-            ->reject(fn (Role $role): bool => $roles->contains('name', $role->name))
-            ->map(fn (Role $role): array => $this->roleOption($role));
-
         return Inertia::render('Admin/Users/Edit', [
             'user' => $user,
-            'roles' => $roles->concat($currentRoles)->values()->all(),
+            'roles' => $this->assignableRoles(),
         ]);
     }
 
@@ -162,14 +155,13 @@ class UserController extends Controller
             }
         }
 
-        // Siempre debe quedar al menos un SuperAdmin y un Admin activos (docs/MATRIZ_RBAC.md §4).
-        foreach ([SystemRole::SuperAdmin, SystemRole::Admin] as $protectedRole) {
-            $losesProtectedRole = $user->hasRole($protectedRole->value)
-                && (! $validated['is_active'] || $validated['role'] !== $protectedRole->value);
+        // Siempre debe quedar al menos un SuperAdmin activo, o nadie podría recuperar el acceso (docs/MATRIZ_RBAC.md §4).
+        // Es la única regla ligada a un rol: los demás usuarios se protegen por permisos (UserPolicy).
+        $losesSuperAdmin = $user->isSuperAdmin()
+            && (! $validated['is_active'] || $validated['role'] !== SystemRole::SuperAdmin->value);
 
-            if ($losesProtectedRole && ! $this->hasOtherActiveUserWithRole($protectedRole, $user)) {
-                return back()->with('error', 'No se puede desactivar o degradar al único '.mb_strtolower($protectedRole->label()).' activo del sistema.');
-            }
+        if ($losesSuperAdmin && ! $this->hasOtherActiveSuperAdmin($user)) {
+            return back()->with('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
         }
 
         $oldRole = $currentRole;
@@ -244,10 +236,6 @@ class UserController extends Controller
             return back()->with('error', 'No puedes eliminar tu propia cuenta.');
         }
 
-        if ($user->hasAnyRole([SystemRole::Admin->value, SystemRole::SuperAdmin->value])) {
-            return back()->with('error', 'No se puede eliminar un administrador. Desactiva su cuenta en su lugar.');
-        }
-
         if ($user->hasActivity()) {
             return back()->with('error', 'No se puede eliminar el usuario porque tiene actividad registrada en el sistema. Desactiva su cuenta en su lugar.');
         }
@@ -308,11 +296,8 @@ class UserController extends Controller
             ->firstOrFail();
     }
 
-    private function hasOtherActiveUserWithRole(SystemRole $role, User $user): bool
+    private function hasOtherActiveSuperAdmin(User $user): bool
     {
-        return User::role($role->value)
-            ->where('is_active', true)
-            ->where('id', '!=', $user->id)
-            ->exists();
+        return User::superAdmins()->active()->whereKeyNot($user->id)->exists();
     }
 }
