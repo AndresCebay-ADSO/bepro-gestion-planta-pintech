@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('remnant_consumptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('remnant_id')->constrained('production_remnants')->restrictOnDelete();
-            $table->foreignId('target_order_id')->nullable()->constrained('production_orders')->nullOnDelete();
+            $table->foreignId('target_order_id')->nullable()->constrained('production_orders')->restrictOnDelete();
             $table->decimal('consumed_cost', 16, 4)->nullable();
             $table->decimal('quantity_gallons', 12, 4);
             $table->decimal('quantity_kg', 12, 4);

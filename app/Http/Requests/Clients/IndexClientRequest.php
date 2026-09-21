@@ -21,6 +21,7 @@ class IndexClientRequest extends FormRequest
     {
         return [
             'search' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'string', 'in:active,inactive,all'],
         ];
     }
 }

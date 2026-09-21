@@ -214,6 +214,7 @@ final class RoutePermissionMap
             Permission::CatalogsEdit->value => 'CRUDs de catálogos en la Fase 3 (3.1, 3.2).',
             Permission::CatalogsDelete->value => 'CRUDs de catálogos en la Fase 3 (3.1, 3.2).',
             Permission::ProductsDeactivate->value => 'Casilla "Producto activo" dentro de products.update.',
+            Permission::ClientsDeactivate->value => 'Casilla "Cliente activo" dentro de clients.update.',
             Permission::RawMaterialsDelete->value => 'Se aplica dentro de raw-materials.destroy; endpoint propio en la tarea 2.7.',
             Permission::WarehousesViewAll->value => 'Alcance de datos: bodegas visibles y selector de bodega.',
         ];

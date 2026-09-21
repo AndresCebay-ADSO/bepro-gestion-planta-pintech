@@ -15,6 +15,7 @@ return new class extends Migration
             $table->foreignId('quality_responsible_user_id')
                 ->nullable()
                 ->constrained('users')
+                ->restrictOnDelete()
                 ->index();
         });
     }

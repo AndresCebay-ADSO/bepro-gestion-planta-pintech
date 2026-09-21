@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Shared\DeleteUnusedRecordAction;
 use App\Enums\Permission;
 use App\Enums\SystemRole;
 use App\Filters\UserFilter;
@@ -13,7 +14,6 @@ use App\Http\Requests\Users\UpdateUserRequest;
 use App\Models\User;
 use App\Services\AssignableRoleService;
 use App\Services\SignatureOptimizerService;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -26,6 +26,7 @@ class UserController extends Controller
 {
     public function __construct(
         private readonly AssignableRoleService $assignableRoleService,
+        private readonly DeleteUnusedRecordAction $deleteUnused,
     ) {}
 
     /**
@@ -261,37 +262,31 @@ class UserController extends Controller
             return back()->with('error', 'No puedes eliminar tu propia cuenta.');
         }
 
+        // La autoría en la auditoría no tiene clave foránea; el resto del historial lo protegen las claves foráneas.
         if ($user->hasActivity()) {
             return back()->with('error', 'No se puede eliminar el usuario porque tiene actividad registrada en el sistema. Desactiva su cuenta en su lugar.');
         }
 
-        try {
-            $deleted = DB::transaction(function () use ($user): bool {
-                // Mismo bloqueo que update(): dos SuperAdmins que se eliminan o desactivan a la vez no pueden dejar el
-                // sistema sin ninguno activo. Hoy lo impide también hasActivity() (iniciar sesión deja actividad), pero
-                // esa garantía dependería de lo que registra y conserva el log de auditoría.
-                if ($user->isSuperAdmin() && $user->is_active) {
-                    $this->lockRole(SystemRole::SuperAdmin->value);
+        $result = DB::transaction(function () use ($user): string {
+            // Mismo bloqueo que update(): dos SuperAdmins que se eliminan o desactivan a la vez no pueden dejar el
+            // sistema sin ninguno activo.
+            if ($user->isSuperAdmin() && $user->is_active) {
+                $this->lockRole(SystemRole::SuperAdmin->value);
 
-                    if (! $this->hasOtherActiveSuperAdmin($user)) {
-                        return false;
-                    }
+                if (! $this->hasOtherActiveSuperAdmin($user)) {
+                    return 'last_super_admin';
                 }
-
-                $user->delete();
-
-                return true;
-            });
-        } catch (QueryException $e) {
-            if ((string) $e->getCode() === '23503') {
-                return back()->with('error', 'No se puede eliminar el usuario porque tiene registros asociados en el sistema. Desactiva su cuenta en su lugar.');
             }
 
-            throw $e;
+            return $this->deleteUnused->execute($user) ? 'deleted' : 'has_history';
+        });
+
+        if ($result === 'last_super_admin') {
+            return back()->with('error', 'No se puede eliminar al único super administrador activo del sistema.');
         }
 
-        if (! $deleted) {
-            return back()->with('error', 'No se puede eliminar al único super administrador activo del sistema.');
+        if ($result === 'has_history') {
+            return back()->with('error', 'No se puede eliminar el usuario porque tiene registros asociados en el sistema. Desactiva su cuenta en su lugar.');
         }
 
         return redirect()->route('users.index')->with('message', 'Usuario eliminado exitosamente.');

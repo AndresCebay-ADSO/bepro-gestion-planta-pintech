@@ -109,6 +109,7 @@ enum Permission: string
     case ClientsView = 'clients.view';
     case ClientsCreate = 'clients.create';
     case ClientsEdit = 'clients.edit';
+    case ClientsDeactivate = 'clients.deactivate';
     case ClientsDelete = 'clients.delete';
 
     // Listas de precios
@@ -207,6 +208,7 @@ enum Permission: string
             self::ClientsView => __('Ver clientes'),
             self::ClientsCreate => __('Crear clientes'),
             self::ClientsEdit => __('Editar clientes'),
+            self::ClientsDeactivate => __('Desactivar clientes'),
             self::ClientsDelete => __('Eliminar clientes'),
             self::PriceListsView => __('Ver listas de precios'),
             self::PaintDevelopmentRequestsViewOwn => __('Ver solicitudes de desarrollo propias'),
@@ -297,6 +299,7 @@ enum Permission: string
             self::ClientsView,
             self::ClientsCreate,
             self::ClientsEdit,
+            self::ClientsDeactivate,
             self::ClientsDelete => PermissionModule::Clients,
             self::PriceListsView => PermissionModule::PriceLists,
             self::PaintDevelopmentRequestsViewOwn,
@@ -406,6 +409,7 @@ enum Permission: string
             self::ClientsCreate,
             self::ClientsEdit,
             self::ClientsDelete => [self::ClientsView],
+            self::ClientsDeactivate => [self::ClientsEdit],
             self::PaintDevelopmentRequestsViewAll,
             self::PaintDevelopmentRequestsCreate,
             self::PaintDevelopmentRequestsEdit,
@@ -488,6 +492,7 @@ enum Permission: string
             self::QuotationsViewAll,
             self::SalesOrdersEdit,
             self::ClientsEdit,
+            self::ClientsDeactivate,
             self::ClientsDelete,
             self::PaintDevelopmentRequestsViewAll,
             self::PaintDevelopmentRequestsUpdateStatus,

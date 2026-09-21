@@ -128,7 +128,8 @@ combinación, se crea un rol nuevo.
 | **Clientes** | `clients.view` | [x] | [x] | [ ] | [ ] | [x] | |
 | | `clients.create` | [x] | [x] | [ ] | [ ] | [x] | |
 | | `clients.edit` | [x] | [x] | [ ] | [ ] | [ ] | |
-| | `clients.delete` | [x] | [x] | [ ] | [ ] | [ ] | Borrado **lógico** (clientes no tiene `is_active`; ya usa SoftDeletes). Sus cotizaciones y pedidos se conservan. |
+| | `clients.deactivate` | [x] | [x] | [ ] | [ ] | [ ] | 🆕 Casilla "Cliente activo" al editar (`POLITICA_ELIMINACION.md`). Un cliente inactivo no aparece en cotizaciones ni pedidos nuevos; los abiertos siguen su curso. |
+| | `clients.delete` | [x] | [x] | [ ] | [ ] | [ ] | Borrado físico solo si no tiene cotizaciones ni pedidos (`POLITICA_ELIMINACION.md`). |
 | **Listas de precios** | `price_lists.view` | [x] | [x] | [ ] | [ ] | [x] | Comercial ve precios; los costos solo con `costs.view`. |
 | **Desarrollo de pinturas** | `paint_development_requests.view_own` | [x] | [x] | [ ] | [ ] | [x] | Solo las propias (`created_by`). ⚠️ hoy Producción las ve todas; se retira: solo la jefa recibe y revisa estas solicitudes. |
 | | `paint_development_requests.view_all` | [x] | [x] | [ ] | [ ] | [ ] | ⚠️ |
@@ -148,7 +149,7 @@ combinación, se crea un rol nuevo.
 | | `warehouses.assign_users` | [x] | [x] | [ ] | [ ] | [ ] | |
 | | `warehouses.delete` | [x] | [ ] | [ ] | [ ] | [ ] | Solo si está intacta. ⚠️ hoy Admin puede. |
 
-**Total: 84 permisos en 21 módulos.** Por rol: SuperAdmin 84 · Admin 71 · Producción 23 · Operador 8 · Comercial 22.
+**Total: 85 permisos en 21 módulos.** Por rol: SuperAdmin 85 · Admin 72 · Producción 23 · Operador 8 · Comercial 22.
 (La v1 tenía 83. Entran 6: los 4 de catálogos, `products.download_documents` y `raw_materials.deactivate`.
 Salen 5: ver §6. `products.desactive` solo se renombra, igual que los `view` de módulos con dueño → `view_own`.)
 

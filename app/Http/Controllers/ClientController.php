@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Shared\DeleteUnusedRecordAction;
 use App\Enums\Permission;
 use App\Filters\ClientFilter;
 use App\Http\Requests\Clients\IndexClientRequest;
@@ -16,6 +17,8 @@ use Inertia\Response;
 
 class ClientController extends Controller
 {
+    public function __construct(private readonly DeleteUnusedRecordAction $deleteUnused) {}
+
     public function index(IndexClientRequest $request): Response
     {
         $user = $request->user();
@@ -30,7 +33,10 @@ class ClientController extends Controller
         return Inertia::render('Clients/Index', [
             'clients' => $clients,
             'filters' => $request->validated(),
-            'can' => ['edit' => $user?->can(Permission::ClientsEdit->value) ?? false],
+            'can' => [
+                'edit' => $user?->can(Permission::ClientsEdit->value) ?? false,
+                'delete' => $user?->can(Permission::ClientsDelete->value) ?? false,
+            ],
         ]);
     }
 
@@ -57,6 +63,9 @@ class ClientController extends Controller
 
         return Inertia::render('Clients/Edit', [
             'client' => $client,
+            'can' => [
+                'deactivate' => auth()->user()?->can('deactivate', $client) ?? false,
+            ],
         ]);
     }
 
@@ -64,7 +73,18 @@ class ClientController extends Controller
     {
         $this->authorize('update', $client);
 
-        $client->update($request->validated());
+        $validated = $request->validated();
+
+        // Desactivar no se bloquea: sus cotizaciones y pedidos abiertos siguen su curso; solo deja de aparecer en los
+        // documentos nuevos (docs/POLITICA_ELIMINACION.md §3.1).
+        $activeChanged = array_key_exists('is_active', $validated)
+            && (bool) $validated['is_active'] !== $client->is_active;
+
+        if ($activeChanged && ! ($request->user()?->can('deactivate', $client) ?? false)) {
+            abort(403, __('No tienes autorización para activar o desactivar clientes.'));
+        }
+
+        $client->update($validated);
 
         return redirect()->route('clients.index')
             ->with('success', 'Cliente actualizado con éxito.');
@@ -74,7 +94,9 @@ class ClientController extends Controller
     {
         $this->authorize('delete', $client);
 
-        $client->delete();
+        if (! $this->deleteUnused->execute($client)) {
+            return back()->with('error', __('El cliente tiene cotizaciones o pedidos. Desactívalo en su lugar.'));
+        }
 
         return redirect()->route('clients.index')
             ->with('success', 'Cliente eliminado con éxito.');

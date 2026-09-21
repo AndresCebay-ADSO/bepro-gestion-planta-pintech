@@ -57,6 +57,7 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
         routeUrl: warehousesIndex().url,
         initialFilters: {
             search: filters.search ?? '',
+            status: filters.status ?? '',
         },
     });
     const flash = usePage<{ flash?: { success?: string; error?: string } }>()
@@ -119,6 +120,15 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                             label: 'Buscar',
                             placeholder:
                                 'Buscar por nombre, ciudad o dirección...',
+                        },
+                        {
+                            type: 'select',
+                            name: 'status',
+                            label: 'Estado',
+                            options: [
+                                { value: 'active', label: 'Activas' },
+                                { value: 'inactive', label: 'Inactivas' },
+                            ],
                         },
                     ]}
                     filters={filterState}

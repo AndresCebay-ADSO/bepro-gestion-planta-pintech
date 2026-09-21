@@ -80,7 +80,8 @@ class FinishedInventoryMovementController extends Controller
                     'initial_quantity' => $batch->initial_quantity,
                     'stocks' => $batch->stocks->map(fn ($stock) => ['warehouse_id' => $stock->warehouse_id, 'quantity' => $stock->quantity]),
                 ])),
-            'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->get()),
+            // Formulario de alta: solo bodegas activas. `warehouseOptions` es el filtro del historial y muestra todas.
+            'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->where('is_active', true)->get()),
             'warehouseOptions' => Warehouse::query()
                 ->select('id', 'name')
                 ->orderBy('name')

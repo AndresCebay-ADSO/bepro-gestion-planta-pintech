@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('production_order_line_adjustments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('production_order_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('raw_material_id')->constrained();
+            $table->foreignId('raw_material_id')->constrained()->restrictOnDelete();
             $table->decimal('quantity', 12, 4);
             $table->string('reason', 500);
             $table->text('notes')->nullable();
-            $table->foreignId('created_by')->constrained('users');
+            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
             $table->timestamps();
 
             $table->index(['production_order_id', 'raw_material_id']);

@@ -303,8 +303,8 @@ it('fails validation when items array is empty', function () {
         ->assertInvalid(['items']);
 });
 
-it('fails validation when product is soft deleted', function () {
-    $this->product->delete();
+it('fails validation when product is inactive', function () {
+    $this->product->update(['is_active' => false]);
 
     $this->actingAs($this->comercialUser)
         ->post(route('quotations.store'), quotationPayload(
@@ -313,6 +313,18 @@ it('fails validation when product is soft deleted', function () {
             $this->variant->id,
         ))
         ->assertInvalid(['items.0.product_id']);
+});
+
+it('fails validation when client is inactive', function () {
+    $this->client->update(['is_active' => false]);
+
+    $this->actingAs($this->comercialUser)
+        ->post(route('quotations.store'), quotationPayload(
+            $this->client->id,
+            $this->product->id,
+            $this->variant->id,
+        ))
+        ->assertInvalid(['client_id']);
 });
 
 it('allows updating quotation status via service', function () {

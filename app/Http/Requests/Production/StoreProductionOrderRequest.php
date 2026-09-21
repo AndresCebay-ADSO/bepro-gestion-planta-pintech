@@ -32,16 +32,14 @@ class StoreProductionOrderRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('products', 'id')
-                    ->where('is_active', true)
-                    ->whereNull('deleted_at'),
+                    ->where('is_active', true),
             ],
             'formula_id' => [
                 'required',
                 'integer',
                 Rule::exists('formulas', 'id')
                     ->where('product_id', $this->input('product_id'))
-                    ->where('is_active', true)
-                    ->whereNull('deleted_at'),
+                    ->where('is_active', true),
             ],
             'warehouse_id' => [
                 'required',
@@ -60,7 +58,6 @@ class StoreProductionOrderRequest extends FormRequest
                 'distinct',
                 Rule::exists('product_variants', 'id')
                     ->where('is_active', true)
-                    ->whereNull('deleted_at')
                     ->when($this->input('product_id') !== null, fn ($query) => $query->where('product_id', $this->input('product_id'))),
             ],
             'packaging.*.planned_units' => ['required_with:packaging', 'numeric', 'min:0.01'],

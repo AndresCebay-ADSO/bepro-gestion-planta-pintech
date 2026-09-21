@@ -1,7 +1,8 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Users } from 'lucide-react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
+import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
@@ -9,6 +10,7 @@ import {
     index as clientsIndex,
     create as clientsCreate,
     edit as clientsEdit,
+    destroy as clientsDestroy,
 } from '@/routes/clients';
 import type { PaginationLink } from '@/types/ui';
 
@@ -19,6 +21,7 @@ interface ClientRow {
     contact_name: string | null;
     phone: string | null;
     shipping_address: string | null;
+    is_active: boolean;
 }
 
 type Props = {
@@ -29,6 +32,7 @@ type Props = {
     filters: Record<string, string | null | undefined>;
     can: {
         edit: boolean;
+        delete: boolean;
     };
 };
 
@@ -41,6 +45,7 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
         routeUrl: clientsIndex().url,
         initialFilters: {
             search: filters.search ?? '',
+            status: filters.status ?? '',
         },
     });
 
@@ -74,6 +79,15 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
                             label: 'Buscar',
                             placeholder: 'Buscar por razón social o NIT...',
                         },
+                        {
+                            type: 'select',
+                            name: 'status',
+                            label: 'Estado',
+                            options: [
+                                { value: 'active', label: 'Activos' },
+                                { value: 'inactive', label: 'Inactivos' },
+                            ],
+                        },
                     ]}
                     filters={filterState}
                     onFilter={setFilter}
@@ -106,7 +120,10 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
                                         <th className="p-3 text-left">
                                             Dirección
                                         </th>
-                                        {can.edit && (
+                                        <th className="p-3 text-left">
+                                            Estado
+                                        </th>
+                                        {(can.edit || can.delete) && (
                                             <th className="p-3 text-right">
                                                 Acciones
                                             </th>
@@ -134,23 +151,49 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
                                             <td className="max-w-xs truncate p-3 text-muted-foreground">
                                                 {client.shipping_address ?? '-'}
                                             </td>
-                                            {can.edit && (
-                                                <td className="p-3 text-right">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        asChild
-                                                    >
-                                                        <Link
-                                                            href={
+                                            <td className="p-3">
+                                                <span
+                                                    className={
+                                                        client.is_active
+                                                            ? 'rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-300'
+                                                            : 'rounded-full bg-slate-500/15 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300'
+                                                    }
+                                                >
+                                                    {client.is_active
+                                                        ? 'Activo'
+                                                        : 'Inactivo'}
+                                                </span>
+                                            </td>
+                                            {(can.edit || can.delete) && (
+                                                <td className="p-3">
+                                                    {/* Eliminar solo borra clientes sin cotizaciones ni pedidos; si tienen, el servidor pide desactivarlos. */}
+                                                    <TableActions
+                                                        actions={{
+                                                            view: false,
+                                                            edit: can.edit,
+                                                            delete: can.delete,
+                                                        }}
+                                                        onEdit={() =>
+                                                            router.get(
                                                                 clientsEdit(
                                                                     client.id,
-                                                                ).url
+                                                                ).url,
+                                                            )
+                                                        }
+                                                        onDelete={() => {
+                                                            if (
+                                                                confirm(
+                                                                    '¿Eliminar este cliente definitivamente? Solo es posible si no tiene cotizaciones ni pedidos.',
+                                                                )
+                                                            ) {
+                                                                router.delete(
+                                                                    clientsDestroy(
+                                                                        client.id,
+                                                                    ).url,
+                                                                );
                                                             }
-                                                        >
-                                                            Editar
-                                                        </Link>
-                                                    </Button>
+                                                        }}
+                                                    />
                                                 </td>
                                             )}
                                         </tr>

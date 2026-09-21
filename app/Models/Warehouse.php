@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -26,7 +25,6 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property Carbon|null $deleted_at
  * @property-read Collection|FinishedInventory[] $finishedInventories
  * @property-read Collection|ProductionOrder[] $productionOrders
  * @property-read Collection|FinishedInventoryMovement[] $finishedInventoryMovements
@@ -43,7 +41,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class Warehouse extends Model
 {
     /** @use HasFactory<WarehouseFactory> */
-    use HasAuditDescription, HasFactory, LogsActivity, SoftDeletes;
+    use HasAuditDescription, HasFactory, LogsActivity;
 
     protected string $auditLabel = 'Bodega';
 

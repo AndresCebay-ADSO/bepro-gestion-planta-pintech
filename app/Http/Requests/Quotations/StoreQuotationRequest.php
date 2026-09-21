@@ -32,8 +32,15 @@ class StoreQuotationRequest extends FormRequest
      */
     protected function sharedRules(): array
     {
+        $kept = $this->keptRecords();
+
         return [
-            'client_id' => ['required', Rule::exists('clients', 'id')->whereNull('deleted_at')],
+            'client_id' => [
+                'required',
+                Rule::exists('clients', 'id')->where(fn ($query) => $query
+                    ->where('is_active', true)
+                    ->when($kept['client_id'] !== null, fn ($q) => $q->orWhere('id', $kept['client_id']))),
+            ],
             'client_business_name' => ['nullable', 'string', 'max:255'],
             'client_nit' => ['nullable', 'string', 'max:30'],
             'client_contact_name' => ['nullable', 'string', 'max:255'],
@@ -50,11 +57,16 @@ class StoreQuotationRequest extends FormRequest
             'notes' => ['nullable', 'string', 'max:5000'],
             'iva_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('is_active', true)->whereNull('deleted_at')],
+            'items.*.product_id' => [
+                'required',
+                Rule::exists('products', 'id')->where(fn ($query) => $query
+                    ->where('is_active', true)
+                    ->orWhereIn('id', $kept['product_ids'])),
+            ],
             'items.*.product_variant_id' => [
                 'required',
                 'integer',
-                function (string $attribute, mixed $value, \Closure $fail): void {
+                function (string $attribute, mixed $value, \Closure $fail) use ($kept): void {
                     $index = explode('.', $attribute)[1] ?? null;
 
                     if ($index === null) {
@@ -68,8 +80,9 @@ class StoreQuotationRequest extends FormRequest
                     $exists = ProductVariant::query()
                         ->where('id', $value)
                         ->where('product_id', $productId)
-                        ->where('is_active', true)
-                        ->whereNull('deleted_at')
+                        ->where(fn ($query) => $query
+                            ->where('is_active', true)
+                            ->orWhereIn('id', $kept['variant_ids']))
                         ->exists();
 
                     if (! $exists) {
@@ -84,6 +97,17 @@ class StoreQuotationRequest extends FormRequest
             'items.*.price_adjustment_pct' => ['nullable', 'numeric', 'min:-100', 'max:99.99'],
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
         ];
+    }
+
+    /**
+     * Cliente, productos y presentaciones que el documento ya tiene: se aceptan aunque estén inactivos, para que un
+     * documento abierto siga su curso (docs/POLITICA_ELIMINACION.md §3.1). Al crear no hay ninguno.
+     *
+     * @return array{client_id: int|null, product_ids: array<int, int>, variant_ids: array<int, int>}
+     */
+    protected function keptRecords(): array
+    {
+        return ['client_id' => null, 'product_ids' => [], 'variant_ids' => []];
     }
 
     /**

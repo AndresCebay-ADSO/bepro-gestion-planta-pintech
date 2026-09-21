@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -39,7 +38,6 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $created_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property Carbon|null $deleted_at
  * @property-read User $creator
  * @property-read User|null $reviewer
  */
@@ -64,7 +62,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class PaintDevelopmentRequest extends Model
 {
     /** @use HasFactory<PaintDevelopmentRequestFactory> */
-    use HasAuditDescription, HasFactory, LogsActivity, SoftDeletes;
+    use HasAuditDescription, HasFactory, LogsActivity;
 
     protected string $auditLabel = 'Solicitud de Desarrollo';
 

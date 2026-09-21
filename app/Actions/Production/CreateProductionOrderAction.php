@@ -6,13 +6,16 @@ namespace App\Actions\Production;
 
 use App\Enums\ProductionOrderStatus;
 use App\Models\Formula;
+use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderPackagingPlan;
+use App\Models\Warehouse;
 use App\Services\DecimalCalculator;
 use App\Services\FormulaService;
 use App\Services\Inventory\FifoStockAllocatorService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class CreateProductionOrderAction
 {
@@ -42,6 +45,10 @@ class CreateProductionOrderAction
         return DB::transaction(function () use ($data, $formula, $userId): ProductionOrder {
             $quantity = (string) $data['quantity'];
             $warehouseId = (int) $data['warehouse_id'];
+
+            // Bloqueo compartido: si alguien desactiva el producto o la bodega a la vez (lockForUpdate sobre la misma
+            // fila), una de las dos operaciones espera a la otra y ve su resultado (docs/POLITICA_ELIMINACION.md §3.1).
+            $this->ensureStillActive((int) $data['product_id'], $warehouseId);
 
             $this->fifoStockAllocator->validateStockForOrder($formula, $quantity, $warehouseId);
 
@@ -143,5 +150,19 @@ class CreateProductionOrderAction
         }
 
         return max((int) $maxLot + 1, $startLot);
+    }
+
+    private function ensureStillActive(int $productId, int $warehouseId): void
+    {
+        $productActive = Product::query()->whereKey($productId)->where('is_active', true)->sharedLock()->first(['id']) !== null;
+        $warehouseActive = Warehouse::query()->whereKey($warehouseId)->where('is_active', true)->sharedLock()->first(['id']) !== null;
+
+        if (! $productActive) {
+            throw ValidationException::withMessages(['product_id' => __('El producto se desactivó mientras se creaba la orden.')]);
+        }
+
+        if (! $warehouseActive) {
+            throw ValidationException::withMessages(['warehouse_id' => __('La bodega se desactivó mientras se creaba la orden.')]);
+        }
     }
 }

@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
@@ -20,7 +19,6 @@ use Illuminate\Support\Carbon;
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property Carbon|null $deleted_at
  * @property-read Collection|RawMaterial[] $rawMaterials
  */
 #[Fillable([
@@ -32,7 +30,7 @@ use Illuminate\Support\Carbon;
 class RawMaterialCategory extends Model
 {
     /** @use HasFactory<RawMaterialCategoryFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected function casts(): array
     {

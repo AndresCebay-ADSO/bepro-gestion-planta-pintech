@@ -105,7 +105,7 @@ test('admin can delete a product variant', function () {
         ->delete(route('products.variants.destroy', [$product, $variant]))
         ->assertRedirect(route('products.show', $product));
 
-    $this->assertSoftDeleted('product_variants', [
+    $this->assertDatabaseMissing('product_variants', [
         'id' => $variant->id,
     ]);
 });

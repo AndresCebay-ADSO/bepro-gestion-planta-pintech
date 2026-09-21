@@ -135,11 +135,12 @@ class QuotationController extends Controller
         $this->authorize('update', $quotation);
 
         $quotation->load(['items.product', 'items.productVariant']);
+        $kept = $quotation->keptRecords();
 
         return Inertia::render('Quotations/Edit', [
             'quotation' => $this->buildQuotationData($quotation),
-            'clients' => $this->clientOptions(),
-            'products' => $this->quotationService->catalogProducts(),
+            'clients' => $this->clientOptions($kept['client_id']),
+            'products' => $this->quotationService->catalogProducts($kept),
             'validityDaysOptions' => $this->enumOptions(QuotationValidity::cases()),
             'paymentMethodOptions' => $this->enumOptions(PaymentMethod::cases()),
             'itemTypeOptions' => $this->enumOptions(QuotationItemType::cases()),
@@ -206,12 +207,15 @@ class QuotationController extends Controller
     }
 
     /**
+     * Clientes activos, más el de la cotización al editarla aunque se haya desactivado.
+     *
      * @return array<int, Client>
      */
-    private function clientOptions(): array
+    private function clientOptions(?int $keptClientId = null): array
     {
         return Client::query()
-            ->active()
+            ->where(fn ($query) => $query->where('is_active', true)
+                ->when($keptClientId !== null, fn ($q) => $q->orWhere('id', $keptClientId)))
             ->orderBy('business_name')
             ->get(['id', 'business_name', 'nit', 'contact_name', 'phone'])
             ->all();

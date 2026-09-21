@@ -361,12 +361,12 @@ Coinciden con RR-02, RR-03, RR-05, RR-07, RR-08, RR-10 a RR-13; aportan RR-15 y 
 | B8 | Manejar el código 419 (sesión/CSRF expirado) en el `respond()` de `bootstrap/app.php`, igual que el 429 | AG-04 | 20 min |
 | B9 | `SalesOrderPolicy`: añadir `update()` como alias de `edit()` para que el patrón sea intercambiable con `QuotationPolicy`/`PaintDevelopmentRequestPolicy` | AG-05 | 15 min |
 | B10 | `SalesOrderController::show`: quitar `client` del `load()`, no se usa (se leen las columnas desnormalizadas) | AG-06 | 10 min |
-| B11 | `User::hasActivity()`: condensar las 16 consultas en una sola (`UNION` o tabla de auditoría agregada) | AG-07 | 45 min |
+| ~~B11~~ | ✅ Resuelto con la política de eliminación: las claves foráneas `RESTRICT` protegen el historial y `hasActivity()` solo consulta la auditoría. `User::hasActivity()`: condensar las 16 consultas en una sola | AG-07 | 45 min |
 | B12 | Botón "Volver" de `ErrorPage.tsx`: si no hay historial, navegar a `homeHref` (o `/` si tampoco hay) | AG-09 | 15 min |
 | B13 | `useMemo` en `buildSidebarGroups` dentro de `AppSidebar` | AG-10 | 15 min |
 | B14 | Uniformar `href` del menú: siempre objeto Wayfinder o siempre `.url` | AG-12 | 15 min |
 | B15 | `DashboardService`: zona horaria de planta desde `config('app.plant_timezone')` | AU-09 | 10 min |
-| B16 | Retirar `ProductPolicy::restore` y `forceDelete` (o implementarlos con la 2.6) | AU-11 | 10 min |
+| ~~B16~~ | ✅ Resuelto con la política de eliminación (sin soft deletes): retirados `restore` y `forceDelete` de las policies. Retirar `ProductPolicy::restore` y `forceDelete` | AU-11 | 10 min |
 | B17 | Test de acceso por rol: dataset `[rol, ruta, código]` sobre las rutas principales, y verificar la ability exacta en las rutas `can:viewAny` / `can:view` | AU-10 | 3 h |
 | ~~B18~~ | ✅ Aplicado en A5. Formulario de edición de producto: enviar CIF y umbral solo con `can.managePrices` y hacerlos `sometimes` en `UpdateProductRequest`; después, ocultarlos también sin `costs.view` | PC-05 | 45 min |
 | ~~B19~~ | ✅ Resuelto en la 2.4: `inventory_movements.create` exige `costs.view` (dependencia validada al guardar un rol). Formulario de movimientos MP: decidir qué ve del precio del lote un rol con `inventory_movements.create` sin `costs.view` | PC-07 | 30 min |
@@ -379,6 +379,7 @@ Coinciden con RR-02, RR-03, RR-05, RR-07, RR-08, RR-10 a RR-13; aportan RR-15 y 
 | B26 | Dashboard: reutilizar las alertas recientes compartidas en lugar de volver a consultarlas | Revisión 2.4 | 20 min |
 | B27 | `role-permissions-fields`: no anunciar dos veces el módulo y mostrar los permisos en solo lectura sin casillas deshabilitadas | Revisión 2.4 | 45 min |
 | B28 | Modelo `App\Models\Role` propio que extienda el de Spatie (registrado en `config/permission.php`), con `@property int $id` y los helpers de rol del sistema. **Solo cuando haga falta** (añadir relaciones, scopes o lógica al rol): hoy los tipos de Wayfinder ya salen bien porque el CI genera las rutas contra PostgreSQL | CI (PR #145) | 30 min |
+| B29 | Rutas anidadas de presentaciones (`products/{product}/variants/{variant}`) con `->scopeBindings()` en lugar del `abort_if` manual del controlador | Revisión política de eliminación | 15 min |
 
 ### Lote C — Refactors de arquitectura (backlog, fuera de la Fase 2)
 

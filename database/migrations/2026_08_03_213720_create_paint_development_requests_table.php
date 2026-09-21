@@ -38,13 +38,12 @@ return new class extends Migration
 
             // Revisión por admin / producción
             $table->text('review_notes')->nullable();
-            $table->foreignId('reviewed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('reviewed_by')->nullable()->constrained('users')->restrictOnDelete();
             $table->timestamp('reviewed_at')->nullable();
 
             // Auditoría
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
             $table->timestamps();
-            $table->softDeletes();
 
             // Índices para filtros comunes del listado
             $table->index(['status', 'created_by']);

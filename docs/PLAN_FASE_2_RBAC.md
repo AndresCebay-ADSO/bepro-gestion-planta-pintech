@@ -504,6 +504,16 @@ y cada test arranca una aplicación nueva. No hace falta limpiarla en `TestCase`
 
 ### 2.6 — Soft deletes en modelos críticos
 
+> **🔁 Replanteada (2026-09-18): la 2.6 y la 2.7 se funden en "Política de eliminación", definida en
+> `docs/POLITICA_ELIMINACION.md`, que es su fuente de verdad.** Decisión: **no se usan soft deletes**; los datos
+> maestros se desactivan (`is_active`) y solo se eliminan físicamente si nunca se usaron, con las claves foráneas en
+> `RESTRICT` como guardia. Motivo verificado: el borrado lógico dejaba `NULL` las relaciones del historial (órdenes sin
+> producto) y bloqueaba los códigos. El análisis de abajo se conserva como antecedente; los riesgos 1 (índices únicos),
+> 2 (costeo FIFO) y 5 (auditoría de claves foráneas) quedan resueltos por la política. La corrección de movimientos MP
+> (paso 14) sigue igual.
+>
+> **✅ Implementada (2026-09-18):** ver el estado en `docs/POLITICA_ELIMINACION.md` §5.1.
+
 ⚠️ **Esta tarea no es RBAC.** Comparte fase con lo anterior pero no comparte nada técnico. Recomiendo tratarla como **Fase 2B**, después de que 2.1-2.5/2.8/2.9 estén estables y mergeadas. Mezclar ambas en la misma rama hace la revisión imposible.
 
 **Estado real:** 15 de 35 modelos ya tienen `SoftDeletes`. Faltan los que listas (`ProductionOrder`, `ProductionOrderDetail`, `InventoryMovement`, `RawMaterial`, `SalesOrderItem`, `QuotationItem`, `User`) más `InventoryBatch`, `FinishedInventory*`, `ProductionRemnant`, `ProductionCost`.
@@ -538,6 +548,9 @@ el flujo correcto de corrección:
 ---
 
 ### 2.7 — Lógica de eliminación inteligente
+
+> **🔁 Fundida con la 2.6 en `docs/POLITICA_ELIMINACION.md` (2026-09-18).** El patrón extraído ya no comprueba
+> relaciones a mano: intenta el borrado y traduce el rechazo de la clave foránea (`23503`) en "tiene historial".
 
 **Buena noticia: ya está implementada y probada en un sitio.** `RawMaterialController::destroy` (líneas 208-247) hace exactamente lo que pides: bloqueo `lockForUpdate`, comprueba relaciones (`inventoryBatches`, `inventoryMovements`, `formulaDetails`, `productionOrderDetails`), borra físico si está limpio, desactiva si tiene historial, y rechaza si hay stock. **Ese es el patrón a extraer.**
 
@@ -579,10 +592,9 @@ FASE 2A — RBAC  (≈13 días)
                                                      ────────
                                                       ≈15 días
 
-FASE 2B — Integridad  (≈6,5 días)
-  12. 2.6  Soft deletes (por grupos, con auditoría)    3 d
-  13. 2.7  Eliminación inteligente (patrón extraído)   2 d
-  14. ---  Corrección de movimientos MP                1,5 d   ← motivo + "Revertir movimiento"
+FASE 2B — Integridad  (≈4,5 días)
+  12. 2.6+2.7  Política de eliminación                 3 d     ← docs/POLITICA_ELIMINACION.md
+  14. ---      Corrección de movimientos MP            1,5 d   ← motivo + "Revertir movimiento"
 ```
 
 **Paso 11 — renombrar los roles a inglés.** Los valores `'produccion'`, `'operador'` y `'comercial'` vienen del
@@ -667,4 +679,6 @@ Tu estimación era de 8 días (días 6-13). El alcance real, incluyendo lo que l
 | — | 2.4 (CRUD de roles) | ✅ Entra antes de producción |
 | — | ¿La auditoría impide el borrado físico? (2.7) | ✅ No como historial; sí como autor (usuarios) |
 | — | Roles base en código o editables en la UI | ✅ En código (`SystemRole` + `Permission::defaultRoles()`), reconciliados por el seeder; los casos especiales son roles personalizados (2.4). La lógica decide solo por permisos. Revisar si algún día la empresa necesita cambiar los permisos de un rol base sin desplegar |
+| — | Soft deletes (2.6) | ✅ No se usan: desactivar + eliminar solo sin historial; claves foráneas `RESTRICT` hacia historial (`POLITICA_ELIMINACION.md`) |
+| — | Clientes desactivables | ✅ Sí: columna `is_active` y permiso nuevo `clients.deactivate` (Admin); `clients.delete` solo sin historial |
 | — | Protecciones de usuarios | ✅ Por permisos (`holdsAllPermissions`); la única regla por rol es "último SuperAdmin activo" |

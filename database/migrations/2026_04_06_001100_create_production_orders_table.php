@@ -49,9 +49,9 @@ return new class extends Migration
             $table->decimal('density_kg_per_gallon', 10, 4)->nullable()->comment('Densidad en kg/galón');
 
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
-            $table->foreignId('submitted_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('submitted_by')->nullable()->constrained('users')->restrictOnDelete();
             $table->timestamp('submitted_at')->nullable();
-            $table->foreignId('reviewed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('reviewed_by')->nullable()->constrained('users')->restrictOnDelete();
             $table->timestamp('reviewed_at')->nullable();
             $table->text('rejection_reason')->nullable();
             $table->timestamps();

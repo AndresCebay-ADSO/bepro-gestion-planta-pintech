@@ -104,6 +104,9 @@ Route (routes/web.php, role: middleware)
 
 - **Language**: Code in English (classes, methods, variables, DB columns). User-facing strings, UI text, and inline comments in Spanish (`lang/es.json`, `lang/es/`).
 - **PHP**: PHP 8.3+, PSR-12 via Laravel Pint. Include `declare(strict_types=1);` at the top of new PHP files.
+- **Deletion**: never `SoftDeletes`. Master data is deactivated (`is_active`) and only hard-deleted when unused;
+  business documents are cancelled by status; ledgers are reversed. FKs to history are `RESTRICT`, never `SET NULL`.
+  See `docs/POLITICA_ELIMINACION.md`.
 - **Authorization**: decide by permission (`$user->can(Permission::X->value)`, `can:` middleware, policies), never by
   role name. The only role checks live in `User` (`isSuperAdmin()`, `superAdmins()`), enforced by a test. Role names
   are written as `SystemRole::X->value`, never as string literals.
@@ -125,6 +128,7 @@ Route (routes/web.php, role: middleware)
 - `STANDARDS.md` & `ARQUITECTURA.md` — Core architectural guidelines, patterns, and conventions.
 - `FLUJO_SISTEMA.md` & `SOFTWARE_OVERVIEW.md` — End-to-end plant workflows and functional overview.
 - `POLITICA_COSTOS_MATERIA_PRIMA.md` — FIFO costing rules, reference pricing, and valuation formulas.
+- `POLITICA_ELIMINACION.md` — Deletion policy: deactivate vs delete per entity, FK delete rules (no soft deletes).
 - `MATRIZ_RBAC.md` & `PLAN_FASE_2_RBAC.md` — Role and permission matrix, plus current RBAC implementation roadmap.
 - `COMPONENTES_UI.md` & `SISTEMA_TEMAS_UI.md` — Design system, themes (dark/light), and reusable UI components.
 - `SISTEMA_AUDITORIA.md` — Spatie activity log integration, audit trails, and security events.

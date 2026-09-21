@@ -17,7 +17,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -49,7 +48,6 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int|null $convert_to_order_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property Carbon|null $deleted_at
  * @property-read Client $client
  * @property-read User $creator
  * @property-read SalesOrder|null $salesOrder
@@ -83,7 +81,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class Quotation extends Model
 {
     /** @use HasFactory<QuotationFactory> */
-    use HasAuditDescription, HasFactory, LogsActivity, SoftDeletes;
+    use HasAuditDescription, HasFactory, LogsActivity;
 
     protected string $auditLabel = 'Cotización';
 
@@ -168,5 +166,22 @@ class Quotation extends Model
     public function items(): HasMany
     {
         return $this->hasMany(QuotationItem::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Cliente, productos y presentaciones que la cotización ya usa. Al editarla se aceptan y se ofrecen aunque se hayan
+     * desactivado después (docs/POLITICA_ELIMINACION.md §3.1).
+     *
+     * @return array{client_id: int|null, product_ids: array<int, int>, variant_ids: array<int, int>}
+     */
+    public function keptRecords(): array
+    {
+        $items = $this->items()->get(['product_id', 'product_variant_id']);
+
+        return [
+            'client_id' => $this->client_id !== null ? (int) $this->client_id : null,
+            'product_ids' => $items->pluck('product_id')->map(fn ($id): int => (int) $id)->unique()->values()->all(),
+            'variant_ids' => $items->pluck('product_variant_id')->filter()->map(fn ($id): int => (int) $id)->unique()->values()->all(),
+        ];
     }
 }

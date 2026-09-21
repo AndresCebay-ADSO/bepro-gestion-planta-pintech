@@ -3,12 +3,16 @@
 namespace App\Models;
 
 use App\Enums\QrDocumentType;
+use App\Models\Concerns\HasAuditDescription;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -23,7 +27,6 @@ use Illuminate\Support\Carbon;
  * @property int $uploaded_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property Carbon|null $deleted_at
  * @property-read Product $product
  * @property-read User $uploadedBy
  */
@@ -40,7 +43,34 @@ use Illuminate\Support\Carbon;
 ])]
 class ProductDocument extends Model
 {
-    use SoftDeletes;
+    use HasAuditDescription, LogsActivity;
+
+    protected string $auditLabel = 'Documento de producto';
+
+    protected string $auditIdentifierAttribute = 'file_name';
+
+    /**
+     * El archivo se borra solo si el borrado del registro se confirma: si la transacción se revierte (por ejemplo, el
+     * producto tenía historial), el documento sigue intacto (docs/POLITICA_ELIMINACION.md §3.4).
+     */
+    protected static function booted(): void
+    {
+        static::deleted(function (ProductDocument $document): void {
+            $path = $document->file_path;
+
+            DB::afterCommit(fn () => Storage::disk('local')->delete($path));
+        });
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('productos')
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
+            ->logOnly(['product_id', 'document_type', 'file_name', 'version', 'is_current'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     protected function casts(): array
     {

@@ -25,7 +25,7 @@ class StoreInventoryMovementRequest extends FormRequest
                 'integer',
                 Rule::exists('raw_materials', 'id')->where('is_active', true),
             ],
-            'warehouse_id' => ['bail', 'required', 'integer', Rule::exists('warehouses', 'id')],
+            'warehouse_id' => ['bail', 'required', 'integer', Rule::exists('warehouses', 'id')->where('is_active', true)],
             'batch_id' => ['nullable', 'integer', Rule::exists('inventory_batches', 'id')],
             'production_order_id' => ['prohibited'],
             'type' => ['bail', 'required', Rule::in(['entry', 'exit'])],

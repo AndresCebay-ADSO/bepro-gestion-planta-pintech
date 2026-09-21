@@ -89,7 +89,7 @@ class QuotationService
                 ]);
             }
 
-            $preparedItems = $this->prepareItems($data['items'] ?? []);
+            $preparedItems = $this->prepareItems($data['items'] ?? [], $lockedQuotation->keptRecords()['variant_ids']);
             $ivaPercentage = isset($data['iva_percentage']) ? (string) $data['iva_percentage'] : '19';
             $totals = $this->pricingService->calculateQuotationTotals($preparedItems, $ivaPercentage);
 
@@ -154,9 +154,10 @@ class QuotationService
 
     /**
      * @param  array<int, array<string, mixed>>  $items
+     * @param  array<int, int>  $keptVariantIds  Presentaciones que la cotización ya tenía: válidas aunque estén inactivas.
      * @return array<int, array<string, mixed>>
      */
-    private function prepareItems(array $items): array
+    private function prepareItems(array $items, array $keptVariantIds = []): array
     {
         $variantIds = array_unique(array_map(
             fn (array $item): int => (int) $item['product_variant_id'],
@@ -166,8 +167,7 @@ class QuotationService
         $variants = ProductVariant::query()
             ->with('product:id,description,name,sales_margin')
             ->whereIn('id', $variantIds)
-            ->where('is_active', true)
-            ->whereNull('deleted_at')
+            ->where(fn ($query) => $query->where('is_active', true)->orWhereIn('id', $keptVariantIds))
             ->get()
             ->keyBy('id');
 
@@ -296,17 +296,23 @@ class QuotationService
     }
 
     /**
+     * Catálogo del formulario: productos y presentaciones activos, más los que la cotización ya usa al editarla.
+     *
+     * @param  array{client_id: int|null, product_ids: array<int, int>, variant_ids: array<int, int>}|null  $kept
      * @return array<int, array<string, mixed>>
      */
-    public function catalogProducts(): array
+    public function catalogProducts(?array $kept = null): array
     {
+        $keptProductIds = $kept['product_ids'] ?? [];
+        $keptVariantIds = $kept['variant_ids'] ?? [];
+
         return Product::query()
             ->with([
                 'variants' => fn ($query) => $query
-                    ->where('is_active', true)
+                    ->where(fn ($q) => $q->where('is_active', true)->orWhereIn('id', $keptVariantIds))
                     ->orderBy('name'),
             ])
-            ->where('is_active', true)
+            ->where(fn ($query) => $query->where('is_active', true)->orWhereIn('id', $keptProductIds))
             ->orderBy('name')
             ->get(['id', 'code', 'name', 'description', 'sales_margin'])
             ->map(fn (Product $product) => [

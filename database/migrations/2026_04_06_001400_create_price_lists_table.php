@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('price_lists', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
-            $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
+            $table->foreignId('product_id')->constrained('products')->restrictOnDelete();
+            $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->restrictOnDelete();
             $table->decimal('price', 12, 4);
             $table->decimal('cost_at_time', 12, 4);
             $table->decimal('profit_margin', 5, 2);
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('variation_percentage', 8, 4)->nullable();
             $table->date('valid_from');
             $table->date('valid_to')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('created_by')->nullable()->constrained('users')->restrictOnDelete();
             $table->timestamps();
 
             $table->index(['product_id', 'valid_to']);

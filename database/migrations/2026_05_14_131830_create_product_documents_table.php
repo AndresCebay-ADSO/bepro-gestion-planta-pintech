@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('product_documents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained('products')->restrictOnDelete();
             $table->enum('document_type', ['technical_data_sheet', 'safety_data_sheet']);
             $table->string('file_name', 255);
             $table->string('file_path', 500);
@@ -23,7 +23,6 @@ return new class extends Migration
             $table->boolean('is_current')->default(true);
             $table->foreignId('uploaded_by')->constrained('users')->restrictOnDelete();
             $table->timestamps();
-            $table->softDeletes();
 
             $table->index(['product_id', 'document_type']);
             $table->index('is_current');

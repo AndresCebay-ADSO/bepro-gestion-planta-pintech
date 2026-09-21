@@ -17,7 +17,7 @@ class StoreWarehouseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['bail', 'required', 'string', 'max:100', Rule::unique('warehouses', 'name')->whereNull('deleted_at')],
+            'name' => ['bail', 'required', 'string', 'max:100', Rule::unique('warehouses', 'name')],
             'city' => ['bail', 'required', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:255'],
             'type' => ['required', 'string', 'in:factory,storage'],

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Actions\Shared\DeleteUnusedRecordAction;
 use App\Enums\Permission;
 use App\Filters\WarehouseFilter;
 use App\Http\Controllers\Controller;
@@ -12,6 +13,7 @@ use App\Http\Requests\Warehouses\StoreWarehouseRequest;
 use App\Http\Requests\Warehouses\UpdateWarehouseRequest;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\DeactivationGuardService;
 use App\Services\WarehouseContextService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +23,11 @@ use Inertia\Response;
 
 class WarehouseController extends Controller
 {
-    public function __construct(private readonly WarehouseContextService $warehouseContextService) {}
+    public function __construct(
+        private readonly WarehouseContextService $warehouseContextService,
+        private readonly DeactivationGuardService $deactivationGuard,
+        private readonly DeleteUnusedRecordAction $deleteUnused,
+    ) {}
 
     public function index(IndexWarehouseRequest $request): Response
     {
@@ -123,7 +129,27 @@ class WarehouseController extends Controller
     {
         $this->authorize('update', $warehouse);
 
-        $warehouse->update($request->validated());
+        $validated = $request->validated();
+        $deactivating = array_key_exists('is_active', $validated) && ! $validated['is_active'] && $warehouse->is_active;
+
+        $blocker = DB::transaction(function () use ($warehouse, $validated, $deactivating): ?string {
+            // Misma serialización que en productos: CreateProductionOrderAction bloquea la bodega en modo compartido.
+            if ($deactivating) {
+                $blocker = $this->deactivationGuard->warehouseBlocker(Warehouse::query()->lockForUpdate()->findOrFail($warehouse->id));
+
+                if ($blocker !== null) {
+                    return $blocker;
+                }
+            }
+
+            $warehouse->update($validated);
+
+            return null;
+        });
+
+        if ($blocker !== null) {
+            return back()->with('error', $blocker);
+        }
 
         return redirect()
             ->route('warehouses.index')
@@ -134,12 +160,10 @@ class WarehouseController extends Controller
     {
         $this->authorize('delete', $warehouse);
 
-        $hasFinishedInventory = $warehouse->finishedInventories()->exists();
-        if ($hasFinishedInventory) {
-            return back()->with('error', __('No se puede eliminar la bodega porque tiene inventario de producto terminado.'));
+        // Solo si nunca se usó; sus asignaciones de usuarios se van con ella (docs/POLITICA_ELIMINACION.md §3.1).
+        if (! $this->deleteUnused->execute($warehouse)) {
+            return back()->with('error', __('La bodega tiene historial (lotes, movimientos, órdenes o inventario). Desactívala en su lugar.'));
         }
-
-        $warehouse->delete();
 
         return redirect()
             ->route('warehouses.index')

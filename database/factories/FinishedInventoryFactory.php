@@ -23,7 +23,7 @@ class FinishedInventoryFactory extends Factory
         ];
     }
 
-    protected function configure(): static
+    public function configure(): static
     {
         return $this->afterMaking(function (FinishedInventory $inventory) {
             if ($inventory->product_id === null && $inventory->productVariant) {

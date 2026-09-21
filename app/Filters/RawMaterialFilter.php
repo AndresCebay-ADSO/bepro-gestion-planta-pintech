@@ -15,10 +15,6 @@ class RawMaterialFilter extends QueryFilter
 
     protected function status(string $value): void
     {
-        match ($value) {
-            'active' => $this->builder->where('is_active', true),
-            'inactive' => $this->builder->where('is_active', false),
-            default => null, // 'all' — sin filtro
-        };
+        $this->applyActiveStatus($value);
     }
 }
