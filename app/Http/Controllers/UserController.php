@@ -116,7 +116,7 @@ class UserController extends Controller
             });
         } catch (\Throwable $e) {
             if ($signaturePath) {
-                Storage::disk('public')->delete($signaturePath);
+                Storage::disk(User::SIGNATURE_DISK)->delete($signaturePath);
             }
 
             throw $e;
@@ -213,7 +213,7 @@ class UserController extends Controller
             });
         } catch (\Throwable $e) {
             if ($newSignaturePath) {
-                Storage::disk('public')->delete($newSignaturePath);
+                Storage::disk(User::SIGNATURE_DISK)->delete($newSignaturePath);
             }
 
             throw $e;
@@ -221,14 +221,14 @@ class UserController extends Controller
 
         if (! $updated) {
             if ($newSignaturePath) {
-                Storage::disk('public')->delete($newSignaturePath);
+                Storage::disk(User::SIGNATURE_DISK)->delete($newSignaturePath);
             }
 
             return back()->with('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
         }
 
         if ($oldSignatureToDelete) {
-            Storage::disk('public')->delete($oldSignatureToDelete);
+            Storage::disk(User::SIGNATURE_DISK)->delete($oldSignatureToDelete);
         }
 
         if ($roleChanged) {

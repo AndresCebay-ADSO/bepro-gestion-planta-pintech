@@ -9,6 +9,7 @@ use App\Enums\QrDocumentType;
 use App\Models\ProductionOrder;
 use App\Models\QrCode;
 use App\Models\QrDocument;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -137,7 +138,7 @@ class QualityInspectionCertificateService
         $signatureBase64 = null;
         if ($order->qualityResponsibleUser?->signature_path) {
             $signatureBase64 = $this->assetBase64(
-                Storage::disk('public')->path($order->qualityResponsibleUser->signature_path)
+                Storage::disk(User::SIGNATURE_DISK)->path($order->qualityResponsibleUser->signature_path)
             );
         }
 

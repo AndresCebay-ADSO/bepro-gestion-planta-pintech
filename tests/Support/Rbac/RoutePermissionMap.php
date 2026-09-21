@@ -60,6 +60,8 @@ final class RoutePermissionMap
             'users.edit' => Permission::UsersEdit,
             'users.update' => Permission::UsersEdit,
             'users.destroy' => Permission::UsersDelete,
+            // Policy `viewSignature`: el propio usuario, users.edit o production_orders.complete.
+            'users.signature' => self::AUTHENTICATED,
             'roles.index' => Permission::RolesView,
             'roles.show' => Permission::RolesView,
             'roles.create' => Permission::RolesCreate,

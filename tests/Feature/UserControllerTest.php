@@ -214,7 +214,7 @@ test('admin can update user is_active from false to true', function () {
 // ──────────────────────────────────────────────
 
 test('admin can create user with signature', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $admin = User::factory()->create();
     $admin->assignRole('admin');
@@ -238,11 +238,11 @@ test('admin can create user with signature', function () {
     $user = User::where('email', 'firma@test.com')->first();
     expect($user)->not->toBeNull();
     expect($user->signature_path)->not->toBeNull();
-    Storage::disk('public')->assertExists($user->signature_path);
+    Storage::disk('local')->assertExists($user->signature_path);
 });
 
 test('admin can update user signature', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $admin = User::factory()->create();
     $admin->assignRole('admin');
@@ -251,7 +251,7 @@ test('admin can update user signature', function () {
         'signature_path' => 'signatures/old.png',
     ]);
     $target->assignRole(SystemRole::Operator->value);
-    Storage::disk('public')->put('signatures/old.png', 'old-content');
+    Storage::disk('local')->put('signatures/old.png', 'old-content');
 
     $newFile = UploadedFile::fake()->image('new_signature.png', 200, 100);
 
@@ -269,12 +269,12 @@ test('admin can update user signature', function () {
 
     $target->refresh();
     expect($target->signature_path)->not->toBe('signatures/old.png');
-    Storage::disk('public')->assertMissing('signatures/old.png');
-    Storage::disk('public')->assertExists($target->signature_path);
+    Storage::disk('local')->assertMissing('signatures/old.png');
+    Storage::disk('local')->assertExists($target->signature_path);
 });
 
 test('user creation fails gracefully when signature optimizer throws exception', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $admin = User::factory()->create();
     $admin->assignRole('admin');
@@ -305,7 +305,7 @@ test('user creation fails gracefully when signature optimizer throws exception',
 });
 
 test('user update preserves existing signature when optimizer throws exception', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $admin = User::factory()->create();
     $admin->assignRole('admin');
@@ -314,7 +314,7 @@ test('user update preserves existing signature when optimizer throws exception',
         'signature_path' => 'signatures/original.png',
     ]);
     $target->assignRole(SystemRole::Operator->value);
-    Storage::disk('public')->put('signatures/original.png', 'original-content');
+    Storage::disk('local')->put('signatures/original.png', 'original-content');
 
     $this->mock(SignatureOptimizerService::class, function ($mock) {
         $mock->shouldReceive('optimizeAndStore')
@@ -339,11 +339,11 @@ test('user update preserves existing signature when optimizer throws exception',
 
     $target->refresh();
     expect($target->signature_path)->toBe('signatures/original.png');
-    Storage::disk('public')->assertExists('signatures/original.png');
+    Storage::disk('local')->assertExists('signatures/original.png');
 });
 
 test('admin can remove user signature', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $admin = User::factory()->create();
     $admin->assignRole('admin');
@@ -352,7 +352,7 @@ test('admin can remove user signature', function () {
         'signature_path' => 'signatures/old.png',
     ]);
     $target->assignRole(SystemRole::Operator->value);
-    Storage::disk('public')->put('signatures/old.png', 'old-content');
+    Storage::disk('local')->put('signatures/old.png', 'old-content');
 
     $this->actingAs($admin)
         ->put(route('users.update', $target), [
@@ -367,11 +367,11 @@ test('admin can remove user signature', function () {
 
     $target->refresh();
     expect($target->signature_path)->toBeNull();
-    Storage::disk('public')->assertMissing('signatures/old.png');
+    Storage::disk('local')->assertMissing('signatures/old.png');
 });
 
 test('signature file is deleted when user is deleted', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $admin = User::factory()->create();
     $admin->assignRole('super-admin');
@@ -380,7 +380,7 @@ test('signature file is deleted when user is deleted', function () {
         'signature_path' => 'signatures/delete_me.png',
     ]);
     $target->assignRole(SystemRole::Operator->value);
-    Storage::disk('public')->put('signatures/delete_me.png', 'content');
+    Storage::disk('local')->put('signatures/delete_me.png', 'content');
 
     // Sin logs de actividad
     Activity::where('causer_id', $target->id)->delete();
@@ -389,12 +389,12 @@ test('signature file is deleted when user is deleted', function () {
         ->delete(route('users.destroy', $target))
         ->assertRedirect(route('users.index'));
 
-    Storage::disk('public')->assertMissing('signatures/delete_me.png');
+    Storage::disk('local')->assertMissing('signatures/delete_me.png');
     $this->assertDatabaseMissing('users', ['id' => $target->id]);
 });
 
 test('orphaned signature file is cleaned up if database transaction fails during store', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $admin = User::factory()->create();
     $admin->assignRole('admin');
@@ -406,7 +406,7 @@ test('orphaned signature file is cleaned up if database transaction fails during
             ->once()
             ->andReturnUsing(function ($file) use (&$storedSignaturePath) {
                 $storedSignaturePath = 'signatures/mocked_orphan.png';
-                Storage::disk('public')->put($storedSignaturePath, 'orphan-content');
+                Storage::disk('local')->put($storedSignaturePath, 'orphan-content');
 
                 return $storedSignaturePath;
             });
@@ -440,11 +440,11 @@ test('orphaned signature file is cleaned up if database transaction fails during
     }
 
     expect($storedSignaturePath)->not->toBeNull();
-    Storage::disk('public')->assertMissing($storedSignaturePath);
+    Storage::disk('local')->assertMissing($storedSignaturePath);
 });
 
 test('signature file is preserved on disk if user deletion fails', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $admin = User::factory()->create();
     $admin->assignRole('super-admin');
@@ -453,7 +453,7 @@ test('signature file is preserved on disk if user deletion fails', function () {
         'signature_path' => 'signatures/preserve_me.png',
     ]);
     $target->assignRole(SystemRole::Operator->value);
-    Storage::disk('public')->put('signatures/preserve_me.png', 'preserve-content');
+    Storage::disk('local')->put('signatures/preserve_me.png', 'preserve-content');
 
     // El usuario tiene actividad, por lo que destroy() aborta
     activity('test')
@@ -465,12 +465,12 @@ test('signature file is preserved on disk if user deletion fails', function () {
         ->assertRedirect()
         ->assertSessionHas('error');
 
-    Storage::disk('public')->assertExists('signatures/preserve_me.png');
+    Storage::disk('local')->assertExists('signatures/preserve_me.png');
     $this->assertDatabaseHas('users', ['id' => $target->id]);
 });
 
 test('orphaned signature file is cleaned up and database rolled back if transaction fails during update', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $admin = User::factory()->create();
     $admin->assignRole('admin');
@@ -479,7 +479,7 @@ test('orphaned signature file is cleaned up and database rolled back if transact
         'signature_path' => 'signatures/keep_original.png',
     ]);
     $target->assignRole(SystemRole::Operator->value);
-    Storage::disk('public')->put('signatures/keep_original.png', 'original-content');
+    Storage::disk('local')->put('signatures/keep_original.png', 'original-content');
 
     $storedSignaturePath = null;
     $this->mock(SignatureOptimizerService::class, function ($mock) use (&$storedSignaturePath) {
@@ -487,7 +487,7 @@ test('orphaned signature file is cleaned up and database rolled back if transact
             ->once()
             ->andReturnUsing(function ($file) use (&$storedSignaturePath) {
                 $storedSignaturePath = 'signatures/mocked_new_orphan.png';
-                Storage::disk('public')->put($storedSignaturePath, 'new-content');
+                Storage::disk('local')->put($storedSignaturePath, 'new-content');
 
                 return $storedSignaturePath;
             });
@@ -519,8 +519,8 @@ test('orphaned signature file is cleaned up and database rolled back if transact
     }
 
     expect($storedSignaturePath)->not->toBeNull();
-    Storage::disk('public')->assertMissing($storedSignaturePath);
-    Storage::disk('public')->assertExists('signatures/keep_original.png');
+    Storage::disk('local')->assertMissing($storedSignaturePath);
+    Storage::disk('local')->assertExists('signatures/keep_original.png');
 
     $target->refresh();
     expect($target->signature_path)->toBe('signatures/keep_original.png');
@@ -795,7 +795,7 @@ test('the last active super-admin cannot be deactivated or demoted', function ()
 });
 
 test('a blocked super-admin demotion changes nothing and discards the uploaded signature', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $activeSuperAdmin = User::factory()->create(['is_active' => true, 'name' => 'Nombre original']);
     $activeSuperAdmin->assignRole(SystemRole::SuperAdmin->value);
@@ -805,7 +805,7 @@ test('a blocked super-admin demotion changes nothing and discards the uploaded s
 
     $this->mock(SignatureOptimizerService::class, function ($mock) {
         $mock->shouldReceive('optimizeAndStore')->once()->andReturnUsing(function () {
-            Storage::disk('public')->put('signatures/blocked.png', 'new-content');
+            Storage::disk('local')->put('signatures/blocked.png', 'new-content');
 
             return 'signatures/blocked.png';
         });
@@ -821,7 +821,7 @@ test('a blocked super-admin demotion changes nothing and discards the uploaded s
         ])
         ->assertSessionHas('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
 
-    Storage::disk('public')->assertMissing('signatures/blocked.png');
+    Storage::disk('local')->assertMissing('signatures/blocked.png');
 
     $activeSuperAdmin->refresh();
     expect($activeSuperAdmin->name)->toBe('Nombre original')

@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 uses(RefreshDatabase::class);
 
 test('optimizer resizes oversized signature image', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $service = app(SignatureOptimizerService::class);
 
@@ -58,7 +58,7 @@ test('optimizer resizes oversized signature image', function () {
 });
 
 test('optimizer does not resize already small signature', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $service = app(SignatureOptimizerService::class);
 
@@ -92,7 +92,7 @@ test('optimizer does not resize already small signature', function () {
 
 test('optimized signature does not cause memory error on certificate generation', function () {
     Storage::fake('local');
-    Storage::fake('public');
+    Storage::fake('local');
 
     $user = User::factory()->create([
         'email_verified_at' => now(),
@@ -110,12 +110,12 @@ test('optimized signature does not cause memory error on certificate generation'
     $content = ob_get_clean();
     imagedestroy($image);
 
-    Storage::disk('public')->put('signatures/test.png', $content);
+    Storage::disk('local')->put('signatures/test.png', $content);
 
     $service = app(SignatureOptimizerService::class);
     $optimized = $service->optimize(
         new UploadedFile(
-            Storage::disk('public')->path('signatures/test.png'),
+            Storage::disk('local')->path('signatures/test.png'),
             'signature.png',
             'image/png',
             null,
@@ -123,10 +123,10 @@ test('optimized signature does not cause memory error on certificate generation'
         )
     );
 
-    Storage::disk('public')->put('signatures/test.png', file_get_contents($optimized->getRealPath()));
+    Storage::disk('local')->put('signatures/test.png', file_get_contents($optimized->getRealPath()));
 
     // Ahora la firma esta optimizada: verificar que getimagesize no reporta dimensiones excesivas
-    $path = Storage::disk('public')->path('signatures/test.png');
+    $path = Storage::disk('local')->path('signatures/test.png');
     $info = getimagesize($path);
 
     expect($info[0])->toBeLessThanOrEqual(400)
@@ -134,7 +134,7 @@ test('optimized signature does not cause memory error on certificate generation'
 });
 
 test('optimizeAndStore stores optimized signature and returns public path', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $service = app(SignatureOptimizerService::class);
     $file = UploadedFile::fake()->image('my_signature.png', 800, 400);
@@ -142,11 +142,11 @@ test('optimizeAndStore stores optimized signature and returns public path', func
     $path = $service->optimizeAndStore($file);
 
     expect($path)->toBeString()->toStartWith('signatures/');
-    Storage::disk('public')->assertExists($path);
+    Storage::disk('local')->assertExists($path);
 });
 
 test('optimizeAndStore throws ValidationException with signature message on failure', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $service = app(SignatureOptimizerService::class);
     $tempFile = tempnam(sys_get_temp_dir(), 'corrupt_');
@@ -168,7 +168,7 @@ test('optimizeAndStore throws ValidationException with signature message on fail
 });
 
 test('optimizeAndStore converts any Throwable into ValidationException', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $service = new class extends SignatureOptimizerService
     {
@@ -190,7 +190,7 @@ test('optimizeAndStore converts any Throwable into ValidationException', functio
 });
 
 test('optimize converts small jpeg to png format and returns png path', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $service = app(SignatureOptimizerService::class);
 
@@ -215,7 +215,7 @@ test('optimize converts small jpeg to png format and returns png path', function
         $path = $service->optimizeAndStore($file);
 
         expect($path)->toEndWith('.png');
-        Storage::disk('public')->assertExists($path);
+        Storage::disk('local')->assertExists($path);
     } finally {
         if (file_exists($tempPath)) {
             @unlink($tempPath);
@@ -224,7 +224,7 @@ test('optimize converts small jpeg to png format and returns png path', function
 });
 
 test('optimizeAndStore cleans up temporary file in sys_get_temp_dir after storage', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $service = app(SignatureOptimizerService::class);
     $file = UploadedFile::fake()->image('big_signature.png', 800, 400);

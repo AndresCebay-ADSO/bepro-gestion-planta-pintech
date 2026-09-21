@@ -23,13 +23,13 @@ use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\View;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     test()->seed(RolePermissionSeeder::class);
     Storage::fake('local');
-    Storage::fake('public');
 
     $this->user = User::factory()->create([
         'email_verified_at' => now(),
@@ -39,7 +39,7 @@ beforeEach(function () {
     $this->user->assignRole('admin');
     $this->actingAs($this->user);
 
-    Storage::disk('public')->put('signatures/test.png', 'fake-signature-content');
+    Storage::disk('local')->put('signatures/test.png', 'fake-signature-content');
 
     $this->factory = Warehouse::create([
         'id' => 1,
@@ -243,8 +243,16 @@ test('regenerating certificate does not duplicate current document', function ()
         'quality_responsible_user_id' => $this->user->id,
     ]);
 
+    // La firma se lee del disco privado y llega al PDF.
+    $signatureInPdf = null;
+    View::creator('pdf.quality-inspection-certificate', function ($view) use (&$signatureInPdf): void {
+        $signatureInPdf = $view->getData()['signatureBase64'] ?? null;
+    });
+
     $service = app(QualityInspectionCertificateService::class);
     $service->generateForCompletedOrder($order, $this->user->id);
+
+    expect($signatureInPdf)->toBe('data:text/plain;base64,'.base64_encode('fake-signature-content'));
 
     $order->refresh();
     $qrCode = QrCode::where('production_order_id', $order->id)->firstOrFail();
@@ -378,7 +386,7 @@ test('quality signer must have admin or produccion role', function () {
     ]);
     $operatorUser->assignRole(SystemRole::Operator->value);
 
-    Storage::disk('public')->put('signatures/operator.png', 'fake-signature-content');
+    Storage::disk('local')->put('signatures/operator.png', 'fake-signature-content');
 
     $batch = InventoryBatch::create([
         'raw_material_id' => $this->material->id,
@@ -436,7 +444,7 @@ test('quality signer must be active', function () {
     ]);
     $inactiveUser->assignRole(SystemRole::Production->value);
 
-    Storage::disk('public')->put('signatures/inactive.png', 'fake-signature-content');
+    Storage::disk('local')->put('signatures/inactive.png', 'fake-signature-content');
 
     $batch = InventoryBatch::create([
         'raw_material_id' => $this->material->id,

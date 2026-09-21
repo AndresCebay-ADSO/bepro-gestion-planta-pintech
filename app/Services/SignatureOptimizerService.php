@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 
@@ -21,7 +22,7 @@ class SignatureOptimizerService
     public function optimizeAndStore(
         UploadedFile $file,
         string $directory = 'signatures',
-        string $disk = 'public'
+        string $disk = User::SIGNATURE_DISK,
     ): string {
         $optimized = null;
 

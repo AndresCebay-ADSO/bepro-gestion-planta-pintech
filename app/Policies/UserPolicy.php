@@ -19,6 +19,17 @@ class UserPolicy
         return $user->can(Permission::UsersCreate->value);
     }
 
+    /**
+     * Ver la imagen de la firma: el propio usuario, quien edita usuarios y quien completa órdenes (elige al firmante
+     * del certificado de calidad en la ficha de la orden).
+     */
+    public function viewSignature(User $user, User $owner): bool
+    {
+        return $user->id === $owner->id
+            || $user->can(Permission::UsersEdit->value)
+            || $user->can(Permission::ProductionOrdersComplete->value);
+    }
+
     public function update(User $user, User $target): bool
     {
         return $user->can(Permission::UsersEdit->value) && $this->canManageTarget($user, $target);
