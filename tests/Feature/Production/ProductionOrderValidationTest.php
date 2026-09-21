@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -101,7 +102,7 @@ test('rejects formula_id that belongs to another product', function () {
 
     [$product, $user, $formula] = createDependencies();
     $user->forceFill(['email_verified_at' => now()])->save();
-    $user->assignRole('admin');
+    $user->assignRole(SystemRole::Admin->value);
 
     $otherProduct = Product::create([
         'code' => 'TEST-002',
@@ -135,12 +136,12 @@ test('rejects formula_id that belongs to another product', function () {
     $response->assertSessionHasErrors(['formula_id']);
 });
 
-test('rejects soft deleted formula_id', function () {
+test('rejects an inactive formula_id', function () {
     test()->seed(RolePermissionSeeder::class);
 
     [$product, $user, $formula] = createDependencies();
     $user->forceFill(['email_verified_at' => now()])->save();
-    $user->assignRole('admin');
+    $user->assignRole(SystemRole::Admin->value);
 
     $warehouse = Warehouse::create([
         'name' => 'Fábrica Yumbo',
@@ -149,7 +150,7 @@ test('rejects soft deleted formula_id', function () {
         'is_active' => true,
     ]);
 
-    $formula->delete();
+    $formula->update(['is_active' => false]);
 
     $response = $this->actingAs($user)
         ->from(route('production-orders.create'))

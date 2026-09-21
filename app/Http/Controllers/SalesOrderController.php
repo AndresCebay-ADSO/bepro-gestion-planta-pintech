@@ -144,7 +144,7 @@ class SalesOrderController extends Controller
         $this->authorize('view', $salesOrder);
         $user = $request->user();
 
-        $salesOrder->load(['client', 'creator', 'items.product', 'items.productVariant', 'quotation']);
+        $salesOrder->load(['creator', 'items.product', 'items.productVariant', 'quotation']);
 
         $statusTransitions = $salesOrder->status->nextTransitions();
 

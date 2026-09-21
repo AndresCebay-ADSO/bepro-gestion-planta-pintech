@@ -293,7 +293,7 @@ test('paint development request translates nested payload attributes into spanis
         ->toBe('El campo sustrato es obligatorio.');
 });
 
-test('store formula request rejects inactive or soft deleted unit of measure with clear spanish message', function () {
+test('store formula request rejects inactive or nonexistent unit of measure with clear spanish message', function () {
     $rawMaterial = RawMaterial::factory()->create(['is_active' => true]);
     $inactiveUom = UnitOfMeasure::factory()->create(['is_active' => false]);
     $deletedUom = UnitOfMeasure::factory()->create(['is_active' => true]);

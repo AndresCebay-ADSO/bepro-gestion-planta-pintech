@@ -17,7 +17,7 @@ beforeEach(function (): void {
 
 test('admin can view assign users page and it only lists active users', function () {
     $admin = User::factory()->create(['is_active' => true]);
-    $admin->assignRole('admin');
+    $admin->assignRole(SystemRole::Admin->value);
 
     $activeUser = User::factory()->create(['name' => 'Activo User', 'is_active' => true]);
     $inactiveUser = User::factory()->create(['name' => 'Inactivo User', 'is_active' => false]);
@@ -37,7 +37,7 @@ test('admin can view assign users page and it only lists active users', function
 
 test('admin can assign active users to a warehouse', function () {
     $admin = User::factory()->create(['is_active' => true]);
-    $admin->assignRole('admin');
+    $admin->assignRole(SystemRole::Admin->value);
 
     $user1 = User::factory()->create(['is_active' => true]);
     $user2 = User::factory()->create(['is_active' => true]);
@@ -71,4 +71,24 @@ test('non admin user cannot access assign users page or submit assignments', fun
             ],
         ])
         ->assertForbidden();
+});
+
+test('saving assignments keeps the warehouses of inactive users, including their default one', function () {
+    $admin = userWithRole(SystemRole::Admin);
+    $active = User::factory()->create(['is_active' => true]);
+    $inactive = User::factory()->create(['is_active' => true]);
+    $warehouse = Warehouse::factory()->create();
+    $warehouse->users()->attach($inactive->id, ['is_default' => true]);
+    $inactive->update(['is_active' => false]);
+
+    // El formulario no lista al inactivo, así que nunca lo envía.
+    $this->actingAs($admin)
+        ->post(route('warehouses.assign-users', $warehouse), [
+            'users' => [['user_id' => $active->id, 'is_default' => false]],
+        ])
+        ->assertRedirect(route('warehouses.show', $warehouse));
+
+    $assigned = $warehouse->fresh()->users->keyBy('id');
+    expect($assigned->keys()->sort()->values()->all())->toBe(collect([$active->id, $inactive->id])->sort()->values()->all())
+        ->and((bool) $assigned[$inactive->id]->pivot->is_default)->toBeTrue();
 });
