@@ -21,20 +21,17 @@ use App\Models\RemnantConsumption;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
-use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    test()->seed(RolePermissionSeeder::class);
+    $unit = UnitOfMeasure::factory()->create(['code' => 'kg', 'name' => 'Kilo', 'symbol' => 'kg']);
+    $rmCat = RawMaterialCategory::factory()->create(['code' => 'RMC', 'name' => 'RM Cat', 'is_active' => true]);
+    $pCat = ProductCategory::factory()->create(['name' => 'Prod Cat']);
 
-    $unit = UnitOfMeasure::create(['code' => 'kg', 'name' => 'Kilo', 'symbol' => 'kg']);
-    $rmCat = RawMaterialCategory::create(['code' => 'RMC', 'name' => 'RM Cat', 'is_active' => true]);
-    $pCat = ProductCategory::create(['name' => 'Prod Cat']);
-
-    $product = Product::create([
+    $product = Product::factory()->create([
         'code' => 'P-COST',
         'name' => 'Pintura Cost Test',
         'category_id' => $pCat->id,
@@ -44,7 +41,7 @@ beforeEach(function () {
         'is_active' => true,
     ]);
 
-    $formula = Formula::create([
+    $formula = Formula::factory()->create([
         'product_id' => $product->id,
         'version' => 1,
         'is_active' => true,
@@ -52,14 +49,14 @@ beforeEach(function () {
         'created_by' => User::factory()->create()->id,
     ]);
 
-    $warehouse = Warehouse::create([
+    $warehouse = Warehouse::factory()->create([
         'name' => 'Planta',
         'city' => 'Cali',
         'type' => WarehouseType::Factory,
         'is_active' => true,
     ]);
 
-    $rawMaterial = RawMaterial::create([
+    $rawMaterial = RawMaterial::factory()->create([
         'code' => 'RM-COST-01',
         'category_id' => $rmCat->id,
         'unit_of_measure_id' => $unit->id,
@@ -69,7 +66,7 @@ beforeEach(function () {
         'is_active' => true,
     ]);
 
-    $variant = ProductVariant::create([
+    $variant = ProductVariant::factory()->create([
         'product_id' => $product->id,
         'code' => 'P-COST-GAL',
         'name' => 'Pintura Cost Test - Galón',
@@ -79,7 +76,7 @@ beforeEach(function () {
         'is_active' => true,
     ]);
 
-    $this->productionOrder = ProductionOrder::create([
+    $this->productionOrder = ProductionOrder::factory()->create([
         'order_number' => 'OP-COST-001',
         'product_id' => $product->id,
         'formula_id' => $formula->id,
@@ -106,8 +103,7 @@ beforeEach(function () {
 });
 
 test('operator show payload does not expose cost fields', function () {
-    $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole(SystemRole::Operator->value);
+    $operator = userWithRole(SystemRole::Operator, ['email_verified_at' => now()]);
 
     $this->actingAs($operator)
         ->get(route('production-orders.show', $this->productionOrder))
@@ -125,8 +121,7 @@ test('operator show payload does not expose cost fields', function () {
 
 test('production user show payload does not expose cost fields', function () {
     // Matriz: los costos de la orden solo con costs.view (Admin y SuperAdmin).
-    $user = User::factory()->create(['email_verified_at' => now()]);
-    $user->assignRole(SystemRole::Production->value);
+    $user = userWithRole(SystemRole::Production, ['email_verified_at' => now()]);
 
     $this->actingAs($user)
         ->get(route('production-orders.show', $this->productionOrder))
@@ -140,8 +135,7 @@ test('production user show payload does not expose cost fields', function () {
 });
 
 test('admin show payload includes cost fields', function () {
-    $admin = User::factory()->create(['email_verified_at' => now()]);
-    $admin->assignRole('admin');
+    $admin = userWithRole(SystemRole::Admin, ['email_verified_at' => now()]);
 
     $this->actingAs($admin)
         ->get(route('production-orders.show', $this->productionOrder))
@@ -223,8 +217,7 @@ test('export payload without costs omits remnant costs and CIF', function () {
 });
 
 test('operator export payload does not expose cost fields', function () {
-    $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole(SystemRole::Operator->value);
+    $operator = userWithRole(SystemRole::Operator, ['email_verified_at' => now()]);
 
     $this->actingAs($operator);
 
@@ -241,8 +234,7 @@ test('operator export payload does not expose cost fields', function () {
 });
 
 test('operator can still export pdf and excel without cost data', function () {
-    $operator = User::factory()->create(['email_verified_at' => now()]);
-    $operator->assignRole(SystemRole::Operator->value);
+    $operator = userWithRole(SystemRole::Operator, ['email_verified_at' => now()]);
 
     $this->actingAs($operator)
         ->get(route('production-orders.export-pdf', $this->productionOrder))

@@ -1,5 +1,4 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { route } from 'ziggy-js';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -12,6 +11,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    index as warehousesIndex,
+    store as warehousesStore,
+} from '@/routes/warehouses';
 
 type WarehouseForm = {
     name: string;
@@ -31,7 +34,7 @@ export default function WarehousesCreate() {
     });
 
     const submit = () => {
-        form.post(route('warehouses.store'));
+        form.post(warehousesStore().url);
     };
 
     return (
@@ -139,7 +142,7 @@ export default function WarehousesCreate() {
                                 {form.processing ? 'Guardando...' : 'Guardar'}
                             </Button>
                             <Button type="button" variant="outline" asChild>
-                                <Link href={route('warehouses.index')}>
+                                <Link href={warehousesIndex().url}>
                                     Cancelar
                                 </Link>
                             </Button>

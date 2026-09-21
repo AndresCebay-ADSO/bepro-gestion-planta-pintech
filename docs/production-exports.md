@@ -39,21 +39,19 @@ Se utiliza la librería `barryvdh/laravel-dompdf` para generar un documento que 
 
 ## 3. Exportación a Excel
 
-Se utiliza `maatwebsite/excel` bajo un patrón de "Múltiples Hojas" para organizar la información de manera lógica.
+Se utiliza `maatwebsite/excel` con una sola hoja generada desde una vista Blade (`FromView`), con el mismo contenido
+que el PDF.
 
 ### Archivos Relacionados
-- **Clase Principal**: `app/Exports/ProductionOrderExport.php`
-- **Hoja General**: `app/Exports/Sheets/ProductionOrderGeneralSheet.php`
-- **Hoja Ingredientes**: `app/Exports/Sheets/ProductionOrderIngredientsSheet.php`
-
-### Diseño y Estilos
-- **ShouldAutoSize**: Ajusta el ancho de las columnas automáticamente.
-- **WithStyles**: Aplica colores de cabecera y bordes.
-- **WithColumnFormatting**: Asegura que los precios tengan signo de pesos (`$`) y los pesos tengan decimales fijos.
+- **Clase**: `app/Exports/ProductionOrderExport.php` (`FromView`, `ShouldAutoSize`, `WithColumnWidths`, `WithDrawings`
+  para el logo, `WithTitle`).
+- **Vista**: `resources/views/excel/production-order.blade.php`.
+- **Datos**: `app/Actions/Production/BuildProductionOrderExportDataAction.php` (compartidos con el PDF; los costos solo
+  con `costs.view`).
 
 ### Cómo editar el Excel
-- **Cambiar campos**: Edita el método `array()` en las clases de `Sheets`.
-- **Cambiar colores**: Edita el método `styles()` en las mismas clases.
+- **Cambiar campos o estilos**: edita la vista `excel/production-order.blade.php`.
+- **Cambiar anchos de columna o el logo**: `columnWidths()` y `drawings()` en `ProductionOrderExport`.
 
 ---
 

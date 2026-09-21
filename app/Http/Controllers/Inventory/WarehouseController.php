@@ -228,7 +228,15 @@ class WarehouseController extends Controller
                 ];
             }
 
-            $warehouse->users()->sync($syncData);
+            // El formulario solo lista usuarios activos: se conservan las asignaciones de los inactivos (incluida su bodega
+            // por defecto), para que al reactivarlos vuelvan con sus bodegas.
+            $inactiveAssignments = $warehouse->users()
+                ->where('users.is_active', false)
+                ->get(['users.id'])
+                ->mapWithKeys(fn (User $user): array => [$user->id => ['is_default' => (bool) $user->pivot->is_default]])
+                ->all();
+
+            $warehouse->users()->sync($syncData + $inactiveAssignments);
 
             $defaultUserIds = $userItems
                 ->filter(fn (array $item): bool => $item['is_default'])

@@ -248,3 +248,14 @@ it('rechaza crear una orden si su producto o su bodega se desactivaron después 
 
     expect(ProductionOrder::count())->toBe(0);
 })->with(['product_id', 'warehouse_id']);
+
+it('responde 404 si la presentación de la URL pertenece a otro producto', function () {
+    actingAsRole(SystemRole::Admin);
+    $product = Product::factory()->create();
+    $foreign = ProductVariant::factory()->create();
+
+    $this->patch(route('products.variants.update', [$product, $foreign]), variantUpdatePayload($foreign, true))->assertNotFound();
+    $this->delete(route('products.variants.destroy', [$product, $foreign]))->assertNotFound();
+
+    $this->assertDatabaseHas('product_variants', ['id' => $foreign->id]);
+});

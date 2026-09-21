@@ -510,7 +510,7 @@ y cada test arranca una aplicación nueva. No hace falta limpiarla en `TestCase`
 > `RESTRICT` como guardia. Motivo verificado: el borrado lógico dejaba `NULL` las relaciones del historial (órdenes sin
 > producto) y bloqueaba los códigos. El análisis de abajo se conserva como antecedente; los riesgos 1 (índices únicos),
 > 2 (costeo FIFO) y 5 (auditoría de claves foráneas) quedan resueltos por la política. La corrección de movimientos MP
-> (paso 14) sigue igual.
+> (paso 14) se descartó el 2026-09-21 (ver abajo).
 >
 > **✅ Implementada (2026-09-18):** ver el estado en `docs/POLITICA_ELIMINACION.md` §5.1.
 
@@ -528,10 +528,15 @@ y cada test arranca una aplicación nueva. No hace falta limpiarla en `TestCase`
 
 **5. Auditoría de claves foráneas (tras tu nota: se generaron con vibe coding).** 23 `cascadeOnDelete`, 20 `nullOnDelete`, 51 `restrictOnDelete`. Regla propuesta: tablas de historial (`price_lists`, `production_costs`, movimientos, lotes, detalles de orden) → `restrictOnDelete`; cascada solo para hijos sin valor propio (p. ej. `formula_details` de una fórmula borrable). Prioridad: la cascada `products` → historial de precios y costos.
 
-**Decidido (tus notas):** `InventoryMovement` e `InventoryBatch` son libro mayor inmutable y **no** llevan SoftDeletes. Hace falta un movimiento de reverso (hoy `InventoryMovementType` solo tiene `entry`/`exit`).
+**Decidido (tus notas):** `InventoryMovement` e `InventoryBatch` son libro mayor inmutable y **no** llevan SoftDeletes. Los errores se corrigen con un movimiento contrario registrado a mano y una nota (ver abajo:
+la acción de reverso se descartó).
 
-**Corrección de movimientos MP (paso 14 de la 2B).** La edición y el borrado ya se retiraron en la 2.2 (lote 3). Falta
-el flujo correcto de corrección:
+**Corrección de movimientos MP (paso 14 de la 2B) — ❌ descartado (2026-09-21).** Decisión del usuario: sin acción
+"Revertir movimiento" ni motivo; un error se corrige a mano con un movimiento contrario y una nota (el campo `notes` ya
+existe, hasta 2000 caracteres). Limitación aceptada: si una salida equivocada dejó un lote en cero, la entrada que la
+corrige crea un lote nuevo (el selector solo lista lotes con stock); quien corrige usa el precio del lote original. Si
+llega a molestar, se permite elegir lotes vacíos en el selector, sin crear la acción. Propuesta original, como
+antecedente:
 1. Columna `reason` en `inventory_movements` con un enum (compra, ajuste, devolución, corrección…), siguiendo
    `FinishedInventoryMovementReason`. Los movimientos existentes se migran con un valor por defecto.
 2. Acción "Revertir movimiento": crea el movimiento compensatorio con `reverses_movement_id` hacia el original, motivo
@@ -592,9 +597,9 @@ FASE 2A — RBAC  (≈13 días)
                                                      ────────
                                                       ≈15 días
 
-FASE 2B — Integridad  (≈4,5 días)
+FASE 2B — Integridad  (≈3 días)  ✅ cerrada
   12. 2.6+2.7  Política de eliminación                 3 d     ← docs/POLITICA_ELIMINACION.md
-  14. ---      Corrección de movimientos MP            1,5 d   ← motivo + "Revertir movimiento"
+  14. ---      Corrección de movimientos MP            ❌ descartado: corrección manual con nota
 ```
 
 **Paso 11 — renombrar los roles a inglés.** Los valores `'produccion'`, `'operador'` y `'comercial'` vienen del
@@ -670,7 +675,7 @@ Tu estimación era de 8 días (días 6-13). El alcance real, incluyendo lo que l
 | C3 | Mono o multi-rol | ✅ Un rol por usuario, sin permisos directos (se pueden activar después sin migración) |
 | C4 | Producción pierde fórmulas y creación/edición de productos | ✅ Intencional: Admin es la jefa de producción |
 | — | Auto-eliminación de cuenta | ✅ Se elimina la función |
-| — | SoftDeletes en `InventoryMovement` / `InventoryBatch` | ✅ No: libro mayor inmutable con movimientos de reverso |
+| — | SoftDeletes en `InventoryMovement` / `InventoryBatch` | ✅ No: libro mayor inmutable; los errores se corrigen con un movimiento contrario manual y una nota |
 | — | Orden, pedido y cotización eliminables | ✅ No: se cancelan por estado |
 | — | Desarrollo de pinturas | ✅ Solo Admin (y Comercial, las suyas). Producción y Operador sin acceso |
 | — | Comercial en órdenes de producción | ✅ Sin acceso: lo cubre el estado del pedido (`MATRIZ_RBAC.md` §7.3) |

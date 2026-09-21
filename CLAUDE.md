@@ -105,7 +105,8 @@ Route (routes/web.php, role: middleware)
 - **Language**: Code in English (classes, methods, variables, DB columns). User-facing strings, UI text, and inline comments in Spanish (`lang/es.json`, `lang/es/`).
 - **PHP**: PHP 8.3+, PSR-12 via Laravel Pint. Include `declare(strict_types=1);` at the top of new PHP files.
 - **Deletion**: never `SoftDeletes`. Master data is deactivated (`is_active`) and only hard-deleted when unused;
-  business documents are cancelled by status; ledgers are reversed. FKs to history are `RESTRICT`, never `SET NULL`.
+  business documents are cancelled by status; ledger mistakes are fixed by a manual opposite movement with a note
+  (no "reverse" action). FKs to history are `RESTRICT`, never `SET NULL`.
   See `docs/POLITICA_ELIMINACION.md`.
 - **Authorization**: decide by permission (`$user->can(Permission::X->value)`, `can:` middleware, policies), never by
   role name. The only role checks live in `User` (`isSuperAdmin()`, `superAdmins()`), enforced by a test. Role names

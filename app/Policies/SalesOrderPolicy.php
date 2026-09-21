@@ -32,7 +32,7 @@ class SalesOrderPolicy
     /**
      * Datos del pedido (contacto, dirección, prioridad, fechas, notas): solo mientras está pendiente.
      */
-    public function edit(User $user, SalesOrder $salesOrder): bool
+    public function update(User $user, SalesOrder $salesOrder): bool
     {
         return $salesOrder->status === SalesOrderStatus::Pending
             && $user->can(Permission::SalesOrdersEdit->value)

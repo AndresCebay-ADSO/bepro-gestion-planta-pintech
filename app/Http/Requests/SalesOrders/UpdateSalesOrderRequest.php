@@ -16,7 +16,7 @@ class UpdateSalesOrderRequest extends FormRequest
         /** @var SalesOrder $salesOrder */
         $salesOrder = $this->route('sales_order');
 
-        return $this->user()?->can('edit', $salesOrder) ?? false;
+        return $this->user()?->can('update', $salesOrder) ?? false;
     }
 
     /**

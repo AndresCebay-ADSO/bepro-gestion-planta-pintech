@@ -69,8 +69,8 @@ it('no muestra a Producción las alertas de precios ni las de desarrollo de pint
     $this->get(route('dashboard'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('stats.unresolved_alerts', 1)
-            ->has('recent_alerts', 1)
+            ->where('unresolvedAlertsCount', 1)
+            ->has('recentAlerts', 1)
             ->where('alert_breakdown.stock_bajo', 1)
             ->where('alert_breakdown.variacion_precio', 0)
             ->where('alert_breakdown.paint_development_request', 0));

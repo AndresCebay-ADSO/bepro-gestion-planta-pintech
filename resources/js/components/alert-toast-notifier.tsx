@@ -3,14 +3,10 @@ import { BellRing, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { index as alertsIndex } from '@/routes/alerts';
+import type { NewAlert } from '@/types';
 
-type AlertToast = {
-    id: number;
-    message: string;
-    severity: string;
-    type: string;
-    type_label: string;
-};
+/** Las alertas recientes (campana) traen más campos; la notificación usa solo estos. */
+type AlertToast = NewAlert;
 
 const STORAGE_KEY = 'pintech_seen_alert_ids';
 
@@ -46,16 +42,7 @@ function writeSeenAlertIds(ids: Set<number>): void {
 }
 
 export function AlertToastNotifier() {
-    const {
-        auth,
-        recentAlerts = [],
-        flash,
-    } = usePage<{
-        recentAlerts?: AlertToast[];
-        flash?: {
-            new_alerts?: AlertToast[];
-        };
-    }>().props;
+    const { auth, recentAlerts, flash } = usePage().props;
 
     const [toasts, setToasts] = useState<AlertToast[]>([]);
 

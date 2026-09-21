@@ -13,6 +13,11 @@ use Illuminate\Support\Str;
  */
 enum SystemRole: string
 {
+    /**
+     * Guard de Spatie de todos los roles y permisos de la aplicación.
+     */
+    public const GUARD = 'web';
+
     case SuperAdmin = 'super-admin';
     case Admin = 'admin';
     case Production = 'production';

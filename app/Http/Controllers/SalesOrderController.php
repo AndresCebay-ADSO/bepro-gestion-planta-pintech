@@ -17,6 +17,7 @@ use App\Models\Product;
 use App\Models\SalesOrder;
 use App\Support\EnumOptions;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -106,12 +107,12 @@ class SalesOrderController extends Controller
         $this->authorize('create', SalesOrder::class);
 
         $validated = $request->validated();
-        $user = auth()->user();
+        $user = $request->user();
 
         $order = DB::transaction(function () use ($validated, $user): SalesOrder {
             $order = SalesOrder::create([
                 'client_id' => $validated['client_id'],
-                'status' => SalesOrderStatus::Pending->value,
+                'status' => SalesOrderStatus::Pending,
                 'priority' => $validated['priority'],
                 'required_date' => $validated['required_date'],
                 'notes' => $validated['notes'] ?? null,
@@ -138,12 +139,12 @@ class SalesOrderController extends Controller
             ->with('success', 'Pedido creado con éxito.');
     }
 
-    public function show(SalesOrder $salesOrder): Response
+    public function show(Request $request, SalesOrder $salesOrder): Response
     {
         $this->authorize('view', $salesOrder);
-        $user = auth()->user();
+        $user = $request->user();
 
-        $salesOrder->load(['client', 'creator', 'items.product', 'items.productVariant', 'quotation']);
+        $salesOrder->load(['creator', 'items.product', 'items.productVariant', 'quotation']);
 
         $statusTransitions = $salesOrder->status->nextTransitions();
 
@@ -154,7 +155,7 @@ class SalesOrderController extends Controller
                 $statusTransitions
             ),
             'can' => [
-                'edit' => $user?->can('edit', $salesOrder) ?? false,
+                'update' => $user?->can('update', $salesOrder) ?? false,
                 'updateStatus' => $user?->can('updateStatus', $salesOrder) ?? false,
                 'viewQuotation' => $salesOrder->quotation !== null && ($user?->can('view', $salesOrder->quotation) ?? false),
             ],

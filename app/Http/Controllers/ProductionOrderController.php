@@ -133,7 +133,7 @@ class ProductionOrderController extends Controller
                 'presentation_value' => (float) $v->presentation_value,
             ]);
 
-        $user = auth()->user();
+        $user = $request->user();
         $includeCosts = $user?->can('previewCosts', $productionOrder) ?? false;
 
         // Firmantes del certificado: quien puede completar órdenes (misma regla que CompleteProductionOrderRequest).
@@ -169,11 +169,11 @@ class ProductionOrderController extends Controller
     /**
      * Exportar orden de producción como PDF (ficha industrial FPR-01).
      */
-    public function exportPdf(ProductionOrder $productionOrder): \Illuminate\Http\Response
+    public function exportPdf(Request $request, ProductionOrder $productionOrder): \Illuminate\Http\Response
     {
         $this->authorize('view', $productionOrder);
 
-        $includeCosts = auth()->user()?->can('previewCosts', $productionOrder) ?? false;
+        $includeCosts = $request->user()?->can('previewCosts', $productionOrder) ?? false;
         $orderData = $this->buildProductionOrderExportData->execute($productionOrder, $includeCosts);
         $filename = "orden-produccion-{$orderData['order_number']}.pdf";
 
@@ -200,11 +200,11 @@ class ProductionOrderController extends Controller
      * NOTE: Diseñado para una orden individual. Si se requiere exportación
      * masiva desde el índice en el futuro, se deberá refactorizar esta clase.
      */
-    public function exportExcel(ProductionOrder $productionOrder): BinaryFileResponse
+    public function exportExcel(Request $request, ProductionOrder $productionOrder): BinaryFileResponse
     {
         $this->authorize('view', $productionOrder);
 
-        $includeCosts = auth()->user()?->can('previewCosts', $productionOrder) ?? false;
+        $includeCosts = $request->user()?->can('previewCosts', $productionOrder) ?? false;
         $orderData = $this->buildProductionOrderExportData->execute($productionOrder, $includeCosts);
         $filename = "orden-produccion-{$orderData['order_number']}.xlsx";
 

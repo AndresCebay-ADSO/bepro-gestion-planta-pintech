@@ -140,9 +140,9 @@ test('admin dashboard exposes global stats', function () {
             ->where('stats.pending_orders', 1)
             ->where('stats.active_orders', 1)
             ->where('stats.completed_today', 0)
-            ->where('stats.unresolved_alerts', 1)
+            ->where('unresolvedAlertsCount', 1)
             ->has('recent_orders', 3)
-            ->has('recent_alerts', 1)
+            ->has('recentAlerts', 1)
             ->where('alert_breakdown.stock_bajo', 1));
 });
 
@@ -157,10 +157,10 @@ test('production dashboard exposes operational stats', function () {
             ->where('stats.pending_orders', 1)
             ->where('stats.active_orders', 1)
             ->where('stats.pending_review_orders', 1)
-            ->where('stats.unresolved_alerts', 1)
+            ->where('unresolvedAlertsCount', 1)
             ->missing('stats.total_users')
             ->has('recent_orders', 3)
-            ->has('recent_alerts', 1)
+            ->has('recentAlerts', 1)
             ->where('alert_breakdown.stock_bajo', 1));
 });
 
@@ -176,7 +176,8 @@ test('operator dashboard exposes plant stats', function () {
             ->where('stats.active_orders', 1)
             ->where('stats.submitted_orders', 1)
             ->has('recent_orders', 3)
-            ->missing('recent_alerts'));
+            ->where('recentAlerts', [])
+            ->missing('alert_breakdown'));
 });
 
 test('comercial dashboard exposes sales stats', function () {
@@ -252,7 +253,8 @@ test('a custom role gets the view that matches its permissions and only its data
             ->where('roleLabel', 'calidad')
             ->where('stats.pending_orders', 1)
             ->missing('stats.total_users')
-            ->missing('recent_alerts'));
+            ->where('recentAlerts', [])
+            ->missing('alert_breakdown'));
 });
 
 test('a custom role without dashboard data gets an empty dashboard instead of an error', function () {

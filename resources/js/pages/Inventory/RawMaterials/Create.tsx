@@ -1,7 +1,10 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { route } from 'ziggy-js';
 import { RawMaterialForm } from '@/components/raw-materials/raw-material-form';
 import { Button } from '@/components/ui/button';
+import {
+    index as rawMaterialsIndex,
+    store as rawMaterialsStore,
+} from '@/routes/raw-materials';
 
 type UnitOption = {
     id: number;
@@ -52,7 +55,7 @@ export default function RawMaterialsCreate({ categories, units }: Props) {
                     : data.price_variation_threshold,
         }));
 
-        form.post(route('raw-materials.store'));
+        form.post(rawMaterialsStore().url);
     };
 
     return (
@@ -63,7 +66,7 @@ export default function RawMaterialsCreate({ categories, units }: Props) {
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Link
-                            href={route('raw-materials.index')}
+                            href={rawMaterialsIndex().url}
                             className="hover:text-foreground"
                         >
                             Materias Primas
@@ -89,9 +92,7 @@ export default function RawMaterialsCreate({ categories, units }: Props) {
 
                 <div className="flex justify-end gap-2 pt-2 pr-2">
                     <Button variant="outline" asChild>
-                        <Link href={route('raw-materials.index')}>
-                            Cancelar
-                        </Link>
+                        <Link href={rawMaterialsIndex().url}>Cancelar</Link>
                     </Button>
                 </div>
             </div>

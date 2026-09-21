@@ -43,8 +43,6 @@ class ProductVariantController extends Controller
     {
         $this->authorize('manageVariants', $product);
 
-        abort_if((int) $variant->product_id !== (int) $product->id, 404);
-
         $validated = $request->validated();
 
         $deactivating = array_key_exists('is_active', $validated) && ! $validated['is_active'] && $variant->is_active;
@@ -76,8 +74,6 @@ class ProductVariantController extends Controller
     public function destroy(Product $product, ProductVariant $variant): RedirectResponse
     {
         $this->authorize('manageVariants', $product);
-
-        abort_if((int) $variant->product_id !== (int) $product->id, 404);
 
         // Solo si nunca se usó (cotizaciones, pedidos, inventario, lotes, precios): si no, se desactiva
         // (docs/POLITICA_ELIMINACION.md §3.1).

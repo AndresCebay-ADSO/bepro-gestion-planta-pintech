@@ -4,20 +4,18 @@ import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export function FlashMessages() {
-    const { flash } = usePage().props as any;
+    const { flash } = usePage().props;
     const [dismissedMessage, setDismissedMessage] = useState<string | null>(
         null,
     );
 
     // Derivamos el mensaje directamente del prop (Single Source of Truth)
-    const currentFlash = flash.message || flash.success || flash.error || null;
-    const message = flash.message
-        ? { type: 'success' as const, text: flash.message }
-        : flash.success
-          ? { type: 'success' as const, text: flash.success }
-          : flash.error
-            ? { type: 'error' as const, text: flash.error }
-            : null;
+    const currentFlash = flash.success || flash.error || null;
+    const message = flash.success
+        ? { type: 'success' as const, text: flash.success }
+        : flash.error
+          ? { type: 'error' as const, text: flash.error }
+          : null;
 
     // Si el mensaje actual es el mismo que el usuario ya cerró, no mostramos nada
     if (!message || dismissedMessage === currentFlash) {

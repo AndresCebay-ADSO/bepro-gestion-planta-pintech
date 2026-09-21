@@ -18,6 +18,7 @@ use App\Services\FinishedInventory\FinishedInventoryMovementService;
 use App\Services\WarehouseContextService;
 use App\Support\EnumOptions;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -142,7 +143,7 @@ class FinishedInventoryMovementController extends Controller
             ->with('success', __('Movimiento de inventario de producto terminado registrado exitosamente.'));
     }
 
-    public function show(FinishedInventoryMovement $finishedInventoryMovement): Response
+    public function show(Request $request, FinishedInventoryMovement $finishedInventoryMovement): Response
     {
         $this->authorize('view', $finishedInventoryMovement);
 
@@ -156,7 +157,7 @@ class FinishedInventoryMovementController extends Controller
         ]);
 
         // El costo del movimiento solo con costs.view (docs/MATRIZ_RBAC.md, principio 1).
-        if (! (auth()->user()?->can(Permission::CostsView->value) ?? false)) {
+        if (! ($request->user()?->can(Permission::CostsView->value) ?? false)) {
             $finishedInventoryMovement->makeHidden('cost_price');
         }
 

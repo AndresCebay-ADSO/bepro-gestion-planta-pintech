@@ -55,9 +55,7 @@ export default function RawMaterialsShow({
     hasAvailableStock,
     hasActivity,
 }: Props) {
-    const flash = usePage<{
-        flash?: { success?: string; error?: string };
-    }>().props.flash;
+    const flash = usePage().props.flash;
 
     const totalAvailableQuantity = rawMaterial.inventory_batches.reduce(
         (sum, batch) => sum + (Number(batch.remaining_quantity) || 0),

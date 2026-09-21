@@ -17,6 +17,7 @@ use App\Services\TimezoneService;
 use App\Support\EnumOptions;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -88,7 +89,7 @@ class PaintDevelopmentRequestController extends Controller
             ->with('success', $message);
     }
 
-    public function show(PaintDevelopmentRequest $paintDevelopmentRequest): Response
+    public function show(Request $request, PaintDevelopmentRequest $paintDevelopmentRequest): Response
     {
         $this->authorize('view', $paintDevelopmentRequest);
 
@@ -97,10 +98,10 @@ class PaintDevelopmentRequestController extends Controller
         return Inertia::render('PaintDevelopmentRequests/Show', [
             'request' => $this->buildRequestData($paintDevelopmentRequest),
             'can' => [
-                'update' => auth()->user()?->can('update', $paintDevelopmentRequest) ?? false,
-                'exportPdf' => auth()->user()?->can('exportPdf', $paintDevelopmentRequest) ?? false,
-                'updateStatus' => auth()->user()?->can('updateStatus', $paintDevelopmentRequest) ?? false,
-                'submit' => auth()->user()?->can('submit', $paintDevelopmentRequest) ?? false,
+                'update' => $request->user()?->can('update', $paintDevelopmentRequest) ?? false,
+                'exportPdf' => $request->user()?->can('exportPdf', $paintDevelopmentRequest) ?? false,
+                'updateStatus' => $request->user()?->can('updateStatus', $paintDevelopmentRequest) ?? false,
+                'submit' => $request->user()?->can('submit', $paintDevelopmentRequest) ?? false,
             ],
             'nextStatusOptions' => EnumOptions::for($paintDevelopmentRequest->status->nextTransitions()),
         ]);

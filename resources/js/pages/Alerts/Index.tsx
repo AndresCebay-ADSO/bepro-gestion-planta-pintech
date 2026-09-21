@@ -131,9 +131,7 @@ export default function AlertsIndex({
         },
     ];
 
-    const flash = usePage<{
-        flash?: { success?: string; error?: string };
-    }>().props.flash;
+    const flash = usePage().props.flash;
 
     const handleResolve = (alertId: number) => {
         router.patch(alertResolve({ alert: alertId }).url, undefined, {

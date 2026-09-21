@@ -347,39 +347,57 @@ Coinciden con RR-02, RR-03, RR-05, RR-07, RR-08, RR-10 a RR-13; aportan RR-15 y 
 - Accesibilidad del componente de permisos (módulo anunciado dos veces, casillas deshabilitadas en solo lectura) → B27.
 - Lógica de `UserController` en el controlador: previa, fuera del alcance (Lote C).
 
+**Verificación de la revisión externa y de CodeRabbit del PR #149 (2026-09-21):** cada punto se verificó contra el
+código y contra `develop`.
+- Aplicados: CR-01 → B33, DT-04 → B34, DT-06 → B35; los dos comentarios de CodeRabbit → B36 y B37.
+- Pendientes: DT-03 → B38; DT-02 → C6.
+- No reales: CR-02 (la carrera es la contraria —un usuario reactivado mientras el formulario está abierto se
+  desasigna— y la ventana es mínima), CR-03 (las alertas se crean en POST que redirigen y el GET siguiente las
+  muestra; una descarga no se cuela en medio), DT-05 (el FormRequest se valida al resolverse), E-01 a E-05 (ya
+  resueltos o sin efecto). Opinión o bajo impacto, sin acción: DT-01, DT-07, E-07.
+
 ### Lote B — Limpieza técnica (rama nueva `chore/…`, tras el merge)
 
 | # | Tarea | Hallazgos | Esfuerzo |
 | --- | --- | --- | --- |
 | B1 | `declare(strict_types=1)` en los 8 archivos señalados (luego progresivamente en los 67) | CR-11 | 30 min + suite |
-| B2 | Estandarizar `$request->user()` en controladores que reciben `Request` | CR-12, CR-04 | 45 min |
-| B3 | Unificar flash en `success` (`UserController`) | CR-16 | 15 min |
-| B4 | Tipar `warehouseContext` (y los demás props compartidos) en `global.d.ts` | CR-14 | 20 min |
-| B5 | `CostController`: ability de policy (`ProductPolicy::updateCost`) y validación del margen en `UpdateCostRequest` | CR-13 | 45 min |
-| B6 | Detalles: enum directo en `store`, PHPDoc de `clientOptions()` | CR-18, CR-17 | 10 min |
-| B7 | Convertir `verify_production_lock.php` en test Pest o eliminarlo si ya está cubierto | CR-10, AG-14 | 30 min |
-| B8 | Manejar el código 419 (sesión/CSRF expirado) en el `respond()` de `bootstrap/app.php`, igual que el 429 | AG-04 | 20 min |
-| B9 | `SalesOrderPolicy`: añadir `update()` como alias de `edit()` para que el patrón sea intercambiable con `QuotationPolicy`/`PaintDevelopmentRequestPolicy` | AG-05 | 15 min |
-| B10 | `SalesOrderController::show`: quitar `client` del `load()`, no se usa (se leen las columnas desnormalizadas) | AG-06 | 10 min |
+| ~~B2~~ | ✅ Hecho (2026-09-21): las 20 acciones usan `$request->user()` (se inyecta `Request` donde faltaba). Queda `auth()` solo en el helper privado `UserController::assignableRoles`. Estandarizar `$request->user()` en controladores que reciben `Request` | CR-12, CR-04 | 45 min |
+| ~~B3~~ | ✅ Hecho (2026-09-21): `UserController` usa `success`; se retira la clave compartida `flash.message`, que nadie más usaba. Unificar flash en `success` (`UserController`) | CR-16 | 15 min |
+| ~~B4~~ | ✅ Hecho (2026-09-21): `global.d.ts` tipa todas las props compartidas (`warehouseContext`, alertas, flash) con tipos en `types/shared.ts`; se quitan 11 genéricos locales de `usePage` y el `as any` de `flash-messages`. Tipar `warehouseContext` (y los demás props compartidos) en `global.d.ts` | CR-14 | 20 min |
+| ~~B5~~ | ✅ Hecho (2026-09-21): `ProductPolicy::updateCost`; `UpdateCostRequest` autoriza con la policy, valida y calcula el margen con `DecimalCalculator` (antes, con floats en el controlador). `CostController`: ability de policy (`ProductPolicy::updateCost`) y validación del margen en `UpdateCostRequest` | CR-13 | 45 min |
+| ~~B6~~ | ✅ Hecho (2026-09-21): `SalesOrderStatus::Pending` directo; el PHPDoc de `clientOptions()` ya se corrigió en la política de eliminación. Detalles: enum directo en `store`, PHPDoc de `clientOptions()` | CR-18, CR-17 | 10 min |
+| ~~B7~~ | ✅ Hecho (2026-09-21): eliminado; usaba valores que ya no existen y la regla ya la cubren dos tests de `ProductionOrderValidationTest`. Convertir `verify_production_lock.php` en test Pest o eliminarlo si ya está cubierto | CR-10, AG-14 | 30 min |
+| ~~B8~~ | ✅ Hecho (2026-09-21): el 419 muestra la página de error "Tu sesión expiró" (un `back()` perdía el aviso al redirigir al login). Manejar el código 419 (sesión/CSRF expirado) en el `respond()` de `bootstrap/app.php`, igual que el 429 | AG-04 | 20 min |
+| ~~B9~~ | ✅ Hecho (2026-09-21): `SalesOrderPolicy::edit()` renombrado a `update()` en la policy, el request, la ruta y el controlador (sin alias). `SalesOrderPolicy`: añadir `update()` como alias de `edit()` para que el patrón sea intercambiable con `QuotationPolicy`/`PaintDevelopmentRequestPolicy` | AG-05 | 15 min |
+| ~~B10~~ | ✅ Hecho (2026-09-21): `show` ya no carga `client` (usa las columnas desnormalizadas). `SalesOrderController::show`: quitar `client` del `load()`, no se usa (se leen las columnas desnormalizadas) | AG-06 | 10 min |
 | ~~B11~~ | ✅ Resuelto con la política de eliminación: las claves foráneas `RESTRICT` protegen el historial y `hasActivity()` solo consulta la auditoría. `User::hasActivity()`: condensar las 16 consultas en una sola | AG-07 | 45 min |
-| B12 | Botón "Volver" de `ErrorPage.tsx`: si no hay historial, navegar a `homeHref` (o `/` si tampoco hay) | AG-09 | 15 min |
-| B13 | `useMemo` en `buildSidebarGroups` dentro de `AppSidebar` | AG-10 | 15 min |
-| B14 | Uniformar `href` del menú: siempre objeto Wayfinder o siempre `.url` | AG-12 | 15 min |
-| B15 | `DashboardService`: zona horaria de planta desde `config('app.plant_timezone')` | AU-09 | 10 min |
+| ~~B12~~ | ✅ Hecho (2026-09-21): sin historial, "Volver" lleva al inicio o al login. Botón "Volver" de `ErrorPage.tsx`: si no hay historial, navegar a `homeHref` (o `/` si tampoco hay) | AG-09 | 15 min |
+| ~~B13~~ | ❌ Obsoleto: el proyecto usa React Compiler (`babel-plugin-react-compiler`), que ya memoriza el componente; el `useMemo` se retiró. `useMemo` en `buildSidebarGroups` dentro de `AppSidebar` | AG-10 | 15 min |
+| ~~B14~~ | ✅ Hecho (2026-09-21): menú lateral, cabecera y Configuración con `.url`. Queda `/reports` (elemento deshabilitado sin ruta, decisión de producto). Uniformar `href` del menú: siempre objeto Wayfinder o siempre `.url` | AG-12 | 15 min |
+| ~~B15~~ | ✅ Hecho (2026-09-21): `DashboardService` (3) y `SaveProductionOrderOperationalDataAction` leen `config('app.plant_timezone')`. `DashboardService`: zona horaria de planta desde `config('app.plant_timezone')` | AU-09 | 10 min |
 | ~~B16~~ | ✅ Resuelto con la política de eliminación (sin soft deletes): retirados `restore` y `forceDelete` de las policies. Retirar `ProductPolicy::restore` y `forceDelete` | AU-11 | 10 min |
 | B17 | Test de acceso por rol: dataset `[rol, ruta, código]` sobre las rutas principales, y verificar la ability exacta en las rutas `can:viewAny` / `can:view` | AU-10 | 3 h |
 | ~~B18~~ | ✅ Aplicado en A5. Formulario de edición de producto: enviar CIF y umbral solo con `can.managePrices` y hacerlos `sometimes` en `UpdateProductRequest`; después, ocultarlos también sin `costs.view` | PC-05 | 45 min |
 | ~~B19~~ | ✅ Resuelto en la 2.4: `inventory_movements.create` exige `costs.view` (dependencia validada al guardar un rol). Formulario de movimientos MP: decidir qué ve del precio del lote un rol con `inventory_movements.create` sin `costs.view` | PC-07 | 30 min |
 | ~~B20~~ | ✅ Resuelto en la 2.4: `audit_logs.view` es un permiso reservado a SuperAdmin, así que ningún rol personalizado lo recibe (la dependencia de `costs.view` queda como documentación: no llega a actuar). Auditoría: filtrar de `properties` los atributos de costo sin `costs.view`, o impedir que un rol reciba `audit_logs.view` sin `costs.view` | PC-08 | 1 h |
-| B21 | Eliminar `ProductionOrderIngredientsSheet` y `ProductionOrderGeneralSheet` (sin uso) | PC-09 | 10 min |
-| B22 | `ProductController::show` con arrays explícitos en lugar de `makeHidden` (producto, presentaciones, documentos y fórmulas) | RV-04 | 1 h |
-| B23 | `UserController::index`: `with('roles:id,name')` | RV-05 | 5 min |
-| B24 | `ProductionOrderCostVisibilityTest`: preparar datos con factories y pasar los literales de rol a `SystemRole` | RV-13, RV-02 | 30 min |
-| B25 | Constante o configuración para el guard `web` en roles y usuarios | RR-08 | 15 min |
-| B26 | Dashboard: reutilizar las alertas recientes compartidas en lugar de volver a consultarlas | Revisión 2.4 | 20 min |
+| ~~B21~~ | ✅ Hecho (2026-09-21): eliminadas las dos hojas y la carpeta `Sheets`. Eliminar `ProductionOrderIngredientsSheet` y `ProductionOrderGeneralSheet` (sin uso) | PC-09 | 10 min |
+| ~~B22~~ | ✅ Hecho (2026-09-21): arrays explícitos en producto, presentaciones, documentos y fórmulas; test que fija la lista de campos. `ProductController::show` con arrays explícitos en lugar de `makeHidden` (producto, presentaciones, documentos y fórmulas) | RV-04 | 1 h |
+| ~~B23~~ | ❌ Obsoleto: desde el paso 11 el listado carga `roles.permissions` y `permissions` a propósito (la policy compara permisos por fila); reducirlo reintroduciría N+1. `UserController::index`: `with('roles:id,name')` | RV-05 | 5 min |
+| ~~B24~~ | ✅ Hecho (2026-09-21): factories donde existen y `userWithRole(SystemRole::X)`. Además, tres tests con nombres de "soft delete" pasan a probar registros inactivos o inexistentes. `ProductionOrderCostVisibilityTest`: preparar datos con factories y pasar los literales de rol a `SystemRole` | RV-13, RV-02 | 30 min |
+| ~~B25~~ | ✅ Hecho (2026-09-21): `SystemRole::GUARD` en controladores, Actions, servicio, comandos y seeder. Constante o configuración para el guard `web` en roles y usuarios | RR-08 | 15 min |
+| ~~B26~~ | ✅ Hecho (2026-09-21): el dashboard usa las props compartidas `recentAlerts` y `unresolvedAlertsCount` (ya no las vuelve a consultar); un solo tipo `RecentAlert`. Además, `auth`, `recentAlerts` y `unresolvedAlertsCount` se comparten como closures: un POST que redirige ahorra 3 consultas. Dashboard: reutilizar las alertas recientes compartidas en lugar de volver a consultarlas | Revisión 2.4 | 20 min |
 | B27 | `role-permissions-fields`: no anunciar dos veces el módulo y mostrar los permisos en solo lectura sin casillas deshabilitadas | Revisión 2.4 | 45 min |
 | B28 | Modelo `App\Models\Role` propio que extienda el de Spatie (registrado en `config/permission.php`), con `@property int $id` y los helpers de rol del sistema. **Solo cuando haga falta** (añadir relaciones, scopes o lógica al rol): hoy los tipos de Wayfinder ya salen bien porque el CI genera las rutas contra PostgreSQL | CI (PR #145) | 30 min |
-| B29 | Rutas anidadas de presentaciones (`products/{product}/variants/{variant}`) con `->scopeBindings()` en lugar del `abort_if` manual del controlador | Revisión política de eliminación | 15 min |
+| ~~B29~~ | ✅ Hecho (2026-09-21): `scopeBindings()` en las rutas de presentaciones; test del 404 con una presentación de otro producto. Rutas anidadas de presentaciones (`products/{product}/variants/{variant}`) con `->scopeBindings()` en lugar del `abort_if` manual del controlador | Revisión política de eliminación | 15 min |
+| ~~B30~~ | ✅ Hecho (2026-09-21): 20 llamadas a Wayfinder; retirados `@routes`, `tightenco/ziggy` y `ziggy-js` (`@routes` además publicaba en cada página la lista completa de rutas). Sustituir `route()` de Ziggy por los helpers de Wayfinder en 9 archivos (selector de bodega, formularios de movimientos MP, bodegas, materias primas) y retirar `ziggy-js` y `@routes`: incumple el invariante 6 de `CLAUDE.md` | Lote B, grupo 2 | 1 h |
+| B31 | Enlaces al dashboard (logos del menú y la cabecera, `home` de Fortify) llevan a un 403 a un usuario sin `dashboard.view`. Hoy solo le pasa a un usuario sin rol (los 5 roles y todo rol personalizado lo tienen); resolver si algún día existe un rol sin dashboard | Code review grupos 3-4 | 30 min |
+| ~~B32~~ | ✅ Hecho (2026-09-21): asignar usuarios a una bodega conserva las asignaciones de los usuarios inactivos (el formulario no los lista y `sync()` las borraba, incluida su bodega por defecto). Test incluido | Code review grupos 3-4 | 20 min |
+| ~~B33~~ | ✅ Hecho (2026-09-21): `warehouseContext` se comparte con closure, como `auth` y las alertas: los POST que redirigen y las descargas ya no consultan bodegas (los controladores de movimientos resuelven la bodega por su cuenta). Tests de la prop incluidos | Revisión externa PR #149 (CR-01) | 20 min |
+| ~~B34~~ | ✅ Hecho (2026-09-21): `UpdateCostRequest::after()` recibe `DecimalCalculator` y `VariantSalesPriceService` por inyección (Laravel lo llama con el contenedor) en vez de `app()` | Revisión externa PR #149 (DT-04) | 10 min |
+| ~~B35~~ | ✅ Hecho (2026-09-21): la clave `can.edit` de la ficha de pedido pasa a `can.update`, como la policy y los demás controladores | Revisión externa PR #149 (DT-06) | 10 min |
+| ~~B36~~ | ✅ Hecho (2026-09-21): `retry_after` de 300 s también en Redis y Beanstalkd (tenían 90 s, menos que los 120 s del job de precio de referencia); `QueueRetryAfterTest` recorre todas las conexiones | CodeRabbit PR #149 | 15 min |
+| ~~B37~~ | ✅ Hecho (2026-09-21): `PLAN_FASE_2_RBAC.md` ya no dice que haga falta un movimiento de reverso (esa acción se descartó) | CodeRabbit PR #149 | 5 min |
+| B38 | Filtro de envases del formulario de variantes (`ProductController`): los `LIKE` por código no usan `LOWER()` y en PostgreSQL distinguen mayúsculas. Comprobar en datos si algún envase queda fuera de las categorías "Envases …"; si no, filtrar solo por categoría | Revisión externa PR #149 (DT-03) | 30 min |
 
 ### Lote C — Refactors de arquitectura (backlog, fuera de la Fase 2)
 
@@ -390,6 +408,7 @@ Coinciden con RR-02, RR-03, RR-05, RR-07, RR-08, RR-10 a RR-13; aportan RR-15 y 
 | C3 | Unificar `enumOptions()` con `EnumOptions::for()` y adaptar el `Combobox` | CR-09 |
 | C4 | Reorganizar controladores de la raíz en subcarpetas por dominio | CR-15 |
 | C5 | Partir `Products/Show.tsx` (1.463 líneas) en componentes: variantes, documentos, fórmulas, calidad | AG-08 |
+| C6 | Sacar de `ProductController::update` el recálculo de CIF de respaldo (cuando no hay registro de costo) al servicio de costos, para que la fórmula viva en un solo sitio | Revisión externa PR #149 (DT-02) |
 
 ### Decisiones pendientes
 

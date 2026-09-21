@@ -8,16 +8,8 @@ export type RecentOrder = {
     completion_date: string | null;
 };
 
-export type RecentAlert = {
-    id: number;
-    type: string;
-    type_label: string;
-    severity: string;
-    severity_label: string;
-    message: string;
-    created_at: string | null;
-    raw_material_code: string | null;
-};
+/** Misma forma que la prop compartida `recentAlerts`. */
+export type { RecentAlert } from '@/types/shared';
 
 export type AlertBreakdown = {
     stock_bajo: number;
@@ -52,7 +44,6 @@ export type DashboardStats = {
     pending_orders?: number;
     active_orders?: number;
     completed_today?: number;
-    unresolved_alerts?: number;
     low_stock_materials?: number;
     expiring_batches?: number;
     pending_review_orders?: number;

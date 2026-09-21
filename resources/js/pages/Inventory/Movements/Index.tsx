@@ -113,8 +113,7 @@ export default function InventoryMovementsIndex({
     }>({ isOpen: false, mode: 'entry' });
     const [isLoadingFormData, setIsLoadingFormData] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
-    const flash = usePage<{ flash?: { success?: string; error?: string } }>()
-        .props.flash;
+    const flash = usePage().props.flash;
 
     const openDrawer = useCallback(
         (mode: 'entry' | 'exit') => {

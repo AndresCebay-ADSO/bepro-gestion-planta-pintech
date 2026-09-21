@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowRight,
@@ -32,7 +32,6 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import type {
     AlertBreakdown,
     DashboardStats,
-    RecentAlert,
     RecentOrder,
     RecentQuote,
     RecentSalesOrder,
@@ -68,7 +67,6 @@ interface DashboardProps {
     userName: string;
     stats: DashboardStats;
     recent_orders?: RecentOrder[];
-    recent_alerts?: RecentAlert[];
     alert_breakdown?: AlertBreakdown;
     recent_quotes?: RecentQuote[];
     recent_sales_orders?: RecentSalesOrder[];
@@ -112,11 +110,15 @@ export default function Dashboard({
     userName,
     stats,
     recent_orders,
-    recent_alerts,
     alert_breakdown,
     recent_quotes,
     recent_sales_orders,
 }: DashboardProps) {
+    // Alertas recientes compartidas (las mismas de la campana de la cabecera).
+    const { recentAlerts, unresolvedAlertsCount } = usePage().props;
+    // El contador compartido (el de la campana) ya se calcula en cada petición; solo se muestra con alerts.view.
+    const alertsCount = alert_breakdown ? unresolvedAlertsCount : undefined;
+
     return (
         <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950">
             <Head title="Dashboard" />
@@ -175,7 +177,7 @@ export default function Dashboard({
                             <StatCard
                                 icon={BellRing}
                                 label="Alertas activas"
-                                value={stats.unresolved_alerts}
+                                value={alertsCount}
                                 iconClassName="bg-red-100 text-red-600"
                             />
                             <StatCard
@@ -253,9 +255,9 @@ export default function Dashboard({
                                 />
                             </div>
                             <div className="space-y-6">
-                                {recent_alerts && alert_breakdown && (
+                                {alert_breakdown && (
                                     <RecentAlertsCard
-                                        alerts={recent_alerts}
+                                        alerts={recentAlerts}
                                         alert_breakdown={alert_breakdown}
                                         panelHref={alertsIndex().url}
                                     />
@@ -308,7 +310,7 @@ export default function Dashboard({
                             <StatCard
                                 icon={BellRing}
                                 label="Alertas activas"
-                                value={stats.unresolved_alerts}
+                                value={alertsCount}
                                 iconClassName="bg-red-100 text-red-600"
                             />
                             <StatCard
@@ -363,9 +365,9 @@ export default function Dashboard({
                                 />
                             </div>
                             <div className="space-y-6">
-                                {recent_alerts && alert_breakdown && (
+                                {alert_breakdown && (
                                     <RecentAlertsCard
-                                        alerts={recent_alerts}
+                                        alerts={recentAlerts}
                                         alert_breakdown={alert_breakdown}
                                         panelHref={alertsIndex().url}
                                     />

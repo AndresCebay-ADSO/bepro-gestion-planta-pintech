@@ -1,7 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { route } from 'ziggy-js';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
+import {
+    destroy as warehousesDestroy,
+    edit as warehousesEdit,
+    index as warehousesIndex,
+} from '@/routes/warehouses';
+import { form as assignUsersForm } from '@/routes/warehouses/assign-users';
 
 type UserItem = {
     id: number;
@@ -53,7 +58,7 @@ export default function WarehousesShow({ warehouse, can }: Props) {
             return;
         }
 
-        router.delete(route('warehouses.destroy', warehouse.id));
+        router.delete(warehousesDestroy(warehouse.id).url);
     };
 
     return (
@@ -73,28 +78,18 @@ export default function WarehousesShow({ warehouse, can }: Props) {
 
                     <div className="flex flex-wrap gap-2">
                         <Button variant="outline" asChild>
-                            <Link href={route('warehouses.index')}>Volver</Link>
+                            <Link href={warehousesIndex().url}>Volver</Link>
                         </Button>
                         {can.assignUsers && (
                             <Button variant="outline" asChild>
-                                <Link
-                                    href={route(
-                                        'warehouses.assign-users.form',
-                                        warehouse.id,
-                                    )}
-                                >
+                                <Link href={assignUsersForm(warehouse.id).url}>
                                     Asignar usuarios
                                 </Link>
                             </Button>
                         )}
                         {can.update && (
                             <Button asChild>
-                                <Link
-                                    href={route(
-                                        'warehouses.edit',
-                                        warehouse.id,
-                                    )}
-                                >
+                                <Link href={warehousesEdit(warehouse.id).url}>
                                     Editar
                                 </Link>
                             </Button>

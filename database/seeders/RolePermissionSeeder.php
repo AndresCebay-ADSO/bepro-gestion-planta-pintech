@@ -22,7 +22,7 @@ use Spatie\Permission\PermissionRegistrar;
  */
 class RolePermissionSeeder extends Seeder
 {
-    private const GUARD = 'web';
+    private const GUARD = SystemRole::GUARD;
 
     public function run(): void
     {

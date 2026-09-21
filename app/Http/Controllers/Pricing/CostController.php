@@ -8,17 +8,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Pricing\IndexCostRequest;
 use App\Http\Requests\Pricing\UpdateCostRequest;
 use App\Models\Product;
-use App\Services\VariantSalesPriceService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CostController extends Controller
 {
-    public function __construct(
-        private readonly VariantSalesPriceService $salesPriceService,
-    ) {}
-
     /**
      * Display the costs dashboard for admin.
      */
@@ -51,38 +46,11 @@ class CostController extends Controller
     }
 
     /**
-     * Update the sales margin for a product.
+     * Guarda el margen de venta. UpdateCostRequest autoriza, valida y lo calcula (bcmath).
      */
     public function update(UpdateCostRequest $request, Product $product): RedirectResponse
     {
-        $this->authorize(Permission::CostsUpdate->value);
-
-        $validated = $request->validated();
-
-        $salesMargin = $validated['sales_margin'] ?? null;
-
-        if (isset($validated['sales_price']) && $validated['sales_price'] !== null) {
-            if (empty($product->current_price) || $product->current_price <= 0) {
-                return back()->withErrors([
-                    'sales_price' => 'No se puede calcular el margen porque el producto no tiene precio interno.',
-                ]);
-            }
-
-            $salesMargin = (float) $this->salesPriceService->resolveMarginFromSalesPrice(
-                $product->current_price,
-                $validated['sales_price'],
-            );
-        }
-
-        if ($salesMargin !== null && ($salesMargin < 0 || $salesMargin >= 100)) {
-            return back()->withErrors([
-                'sales_price' => 'El precio ingresado genera un margen inválido (debe estar entre 0% y 99.99%).',
-            ]);
-        }
-
-        $product->update([
-            'sales_margin' => $salesMargin,
-        ]);
+        $product->update(['sales_margin' => $request->salesMargin()]);
 
         return back()->with('success', 'Margen de venta actualizado correctamente.');
     }

@@ -12,6 +12,7 @@ use App\Http\Requests\Clients\StoreClientRequest;
 use App\Http\Requests\Clients\UpdateClientRequest;
 use App\Models\Client;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -57,14 +58,14 @@ class ClientController extends Controller
             ->with('success', 'Cliente creado con éxito.');
     }
 
-    public function edit(Client $client): Response
+    public function edit(Request $request, Client $client): Response
     {
         $this->authorize('update', $client);
 
         return Inertia::render('Clients/Edit', [
             'client' => $client,
             'can' => [
-                'deactivate' => auth()->user()?->can('deactivate', $client) ?? false,
+                'deactivate' => $request->user()?->can('deactivate', $client) ?? false,
             ],
         ]);
     }

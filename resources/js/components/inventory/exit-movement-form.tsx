@@ -1,8 +1,8 @@
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
 import { getLocalDateString } from '@/lib/date-time-helpers';
+import { store as inventoryMovementsStore } from '@/routes/inventory-movements';
 import type { InventoryOption } from '@/types';
 import { MovementFormBase } from './movement-form-base';
 
@@ -51,7 +51,7 @@ export function ExitMovementForm({
             // cost_price is deliberately omitted for exits. The backend ignores it.
         }));
 
-        form.post(route('inventory-movements.store'), {
+        form.post(inventoryMovementsStore().url, {
             preserveScroll: true,
             onSuccess: () => {
                 form.reset();

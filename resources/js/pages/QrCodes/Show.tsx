@@ -70,9 +70,7 @@ type Props = {
 export default function QrCodesShow({ qrCode, can }: Props) {
     const [copied, setCopied] = useState(false);
 
-    const flash = usePage<{
-        flash?: { success?: string; error?: string };
-    }>().props.flash;
+    const flash = usePage().props.flash;
 
     const handleCopyUrl = () => {
         navigator.clipboard.writeText(qrCode.landing_url).then(() => {

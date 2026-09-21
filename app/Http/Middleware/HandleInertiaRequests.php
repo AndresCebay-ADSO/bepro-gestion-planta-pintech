@@ -47,40 +47,12 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-        $warehouseContext = null;
-
-        if ($user) {
-            $availableWarehouses = $this->warehouseContextService->availableWarehouses($user);
-            $currentWarehouse = $this->warehouseContextService->resolveCurrentWarehouse(
-                $user,
-                $request->session()->get('current_warehouse_id'),
-            );
-
-            if ($currentWarehouse) {
-                $request->session()->put('current_warehouse_id', $currentWarehouse->id);
-            }
-
-            $warehouseContext = [
-                'current' => $currentWarehouse ? [
-                    'id' => $currentWarehouse->id,
-                    'name' => $currentWarehouse->name,
-                    'city' => $currentWarehouse->city,
-                ] : null,
-                'available' => $availableWarehouses
-                    ->map(fn ($warehouse) => [
-                        'id' => $warehouse->id,
-                        'name' => $warehouse->name,
-                        'city' => $warehouse->city,
-                    ])
-                    ->values()
-                    ->all(),
-            ];
-        }
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'auth' => [
+            // Closures: Inertia solo las evalúa al renderizar una página, no en los POST que redirigen ni en las descargas.
+            'auth' => fn (): array => [
                 'user' => $user ? [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -94,19 +66,53 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'flash' => [
-                'message' => $request->session()->get('message'),
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
                 'new_alerts' => $this->visibleNewAlerts($request, $user),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'warehouseContext' => $warehouseContext,
-            'unresolvedAlertsCount' => $user?->can(Permission::AlertsView->value)
+            'warehouseContext' => fn (): ?array => $user ? $this->warehouseContext($request, $user) : null,
+            'unresolvedAlertsCount' => fn (): int => $user?->can(Permission::AlertsView->value)
                 ? $this->alertService->unresolvedCount($user)
                 : 0,
-            'recentAlerts' => $user?->can(Permission::AlertsView->value)
+            'recentAlerts' => fn (): array => $user?->can(Permission::AlertsView->value)
                 ? $this->alertService->recentUnresolved($user, 5)
                 : [],
+        ];
+    }
+
+    /**
+     * Bodega activa y bodegas disponibles del usuario; la activa queda en sesión. Los controladores de movimientos la
+     * resuelven por su cuenta, así que no dependen de que esta prop se haya evaluado en la petición.
+     *
+     * @return array<string, mixed>
+     */
+    private function warehouseContext(Request $request, User $user): array
+    {
+        $availableWarehouses = $this->warehouseContextService->availableWarehouses($user);
+        $currentWarehouse = $this->warehouseContextService->resolveCurrentWarehouse(
+            $user,
+            $request->session()->get('current_warehouse_id'),
+        );
+
+        if ($currentWarehouse) {
+            $request->session()->put('current_warehouse_id', $currentWarehouse->id);
+        }
+
+        return [
+            'current' => $currentWarehouse ? [
+                'id' => $currentWarehouse->id,
+                'name' => $currentWarehouse->name,
+                'city' => $currentWarehouse->city,
+            ] : null,
+            'available' => $availableWarehouses
+                ->map(fn ($warehouse) => [
+                    'id' => $warehouse->id,
+                    'name' => $warehouse->name,
+                    'city' => $warehouse->city,
+                ])
+                ->values()
+                ->all(),
         ];
     }
 

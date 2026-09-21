@@ -234,12 +234,11 @@ it('prevents produccion from accessing sales order create', function () {
         ->assertForbidden();
 });
 
-it('rejects orders for soft-deleted clients', function () {
+it('rejects orders for inactive clients', function () {
     $user = User::factory()->create();
     $user->assignRole(SystemRole::Commercial->value);
 
-    $client = Client::factory()->create();
-    $client->delete();
+    $client = Client::factory()->create(['is_active' => false]);
     [$product, $variant] = createTestProduct();
 
     $this->actingAs($user)

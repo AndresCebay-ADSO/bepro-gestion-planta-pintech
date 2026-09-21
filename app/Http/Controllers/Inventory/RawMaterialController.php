@@ -269,12 +269,12 @@ class RawMaterialController extends Controller
     /**
      * Remove or deactivate the specified raw material depending on activity and stock.
      */
-    public function destroy(RawMaterial $rawMaterial): RedirectResponse
+    public function destroy(Request $request, RawMaterial $rawMaterial): RedirectResponse
     {
         $this->authorize('deactivate', $rawMaterial);
 
         // El borrado físico exige además raw_materials.delete (SuperAdmin); si no, se desactiva.
-        $canDeletePermanently = auth()->user()?->can('delete', $rawMaterial) ?? false;
+        $canDeletePermanently = $request->user()?->can('delete', $rawMaterial) ?? false;
 
         return DB::transaction(function () use ($rawMaterial, $canDeletePermanently): RedirectResponse {
             /** @var RawMaterial $lockedRawMaterial */

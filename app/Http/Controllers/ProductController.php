@@ -11,8 +11,10 @@ use App\Filters\ProductFilter;
 use App\Http\Requests\Products\IndexProductRequest;
 use App\Http\Requests\Products\StoreProductRequest;
 use App\Http\Requests\Products\UpdateProductRequest;
+use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductDocument;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
@@ -29,14 +31,6 @@ use Inertia\Response;
 
 class ProductController extends Controller
 {
-    /**
-     * Atributos que revelan el costo. Solo con costs.view.
-     * current_price es el precio interno (costo × (1 + CIF %)), no el de venta; el CIF, el umbral y el margen lo derivan.
-     */
-    private const PRODUCT_COST_ATTRIBUTES = ['current_cost', 'current_price', 'cif_percentage', 'price_threshold', 'sales_margin'];
-
-    private const VARIANT_COST_ATTRIBUTES = ['current_cost', 'current_price'];
-
     public function __construct(
         private readonly ProductionCostRecalculationService $productionCostRecalculationService,
         private readonly DecimalCalculator $calculator,
@@ -292,16 +286,17 @@ class ProductController extends Controller
     }
 
     /**
-     * Carga el producto para su ficha, sin costos ni fórmulas si el usuario no tiene el permiso.
+     * Ficha del producto con arrays explícitos (B22): solo viajan los campos que la pantalla usa, y los de costo solo con
+     * `costs.view`. Una columna de costo nueva en el modelo no se envía al navegador por accidente.
+     *
+     * @return array<string, mixed>
      */
-    private function productForShow(Product $product, bool $canViewCosts, bool $canViewFormulas): Product
+    private function productForShow(Product $product, bool $canViewCosts, bool $canViewFormulas): array
     {
         $product->load([
             'category:id,name',
             'unitOfMeasure:id,name,symbol',
-            'variants' => fn ($query) => $query
-                ->with(['unitOfMeasure:id,name,symbol', 'packageRawMaterial:id,code,category_id'])
-                ->orderBy('code'),
+            'variants' => fn ($query) => $query->with('unitOfMeasure:id,name,symbol')->orderBy('code'),
             'productDocuments' => fn ($query) => $query->current()->latest('id'),
         ]);
 
@@ -309,12 +304,67 @@ class ProductController extends Controller
             $product->load(['formulas' => fn ($query) => $query->with('createdBy:id,name')->orderBy('version', 'desc')]);
         }
 
-        if (! $canViewCosts) {
-            $product->makeHidden(self::PRODUCT_COST_ATTRIBUTES);
-            $product->variants->each(fn (ProductVariant $variant) => $variant->makeHidden(self::VARIANT_COST_ATTRIBUTES));
-        }
-
-        return $product;
+        return [
+            'id' => $product->id,
+            'code' => $product->code,
+            'name' => $product->name,
+            'brand' => $product->brand,
+            'description' => $product->description,
+            'is_active' => $product->is_active,
+            'category' => $product->category ? ['name' => $product->category->name] : null,
+            'unit_of_measure' => $product->unitOfMeasure
+                ? ['name' => $product->unitOfMeasure->name, 'symbol' => $product->unitOfMeasure->symbol]
+                : null,
+            'quality_viscosity_lower' => $product->quality_viscosity_lower,
+            'quality_viscosity_upper' => $product->quality_viscosity_upper,
+            'quality_fineness_lower' => $product->quality_fineness_lower,
+            'quality_fineness_upper' => $product->quality_fineness_upper,
+            'quality_solids_lower' => $product->quality_solids_lower,
+            'quality_solids_upper' => $product->quality_solids_upper,
+            // current_price es el precio interno (costo × (1 + CIF %)), no el de venta: es costo.
+            ...($canViewCosts ? [
+                'current_cost' => $product->current_cost,
+                'current_price' => $product->current_price,
+                'cif_percentage' => $product->cif_percentage,
+                'price_threshold' => $product->price_threshold,
+                'sales_margin' => $product->sales_margin,
+            ] : []),
+            'variants' => $product->variants->map(fn (ProductVariant $variant): array => [
+                'id' => $variant->id,
+                'code' => $variant->code,
+                'name' => $variant->name,
+                'unit_of_measure_id' => $variant->unit_of_measure_id,
+                'presentation_value' => $variant->presentation_value,
+                'presentation_label' => $variant->presentation_label,
+                'package_raw_material_id' => $variant->package_raw_material_id,
+                'is_active' => $variant->is_active,
+                'unit_of_measure' => $variant->unitOfMeasure
+                    ? ['name' => $variant->unitOfMeasure->name, 'symbol' => $variant->unitOfMeasure->symbol]
+                    : null,
+                ...($canViewCosts ? [
+                    'current_cost' => $variant->current_cost,
+                    'current_price' => $variant->current_price,
+                ] : []),
+            ])->all(),
+            'product_documents' => $product->productDocuments->map(fn (ProductDocument $document): array => [
+                'id' => $document->id,
+                'document_type' => $document->document_type->value,
+                'file_name' => $document->file_name,
+                'file_size' => $document->file_size,
+                'version' => $document->version,
+                'created_at' => $document->created_at,
+            ])->all(),
+            ...($canViewFormulas ? [
+                'formulas' => $product->formulas->map(fn (Formula $formula): array => [
+                    'id' => $formula->id,
+                    'version' => $formula->version,
+                    'is_active' => $formula->is_active,
+                    'notes' => $formula->notes,
+                    'created_at' => $formula->created_at,
+                    'created_by' => $formula->createdBy ? ['name' => $formula->createdBy->name] : null,
+                ])->all(),
+            ] : []),
+        ];
     }
 
     private function hasDecimalChanged(string|int|float|null $current, mixed $new): bool

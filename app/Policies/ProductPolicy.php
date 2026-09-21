@@ -29,6 +29,14 @@ class ProductPolicy
     }
 
     /**
+     * Cambiar el margen de venta (página de costos).
+     */
+    public function updateCost(User $user, Product $product): bool
+    {
+        return $user->can(Permission::CostsUpdate->value);
+    }
+
+    /**
      * Activar o desactivar (docs/POLITICA_ELIMINACION.md §3.1).
      */
     public function deactivate(User $user, Product $product): bool

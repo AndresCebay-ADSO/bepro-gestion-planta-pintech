@@ -17,6 +17,7 @@ use App\Services\InventoryService;
 use App\Services\WarehouseContextService;
 use App\Support\EnumOptions;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -99,11 +100,11 @@ class InventoryMovementController extends Controller
         return redirect()->route('inventory-movements.index')->with('success', __('Movimiento de inventario registrado exitosamente.'));
     }
 
-    public function show(InventoryMovement $inventoryMovement): Response
+    public function show(Request $request, InventoryMovement $inventoryMovement): Response
     {
         $this->authorize('view', $inventoryMovement);
 
-        $canViewCosts = auth()->user()?->can(Permission::CostsView->value) ?? false;
+        $canViewCosts = $request->user()?->can(Permission::CostsView->value) ?? false;
 
         $inventoryMovement->load([
             'rawMaterial:id,code',
