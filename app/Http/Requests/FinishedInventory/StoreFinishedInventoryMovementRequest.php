@@ -61,6 +61,7 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
                 $this->validateReasonForType($validator);
                 $this->validateTransferFields($validator);
                 $this->validateBatchBelongsToWarehouse($validator);
+                $this->validateEntryIsForActiveProduct($validator);
             },
         ];
     }
@@ -121,6 +122,31 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
 
         if ($batch->stocks->isEmpty()) {
             $validator->errors()->add('finished_product_batch_id', __('El lote seleccionado no tiene stock disponible en la bodega indicada.'));
+        }
+    }
+
+    /**
+     * Una entrada no puede sumar stock a un producto o presentación inactivos: ningún pedido lo ofrecería. Las salidas y
+     * los traslados sí se permiten, para poder dar salida a lo que quede (docs/POLITICA_ELIMINACION.md §3.1).
+     */
+    private function validateEntryIsForActiveProduct(Validator $validator): void
+    {
+        $batchId = $this->input('finished_product_batch_id');
+
+        if ($batchId === null || $this->input('type') !== InventoryMovementType::Entry->value) {
+            return;
+        }
+
+        $batch = FinishedProductBatch::query()
+            ->with(['product:id,is_active', 'productVariant:id,is_active'])
+            ->find((int) $batchId);
+
+        if ($batch === null) {
+            return;
+        }
+
+        if ($batch->product?->is_active === false || $batch->productVariant?->is_active === false) {
+            $validator->errors()->add('finished_product_batch_id', __('No se puede ingresar stock a un producto o presentación inactivos.'));
         }
     }
 }

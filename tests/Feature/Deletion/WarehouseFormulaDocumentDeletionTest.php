@@ -3,12 +3,14 @@
 declare(strict_types=1);
 
 use App\Enums\QrDocumentType;
+use App\Enums\RemnantStatus;
 use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\InventoryBatch;
 use App\Models\Product;
 use App\Models\ProductDocument;
 use App\Models\ProductionOrder;
+use App\Models\ProductionRemnant;
 use App\Models\Warehouse;
 use Illuminate\Support\Facades\Storage;
 
@@ -63,6 +65,31 @@ it('no desactiva una bodega con órdenes en curso y sí una sin stock ni órdene
 
     $this->put(route('warehouses.update', $idle), warehouseUpdatePayload($idle, false))->assertRedirect(route('warehouses.index'));
     expect($idle->fresh()->is_active)->toBeFalse();
+});
+
+it('no desactiva una bodega con saldos de producción disponibles, pero sí con saldos consumidos', function () {
+    $admin = actingAsRole(SystemRole::Admin);
+    $order = ProductionOrder::factory()->completed()->create();
+    $warehouse = $order->warehouse;
+    $remnant = ProductionRemnant::factory()->create([
+        'source_order_id' => $order->id,
+        'product_id' => $order->product_id,
+        'warehouse_id' => $warehouse->id,
+        'created_by' => $admin->id,
+    ]);
+
+    $this->put(route('warehouses.update', $warehouse), warehouseUpdatePayload($warehouse, false))->assertSessionHas('error');
+    expect($warehouse->fresh()->is_active)->toBeTrue();
+
+    $remnant->update([
+        'available_quantity_gallons' => 0,
+        'available_quantity_kg' => 0,
+        'status' => RemnantStatus::Consumed,
+    ]);
+
+    $this->put(route('warehouses.update', $warehouse), warehouseUpdatePayload($warehouse, false))
+        ->assertRedirect(route('warehouses.index'));
+    expect($warehouse->fresh()->is_active)->toBeFalse();
 });
 
 it('elimina una fórmula sin historial con sus ingredientes y rechaza una usada en una orden', function () {

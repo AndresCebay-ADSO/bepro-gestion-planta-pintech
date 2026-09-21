@@ -32,3 +32,29 @@ it('elimina físicamente una materia prima que nunca se usó', function () {
 
     $this->assertDatabaseMissing('raw_materials', ['id' => $rawMaterial->id]);
 });
+
+it('elimina una materia prima inactiva que nunca se usó y rechaza una inactiva con historial', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+    $unused = RawMaterial::factory()->create(['is_active' => false]);
+    $used = RawMaterial::factory()->create(['is_active' => false]);
+    ProductVariant::factory()->create(['package_raw_material_id' => $used->id]);
+
+    $this->get(route('raw-materials.show', $unused))->assertInertia(fn (Assert $page) => $page->where('can.delete', true));
+    $this->get(route('raw-materials.show', $used))->assertInertia(fn (Assert $page) => $page->where('can.delete', false));
+
+    $this->delete(route('raw-materials.destroy', $unused))->assertRedirect(route('raw-materials.index'));
+    $this->assertDatabaseMissing('raw_materials', ['id' => $unused->id]);
+
+    $this->delete(route('raw-materials.destroy', $used))->assertSessionHas('error');
+    $this->assertDatabaseHas('raw_materials', ['id' => $used->id, 'is_active' => false]);
+});
+
+it('no ofrece eliminar una materia prima inactiva a quien solo puede desactivar', function () {
+    actingAsRole(SystemRole::Admin);
+    $rawMaterial = RawMaterial::factory()->create(['is_active' => false]);
+
+    $this->get(route('raw-materials.show', $rawMaterial))->assertInertia(fn (Assert $page) => $page->where('can.delete', false));
+
+    $this->delete(route('raw-materials.destroy', $rawMaterial))->assertSessionHas('error');
+    $this->assertDatabaseHas('raw_materials', ['id' => $rawMaterial->id]);
+});

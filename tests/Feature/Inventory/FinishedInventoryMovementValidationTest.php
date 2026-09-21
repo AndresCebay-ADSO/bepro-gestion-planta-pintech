@@ -6,6 +6,7 @@ use App\Models\FinishedInventoryMovement;
 use App\Models\FinishedProductBatch;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductVariant;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -182,4 +183,49 @@ it('keeps returnable quotas independent per warehouse', function () {
             'movement_date' => now()->toDateString(),
         ])
         ->assertInvalid(['quantity']);
+});
+
+it('rejects entries into an inactive product but still allows exits of its remaining stock', function () {
+    [$admin, $product, $batch] = createFinishedMovementFixture('PROD-INACTIVE');
+    $warehouse = Warehouse::factory()->create();
+
+    registerFinishedMovement($admin, $batch, $warehouse, 'entry', 'adjustment', '10');
+    $product->update(['is_active' => false]);
+
+    $payload = [
+        'finished_product_batch_id' => $batch->id,
+        'warehouse_id' => $warehouse->id,
+        'quantity' => '5',
+        'movement_date' => now()->toDateString(),
+    ];
+
+    actingAs($admin)
+        ->post(route('finished-inventory-movements.store'), [...$payload, 'type' => 'entry', 'reason' => 'adjustment'])
+        ->assertSessionHasErrors('finished_product_batch_id');
+
+    actingAs($admin)
+        ->post(route('finished-inventory-movements.store'), [...$payload, 'type' => 'exit', 'reason' => 'sale'])
+        ->assertSessionHasNoErrors();
+});
+
+it('rejects entries into a batch whose variant is inactive', function () {
+    [$admin, $product] = createFinishedMovementFixture('PROD-VAR-INACTIVE');
+    $variant = ProductVariant::factory()->create(['product_id' => $product->id, 'is_active' => false]);
+    $batch = FinishedProductBatch::create([
+        'product_id' => $product->id,
+        'product_variant_id' => $variant->id,
+        'initial_quantity' => '20',
+        'entry_date' => now(),
+    ]);
+
+    actingAs($admin)
+        ->post(route('finished-inventory-movements.store'), [
+            'finished_product_batch_id' => $batch->id,
+            'warehouse_id' => Warehouse::factory()->create()->id,
+            'type' => 'entry',
+            'reason' => 'adjustment',
+            'quantity' => '5',
+            'movement_date' => now()->toDateString(),
+        ])
+        ->assertSessionHasErrors('finished_product_batch_id');
 });

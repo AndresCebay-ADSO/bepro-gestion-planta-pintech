@@ -154,16 +154,20 @@ class ProductController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get(),
+            // Envases activos, más los inactivos que ya usa alguna presentación: al editarla se muestra el que tiene.
             'rawMaterials' => RawMaterial::query()
                 ->with('category:id,name')
-                ->where('is_active', true)
                 ->where(fn ($q) => $q
-                    ->whereHas('category', fn ($cq) => $cq->whereRaw('LOWER(name) LIKE ?', ['%envase%']))
-                    ->orWhere('code', 'like', '%bidón%')
-                    ->orWhere('code', 'like', '%galón%')
-                    ->orWhere('code', 'like', '%tambor%')
+                    ->where('is_active', true)
+                    ->where(fn ($q) => $q
+                        ->whereHas('category', fn ($cq) => $cq->whereRaw('LOWER(name) LIKE ?', ['%envase%']))
+                        ->orWhere('code', 'like', '%bidón%')
+                        ->orWhere('code', 'like', '%galón%')
+                        ->orWhere('code', 'like', '%tambor%')
+                    )
                 )
-                ->select('id', 'code', 'category_id')
+                ->orWhereIn('id', $product->variants()->whereNotNull('package_raw_material_id')->select('package_raw_material_id'))
+                ->select('id', 'code', 'category_id', 'is_active')
                 ->get(),
         ]);
     }
@@ -204,6 +208,7 @@ class ProductController extends Controller
             'can' => [
                 'managePrices' => Gate::allows(Permission::CostsUpdate->value),
                 'viewCosts' => $canViewCosts,
+                'deactivate' => Gate::allows('deactivate', $product),
             ],
         ]);
     }
