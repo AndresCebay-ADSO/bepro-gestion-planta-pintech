@@ -135,3 +135,19 @@ it('sends cost amounts to the edit form for users with costs.view', function ():
             // El formulario no usa el margen: el array explícito no lo envía a nadie.
             ->missing('product.sales_margin'));
 });
+
+it('sends only an explicit list of product and variant fields to users without costs.view', function (): void {
+    // Arrays explícitos (B22): una columna nueva del modelo no llega a la ficha sin añadirla a propósito.
+    $this->actingAs(userWithRole(SystemRole::Commercial))
+        ->get(route('products.show', $this->product))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('product', fn ($product) => collect($product)->keys()->sort()->values()->all() === collect([
+                'id', 'code', 'name', 'brand', 'description', 'is_active', 'category', 'unit_of_measure',
+                'quality_viscosity_lower', 'quality_viscosity_upper', 'quality_fineness_lower', 'quality_fineness_upper',
+                'quality_solids_lower', 'quality_solids_upper', 'variants', 'product_documents',
+            ])->sort()->values()->all())
+            ->where('product.variants.0', fn ($variant) => collect($variant)->keys()->sort()->values()->all() === collect([
+                'id', 'code', 'name', 'unit_of_measure_id', 'presentation_value', 'presentation_label',
+                'package_raw_material_id', 'is_active', 'unit_of_measure',
+            ])->sort()->values()->all()));
+});

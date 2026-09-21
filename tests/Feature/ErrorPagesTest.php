@@ -36,6 +36,16 @@ it('muestra la página 404 cuando el registro no existe', function () {
             ->where('status', 404));
 });
 
+it('muestra la página 419 cuando la sesión o el token expiraron', function () {
+    Route::middleware('web')->post('/_error-pages-test', fn () => abort(419));
+
+    $this->post('/_error-pages-test')
+        ->assertStatus(419)
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('ErrorPage')
+            ->where('status', 419));
+});
+
 it('mantiene la respuesta JSON en peticiones que esperan JSON', function () {
     $this->getJson('/ruta-que-no-existe')
         ->assertNotFound()

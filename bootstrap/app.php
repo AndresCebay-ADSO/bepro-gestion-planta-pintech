@@ -39,8 +39,10 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             // Páginas de error con Inertia. 500 y 503 conservan la traza de Laravel mientras APP_DEBUG está activo.
+            // 419: la sesión o el token CSRF expiraron. Un `back()` perdería el aviso: si la sesión expiró, el usuario ya
+            // no está autenticado y la página anterior redirige al login, que consume el mensaje flash.
             $status = $response->getStatusCode();
-            $rendersErrorPage = in_array($status, [403, 404], true)
+            $rendersErrorPage = in_array($status, [403, 404, 419], true)
                 || (in_array($status, [500, 503], true) && ! config('app.debug'));
 
             if ($rendersErrorPage && ($request->header('X-Inertia') || ! $request->expectsJson())) {

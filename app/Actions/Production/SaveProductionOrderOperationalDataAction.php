@@ -67,7 +67,7 @@ class SaveProductionOrderOperationalDataAction
      * Parsea un tiempo operacional enviado desde el frontend.
      *
      * Si el string incluye un offset explícito (Z, +HH:MM, -HH:MM), se respeta.
-     * Si no trae offset, se asume que es hora local de Colombia (America/Bogota)
+     * Si no trae offset, se asume que es hora local de planta (`app.plant_timezone`)
      * como fallback para clientes antiguos que aún no envían offset.
      */
     private function parseOperationalTime(?string $value): ?Carbon
@@ -82,6 +82,6 @@ class SaveProductionOrderOperationalDataAction
             return Carbon::parse($value)->utc();
         }
 
-        return Carbon::parse($value, 'America/Bogota')->utc();
+        return Carbon::parse($value, (string) config('app.plant_timezone'))->utc();
     }
 }

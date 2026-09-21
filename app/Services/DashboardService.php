@@ -70,7 +70,7 @@ class DashboardService
 
     private function buildForAdmin(User $user): array
     {
-        $today = Carbon::today('America/Bogota')->format('Y-m-d');
+        $today = Carbon::today((string) config('app.plant_timezone'))->format('Y-m-d');
         $canSeeOrders = $user->can(Permission::ProductionOrdersView->value);
         $canSeeAlerts = $user->can(Permission::AlertsView->value);
 
@@ -96,7 +96,7 @@ class DashboardService
 
     private function buildForProduction(User $user): array
     {
-        $today = Carbon::today('America/Bogota')->format('Y-m-d');
+        $today = Carbon::today((string) config('app.plant_timezone'))->format('Y-m-d');
         $canSeeOrders = $user->can(Permission::ProductionOrdersView->value);
 
         $stats = [
@@ -122,7 +122,7 @@ class DashboardService
      */
     private function buildForPlant(): array
     {
-        $today = Carbon::today('America/Bogota')->format('Y-m-d');
+        $today = Carbon::today((string) config('app.plant_timezone'))->format('Y-m-d');
 
         $stats = [
             'pending_orders' => $this->pendingOrdersCount(),

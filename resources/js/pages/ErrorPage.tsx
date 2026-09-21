@@ -1,15 +1,15 @@
 /**
- * Página de error (403, 404, 500, 503)
+ * Página de error (403, 404, 419, 500, 503)
  * Se renderiza desde el manejador de excepciones (bootstrap/app.php), sin layout:
  * un 404 de una ruta inexistente no pasa por la sesión y no hay usuario ni menú.
  */
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, Home } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { dashboard, login } from '@/routes';
 
-type ErrorStatus = 403 | 404 | 500 | 503;
+type ErrorStatus = 403 | 404 | 419 | 500 | 503;
 
 const MESSAGES: Record<ErrorStatus, { title: string; description: string }> = {
     403: {
@@ -21,6 +21,11 @@ const MESSAGES: Record<ErrorStatus, { title: string; description: string }> = {
         title: 'Página no encontrada',
         description:
             'La página que buscas no existe o el registro ya no está disponible.',
+    },
+    419: {
+        title: 'Tu sesión expiró',
+        description:
+            'Pasó demasiado tiempo sin actividad y, por seguridad, la sesión se cerró. Vuelve a entrar y repite la acción; lo que no se guardó hay que ingresarlo de nuevo.',
     },
     500: {
         title: 'Error del servidor',
@@ -45,6 +50,17 @@ export default function ErrorPage({ status }: { status: ErrorStatus }) {
             ? dashboard().url
             : null
         : login().url;
+
+    // Si se llegó por un enlace directo no hay página anterior: "Volver" lleva al inicio (o al login).
+    const goBack = () => {
+        if (window.history.length > 1) {
+            window.history.back();
+
+            return;
+        }
+
+        router.visit(homeHref ?? login().url);
+    };
 
     return (
         <>
@@ -71,10 +87,7 @@ export default function ErrorPage({ status }: { status: ErrorStatus }) {
                     </div>
 
                     <div className="flex flex-wrap items-center justify-center gap-3">
-                        <Button
-                            variant="outline"
-                            onClick={() => window.history.back()}
-                        >
+                        <Button variant="outline" onClick={goBack}>
                             <ArrowLeft />
                             Volver
                         </Button>
