@@ -20,13 +20,16 @@ class UserPolicy
     }
 
     /**
-     * Ver la imagen de la firma: el propio usuario, quien edita usuarios y quien completa órdenes (elige al firmante
-     * del certificado de calidad en la ficha de la orden).
+     * Ver la imagen de la firma:
+     * - el propio usuario;
+     * - quien puede editarlo (formulario de usuario): misma regla que update(), así Admin no ve la de un SuperAdmin;
+     * - quien completa órdenes: elige al firmante del certificado de calidad, que puede ser cualquier usuario con
+     *   production_orders.complete, SuperAdmin incluido.
      */
-    public function viewSignature(User $user, User $owner): bool
+    public function viewSignature(User $user, User $target): bool
     {
-        return $user->id === $owner->id
-            || $user->can(Permission::UsersEdit->value)
+        return $user->id === $target->id
+            || ($user->can(Permission::UsersEdit->value) && $this->canManageTarget($user, $target))
             || $user->can(Permission::ProductionOrdersComplete->value);
     }
 

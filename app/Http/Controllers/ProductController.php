@@ -151,8 +151,7 @@ class ProductController extends Controller
             // Envases activos, más los inactivos que ya usa alguna presentación: al editarla se muestra el que tiene.
             'rawMaterials' => RawMaterial::query()
                 ->with('category:id,name')
-                // Envases = materias primas de una categoría "Envases…" (B38: los LIKE por código distinguían
-                // mayúsculas en PostgreSQL y no coincidían con ningún código real, que empiezan por ENV-).
+                // Envases = materias primas de una categoría cuyo nombre contiene "envase", sin distinguir mayúsculas.
                 ->where(fn ($q) => $q
                     ->where('is_active', true)
                     ->whereHas('category', fn ($cq) => $cq->whereRaw('LOWER(name) LIKE ?', ['%envase%']))

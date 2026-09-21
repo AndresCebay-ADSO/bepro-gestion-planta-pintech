@@ -92,7 +92,6 @@ test('optimizer does not resize already small signature', function () {
 
 test('optimized signature does not cause memory error on certificate generation', function () {
     Storage::fake('local');
-    Storage::fake('local');
 
     $user = User::factory()->create([
         'email_verified_at' => now(),
