@@ -528,7 +528,8 @@ y cada test arranca una aplicación nueva. No hace falta limpiarla en `TestCase`
 
 **5. Auditoría de claves foráneas (tras tu nota: se generaron con vibe coding).** 23 `cascadeOnDelete`, 20 `nullOnDelete`, 51 `restrictOnDelete`. Regla propuesta: tablas de historial (`price_lists`, `production_costs`, movimientos, lotes, detalles de orden) → `restrictOnDelete`; cascada solo para hijos sin valor propio (p. ej. `formula_details` de una fórmula borrable). Prioridad: la cascada `products` → historial de precios y costos.
 
-**Decidido (tus notas):** `InventoryMovement` e `InventoryBatch` son libro mayor inmutable y **no** llevan SoftDeletes. Hace falta un movimiento de reverso (hoy `InventoryMovementType` solo tiene `entry`/`exit`).
+**Decidido (tus notas):** `InventoryMovement` e `InventoryBatch` son libro mayor inmutable y **no** llevan SoftDeletes. Los errores se corrigen con un movimiento contrario registrado a mano y una nota (ver abajo:
+la acción de reverso se descartó).
 
 **Corrección de movimientos MP (paso 14 de la 2B) — ❌ descartado (2026-09-21).** Decisión del usuario: sin acción
 "Revertir movimiento" ni motivo; un error se corrige a mano con un movimiento contrario y una nota (el campo `notes` ya

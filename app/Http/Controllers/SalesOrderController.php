@@ -155,7 +155,7 @@ class SalesOrderController extends Controller
                 $statusTransitions
             ),
             'can' => [
-                'edit' => $user?->can('update', $salesOrder) ?? false,
+                'update' => $user?->can('update', $salesOrder) ?? false,
                 'updateStatus' => $user?->can('updateStatus', $salesOrder) ?? false,
                 'viewQuotation' => $salesOrder->quotation !== null && ($user?->can('view', $salesOrder->quotation) ?? false),
             ],

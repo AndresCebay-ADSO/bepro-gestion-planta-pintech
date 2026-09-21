@@ -42,7 +42,7 @@ type Props = {
     statusTransitions: StatusTransition[];
     can: {
         /** Editar datos del pedido (solo mientras está pendiente). */
-        edit: boolean;
+        update: boolean;
         /** Cambiar el estado del pedido. */
         updateStatus: boolean;
     };
@@ -127,7 +127,7 @@ export default function AdminOrderSidebar({
                 </form>
             )}
 
-            {can.edit && (
+            {can.update && (
                 <form
                     onSubmit={handleDataUpdate}
                     className="space-y-4 rounded-lg border border-border bg-card p-6"

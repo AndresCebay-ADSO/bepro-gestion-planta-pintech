@@ -347,6 +347,15 @@ Coinciden con RR-02, RR-03, RR-05, RR-07, RR-08, RR-10 a RR-13; aportan RR-15 y 
 - Accesibilidad del componente de permisos (módulo anunciado dos veces, casillas deshabilitadas en solo lectura) → B27.
 - Lógica de `UserController` en el controlador: previa, fuera del alcance (Lote C).
 
+**Verificación de la revisión externa y de CodeRabbit del PR #149 (2026-09-21):** cada punto se verificó contra el
+código y contra `develop`.
+- Aplicados: CR-01 → B33, DT-04 → B34, DT-06 → B35; los dos comentarios de CodeRabbit → B36 y B37.
+- Pendientes: DT-03 → B38; DT-02 → C6.
+- No reales: CR-02 (la carrera es la contraria —un usuario reactivado mientras el formulario está abierto se
+  desasigna— y la ventana es mínima), CR-03 (las alertas se crean en POST que redirigen y el GET siguiente las
+  muestra; una descarga no se cuela en medio), DT-05 (el FormRequest se valida al resolverse), E-01 a E-05 (ya
+  resueltos o sin efecto). Opinión o bajo impacto, sin acción: DT-01, DT-07, E-07.
+
 ### Lote B — Limpieza técnica (rama nueva `chore/…`, tras el merge)
 
 | # | Tarea | Hallazgos | Esfuerzo |
@@ -383,6 +392,12 @@ Coinciden con RR-02, RR-03, RR-05, RR-07, RR-08, RR-10 a RR-13; aportan RR-15 y 
 | ~~B30~~ | ✅ Hecho (2026-09-21): 20 llamadas a Wayfinder; retirados `@routes`, `tightenco/ziggy` y `ziggy-js` (`@routes` además publicaba en cada página la lista completa de rutas). Sustituir `route()` de Ziggy por los helpers de Wayfinder en 9 archivos (selector de bodega, formularios de movimientos MP, bodegas, materias primas) y retirar `ziggy-js` y `@routes`: incumple el invariante 6 de `CLAUDE.md` | Lote B, grupo 2 | 1 h |
 | B31 | Enlaces al dashboard (logos del menú y la cabecera, `home` de Fortify) llevan a un 403 a un usuario sin `dashboard.view`. Hoy solo le pasa a un usuario sin rol (los 5 roles y todo rol personalizado lo tienen); resolver si algún día existe un rol sin dashboard | Code review grupos 3-4 | 30 min |
 | ~~B32~~ | ✅ Hecho (2026-09-21): asignar usuarios a una bodega conserva las asignaciones de los usuarios inactivos (el formulario no los lista y `sync()` las borraba, incluida su bodega por defecto). Test incluido | Code review grupos 3-4 | 20 min |
+| ~~B33~~ | ✅ Hecho (2026-09-21): `warehouseContext` se comparte con closure, como `auth` y las alertas: los POST que redirigen y las descargas ya no consultan bodegas (los controladores de movimientos resuelven la bodega por su cuenta). Tests de la prop incluidos | Revisión externa PR #149 (CR-01) | 20 min |
+| ~~B34~~ | ✅ Hecho (2026-09-21): `UpdateCostRequest::after()` recibe `DecimalCalculator` y `VariantSalesPriceService` por inyección (Laravel lo llama con el contenedor) en vez de `app()` | Revisión externa PR #149 (DT-04) | 10 min |
+| ~~B35~~ | ✅ Hecho (2026-09-21): la clave `can.edit` de la ficha de pedido pasa a `can.update`, como la policy y los demás controladores | Revisión externa PR #149 (DT-06) | 10 min |
+| ~~B36~~ | ✅ Hecho (2026-09-21): `retry_after` de 300 s también en Redis y Beanstalkd (tenían 90 s, menos que los 120 s del job de precio de referencia); `QueueRetryAfterTest` recorre todas las conexiones | CodeRabbit PR #149 | 15 min |
+| ~~B37~~ | ✅ Hecho (2026-09-21): `PLAN_FASE_2_RBAC.md` ya no dice que haga falta un movimiento de reverso (esa acción se descartó) | CodeRabbit PR #149 | 5 min |
+| B38 | Filtro de envases del formulario de variantes (`ProductController`): los `LIKE` por código no usan `LOWER()` y en PostgreSQL distinguen mayúsculas. Comprobar en datos si algún envase queda fuera de las categorías "Envases …"; si no, filtrar solo por categoría | Revisión externa PR #149 (DT-03) | 30 min |
 
 ### Lote C — Refactors de arquitectura (backlog, fuera de la Fase 2)
 
@@ -393,6 +408,7 @@ Coinciden con RR-02, RR-03, RR-05, RR-07, RR-08, RR-10 a RR-13; aportan RR-15 y 
 | C3 | Unificar `enumOptions()` con `EnumOptions::for()` y adaptar el `Combobox` | CR-09 |
 | C4 | Reorganizar controladores de la raíz en subcarpetas por dominio | CR-15 |
 | C5 | Partir `Products/Show.tsx` (1.463 líneas) en componentes: variantes, documentos, fórmulas, calidad | AG-08 |
+| C6 | Sacar de `ProductController::update` el recálculo de CIF de respaldo (cuando no hay registro de costo) al servicio de costos, para que la fórmula viva en un solo sitio | Revisión externa PR #149 (DT-02) |
 
 ### Decisiones pendientes
 

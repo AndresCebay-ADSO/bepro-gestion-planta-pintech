@@ -47,35 +47,6 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-        $warehouseContext = null;
-
-        if ($user) {
-            $availableWarehouses = $this->warehouseContextService->availableWarehouses($user);
-            $currentWarehouse = $this->warehouseContextService->resolveCurrentWarehouse(
-                $user,
-                $request->session()->get('current_warehouse_id'),
-            );
-
-            if ($currentWarehouse) {
-                $request->session()->put('current_warehouse_id', $currentWarehouse->id);
-            }
-
-            $warehouseContext = [
-                'current' => $currentWarehouse ? [
-                    'id' => $currentWarehouse->id,
-                    'name' => $currentWarehouse->name,
-                    'city' => $currentWarehouse->city,
-                ] : null,
-                'available' => $availableWarehouses
-                    ->map(fn ($warehouse) => [
-                        'id' => $warehouse->id,
-                        'name' => $warehouse->name,
-                        'city' => $warehouse->city,
-                    ])
-                    ->values()
-                    ->all(),
-            ];
-        }
 
         return [
             ...parent::share($request),
@@ -100,13 +71,48 @@ class HandleInertiaRequests extends Middleware
                 'new_alerts' => $this->visibleNewAlerts($request, $user),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'warehouseContext' => $warehouseContext,
+            'warehouseContext' => fn (): ?array => $user ? $this->warehouseContext($request, $user) : null,
             'unresolvedAlertsCount' => fn (): int => $user?->can(Permission::AlertsView->value)
                 ? $this->alertService->unresolvedCount($user)
                 : 0,
             'recentAlerts' => fn (): array => $user?->can(Permission::AlertsView->value)
                 ? $this->alertService->recentUnresolved($user, 5)
                 : [],
+        ];
+    }
+
+    /**
+     * Bodega activa y bodegas disponibles del usuario; la activa queda en sesión. Los controladores de movimientos la
+     * resuelven por su cuenta, así que no dependen de que esta prop se haya evaluado en la petición.
+     *
+     * @return array<string, mixed>
+     */
+    private function warehouseContext(Request $request, User $user): array
+    {
+        $availableWarehouses = $this->warehouseContextService->availableWarehouses($user);
+        $currentWarehouse = $this->warehouseContextService->resolveCurrentWarehouse(
+            $user,
+            $request->session()->get('current_warehouse_id'),
+        );
+
+        if ($currentWarehouse) {
+            $request->session()->put('current_warehouse_id', $currentWarehouse->id);
+        }
+
+        return [
+            'current' => $currentWarehouse ? [
+                'id' => $currentWarehouse->id,
+                'name' => $currentWarehouse->name,
+                'city' => $currentWarehouse->city,
+            ] : null,
+            'available' => $availableWarehouses
+                ->map(fn ($warehouse) => [
+                    'id' => $warehouse->id,
+                    'name' => $warehouse->name,
+                    'city' => $warehouse->city,
+                ])
+                ->values()
+                ->all(),
         ];
     }
 

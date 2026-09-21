@@ -38,12 +38,14 @@ class UpdateCostRequest extends FormRequest
     }
 
     /**
+     * Laravel resuelve los parámetros de `after()` con el contenedor.
+     *
      * @return array<int, \Closure(Validator): void>
      */
-    public function after(): array
+    public function after(DecimalCalculator $calculator, VariantSalesPriceService $salesPriceService): array
     {
         return [
-            function (Validator $validator): void {
+            function (Validator $validator) use ($calculator, $salesPriceService): void {
                 if ($validator->errors()->isNotEmpty()) {
                     return;
                 }
@@ -59,7 +61,6 @@ class UpdateCostRequest extends FormRequest
 
                 /** @var Product $product */
                 $product = $this->route('product');
-                $calculator = app(DecimalCalculator::class);
                 $basePrice = (string) ($product->current_price ?? '0');
 
                 if (! $calculator->isPositive($basePrice)) {
@@ -68,7 +69,7 @@ class UpdateCostRequest extends FormRequest
                     return;
                 }
 
-                $margin = app(VariantSalesPriceService::class)->resolveMarginFromSalesPrice($basePrice, (string) $salesPrice);
+                $margin = $salesPriceService->resolveMarginFromSalesPrice($basePrice, (string) $salesPrice);
 
                 if ($calculator->isNegative($margin) || $calculator->cmp($margin, '100') >= 0) {
                     $validator->errors()->add('sales_price', 'El precio ingresado genera un margen inválido (debe estar entre 0% y 99.99%).');
