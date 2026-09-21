@@ -28,6 +28,7 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserSignatureController;
 use App\Models\PaintDevelopmentRequest;
 use App\Models\Quotation;
 use App\Models\SalesOrder;
@@ -173,6 +174,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('prices.index');
 
     // Usuarios
+    Route::get('users/{user}/signature', UserSignatureController::class)
+        ->middleware('can:viewSignature,user')
+        ->name('users.signature');
     Route::resource('users', UserController::class)
         ->except(['show'])
         ->middlewareFor('index', 'can:'.Permission::UsersView->value)

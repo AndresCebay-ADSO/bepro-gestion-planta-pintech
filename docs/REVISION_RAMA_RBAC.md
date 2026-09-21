@@ -397,7 +397,9 @@ código y contra `develop`.
 | ~~B35~~ | ✅ Hecho (2026-09-21): la clave `can.edit` de la ficha de pedido pasa a `can.update`, como la policy y los demás controladores | Revisión externa PR #149 (DT-06) | 10 min |
 | ~~B36~~ | ✅ Hecho (2026-09-21): `retry_after` de 300 s también en Redis y Beanstalkd (tenían 90 s, menos que los 120 s del job de precio de referencia); `QueueRetryAfterTest` recorre todas las conexiones | CodeRabbit PR #149 | 15 min |
 | ~~B37~~ | ✅ Hecho (2026-09-21): `PLAN_FASE_2_RBAC.md` ya no dice que haga falta un movimiento de reverso (esa acción se descartó) | CodeRabbit PR #149 | 5 min |
-| B38 | Filtro de envases del formulario de variantes (`ProductController`): los `LIKE` por código no usan `LOWER()` y en PostgreSQL distinguen mayúsculas. Comprobar en datos si algún envase queda fuera de las categorías "Envases …"; si no, filtrar solo por categoría | Revisión externa PR #149 (DT-03) | 30 min |
+| ~~B38~~ | ✅ Hecho (2026-09-21): los envases se filtran solo por categoría (`LOWER(name) LIKE '%envase%'`); los 13 envases reales están en "Envases Metálicos/Plásticos" y ningún código coincidía con los LIKE retirados. Test incluido. Filtro de envases del formulario de variantes (`ProductController`): los `LIKE` por código no usan `LOWER()` y en PostgreSQL distinguen mayúsculas. Comprobar en datos si algún envase queda fuera de las categorías "Envases …"; si no, filtrar solo por categoría | Revisión externa PR #149 (DT-03) | 30 min |
+| ~~B39~~ | ✅ Hecho (2026-09-21): **firmas fuera del disco público.** La imagen original se guarda en el disco privado (`User::SIGNATURE_DISK`) y se sirve por `users.signature` con sesión, `Cache-Control: no-store` (equipos compartidos en planta) y la policy `UserPolicy::viewSignature`: la ve el propio usuario, quien puede editarlo (regla de `update()`) y quien ve órdenes de producción, solo si el dueño firma certificados (`production_orders.complete`), que es lo que muestra la ficha de la orden. El certificado PDF no cambia: lleva la firma incrustada y se sigue descargando desde Códigos QR y la landing pública del QR. Antes cualquiera con la URL veía la firma original sin iniciar sesión. Se corrigió además `QrCodeFactory` (import faltante y `production_order_id` nulo) | Checklist de preproducción | 2 h |
+| B40 | `Store/UpdateProductVariantRequest` aceptan como envase cualquier materia prima activa: el selector filtra por categoría "Envases…", pero el backend no lo valida | Code review `fix/private-signatures` | 20 min |
 
 ### Lote C — Refactors de arquitectura (backlog, fuera de la Fase 2)
 
@@ -409,6 +411,7 @@ código y contra `develop`.
 | C4 | Reorganizar controladores de la raíz en subcarpetas por dominio | CR-15 |
 | C5 | Partir `Products/Show.tsx` (1.463 líneas) en componentes: variantes, documentos, fórmulas, calidad | AG-08 |
 | C6 | Sacar de `ProductController::update` el recálculo de CIF de respaldo (cuando no hay registro de costo) al servicio de costos, para que la fórmula viva en un solo sitio | Revisión externa PR #149 (DT-02) |
+| C7 | Quitar `#[Appends(['signature_url'])]` de `User` y calcular la URL solo donde se usa (perfil, edición de usuario, firmantes de la orden): hoy viaja en cada serialización, p. ej. con el autor de la actividad reciente | Code review `fix/private-signatures` |
 
 ### Decisiones pendientes
 

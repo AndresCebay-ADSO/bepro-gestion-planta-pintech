@@ -7,6 +7,8 @@ use App\Enums\SystemRole;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
+use App\Models\RawMaterial;
+use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -150,4 +152,20 @@ it('sends only an explicit list of product and variant fields to users without c
                 'id', 'code', 'name', 'unit_of_measure_id', 'presentation_value', 'presentation_label',
                 'package_raw_material_id', 'is_active', 'unit_of_measure',
             ])->sort()->values()->all()));
+});
+
+it('offers as packages only active raw materials of an "Envases" category, regardless of case', function (): void {
+    $packages = RawMaterialCategory::factory()->create(['name' => 'ENVASES Metálicos']);
+    $chemicals = RawMaterialCategory::factory()->create(['name' => 'Químicos']);
+    $package = RawMaterial::factory()->create(['code' => 'ENV-M-GL', 'category_id' => $packages->id]);
+    $inactivePackage = RawMaterial::factory()->create(['code' => 'ENV-M-T50', 'category_id' => $packages->id, 'is_active' => false]);
+    // En minúsculas a propósito: el filtro anterior (LIKE '%galón%' sobre el código) lo tomaba por envase.
+    $chemical = RawMaterial::factory()->create(['code' => 'galón-q1', 'category_id' => $chemicals->id]);
+
+    $this->actingAs(userWithRole(SystemRole::Admin))
+        ->get(route('products.show', $this->product))
+        ->assertInertia(fn (Assert $page) => $page->where('rawMaterials', fn ($options) => ($ids = collect($options)->pluck('id'))
+            ->contains($package->id)
+            && ! $ids->contains($inactivePackage->id)
+            && ! $ids->contains($chemical->id)));
 });

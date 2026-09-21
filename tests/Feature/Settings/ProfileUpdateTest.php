@@ -111,7 +111,7 @@ test('phone can be cleared', function () {
 });
 
 test('signature can be uploaded', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $user = User::factory()->create();
     $file = UploadedFile::fake()->image('firma.png', 200, 50);
@@ -131,14 +131,14 @@ test('signature can be uploaded', function () {
     $user->refresh();
 
     expect($user->signature_path)->not->toBeNull();
-    Storage::disk('public')->assertExists($user->signature_path);
+    Storage::disk('local')->assertExists($user->signature_path);
 });
 
 test('signature can be removed', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $user = User::factory()->create();
-    $path = Storage::disk('public')->putFile('signatures', UploadedFile::fake()->image('firma.png'));
+    $path = Storage::disk('local')->putFile('signatures', UploadedFile::fake()->image('firma.png'));
     $user->update(['signature_path' => $path]);
 
     $response = $this
@@ -154,7 +154,7 @@ test('signature can be removed', function () {
         ->assertRedirect(route('profile.edit'));
 
     expect($user->refresh()->signature_path)->toBeNull();
-    Storage::disk('public')->assertMissing($path);
+    Storage::disk('local')->assertMissing($path);
 });
 
 test('signature upload rejects invalid file type', function () {
@@ -220,12 +220,12 @@ test('email verification status is unchanged when the email address is unchanged
 });
 
 test('profile update fails gracefully when signature optimizer throws validation exception', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
     $user = User::factory()->create([
         'signature_path' => 'signatures/keep_me.png',
     ]);
-    Storage::disk('public')->put('signatures/keep_me.png', 'existing-signature');
+    Storage::disk('local')->put('signatures/keep_me.png', 'existing-signature');
 
     $this->mock(SignatureOptimizerService::class, function ($mock) {
         $mock->shouldReceive('optimizeAndStore')
@@ -249,7 +249,7 @@ test('profile update fails gracefully when signature optimizer throws validation
 
     $user->refresh();
     expect($user->signature_path)->toBe('signatures/keep_me.png');
-    Storage::disk('public')->assertExists('signatures/keep_me.png');
+    Storage::disk('local')->assertExists('signatures/keep_me.png');
 });
 
 test('profile update normalizes uppercase email to lowercase', function () {

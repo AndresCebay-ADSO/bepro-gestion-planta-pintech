@@ -50,6 +50,11 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasAuditDescription, HasFactory, HasRoles, LogsActivity, Notifiable;
 
+    /**
+     * Disco de las firmas: privado. Se sirven por `users.signature` (UserSignatureController), con sesión y policy.
+     */
+    public const SIGNATURE_DISK = 'local';
+
     protected string $auditLabel = 'Usuario';
 
     protected string $auditIdentifierAttribute = 'name';
@@ -61,7 +66,7 @@ class User extends Authenticatable
             $path = $user->signature_path;
 
             if ($path) {
-                DB::afterCommit(fn () => Storage::disk('public')->delete($path));
+                DB::afterCommit(fn () => Storage::disk(self::SIGNATURE_DISK)->delete($path));
             }
         });
     }
@@ -96,8 +101,8 @@ class User extends Authenticatable
 
     public function signatureUrl(): Attribute
     {
-        return Attribute::get(fn () => $this->signature_path
-            ? Storage::disk('public')->url($this->signature_path)
+        return Attribute::get(fn () => filled($this->signature_path)
+            ? route('users.signature', $this->id)
             : null);
     }
 

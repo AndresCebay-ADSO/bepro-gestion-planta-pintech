@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\User;
 use App\Services\SignatureOptimizerService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
@@ -61,14 +62,14 @@ class ProfileController extends Controller
             });
         } catch (\Throwable $e) {
             if ($newSignaturePath) {
-                Storage::disk('public')->delete($newSignaturePath);
+                Storage::disk(User::SIGNATURE_DISK)->delete($newSignaturePath);
             }
 
             throw $e;
         }
 
         if ($oldSignatureToDelete) {
-            Storage::disk('public')->delete($oldSignatureToDelete);
+            Storage::disk(User::SIGNATURE_DISK)->delete($oldSignatureToDelete);
         }
 
         return to_route('profile.edit');
