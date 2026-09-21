@@ -80,7 +80,8 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'auth' => [
+            // Closures: Inertia solo las evalúa al renderizar una página, no en los POST que redirigen ni en las descargas.
+            'auth' => fn (): array => [
                 'user' => $user ? [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -100,10 +101,10 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'warehouseContext' => $warehouseContext,
-            'unresolvedAlertsCount' => $user?->can(Permission::AlertsView->value)
+            'unresolvedAlertsCount' => fn (): int => $user?->can(Permission::AlertsView->value)
                 ? $this->alertService->unresolvedCount($user)
                 : 0,
-            'recentAlerts' => $user?->can(Permission::AlertsView->value)
+            'recentAlerts' => fn (): array => $user?->can(Permission::AlertsView->value)
                 ? $this->alertService->recentUnresolved($user, 5)
                 : [],
         ];

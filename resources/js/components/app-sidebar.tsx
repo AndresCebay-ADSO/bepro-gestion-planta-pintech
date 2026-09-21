@@ -280,21 +280,22 @@ function buildSidebarGroups(userPermissions: Permission[]): NavGroup[] {
 export function AppSidebar() {
     const { auth, unresolvedAlertsCount } = usePage().props;
     const userPermissions = auth.user?.permissions ?? [];
+
+    // Sin useMemo: React Compiler (babel-plugin-react-compiler) ya memoriza el componente.
     const filteredGroups = buildSidebarGroups(userPermissions).map((group) => ({
         ...group,
-        items: group.items.map((item) => {
-            if (item.title !== 'Alertas') {
-                return item;
-            }
-
-            return {
-                ...item,
-                badge:
-                    unresolvedAlertsCount > 0
-                        ? unresolvedAlertsCount
-                        : undefined,
-            };
-        }),
+        items: group.items.map((item) =>
+            // Se identifica por la ruta, no por el título: renombrar el elemento no debe quitar el contador.
+            item.href === alertsIndex().url
+                ? {
+                      ...item,
+                      badge:
+                          unresolvedAlertsCount > 0
+                              ? unresolvedAlertsCount
+                              : undefined,
+                  }
+                : item,
+        ),
     }));
 
     return (

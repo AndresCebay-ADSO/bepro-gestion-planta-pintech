@@ -123,9 +123,9 @@ test('production dashboard exposes real operational stats', function (): void {
             ->where('stats.pending_orders', 1)
             ->where('stats.active_orders', 1)
             ->where('stats.pending_review_orders', 1)
-            ->where('stats.unresolved_alerts', 1)
+            ->where('unresolvedAlertsCount', 1)
             ->has('recent_orders', 3)
-            ->has('recent_alerts', 1)
+            ->has('recentAlerts', 1)
             ->where('alert_breakdown.stock_bajo', 1));
 });
 

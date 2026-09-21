@@ -8,6 +8,7 @@ import { ArrowLeft, Home } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { dashboard, login } from '@/routes';
+import { edit as editProfile } from '@/routes/profile';
 
 type ErrorStatus = 403 | 404 | 419 | 500 | 503;
 
@@ -59,7 +60,9 @@ export default function ErrorPage({ status }: { status: ErrorStatus }) {
             return;
         }
 
-        router.visit(homeHref ?? login().url);
+        // Sin sesión, homeHref ya es el login. Con sesión pero sin dashboard.view, el login redirigiría al dashboard
+        // (otro 403): se va al perfil.
+        router.visit(homeHref ?? editProfile().url);
     };
 
     return (

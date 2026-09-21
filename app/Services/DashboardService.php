@@ -72,7 +72,6 @@ class DashboardService
     {
         $today = Carbon::today((string) config('app.plant_timezone'))->format('Y-m-d');
         $canSeeOrders = $user->can(Permission::ProductionOrdersView->value);
-        $canSeeAlerts = $user->can(Permission::AlertsView->value);
 
         $stats = [
             ...($user->can(Permission::UsersView->value) ? ['total_users' => User::query()->count()] : []),
@@ -83,7 +82,6 @@ class DashboardService
                 'active_orders' => $this->activeOrdersCount(),
                 'completed_today' => $this->completedTodayCount($today),
             ] : []),
-            ...($canSeeAlerts ? ['unresolved_alerts' => $this->alertService->unresolvedCount($user)] : []),
             ...$this->stockStats($user),
         ];
 
@@ -106,7 +104,6 @@ class DashboardService
                 'pending_review_orders' => $this->pendingReviewOrdersCount(),
                 'completed_today' => $this->completedTodayCount($today),
             ] : []),
-            ...($user->can(Permission::AlertsView->value) ? ['unresolved_alerts' => $this->alertService->unresolvedCount($user)] : []),
             ...$this->stockStats($user),
         ];
 
@@ -249,8 +246,9 @@ class DashboardService
             return [];
         }
 
+        // Las alertas recientes ya llegan como prop compartida (`recentAlerts`, HandleInertiaRequests): no se repite
+        // la consulta.
         return [
-            'recent_alerts' => $this->alertService->recentUnresolved($user, 5),
             'alert_breakdown' => $this->alertService->unresolvedBreakdown($user),
         ];
     }
