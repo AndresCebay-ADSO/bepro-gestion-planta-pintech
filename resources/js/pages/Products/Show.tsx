@@ -32,6 +32,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -157,6 +158,7 @@ type Props = {
     rawMaterials?: Array<{
         id: number;
         code: string;
+        is_active: boolean;
         category?: { id: number; name: string };
     }>;
 };
@@ -252,6 +254,16 @@ export default function ProductsShow({
             { preserveScroll: true },
         );
     };
+
+    // Un envase inactivo solo se ofrece a la presentación que ya lo usa.
+    const keptPackageId =
+        dialogMode === 'edit'
+            ? product.variants?.find((v) => v.id === editingVariantId)
+                  ?.package_raw_material_id
+            : null;
+    const packageOptions = (rawMaterials ?? []).filter(
+        (rm) => rm.is_active || rm.id === keptPackageId,
+    );
 
     const openCreate = () => {
         form.reset();
@@ -1164,16 +1176,20 @@ export default function ProductsShow({
                                                     <SelectValue placeholder="Selecciona el envase (opcional)" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {rawMaterials?.map((rm) => (
-                                                        <SelectItem
-                                                            key={rm.id}
-                                                            value={String(
-                                                                rm.id,
-                                                            )}
-                                                        >
-                                                            {rm.code}
-                                                        </SelectItem>
-                                                    ))}
+                                                    {packageOptions.map(
+                                                        (rm) => (
+                                                            <SelectItem
+                                                                key={rm.id}
+                                                                value={String(
+                                                                    rm.id,
+                                                                )}
+                                                            >
+                                                                {rm.is_active
+                                                                    ? rm.code
+                                                                    : `${rm.code} (inactivo)`}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
                                                 </SelectContent>
                                             </Select>
                                             <p className="text-xs text-muted-foreground">
@@ -1181,6 +1197,38 @@ export default function ProductsShow({
                                                 completar la orden de producción
                                             </p>
                                         </div>
+
+                                        {dialogMode === 'edit' && (
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-3">
+                                                    <Checkbox
+                                                        id="variant_is_active"
+                                                        checked={
+                                                            form.data.is_active
+                                                        }
+                                                        onCheckedChange={(
+                                                            checked,
+                                                        ) =>
+                                                            form.setData(
+                                                                'is_active',
+                                                                checked ===
+                                                                    true,
+                                                            )
+                                                        }
+                                                    />
+                                                    <Label htmlFor="variant_is_active">
+                                                        Presentación activa
+                                                    </Label>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Una presentación inactiva no
+                                                    aparece en órdenes,
+                                                    cotizaciones ni pedidos
+                                                    nuevos; su historial se
+                                                    conserva.
+                                                </p>
+                                            </div>
+                                        )}
 
                                         <div className="flex justify-end gap-2 pt-4">
                                             <Button

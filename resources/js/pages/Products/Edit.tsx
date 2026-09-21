@@ -43,7 +43,7 @@ type Props = {
     };
     categories: Option[];
     units: Option[];
-    can: { managePrices: boolean; viewCosts: boolean };
+    can: { managePrices: boolean; viewCosts: boolean; deactivate: boolean };
     hasActiveFormula?: boolean;
 };
 
@@ -284,16 +284,20 @@ export default function ProductsEdit({
                             )}
                         </div>
 
-                        <div className="flex items-center gap-3">
-                            <Checkbox
-                                id="is_active"
-                                checked={data.is_active}
-                                onCheckedChange={(checked) =>
-                                    setData('is_active', checked === true)
-                                }
-                            />
-                            <Label htmlFor="is_active">Producto activo</Label>
-                        </div>
+                        {can.deactivate && (
+                            <div className="flex items-center gap-3">
+                                <Checkbox
+                                    id="is_active"
+                                    checked={data.is_active}
+                                    onCheckedChange={(checked) =>
+                                        setData('is_active', checked === true)
+                                    }
+                                />
+                                <Label htmlFor="is_active">
+                                    Producto activo
+                                </Label>
+                            </div>
+                        )}
                     </div>
 
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">

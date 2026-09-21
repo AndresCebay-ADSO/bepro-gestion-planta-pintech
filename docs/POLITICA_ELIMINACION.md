@@ -51,17 +51,23 @@ y es lo correcto, porque el historial lo referencia.
 
 | Entidad | Desactivar / reactivar | Eliminar (solo sin historial) | Se bloquea desactivar si… |
 | --- | --- | --- | --- |
-| Producto | `products.deactivate` (Admin) | `products.delete` (SuperAdmin). Se lleva sus variantes y documentos si tampoco tienen historial | tiene órdenes de producción en curso |
-| Variante (presentación) | `products.manage_variants` (Admin, Producción) | `products.manage_variants` | tiene stock de producto terminado |
+| Producto | `products.deactivate` (Admin) | `products.delete` (SuperAdmin). Se lleva sus variantes y documentos si tampoco tienen historial | tiene órdenes de producción en curso, o stock de producto terminado en alguna presentación |
+| Variante (presentación) | `products.manage_variants` (Admin, Producción) | `products.manage_variants` | tiene stock de producto terminado, o una orden en curso la va a envasar |
 | Fórmula | `formulas.activate`: activar una versión desactiva la anterior (una activa por producto) | `formulas.delete` (SuperAdmin). En la práctica, solo una versión sin costos calculados ni órdenes | nunca: una orden en curso conserva sus propios detalles y no necesita que su fórmula siga activa |
 | Materia prima | `raw_materials.deactivate` (Admin) — ya implementado | `raw_materials.delete` (SuperAdmin) — ya implementado | tiene lotes con stock — ya implementado |
-| Bodega | `warehouses.edit` (Admin) | `warehouses.delete` (SuperAdmin) | tiene stock de materia prima o de producto terminado, u órdenes en curso |
+| Bodega | `warehouses.edit` (Admin) | `warehouses.delete` (SuperAdmin) | tiene stock de materia prima o de producto terminado, saldos de producción disponibles u órdenes en curso |
 | Cliente | 🆕 `clients.deactivate` (Admin); 🆕 columna `is_active` | `clients.delete` (Admin) | nunca: sus cotizaciones y pedidos abiertos siguen su curso |
 | Usuario | `users.edit` (`is_active`) — ya implementado | `users.delete` (SuperAdmin) — ya implementado | es el último SuperAdmin activo — ya implementado |
 | Unidad de medida, categorías | `catalogs.edit` (Fase 3) | `catalogs.delete` (Fase 3) | — (llegan con sus CRUD; añadir auditoría antes) |
 
 **Desactivar un producto** oculta también sus variantes y fórmulas en los selectores, aunque cada una conserve su
 propio `is_active`: los selectores filtran por el producto y por el hijo.
+
+**Principio de los bloqueos:** no se desactiva lo que tiene valor en libros (stock, saldos de producción) ni lo que una
+orden en curso va a usar. Después ningún selector lo ofrecería y ese valor quedaría atrapado.
+
+**Movimientos de producto terminado:** no se aceptan entradas a un producto o presentación inactivos; las salidas y los
+traslados sí, para poder dar salida a lo que quede.
 
 **Reactivar** siempre está permitido, con el mismo permiso que desactivar.
 
@@ -191,6 +197,22 @@ fórmulas, clientes, documentos · (4) selectores · (5) usuarios (`hasActivity`
     bodega. Una bodega podría quedar desactivada con stock que entró en el mismo instante; no se pierde nada (el stock
     sigue visible y basta reactivarla) y evitarlo exigiría tocar los servicios de movimientos, la parte más delicada del
     costeo. Las órdenes de producción sí lo toman, porque una orden en curso en una bodega inactiva rompe el flujo.
+- **Tras la segunda revisión (2026-09-21):**
+  - Bloqueos nuevos: producto con stock de producto terminado, presentación que una orden en curso va a envasar y
+    bodega con saldos de producción disponibles.
+  - Entradas de producto terminado rechazadas si el producto o la presentación del lote están inactivos.
+  - El selector de envase de una presentación ofrece también su envase actual si está inactivo, marcado "(inactivo)"
+    (antes aparecía vacío y el formulario lo reenviaba sin mostrarlo).
+  - Una materia prima inactiva sin historial se puede eliminar (antes había que reactivarla primero).
+  - Casilla "Presentación activa" en el diálogo de edición de presentaciones (antes el backend lo permitía, pero
+    ninguna pantalla lo ofrecía). La casilla "Producto activo" solo se muestra con `products.deactivate`: con un rol
+    personalizado que solo edita, el 403 rechazaba el guardado completo.
+  - **Riesgo aceptado:** `UserController::destroy` consulta la auditoría (`hasActivity()`) antes de la transacción. Un
+    usuario que registra su primera acción justo mientras lo eliminan dejaría una fila de auditoría con un autor que ya
+    no existe; el propio borrado queda auditado. Moverla dentro de la transacción no lo cierra (escribir en la
+    auditoría no bloquea al usuario), y cerrarlo exigiría bloquear en cada escritura de auditoría.
+  - **Se deja como aviso, no como bloqueo:** desactivar una materia prima que usa una fórmula activa. Suele hacerse
+    justamente para reemplazarla en la fórmula; el diálogo ya indica que tiene fórmulas.
 - **Bug previo corregido:** `UpdateWarehouseRequest` no importaba `App\Models\Warehouse` y respondía 403 a toda
   edición de bodega.
 
@@ -208,6 +230,9 @@ se puede eliminar físicamente debe usar `LogsActivity`.
 ---
 
 ## 7. Fuera de alcance (anotado)
+
+- Las unidades de medida tienen `is_active`, pero productos, presentaciones y materias primas no lo filtran al validar
+  (las fórmulas sí). Hoy ninguna pantalla desactiva unidades; cerrarlo con el CRUD de catálogos (Fase 3).
 
 - `clients.nit` es único solo en la validación (`Store/UpdateClientRequest`), no en la base de datos. Decidir en otra
   tarea si se añade el índice único.
