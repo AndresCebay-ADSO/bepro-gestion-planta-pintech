@@ -94,7 +94,6 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'flash' => [
-                'message' => $request->session()->get('message'),
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
                 'new_alerts' => $this->visibleNewAlerts($request, $user),

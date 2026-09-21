@@ -352,19 +352,19 @@ Coinciden con RR-02, RR-03, RR-05, RR-07, RR-08, RR-10 a RR-13; aportan RR-15 y 
 | # | Tarea | Hallazgos | Esfuerzo |
 | --- | --- | --- | --- |
 | B1 | `declare(strict_types=1)` en los 8 archivos señalados (luego progresivamente en los 67) | CR-11 | 30 min + suite |
-| B2 | Estandarizar `$request->user()` en controladores que reciben `Request` | CR-12, CR-04 | 45 min |
-| B3 | Unificar flash en `success` (`UserController`) | CR-16 | 15 min |
-| B4 | Tipar `warehouseContext` (y los demás props compartidos) en `global.d.ts` | CR-14 | 20 min |
+| ~~B2~~ | ✅ Hecho (2026-09-21): las 20 acciones usan `$request->user()` (se inyecta `Request` donde faltaba). Queda `auth()` solo en el helper privado `UserController::assignableRoles`. Estandarizar `$request->user()` en controladores que reciben `Request` | CR-12, CR-04 | 45 min |
+| ~~B3~~ | ✅ Hecho (2026-09-21): `UserController` usa `success`; se retira la clave compartida `flash.message`, que nadie más usaba. Unificar flash en `success` (`UserController`) | CR-16 | 15 min |
+| ~~B4~~ | ✅ Hecho (2026-09-21): `global.d.ts` tipa todas las props compartidas (`warehouseContext`, alertas, flash) con tipos en `types/shared.ts`; se quitan 11 genéricos locales de `usePage` y el `as any` de `flash-messages`. Tipar `warehouseContext` (y los demás props compartidos) en `global.d.ts` | CR-14 | 20 min |
 | ~~B5~~ | ✅ Hecho (2026-09-21): `ProductPolicy::updateCost`; `UpdateCostRequest` autoriza con la policy, valida y calcula el margen con `DecimalCalculator` (antes, con floats en el controlador). `CostController`: ability de policy (`ProductPolicy::updateCost`) y validación del margen en `UpdateCostRequest` | CR-13 | 45 min |
-| B6 | Detalles: enum directo en `store`, PHPDoc de `clientOptions()` | CR-18, CR-17 | 10 min |
+| ~~B6~~ | ✅ Hecho (2026-09-21): `SalesOrderStatus::Pending` directo; el PHPDoc de `clientOptions()` ya se corrigió en la política de eliminación. Detalles: enum directo en `store`, PHPDoc de `clientOptions()` | CR-18, CR-17 | 10 min |
 | B7 | Convertir `verify_production_lock.php` en test Pest o eliminarlo si ya está cubierto | CR-10, AG-14 | 30 min |
 | ~~B8~~ | ✅ Hecho (2026-09-21): el 419 muestra la página de error "Tu sesión expiró" (un `back()` perdía el aviso al redirigir al login). Manejar el código 419 (sesión/CSRF expirado) en el `respond()` de `bootstrap/app.php`, igual que el 429 | AG-04 | 20 min |
-| B9 | `SalesOrderPolicy`: añadir `update()` como alias de `edit()` para que el patrón sea intercambiable con `QuotationPolicy`/`PaintDevelopmentRequestPolicy` | AG-05 | 15 min |
+| ~~B9~~ | ✅ Hecho (2026-09-21): `SalesOrderPolicy::edit()` renombrado a `update()` en la policy, el request, la ruta y el controlador (sin alias). `SalesOrderPolicy`: añadir `update()` como alias de `edit()` para que el patrón sea intercambiable con `QuotationPolicy`/`PaintDevelopmentRequestPolicy` | AG-05 | 15 min |
 | B10 | `SalesOrderController::show`: quitar `client` del `load()`, no se usa (se leen las columnas desnormalizadas) | AG-06 | 10 min |
 | ~~B11~~ | ✅ Resuelto con la política de eliminación: las claves foráneas `RESTRICT` protegen el historial y `hasActivity()` solo consulta la auditoría. `User::hasActivity()`: condensar las 16 consultas en una sola | AG-07 | 45 min |
 | ~~B12~~ | ✅ Hecho (2026-09-21): sin historial, "Volver" lleva al inicio o al login. Botón "Volver" de `ErrorPage.tsx`: si no hay historial, navegar a `homeHref` (o `/` si tampoco hay) | AG-09 | 15 min |
 | B13 | `useMemo` en `buildSidebarGroups` dentro de `AppSidebar` | AG-10 | 15 min |
-| B14 | Uniformar `href` del menú: siempre objeto Wayfinder o siempre `.url` | AG-12 | 15 min |
+| ~~B14~~ | ✅ Hecho (2026-09-21): menú lateral, cabecera y Configuración con `.url`. Queda `/reports` (elemento deshabilitado sin ruta, decisión de producto). Uniformar `href` del menú: siempre objeto Wayfinder o siempre `.url` | AG-12 | 15 min |
 | ~~B15~~ | ✅ Hecho (2026-09-21): `DashboardService` (3) y `SaveProductionOrderOperationalDataAction` leen `config('app.plant_timezone')`. `DashboardService`: zona horaria de planta desde `config('app.plant_timezone')` | AU-09 | 10 min |
 | ~~B16~~ | ✅ Resuelto con la política de eliminación (sin soft deletes): retirados `restore` y `forceDelete` de las policies. Retirar `ProductPolicy::restore` y `forceDelete` | AU-11 | 10 min |
 | B17 | Test de acceso por rol: dataset `[rol, ruta, código]` sobre las rutas principales, y verificar la ability exacta en las rutas `can:viewAny` / `can:view` | AU-10 | 3 h |
@@ -375,11 +375,12 @@ Coinciden con RR-02, RR-03, RR-05, RR-07, RR-08, RR-10 a RR-13; aportan RR-15 y 
 | ~~B22~~ | ✅ Hecho (2026-09-21): arrays explícitos en producto, presentaciones, documentos y fórmulas; test que fija la lista de campos. `ProductController::show` con arrays explícitos en lugar de `makeHidden` (producto, presentaciones, documentos y fórmulas) | RV-04 | 1 h |
 | ~~B23~~ | ❌ Obsoleto: desde el paso 11 el listado carga `roles.permissions` y `permissions` a propósito (la policy compara permisos por fila); reducirlo reintroduciría N+1. `UserController::index`: `with('roles:id,name')` | RV-05 | 5 min |
 | B24 | `ProductionOrderCostVisibilityTest`: preparar datos con factories y pasar los literales de rol a `SystemRole` | RV-13, RV-02 | 30 min |
-| B25 | Constante o configuración para el guard `web` en roles y usuarios | RR-08 | 15 min |
+| ~~B25~~ | ✅ Hecho (2026-09-21): `SystemRole::GUARD` en controladores, Actions, servicio, comandos y seeder. Constante o configuración para el guard `web` en roles y usuarios | RR-08 | 15 min |
 | B26 | Dashboard: reutilizar las alertas recientes compartidas en lugar de volver a consultarlas | Revisión 2.4 | 20 min |
 | B27 | `role-permissions-fields`: no anunciar dos veces el módulo y mostrar los permisos en solo lectura sin casillas deshabilitadas | Revisión 2.4 | 45 min |
 | B28 | Modelo `App\Models\Role` propio que extienda el de Spatie (registrado en `config/permission.php`), con `@property int $id` y los helpers de rol del sistema. **Solo cuando haga falta** (añadir relaciones, scopes o lógica al rol): hoy los tipos de Wayfinder ya salen bien porque el CI genera las rutas contra PostgreSQL | CI (PR #145) | 30 min |
-| B29 | Rutas anidadas de presentaciones (`products/{product}/variants/{variant}`) con `->scopeBindings()` en lugar del `abort_if` manual del controlador | Revisión política de eliminación | 15 min |
+| ~~B29~~ | ✅ Hecho (2026-09-21): `scopeBindings()` en las rutas de presentaciones; test del 404 con una presentación de otro producto. Rutas anidadas de presentaciones (`products/{product}/variants/{variant}`) con `->scopeBindings()` en lugar del `abort_if` manual del controlador | Revisión política de eliminación | 15 min |
+| B30 | Sustituir `route()` de Ziggy por los helpers de Wayfinder en 9 archivos (selector de bodega, formularios de movimientos MP, bodegas, materias primas) y retirar `ziggy-js` y `@routes`: incumple el invariante 6 de `CLAUDE.md` | Lote B, grupo 2 | 1 h |
 
 ### Lote C — Refactors de arquitectura (backlog, fuera de la Fase 2)
 

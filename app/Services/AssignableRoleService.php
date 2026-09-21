@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\SystemRole;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Models\Role;
@@ -22,7 +23,7 @@ class AssignableRoleService
     public function for(User $actor): Collection
     {
         $roles = Role::query()
-            ->where('guard_name', 'web')
+            ->where('guard_name', SystemRole::GUARD)
             ->with('permissions:id,name')
             ->orderBy('id')
             ->get();

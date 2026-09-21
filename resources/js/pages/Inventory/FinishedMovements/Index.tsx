@@ -142,8 +142,7 @@ export default function FinishedMovementsIndex({
     const [isLoadingFormData, setIsLoadingFormData] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
     const hasOpenedFromUrl = useRef(false);
-    const flash = usePage<{ flash?: { success?: string; error?: string } }>()
-        .props.flash;
+    const flash = usePage().props.flash;
 
     const openDrawer = useCallback(
         (mode: DrawerMode) => {

@@ -24,6 +24,7 @@ use App\Services\TimezoneService;
 use App\Support\EnumOptions;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -105,7 +106,7 @@ class QuotationController extends Controller
             ->with('success', __('Cotización creada con éxito.'));
     }
 
-    public function show(Quotation $quotation): Response
+    public function show(Request $request, Quotation $quotation): Response
     {
         $this->authorize('view', $quotation);
 
@@ -116,11 +117,11 @@ class QuotationController extends Controller
         return Inertia::render('Quotations/Show', [
             'quotation' => $this->buildQuotationData($quotation),
             'can' => [
-                'update' => auth()->user()?->can('update', $quotation) ?? false,
-                'exportPdf' => auth()->user()?->can('exportPdf', $quotation) ?? false,
-                'updateStatus' => auth()->user()?->can('updateStatus', $quotation) ?? false,
-                'convertToOrder' => auth()->user()?->can('convertToOrder', $quotation) ?? false,
-                'viewSalesOrder' => $salesOrder !== null && (auth()->user()?->can('view', $salesOrder) ?? false),
+                'update' => $request->user()?->can('update', $quotation) ?? false,
+                'exportPdf' => $request->user()?->can('exportPdf', $quotation) ?? false,
+                'updateStatus' => $request->user()?->can('updateStatus', $quotation) ?? false,
+                'convertToOrder' => $request->user()?->can('convertToOrder', $quotation) ?? false,
+                'viewSalesOrder' => $salesOrder !== null && ($request->user()?->can('view', $salesOrder) ?? false),
             ],
             'salesOrderId' => $quotation->convert_to_order_id,
             'statusOptions' => array_map(

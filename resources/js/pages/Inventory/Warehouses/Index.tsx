@@ -60,8 +60,7 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
             status: filters.status ?? '',
         },
     });
-    const flash = usePage<{ flash?: { success?: string; error?: string } }>()
-        .props.flash;
+    const flash = usePage().props.flash;
 
     const handleDelete = (id: number) => {
         if (

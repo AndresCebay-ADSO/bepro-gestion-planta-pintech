@@ -61,7 +61,7 @@ const navigationGroups: NavGroup[] = [
             {
                 title: 'Dashboard',
                 allowedPermissions: ['dashboard.view'],
-                href: dashboard(),
+                href: dashboard().url,
                 icon: LayoutGrid,
             },
             {
@@ -207,27 +207,27 @@ const navigationGroups: NavGroup[] = [
             {
                 title: 'Usuarios',
                 allowedPermissions: ['users.view'],
-                href: usersIndex(),
+                href: usersIndex().url,
                 icon: Users,
                 unauthorizedBehavior: 'hide',
             },
             {
                 title: 'Roles',
                 allowedPermissions: ['roles.view'],
-                href: rolesIndex(),
+                href: rolesIndex().url,
                 icon: KeyRound,
                 unauthorizedBehavior: 'hide',
             },
             {
                 title: 'Auditoría',
                 allowedPermissions: ['audit_logs.view'],
-                href: auditLogsIndex(),
+                href: auditLogsIndex().url,
                 icon: ShieldCheck,
                 unauthorizedBehavior: 'hide',
             },
             {
                 title: 'Configuración',
-                href: editAppearance(),
+                href: editAppearance().url,
                 icon: Settings,
                 unauthorizedBehavior: 'hide',
             },
@@ -278,9 +278,7 @@ function buildSidebarGroups(userPermissions: Permission[]): NavGroup[] {
 }
 
 export function AppSidebar() {
-    const { auth, unresolvedAlertsCount = 0 } = usePage<{
-        unresolvedAlertsCount?: number;
-    }>().props;
+    const { auth, unresolvedAlertsCount } = usePage().props;
     const userPermissions = auth.user?.permissions ?? [];
     const filteredGroups = buildSidebarGroups(userPermissions).map((group) => ({
         ...group,

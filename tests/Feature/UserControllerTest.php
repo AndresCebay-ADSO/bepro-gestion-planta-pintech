@@ -98,7 +98,7 @@ test('super-admin can delete a user with no activity', function () {
     $this->actingAs($admin)
         ->delete(route('users.destroy', $target))
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('message');
+        ->assertSessionHas('success');
 
     $this->assertDatabaseMissing('users', ['id' => $target->id]);
 });
@@ -122,7 +122,7 @@ test('admin can create user with is_active = true', function () {
             'is_active' => true,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('message');
+        ->assertSessionHas('success');
 
     $this->assertDatabaseHas('users', [
         'email' => 'activo@test.com',
@@ -146,7 +146,7 @@ test('admin can create user with is_active = false', function () {
             'is_active' => false,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('message');
+        ->assertSessionHas('success');
 
     $this->assertDatabaseHas('users', [
         'email' => 'inactivo@test.com',
@@ -173,7 +173,7 @@ test('admin can update user is_active from true to false', function () {
             'is_active' => false,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('message');
+        ->assertSessionHas('success');
 
     $this->assertDatabaseHas('users', [
         'id' => $target->id,
@@ -200,7 +200,7 @@ test('admin can update user is_active from false to true', function () {
             'is_active' => true,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('message');
+        ->assertSessionHas('success');
 
     $this->assertDatabaseHas('users', [
         'id' => $target->id,
@@ -233,7 +233,7 @@ test('admin can create user with signature', function () {
             'signature' => $file,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('message');
+        ->assertSessionHas('success');
 
     $user = User::where('email', 'firma@test.com')->first();
     expect($user)->not->toBeNull();
@@ -265,7 +265,7 @@ test('admin can update user signature', function () {
             'signature' => $newFile,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('message');
+        ->assertSessionHas('success');
 
     $target->refresh();
     expect($target->signature_path)->not->toBe('signatures/old.png');
@@ -363,7 +363,7 @@ test('admin can remove user signature', function () {
             'remove_signature' => true,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('message');
+        ->assertSessionHas('success');
 
     $target->refresh();
     expect($target->signature_path)->toBeNull();
@@ -564,7 +564,7 @@ test('user update allows pre-existing uppercase email and normalizes it to lower
             'is_active' => true,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('message');
+        ->assertSessionHas('success');
 
     $target->refresh();
     expect($target->name)->toBe('Updated Name')
@@ -678,7 +678,7 @@ test('an admin can deactivate another admin: only the last super-admin is protec
             'is_active' => false,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('message');
+        ->assertSessionHas('success');
 
     expect($admin2->fresh()->is_active)->toBeFalse();
 });

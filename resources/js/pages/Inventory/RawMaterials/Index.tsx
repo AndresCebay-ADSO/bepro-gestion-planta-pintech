@@ -97,9 +97,7 @@ export default function RawMaterialsIndex({
         },
     ];
 
-    const flash = usePage<{
-        flash?: { success?: string; error?: string };
-    }>().props.flash;
+    const flash = usePage().props.flash;
 
     const [deleteTarget, setDeleteTarget] = useState<RawMaterialRow | null>(
         null,

@@ -35,7 +35,7 @@ class GrantSuperAdminCommand extends Command
 
         $role = Role::query()
             ->where('name', SystemRole::SuperAdmin->value)
-            ->where('guard_name', 'web')
+            ->where('guard_name', SystemRole::GUARD)
             ->first();
 
         if ($role === null) {

@@ -8,6 +8,7 @@ use App\Enums\Permission;
 use App\Enums\SystemRole;
 use App\Models\User;
 use App\Services\DashboardService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,9 +21,9 @@ class DashboardController extends Controller
     /**
      * Renderiza el dashboard global. La vista se elige por permisos (DashboardService).
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $user = auth()->user();
+        $user = $request->user();
 
         abort_unless($user instanceof User && $user->can(Permission::DashboardView->value), 403);
 

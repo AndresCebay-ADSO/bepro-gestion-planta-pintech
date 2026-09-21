@@ -12,21 +12,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
-type WarehouseOption = {
-    id: number;
-    name: string;
-    city: string;
-};
-
-type WarehouseContext = {
-    current: WarehouseOption | null;
-    available: WarehouseOption[];
-};
-
 export default function WarehouseSelector() {
-    const { warehouseContext } = usePage<{
-        warehouseContext?: WarehouseContext;
-    }>().props;
+    const { warehouseContext } = usePage().props;
 
     if (!warehouseContext?.current || warehouseContext.available.length <= 1) {
         return null;

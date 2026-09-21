@@ -122,7 +122,7 @@ class UserController extends Controller
             throw $e;
         }
 
-        return redirect()->route('users.index')->with('message', 'Usuario creado exitosamente.');
+        return redirect()->route('users.index')->with('success', 'Usuario creado exitosamente.');
     }
 
     /**
@@ -243,7 +243,7 @@ class UserController extends Controller
                     .SystemRole::labelFor($validated['role']));
         }
 
-        return redirect()->route('users.index')->with('message', 'Usuario actualizado exitosamente.');
+        return redirect()->route('users.index')->with('success', 'Usuario actualizado exitosamente.');
     }
 
     /**
@@ -289,7 +289,7 @@ class UserController extends Controller
             return back()->with('error', 'No se puede eliminar el usuario porque tiene registros asociados en el sistema. Desactiva su cuenta en su lugar.');
         }
 
-        return redirect()->route('users.index')->with('message', 'Usuario eliminado exitosamente.');
+        return redirect()->route('users.index')->with('success', 'Usuario eliminado exitosamente.');
     }
 
     /**
@@ -330,7 +330,7 @@ class UserController extends Controller
     {
         Role::query()
             ->where('name', $name)
-            ->where('guard_name', 'web')
+            ->where('guard_name', SystemRole::GUARD)
             ->lockForUpdate()
             ->firstOrFail();
     }

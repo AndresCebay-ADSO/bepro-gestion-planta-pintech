@@ -16,9 +16,7 @@ type Props = {
 };
 
 export default function Login({ status, canResetPassword }: Props) {
-    const { flash } = usePage<{
-        flash: { error?: string; message?: string };
-    }>().props;
+    const { flash } = usePage().props;
 
     return (
         <>

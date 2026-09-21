@@ -47,7 +47,7 @@ class AuditCustomRolesCommand extends Command
     private function customRoles(): iterable
     {
         return Role::query()
-            ->where('guard_name', 'web')
+            ->where('guard_name', SystemRole::GUARD)
             ->with('permissions:id,name')
             ->orderBy('name')
             ->get()

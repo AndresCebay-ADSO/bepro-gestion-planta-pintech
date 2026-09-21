@@ -36,7 +36,7 @@ class RoleController extends Controller
         $user = $request->user();
 
         $roles = (new RoleFilter($request))
-            ->apply(Role::query()->where('guard_name', 'web')->withCount(['permissions', 'users']))
+            ->apply(Role::query()->where('guard_name', SystemRole::GUARD)->withCount(['permissions', 'users']))
             ->orderBy('id')
             ->paginate(15)
             ->withQueryString()
@@ -149,7 +149,7 @@ class RoleController extends Controller
         $assignable = $this->permissionCatalog->assignableToCustomRoles();
 
         return Role::query()
-            ->where('guard_name', 'web')
+            ->where('guard_name', SystemRole::GUARD)
             ->with('permissions:id,name')
             ->orderBy('id')
             ->get()

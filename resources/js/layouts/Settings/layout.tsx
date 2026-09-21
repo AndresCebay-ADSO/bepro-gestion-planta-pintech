@@ -12,12 +12,12 @@ import type { NavItem } from '@/types';
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
-        href: edit(),
+        href: edit().url,
         icon: null,
     },
     {
         title: 'Appearance',
-        href: editAppearance(),
+        href: editAppearance().url,
         icon: null,
     },
 ];

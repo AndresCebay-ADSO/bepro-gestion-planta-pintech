@@ -136,7 +136,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middlewareFor(['create', 'store'], 'can:'.Permission::ProductsCreate->value)
         ->middlewareFor(['edit', 'update'], 'can:'.Permission::ProductsEdit->value)
         ->middlewareFor('destroy', 'can:'.Permission::ProductsDelete->value);
-    Route::middleware('can:'.Permission::ProductsManageVariants->value)->group(function () {
+    // scopeBindings: la presentación se busca dentro del producto de la URL (404 si es de otro producto).
+    Route::middleware('can:'.Permission::ProductsManageVariants->value)->scopeBindings()->group(function () {
         Route::post('products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
         Route::patch('products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
         Route::delete('products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
@@ -263,7 +264,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:view,sales_order')
         ->name('sales-orders.show');
     Route::patch('sales-orders/{sales_order}', [SalesOrderController::class, 'update'])
-        ->middleware(['can:'.Permission::SalesOrdersEdit->value, 'can:edit,sales_order'])
+        ->middleware(['can:'.Permission::SalesOrdersEdit->value, 'can:update,sales_order'])
         ->name('sales-orders.update');
     Route::patch('sales-orders/{sales_order}/status', [SalesOrderController::class, 'updateStatus'])
         ->middleware(['can:'.Permission::SalesOrdersUpdateStatus->value, 'can:updateStatus,sales_order'])

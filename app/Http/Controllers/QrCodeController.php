@@ -11,6 +11,7 @@ use App\Models\QrCode;
 use App\Models\QrDocument;
 use App\Services\QrImageService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -63,7 +64,7 @@ class QrCodeController extends Controller
         ]);
     }
 
-    public function show(QrCode $qrCode): Response
+    public function show(Request $request, QrCode $qrCode): Response
     {
         $this->authorize('view', $qrCode);
 
@@ -123,7 +124,7 @@ class QrCodeController extends Controller
                 ])->values(),
             ],
             'can' => [
-                'update' => auth()->user()?->can('update', $qrCode) ?? false,
+                'update' => $request->user()?->can('update', $qrCode) ?? false,
             ],
         ]);
     }
