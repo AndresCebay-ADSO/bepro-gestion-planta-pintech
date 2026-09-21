@@ -1,8 +1,8 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { assignUsers, show as warehousesShow } from '@/routes/warehouses';
 
 type UserRow = {
     id: number;
@@ -59,7 +59,7 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
                 })),
         }));
 
-        form.post(route('warehouses.assign-users', warehouse.id));
+        form.post(assignUsers(warehouse.id).url);
     };
 
     return (
@@ -174,7 +174,7 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
                                 : 'Guardar asignaciones'}
                         </Button>
                         <Button type="button" variant="outline" asChild>
-                            <Link href={route('warehouses.show', warehouse.id)}>
+                            <Link href={warehousesShow(warehouse.id).url}>
                                 Cancelar
                             </Link>
                         </Button>

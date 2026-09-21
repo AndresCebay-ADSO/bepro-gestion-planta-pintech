@@ -1,7 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { route } from 'ziggy-js';
 import { RawMaterialForm } from '@/components/raw-materials/raw-material-form';
 import { Button } from '@/components/ui/button';
+import {
+    index as rawMaterialsIndex,
+    show as rawMaterialsShow,
+    update as rawMaterialsUpdate,
+} from '@/routes/raw-materials';
 
 type UnitOption = {
     id: number;
@@ -79,7 +83,7 @@ export default function RawMaterialsEdit({
                     : data.price_variation_threshold,
         }));
 
-        form.put(route('raw-materials.update', rawMaterial.id));
+        form.put(rawMaterialsUpdate(rawMaterial.id).url);
     };
 
     return (
@@ -90,14 +94,14 @@ export default function RawMaterialsEdit({
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Link
-                            href={route('raw-materials.index')}
+                            href={rawMaterialsIndex().url}
                             className="hover:text-foreground"
                         >
                             Materias Primas
                         </Link>
                         <span>/</span>
                         <Link
-                            href={route('raw-materials.show', rawMaterial.id)}
+                            href={rawMaterialsShow(rawMaterial.id).url}
                             className="font-mono hover:text-foreground"
                         >
                             {rawMaterial.code}
@@ -121,9 +125,7 @@ export default function RawMaterialsEdit({
 
                 <div className="flex justify-end gap-2 pt-2 pr-2">
                     <Button variant="outline" asChild>
-                        <Link href={route('raw-materials.index')}>
-                            Cancelar
-                        </Link>
+                        <Link href={rawMaterialsIndex().url}>Cancelar</Link>
                     </Button>
                 </div>
             </div>

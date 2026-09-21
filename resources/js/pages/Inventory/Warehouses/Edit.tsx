@@ -1,5 +1,4 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { route } from 'ziggy-js';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -12,6 +11,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    index as warehousesIndex,
+    update as warehousesUpdate,
+} from '@/routes/warehouses';
 
 type Props = {
     warehouse: {
@@ -42,7 +45,7 @@ export default function WarehousesEdit({ warehouse }: Props) {
     });
 
     const submit = () => {
-        form.put(route('warehouses.update', warehouse.id));
+        form.put(warehousesUpdate(warehouse.id).url);
     };
 
     return (
@@ -152,7 +155,7 @@ export default function WarehousesEdit({ warehouse }: Props) {
                                     : 'Guardar cambios'}
                             </Button>
                             <Button type="button" variant="outline" asChild>
-                                <Link href={route('warehouses.index')}>
+                                <Link href={warehousesIndex().url}>
                                     Cancelar
                                 </Link>
                             </Button>

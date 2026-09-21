@@ -1,6 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
 import { Check, ChevronsUpDown, Warehouse } from 'lucide-react';
-import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -11,6 +10,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { setCurrent as setCurrentWarehouse } from '@/routes/warehouses';
 
 export default function WarehouseSelector() {
     const { warehouseContext } = usePage().props;
@@ -21,7 +21,7 @@ export default function WarehouseSelector() {
 
     const changeWarehouse = (warehouseId: number) => {
         router.post(
-            route('warehouses.set-current'),
+            setCurrentWarehouse().url,
             { warehouse_id: warehouseId },
             { preserveScroll: true },
         );
