@@ -101,9 +101,8 @@ class User extends Authenticatable
 
     public function signatureUrl(): Attribute
     {
-        // `v` cambia al cambiar la firma: el navegador no muestra la anterior desde su caché.
-        return Attribute::get(fn () => $this->signature_path
-            ? route('users.signature', ['user' => $this->id, 'v' => substr(md5($this->signature_path), 0, 8)])
+        return Attribute::get(fn () => filled($this->signature_path)
+            ? route('users.signature', $this->id)
             : null);
     }
 

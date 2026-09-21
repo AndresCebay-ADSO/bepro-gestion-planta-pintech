@@ -159,7 +159,8 @@ it('offers as packages only active raw materials of an "Envases" category, regar
     $chemicals = RawMaterialCategory::factory()->create(['name' => 'Químicos']);
     $package = RawMaterial::factory()->create(['code' => 'ENV-M-GL', 'category_id' => $packages->id]);
     $inactivePackage = RawMaterial::factory()->create(['code' => 'ENV-M-T50', 'category_id' => $packages->id, 'is_active' => false]);
-    $chemical = RawMaterial::factory()->create(['code' => 'GALÓN-Q1', 'category_id' => $chemicals->id]);
+    // En minúsculas a propósito: el filtro anterior (LIKE '%galón%' sobre el código) lo tomaba por envase.
+    $chemical = RawMaterial::factory()->create(['code' => 'galón-q1', 'category_id' => $chemicals->id]);
 
     $this->actingAs(userWithRole(SystemRole::Admin))
         ->get(route('products.show', $this->product))

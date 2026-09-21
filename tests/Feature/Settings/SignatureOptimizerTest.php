@@ -132,7 +132,7 @@ test('optimized signature does not cause memory error on certificate generation'
         ->and($info[1])->toBeLessThanOrEqual(200);
 });
 
-test('optimizeAndStore stores optimized signature and returns public path', function () {
+test('optimizeAndStore stores the optimized signature on the private disk and returns its path', function () {
     Storage::fake('local');
 
     $service = app(SignatureOptimizerService::class);

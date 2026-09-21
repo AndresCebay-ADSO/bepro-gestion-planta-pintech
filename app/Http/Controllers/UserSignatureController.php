@@ -18,11 +18,13 @@ class UserSignatureController extends Controller
     {
         $disk = Storage::disk(User::SIGNATURE_DISK);
 
-        abort_if($user->signature_path === null || ! $disk->exists($user->signature_path), 404);
+        // fileExists() y no exists(): una ruta vacía apunta a la carpeta raíz, y exists() la da por buena.
+        abort_if(blank($user->signature_path) || ! $disk->fileExists($user->signature_path), 404);
 
         return $disk->response($user->signature_path, null, [
-            // Privada: ni proxies ni CDN la guardan; el navegador sí, y `v` en la URL invalida la caché al cambiarla.
-            'Cache-Control' => 'private, max-age=86400',
+            // Sin caché: en planta los equipos son compartidos y la firma no debe quedar en el navegador al cerrar
+            // sesión. La imagen pesa pocos KB.
+            'Cache-Control' => 'no-store',
             'X-Content-Type-Options' => 'nosniff',
         ]);
     }
