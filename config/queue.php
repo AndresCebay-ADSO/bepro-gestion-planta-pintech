@@ -40,7 +40,9 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 120),
+            // Debe superar el timeout del job más largo (hoy 120 s, RecalculateRawMaterialReferencePrice): si no, la cola
+            // da por perdido un job que sigue corriendo y lo entrega a otro worker (test QueueRetryAfterTest).
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 300),
             'after_commit' => false,
         ],
 

@@ -21,7 +21,8 @@ debe seguirla (ver la guía del §6).
 eliminan; **se cancelan por estado** (decisión previa, `PLAN_FASE_2_RBAC.md` §6).
 
 **Libro contable** (movimientos y lotes de inventario): ni se desactivan ni se eliminan; **se corrigen con un
-movimiento de reverso** (paso 14).
+movimiento contrario registrado a mano**, con una nota que explique la corrección (decisión del 2026-09-21: sin
+acción "Revertir movimiento").
 
 ---
 
@@ -80,7 +81,7 @@ Se retira el `SoftDeletes` que tenían (código muerto: ninguna ruta los borraba
 
 | Tabla | Por qué |
 | --- | --- |
-| `inventory_movements`, `inventory_batches` | Libro contable de materia prima: se corrige con reverso (paso 14) |
+| `inventory_movements`, `inventory_batches` | Libro contable de materia prima: se corrige con un movimiento contrario manual y una nota |
 | `finished_inventory_movements`, `finished_product_batches`, `transfers` | Libro contable de producto terminado |
 | `production_remnants`, `remnant_consumptions` | Movimientos de saldos de producción |
 | `price_lists`, `production_costs` | Historial de precios y costos |
@@ -220,7 +221,7 @@ fórmulas, clientes, documentos · (4) selectores · (5) usuarios (`hasActivity`
 
 1. **¿Otros registros lo usan o lo usarán?** → `is_active` + eliminar solo sin historial (§3.1).
 2. **¿Es un documento del negocio con número y estado?** → se cancela por estado; no se elimina.
-3. **¿Es un movimiento o un saldo?** → inmutable; se corrige con un reverso.
+3. **¿Es un movimiento o un saldo?** → inmutable; se corrige con un movimiento contrario manual y una nota.
 4. **¿Es un dato auxiliar de otro?** → se elimina físicamente con su padre (`CASCADE`) o mientras el padre está en
    borrador.
 

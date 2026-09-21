@@ -373,7 +373,7 @@ Coinciden con RR-02, RR-03, RR-05, RR-07, RR-08, RR-10 a RR-13; aportan RR-15 y 
 | ~~B20~~ | ✅ Resuelto en la 2.4: `audit_logs.view` es un permiso reservado a SuperAdmin, así que ningún rol personalizado lo recibe (la dependencia de `costs.view` queda como documentación: no llega a actuar). Auditoría: filtrar de `properties` los atributos de costo sin `costs.view`, o impedir que un rol reciba `audit_logs.view` sin `costs.view` | PC-08 | 1 h |
 | B21 | Eliminar `ProductionOrderIngredientsSheet` y `ProductionOrderGeneralSheet` (sin uso) | PC-09 | 10 min |
 | B22 | `ProductController::show` con arrays explícitos en lugar de `makeHidden` (producto, presentaciones, documentos y fórmulas) | RV-04 | 1 h |
-| B23 | `UserController::index`: `with('roles:id,name')` | RV-05 | 5 min |
+| ~~B23~~ | ❌ Obsoleto: desde el paso 11 el listado carga `roles.permissions` y `permissions` a propósito (la policy compara permisos por fila); reducirlo reintroduciría N+1. `UserController::index`: `with('roles:id,name')` | RV-05 | 5 min |
 | B24 | `ProductionOrderCostVisibilityTest`: preparar datos con factories y pasar los literales de rol a `SystemRole` | RV-13, RV-02 | 30 min |
 | B25 | Constante o configuración para el guard `web` en roles y usuarios | RR-08 | 15 min |
 | B26 | Dashboard: reutilizar las alertas recientes compartidas en lugar de volver a consultarlas | Revisión 2.4 | 20 min |
