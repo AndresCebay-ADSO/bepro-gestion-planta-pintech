@@ -46,7 +46,9 @@ class QuotationController extends Controller
             ->visibleTo($user)
             ->with(['client', 'creator'])
             ->withCount('items')
+            // `latest('id')` desempata: sin él la paginación puede repetir o saltarse registros.
             ->latest()
+            ->latest('id')
             ->paginate(15)
             ->onEachSide(1)
             ->withQueryString()

@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Models\Warehouse;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia;
 
 uses(RefreshDatabase::class);
 
@@ -473,4 +474,26 @@ it('completing order includes consumed remnant cost in production cost', functio
 
     expect($productionCost)->not->toBeNull();
     expect(round((float) $productionCost->cost, 2))->toBe(172.0);
+});
+
+it('precarga en la ficha los mismos saldos y en el mismo orden que el endpoint', function () {
+    // La ficha (`BuildProductionOrderShowDataAction`) repite la consulta del endpoint. Con la misma fecha y sin
+    // desempate, cada una puede devolver un orden —y un corte de 50— distinto.
+    // En PostgreSQL un UPDATE reubica la fila al final de la tabla, así que tocar el saldo más antiguo lo devolvería
+    // último sin el desempate. En SQLite el caso no se reproduce; el CI corre los dos motores.
+    $sameMoment = now()->subDay();
+    ProductionRemnant::whereKey([$this->remnant->id, $this->remnant2->id])->update(['created_at' => $sameMoment]);
+    ProductionRemnant::whereKey($this->remnant->id)->update(['notes' => 'reubicado al final de la tabla']);
+
+    $fromEndpoint = collect($this->get(route('production-orders.available-remnants', $this->targetOrder))->assertOk()->json())
+        ->pluck('id')
+        ->all();
+
+    expect($fromEndpoint)->toBe([$this->remnant->id, $this->remnant2->id]);
+
+    $this->get(route('production-orders.show', $this->targetOrder))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('order.available_remnants', fn ($remnants) => collect($remnants)->pluck('id')->all() === $fromEndpoint)
+            ->etc());
 });

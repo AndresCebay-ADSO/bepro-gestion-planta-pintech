@@ -31,7 +31,9 @@ class RemnantController extends Controller
                 'product:id,name,code',
                 'warehouse:id,name',
             ])
-            ->orderByDesc('created_at')
+            // `latest('id')` desempata: sin él la paginación puede repetir o saltarse registros.
+            ->latest()
+            ->latest('id')
             ->paginate(15)
             ->onEachSide(1)
             ->withQueryString()

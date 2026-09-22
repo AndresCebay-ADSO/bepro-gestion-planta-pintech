@@ -26,7 +26,9 @@ class RemnantConsumptionController extends Controller
             ->with(['sourceOrder:id,order_number'])
             ->available()
             ->where('warehouse_id', $productionOrder->warehouse_id)
-            ->orderBy('created_at', 'asc') // FIFO
+            // FIFO, desempatado por id: con la misma fecha, el orden y el corte de los 50 serían arbitrarios.
+            ->orderBy('created_at', 'asc')
+            ->orderBy('id', 'asc')
             ->limit(50)
             ->get()
             ->map(fn (ProductionRemnant $r) => [

@@ -16,7 +16,8 @@ class AuditLogController extends Controller
      */
     public function index(IndexAuditLogRequest $request): Response
     {
-        $baseQuery = Activity::with('causer')->latest();
+        // `latest('id')` desempata: sin él la paginación puede repetir o saltarse registros.
+        $baseQuery = Activity::with('causer')->latest()->latest('id');
 
         $logs = (new AuditLogFilter($request))
             ->apply($baseQuery)

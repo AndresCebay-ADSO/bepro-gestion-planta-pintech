@@ -237,8 +237,9 @@ it('ignores created_by filter for non-admin users', function () {
         ->assertInertia(fn ($page) => $page
             ->component('Quotations/Index')
             ->has('quotations.data', 2)
-            ->where('quotations.data.0.id', $this->quotationA->id)
-            ->where('quotations.data.1.id', $this->quotationB->id)
+            // Mismo `created_at`: el listado desempata por id descendente, así que la más reciente va primero.
+            ->where('quotations.data.0.id', $this->quotationB->id)
+            ->where('quotations.data.1.id', $this->quotationA->id)
         );
 });
 

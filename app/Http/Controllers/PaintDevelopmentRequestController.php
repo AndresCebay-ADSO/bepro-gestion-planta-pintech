@@ -37,7 +37,9 @@ class PaintDevelopmentRequestController extends Controller
             ->apply(PaintDevelopmentRequest::query())
             ->visibleTo($user)
             ->with(['creator'])
+            // `latest('id')` desempata: sin él la paginación puede repetir o saltarse registros.
             ->latest()
+            ->latest('id')
             ->paginate(15)
             ->onEachSide(1)
             ->withQueryString()
