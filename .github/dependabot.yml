@@ -1,5 +1,6 @@
 # Actualizaciones de dependencias automáticas: cada semana, Dependabot abre PR contra `develop` y el CI los prueba
-# en SQLite y PostgreSQL antes del merge. Los parches y las versiones menores se agrupan en un solo PR por ecosistema;
+# en SQLite y PostgreSQL antes del merge. GitHub lee este archivo desde la rama por defecto del repositorio, y los PR de
+# seguridad (Settings → Code security) siempre van contra ella: la rama por defecto debe ser `develop`. Los parches y las versiones menores se agrupan en un solo PR por ecosistema;
 # las versiones mayores llegan por separado, porque pueden romper y hay que revisarlas una a una.
 version: 2
 
@@ -7,6 +8,10 @@ updates:
   - package-ecosystem: composer
     directory: /
     target-branch: develop
+    # También las dependencias indirectas: 5 de los 6 paquetes vulnerables de la auditoría de 2026-09 (dompdf,
+    # phpspreadsheet, guzzle, psr7, commonmark) no están en el manifiesto.
+    allow:
+      - dependency-type: all
     schedule:
       interval: weekly
       day: monday
@@ -27,6 +32,10 @@ updates:
   - package-ecosystem: npm
     directory: /
     target-branch: develop
+    # También las dependencias indirectas: 5 de los 6 paquetes vulnerables de la auditoría de 2026-09 (dompdf,
+    # phpspreadsheet, guzzle, psr7, commonmark) no están en el manifiesto.
+    allow:
+      - dependency-type: all
     schedule:
       interval: weekly
       day: monday
@@ -38,6 +47,11 @@ updates:
     labels:
       - dependencies
       - javascript
+    ignore:
+      # El proyecto usa Node 22 (`engines`, `.nvmrc`): los tipos deben seguir esa versión mayor.
+      - dependency-name: '@types/node'
+        update-types:
+          - version-update:semver-major
     groups:
       npm-minor-patch:
         update-types:

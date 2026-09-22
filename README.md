@@ -174,7 +174,7 @@ docker compose -f compose.dev.yaml up -d --build                        # Rebuil
    # ¡Recomendado en desarrollo! Poblar la base de datos con datos de prueba, roles y usuario admin:
    php artisan db:seed
    ```
-   > **Nota:** Al ejecutar los seeders, se generan usuarios de prueba para cada rol del sistema (`super-admin`, `admin`, `production`, `operator`, `commercial`). Revisa la consola o `database/seeders/DatabaseSeeder.php` para las credenciales predeterminadas.
+   > **Nota:** Al ejecutar los seeders, se generan usuarios de prueba para cada rol del sistema (`super-admin`, `admin`, `production`, `operator`, `commercial`). Las credenciales están en `CLAUDE.md` (sección *Demo Credentials*) y la contraseña se define con `SEED_USER_PASSWORD` en `.env` (por defecto, la de `database/seeders/UserSeeder.php`). Esos usuarios solo se crean en `local` y `testing`.
 
 ## Desarrollo local
 
@@ -258,7 +258,8 @@ Las variables de entorno mandan sobre `phpunit.xml`, que fija SQLite. Usa una ba
 Dos workflows, en cada push y PR a `develop` y `main`:
 
 - **quality**: Pint, Prettier, ESLint y TypeScript **en modo comprobación** (fallan, no corrigen), más `composer audit`
-  y `npm audit` como aviso. Levanta PostgreSQL y migra antes de generar las rutas de Wayfinder, que tipa los parámetros
+  y `npm audit --omit=dev`, que **bloquean** si hay vulnerabilidades conocidas (la auditoría de las herramientas de
+  desarrollo solo avisa). Levanta PostgreSQL y migra antes de generar las rutas de Wayfinder, que tipa los parámetros
   leyendo el esquema: sin base de datos los tipos cambian y `tsc` falla sin motivo real.
 - **tests**: la suite en SQLite y en PostgreSQL 16, ambas con `--parallel`.
 
@@ -267,7 +268,7 @@ Los tres jobs corren a la vez y cachean `vendor` y `node_modules`, así que el t
 Para que sirvan de barrera hay que **proteger `develop` y `main`** en GitHub exigiendo ambos checks antes de fusionar.
 
 **Dependencias:** Dependabot (`.github/dependabot.yml`) abre cada lunes PR contra `develop` con las actualizaciones de
-Composer y npm (parches y menores agrupados en un PR por ecosistema; las mayores, por separado) y cada mes las de GitHub
+Composer y npm, incluidas las dependencias indirectas (parches y menores agrupados en un PR por ecosistema; las mayores, por separado) y cada mes las de GitHub
 Actions. Pasan por el mismo CI: si está en verde, se revisa el changelog y se fusiona. Una versión mayor de un paquete
 que genera documentos (`dompdf`, `maatwebsite/excel`) exige además revisar a mano un PDF y un Excel.
 
