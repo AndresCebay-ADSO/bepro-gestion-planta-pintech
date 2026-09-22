@@ -174,7 +174,7 @@ docker compose -f compose.dev.yaml up -d --build                        # Rebuil
    # ¡Recomendado en desarrollo! Poblar la base de datos con datos de prueba, roles y usuario admin:
    php artisan db:seed
    ```
-   > **Nota:** Al ejecutar los seeders, se generan usuarios de prueba según los roles (admin, produccion, comercial). Revisa la consola o `database/seeders/DatabaseSeeder.php` para las credenciales predeterminadas.
+   > **Nota:** Al ejecutar los seeders, se generan usuarios de prueba para cada rol del sistema (`super-admin`, `admin`, `production`, `operator`, `commercial`). Revisa la consola o `database/seeders/DatabaseSeeder.php` para las credenciales predeterminadas.
 
 ## Desarrollo local
 
@@ -265,6 +265,11 @@ Dos workflows, en cada push y PR a `develop` y `main`:
 Los tres jobs corren a la vez y cachean `vendor` y `node_modules`, así que el tiempo total es el del más lento.
 
 Para que sirvan de barrera hay que **proteger `develop` y `main`** en GitHub exigiendo ambos checks antes de fusionar.
+
+**Dependencias:** Dependabot (`.github/dependabot.yml`) abre cada lunes PR contra `develop` con las actualizaciones de
+Composer y npm (parches y menores agrupados en un PR por ecosistema; las mayores, por separado) y cada mes las de GitHub
+Actions. Pasan por el mismo CI: si está en verde, se revisa el changelog y se fusiona. Una versión mayor de un paquete
+que genera documentos (`dompdf`, `maatwebsite/excel`) exige además revisar a mano un PDF y un Excel.
 
 ## Despliegue a producción
 
