@@ -116,12 +116,18 @@ jobs:
       - name: TypeScript
         run: npm run types:check
 
-      # Informativo: avisa de vulnerabilidades conocidas sin bloquear la rama.
-      # Pasos separados: con bash -e, un fallo de composer impediría ejecutar npm audit.
+      # Bloqueantes desde 2026-09 (partimos de 0 avisos): una vulnerabilidad conocida frena el merge, y el arreglo suele
+      # llegar solo como PR de Dependabot. Un paquete abandonado avisa pero no bloquea.
       - name: Auditoría de dependencias PHP
-        continue-on-error: true
-        run: composer audit --no-interaction
+        run: composer audit --no-interaction --abandoned=report
 
-      - name: Auditoría de dependencias Node
-        continue-on-error: true
+      # `!cancelled()`: se ejecuta aunque falle la auditoría de PHP, para ver los dos resultados en una pasada.
+      - name: Auditoría de dependencias Node (producción)
+        if: ${{ !cancelled() }}
         run: npm audit --omit=dev
+
+      # Herramientas de compilación y de lint: no llegan al navegador, solo avisan.
+      - name: Auditoría de dependencias Node (desarrollo, informativa)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: npm audit
