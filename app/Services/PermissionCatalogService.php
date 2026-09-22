@@ -8,7 +8,7 @@ use App\Enums\Permission;
 use App\Enums\PermissionModule;
 
 /**
- * Catálogo de permisos agrupado por módulo para la pantalla de roles (docs/PLAN_FASE_2_RBAC.md, 2.4).
+ * Catálogo de permisos agrupado por módulo para la pantalla de roles (docs/MATRIZ_RBAC.md §8.8).
  */
 class PermissionCatalogService
 {

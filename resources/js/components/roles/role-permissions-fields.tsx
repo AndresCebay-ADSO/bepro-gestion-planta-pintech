@@ -1,5 +1,5 @@
 /**
- * Permisos de un rol agrupados por módulo (docs/PLAN_FASE_2_RBAC.md, 2.4).
+ * Permisos de un rol agrupados por módulo (docs/MATRIZ_RBAC.md §8.3).
  *
  * Al marcar un permiso se marcan sus dependencias; al desmarcarlo se desmarcan los que dependen de él.
  * Los permisos obligatorios no se pueden desmarcar. El servidor valida las mismas reglas (RoleFormRequest).

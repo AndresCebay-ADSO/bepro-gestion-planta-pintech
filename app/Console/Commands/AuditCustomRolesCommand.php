@@ -13,7 +13,7 @@ use Spatie\Permission\Models\Role;
 
 /**
  * Revisa los roles personalizados contra las reglas actuales del código. Solo informa: nunca cambia permisos
- * (decisión del usuario, docs/REVISION_RAMA_RBAC.md, lote A6).
+ * (decisión del usuario, docs/MATRIZ_RBAC.md §8.6).
  */
 #[Signature('roles:audit')]
 #[Description('Lista los roles personalizados con permisos reservados, obligatorios faltantes o dependencias incompletas')]

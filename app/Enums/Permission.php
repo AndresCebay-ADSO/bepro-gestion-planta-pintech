@@ -323,7 +323,7 @@ enum Permission: string
     }
 
     /**
-     * Permisos reservados a SuperAdmin: un rol creado desde la UI nunca puede tenerlos (docs/PLAN_FASE_2_RBAC.md, 2.4).
+     * Permisos reservados a SuperAdmin: un rol creado desde la UI nunca puede tenerlos (docs/MATRIZ_RBAC.md §8.2).
      */
     public function isReserved(): bool
     {

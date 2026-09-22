@@ -2,7 +2,7 @@
 
 Fuente de verdad sobre cómo se "quita" un registro en Pintech OS: qué se desactiva, qué se elimina, qué no se toca
 nunca y qué reglas de borrado llevan las claves foráneas. Sustituye a las tareas 2.6 (soft deletes) y 2.7 (eliminación
-inteligente) de `PLAN_FASE_2_RBAC.md`, que se funden en una sola.
+inteligente) del plan de la Fase 2, que se funden en una sola.
 
 Decidida el 2026-09-18, tras la revisión de la rama `feature/data-integrity-soft-deletes`. Todo módulo o tabla nueva
 debe seguirla (ver la guía del §6).
@@ -18,7 +18,7 @@ debe seguirla (ver la guía del §6).
 | ~~Soft delete~~ (`deleted_at`) | **No se usa.** Ver §2. | — |
 
 **Documentos del negocio** (cotizaciones, pedidos, órdenes, solicitudes de desarrollo): ni se desactivan ni se
-eliminan; **se cancelan por estado** (decisión previa, `PLAN_FASE_2_RBAC.md` §6).
+eliminan; **se cancelan por estado** (decisión previa de la Fase 2).
 
 **Libro contable** (movimientos y lotes de inventario): ni se desactivan ni se eliminan; **se corrigen con un
 movimiento contrario registrado a mano**, con una nota que explique la corrección (decisión del 2026-09-21: sin
