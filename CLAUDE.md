@@ -52,9 +52,14 @@ docker compose -f compose.dev.yaml exec php-fpm ./vendor/bin/pest
 docker compose -f compose.dev.yaml down
 
 # `vendor/` and `node_modules/` are named volumes (compose.dev.yaml), NOT the host folders: installing on the host
-# leaves the containers behind and boot fails ("Class ... ServiceProvider not found"). After any lock change:
-docker compose -f compose.dev.yaml exec workspace composer install
+# leaves the containers behind and boot fails ("Class ... ServiceProvider not found"). Each lock file has its own
+# workflow, and neither install runs by itself: `workspace` only runs `npm ci` on boot while
+# `node_modules/.package-lock.json` is missing, so a package-lock.json change installs nothing.
+docker compose -f compose.dev.yaml exec workspace composer install   # composer.lock changed
 docker compose -f compose.dev.yaml restart php-fpm
+# package-lock.json changed. npm lives in nvm under the `www` user, so root's PATH has no npm:
+docker compose -f compose.dev.yaml exec -u www workspace bash -lc "source /home/www/.nvm/nvm.sh && npm ci"
+docker compose -f compose.dev.yaml restart workspace
 ```
 
 ## Architecture & Request Flow
