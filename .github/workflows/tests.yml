@@ -46,7 +46,7 @@ jobs:
 
       - name: Cache de vendor
         id: vendor-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: vendor
           key: vendor-${{ runner.os }}-php8.3-${{ hashFiles('composer.lock', 'composer.json') }}
@@ -57,7 +57,7 @@ jobs:
 
       - name: Cache de node_modules
         id: node-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: node_modules
           key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
@@ -129,7 +129,7 @@ jobs:
 
       - name: Cache de vendor
         id: vendor-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: vendor
           key: vendor-${{ runner.os }}-php8.3-${{ hashFiles('composer.lock', 'composer.json') }}
@@ -140,7 +140,7 @@ jobs:
 
       - name: Cache de node_modules
         id: node-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: node_modules
           key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
