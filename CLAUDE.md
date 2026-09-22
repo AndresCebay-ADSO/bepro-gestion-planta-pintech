@@ -50,6 +50,11 @@ php artisan wayfinder:generate --with-form   # Regenerate typed route helpers if
 docker compose -f compose.dev.yaml up -d
 docker compose -f compose.dev.yaml exec php-fpm ./vendor/bin/pest
 docker compose -f compose.dev.yaml down
+
+# `vendor/` and `node_modules/` are named volumes (compose.dev.yaml), NOT the host folders: installing on the host
+# leaves the containers behind and boot fails ("Class ... ServiceProvider not found"). After any lock change:
+docker compose -f compose.dev.yaml exec workspace composer install
+docker compose -f compose.dev.yaml restart php-fpm
 ```
 
 ## Architecture & Request Flow
@@ -111,6 +116,8 @@ Route (routes/web.php, role: middleware)
 - **Authorization**: decide by permission (`$user->can(Permission::X->value)`, `can:` middleware, policies), never by
   role name. The only role checks live in `User` (`isSuperAdmin()`, `superAdmins()`), enforced by a test. Role names
   are written as `SystemRole::X->value`, never as string literals.
+- **Listings**: order by a date and always break ties with `latest('id')`. Without it, rows sharing a timestamp come
+  back in arbitrary order on PostgreSQL and pagination can repeat or skip them (`StableListingOrderTest`).
 - **SQL**: Database-agnostic (`LOWER()` instead of Postgres-specific `ILIKE`).
 - **Seeders**: Must be idempotent (`updateOrCreate` / `firstOrCreate`). Gate test/mock data with `app()->environment('local', 'testing')`.
 - **Git**: Conventional Commits (`feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`). Main branch: `main`; development: `develop`.
