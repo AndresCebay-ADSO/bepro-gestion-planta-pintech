@@ -67,7 +67,9 @@ class ProductionOrderController extends Controller
         $orders = (new ProductionOrderFilter($request))
             ->apply(ProductionOrder::query())
             ->with(['product:id,code,name', 'formula:id,version', 'warehouse:id,name'])
+            // `latest('id')` desempata: sin él la paginación puede repetir o saltarse registros.
             ->latest()
+            ->latest('id')
             ->paginate(15)
             ->onEachSide(1)
             ->withQueryString()

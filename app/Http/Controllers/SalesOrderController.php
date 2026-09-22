@@ -35,7 +35,9 @@ class SalesOrderController extends Controller
             ->visibleTo($user)
             ->with($canManage ? ['client', 'creator'] : ['client'])
             ->withCount('items')
+            // `latest('id')` desempata: sin él la paginación puede repetir o saltarse registros.
             ->latest()
+            ->latest('id')
             ->paginate(15)
             ->onEachSide(1)
             ->withQueryString()

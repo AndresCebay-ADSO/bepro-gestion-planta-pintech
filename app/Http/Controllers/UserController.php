@@ -39,7 +39,9 @@ class UserController extends Controller
         // roles.permissions y permissions: la policy compara los permisos de cada fila con los de quien consulta.
         $users = (new UserFilter($request))
             ->apply(User::with(['roles.permissions', 'permissions']))
+            // `latest('id')` desempata: sin él la paginación puede repetir o saltarse registros.
             ->latest()
+            ->latest('id')
             ->paginate(15)
             ->onEachSide(1)
             ->withQueryString()
@@ -62,7 +64,7 @@ class UserController extends Controller
         // La actividad reciente es auditoría: solo con audit_logs.view (docs/MATRIZ_RBAC.md).
         $canViewActivity = $actor?->can(Permission::AuditLogsView->value) ?? false;
         $activities = $canViewActivity
-            ? Activity::with('causer')->latest()->take(5)->get()
+            ? Activity::with('causer')->latest()->latest('id')->take(5)->get()
             : collect();
 
         return Inertia::render('Admin/Users/Index', [

@@ -295,7 +295,9 @@ class BuildProductionOrderShowDataAction
                     ->with(['sourceOrder:id,order_number'])
                     ->available()
                     ->where('warehouse_id', $productionOrder->warehouse_id)
+                    // Mismo orden que `RemnantConsumptionController::availableRemnants`, que refresca esta lista.
                     ->orderBy('created_at', 'asc')
+                    ->orderBy('id', 'asc')
                     ->limit(50)
                     ->get()
                     ->map(fn (ProductionRemnant $r) => [
