@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;

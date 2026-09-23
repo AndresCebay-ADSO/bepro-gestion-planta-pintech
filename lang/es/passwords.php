@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     'reset' => 'Tu contraseña ha sido restablecida.',
     'sent' => 'Si el correo ingresado coincide con una cuenta activa, recibirás un enlace en los próximos minutos.',

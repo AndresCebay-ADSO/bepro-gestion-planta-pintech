@@ -91,6 +91,9 @@ Route (routes/web.php, role: middleware)
 1. **Decimal Precision (CRITICAL)**:
    - **Never compute money, costs, prices, or quantities using PHP floats.**
    - Always use `App\Services\DecimalCalculator` (`bcmath`, string in/string out, default scale 4). `ext-bcmath` is mandatory.
+   - Eloquent's `decimal:N` cast returns a **string**. Every file declares `strict_types=1` (enforced by Pint), so a
+     parameter typed `float` will throw a `TypeError` instead of coercing it. Type such parameters `string|int|float`
+     (as `DecimalCalculator` does) or cast explicitly with `(float)` at the call site.
 2. **Raw Materials Privacy**:
    - `raw_materials` table has **NO `name` column** (industrial formula privacy policy). Identification is **strictly by `code`**. Search filters must target `code`.
 3. **Inventory & FIFO Traceability**:
