@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     'failed' => 'Las credenciales proporcionadas son incorrectas.',
     'password' => 'Las credenciales proporcionadas son incorrectas.',

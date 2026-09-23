@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\SystemRole;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;

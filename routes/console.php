@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Models\Product;
 use App\Services\ProductionCostRecalculationService;
 use Illuminate\Foundation\Inspiring;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Exceptions\InsufficientStockException;
 use App\Models\FinishedProductBatch;
 use App\Models\Product;
