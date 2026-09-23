@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
 use Spatie\Permission\Models\Role;
 
 /**
- * Roles que un usuario puede asignar a otros (docs/PLAN_FASE_2_RBAC.md, 2.4).
+ * Roles que un usuario puede asignar a otros (docs/MATRIZ_RBAC.md §8.4).
  *
  * Evita la escalada de privilegios: nadie asigna un rol con permisos que él mismo no tiene. El rol super-admin tiene
  * todos los permisos, así que solo lo asigna otro SuperAdmin.

@@ -241,4 +241,21 @@ función), `inventory_movements.edit/delete` (inmutables), `production_orders.de
 4. ✅ **`sales_orders.update_status` para Producción — sí.** Es quien marca cuándo el pedido pasa a `in_progress`/`ready`.
 5. ✅ **Nomenclatura `view_own` / `view_all`** en los módulos con dueño (§1).
 
-**No quedan decisiones abiertas**, ni en la matriz ni en el plan (`PLAN_FASE_2_RBAC.md` §6).
+**No quedan decisiones abiertas** en la matriz.
+
+## 8. Decisiones de implementación (citadas desde el código)
+
+Estas decisiones se tomaron durante la Fase 2 y las citan los docblocks del código. El plan que las originó
+(`PLAN_FASE_2_RBAC.md`) y la revisión de la rama (`REVISION_RAMA_RBAC.md`) se archivaron fuera del repositorio; lo que
+el código necesita saber vive aquí.
+
+| # | Decisión | Dónde se aplica |
+| :--- | :--- | :--- |
+| 8.1 | **SuperAdmin sin `Gate::before`.** Recibe los 85 permisos por seeder. Un bypass cortaría la ejecución antes de los invariantes de estado y dejaría completar una orden ya completada (doble descuento FIFO) o convertir dos veces una cotización | `SystemRole`, `RolePermissionSeeder` |
+| 8.2 | **Permisos reservados.** Un rol creado desde la UI nunca puede tener los permisos exclusivos de SuperAdmin, ni al copiar otro rol | `Permission::isReserved()`, `RoleFormRequest` |
+| 8.3 | **Los roles del sistema se ven en solo lectura.** La pantalla de roles no permite editarlos ni borrarlos | `RoleController`, `role-permissions-fields.tsx` |
+| 8.4 | **No se asigna lo que no se tiene.** Nadie asigna un rol con permisos que él mismo no posee (`User::holdsAllPermissions`) | `AssignableRoleService`, `UserPolicy` |
+| 8.5 | **`dashboard.view` es obligatorio** en todo rol personalizado | `RoleFormRequest` |
+| 8.6 | **`roles:audit` solo avisa, nunca corrige.** Lista roles personalizados con permisos reservados, obligatorios faltantes o dependencias rotas; se ejecuta en cada despliegue | `AuditCustomRolesCommand` |
+| 8.7 | **`visibleTo()` sin usuario no devuelve nada.** Con `view_all` ve todo; con `view_own`, solo lo propio; sin usuario, ningún registro (antes se trataba como admin sin restricción) | `Quotation`, `SalesOrder`, `PaintDevelopmentRequest` |
+| 8.8 | **Los permisos se agrupan por módulo** para la pantalla de roles, desde el propio enum | `PermissionCatalogService`, `PermissionModule` |

@@ -20,7 +20,7 @@ use Inertia\Response;
 use Spatie\Permission\Models\Role;
 
 /**
- * Gestión de roles (docs/PLAN_FASE_2_RBAC.md, 2.4). Los roles del sistema se ven en solo lectura.
+ * Gestión de roles (docs/MATRIZ_RBAC.md §8.3). Los roles del sistema se ven en solo lectura.
  */
 class RoleController extends Controller
 {

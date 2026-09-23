@@ -70,7 +70,7 @@ enum SystemRole: string
     /**
      * Permisos que el seeder asigna a este rol.
      *
-     * SuperAdmin recibe todos los permisos (sin Gate::before, ver docs/PLAN_FASE_2_RBAC.md C1).
+     * SuperAdmin recibe todos los permisos (sin Gate::before, ver docs/MATRIZ_RBAC.md §8.1).
      *
      * @return array<int, Permission>
      */

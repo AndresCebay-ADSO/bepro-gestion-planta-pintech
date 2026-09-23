@@ -12,8 +12,7 @@ use Database\Seeders\RolePermissionSeeder;
 
 /**
  * scopeVisibleTo (Quotation, SalesOrder, PaintDevelopmentRequest): con view_all ve todo, con view_own
- * solo lo propio, y sin usuario no debe ver nada — nunca "todo" (docs/REVISION_RAMA_RBAC.md, hallazgo #1
- * de la tercera revisión). El scope solo se invoca hoy detrás de 'auth', así que esto es una prueba de
+ * solo lo propio, y sin usuario no debe ver nada — nunca "todo" (docs/MATRIZ_RBAC.md §8.7). El scope solo se invoca hoy detrás de 'auth', así que esto es una prueba de
  * defensa en profundidad: protege contra un futuro uso del scope desde un job o comando sin usuario.
  */
 beforeEach(function (): void {

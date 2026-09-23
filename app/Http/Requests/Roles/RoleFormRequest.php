@@ -14,7 +14,7 @@ use Illuminate\Validation\Validator;
 use Spatie\Permission\Models\Role;
 
 /**
- * Reglas compartidas al crear y editar un rol personalizado (docs/PLAN_FASE_2_RBAC.md, 2.4).
+ * Reglas compartidas al crear y editar un rol personalizado (docs/MATRIZ_RBAC.md §8).
  */
 abstract class RoleFormRequest extends FormRequest
 {
