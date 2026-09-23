@@ -137,12 +137,20 @@ Route (routes/web.php, role: middleware)
 
 ## Active Documentation Index (`docs/`)
 
+`docs/` holds only the rules that code must satisfy. Plans, sprints, backlog and business overviews live in the
+Obsidian vault (see below), so nothing here goes stale on its own.
+
 - `MER.md` — Complete database schema and entity-relationship dictionary.
 - `STANDARDS.md` & `ARQUITECTURA.md` — Core architectural guidelines, patterns, and conventions.
-- `FLUJO_SISTEMA.md` & `SOFTWARE_OVERVIEW.md` — End-to-end plant workflows and functional overview.
 - `POLITICA_COSTOS_MATERIA_PRIMA.md` — FIFO costing rules, reference pricing, and valuation formulas.
 - `POLITICA_ELIMINACION.md` — Deletion policy: deactivate vs delete per entity, FK delete rules (no soft deletes).
-- `MATRIZ_RBAC.md` & `PLAN_FASE_2_RBAC.md` — Role and permission matrix, plus current RBAC implementation roadmap.
+- `MATRIZ_RBAC.md` — Role and permission matrix. §8 holds the implementation decisions the code cites.
 - `COMPONENTES_UI.md` & `SISTEMA_TEMAS_UI.md` — Design system, themes (dark/light), and reusable UI components.
 - `SISTEMA_AUDITORIA.md` — Spatie activity log integration, audit trails, and security events.
 - `LOGOS.md` & `production-exports.md` — Brand identity rules, PDF & Excel export technical specifications.
+
+## Project Management (outside this repository)
+
+Roadmap, sprints, pending work, technical debt backlog and decision records live in the owner's Obsidian vault, at
+`~/documents/Obsidian/001-Proyectos/Pintech Colombia S.A.S/`. What is pending is answered by
+`Documentation/Project Management/Estado y Pendientes.md` there — never from this repository or from chat history.

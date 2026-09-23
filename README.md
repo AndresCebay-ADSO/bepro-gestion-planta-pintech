@@ -309,11 +309,8 @@ Carpeta `docs/`:
 - `MER.md` - Modelo entidad-relación y diccionario de datos completo.
 - `STANDARDS.md` - Estándares de código, paginación y diseño.
 - `ARQUITECTURA.md` - Guía y decisiones de arquitectura del sistema.
-- `FLUJO_SISTEMA.md` - Flujo integral de operaciones de planta.
-- `SOFTWARE_OVERVIEW.md` - Mapa completo de capacidades del sistema.
 - `POLITICA_COSTOS_MATERIA_PRIMA.md` - Costeo FIFO y precios de referencia.
-- `MATRIZ_RBAC.md` - Matriz de roles y permisos del sistema.
-- `PLAN_FASE_2_RBAC.md` - Plan de implementación de roles y permisos (Fase 2).
+- `MATRIZ_RBAC.md` - Matriz de roles y permisos del sistema; §8, las decisiones de implementación que cita el código.
 - `COMPONENTES_UI.md` - Componentes reutilizables (FormattedNumber, FormattedDate, TableActions).
 - `SISTEMA_TEMAS_UI.md` - Guía del sistema de temas visuales (claro/oscuro).
 - `SISTEMA_AUDITORIA.md` - Guía del registro de actividad y auditoría.
