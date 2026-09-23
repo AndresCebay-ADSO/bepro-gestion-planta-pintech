@@ -156,8 +156,15 @@ it('no decide por nombre de rol fuera de User', function () {
 it('autoriza cada ruta con la ability exacta de su policy', function (string $routeName, string $expected) {
     $middleware = Route::getRoutes()->getByName($routeName)?->gatherMiddleware() ?? [];
 
-    // La ability literal, no "algún can:": proteger la edición con la ability de ver pasaría desapercibido.
-    expect($middleware)->toContain($expected);
+    // Solo las abilities de policy (las que llevan el modelo tras la coma); el permiso suelto va aparte.
+    $policyMiddleware = collect($middleware)
+        ->filter(fn ($item) => is_string($item) && str_starts_with($item, 'can:') && str_contains($item, ','))
+        ->values()
+        ->all();
+
+    // La lista completa, no "que esté la esperada": una ability de más también autoriza, y puede negar el
+    // acceso a quien la esperada permite.
+    expect($policyMiddleware)->toBe([$expected]);
 })->with(fn () => collect(RoutePermissionMap::policyAbilities())
     ->map(fn (string $ability, string $route) => [$route, $ability])
     ->all());

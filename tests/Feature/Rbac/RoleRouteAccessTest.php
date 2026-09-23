@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\SystemRole;
+use App\Models\User;
 use Illuminate\Routing\Route as RoutingRoute;
 use Tests\Support\Rbac\RoleRouteMatrix;
 use Tests\Support\Rbac\RoutePermissionMap;
@@ -35,16 +36,20 @@ it('abre solo las pantallas que la matriz concede a cada rol', function (SystemR
 })->with(SystemRole::cases());
 
 it('deja abiertas a cualquier usuario autenticado las rutas sin permiso', function () {
-    // Operador es el rol con menos permisos (8): si él entra, entra cualquiera con sesión.
-    actingAsRole(SystemRole::Operator);
+    // Un usuario sin rol ni permisos, que es lo que afirma el contrato. Con un Operador no valdría: tiene ocho
+    // permisos, y si una de estas rutas ganara uno de ellos el test seguiría verde mientras los demás pierden acceso.
+    $this->actingAs(User::factory()->create());
 
     $wrong = [];
 
     foreach (RoleRouteMatrix::openToAnyUser() as $routeName => $expected) {
         $response = $this->get(route($routeName));
+        $target = isset($expected['to']) ? route($expected['to']) : null;
 
-        if ($response->getStatusCode() !== $expected) {
-            $wrong[] = "{$routeName}: esperado {$expected}, recibido ".describeResponse($response);
+        if ($response->getStatusCode() !== $expected['status']
+            || ($target !== null && $response->headers->get('Location') !== $target)) {
+            $wrong[] = "{$routeName}: esperado {$expected['status']}"
+                .($target !== null ? " -> {$target}" : '').', recibido '.describeResponse($response);
         }
     }
 
@@ -92,7 +97,8 @@ it('cubre toda pantalla principal protegida por permiso', function () {
         ->filter(fn (RoutingRoute $route) => in_array('GET', $route->methods(), true)
             && ! str_contains($route->uri(), '{')
             && collect($route->gatherMiddleware())
-                ->contains(fn ($item) => is_string($item) && str_starts_with($item, 'can:')))
+                ->contains(fn ($item) => is_string($item)
+                    && (str_starts_with($item, 'can:') || str_starts_with($item, 'permission:'))))
         ->map(fn (RoutingRoute $route) => $route->getName())
         ->reject(fn (?string $name) => $name !== null && array_key_exists($name, RoleRouteMatrix::screens()))
         ->values()

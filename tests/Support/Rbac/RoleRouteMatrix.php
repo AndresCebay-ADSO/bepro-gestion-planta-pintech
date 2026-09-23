@@ -89,19 +89,19 @@ final class RoleRouteMatrix
      * `RoutePermissionMap` (marcador AUTHENTICATED) y hay una guarda que exige que aparezcan aquí; las de
      * Fortify quedan fuera de esa clasificación a propósito (`IGNORED_ACTION_PREFIXES`).
      *
-     * @return array<string, int>
+     * @return array<string, array{status: int, to?: string}>
      */
     public static function openToAnyUser(): array
     {
         return [
             // De la aplicación: ajustes de la propia cuenta.
-            'profile.edit' => 200,
-            'appearance.edit' => 200,
+            'profile.edit' => ['status' => 200],
+            'appearance.edit' => ['status' => 200],
 
             // De Fortify.
-            'password.confirm' => 200,
+            'password.confirm' => ['status' => 200],
             // Redirige al dashboard: el usuario de las pruebas ya tiene el correo verificado.
-            'verification.notice' => 302,
+            'verification.notice' => ['status' => 302, 'to' => 'dashboard'],
         ];
     }
 
