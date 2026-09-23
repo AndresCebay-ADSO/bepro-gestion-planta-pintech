@@ -166,18 +166,25 @@ it('no decide por nombre de rol fuera de User', function () {
     expect($offenders)->toBe([], 'Comprobaciones por rol fuera de User: '.implode(', ', $offenders));
 });
 
-it('autoriza con la policy del registro las acciones sobre registros con dueño', function (string $routeName) {
+it('autoriza cada ruta con la ability exacta de su policy', function (string $routeName, string $expected) {
     $middleware = Route::getRoutes()->getByName($routeName)?->gatherMiddleware() ?? [];
 
-    // Además del permiso, la policy del modelo comprueba dueño y estado ya en la ruta (defensa en profundidad).
-    $policyMiddleware = collect($middleware)
-        ->filter(fn ($item) => is_string($item) && str_starts_with($item, 'can:') && str_contains($item, ','));
+    // La ability literal, no "algún can:": proteger la edición con la ability de ver pasaría desapercibido.
+    expect($middleware)->toContain($expected);
+})->with(fn () => collect(RoutePermissionMap::policyAbilities())
+    ->map(fn (string $ability, string $route) => [$route => [$route, $ability]])
+    ->collapse()
+    ->all());
 
-    expect($policyMiddleware)->not->toBeEmpty("{$routeName} no autoriza con la policy del registro");
-})->with([
-    'quotations.show', 'quotations.edit', 'quotations.update', 'quotations.update-status',
-    'quotations.convert-to-order', 'quotations.export-pdf',
-    'sales-orders.show', 'sales-orders.update', 'sales-orders.update-status',
-    'paint-development-requests.show', 'paint-development-requests.edit', 'paint-development-requests.update',
-    'paint-development-requests.submit', 'paint-development-requests.update-status', 'paint-development-requests.export-pdf',
-]);
+it('declara la ability de toda ruta autorizada por policy', function () {
+    // Si mañana una ruta pasa a autorizarse con una policy, debe entrar en la lista con su ability.
+    $undeclared = collect(applicationRoutes())
+        ->filter(fn (RoutingRoute $route) => collect($route->gatherMiddleware())
+            ->contains(fn ($item) => is_string($item) && str_starts_with($item, 'can:') && str_contains($item, ',')))
+        ->map(fn (RoutingRoute $route) => $route->getName())
+        ->reject(fn (?string $name) => $name !== null && array_key_exists($name, RoutePermissionMap::policyAbilities()))
+        ->values()
+        ->all();
+
+    expect($undeclared)->toBe([], 'Rutas con policy sin ability declarada: '.implode(', ', $undeclared));
+});

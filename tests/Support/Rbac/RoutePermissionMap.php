@@ -203,6 +203,46 @@ final class RoutePermissionMap
     }
 
     /**
+     * Ability exacta que autoriza cada ruta cubierta por una policy.
+     *
+     * No basta con exigir "algún can:": una ruta de edición protegida con la ability de ver pasaría igual.
+     * Aquí se declara la ability literal, y el test compara el middleware con esta lista.
+     *
+     * @return array<string, string>
+     */
+    public static function policyAbilities(): array
+    {
+        return [
+            'quotations.index' => 'can:viewAny,App\\Models\\Quotation',
+            'quotations.show' => 'can:view,quotation',
+            'quotations.edit' => 'can:update,quotation',
+            'quotations.update' => 'can:update,quotation',
+            'quotations.update-status' => 'can:updateStatus,quotation',
+            'quotations.convert-to-order' => 'can:convertToOrder,quotation',
+            'quotations.export-pdf' => 'can:exportPdf,quotation',
+
+            'sales-orders.index' => 'can:viewAny,App\\Models\\SalesOrder',
+            'sales-orders.show' => 'can:view,sales_order',
+            'sales-orders.update' => 'can:update,sales_order',
+            'sales-orders.update-status' => 'can:updateStatus,sales_order',
+
+            'paint-development-requests.index' => 'can:viewAny,App\\Models\\PaintDevelopmentRequest',
+            'paint-development-requests.show' => 'can:view,paintDevelopmentRequest',
+            'paint-development-requests.edit' => 'can:update,paintDevelopmentRequest',
+            'paint-development-requests.update' => 'can:update,paintDevelopmentRequest',
+            'paint-development-requests.submit' => 'can:submit,paintDevelopmentRequest',
+            'paint-development-requests.update-status' => 'can:updateStatus,paintDevelopmentRequest',
+            'paint-development-requests.export-pdf' => 'can:exportPdf,paintDevelopmentRequest',
+
+            'roles.edit' => 'can:update,role',
+            'roles.update' => 'can:update,role',
+            'roles.destroy' => 'can:delete,role',
+
+            'users.signature' => 'can:viewSignature,user',
+        ];
+    }
+
+    /**
      * Permisos que no protegen ninguna ruta, con el motivo.
      *
      * @return array<string, string>
