@@ -82,19 +82,26 @@ final class RoleRouteMatrix
     }
 
     /**
-     * Rutas con sesión pero sin permiso: las abre cualquier usuario autenticado, a propósito.
+     * Rutas que abre cualquier usuario autenticado, con el estado que devuelven y por qué.
      *
-     * Están aquí para que ese "sin permiso" sea una decisión escrita y no un olvido al añadir la ruta.
+     * Están declaradas para que ese "sin permiso" sea una decisión escrita y no un olvido al añadir la ruta.
+     * Se separan en dos grupos porque no se vigilan igual: las de la aplicación las cubre
+     * `RoutePermissionMap` (marcador AUTHENTICATED) y hay una guarda que exige que aparezcan aquí; las de
+     * Fortify quedan fuera de esa clasificación a propósito (`IGNORED_ACTION_PREFIXES`).
      *
-     * @return list<string>
+     * @return array<string, int>
      */
     public static function openToAnyUser(): array
     {
         return [
-            'profile.edit',
-            'appearance.edit',
-            'password.confirm',
-            'verification.notice',
+            // De la aplicación: ajustes de la propia cuenta.
+            'profile.edit' => 200,
+            'appearance.edit' => 200,
+
+            // De Fortify.
+            'password.confirm' => 200,
+            // Redirige al dashboard: el usuario de las pruebas ya tiene el correo verificado.
+            'verification.notice' => 302,
         ];
     }
 

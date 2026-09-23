@@ -6,6 +6,7 @@ use App\Enums\SystemRole;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /*
@@ -75,4 +76,21 @@ function actingAsRole(SystemRole $role, array $attributes = []): User
     test()->actingAs($user);
 
     return $user;
+}
+
+/**
+ * Describe una respuesta para un informe de fallos, incluida la excepción si el servidor reventó.
+ *
+ * Sin esto, un 500 aparece como un número suelto y obliga a depurar a ciegas.
+ */
+function describeResponse(TestResponse $response): string
+{
+    $status = $response->getStatusCode();
+    $exception = $response->exception;
+
+    if ($exception !== null) {
+        return $status.' ('.$exception::class.': '.$exception->getMessage().')';
+    }
+
+    return $status.($status === 302 ? ' -> '.($response->headers->get('Location') ?? 'sin destino') : '');
 }

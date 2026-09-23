@@ -5,6 +5,12 @@ declare(strict_types=1);
 namespace Tests\Support\Rbac;
 
 use App\Enums\Permission;
+use App\Models\PaintDevelopmentRequest;
+use App\Models\Quotation;
+use App\Models\SalesOrder;
+use Illuminate\Routing\Route as RoutingRoute;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 /**
  * Clasificación de cada ruta nombrada de la aplicación según docs/MATRIZ_RBAC.md.
@@ -203,6 +209,22 @@ final class RoutePermissionMap
     }
 
     /**
+     * Rutas de la aplicación: las del framework y los paquetes quedan fuera del control de acceso.
+     *
+     * Vive aquí, y no en un test, para que todas las pruebas de RBAC filtren con el mismo criterio.
+     *
+     * @return array<int, RoutingRoute>
+     */
+    public static function applicationRoutes(): array
+    {
+        return array_values(array_filter(
+            Route::getRoutes()->getRoutes(),
+            fn (RoutingRoute $route) => ! in_array($route->getName(), self::IGNORED_ROUTES, true)
+                && ! Str::startsWith($route->getActionName(), self::IGNORED_ACTION_PREFIXES),
+        ));
+    }
+
+    /**
      * Ability exacta que autoriza cada ruta cubierta por una policy.
      *
      * No basta con exigir "algún can:": una ruta de edición protegida con la ability de ver pasaría igual.
@@ -213,7 +235,7 @@ final class RoutePermissionMap
     public static function policyAbilities(): array
     {
         return [
-            'quotations.index' => 'can:viewAny,App\\Models\\Quotation',
+            'quotations.index' => 'can:viewAny,'.Quotation::class,
             'quotations.show' => 'can:view,quotation',
             'quotations.edit' => 'can:update,quotation',
             'quotations.update' => 'can:update,quotation',
@@ -221,12 +243,12 @@ final class RoutePermissionMap
             'quotations.convert-to-order' => 'can:convertToOrder,quotation',
             'quotations.export-pdf' => 'can:exportPdf,quotation',
 
-            'sales-orders.index' => 'can:viewAny,App\\Models\\SalesOrder',
+            'sales-orders.index' => 'can:viewAny,'.SalesOrder::class,
             'sales-orders.show' => 'can:view,sales_order',
             'sales-orders.update' => 'can:update,sales_order',
             'sales-orders.update-status' => 'can:updateStatus,sales_order',
 
-            'paint-development-requests.index' => 'can:viewAny,App\\Models\\PaintDevelopmentRequest',
+            'paint-development-requests.index' => 'can:viewAny,'.PaintDevelopmentRequest::class,
             'paint-development-requests.show' => 'can:view,paintDevelopmentRequest',
             'paint-development-requests.edit' => 'can:update,paintDevelopmentRequest',
             'paint-development-requests.update' => 'can:update,paintDevelopmentRequest',

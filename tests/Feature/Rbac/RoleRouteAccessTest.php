@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 use App\Enums\SystemRole;
 use Illuminate\Routing\Route as RoutingRoute;
-use Illuminate\Support\Facades\Route;
 use Tests\Support\Rbac\RoleRouteMatrix;
+use Tests\Support\Rbac\RoutePermissionMap;
 
 /**
  * Matriz de acceso comprobada por HTTP: cada rol entra de verdad en cada pantalla principal (B17).
  *
- * `RoutePermissionMapTest` revisa la tabla de rutas; este test entra por la puerta. Es la prueba que se le enseña
- * a una auditoría: demuestra que Comercial no abre una orden de producción, en vez de deducirlo del middleware.
+ * `RoutePermissionMapTest` revisa la tabla de rutas; este test entra por la puerta.
+ *
+ * Alcance: las pantallas listables, es decir las rutas GET **sin parámetros**. Las de detalle y edición
+ * (`production-orders/{id}`, `quotations/{id}/edit`…) no se recorren aquí porque exigen fabricar un registro de
+ * cada modelo; su autorización se comprueba en las pruebas de policy (`ProductionOrderPolicyTest` y las de cada
+ * módulo) y en `RoutePermissionMapTest`, que exige la ability exacta de cada una.
  */
 it('abre solo las pantallas que la matriz concede a cada rol', function (SystemRole $role) {
     $user = actingAsRole($role);
@@ -20,10 +24,10 @@ it('abre solo las pantallas que la matriz concede a cada rol', function (SystemR
 
     foreach (RoleRouteMatrix::screens() as $routeName => $byRole) {
         $expected = $byRole[$role->value] ? 200 : 403;
-        $status = $this->get(route($routeName))->getStatusCode();
+        $response = $this->get(route($routeName));
 
-        if ($status !== $expected) {
-            $wrong[] = "{$routeName}: esperado {$expected}, recibido {$status}";
+        if ($response->getStatusCode() !== $expected) {
+            $wrong[] = "{$routeName}: esperado {$expected}, recibido ".describeResponse($response);
         }
     }
 
@@ -34,27 +38,57 @@ it('deja abiertas a cualquier usuario autenticado las rutas sin permiso', functi
     // Operador es el rol con menos permisos (8): si él entra, entra cualquiera con sesión.
     actingAsRole(SystemRole::Operator);
 
-    foreach (RoleRouteMatrix::openToAnyUser() as $routeName) {
-        expect($this->get(route($routeName))->getStatusCode())
-            ->toBeLessThan(400, "{$routeName} debería abrirse sin permiso");
-    }
-});
+    $wrong = [];
 
-it('exige sesión en todas las pantallas de la matriz', function () {
-    $public = [];
+    foreach (RoleRouteMatrix::openToAnyUser() as $routeName => $expected) {
+        $response = $this->get(route($routeName));
 
-    foreach (array_keys(RoleRouteMatrix::screens()) as $routeName) {
-        if ($this->get(route($routeName))->getStatusCode() !== 302) {
-            $public[] = $routeName;
+        if ($response->getStatusCode() !== $expected) {
+            $wrong[] = "{$routeName}: esperado {$expected}, recibido ".describeResponse($response);
         }
     }
 
-    expect($public)->toBe([], 'Pantallas alcanzables sin sesión: '.implode(', ', $public));
+    expect($wrong)->toBe([], implode("\n", $wrong));
+});
+
+it('declara toda ruta de la aplicación que se abre sin permiso', function () {
+    // Las marcadas AUTHENTICATED en el mapa y alcanzables como pantalla deben comprobarse aquí.
+    $undeclared = collect(RoutePermissionMap::applicationRoutes())
+        ->filter(fn (RoutingRoute $route) => in_array('GET', $route->methods(), true)
+            && ! str_contains($route->uri(), '{')
+            && (RoutePermissionMap::routes()[$route->getName()] ?? null) === RoutePermissionMap::AUTHENTICATED)
+        ->map(fn (RoutingRoute $route) => $route->getName())
+        ->reject(fn (?string $name) => $name !== null && array_key_exists($name, RoleRouteMatrix::openToAnyUser()))
+        ->values()
+        ->all();
+
+    expect($undeclared)->toBe([], 'Rutas sin permiso que nadie comprueba: '.implode(', ', $undeclared));
+});
+
+it('manda al login toda pantalla cuando no hay sesión', function () {
+    // También las que no piden permiso: si alguien retira el middleware `auth` del perfil, debe saltar aquí.
+    $routes = array_merge(
+        array_keys(RoleRouteMatrix::screens()),
+        array_keys(RoleRouteMatrix::openToAnyUser()),
+    );
+
+    $wrong = [];
+
+    foreach ($routes as $routeName) {
+        $response = $this->get(route($routeName));
+
+        // El destino importa: un 302 a cualquier otro sitio no demuestra que exija sesión.
+        if ($response->headers->get('Location') !== route('login')) {
+            $wrong[] = "{$routeName}: ".describeResponse($response);
+        }
+    }
+
+    expect($wrong)->toBe([], "Pantallas que no mandan al login:\n".implode("\n", $wrong));
 });
 
 it('cubre toda pantalla principal protegida por permiso', function () {
     // Una pantalla nueva sin entrada en la matriz queda sin comprobar: aquí se obliga a declararla.
-    $uncovered = collect(Route::getRoutes()->getRoutes())
+    $uncovered = collect(RoutePermissionMap::applicationRoutes())
         ->filter(fn (RoutingRoute $route) => in_array('GET', $route->methods(), true)
             && ! str_contains($route->uri(), '{')
             && collect($route->gatherMiddleware())
