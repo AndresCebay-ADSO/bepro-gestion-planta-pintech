@@ -188,12 +188,12 @@ class QuotationController extends Controller
         /** @var \Barryvdh\DomPDF\PDF $pdf */
         $pdf = Pdf::loadView('pdf.quotation', [
             'quotation' => $quotationData,
-            'beproLogoBase64' => $this->imageToBase64(public_path('images/firma-calidad.jpg')),
-            'pintechLogoBase64' => $this->imageToBase64(public_path('images/beprologoqr.png')),
+            'beproLogoBase64' => $this->imageToBase64(public_path(config('quotation.pdf_logos.header'))),
+            'pintechLogoBase64' => $this->imageToBase64(public_path(config('quotation.pdf_logos.footer'))),
             'generatedAt' => $this->timezoneService->formatPlantDateTime(now()),
         ]);
 
-        $pdf->setPaper('letter');
+        $pdf->setPaper('letter', 'landscape');
 
         return $pdf->download($filename);
     }

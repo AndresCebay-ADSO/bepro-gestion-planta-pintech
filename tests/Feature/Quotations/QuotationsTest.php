@@ -18,7 +18,9 @@ use App\Services\QuotationService;
 use App\Services\VariantSalesPriceService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Role;
 
@@ -246,10 +248,112 @@ it('renders quotation pdf template with bepro layout sections', function () {
         ->toContain('Condiciones comerciales')
         ->toContain('Producto / Referencia')
         ->toContain('SEDE CALI')
+        ->toContain('Calle 23 No. 17-100')
         ->toContain('SEDE NEIVA')
+        ->toContain('Calle 4 No. 2-06')
         ->toContain('Notas y alcance')
         ->toContain('Móvil: 3009876543');
 });
+
+it('keeps the quotation pdf logos small and without transparency', function (string $logo) {
+    $path = public_path(config("quotation.pdf_logos.{$logo}"));
+
+    expect($path)->toBeFile();
+
+    [$width, $height] = getimagesize($path);
+    // Byte 25 del PNG (IHDR) es el tipo de color: 2 = RGB, 6 = RGBA. DomPDF sin Imagick recorre el canal alfa
+    // píxel por píxel con GD y un logo grande con transparencia agota los 128 MB del servidor.
+    $pngColorType = ord(file_get_contents($path, false, null, 25, 1));
+
+    expect($width)->toBeLessThanOrEqual(600)
+        ->and($height)->toBeLessThanOrEqual(600)
+        ->and($pngColorType)->not->toBe(6);
+})->with(['header', 'footer']);
+
+it('signs the quotation pdf with the signature of the user who created it', function () {
+    Storage::fake(User::SIGNATURE_DISK);
+    Storage::disk(User::SIGNATURE_DISK)->put(
+        'signatures/asesor.png',
+        UploadedFile::fake()->image('firma.png', 200, 50)->getContent(),
+    );
+    $this->comercialUser->update(['signature_path' => 'signatures/asesor.png']);
+
+    $quotation = Quotation::factory()->create([
+        'client_id' => $this->client->id,
+        'created_by' => $this->comercialUser->id,
+    ]);
+
+    $signature = app(BuildQuotationPdfDataAction::class)->execute($quotation)['advisor']['signature'];
+
+    expect($signature)->toStartWith('data:image/png;base64,');
+
+    $this->actingAs($this->comercialUser)
+        ->get(route('quotations.export-pdf', $quotation))
+        ->assertOk()
+        ->assertHeader('content-type', 'application/pdf');
+});
+
+it('leaves the advisor signature empty when the creator has none or the file is missing', function (?string $path) {
+    Storage::fake(User::SIGNATURE_DISK);
+    $this->comercialUser->update(['signature_path' => $path]);
+
+    $quotation = Quotation::factory()->create([
+        'client_id' => $this->client->id,
+        'created_by' => $this->comercialUser->id,
+    ]);
+
+    expect(app(BuildQuotationPdfDataAction::class)->execute($quotation)['advisor']['signature'])->toBeNull();
+})->with([
+    'sin firma' => [null],
+    'archivo inexistente' => ['signatures/borrada.png'],
+]);
+
+it('formats the free-text area and thickness for the quotation pdf', function (?string $area, ?string $thickness, string $expectedArea, string $expectedThickness) {
+    $quotation = Quotation::factory()->create([
+        'client_id' => $this->client->id,
+        'created_by' => $this->comercialUser->id,
+        'area' => $area,
+        'thickness_mils' => $thickness,
+    ]);
+
+    $data = app(BuildQuotationPdfDataAction::class)->execute($quotation);
+
+    expect($data['area'])->toBe($expectedArea)
+        ->and($data['thickness_mils'])->toBe($expectedThickness);
+})->with([
+    'vacíos' => [null, '', 'N.A.', 'N.A.'],
+    'solo números' => ['5750', '4', '5.750', '4 Mils'],
+    'espesor decimal' => ['600', '3,5', '600', '3,5 Mils'],
+    'texto libre' => ['600 m2 aprox', '4 Mils', '600 m2 aprox', '4 Mils'],
+]);
+
+it('prints item quantities without rounding away their decimals', function (string $quantity, string $expected) {
+    $quotation = Quotation::factory()->create([
+        'client_id' => $this->client->id,
+        'created_by' => $this->comercialUser->id,
+    ]);
+
+    $quotation->items()->create([
+        'product_id' => $this->product->id,
+        'product_variant_id' => $this->variant->id,
+        'type' => 'primer',
+        'quantity' => $quantity,
+        'list_unit_price' => 1000,
+        'price_adjustment_pct' => 0,
+        'unit_price' => 1000,
+        'subtotal' => 1000,
+        'sort_order' => 1,
+    ]);
+
+    $data = app(BuildQuotationPdfDataAction::class)->execute($quotation);
+
+    expect($data['items'][0]['quantity'])->toBe($expected);
+})->with([
+    'entero' => ['55', '55'],
+    'decimal' => ['2.5', '2,5'],
+    'miles' => ['1200', '1.200'],
+    'miles con decimales' => ['1234.125', '1.234,125'],
+]);
 
 it('uses shared sales price service for list prices', function () {
     $service = app(VariantSalesPriceService::class);

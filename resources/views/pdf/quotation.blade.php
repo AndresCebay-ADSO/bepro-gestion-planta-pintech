@@ -3,22 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <title>Cotización - {{ $quotation['quotation_number'] }}</title>
+    @php
+        // Bandas diagonales del encabezado y del pie. DomPDF no recorta divs en diagonal, así que se dibujan en SVG.
+        $brandBlue = '#2f67b1';
+        $brandPink = '#e91e84';
+        $svgUri = fn (string $svg): string => 'data:image/svg+xml;base64,'.base64_encode($svg);
+
+        $headerBand = $svgUri(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="840" height="76" viewBox="0 0 840 76">'
+            .'<polygon points="108,0 840,0 840,67 10,67" fill="'.$brandBlue.'"/>'
+            .'<polygon points="10,67 840,67 840,76 0,76" fill="'.$brandPink.'"/>'
+            .'</svg>'
+        );
+
+        $footerBand = $svgUri(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="810" height="118" viewBox="0 0 810 118">'
+            .'<polygon points="0,0 810,0 804,8 0,8" fill="'.$brandPink.'"/>'
+            .'<polygon points="0,8 804,8 722,118 0,118" fill="'.$brandBlue.'"/>'
+            .'</svg>'
+        );
+
+        $money = fn ($value): string => '$'.number_format((float) ($value ?? 0), 0, ',', '.');
+    @endphp
     <style>
         @page {
-            margin: 18px 18px 14px 18px;
-        }
-
-        body {
-            font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
-            font-size: 9px;
-            color: #222;
-            line-height: 1.25;
+            margin: 26pt 36pt 22pt 36pt;
         }
 
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 9.5pt;
+            color: #222;
+            line-height: 1.15;
         }
 
         table {
@@ -26,376 +47,403 @@
             border-collapse: collapse;
         }
 
-        .no-border td,
-        .no-border th {
-            border: none;
-        }
-
-        .top-table td {
-            vertical-align: middle;
-        }
-
-        .logo {
-            max-width: 135px;
-            max-height: 70px;
+        /* ── Encabezado ── */
+        .header-logo {
+            height: 124pt;
+            margin-left: 40pt;
         }
 
         .quotation-no {
-            font-size: 18px;
+            font-size: 13pt;
             font-weight: bold;
-            text-align: right;
             color: #333;
-            padding-top: 10px;
-        }
-
-        .brand-bar {
-            margin-top: 8px;
-            margin-bottom: 4px;
-            height: 28px;
-            background: #2f67b1;
-            color: #fff;
-            font-size: 13px;
-            font-weight: bold;
             text-align: right;
-            padding: 5px 18px 0 0;
-            border-bottom: 4px solid #e91e84;
+            padding-right: 50pt;
+            margin-bottom: 8pt;
         }
 
-        .section-title {
-            background: #575757;
+        .band {
+            position: relative;
+            height: 41pt;
+        }
+
+        .band img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 41pt;
+        }
+
+        .band-website {
+            position: absolute;
+            top: 9pt;
+            right: 18pt;
+            color: #fff;
+            font-size: 17pt;
+            font-weight: bold;
+        }
+
+        /* ── Cliente / Sistema ofertado / Condiciones comerciales ── */
+        .info-table {
+            margin-top: 12pt;
+        }
+
+        .info-table th {
+            background: #595959;
             color: #fff;
             font-weight: bold;
             text-align: center;
             text-transform: uppercase;
-            font-size: 8px;
-            padding: 4px 0;
-        }
-
-        .info-wrap td {
-            vertical-align: top;
-            border: 1px solid #bdbdbd;
-            width: 33.33%;
+            padding: 1.5pt 0;
+            border-bottom: 1.5pt solid #000;
         }
 
         .info-table td {
-            border-bottom: 1px solid #e1e1e1;
-            padding: 3px 5px;
-            font-size: 8px;
+            padding: 1pt 3pt;
+            white-space: nowrap;
         }
 
-        .info-label {
-            width: 42%;
+        .info-table .label {
             font-weight: bold;
-            background: #f5f5f5;
         }
 
-        .info-value {
-            width: 58%;
+        .stripe td {
+            background: #f2f2f2;
         }
 
+        /* ── Ítems ── */
         .items-table {
-            margin-top: 6px;
+            margin-top: 4pt;
         }
 
         .items-table th {
-            background: #575757;
+            background: #595959;
             color: #fff;
-            font-size: 7.5px;
-            padding: 4px 3px;
-            border: 1px solid #4a4a4a;
-            text-align: center;
             font-weight: bold;
+            text-align: center;
+            padding: 4pt 2pt;
+            border-bottom: 1.5pt solid #000;
+        }
+
+        .items-table th.small {
+            font-size: 8.5pt;
         }
 
         .items-table td {
-            border: 1px solid #c9c9c9;
-            padding: 2px 3px;
-            font-size: 8px;
-            vertical-align: middle;
+            padding: 1pt 3pt;
+            text-align: center;
         }
 
-        .gray-row td {
-            background: #f4f4f4;
+        .items-table td.amount {
+            text-align: right;
         }
 
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
-        .text-left { text-align: left; }
+        .totals-first td.totals {
+            border-top: 1.5pt solid #000;
+        }
 
-        .totals-label {
+        .items-table td.totals {
+            text-align: right;
+            padding-top: 1.5pt;
+        }
+
+        .items-table .grand-total td.totals {
             font-weight: bold;
-            text-align: right;
-            background: #f5f5f5;
-            padding-right: 6px;
         }
 
-        .totals-value {
-            font-weight: normal;
-            text-align: right;
-            background: #f5f5f5;
-            padding-right: 6px;
-        }
-
+        /* ── Notas ── */
         .notes-title {
-            margin-top: 12px;
-            color: #2f67b1;
+            margin-top: 12pt;
+            margin-bottom: 4pt;
+            padding-left: 12pt;
+            color: {{ $brandBlue }};
             font-weight: bold;
-            font-size: 9px;
-            margin-bottom: 5px;
         }
 
-        .notes-text {
-            font-size: 8px;
-            margin-bottom: 4px;
-            text-align: justify;
+        .notes-table {
+            width: 88%;
         }
 
-        .advisor-block {
-            margin-top: 16px;
-            font-size: 8.5px;
+        .notes-table td {
+            vertical-align: top;
+            padding-bottom: 3pt;
+            line-height: 1.3;
+        }
+
+        .notes-table td.dash {
+            width: 12pt;
+            padding-left: 4pt;
+        }
+
+        /* ── Asesor y pie ── */
+        .closing {
+            page-break-inside: avoid;
+        }
+
+        .advisor {
+            margin-top: 18pt;
+            padding-left: 10pt;
+        }
+
+        .advisor-label {
+            font-size: 8pt;
+            font-weight: bold;
+        }
+
+        .advisor-signature {
+            height: 40pt;
+            margin-top: 4pt;
+        }
+
+        .advisor-signature img {
+            max-height: 40pt;
+            max-width: 190pt;
         }
 
         .advisor-name {
             font-weight: bold;
-            font-size: 10px;
-            margin-top: 18px;
+            text-transform: uppercase;
+            margin-bottom: 2pt;
+        }
+
+        .advisor-detail {
+            font-size: 8.5pt;
+            line-height: 1.35;
         }
 
         .footer {
-            margin-top: 16px;
+            margin-top: 12pt;
+        }
+
+        .footer-band {
+            position: relative;
+            height: 64pt;
+        }
+
+        .footer-band img {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-        }
-
-        .footer-left {
-            width: 62%;
-            background: #2f67b1;
-            color: #fff;
-            vertical-align: top;
-            padding: 10px 12px;
-            border-top: 4px solid #e91e84;
-        }
-
-        .footer-right {
-            width: 38%;
-            text-align: center;
-            vertical-align: middle;
-            padding-top: 8px;
+            height: 64pt;
         }
 
         .footer-offices {
-            width: 100%;
+            position: absolute;
+            top: 12pt;
+            left: 22pt;
+            width: 390pt;
+            color: #fff;
         }
 
         .footer-offices td {
-            vertical-align: top;
             width: 50%;
-            padding-right: 10px;
-            font-size: 8px;
-            line-height: 1.35;
+            vertical-align: top;
+            font-size: 10pt;
+            line-height: 1.15;
         }
 
         .footer-office-title {
             font-weight: bold;
-            margin-bottom: 2px;
-            font-size: 9px;
         }
 
         .footer-logo {
-            max-width: 125px;
-            max-height: 55px;
-            margin-top: 18px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .footer-logo img {
+            width: 130pt;
         }
     </style>
 </head>
 <body>
 
-    <table class="top-table no-border">
+    {{-- ① ENCABEZADO --}}
+    <table>
         <tr>
-            <td style="width: 55%;">
+            <td style="width: 35%; vertical-align: top;">
                 @if ($beproLogoBase64)
-                    <img src="{{ $beproLogoBase64 }}" alt="BePro Coatings" class="logo">
+                    <img src="{{ $beproLogoBase64 }}" alt="BePro Coatings" class="header-logo">
                 @else
-                    <div style="font-size: 20px; font-weight: bold;">BePro COATINGS</div>
+                    <div style="font-size: 20pt; font-weight: bold;">BePro COATINGS</div>
                 @endif
             </td>
-            <td style="width: 45%;">
+            <td style="width: 65%; vertical-align: bottom;">
                 <div class="quotation-no">Cotización No.{{ $quotation['quotation_number'] }}</div>
+                <div class="band">
+                    <img src="{{ $headerBand }}" alt="">
+                    <div class="band-website">{{ config('quotation.brand.website') }}</div>
+                </div>
             </td>
         </tr>
     </table>
 
-    <div class="brand-bar">{{ config('quotation.brand.website') }}</div>
-
-    <table class="info-wrap">
+    {{-- ② CLIENTE / SISTEMA OFERTADO / CONDICIONES COMERCIALES --}}
+    <table class="info-table">
         <tr>
-            <td>
-                <div class="section-title">Cliente</div>
-                <table class="info-table no-border">
-                    <tr>
-                        <td class="info-label">Cliente</td>
-                        <td class="info-value">{{ $quotation['client']['business_name'] ?? 'N.D.' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="info-label">NIT</td>
-                        <td class="info-value">{{ $quotation['client']['nit'] ?? 'N.D.' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="info-label">Contacto</td>
-                        <td class="info-value">{{ $quotation['client']['contact_name'] ?? 'N.D.' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="info-label">Teléfono</td>
-                        <td class="info-value">{{ $quotation['client']['phone'] ?? 'N.D.' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="info-label">M2</td>
-                        <td class="info-value">{{ !empty($quotation['area']) ? $quotation['area'].' m2' : 'N.D.' }}</td>
-                    </tr>
-                </table>
-            </td>
-
-            <td>
-                <div class="section-title">Sistema ofertado</div>
-                <table class="info-table no-border">
-                    <tr>
-                        <td class="info-label">Tecnología</td>
-                        <td class="info-value">{{ $quotation['technology'] ?? 'N.D.' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="info-label">Línea</td>
-                        <td class="info-value">{{ $quotation['line'] ?? 'N.D.' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="info-label">Espesor en Mils</td>
-                        <td class="info-value">{{ !empty($quotation['thickness_mils']) ? $quotation['thickness_mils'].' Mils' : 'N.D.' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="info-label">Método de aplicación</td>
-                        <td class="info-value">{{ $quotation['application_method'] ?? 'N.A.' }}</td>
-                    </tr>
-                </table>
-            </td>
-
-            <td>
-                <div class="section-title">Condiciones comerciales</div>
-                <table class="info-table no-border">
-                    <tr>
-                        <td class="info-label">Fecha</td>
-                        <td class="info-value">{{ $quotation['quotation_date'] ?? 'N.D.' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="info-label">Validez</td>
-                        <td class="info-value">{{ !empty($quotation['validity_days']) ? $quotation['validity_days'] : 'N.D.' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="info-label">Forma de Pago</td>
-                        <td class="info-value">{{ $quotation['payment_method'] ?? 'N.D.' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="info-label">Tiempo de entrega</td>
-                        <td class="info-value">{{ $quotation['delivery_time'] ?? 'N.D.' }}</td>
-                    </tr>
-                </table>
-            </td>
+            <th colspan="2" style="width: 31.5%;">Cliente</th>
+            <th colspan="2" style="width: 31%;">Sistema ofertado</th>
+            <th colspan="2" style="width: 37.5%;">Condiciones comerciales</th>
+        </tr>
+        <tr>
+            <td class="label" style="width: 7%;">Cliente</td>
+            <td style="width: 24.5%;">{{ $quotation['client']['business_name'] ?? 'N.D.' }}</td>
+            <td class="label" style="width: 18%;">Tecnología</td>
+            <td style="width: 13%;">{{ $quotation['technology'] ?? 'N.D.' }}</td>
+            <td class="label" style="width: 13.5%;">Fecha</td>
+            <td style="width: 24%;">{{ $quotation['quotation_date'] ?? 'N.D.' }}</td>
+        </tr>
+        <tr class="stripe">
+            <td class="label">NIT</td>
+            <td>{{ $quotation['client']['nit'] ?? 'N.D.' }}</td>
+            <td class="label">Línea</td>
+            <td>{{ $quotation['line'] ?? 'N.D.' }}</td>
+            <td class="label">Validez</td>
+            <td>{{ $quotation['validity_days'] ?? 'N.D.' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Contacto</td>
+            <td>{{ $quotation['client']['contact_name'] ?? 'N.D.' }}</td>
+            <td class="label">Espesor en Mils</td>
+            <td>{{ $quotation['thickness_mils'] }}</td>
+            <td class="label">Forma de Pago</td>
+            <td>{{ $quotation['payment_method'] ?? 'N.D.' }}</td>
+        </tr>
+        <tr class="stripe">
+            <td class="label">Teléfono</td>
+            <td>{{ $quotation['client']['phone'] ?? 'N.D.' }}</td>
+            <td class="label">Método de aplicación</td>
+            <td>{{ $quotation['application_method'] ?? 'N.A.' }}</td>
+            <td class="label">Tiempo de entrega</td>
+            <td>{{ $quotation['delivery_time'] ?? 'N.D.' }}</td>
+        </tr>
+        <tr>
+            <td class="label">M2</td>
+            <td>{{ $quotation['area'] }}</td>
+            <td colspan="4"></td>
         </tr>
     </table>
 
+    {{-- ③ ÍTEMS Y TOTALES --}}
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 4%;">Item</th>
+                <th style="width: 6.5%;">Ítem</th>
                 <th style="width: 10%;">Tipo</th>
                 <th style="width: 16%;">Producto / Referencia</th>
-                <th style="width: 20%;">Descripción comercial</th>
-                <th style="width: 10%;">Color</th>
-                <th style="width: 10%;">Presentación</th>
-                <th style="width: 7%;">Cantidad</th>
-                <th style="width: 11%;">Precio Unitario</th>
-                <th style="width: 12%;">Precio Total</th>
+                <th style="width: 16%;">Descripción comercial</th>
+                <th style="width: 13.5%;">Color</th>
+                <th style="width: 11.5%;">Presentación</th>
+                <th style="width: 8.5%;">Cantidad</th>
+                <th class="small" style="width: 9%;">Precio Unitario</th>
+                <th class="small" style="width: 9%;">Precio Total</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($quotation['items'] as $index => $item)
-                <tr class="{{ $index % 2 ? 'gray-row' : '' }}">
-                    <td class="text-center">{{ $item['sort_order'] ?? ($index + 1) }}</td>
-                    <td class="text-center">{{ $item['item_type'] ?? '' }}</td>
-                    <td class="text-left">{{ $item['product_reference'] ?? '' }}</td>
-                    <td class="text-left">{{ $item['description'] ?? $item['product_reference'] ?? '' }}</td>
-                    <td class="text-center">{{ $item['color'] ?? '' }}</td>
-                    <td class="text-center">{{ $item['presentation_label'] ?? '' }}</td>
-                    <td class="text-center">{{ number_format($item['quantity'] ?? 0, 0, ',', '.') }}</td>
-                    <td class="text-right">${{ number_format($item['unit_price'] ?? 0, 0, ',', '.') }}</td>
-                    <td class="text-right">${{ number_format($item['subtotal'] ?? 0, 0, ',', '.') }}</td>
+                <tr class="{{ $index % 2 ? 'stripe' : '' }}">
+                    <td>{{ $item['sort_order'] ?? ($index + 1) }}</td>
+                    <td>{{ $item['item_type'] ?? '' }}</td>
+                    <td>{{ $item['product_reference'] ?? '' }}</td>
+                    <td>{{ $item['description'] ?? $item['product_reference'] ?? '' }}</td>
+                    <td>{{ $item['color'] ?? '' }}</td>
+                    <td>{{ $item['presentation_label'] ?? '' }}</td>
+                    <td>{{ $item['quantity'] }}</td>
+                    <td class="amount">{{ $money($item['unit_price'] ?? 0) }}</td>
+                    <td class="amount">{{ $money($item['subtotal'] ?? 0) }}</td>
                 </tr>
             @endforeach
 
-            <tr>
-                <td colspan="7" style="border:none;"></td>
-                <td class="totals-label">Subtotal</td>
-                <td class="totals-value">${{ number_format($quotation['subtotal'] ?? 0, 0, ',', '.') }}</td>
+            <tr class="totals-first">
+                <td colspan="7"></td>
+                <td class="totals">Subtotal</td>
+                <td class="totals">{{ $money($quotation['subtotal']) }}</td>
             </tr>
             <tr>
-                <td colspan="7" style="border:none;"></td>
-                <td class="totals-label">IVA {{ number_format($quotation['iva_percentage'] ?? 0, 0) }}%</td>
-                <td class="totals-value">${{ number_format($quotation['iva_amount'] ?? 0, 0, ',', '.') }}</td>
+                <td colspan="7"></td>
+                <td class="totals">IVA {{ number_format((float) ($quotation['iva_percentage'] ?? 0), 0) }}%</td>
+                <td class="totals">{{ $money($quotation['iva_amount']) }}</td>
             </tr>
-            <tr>
-                <td colspan="7" style="border:none;"></td>
-                <td class="totals-label">Total</td>
-                <td class="totals-value">${{ number_format($quotation['total'] ?? 0, 0, ',', '.') }}</td>
+            <tr class="grand-total">
+                <td colspan="7"></td>
+                <td class="totals">Total</td>
+                <td class="totals">{{ $money($quotation['total']) }}</td>
             </tr>
         </tbody>
     </table>
 
+    {{-- ④ NOTAS Y ALCANCE --}}
     <div class="notes-title">Notas y alcance:</div>
-
-    @foreach (config('quotation.legal_notes', []) as $note)
-        <div class="notes-text">- {{ $note }}</div>
-    @endforeach
-
-    @if (!empty($quotation['notes']))
-        <div class="notes-text">- {{ $quotation['notes'] }}</div>
-    @endif
-
-    <div class="advisor-block">
-        <div class="advisor-name">Asesor:</div>
-        <div>{{ $quotation['advisor']['name'] ?? 'N.D.' }}</div>
-        @if (!empty($quotation['advisor']['job_title']))
-            <div>{{ $quotation['advisor']['job_title'] }}</div>
+    <table class="notes-table">
+        @foreach (config('quotation.legal_notes', []) as $note)
+            <tr>
+                <td class="dash">-</td>
+                <td>{{ $note }}</td>
+            </tr>
+        @endforeach
+        @if (!empty($quotation['notes']))
+            <tr>
+                <td class="dash">-</td>
+                <td>{{ $quotation['notes'] }}</td>
+            </tr>
         @endif
-        @if (!empty($quotation['advisor']['phone']))
-            <div>Móvil: {{ $quotation['advisor']['phone'] }}</div>
-        @endif
-        @if (!empty($quotation['advisor']['email']))
-            <div>Email: {{ $quotation['advisor']['email'] }}</div>
-        @endif
-    </div>
-
-    <table class="footer no-border">
-        <tr>
-            <td class="footer-left">
-                <table class="footer-offices no-border">
-                    <tr>
-                        @foreach (config('quotation.footer_offices', []) as $office)
-                            <td>
-                                <div class="footer-office-title">{{ $office['label'] }}</div>
-                                <div>{{ implode(' / ', $office['phones'] ?? []) }}</div>
-                                <div>{{ $office['address'] ?? '' }}</div>
-                                <div>{{ $office['city'] ?? '' }}</div>
-                            </td>
-                        @endforeach
-                    </tr>
-                </table>
-            </td>
-            <td class="footer-right">
-                @if ($pintechLogoBase64)
-                    <img src="{{ $pintechLogoBase64 }}" alt="Pintech" class="footer-logo">
-                @else
-                    <div style="font-size: 20px; font-weight: bold; color: #444;">Pintech</div>
-                @endif
-            </td>
-        </tr>
     </table>
+
+    <div class="closing">
+        {{-- ⑤ ASESOR --}}
+        <div class="advisor">
+            <div class="advisor-label">Asesor:</div>
+            <div class="advisor-signature">
+                @if (!empty($quotation['advisor']['signature']))
+                    <img src="{{ $quotation['advisor']['signature'] }}" alt="Firma del asesor">
+                @endif
+            </div>
+            <div class="advisor-name">{{ $quotation['advisor']['name'] ?? 'N.D.' }}</div>
+            <div class="advisor-detail">
+                @if (!empty($quotation['advisor']['job_title']))
+                    <div>{{ $quotation['advisor']['job_title'] }}</div>
+                @endif
+                @if (!empty($quotation['advisor']['phone']))
+                    <div>Móvil: {{ $quotation['advisor']['phone'] }}</div>
+                @endif
+                @if (!empty($quotation['advisor']['email']))
+                    <div>Email: {{ $quotation['advisor']['email'] }}</div>
+                @endif
+            </div>
+        </div>
+
+        {{-- ⑥ PIE: SEDES Y LOGO PINTECH --}}
+        <table class="footer">
+            <tr>
+                <td style="width: 63%;">
+                    <div class="footer-band">
+                        <img src="{{ $footerBand }}" alt="">
+                        <table class="footer-offices">
+                            <tr>
+                                @foreach (config('quotation.footer_offices', []) as $office)
+                                    <td>
+                                        <div class="footer-office-title">{{ $office['label'] }}</div>
+                                        <div>{{ implode(' / ', $office['phones'] ?? []) }}</div>
+                                        <div>{{ $office['address'] ?? '' }}</div>
+                                        <div>{{ $office['city'] ?? '' }}</div>
+                                    </td>
+                                @endforeach
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+                <td class="footer-logo" style="width: 37%;">
+                    @if ($pintechLogoBase64)
+                        <img src="{{ $pintechLogoBase64 }}" alt="Pintech">
+                    @else
+                        <div style="font-size: 20pt; font-weight: bold; color: #444;">Pintech</div>
+                    @endif
+                </td>
+            </tr>
+        </table>
+    </div>
 
 </body>
 </html>
