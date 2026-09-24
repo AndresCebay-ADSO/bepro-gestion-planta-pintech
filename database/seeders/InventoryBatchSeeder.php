@@ -19,11 +19,6 @@ class InventoryBatchSeeder extends Seeder
             return;
         }
 
-        // Los lotes no tienen una clave natural estable (la fecha de entrada es aleatoria): si ya hay, no se repiten.
-        if (InventoryBatch::query()->exists()) {
-            return;
-        }
-
         $cali = Warehouse::where('name', 'Planta Cali')->first();
 
         if (! $cali) {
@@ -741,6 +736,12 @@ class InventoryBatchSeeder extends Seeder
             if (! $material) {
                 $this->command->warn("Raw material with code '{$code}' not found.");
 
+                continue;
+            }
+
+            // Los lotes no tienen una clave natural estable (la fecha de entrada es aleatoria), así que se decide por
+            // material: una siembra cortada o un material creado después se completan al volver a sembrar.
+            if (InventoryBatch::query()->where('raw_material_id', $material->id)->exists()) {
                 continue;
             }
 

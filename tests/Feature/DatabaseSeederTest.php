@@ -65,6 +65,22 @@ test('sembrar dos veces no duplica registros', function () {
     }
 });
 
+test('volver a sembrar completa los lotes de un material que quedó sin ellos', function () {
+    $this->seed([UnitsOfMeasureSeeder::class, RawMaterialCategorySeeder::class, RawMaterialSeeder::class, WarehouseSeeder::class]);
+    $this->seed(InventoryBatchSeeder::class);
+    $total = InventoryBatch::query()->count();
+    $materialId = InventoryBatch::query()->value('raw_material_id');
+    $materialBatches = InventoryBatch::query()->where('raw_material_id', $materialId)->count();
+
+    // Simula una siembra cortada a mitad: un material se quedó sin lotes.
+    InventoryBatch::query()->where('raw_material_id', $materialId)->delete();
+
+    $this->seed(InventoryBatchSeeder::class);
+
+    expect(InventoryBatch::query()->where('raw_material_id', $materialId)->count())->toBe($materialBatches)
+        ->and(InventoryBatch::query()->count())->toBe($total);
+});
+
 test('los lotes de prueba no se siembran fuera de desarrollo y pruebas', function () {
     $this->seed([UnitsOfMeasureSeeder::class, RawMaterialCategorySeeder::class, RawMaterialSeeder::class, WarehouseSeeder::class]);
     app()->detectEnvironment(fn () => 'production');
