@@ -82,7 +82,7 @@ Se retira el `SoftDeletes` que tenían (código muerto: ninguna ruta los borraba
 | Tabla | Por qué |
 | --- | --- |
 | `inventory_movements`, `inventory_batches` | Libro contable de materia prima: se corrige con un movimiento contrario manual y una nota |
-| `finished_inventory_movements`, `finished_product_batches`, `transfers` | Libro contable de producto terminado |
+| `finished_inventory_movements`, `finished_product_batches` | Libro contable de producto terminado |
 | `production_remnants`, `remnant_consumptions` | Movimientos de saldos de producción |
 | `price_lists`, `production_costs` | Historial de precios y costos |
 | `finished_inventories`, `finished_product_batch_stocks` | Saldos calculados por los movimientos |
@@ -125,7 +125,7 @@ conserva (`User::hasActivity()` se reduce a esa consulta).
 | --- | --- | --- |
 | `products` | `price_lists`, `production_costs`, `formulas`, `finished_inventories`, `product_variants`, `product_documents`, `qr_codes` | CASCADE |
 | `warehouses` | `finished_inventories` | CASCADE |
-| `product_variants` | `finished_inventories`, `finished_inventory_movements`, `finished_product_batches`, `price_lists`, `transfers` | SET NULL |
+| `product_variants` | `finished_inventories`, `finished_inventory_movements`, `finished_product_batches`, `price_lists` | SET NULL |
 | `production_orders` | `finished_inventory_movements`, `finished_product_batches`, `inventory_movements`, `production_costs`, `remnant_consumptions` (`target_order_id`) | SET NULL |
 | `finished_product_batches` | `finished_inventory_movements` | SET NULL |
 | `raw_materials` | `product_variants.package_raw_material_id` | SET NULL |

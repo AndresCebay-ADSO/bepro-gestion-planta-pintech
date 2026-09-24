@@ -35,7 +35,6 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read Collection|FinishedInventory[] $finishedInventories
  * @property-read Collection|FinishedInventoryMovement[] $finishedInventoryMovements
  * @property-read Collection|FinishedProductBatch[] $finishedProductBatches
- * @property-read Collection|Transfer[] $transfers
  * @property-read Collection|PriceList[] $priceLists
  */
 #[Fillable([
@@ -122,11 +121,6 @@ class ProductVariant extends Model
     public function finishedProductBatches(): HasMany
     {
         return $this->hasMany(FinishedProductBatch::class, 'product_variant_id');
-    }
-
-    public function transfers(): HasMany
-    {
-        return $this->hasMany(Transfer::class, 'product_variant_id');
     }
 
     public function priceLists(): HasMany
