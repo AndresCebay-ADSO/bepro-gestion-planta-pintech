@@ -14,6 +14,16 @@ class InventoryBatchSeeder extends Seeder
 {
     public function run(): void
     {
+        // Lotes de prueba (proveedor ficticio): nunca fuera de desarrollo y pruebas.
+        if (! app()->environment('local', 'testing')) {
+            return;
+        }
+
+        // Los lotes no tienen una clave natural estable (la fecha de entrada es aleatoria): si ya hay, no se repiten.
+        if (InventoryBatch::query()->exists()) {
+            return;
+        }
+
         $cali = Warehouse::where('name', 'Planta Cali')->first();
 
         if (! $cali) {
