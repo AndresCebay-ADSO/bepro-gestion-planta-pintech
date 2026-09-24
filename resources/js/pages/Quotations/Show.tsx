@@ -6,7 +6,7 @@ import {
     Pencil,
     ShoppingCart,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -147,13 +147,6 @@ export default function QuotationsShow({
         shipping_address: quotation.client.shipping_address ?? '',
     });
 
-    useEffect(() => {
-        if (convertDialogOpen) {
-            convertForm.reset();
-            convertForm.clearErrors();
-        }
-    }, [convertDialogOpen, convertForm]);
-
     const handleStatusUpdate = () => {
         patch(quotationsUpdateStatus(quotation.id).url, {
             preserveScroll: true,
@@ -234,9 +227,19 @@ export default function QuotationsShow({
                             <Dialog
                                 open={convertDialogOpen}
                                 onOpenChange={(open) => {
-                                    if (!convertForm.processing) {
-                                        setConvertDialogOpen(open);
+                                    if (convertForm.processing) {
+                                        return;
                                     }
+
+                                    // Se limpia al abrir y no en un useEffect: useForm devuelve un
+                                    // objeto nuevo en cada render y como dependencia causaba un bucle
+                                    // infinito (pantalla en blanco).
+                                    if (open) {
+                                        convertForm.reset();
+                                        convertForm.clearErrors();
+                                    }
+
+                                    setConvertDialogOpen(open);
                                 }}
                             >
                                 <DialogTrigger asChild>
