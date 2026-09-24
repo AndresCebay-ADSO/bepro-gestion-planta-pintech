@@ -748,7 +748,7 @@ class InventoryBatchSeeder extends Seeder
                     'unit_price' => $batch['price'],
                     'entry_date' => $entryDate,
                     'expiry_date' => $expiryDate,
-                    'lot_number' => 'LOTE-'.$entryDate->format('Y-m').'-'.str_pad($material->id, 4, '0', STR_PAD_LEFT).'-'.($index + 1),
+                    'lot_number' => 'LOTE-'.$entryDate->format('Y-m').'-'.str_pad((string) $material->id, 4, '0', STR_PAD_LEFT).'-'.($index + 1),
                     'supplier' => 'Proveedor Pepito S.A.',
                 ]);
             }
