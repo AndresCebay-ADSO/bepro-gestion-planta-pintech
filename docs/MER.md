@@ -497,26 +497,6 @@ Movimientos de producto terminado (libro contable: inmutable).
 | `cost_price` | DECIMAL(12,4) | sí |  |
 | `finished_product_batch_id` | BIGINT | sí | FK → `finished_product_batches` (RESTRICT) |
 
-### 2.6.5 `transfers`
-
-Traslados de producto terminado entre bodegas.
-
-| Columna | Tipo | Nulo | Notas |
-| --- | --- | :-: | --- |
-| `id` | BIGINT |  | PK |
-| `source_warehouse_id` | BIGINT |  | FK → `warehouses` (RESTRICT) |
-| `destination_warehouse_id` | BIGINT |  | FK → `warehouses` (RESTRICT) |
-| `product_id` | BIGINT |  | FK → `products` (RESTRICT) |
-| `product_variant_id` | BIGINT | sí | FK → `product_variants` (RESTRICT) |
-| `quantity` | DECIMAL(12,4) |  |  |
-| `status` | VARCHAR(255) |  | default `pending` |
-| `notes` | TEXT | sí |  |
-| `created_by` | BIGINT |  | FK → `users` (RESTRICT) |
-| `sent_at` | TIMESTAMP | sí |  |
-| `received_at` | TIMESTAMP | sí |  |
-| `created_at` | TIMESTAMP | sí |  |
-| `updated_at` | TIMESTAMP | sí |  |
-
 ## 2.7 QR
 
 ### 2.7.1 `qr_codes`
@@ -876,7 +856,6 @@ Algunas tienen además una restricción `CHECK` en PostgreSQL.
 | `FinishedInventoryMovementReason` | `finished_inventory_movements.reason` | production, return, adjustment, sale, sample, transfer, transformation, deterioration |
 | `ProductionOrderStatus` | `production_orders.status` | pending, in_progress, pending_review, completed, cancelled |
 | `RemnantStatus` | `production_remnants.status` | available, partially_consumed, consumed |
-| `TransferStatus` | `transfers.status` | pending, sent, received, cancelled |
 | `PriceUpdateType` | `price_lists.update_type` | manual, automatico |
 | `QrDocumentType` | `qr_documents.document_type`, `product_documents.document_type` | technical_data_sheet, safety_data_sheet, quality_certificate |
 | `QuotationStatus` | `quotations.status` | draft, sent, accepted, rejected |

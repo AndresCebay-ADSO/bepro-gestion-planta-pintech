@@ -14,6 +14,11 @@ class InventoryBatchSeeder extends Seeder
 {
     public function run(): void
     {
+        // Lotes de prueba (proveedor ficticio): nunca fuera de desarrollo y pruebas.
+        if (! app()->environment('local', 'testing')) {
+            return;
+        }
+
         $cali = Warehouse::where('name', 'Planta Cali')->first();
 
         if (! $cali) {
@@ -734,6 +739,12 @@ class InventoryBatchSeeder extends Seeder
                 continue;
             }
 
+            // Los lotes no tienen una clave natural estable (la fecha de entrada es aleatoria), así que se decide por
+            // material: una siembra cortada o un material creado después se completan al volver a sembrar.
+            if (InventoryBatch::query()->where('raw_material_id', $material->id)->exists()) {
+                continue;
+            }
+
             foreach ($batches as $index => $batch) {
                 $daysAgo = 60 - ($index * 15) + rand(0, 10);
                 $entryDate = now()->subDays($daysAgo);
@@ -748,7 +759,7 @@ class InventoryBatchSeeder extends Seeder
                     'unit_price' => $batch['price'],
                     'entry_date' => $entryDate,
                     'expiry_date' => $expiryDate,
-                    'lot_number' => 'LOTE-'.$entryDate->format('Y-m').'-'.str_pad($material->id, 4, '0', STR_PAD_LEFT).'-'.($index + 1),
+                    'lot_number' => 'LOTE-'.$entryDate->format('Y-m').'-'.str_pad((string) $material->id, 4, '0', STR_PAD_LEFT).'-'.($index + 1),
                     'supplier' => 'Proveedor Pepito S.A.',
                 ]);
             }
