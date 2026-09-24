@@ -6,21 +6,8 @@ use App\Enums\Permission;
 use Illuminate\Routing\Route as RoutingRoute;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
 use Symfony\Component\Finder\SplFileInfo;
 use Tests\Support\Rbac\RoutePermissionMap;
-
-/**
- * @return array<int, RoutingRoute>
- */
-function applicationRoutes(): array
-{
-    return array_values(array_filter(
-        Route::getRoutes()->getRoutes(),
-        fn (RoutingRoute $route) => ! in_array($route->getName(), RoutePermissionMap::IGNORED_ROUTES, true)
-            && ! Str::startsWith($route->getActionName(), RoutePermissionMap::IGNORED_ACTION_PREFIXES),
-    ));
-}
 
 /**
  * @return array<int, Permission>
@@ -41,7 +28,7 @@ function mappedPermissions(): array
 }
 
 it('clasifica cada ruta nombrada de la aplicación', function () {
-    $unclassified = collect(applicationRoutes())
+    $unclassified = collect(RoutePermissionMap::applicationRoutes())
         ->map(fn (RoutingRoute $route) => $route->getName())
         ->filter()
         ->reject(fn (string $name) => array_key_exists($name, RoutePermissionMap::routes()))
@@ -52,7 +39,7 @@ it('clasifica cada ruta nombrada de la aplicación', function () {
 });
 
 it('solo permite rutas sin nombre en la lista blanca', function () {
-    $unnamed = collect(applicationRoutes())
+    $unnamed = collect(RoutePermissionMap::applicationRoutes())
         ->filter(fn (RoutingRoute $route) => $route->getName() === null)
         ->map(fn (RoutingRoute $route) => $route->uri())
         ->reject(fn (string $uri) => in_array($uri, RoutePermissionMap::UNNAMED_URIS, true))
@@ -108,7 +95,7 @@ it('usa cada permiso en alguna ruta o justifica por qué no tiene', function () 
 it('exige el permiso del mapa en las rutas que ya no dependen de role:', function () {
     $mismatches = [];
 
-    foreach (applicationRoutes() as $route) {
+    foreach (RoutePermissionMap::applicationRoutes() as $route) {
         $entry = RoutePermissionMap::routes()[$route->getName()] ?? null;
 
         // Los marcadores (pública, con sesión, a retirar) no llevan permiso.
@@ -141,7 +128,7 @@ it('exige el permiso del mapa en las rutas que ya no dependen de role:', functio
 });
 
 it('no protege ninguna ruta por rol', function () {
-    $byRole = collect(applicationRoutes())
+    $byRole = collect(RoutePermissionMap::applicationRoutes())
         ->filter(fn (RoutingRoute $route) => collect($route->gatherMiddleware())
             ->contains(fn ($item) => is_string($item) && str_starts_with($item, 'role:')))
         ->map(fn (RoutingRoute $route) => $route->getName() ?? $route->uri())
@@ -166,18 +153,31 @@ it('no decide por nombre de rol fuera de User', function () {
     expect($offenders)->toBe([], 'Comprobaciones por rol fuera de User: '.implode(', ', $offenders));
 });
 
-it('autoriza con la policy del registro las acciones sobre registros con dueño', function (string $routeName) {
+it('autoriza cada ruta con la ability exacta de su policy', function (string $routeName, string $expected) {
     $middleware = Route::getRoutes()->getByName($routeName)?->gatherMiddleware() ?? [];
 
-    // Además del permiso, la policy del modelo comprueba dueño y estado ya en la ruta (defensa en profundidad).
+    // Solo las abilities de policy (las que llevan el modelo tras la coma); el permiso suelto va aparte.
     $policyMiddleware = collect($middleware)
-        ->filter(fn ($item) => is_string($item) && str_starts_with($item, 'can:') && str_contains($item, ','));
+        ->filter(fn ($item) => is_string($item) && str_starts_with($item, 'can:') && str_contains($item, ','))
+        ->values()
+        ->all();
 
-    expect($policyMiddleware)->not->toBeEmpty("{$routeName} no autoriza con la policy del registro");
-})->with([
-    'quotations.show', 'quotations.edit', 'quotations.update', 'quotations.update-status',
-    'quotations.convert-to-order', 'quotations.export-pdf',
-    'sales-orders.show', 'sales-orders.update', 'sales-orders.update-status',
-    'paint-development-requests.show', 'paint-development-requests.edit', 'paint-development-requests.update',
-    'paint-development-requests.submit', 'paint-development-requests.update-status', 'paint-development-requests.export-pdf',
-]);
+    // La lista completa, no "que esté la esperada": una ability de más también autoriza, y puede negar el
+    // acceso a quien la esperada permite.
+    expect($policyMiddleware)->toBe([$expected]);
+})->with(fn () => collect(RoutePermissionMap::policyAbilities())
+    ->map(fn (string $ability, string $route) => [$route, $ability])
+    ->all());
+
+it('declara la ability de toda ruta autorizada por policy', function () {
+    // Si mañana una ruta pasa a autorizarse con una policy, debe entrar en la lista con su ability.
+    $undeclared = collect(RoutePermissionMap::applicationRoutes())
+        ->filter(fn (RoutingRoute $route) => collect($route->gatherMiddleware())
+            ->contains(fn ($item) => is_string($item) && str_starts_with($item, 'can:') && str_contains($item, ',')))
+        ->map(fn (RoutingRoute $route) => $route->getName())
+        ->reject(fn (?string $name) => $name !== null && array_key_exists($name, RoutePermissionMap::policyAbilities()))
+        ->values()
+        ->all();
+
+    expect($undeclared)->toBe([], 'Rutas con policy sin ability declarada: '.implode(', ', $undeclared));
+});
