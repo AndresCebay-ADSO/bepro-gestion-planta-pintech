@@ -9,18 +9,25 @@ return [
         'website_url' => 'https://beprocoatings.com',
     ],
 
+    // Logos del PDF: copias pequeñas y sin transparencia. DomPDF sin Imagick procesa el canal alfa píxel por píxel
+    // con GD y un logo grande agota la memoria del servidor (128 MB en el contenedor).
+    'pdf_logos' => [
+        'header' => 'images/logo-bepro-pdf.png',
+        'footer' => 'images/logo-pintech-pdf.png',
+    ],
+
     'footer_offices' => [
         [
             'label' => 'SEDE CALI',
-            'address' => 'Calle 9 # 42-96, Bodega 12, Parque Industrial El Paraíso',
-            'city' => 'Cali – Valle del Cauca',
-            'phones' => ['(602) 485 0707', '310 219 2649'],
+            'address' => 'Calle 23 No. 17-100',
+            'city' => 'Valle del Cauca',
+            'phones' => ['(602) 308 7767', '317 404 19 93'],
         ],
         [
             'label' => 'SEDE NEIVA',
-            'address' => 'Km 3 Vía Neiva – Rivera, Bodega 8',
-            'city' => 'Neiva – Huila',
-            'phones' => ['(608) 871 0303', '318 390 4236'],
+            'address' => 'Calle 4 No. 2-06',
+            'city' => 'Huila',
+            'phones' => ['(608) 872 0711', '318 875 7659'],
         ],
     ],
 
