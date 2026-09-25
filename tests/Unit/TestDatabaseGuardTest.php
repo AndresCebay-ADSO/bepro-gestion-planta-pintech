@@ -16,6 +16,8 @@ test('acepta solo bases de pruebas', function (string $driver, string $database,
     'nombre que solo contiene test' => ['pgsql', 'pintech_test_backup', false],
     'sufijo sin guion bajo' => ['pgsql', 'pintechtest', false],
     'PostgreSQL con punto tras el sufijo' => ['pgsql', 'pintech_erp_test.backup', false],
+    'PostgreSQL llamado :memory:' => ['pgsql', ':memory:', false],
+    'salto de línea tras el sufijo' => ['pgsql', "pintech_erp_test\n", false],
 ]);
 
 test('detiene los tests antes de tocar una base que no es de pruebas', function () {

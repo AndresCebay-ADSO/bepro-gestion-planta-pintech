@@ -33,7 +33,8 @@ final class TestDatabaseGuard
 
     public static function isTestDatabase(string $driver, string $database): bool
     {
-        if ($database === ':memory:') {
+        // `:memory:` solo es una base en memoria en SQLite; en PostgreSQL sería una base con ese nombre.
+        if ($driver === 'sqlite' && $database === ':memory:') {
             return true;
         }
 
@@ -41,6 +42,7 @@ final class TestDatabaseGuard
         // (PostgreSQL) cuenta el nombre completo, o `pintech_erp_test.backup` pasaría por `pintech_erp_test`.
         $name = $driver === 'sqlite' ? pathinfo($database, PATHINFO_FILENAME) : $database;
 
-        return preg_match('/_test(_\d+)?$/', $name) === 1;
+        // `\z` y no `$`: `$` también acepta un salto de línea final («pintech_erp_test\n»).
+        return preg_match('/_test(_\d+)?\z/', $name) === 1;
     }
 }
