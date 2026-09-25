@@ -19,7 +19,9 @@ abstract class TestCase extends BaseTestCase
      */
     protected function setUpTraits()
     {
-        TestDatabaseGuard::ensureSafe(DB::connection()->getDatabaseName());
+        $connection = DB::connection();
+
+        TestDatabaseGuard::ensureSafe($connection->getDriverName(), $connection->getDatabaseName());
 
         return parent::setUpTraits();
     }

@@ -18,9 +18,9 @@ use RuntimeException;
  */
 final class TestDatabaseGuard
 {
-    public static function ensureSafe(string $database): void
+    public static function ensureSafe(string $driver, string $database): void
     {
-        if (self::isTestDatabase($database)) {
+        if (self::isTestDatabase($driver, $database)) {
             return;
         }
 
@@ -31,14 +31,15 @@ final class TestDatabaseGuard
         );
     }
 
-    public static function isTestDatabase(string $database): bool
+    public static function isTestDatabase(string $driver, string $database): bool
     {
         if ($database === ':memory:') {
             return true;
         }
 
-        // En SQLite en archivo cuenta el nombre del archivo, sin carpeta ni extensión.
-        $name = pathinfo($database, PATHINFO_FILENAME);
+        // Solo en SQLite la base es un archivo: cuenta su nombre, sin carpeta ni extensión. En un servidor
+        // (PostgreSQL) cuenta el nombre completo, o `pintech_erp_test.backup` pasaría por `pintech_erp_test`.
+        $name = $driver === 'sqlite' ? pathinfo($database, PATHINFO_FILENAME) : $database;
 
         return preg_match('/_test(_\d+)?$/', $name) === 1;
     }
