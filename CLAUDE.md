@@ -48,7 +48,10 @@ php artisan wayfinder:generate --with-form   # Regenerate typed route helpers if
 
 # Docker
 docker compose -f compose.dev.yaml up -d
-docker compose -f compose.dev.yaml exec php-fpm ./vendor/bin/pest
+# php-fpm loads `.env` (DB_DATABASE=pintech_erp) and DB_CONNECTION/DB_DATABASE are the only phpunit.xml vars env can
+# override (that is how CI tests PostgreSQL): pass SQLite in memory. Tests refuse any database that is not `:memory:`
+# or named `*_test` (tests/Support/TestDatabaseGuard.php).
+docker compose -f compose.dev.yaml exec -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: php-fpm ./vendor/bin/pest
 docker compose -f compose.dev.yaml down
 
 # `vendor/` and `node_modules/` are named volumes (compose.dev.yaml), NOT the host folders: installing on the host
