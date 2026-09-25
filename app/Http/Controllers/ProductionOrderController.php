@@ -179,7 +179,9 @@ class ProductionOrderController extends Controller
         $orderData = $this->buildProductionOrderExportData->execute($productionOrder, $includeCosts);
         $filename = "orden-produccion-{$orderData['order_number']}.pdf";
 
-        $logoPath = public_path('images/logo-pintech.png');
+        // Copia opaca y pequeña, como en la cotización: sin Imagick, DomPDF recorre la transparencia píxel por píxel y,
+        // con Xdebug activo (desarrollo), el logo transparente sube el pico de 14 a 46 MB.
+        $logoPath = public_path('images/logo-pintech-pdf.png');
         $logoBase64 = file_exists($logoPath)
             ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath))
             : null;
