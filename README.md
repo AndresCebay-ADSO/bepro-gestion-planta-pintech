@@ -131,7 +131,7 @@ docker compose -f compose.dev.yaml exec php-fpm php artisan db:seed
 ```bash
 docker compose -f compose.dev.yaml exec php-fpm php artisan <comando>  # Ejecutar artisan
 docker compose -f compose.dev.yaml exec php-fpm php artisan tinker      # Tinker
-docker compose -f compose.dev.yaml exec php-fpm ./vendor/bin/pest       # Tests
+docker compose -f compose.dev.yaml exec -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: php-fpm ./vendor/bin/pest  # Tests (SQLite en memoria)
 docker compose -f compose.dev.yaml logs -f web php-fpm                  # Ver logs
 docker compose -f compose.dev.yaml down                                 # Detener todo
 docker compose -f compose.dev.yaml up -d --build                        # Rebuild
