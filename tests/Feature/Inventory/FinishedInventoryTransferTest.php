@@ -89,7 +89,7 @@ function postFinishedTransfer(User $user, FinishedProductBatch $batch, Warehouse
     ], $overrides));
 }
 
-function stockOf(FinishedProductBatch $batch, Warehouse $warehouse): ?string
+function finishedStockOf(FinishedProductBatch $batch, Warehouse $warehouse): ?string
 {
     // Por el modelo y no con value(): así se aplica el cast decimal:4 igual en SQLite y en PostgreSQL.
     return FinishedProductBatchStock::query()
@@ -102,12 +102,12 @@ function stockOf(FinishedProductBatch $batch, Warehouse $warehouse): ?string
 it('moves stock of the same batch from origin to destination with an exit and an entry', function () {
     [$admin, $batch, $origin, $destination] = finishedTransferFixture();
 
-    postFinishedTransfer($admin, $batch, $origin, $destination, '7.5', ['notes' => 'Reposición Neiva'])
+    postFinishedTransfer($admin, $batch, $origin, $destination, '7.5', ['notes' => 'Reposición Neiva', 'movement_date' => '2026-09-25'])
         ->assertSessionHasNoErrors()
         ->assertRedirect();
 
-    expect(stockOf($batch, $origin))->toBe('12.5000')
-        ->and(stockOf($batch, $destination))->toBe('7.5000');
+    expect(finishedStockOf($batch, $origin))->toBe('12.5000')
+        ->and(finishedStockOf($batch, $destination))->toBe('7.5000');
 
     $movements = FinishedInventoryMovement::query()
         ->where('reason', FinishedInventoryMovementReason::Transfer)
@@ -127,7 +127,8 @@ it('moves stock of the same batch from origin to destination with an exit and an
         expect($movement->finished_product_batch_id)->toBe($batch->id)
             ->and($movement->quantity)->toBe('7.5000')
             ->and($movement->created_by)->toBe($admin->id)
-            ->and($movement->notes)->toBe('Reposición Neiva');
+            ->and($movement->notes)->toBe('Reposición Neiva')
+            ->and($movement->movement_date->toDateString())->toBe('2026-09-25');
     }
 
     // La tabla resumen por bodega que leen las pantallas de inventario también se mueve.
@@ -152,8 +153,8 @@ it('allows transfers between any two active warehouses regardless of their type'
         ->assertSessionHasNoErrors()
         ->assertRedirect();
 
-    expect(stockOf($batch, $origin))->toBe('0.0000')
-        ->and(stockOf($batch, $destination))->toBe('20.0000');
+    expect(finishedStockOf($batch, $origin))->toBe('0.0000')
+        ->and(finishedStockOf($batch, $destination))->toBe('20.0000');
 })->with([
     'fábrica a almacén' => ['factory', 'storage'],
     'almacén a fábrica' => ['storage', 'factory'],
@@ -167,7 +168,7 @@ it('rejects a transfer without a valid destination and moves nothing', function 
     postFinishedTransfer($admin, $batch, $origin, $destination($origin), '5')
         ->assertSessionHasErrors(['destination_warehouse_id' => $message]);
 
-    expect(stockOf($batch, $origin))->toBe('20.0000')
+    expect(finishedStockOf($batch, $origin))->toBe('20.0000')
         ->and(FinishedInventoryMovement::query()->where('reason', FinishedInventoryMovementReason::Transfer)->exists())->toBeFalse();
 })->with([
     'sin destino' => [fn (Warehouse $origin) => null, 'Debe seleccionar la bodega destino para un traslado.'],
@@ -181,8 +182,8 @@ it('rejects moving more than the batch has at the origin and leaves both warehou
     postFinishedTransfer($admin, $batch, $origin, $destination, '20.0001')
         ->assertSessionHasErrors('quantity');
 
-    expect(stockOf($batch, $origin))->toBe('20.0000')
-        ->and(stockOf($batch, $destination))->toBeNull()
+    expect(finishedStockOf($batch, $origin))->toBe('20.0000')
+        ->and(finishedStockOf($batch, $destination))->toBeNull()
         ->and(FinishedInventoryMovement::query()->where('reason', FinishedInventoryMovementReason::Transfer)->exists())->toBeFalse();
 });
 
@@ -193,5 +194,5 @@ it('rejects a batch that has no stock at the origin', function () {
     postFinishedTransfer($admin, $batch, $emptyOrigin, $destination, '1')
         ->assertSessionHasErrors('finished_product_batch_id');
 
-    expect(stockOf($batch, $destination))->toBeNull();
+    expect(finishedStockOf($batch, $destination))->toBeNull();
 });
