@@ -25,26 +25,26 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $product_id
  * @property int $formula_id
  * @property int $warehouse_id
- * @property float $quantity
- * @property float|null $actual_quantity
- * @property float|null $yield_real_quantity
- * @property float|null $yield_theoretical_quantity
- * @property float|null $yield_variance_quantity
- * @property float|null $yield_percentage
+ * @property string $quantity
+ * @property string|null $actual_quantity
+ * @property string|null $yield_real_quantity
+ * @property string|null $yield_theoretical_quantity
+ * @property string|null $yield_variance_quantity
+ * @property string|null $yield_percentage
  * @property ProductionOrderStatus $status
  * @property Carbon $planned_date
  * @property Carbon|null $completion_date
  * @property string|null $notes
  * @property Carbon|null $agitation_start_time
  * @property Carbon|null $agitation_end_time
- * @property float|null $viscosity_ku
- * @property float|null $grinding_hg
- * @property float|null $quality_solids
+ * @property string|null $viscosity_ku
+ * @property string|null $grinding_hg
+ * @property string|null $quality_solids
  * @property string|null $responsible_name
  * @property Carbon|null $packaging_start_time
  * @property Carbon|null $packaging_end_time
- * @property float $spillage_quantity
- * @property float|null $density_kg_per_gallon
+ * @property string $spillage_quantity
+ * @property string|null $density_kg_per_gallon
  * @property int|null $lot_number
  * @property int $created_by
  * @property int|null $submitted_by

@@ -23,10 +23,10 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string $code
  * @property string $name
  * @property int $unit_of_measure_id
- * @property float|null $presentation_value
+ * @property string|null $presentation_value
  * @property string|null $presentation_label
- * @property float|null $current_cost
- * @property float|null $current_price
+ * @property string|null $current_cost
+ * @property string|null $current_price
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at

@@ -16,9 +16,9 @@ use Illuminate\Support\Carbon;
  * @property int $product_id
  * @property int $formula_id
  * @property int|null $production_order_id
- * @property float $cost
- * @property float|null $unit_cost
- * @property float|null $variation_percentage
+ * @property string $cost
+ * @property string|null $unit_cost
+ * @property string|null $variation_percentage
  * @property Carbon $calculated_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at

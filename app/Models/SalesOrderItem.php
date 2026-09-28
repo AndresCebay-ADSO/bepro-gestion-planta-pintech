@@ -16,7 +16,7 @@ use Illuminate\Support\Carbon;
  * @property int $sales_order_id
  * @property int $product_id
  * @property int|null $product_variant_id
- * @property float $quantity
+ * @property string $quantity
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read SalesOrder $salesOrder

@@ -17,10 +17,10 @@ use Illuminate\Support\Carbon;
  * @property int|null $batch_id
  * @property int $raw_material_id
  * @property int $step_order
- * @property float $planned_quantity
- * @property float|null $actual_quantity
- * @property float $unit_cost
- * @property float $total_cost
+ * @property string $planned_quantity
+ * @property string|null $actual_quantity
+ * @property string $unit_cost
+ * @property string $total_cost
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read ProductionOrder $productionOrder

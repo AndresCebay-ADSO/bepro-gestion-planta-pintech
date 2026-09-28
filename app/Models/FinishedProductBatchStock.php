@@ -18,7 +18,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $id
  * @property int $finished_product_batch_id
  * @property int $warehouse_id
- * @property float $quantity
+ * @property string $quantity
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read FinishedProductBatch $batch

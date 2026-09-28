@@ -26,17 +26,17 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string|null $description
  * @property int $category_id
  * @property int $unit_of_measure_id
- * @property float|null $current_cost
- * @property float|null $cif_percentage
- * @property float|null $sales_margin
- * @property float|null $current_price
- * @property float $price_threshold
- * @property float|null $quality_viscosity_lower
- * @property float|null $quality_viscosity_upper
- * @property float|null $quality_fineness_lower
- * @property float|null $quality_fineness_upper
- * @property float|null $quality_solids_lower
- * @property float|null $quality_solids_upper
+ * @property string|null $current_cost
+ * @property string|null $cif_percentage
+ * @property string|null $sales_margin
+ * @property string|null $current_price
+ * @property string $price_threshold
+ * @property string|null $quality_viscosity_lower
+ * @property string|null $quality_viscosity_upper
+ * @property string|null $quality_fineness_lower
+ * @property string|null $quality_fineness_upper
+ * @property string|null $quality_solids_lower
+ * @property string|null $quality_solids_upper
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at

@@ -20,11 +20,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $id
  * @property int $product_id
  * @property int|null $product_variant_id
- * @property float $price
- * @property float $cost_at_time
- * @property float $profit_margin
+ * @property string $price
+ * @property string $cost_at_time
+ * @property string $profit_margin
  * @property PriceUpdateType $update_type
- * @property float|null $variation_percentage
+ * @property string|null $variation_percentage
  * @property Carbon $valid_from
  * @property Carbon|null $valid_to
  * @property int|null $created_by

@@ -15,8 +15,8 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $production_order_id
  * @property int $product_variant_id
- * @property float $planned_units
- * @property float|null $actual_units
+ * @property string $planned_units
+ * @property string|null $actual_units
  * @property string|null $notes
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at

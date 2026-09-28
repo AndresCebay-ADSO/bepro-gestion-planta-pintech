@@ -19,8 +19,8 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property string $symbol
  * @property string|null $description
- * @property float|null $to_kg_conversion
- * @property float|null $to_liter_conversion
+ * @property string|null $to_kg_conversion
+ * @property string|null $to_liter_conversion
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at

@@ -20,9 +20,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $id
  * @property int $raw_material_id
  * @property int $warehouse_id
- * @property float $initial_quantity
- * @property float $remaining_quantity
- * @property float $unit_price
+ * @property string $initial_quantity
+ * @property string $remaining_quantity
+ * @property string $unit_price
  * @property Carbon $entry_date
  * @property Carbon|null $expiry_date
  * @property string|null $supplier

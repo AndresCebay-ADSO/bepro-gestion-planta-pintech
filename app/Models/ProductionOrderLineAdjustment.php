@@ -13,7 +13,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $production_order_id
  * @property int $raw_material_id
- * @property float $quantity
+ * @property string $quantity
  * @property string $reason
  * @property string|null $notes
  * @property int $created_by
