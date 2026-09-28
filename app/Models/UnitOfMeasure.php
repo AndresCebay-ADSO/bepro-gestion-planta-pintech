@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\UnitOfMeasureFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +13,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -24,6 +27,10 @@ use Illuminate\Support\Carbon;
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read int|null $raw_materials_count
+ * @property-read int|null $products_count
+ * @property-read int|null $product_variants_count
+ * @property-read int|null $formula_details_count
  * @property-read Collection|RawMaterial[] $rawMaterials
  * @property-read Collection|Product[] $products
  * @property-read Collection|FormulaDetail[] $formulaDetails
@@ -41,7 +48,29 @@ use Illuminate\Support\Carbon;
 class UnitOfMeasure extends Model
 {
     /** @use HasFactory<UnitOfMeasureFactory> */
-    use HasFactory;
+    use HasAuditDescription, HasFactory, LogsActivity;
+
+    /**
+     * Registros que pueden apuntar a una unidad (todas las claves foráneas son RESTRICT).
+     */
+    public const USAGE_RELATIONS = ['rawMaterials', 'products', 'productVariants', 'formulaDetails'];
+
+    protected string $auditLabel = 'Unidad de medida';
+
+    protected string $auditIdentifierAttribute = 'code';
+
+    protected bool $auditFeminine = true;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('unidades_medida')
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
+            // Los factores entran en la conversión de las fórmulas: su valor anterior y el nuevo quedan auditados.
+            ->logOnly(['code', 'name', 'symbol', 'description', 'to_kg_conversion', 'to_liter_conversion', 'is_active'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     protected function casts(): array
     {
@@ -58,6 +87,39 @@ class UnitOfMeasure extends Model
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
+    }
+
+    /**
+     * Unidades que se pueden elegir en un formulario: las activas, más las que ya usa el registro que se edita
+     * (una unidad desactivada se conserva donde estaba, pero no se ofrece para registros nuevos).
+     *
+     * @param  array<int, int|null>  $keepIds
+     */
+    public function scopeSelectable(Builder $query, array $keepIds = []): void
+    {
+        $keepIds = array_values(array_filter($keepIds));
+
+        $query->where(fn (Builder $q) => $q
+            ->where('is_active', true)
+            ->when($keepIds !== [], fn (Builder $q) => $q->orWhereIn('id', $keepIds)));
+    }
+
+    /**
+     * Cuenta, por relación, cuántos registros usan la unidad (`raw_materials_count`, `products_count`...).
+     */
+    public function scopeWithUsageCounts(Builder $query): void
+    {
+        $query->withCount(self::USAGE_RELATIONS);
+    }
+
+    /**
+     * Si la unidad entra en alguna conversión: la de una línea de fórmula o la de una materia prima. Cambiar su factor
+     * altera lo que pedirán las OP que se creen después (las ya creadas guardan el suyo). La unidad de un producto o de
+     * una presentación solo se muestra, así que no cuenta.
+     */
+    public function affectsConversions(): bool
+    {
+        return $this->formulaDetails()->exists() || $this->rawMaterials()->exists();
     }
 
     public function rawMaterials(): HasMany
