@@ -22,11 +22,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string $code
  * @property int|null $category_id
  * @property int $unit_of_measure_id
- * @property float|null $current_price
- * @property float $previous_price
- * @property float $minimum_stock
+ * @property string|null $current_price
+ * @property string|null $previous_price
+ * @property string $minimum_stock
  * @property int $alert_days_before_expiry
- * @property float|null $price_variation_threshold
+ * @property string|null $price_variation_threshold
  * @property bool $tracks_inventory
  * @property bool $is_active
  * @property Carbon|null $created_at

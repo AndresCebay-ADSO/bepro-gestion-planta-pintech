@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $formula_id
  * @property int $raw_material_id
- * @property float $quantity
+ * @property string $quantity
  * @property int $unit_of_measure_id
  * @property int $step_order
  * @property Carbon|null $created_at

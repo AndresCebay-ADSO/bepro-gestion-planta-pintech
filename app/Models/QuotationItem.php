@@ -20,11 +20,11 @@ use Illuminate\Support\Carbon;
  * @property QuotationItemType|null $type
  * @property string|null $description
  * @property string|null $color
- * @property float $quantity
- * @property float $list_unit_price
- * @property float $price_adjustment_pct
- * @property float $unit_price
- * @property float $subtotal
+ * @property string $quantity
+ * @property string $list_unit_price
+ * @property string $price_adjustment_pct
+ * @property string $unit_price
+ * @property string $subtotal
  * @property int $sort_order
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at

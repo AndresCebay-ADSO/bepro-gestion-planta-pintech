@@ -22,12 +22,12 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $source_order_id
  * @property int $product_id
  * @property int $warehouse_id
- * @property float $original_quantity_gallons
- * @property float $original_quantity_kg
- * @property float $available_quantity_gallons
- * @property float $available_quantity_kg
- * @property float $density_kg_per_gallon
- * @property float|null $cost_per_gallon
+ * @property string $original_quantity_gallons
+ * @property string $original_quantity_kg
+ * @property string $available_quantity_gallons
+ * @property string $available_quantity_kg
+ * @property string $density_kg_per_gallon
+ * @property string|null $cost_per_gallon
  * @property RemnantStatus $status
  * @property string|null $notes
  * @property int $created_by

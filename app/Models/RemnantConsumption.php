@@ -13,9 +13,9 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $remnant_id
  * @property int|null $target_order_id
- * @property float|null $consumed_cost
- * @property float $quantity_gallons
- * @property float $quantity_kg
+ * @property string|null $consumed_cost
+ * @property string $quantity_gallons
+ * @property string $quantity_kg
  * @property int $consumed_by
  * @property Carbon $consumed_at
  * @property string|null $notes

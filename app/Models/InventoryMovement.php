@@ -22,8 +22,8 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int|null $batch_id
  * @property int|null $production_order_id
  * @property InventoryMovementType $type
- * @property float $quantity
- * @property float $cost_price
+ * @property string $quantity
+ * @property string $cost_price
  * @property Carbon $movement_date
  * @property string|null $notes
  * @property int $created_by

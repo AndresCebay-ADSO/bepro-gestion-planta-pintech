@@ -23,7 +23,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $product_id
  * @property int|null $product_variant_id
  * @property int|null $production_order_id
- * @property float $initial_quantity
+ * @property string $initial_quantity
  * @property Carbon $entry_date
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at

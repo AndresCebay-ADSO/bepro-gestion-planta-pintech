@@ -39,10 +39,10 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string|null $delivery_time
  * @property string|null $area
  * @property string|null $notes
- * @property float $subtotal
- * @property float $iva_percentage
- * @property float $iva_amount
- * @property float $total
+ * @property string $subtotal
+ * @property string $iva_percentage
+ * @property string $iva_amount
+ * @property string $total
  * @property QuotationStatus $status
  * @property int $created_by
  * @property int|null $convert_to_order_id
