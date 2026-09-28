@@ -12,7 +12,6 @@ use App\Models\ProductionOrderPackagingPlan;
 use App\Models\ProductionRemnant;
 use App\Models\RemnantConsumption;
 use App\Services\DecimalCalculator;
-use App\Services\FormulaService;
 use App\Services\Inventory\FifoStockAllocatorService;
 
 class BuildProductionOrderShowDataAction
@@ -20,7 +19,6 @@ class BuildProductionOrderShowDataAction
     public function __construct(
         private readonly FifoStockAllocatorService $fifoStockAllocator,
         private readonly DecimalCalculator $calculator,
-        private readonly FormulaService $formulaService
     ) {}
 
     /**
@@ -177,26 +175,16 @@ class BuildProductionOrderShowDataAction
                 $displayQuantity = null;
                 $displayUnit = null;
                 $conversionFactor = null;
-                if ($formulaDetail && $formulaDetail->unitOfMeasure) {
-                    $rawMaterialUnit = $detail->rawMaterial?->unitOfMeasure;
-
-                    if ($rawMaterialUnit !== null) {
-                        try {
-                            $conversionFactor = (float) $this->formulaService->getConversionFactor(
-                                $formulaDetail->unitOfMeasure,
-                                $rawMaterialUnit
-                            );
-
-                            $displayQuantity = (float) $this->calculator->mul(
-                                (string) $formulaDetail->quantity,
-                                (string) $productionOrder->quantity,
-                                4
-                            );
-                            $displayUnit = $formulaDetail->unitOfMeasure->symbol;
-                        } catch (\DomainException) {
-                            $conversionFactor = null;
-                        }
-                    }
+                // Se convierte con la equivalencia guardada al crear la OP, no con la actual del catálogo: así lo que
+                // registra el operario no cambia si alguien edita la unidad. Sin ella, se muestra en la unidad de la MP.
+                if ($formulaDetail?->unitOfMeasure !== null && $detail->conversion_factor !== null) {
+                    $conversionFactor = (float) $detail->conversion_factor;
+                    $displayQuantity = (float) $this->calculator->mul(
+                        (string) $formulaDetail->quantity,
+                        (string) $productionOrder->quantity,
+                        4
+                    );
+                    $displayUnit = $formulaDetail->unitOfMeasure->symbol;
                 }
 
                 $row = [

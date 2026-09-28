@@ -82,6 +82,7 @@ class CreateProductionOrderAction
                 $computedDetails[] = [
                     'detail' => $detail,
                     'planned_quantity' => $detailTotal,
+                    'conversion_factor' => $factor,
                 ];
             }
 
@@ -101,6 +102,8 @@ class CreateProductionOrderAction
                     'batch_id' => null,
                     'step_order' => $detail->step_order,
                     'planned_quantity' => $plannedQuantityStr,
+                    // Se guarda la equivalencia usada: la OP no depende de que la unidad cambie en el catálogo.
+                    'conversion_factor' => $computed['conversion_factor'],
                     'unit_cost' => $estimatedUnitCost,
                     'total_cost' => $this->calculator->mul($plannedQuantityStr, $estimatedUnitCost, 4),
                 ]);

@@ -312,6 +312,7 @@ Consumo de materia prima por lote en cada orden.
 | `batch_id` | BIGINT | sí | FK → `inventory_batches` (RESTRICT) |
 | `raw_material_id` | BIGINT |  | FK → `raw_materials` (RESTRICT) |
 | `planned_quantity` | DECIMAL(12,4) |  |  |
+| `conversion_factor` | DECIMAL(12,4) | sí | Equivalencia con que se creó la línea (1 unidad de la fórmula = N de la MP). La OP convierte siempre con ella, aunque la unidad cambie en el catálogo. NULL = sin conversión |
 | `actual_quantity` | DECIMAL(12,4) | sí |  |
 | `unit_cost` | DECIMAL(12,4) |  |  |
 | `total_cost` | DECIMAL(12,4) |  |  |
