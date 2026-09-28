@@ -15,6 +15,7 @@ use App\Models\ProductionOrder;
 use App\Models\ProductionRemnant;
 use App\Models\QrCode;
 use App\Models\RawMaterial;
+use App\Models\UnitOfMeasure;
 use App\Models\Warehouse;
 use App\Policies\AlertPolicy;
 use App\Policies\FinishedInventoryMovementPolicy;
@@ -27,6 +28,7 @@ use App\Policies\ProductionRemnantPolicy;
 use App\Policies\QrCodePolicy;
 use App\Policies\RawMaterialPolicy;
 use App\Policies\RolePolicy;
+use App\Policies\UnitOfMeasurePolicy;
 use App\Policies\WarehousePolicy;
 use App\Services\DecimalCalculator;
 use App\Services\FormulaService;
@@ -105,6 +107,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(RawMaterial::class, RawMaterialPolicy::class);
         // El modelo Role es de Spatie: la policy no se descubre por convención.
         Gate::policy(Role::class, RolePolicy::class);
+        Gate::policy(UnitOfMeasure::class, UnitOfMeasurePolicy::class);
         Gate::policy(Warehouse::class, WarehousePolicy::class);
 
         DB::prohibitDestructiveCommands(

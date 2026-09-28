@@ -74,6 +74,10 @@ final class RoleRouteMatrix
             'paint-development-requests.index' => self::only(SystemRole::SuperAdmin, SystemRole::Admin, SystemRole::Commercial),
             'paint-development-requests.create' => self::only(SystemRole::SuperAdmin, SystemRole::Admin, SystemRole::Commercial),
 
+            // Catálogos, en Configuración (§3): Admin los consulta; solo SuperAdmin los gestiona.
+            'catalogs.units-of-measure.index' => self::only(SystemRole::SuperAdmin, SystemRole::Admin),
+            'catalogs.units-of-measure.create' => self::only(SystemRole::SuperAdmin),
+
             // Bodegas y QR.
             'warehouses.index' => self::only(SystemRole::SuperAdmin, SystemRole::Admin, SystemRole::Production, SystemRole::Commercial),
             'warehouses.create' => self::only(SystemRole::SuperAdmin, SystemRole::Admin),

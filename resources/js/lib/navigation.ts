@@ -1,3 +1,34 @@
+import type { NavItem } from '@/types/navigation';
+import type { Permission } from '@/types/permissions';
+
+/**
+ * Filtra ítems de navegación por permisos (docs/MATRIZ_RBAC.md). Un ítem sin `allowedPermissions` es visible para todo
+ * usuario con sesión; si los tiene, basta con uno. Sin permiso se oculta, o se muestra deshabilitado si el ítem lo pide.
+ * Lo usan el menú lateral y las pestañas de Configuración.
+ */
+export function filterNavItemsByPermissions<T extends NavItem>(
+    items: T[],
+    userPermissions: Permission[],
+): T[] {
+    return items.flatMap((item) => {
+        if (!item.allowedPermissions?.length) {
+            return [item];
+        }
+
+        if (
+            item.allowedPermissions.some((permission) =>
+                userPermissions.includes(permission),
+            )
+        ) {
+            return [item];
+        }
+
+        return item.unauthorizedBehavior === 'disable'
+            ? [{ ...item, disabled: true }]
+            : [];
+    });
+}
+
 export function currentReturnTo(): string {
     if (typeof window === 'undefined') {
         return '';

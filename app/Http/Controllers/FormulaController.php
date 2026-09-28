@@ -246,7 +246,9 @@ class FormulaController extends Controller
                 ->select('id', 'code')
                 ->orderBy('code')
                 ->get(),
+            // StoreFormulaRequest solo acepta unidades activas: el desplegable ofrece las mismas.
             'units' => UnitOfMeasure::query()
+                ->selectable()
                 ->select('id', 'name', 'symbol')
                 ->orderBy('name')
                 ->get(),

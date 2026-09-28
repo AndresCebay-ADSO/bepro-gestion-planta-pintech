@@ -29,10 +29,10 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { filterNavItemsByPermissions } from '@/lib/navigation';
 import { dashboard } from '@/routes';
 import { index as adminCostsIndex } from '@/routes/admin/costs';
 import { index as alertsIndex } from '@/routes/alerts';
-import { edit as editAppearance } from '@/routes/appearance';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import { index as clientsIndex } from '@/routes/clients';
 import { index as finishedInventoryIndex } from '@/routes/finished-inventory';
@@ -44,6 +44,7 @@ import { index as pricesIndex } from '@/routes/prices';
 import { index as remnantsIndex } from '@/routes/production/remnants';
 import { index as productionOrdersIndex } from '@/routes/production-orders';
 import { index as productsIndex } from '@/routes/products';
+import { edit as editProfile } from '@/routes/profile';
 import { index as qrCodesIndex } from '@/routes/qr-codes';
 import { index as quotationsIndex } from '@/routes/quotations';
 import { index as rawMaterialsIndex } from '@/routes/raw-materials';
@@ -227,7 +228,7 @@ const navigationGroups: NavGroup[] = [
             },
             {
                 title: 'Configuración',
-                href: editAppearance().url,
+                href: editProfile().url,
                 icon: Settings,
                 unauthorizedBehavior: 'hide',
             },
@@ -241,39 +242,10 @@ const navigationGroups: NavGroup[] = [
  */
 function buildSidebarGroups(userPermissions: Permission[]): NavGroup[] {
     return navigationGroups
-        .map((group) => {
-            const items = group.items
-                .map((item) => {
-                    if (!item.allowedPermissions?.length) {
-                        return item;
-                    }
-
-                    const hasPermission = item.allowedPermissions.some(
-                        (permission) => userPermissions.includes(permission),
-                    );
-
-                    if (hasPermission) {
-                        return item;
-                    }
-
-                    if (item.unauthorizedBehavior === 'disable') {
-                        return { ...item, disabled: true };
-                    }
-
-                    return null;
-                })
-                .filter(
-                    (
-                        item,
-                    ): item is (typeof navigationGroups)[number]['items'][number] =>
-                        item !== null,
-                );
-
-            return {
-                ...group,
-                items,
-            };
-        })
+        .map((group) => ({
+            ...group,
+            items: filterNavItemsByPermissions(group.items, userPermissions),
+        }))
         .filter((group) => group.items.length > 0);
 }
 

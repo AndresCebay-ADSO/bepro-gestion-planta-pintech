@@ -20,7 +20,7 @@ migración, actualiza este documento.
 
 ### 2.1.1 `unit_of_measures`
 
-Catálogo de unidades de medida.
+Catálogo de unidades de medida (Configuración → Catálogos), auditado (`unidades_medida`).
 
 | Columna | Tipo | Nulo | Notas |
 | --- | --- | :-: | --- |
@@ -29,8 +29,8 @@ Catálogo de unidades de medida.
 | `name` | VARCHAR(100) |  |  |
 | `symbol` | VARCHAR(10) |  |  |
 | `description` | TEXT | sí |  |
-| `to_kg_conversion` | DECIMAL(10,4) | sí |  |
-| `to_liter_conversion` | DECIMAL(10,4) | sí |  |
+| `to_kg_conversion` | DECIMAL(10,4) | sí | Excluyente con `to_liter_conversion`: una unidad se convierte por peso o por volumen, o no se convierte |
+| `to_liter_conversion` | DECIMAL(10,4) | sí | `FormulaService::getConversionFactor()` convierte con estos factores |
 | `is_active` | BOOLEAN |  | default `true` |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |

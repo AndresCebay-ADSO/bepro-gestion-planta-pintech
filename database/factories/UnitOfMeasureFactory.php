@@ -16,7 +16,8 @@ class UnitOfMeasureFactory extends Factory
 
     public function definition(): array
     {
-        $code = strtoupper($this->faker->unique()->lexify('U??'));
+        // En minúsculas, como los guarda la aplicación (StoreUnitOfMeasureRequest).
+        $code = strtolower($this->faker->unique()->lexify('u??'));
 
         return [
             'code' => $code,

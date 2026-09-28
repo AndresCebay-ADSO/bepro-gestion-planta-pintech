@@ -195,6 +195,14 @@ final class RoutePermissionMap
             'qr-codes.documents.download' => Permission::QrCodesView,
             'qr-codes.update' => Permission::QrCodesUpdate,
 
+            // Catálogos (Configuración → Catálogos)
+            'catalogs.units-of-measure.index' => Permission::CatalogsView,
+            'catalogs.units-of-measure.create' => Permission::CatalogsCreate,
+            'catalogs.units-of-measure.store' => Permission::CatalogsCreate,
+            'catalogs.units-of-measure.edit' => Permission::CatalogsEdit,
+            'catalogs.units-of-measure.update' => Permission::CatalogsEdit,
+            'catalogs.units-of-measure.destroy' => Permission::CatalogsDelete,
+
             // Bodegas
             'warehouses.index' => Permission::WarehousesView,
             'warehouses.show' => Permission::WarehousesView,
@@ -273,10 +281,6 @@ final class RoutePermissionMap
     {
         return [
             Permission::UsersManageRoles->value => 'Campo del formulario de usuario.',
-            Permission::CatalogsView->value => 'CRUDs de catálogos en la Fase 3 (3.1, 3.2).',
-            Permission::CatalogsCreate->value => 'CRUDs de catálogos en la Fase 3 (3.1, 3.2).',
-            Permission::CatalogsEdit->value => 'CRUDs de catálogos en la Fase 3 (3.1, 3.2).',
-            Permission::CatalogsDelete->value => 'CRUDs de catálogos en la Fase 3 (3.1, 3.2).',
             Permission::ProductsDeactivate->value => 'Casilla "Producto activo" dentro de products.update.',
             Permission::ClientsDeactivate->value => 'Casilla "Cliente activo" dentro de clients.update.',
             Permission::RawMaterialsDelete->value => 'Se aplica dentro de raw-materials.destroy; endpoint propio en la tarea 2.7.',

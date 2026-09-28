@@ -154,6 +154,7 @@ type Props = {
         id: number;
         name: string;
         symbol: string;
+        is_active: boolean;
     }>;
     rawMaterials?: Array<{
         id: number;
@@ -264,6 +265,14 @@ export default function ProductsShow({
     const packageOptions = (rawMaterials ?? []).filter(
         (rm) => rm.is_active || rm.id === keptPackageId,
     );
+
+    // Igual con la unidad: una inactiva solo se ofrece a la presentación que ya la usa.
+    const keptUnitId =
+        dialogMode === 'edit'
+            ? product.variants?.find((v) => v.id === editingVariantId)
+                  ?.unit_of_measure_id
+            : null;
+    const unitOptions = units.filter((u) => u.is_active || u.id === keptUnitId);
 
     const openCreate = () => {
         form.reset();
@@ -1023,17 +1032,19 @@ export default function ProductsShow({
                                                         <SelectValue placeholder="Selecciona..." />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {units.map((u) => (
-                                                            <SelectItem
-                                                                key={u.id}
-                                                                value={String(
-                                                                    u.id,
-                                                                )}
-                                                            >
-                                                                {u.name} (
-                                                                {u.symbol})
-                                                            </SelectItem>
-                                                        ))}
+                                                        {unitOptions.map(
+                                                            (u) => (
+                                                                <SelectItem
+                                                                    key={u.id}
+                                                                    value={String(
+                                                                        u.id,
+                                                                    )}
+                                                                >
+                                                                    {u.name} (
+                                                                    {u.symbol})
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
                                                     </SelectContent>
                                                 </Select>
                                                 {form.errors

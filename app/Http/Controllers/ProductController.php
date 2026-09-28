@@ -88,7 +88,7 @@ class ProductController extends Controller
 
         return Inertia::render('Products/Create', [
             'categories' => ProductCategory::query()->select('id', 'name')->orderBy('name')->get(),
-            'units' => UnitOfMeasure::query()->select('id', 'name', 'symbol')->orderBy('name')->get(),
+            'units' => UnitOfMeasure::query()->selectable()->select('id', 'name', 'symbol')->orderBy('name')->get(),
             'can' => [
                 'managePrices' => Gate::allows(Permission::CostsUpdate->value),
             ],
@@ -143,9 +143,10 @@ class ProductController extends Controller
                     'label' => QrDocumentType::SafetyDataSheet->label(),
                 ],
             ],
+            // Unidades activas, más las inactivas que ya usa alguna presentación: al editarla se muestra la que tiene.
             'units' => UnitOfMeasure::query()
-                ->select('id', 'name', 'symbol')
-                ->where('is_active', true)
+                ->selectable($product->variants()->pluck('unit_of_measure_id')->all())
+                ->select('id', 'name', 'symbol', 'is_active')
                 ->orderBy('name')
                 ->get(),
             // Envases activos, más los inactivos que ya usa alguna presentación: al editarla se muestra el que tiene.
@@ -194,7 +195,7 @@ class ProductController extends Controller
             ],
             'hasActiveFormula' => $product->activeFormula()->exists(),
             'categories' => ProductCategory::query()->select('id', 'name')->orderBy('name')->get(),
-            'units' => UnitOfMeasure::query()->select('id', 'name', 'symbol')->orderBy('name')->get(),
+            'units' => UnitOfMeasure::query()->selectable([$product->unit_of_measure_id])->select('id', 'name', 'symbol')->orderBy('name')->get(),
             'can' => [
                 'managePrices' => Gate::allows(Permission::CostsUpdate->value),
                 'viewCosts' => $canViewCosts,

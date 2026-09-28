@@ -118,8 +118,8 @@ class RawMaterialController extends Controller
                 ->orderBy('name')
                 ->get(),
             'units' => UnitOfMeasure::query()
+                ->selectable()
                 ->select('id', 'name', 'symbol')
-                ->where('is_active', true)
                 ->orderBy('name')
                 ->get(),
         ]);
@@ -250,8 +250,8 @@ class RawMaterialController extends Controller
                 ->orderBy('name')
                 ->get(),
             'units' => UnitOfMeasure::query()
+                ->selectable([$rawMaterial->unit_of_measure_id])
                 ->select('id', 'name', 'symbol')
-                ->where('is_active', true)
                 ->orderBy('name')
                 ->get(),
         ]);
