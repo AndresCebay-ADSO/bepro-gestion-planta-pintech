@@ -138,6 +138,56 @@ test('it creates a production order with normalized planned quantity', function 
     ]);
 });
 
+/**
+ * Crea por HTTP una OP de 10 L con 10 kg de stock: la receta pide 250 g por litro, 2,5 kg en total.
+ */
+function createUomProductionOrder(): ProductionOrder
+{
+    InventoryBatch::create([
+        'raw_material_id' => test()->material->id,
+        'warehouse_id' => test()->factory->id,
+        'initial_quantity' => 10,
+        'remaining_quantity' => 10,
+        'unit_price' => 500,
+        'entry_date' => now(),
+    ]);
+
+    test()->post(route('production-orders.store'), [
+        'product_id' => test()->product->id,
+        'formula_id' => test()->formula->id,
+        'warehouse_id' => test()->factory->id,
+        'quantity' => 10,
+        'planned_date' => now()->addDay()->toDateString(),
+        'packaging' => [
+            ['product_variant_id' => test()->variant->id, 'planned_units' => 10],
+        ],
+    ])->assertRedirect();
+
+    return ProductionOrder::query()->sole();
+}
+
+test('it stores the conversion factor each line was created with', function () {
+    $order = createUomProductionOrder();
+
+    // 1 g = 0,001 kg
+    expect($order->details()->sole()->conversion_factor)->toBe('0.0010');
+});
+
+test('it keeps converting an existing order with its stored factor when the unit changes in the catalog', function () {
+    $order = createUomProductionOrder();
+
+    // Alguien corrige la equivalencia del gramo después de crear la OP.
+    $this->gram->update(['to_kg_conversion' => '0.002']);
+
+    $detail = app(BuildProductionOrderShowDataAction::class)->execute($order->fresh(), includeCosts: false)['details']->first();
+
+    // La pantalla sigue convirtiendo lo que registra el operario con la equivalencia de la OP, no con la nueva.
+    expect($detail['conversion_factor'])->toBe(0.001)
+        ->and($detail['display_quantity'])->toBe(2500.0)
+        ->and($detail['display_unit'])->toBe('g')
+        ->and($detail['planned_quantity'])->toBe(2.5);
+});
+
 test('it validates stock using normalized quantities', function () {
     // Solo 1 kg de stock
     InventoryBatch::create([

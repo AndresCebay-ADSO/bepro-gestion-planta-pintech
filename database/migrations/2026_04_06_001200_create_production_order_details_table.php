@@ -19,6 +19,9 @@ return new class extends Migration
             $table->foreignId('batch_id')->constrained('inventory_batches')->restrictOnDelete();
             $table->foreignId('raw_material_id')->constrained('raw_materials')->restrictOnDelete();
             $table->decimal('planned_quantity', 12, 4); // lo que se planea consumir
+            // Equivalencia con que se creó la línea (1 unidad de la fórmula = N de la materia prima). La OP convierte
+            // siempre con ella: cambiar la unidad en el catálogo solo afecta a las OP nuevas. NULL = sin conversión.
+            $table->decimal('conversion_factor', 12, 4)->nullable();
             $table->decimal('actual_quantity', 12, 4)->nullable(); // lo que se consume realmente
             $table->decimal('unit_cost', 12, 4);
             $table->decimal('total_cost', 12, 4);

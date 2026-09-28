@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property int $raw_material_id
  * @property int $step_order
  * @property string $planned_quantity
+ * @property string|null $conversion_factor
  * @property string|null $actual_quantity
  * @property string $unit_cost
  * @property string $total_cost
@@ -33,6 +34,7 @@ use Illuminate\Support\Carbon;
     'raw_material_id',
     'step_order',
     'planned_quantity',
+    'conversion_factor',
     'actual_quantity',
     'unit_cost',
     'total_cost',
@@ -47,6 +49,7 @@ class ProductionOrderDetail extends Model
         return [
             'step_order' => 'integer',
             'planned_quantity' => 'decimal:4',
+            'conversion_factor' => 'decimal:4',
             'actual_quantity' => 'decimal:4',
             'unit_cost' => 'decimal:4',
             'total_cost' => 'decimal:4',
