@@ -86,7 +86,9 @@ export function RawMaterialCategoryFields({
                 </Select>
                 <p className="text-xs text-muted-foreground">
                     {typeLocked
-                        ? `No se puede cambiar: la categoría tiene ${rawMaterialsCount} materias primas. Muévelas a otra categoría primero.`
+                        ? rawMaterialsCount === 1
+                            ? 'No se puede cambiar: la categoría tiene 1 materia prima. Muévela a otra categoría primero.'
+                            : `No se puede cambiar: la categoría tiene ${rawMaterialsCount} materias primas. Muévelas a otra categoría primero.`
                         : RAW_MATERIAL_TYPE_HINTS[form.data.type]}
                 </p>
                 <InputError message={form.errors.type} />
