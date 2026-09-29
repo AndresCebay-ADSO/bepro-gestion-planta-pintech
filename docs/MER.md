@@ -37,19 +37,23 @@ Catálogo de unidades de medida (Configuración → Catálogos), auditado (`unid
 
 ### 2.1.2 `product_categories`
 
-Categorías de productos.
+Categorías de productos (Configuración → Catálogos), auditadas (`categorias_producto`).
 
 | Columna | Tipo | Nulo | Notas |
 | --- | --- | :-: | --- |
 | `id` | BIGINT |  | PK |
 | `name` | VARCHAR(100) |  | UNIQUE |
 | `description` | TEXT | sí |  |
+| `is_active` | BOOLEAN |  | default `true` |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
 
 ### 2.1.3 `raw_material_categories`
 
-Categorías de materias primas (envases, pigmentos…).
+Categorías de materias primas (Configuración → Catálogos), auditadas (`categorias_materia_prima`). El **tipo de insumo**
+decide dónde se ofrecen sus materias primas: fórmulas (químico), presentaciones (envase), OP (etiqueta) o termoencogido
+(empaque secundario). No se puede cambiar el tipo de una categoría con materias primas, ni pasar una materia prima en
+uso (envase de una presentación, línea de fórmula) a una categoría de otro tipo.
 
 | Columna | Tipo | Nulo | Notas |
 | --- | --- | :-: | --- |
@@ -57,6 +61,7 @@ Categorías de materias primas (envases, pigmentos…).
 | `code` | VARCHAR(50) |  | UNIQUE |
 | `name` | VARCHAR(100) |  |  |
 | `description` | TEXT | sí |  |
+| `type` | VARCHAR(255) |  | `RawMaterialType`, default `chemical` |
 | `is_active` | BOOLEAN |  | default `true` |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
@@ -853,6 +858,7 @@ Algunas tienen además una restricción `CHECK` en PostgreSQL.
 | `AlertType` | `alerts.type` | stock_bajo, vencimiento_proximo, variacion_precio, paint_development_request |
 | `AlertSeverity` | `alerts.severity` | baja, media, alta |
 | `WarehouseType` | `warehouses.type` | factory, storage |
+| `RawMaterialType` | `raw_material_categories.type` | chemical, container, label, secondary_packaging |
 | `InventoryMovementType` | `inventory_movements.type`, `finished_inventory_movements.type` | entry, exit |
 | `FinishedInventoryMovementReason` | `finished_inventory_movements.reason` | production, return, adjustment, sale, sample, transfer, transformation, deterioration |
 | `ProductionOrderStatus` | `production_orders.status` | pending, in_progress, pending_review, completed, cancelled |

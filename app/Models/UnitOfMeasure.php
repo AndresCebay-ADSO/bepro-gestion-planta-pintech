@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Concerns\HasAuditDescription;
+use App\Models\Concerns\SelectableWhenActive;
 use Database\Factories\UnitOfMeasureFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -48,7 +49,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class UnitOfMeasure extends Model
 {
     /** @use HasFactory<UnitOfMeasureFactory> */
-    use HasAuditDescription, HasFactory, LogsActivity;
+    use HasAuditDescription, HasFactory, LogsActivity, SelectableWhenActive;
 
     /**
      * Registros que pueden apuntar a una unidad (todas las claves foráneas son RESTRICT).
@@ -79,29 +80,6 @@ class UnitOfMeasure extends Model
             'to_liter_conversion' => 'decimal:4',
             'is_active' => 'boolean',
         ];
-    }
-
-    /**
-     * Scope a query to only include active units.
-     */
-    public function scopeActive(Builder $query): void
-    {
-        $query->where('is_active', true);
-    }
-
-    /**
-     * Unidades que se pueden elegir en un formulario: las activas, más las que ya usa el registro que se edita
-     * (una unidad desactivada se conserva donde estaba, pero no se ofrece para registros nuevos).
-     *
-     * @param  array<int, int|null>  $keepIds
-     */
-    public function scopeSelectable(Builder $query, array $keepIds = []): void
-    {
-        $keepIds = array_values(array_filter($keepIds));
-
-        $query->where(fn (Builder $q) => $q
-            ->where('is_active', true)
-            ->when($keepIds !== [], fn (Builder $q) => $q->orWhereIn('id', $keepIds)));
     }
 
     /**
