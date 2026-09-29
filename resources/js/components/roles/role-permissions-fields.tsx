@@ -52,7 +52,6 @@ export default function RolePermissionsFields({
     );
 
     const selectedSet = new Set(selected);
-    const locked = readOnly || disabled;
 
     const grant = (names: Permission[]) => {
         const next = new Set(selected);
@@ -182,7 +181,7 @@ export default function RolePermissionsFields({
                                 <Checkbox
                                     id={moduleId}
                                     checked={moduleState}
-                                    disabled={locked}
+                                    disabled={disabled}
                                     onCheckedChange={(checked) =>
                                         checked === true
                                             ? grant(names)
@@ -198,11 +197,15 @@ export default function RolePermissionsFields({
                                     {module.label}
                                 </Label>
                             </div>
-                            <span
-                                className="text-xs text-muted-foreground"
-                                aria-label={`${grantedCount} de ${names.length} permisos seleccionados`}
-                            >
-                                {grantedCount}/{names.length}
+                            {/* aria-label no se anuncia en un <span> sin rol: el texto accesible va aparte. */}
+                            <span className="text-xs text-muted-foreground">
+                                <span aria-hidden="true">
+                                    {grantedCount}/{names.length}
+                                </span>
+                                <span className="sr-only">
+                                    {grantedCount} de {names.length} permisos
+                                    seleccionados
+                                </span>
                             </span>
                         </div>
 
@@ -230,7 +233,7 @@ export default function RolePermissionsFields({
                                                 ) || permission.required
                                             }
                                             disabled={
-                                                locked || permission.required
+                                                disabled || permission.required
                                             }
                                             aria-describedby={
                                                 hasHelpText ? descId : undefined
