@@ -241,8 +241,10 @@ class FormulaController extends Controller
                 ->select('id', 'code', 'name')
                 ->orderBy('code')
                 ->get(),
+            // Solo tipo Químico, como exige StoreFormulaRequest.
             'rawMaterials' => RawMaterial::query()
                 ->where('is_active', true)
+                ->usableInFormulas()
                 ->select('id', 'code')
                 ->orderBy('code')
                 ->get(),

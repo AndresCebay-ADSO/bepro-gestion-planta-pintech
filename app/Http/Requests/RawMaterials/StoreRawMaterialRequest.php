@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\RawMaterials;
 
-use App\Http\Requests\Concerns\UnitOfMeasureRules;
+use App\Http\Requests\Concerns\CatalogSelectionRules;
 use App\Models\RawMaterial;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreRawMaterialRequest extends FormRequest
 {
-    use UnitOfMeasureRules;
+    use CatalogSelectionRules;
 
     public function authorize(): bool
     {
@@ -28,13 +28,8 @@ class StoreRawMaterialRequest extends FormRequest
                 'max:50',
                 Rule::unique('raw_materials', 'code'),
             ],
-            'category_id' => [
-                'bail',
-                'required',
-                'integer',
-                Rule::exists('raw_material_categories', 'id'),
-            ],
-            'unit_of_measure_id' => $this->unitOfMeasureRules(),
+            'category_id' => $this->activeOrCurrentRules('raw_material_categories', 'category_id'),
+            'unit_of_measure_id' => $this->activeOrCurrentRules('unit_of_measures', 'unit_of_measure_id'),
             'minimum_stock' => ['bail', 'required', 'numeric', 'min:0', 'decimal:0,4'],
             'alert_days_before_expiry' => ['bail', 'required', 'integer', 'min:0'],
             'price_variation_threshold' => ['bail', 'nullable', 'numeric', 'min:0.01', 'max:100', 'decimal:0,2'],

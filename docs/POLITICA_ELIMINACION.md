@@ -60,7 +60,7 @@ y es lo correcto, porque el historial lo referencia.
 | Cliente | 🆕 `clients.deactivate` (Admin); 🆕 columna `is_active` | `clients.delete` (Admin) | nunca: sus cotizaciones y pedidos abiertos siguen su curso |
 | Usuario | `users.edit` (`is_active`) — ya implementado | `users.delete` (SuperAdmin) — ya implementado | es el último SuperAdmin activo — ya implementado |
 | Unidad de medida | `catalogs.edit` (SuperAdmin) — ya implementado, auditada | `catalogs.delete` (SuperAdmin) — ya implementado | nunca: materias primas, productos y presentaciones conservan la suya al editarse; los registros nuevos solo eligen unidades activas. Las **fórmulas** son la excepción: editarlas reescribe todas sus líneas (y solo se puede si ninguna OP las usó), así que exigen unidades y materias primas activas |
-| Categorías | `catalogs.edit` (Fase 3) | `catalogs.delete` (Fase 3) | — (llegan con sus CRUD; añadir auditoría antes) |
+| Categorías (de materia prima y de producto) | `catalogs.edit` (SuperAdmin) — ya implementado, auditadas | `catalogs.delete` (SuperAdmin) — ya implementado | nunca: lo que ya la usa la conserva; los registros nuevos solo eligen categorías activas. El **tipo** de una categoría de materia prima no se cambia si tiene materias primas |
 
 **Desactivar un producto** oculta también sus variantes y fórmulas en los selectores, aunque cada una conserve su
 propio `is_active`: los selectores filtran por el producto y por el hijo.

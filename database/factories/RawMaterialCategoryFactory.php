@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\RawMaterialType;
 use App\Models\RawMaterialCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -22,8 +23,24 @@ class RawMaterialCategoryFactory extends Factory
             'code' => $code,
             'name' => 'Categoria '.$code,
             'description' => $this->faker->optional()->sentence(),
+            'type' => RawMaterialType::Chemical,
             'is_active' => true,
         ];
+    }
+
+    public function container(): static
+    {
+        return $this->state(['type' => RawMaterialType::Container]);
+    }
+
+    public function label(): static
+    {
+        return $this->state(['type' => RawMaterialType::Label]);
+    }
+
+    public function secondaryPackaging(): static
+    {
+        return $this->state(['type' => RawMaterialType::SecondaryPackaging]);
     }
 
     public function inactive(): static

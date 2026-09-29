@@ -15,6 +15,7 @@ use App\Models\InventoryBatch;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,7 @@ class RawMaterialController extends Controller
         $rawMaterials = (new RawMaterialFilter($request))
             ->apply(RawMaterial::query())
             ->with([
-                'category:id,name',
+                'category:id,name,type',
                 'unitOfMeasure:id,name,symbol',
             ])
             ->withSum('inventoryBatches as available_stock', 'remaining_quantity')
@@ -79,6 +80,7 @@ class RawMaterialController extends Controller
                     'category' => $rawMaterial->category ? [
                         'id' => $rawMaterial->category->id,
                         'name' => $rawMaterial->category->name,
+                        'type_label' => $rawMaterial->category->type->label(),
                     ] : null,
                     'unit_of_measure' => $rawMaterial->unitOfMeasure ? [
                         'id' => $rawMaterial->unitOfMeasure->id,
@@ -112,11 +114,7 @@ class RawMaterialController extends Controller
         $this->authorize('create', RawMaterial::class);
 
         return Inertia::render('Inventory/RawMaterials/Create', [
-            'categories' => RawMaterialCategory::query()
-                ->select('id', 'name', 'code')
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get(),
+            'categories' => $this->categoryOptions(RawMaterialCategory::query()->selectable()),
             'units' => UnitOfMeasure::query()
                 ->selectable()
                 ->select('id', 'name', 'symbol')
@@ -146,7 +144,7 @@ class RawMaterialController extends Controller
         $canViewCosts = $request->user()?->can(Permission::CostsView->value) ?? false;
 
         $rawMaterial->load([
-            'category:id,name,code',
+            'category:id,name,code,type',
             'unitOfMeasure:id,name,symbol',
             'inventoryBatches' => fn ($query) => $query
                 ->select(
@@ -198,6 +196,8 @@ class RawMaterialController extends Controller
                     'id' => $rawMaterial->category->id,
                     'name' => $rawMaterial->category->name,
                     'code' => $rawMaterial->category->code,
+                    'type' => $rawMaterial->category->type->value,
+                    'type_label' => $rawMaterial->category->type->label(),
                 ] : null,
                 'unit_of_measure' => $rawMaterial->unitOfMeasure ? [
                     'id' => $rawMaterial->unitOfMeasure->id,
@@ -244,11 +244,7 @@ class RawMaterialController extends Controller
                 'price_variation_threshold' => $rawMaterial->price_variation_threshold,
                 'is_active' => $rawMaterial->is_active,
             ],
-            'categories' => RawMaterialCategory::query()
-                ->select('id', 'name', 'code')
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get(),
+            'categories' => $this->categoryOptions(RawMaterialCategory::query()->selectable([$rawMaterial->category_id])),
             'units' => UnitOfMeasure::query()
                 ->selectable([$rawMaterial->unit_of_measure_id])
                 ->select('id', 'name', 'symbol')
@@ -326,5 +322,28 @@ class RawMaterialController extends Controller
         return redirect()
             ->route('raw-materials.index', ['status' => 'inactive'])
             ->with('success', __('Materia prima reactivada exitosamente.'));
+    }
+
+    /**
+     * Categorías para el selector, con el tipo de insumo que heredará la materia prima: el formulario lo muestra en
+     * cuanto se elige la categoría.
+     *
+     * @param  Builder<RawMaterialCategory>  $query
+     * @return list<array{id: int, name: string, code: string, type: string, type_label: string}>
+     */
+    private function categoryOptions(Builder $query): array
+    {
+        return $query
+            ->select('id', 'name', 'code', 'type')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (RawMaterialCategory $category): array => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'code' => $category->code,
+                'type' => $category->type->value,
+                'type_label' => $category->type->label(),
+            ])
+            ->all();
     }
 }

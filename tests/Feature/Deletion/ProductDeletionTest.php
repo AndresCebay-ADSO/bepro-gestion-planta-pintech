@@ -15,6 +15,7 @@ use App\Models\ProductionOrderPackagingPlan;
 use App\Models\ProductVariant;
 use App\Models\QuotationItem;
 use App\Models\RawMaterial;
+use App\Models\RawMaterialCategory;
 use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Support\Facades\Storage;
@@ -210,8 +211,9 @@ it('no desactiva una presentación que una orden en curso va a envasar, pero sí
 it('ofrece el envase inactivo solo junto a la presentación que ya lo usa, y la edita sin cambiarlo', function () {
     actingAsRole(SystemRole::Admin);
     $product = Product::factory()->create();
-    $kept = RawMaterial::factory()->create(['is_active' => false]);
-    $otherInactive = RawMaterial::factory()->create(['is_active' => false]);
+    $containers = RawMaterialCategory::factory()->container()->create();
+    $kept = RawMaterial::factory()->create(['is_active' => false, 'category_id' => $containers->id]);
+    $otherInactive = RawMaterial::factory()->create(['is_active' => false, 'category_id' => $containers->id]);
     $variant = ProductVariant::factory()->create(['product_id' => $product->id, 'package_raw_material_id' => $kept->id]);
 
     $this->get(route('products.show', $product))->assertInertia(fn (Assert $page) => $page

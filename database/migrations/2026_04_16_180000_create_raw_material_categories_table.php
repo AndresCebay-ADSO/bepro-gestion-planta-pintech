@@ -18,10 +18,13 @@ return new class extends Migration
             $table->string('code', 50)->unique();
             $table->string('name', 100);
             $table->text('description')->nullable();
+            // Tipo de insumo (App\Enums\RawMaterialType): decide dónde se ofrece cada materia prima.
+            $table->enum('type', ['chemical', 'container', 'label', 'secondary_packaging'])->default('chemical');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
             $table->index('is_active');
+            $table->index('type');
         });
     }
 

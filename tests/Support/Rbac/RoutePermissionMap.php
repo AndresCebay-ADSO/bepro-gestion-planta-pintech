@@ -202,6 +202,18 @@ final class RoutePermissionMap
             'catalogs.units-of-measure.edit' => Permission::CatalogsEdit,
             'catalogs.units-of-measure.update' => Permission::CatalogsEdit,
             'catalogs.units-of-measure.destroy' => Permission::CatalogsDelete,
+            'catalogs.raw-material-categories.index' => Permission::CatalogsView,
+            'catalogs.raw-material-categories.create' => Permission::CatalogsCreate,
+            'catalogs.raw-material-categories.store' => Permission::CatalogsCreate,
+            'catalogs.raw-material-categories.edit' => Permission::CatalogsEdit,
+            'catalogs.raw-material-categories.update' => Permission::CatalogsEdit,
+            'catalogs.raw-material-categories.destroy' => Permission::CatalogsDelete,
+            'catalogs.product-categories.index' => Permission::CatalogsView,
+            'catalogs.product-categories.create' => Permission::CatalogsCreate,
+            'catalogs.product-categories.store' => Permission::CatalogsCreate,
+            'catalogs.product-categories.edit' => Permission::CatalogsEdit,
+            'catalogs.product-categories.update' => Permission::CatalogsEdit,
+            'catalogs.product-categories.destroy' => Permission::CatalogsDelete,
 
             // Bodegas
             'warehouses.index' => Permission::WarehousesView,

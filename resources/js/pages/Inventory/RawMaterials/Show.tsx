@@ -33,6 +33,12 @@ type Props = {
         alert_days_before_expiry: number;
         is_active: boolean;
         unit_of_measure: { id: number; name: string; symbol: string } | null;
+        category: {
+            id: number;
+            name: string;
+            code: string;
+            type_label: string;
+        } | null;
         inventory_batches: InventoryBatch[];
     };
     can: {
@@ -156,6 +162,16 @@ export default function RawMaterialsShow({
                 {/* Información general */}
                 <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-2">
                     <InfoItem label="Código interno" value={rawMaterial.code} />
+
+                    <InfoItem
+                        label="Categoría"
+                        value={rawMaterial.category?.name ?? '-'}
+                    />
+
+                    <InfoItem
+                        label="Tipo de insumo"
+                        value={rawMaterial.category?.type_label ?? '-'}
+                    />
 
                     <InfoItem
                         label="Unidad"

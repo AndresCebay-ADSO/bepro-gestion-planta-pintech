@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Products;
 
-use App\Http\Requests\Concerns\UnitOfMeasureRules;
+use App\Http\Requests\Concerns\CatalogSelectionRules;
 use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -12,7 +12,7 @@ use Illuminate\Validation\Validator;
 
 class StoreProductRequest extends FormRequest
 {
-    use UnitOfMeasureRules;
+    use CatalogSelectionRules;
 
     public function authorize(): bool
     {
@@ -41,13 +41,8 @@ class StoreProductRequest extends FormRequest
             'name' => ['bail', 'required', 'string', 'min:3', 'max:150'],
             'brand' => ['bail', 'required', 'string', 'max:100'],
             'description' => ['nullable', 'string', 'max:10000'],
-            'category_id' => [
-                'bail',
-                'required',
-                'integer',
-                Rule::exists('product_categories', 'id'),
-            ],
-            'unit_of_measure_id' => $this->unitOfMeasureRules($this->route('product')?->unit_of_measure_id),
+            'category_id' => $this->activeOrCurrentRules('product_categories', 'category_id', $this->route('product')?->category_id),
+            'unit_of_measure_id' => $this->activeOrCurrentRules('unit_of_measures', 'unit_of_measure_id', $this->route('product')?->unit_of_measure_id),
             'cif_percentage' => ['bail', 'required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
             'price_threshold' => ['bail', 'required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
             'quality_viscosity_lower' => ['nullable', 'numeric', 'min:0', 'max:999.99'],

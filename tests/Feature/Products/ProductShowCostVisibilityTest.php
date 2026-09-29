@@ -154,13 +154,14 @@ it('sends only an explicit list of product and variant fields to users without c
             ])->sort()->values()->all()));
 });
 
-it('offers as packages only active raw materials of an "Envases" category, regardless of case', function (): void {
-    $packages = RawMaterialCategory::factory()->create(['name' => 'ENVASES Metálicos']);
-    $chemicals = RawMaterialCategory::factory()->create(['name' => 'Químicos']);
+it('offers as packages only active raw materials whose category is of type Envase, whatever its name', function (): void {
+    // El nombre ya no decide (antes se buscaba «envase» en él): una categoría de tipo Envase con otro nombre sí cuenta,
+    // y una llamada «Envases» pero de tipo Químico no.
+    $packages = RawMaterialCategory::factory()->container()->create(['name' => 'Recipientes metálicos']);
+    $misnamed = RawMaterialCategory::factory()->create(['name' => 'Envases viejos']);
     $package = RawMaterial::factory()->create(['code' => 'ENV-M-GL', 'category_id' => $packages->id]);
     $inactivePackage = RawMaterial::factory()->create(['code' => 'ENV-M-T50', 'category_id' => $packages->id, 'is_active' => false]);
-    // En minúsculas a propósito: el filtro anterior (LIKE '%galón%' sobre el código) lo tomaba por envase.
-    $chemical = RawMaterial::factory()->create(['code' => 'galón-q1', 'category_id' => $chemicals->id]);
+    $chemical = RawMaterial::factory()->create(['code' => 'galón-q1', 'category_id' => $misnamed->id]);
 
     $this->actingAs(userWithRole(SystemRole::Admin))
         ->get(route('products.show', $this->product))

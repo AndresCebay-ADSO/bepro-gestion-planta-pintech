@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\RawMaterialType;
 use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\RawMaterialFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -91,6 +92,25 @@ class RawMaterial extends Model
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
+    }
+
+    /**
+     * Materias primas cuya categoría es del tipo dado (envases, etiquetas…).
+     */
+    public function scopeOfType(Builder $query, RawMaterialType $type): void
+    {
+        $query->whereHas('category', fn (Builder $category) => $category->where('type', $type->value));
+    }
+
+    /**
+     * Lo que puede ser ingrediente de una fórmula: las de tipo Químico. Una materia prima sin categoría cuenta como
+     * química (el formulario exige categoría; solo quedan así registros antiguos o de pruebas).
+     */
+    public function scopeUsableInFormulas(Builder $query): void
+    {
+        $query->where(fn (Builder $q) => $q
+            ->whereDoesntHave('category')
+            ->orWhereHas('category', fn (Builder $category) => $category->where('type', RawMaterialType::Chemical->value)));
     }
 
     public function category(): BelongsTo
