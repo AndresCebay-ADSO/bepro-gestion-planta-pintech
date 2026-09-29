@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\RawMaterialType;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
@@ -22,7 +23,7 @@ class ProductVariantSeeder extends Seeder
         $unitGl = UnitOfMeasure::where('symbol', 'gl')->first();
 
         $packagingMaterials = RawMaterial::whereHas('category', function ($query) {
-            $query->whereIn('code', ['ENV-METAL', 'ENV-PLAST']);
+            $query->where('type', RawMaterialType::Container->value);
         })->get();
 
         if ($products->isEmpty()) {

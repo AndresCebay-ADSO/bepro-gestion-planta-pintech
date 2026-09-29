@@ -14,6 +14,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { RAW_MATERIAL_TYPE_HINTS } from '@/lib/raw-material-types';
+import type { RawMaterialType } from '@/types';
 
 /**
  * Types
@@ -24,10 +26,13 @@ type UnitOption = {
     symbol: string;
 };
 
-type CategoryOption = {
+export type CategoryOption = {
     id: number;
     name: string;
     code: string;
+    /** Tipo de insumo de la categoría: la materia prima lo hereda. */
+    type: RawMaterialType;
+    type_label: string;
 };
 
 type RawMaterialFormData = {
@@ -119,6 +124,10 @@ export function RawMaterialForm({
             form.setData(key, e.target.value);
         };
 
+    const selectedCategory = categories.find(
+        (category) => String(category.id) === form.data.category_id,
+    );
+
     return (
         <form onSubmit={handleSubmit} className="grid min-w-0 gap-6">
             {/* Block 1: Identification */}
@@ -142,6 +151,34 @@ export function RawMaterialForm({
                         <InputError message={form.errors.code} />
                     </div>
 
+                    {/* Unit */}
+                    <div className="grid min-w-0 gap-2">
+                        <Label htmlFor="unit">
+                            Unidad de Medida{' '}
+                            <span className="text-destructive">*</span>
+                        </Label>
+                        <Select
+                            value={form.data.unit_of_measure_id}
+                            onValueChange={(value) =>
+                                form.setData('unit_of_measure_id', value)
+                            }
+                        >
+                            <SelectTrigger id="unit" className="w-full min-w-0">
+                                <SelectValue placeholder="Seleccionar unidad" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {units.map((unit) => (
+                                    <SelectItem
+                                        key={unit.id}
+                                        value={String(unit.id)}
+                                    >
+                                        {unit.name} ({unit.symbol})
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <InputError message={form.errors.unit_of_measure_id} />
+                    </div>
                     {/* Category */}
                     <div className="grid min-w-0 gap-2">
                         <Label htmlFor="category">
@@ -174,33 +211,22 @@ export function RawMaterialForm({
                         <InputError message={form.errors.category_id} />
                     </div>
 
-                    {/* Unit */}
+                    {/* Tipo de insumo: lo decide la categoría, aquí solo se muestra */}
                     <div className="grid min-w-0 gap-2">
-                        <Label htmlFor="unit">
-                            Unidad de Media{' '}
-                            <span className="text-destructive">*</span>
-                        </Label>
-                        <Select
-                            value={form.data.unit_of_measure_id}
-                            onValueChange={(value) =>
-                                form.setData('unit_of_measure_id', value)
-                            }
-                        >
-                            <SelectTrigger id="unit" className="w-full min-w-0">
-                                <SelectValue placeholder="Seleccionar unidad" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {units.map((unit) => (
-                                    <SelectItem
-                                        key={unit.id}
-                                        value={String(unit.id)}
-                                    >
-                                        {unit.name} ({unit.symbol})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <InputError message={form.errors.unit_of_measure_id} />
+                        <Label htmlFor="category_type">Tipo de insumo</Label>
+                        <Input
+                            id="category_type"
+                            value={selectedCategory?.type_label ?? ''}
+                            placeholder="Elige una categoría"
+                            readOnly
+                            tabIndex={-1}
+                            className="bg-muted/40"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            {selectedCategory
+                                ? RAW_MATERIAL_TYPE_HINTS[selectedCategory.type]
+                                : 'Lo define la categoría elegida.'}
+                        </p>
                     </div>
                 </div>
             </div>

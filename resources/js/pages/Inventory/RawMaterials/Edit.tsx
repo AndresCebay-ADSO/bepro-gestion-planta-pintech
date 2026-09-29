@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { RawMaterialForm } from '@/components/raw-materials/raw-material-form';
+import type { CategoryOption } from '@/components/raw-materials/raw-material-form';
 import { Button } from '@/components/ui/button';
 import {
     index as rawMaterialsIndex,
@@ -11,12 +12,6 @@ type UnitOption = {
     id: number;
     name: string;
     symbol: string;
-};
-
-type CategoryOption = {
-    id: number;
-    name: string;
-    code: string;
 };
 
 type RawMaterial = {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\RawMaterialType;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
@@ -34,7 +35,7 @@ class ProductVariantFactory extends Factory
             'current_cost' => $this->faker->randomFloat(4, 10, 100),
             'current_price' => $this->faker->randomFloat(4, 15, 150),
             'package_raw_material_id' => RawMaterial::whereHas('category', function ($query) {
-                $query->whereIn('code', ['ENV-METAL', 'ENV-PLAST']);
+                $query->where('type', RawMaterialType::Container->value);
             })->inRandomOrder()->first()?->id,
             'is_active' => true,
         ];

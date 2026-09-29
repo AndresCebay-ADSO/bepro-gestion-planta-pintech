@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\Shared\DeleteUnusedRecordAction;
 use App\Enums\Permission;
 use App\Enums\QrDocumentType;
+use App\Enums\RawMaterialType;
 use App\Filters\ProductFilter;
 use App\Http\Requests\Products\IndexProductRequest;
 use App\Http\Requests\Products\StoreProductRequest;
@@ -87,7 +88,7 @@ class ProductController extends Controller
         $this->authorize('create', Product::class);
 
         return Inertia::render('Products/Create', [
-            'categories' => ProductCategory::query()->select('id', 'name')->orderBy('name')->get(),
+            'categories' => ProductCategory::query()->selectable()->select('id', 'name')->orderBy('name')->get(),
             'units' => UnitOfMeasure::query()->selectable()->select('id', 'name', 'symbol')->orderBy('name')->get(),
             'can' => [
                 'managePrices' => Gate::allows(Permission::CostsUpdate->value),
@@ -152,12 +153,13 @@ class ProductController extends Controller
             // Envases activos, más los inactivos que ya usa alguna presentación: al editarla se muestra el que tiene.
             'rawMaterials' => RawMaterial::query()
                 ->with('category:id,name')
-                // Envases = materias primas de una categoría cuyo nombre contiene "envase", sin distinguir mayúsculas.
+                // Envases = materias primas cuya categoría es de tipo Envase (antes se deducía del nombre de la categoría).
+                // Todo en un grupo: una condición que se añada después no debe quedar fuera del OR.
                 ->where(fn ($q) => $q
-                    ->where('is_active', true)
-                    ->whereHas('category', fn ($cq) => $cq->whereRaw('LOWER(name) LIKE ?', ['%envase%']))
-                )
-                ->orWhereIn('id', $product->variants()->whereNotNull('package_raw_material_id')->select('package_raw_material_id'))
+                    ->where(fn ($active) => $active
+                        ->where('is_active', true)
+                        ->ofType(RawMaterialType::Container))
+                    ->orWhereIn('id', $product->variants()->whereNotNull('package_raw_material_id')->select('package_raw_material_id')))
                 ->select('id', 'code', 'category_id', 'is_active')
                 ->get(),
         ]);
@@ -194,7 +196,7 @@ class ProductController extends Controller
                 'is_active' => $product->is_active,
             ],
             'hasActiveFormula' => $product->activeFormula()->exists(),
-            'categories' => ProductCategory::query()->select('id', 'name')->orderBy('name')->get(),
+            'categories' => ProductCategory::query()->selectable([$product->category_id])->select('id', 'name')->orderBy('name')->get(),
             'units' => UnitOfMeasure::query()->selectable([$product->unit_of_measure_id])->select('id', 'name', 'symbol')->orderBy('name')->get(),
             'can' => [
                 'managePrices' => Gate::allows(Permission::CostsUpdate->value),

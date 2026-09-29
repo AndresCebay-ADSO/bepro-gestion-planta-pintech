@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { TableActions } from '@/components/table-actions';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
@@ -36,6 +37,7 @@ type RawMaterialRow = {
     has_activity: boolean;
     is_active: boolean;
     unit_of_measure: { id: number; name: string; symbol: string } | null;
+    category: { id: number; name: string; type_label: string } | null;
     can: {
         view: boolean;
         update: boolean;
@@ -188,6 +190,9 @@ export default function RawMaterialsIndex({
                                     Código
                                 </th>
                                 <th className="p-3 text-left font-medium">
+                                    Categoría
+                                </th>
+                                <th className="p-3 text-left font-medium">
                                     Unidad
                                 </th>
                                 {can.view_costs && (
@@ -218,6 +223,26 @@ export default function RawMaterialsIndex({
                                 >
                                     <td className="p-3 font-medium text-foreground">
                                         {item.code}
+                                    </td>
+
+                                    <td className="p-3">
+                                        {item.category ? (
+                                            <div className="flex flex-col items-start gap-1">
+                                                <span className="text-foreground">
+                                                    {item.category.name}
+                                                </span>
+                                                <Badge
+                                                    variant="secondary"
+                                                    className="text-xs font-normal"
+                                                >
+                                                    {item.category.type_label}
+                                                </Badge>
+                                            </div>
+                                        ) : (
+                                            <span className="text-muted-foreground">
+                                                -
+                                            </span>
+                                        )}
                                     </td>
 
                                     <td className="p-3 text-muted-foreground">
@@ -348,7 +373,7 @@ export default function RawMaterialsIndex({
                             {rawMaterials.data.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={can.view_costs ? 7 : 6}
+                                        colSpan={can.view_costs ? 8 : 7}
                                         className="p-10 text-center text-sm text-muted-foreground"
                                     >
                                         No se encontraron materias primas.

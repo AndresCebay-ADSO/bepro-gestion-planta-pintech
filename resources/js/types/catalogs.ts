@@ -30,3 +30,39 @@ export type UnitOfMeasureFormData = {
     is_active: boolean;
     confirm_factor_change: boolean;
 };
+
+/** Tipo de insumo de una categoría de materia prima (App\Enums\RawMaterialType). */
+export type RawMaterialType =
+    'chemical' | 'container' | 'label' | 'secondary_packaging';
+
+export type RawMaterialCategoryRow = {
+    id: number;
+    code: string;
+    name: string;
+    type: RawMaterialType;
+    type_label: string;
+    is_active: boolean;
+    raw_materials_count: number;
+};
+
+export type RawMaterialCategoryFormData = {
+    code: string;
+    name: string;
+    description: string;
+    type: RawMaterialType;
+    is_active: boolean;
+};
+
+export type ProductCategoryRow = {
+    id: number;
+    name: string;
+    description: string | null;
+    is_active: boolean;
+    products_count: number;
+};
+
+export type ProductCategoryFormData = {
+    name: string;
+    description: string;
+    is_active: boolean;
+};

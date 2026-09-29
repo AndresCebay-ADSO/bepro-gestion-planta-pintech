@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Formulas;
 
+use App\Enums\RawMaterialType;
 use App\Models\Formula;
+use App\Rules\RawMaterialOfType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -63,6 +65,8 @@ class StoreFormulaRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('raw_materials', 'id')->where('is_active', true),
+                // Solo materias primas de tipo Químico: un envase o una etiqueta no son ingredientes.
+                new RawMaterialOfType(RawMaterialType::Chemical),
             ],
             'details.*.quantity' => ['required', 'numeric', 'min:0.0001'],
             'details.*.unit_of_measure_id' => [
