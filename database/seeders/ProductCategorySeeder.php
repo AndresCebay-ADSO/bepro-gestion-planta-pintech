@@ -51,10 +51,14 @@ class ProductCategorySeeder extends Seeder
         ];
 
         foreach ($categories as $category) {
-            ProductCategory::firstOrCreate(
-                ['name' => $category['name']],
-                ['description' => $category['description']]
-            );
+            // Sin distinguir mayúsculas, como la validación: «ESMALTES ALQUÍDICOS» editada desde Configuración es la misma.
+            $exists = ProductCategory::query()
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower($category['name'])])
+                ->exists();
+
+            if (! $exists) {
+                ProductCategory::create($category);
+            }
         }
     }
 }

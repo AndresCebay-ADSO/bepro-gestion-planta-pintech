@@ -130,7 +130,10 @@ Route (routes/web.php, role: middleware)
 - **Listings**: order by a date and always break ties with `latest('id')`. Without it, rows sharing a timestamp come
   back in arbitrary order on PostgreSQL and pagination can repeat or skip them (`StableListingOrderTest`).
 - **SQL**: Database-agnostic (`LOWER()` instead of Postgres-specific `ILIKE`).
-- **Seeders**: Must be idempotent (`updateOrCreate` / `firstOrCreate`). Gate test/mock data with `app()->environment('local', 'testing')`.
+- **Seeders**: Must be idempotent and use `firstOrCreate`, never `updateOrCreate`: catalogs are edited from the UI,
+  and re-seeding must not undo those edits (`DatabaseSeederTest`). Once in production, base data changes go through the
+  UI (audited) or a data migration, never through a seeder. The only exception is `RolePermissionSeeder`, which syncs
+  the system roles with the code on every deploy. Gate test/mock data with `app()->environment('local', 'testing')`.
 - **Git**: Conventional Commits (`feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`). Main branch: `main`; development: `develop`.
 
 ## Demo Credentials (local / testing seeds only)

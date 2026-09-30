@@ -202,8 +202,7 @@ class FormulaSeeder extends Seeder
                 continue;
             }
 
-            // Crear o actualizar la cabecera de la fórmula
-            $formula = Formula::updateOrCreate(
+            $formula = Formula::firstOrCreate(
                 ['product_id' => $product->id, 'version' => 1],
                 [
                     'is_active' => true,
@@ -212,8 +211,11 @@ class FormulaSeeder extends Seeder
                 ]
             );
 
-            // Borrar detalles anteriores si es que se está re-ejecutando
-            $formula->details()->delete();
+            // Una fórmula que ya tiene líneas no se toca: se edita desde la pantalla, y si ya la usa una OP ni siquiera
+            // se puede editar. Solo se completa la que quedó sin líneas (una siembra cortada a mitad).
+            if ($formula->details()->exists()) {
+                continue;
+            }
 
             $step = 1;
             foreach ($ingredients as $ingredient) {

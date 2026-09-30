@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\RawMaterialType;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
@@ -15,6 +16,7 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\FormulaSeeder;
 use Database\Seeders\InventoryBatchSeeder;
 use Database\Seeders\RawMaterialCategorySeeder;
 use Database\Seeders\RawMaterialSeeder;
@@ -63,6 +65,81 @@ test('sembrar dos veces no duplica registros', function () {
     foreach ($counts as $model => $count) {
         expect($model::query()->count())->toBe($count, "{$model} cambió al sembrar de nuevo");
     }
+});
+
+// Los catálogos se editan desde la aplicación: volver a sembrar crea lo que falte, pero nunca deshace esas ediciones
+// (firstOrCreate, no updateOrCreate). Antes restablecía equivalencias, tipos, precios y hasta las líneas de las fórmulas.
+test('volver a sembrar no deshace lo editado desde la aplicación', function () {
+    $this->seed(DatabaseSeeder::class);
+
+    $unit = UnitOfMeasure::query()->where('code', 'gl')->sole();
+    $unit->update(['name' => 'Galón USA', 'to_liter_conversion' => '3.7900']);
+
+    $category = RawMaterialCategory::query()->where('code', 'ETIQUETAS')->sole();
+    $category->update(['name' => 'Rótulos', 'type' => RawMaterialType::SecondaryPackaging, 'is_active' => false]);
+
+    $material = RawMaterial::query()->where('code', 'ENV-P-GL')->sole();
+    $material->update(['current_price' => '1234.5', 'minimum_stock' => '7', 'is_active' => false]);
+
+    $warehouse = Warehouse::query()->where('name', 'Bodega Neiva')->sole();
+    $warehouse->update(['address' => 'Nueva sede Neiva']);
+
+    $productCategory = ProductCategory::query()->orderBy('id')->firstOrFail();
+    $productCategory->update(['description' => 'Descripción propia']);
+
+    $product = Product::query()->orderBy('id')->firstOrFail();
+    $product->update(['cif_percentage' => '22', 'is_active' => false]);
+
+    $formula = Formula::query()->has('details', '>', 1)->orderBy('id')->firstOrFail();
+    $formula->details()->orderByDesc('step_order')->firstOrFail()->delete();
+    $formula->update(['notes' => 'Ajustada en planta']);
+    $lines = $formula->details()->count();
+
+    $this->seed(DatabaseSeeder::class);
+
+    expect($unit->fresh())
+        ->name->toBe('Galón USA')
+        ->to_liter_conversion->toBe('3.7900')
+        ->and($category->fresh())
+        ->name->toBe('Rótulos')
+        ->type->toBe(RawMaterialType::SecondaryPackaging)
+        ->is_active->toBeFalse()
+        ->and($material->fresh())
+        ->current_price->toBe('1234.5000')
+        ->minimum_stock->toBe('7.0000')
+        ->is_active->toBeFalse()
+        ->and($warehouse->fresh()->address)->toBe('Nueva sede Neiva')
+        ->and($productCategory->fresh()->description)->toBe('Descripción propia')
+        ->and($product->fresh())
+        ->cif_percentage->toBe('22.00')
+        ->is_active->toBeFalse()
+        ->and($formula->fresh()->notes)->toBe('Ajustada en planta')
+        ->and($formula->details()->count())->toBe($lines);
+});
+
+test('volver a sembrar no choca con una categoría a la que le cambiaron el código o las mayúsculas', function () {
+    $this->seed(DatabaseSeeder::class);
+    RawMaterialCategory::query()->where('code', 'ETIQUETAS')->sole()->update(['code' => 'ETIQ']);
+    ProductCategory::query()->where('name', 'Masillas y Empastes')->sole()->update(['name' => 'MASILLAS Y EMPASTES']);
+    $counts = [RawMaterialCategory::query()->count(), ProductCategory::query()->count()];
+
+    $this->seed(DatabaseSeeder::class);
+
+    expect([RawMaterialCategory::query()->count(), ProductCategory::query()->count()])->toBe($counts)
+        ->and(RawMaterialCategory::query()->where('name', 'Etiquetas')->sole()->code)->toBe('ETIQ');
+});
+
+test('volver a sembrar completa una fórmula que quedó sin líneas', function () {
+    $this->seed(DatabaseSeeder::class);
+    $formula = Formula::query()->has('details')->orderBy('id')->firstOrFail();
+    $lines = $formula->details()->count();
+
+    // Simula una siembra cortada a mitad: la cabecera quedó sin líneas.
+    $formula->details()->delete();
+
+    $this->seed(FormulaSeeder::class);
+
+    expect($formula->details()->count())->toBe($lines);
 });
 
 test('volver a sembrar completa los lotes de un material que quedó sin ellos', function () {
