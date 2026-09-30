@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Models\UnitOfMeasure;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class UnitsOfMeasureSeeder extends Seeder
 {
@@ -61,13 +61,7 @@ class UnitsOfMeasureSeeder extends Seeder
         ];
 
         foreach ($units as $unit) {
-            DB::table('unit_of_measures')->updateOrInsert(
-                ['code' => $unit['code']],
-                array_merge($unit, [
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ])
-            );
+            UnitOfMeasure::firstOrCreate(['code' => $unit['code']], $unit);
         }
     }
 }

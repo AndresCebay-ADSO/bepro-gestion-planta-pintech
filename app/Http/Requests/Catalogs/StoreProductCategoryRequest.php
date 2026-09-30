@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Requests\Catalogs;
 
 use App\Models\ProductCategory;
+use App\Rules\UniqueIgnoringCase;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreProductCategoryRequest extends FormRequest
 {
@@ -21,7 +21,7 @@ class StoreProductCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['bail', 'required', 'string', 'max:100', Rule::unique('product_categories', 'name')],
+            'name' => ['bail', 'required', 'string', 'max:100', new UniqueIgnoringCase('product_categories', 'name')],
             ...$this->sharedRules(),
         ];
     }

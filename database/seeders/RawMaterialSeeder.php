@@ -265,7 +265,7 @@ class RawMaterialSeeder extends Seeder
 
         foreach ($quimicos as $item) {
             $unit = UnitOfMeasure::where('code', $item['unit'])->first();
-            RawMaterial::updateOrCreate(
+            RawMaterial::firstOrCreate(
                 ['code' => $item['code']],
                 [
                     'category_id' => $catQuimicos?->id,
@@ -293,7 +293,7 @@ class RawMaterialSeeder extends Seeder
         ];
 
         foreach ($envasesMetalicos as $pack) {
-            RawMaterial::updateOrCreate(
+            RawMaterial::firstOrCreate(
                 ['code' => $pack['code']],
                 [
                     'category_id' => $catEnvMetal?->id,
@@ -317,7 +317,7 @@ class RawMaterialSeeder extends Seeder
         ];
 
         foreach ($envasesPlasticos as $pack) {
-            RawMaterial::updateOrCreate(
+            RawMaterial::firstOrCreate(
                 ['code' => $pack['code']],
                 [
                     'category_id' => $catEnvPlast?->id,
@@ -331,7 +331,7 @@ class RawMaterialSeeder extends Seeder
             );
         }
 
-        $this->command->info('Created/Updated '.RawMaterial::count().' raw materials:');
+        $this->command->info(RawMaterial::count().' raw materials:');
         $this->command->info('  - Químicos: '.RawMaterial::where('category_id', $catQuimicos?->id)->count());
         $this->command->info('  - Envases Metálicos: '.RawMaterial::where('category_id', $catEnvMetal?->id)->count());
         $this->command->info('  - Envases Plásticos: '.RawMaterial::where('category_id', $catEnvPlast?->id)->count());

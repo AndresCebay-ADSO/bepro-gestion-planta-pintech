@@ -32,7 +32,7 @@ class WarehouseSeeder extends Seeder
         ];
 
         foreach ($warehouses as $warehouse) {
-            Warehouse::updateOrCreate(
+            Warehouse::firstOrCreate(
                 ['name' => $warehouse['name']],
                 $warehouse
             );

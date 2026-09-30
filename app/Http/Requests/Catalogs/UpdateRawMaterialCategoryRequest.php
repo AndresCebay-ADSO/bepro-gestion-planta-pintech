@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Catalogs;
 
 use App\Models\RawMaterialCategory;
+use App\Rules\UniqueIgnoringCase;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -27,6 +28,7 @@ class UpdateRawMaterialCategoryRequest extends StoreRawMaterialCategoryRequest
 
         return [
             'code' => ['bail', 'required', 'string', 'max:50', Rule::unique('raw_material_categories', 'code')->ignore($category?->id)],
+            'name' => ['bail', 'required', 'string', 'max:100', new UniqueIgnoringCase('raw_material_categories', 'name', $category?->id)],
             ...$this->sharedRules(),
         ];
     }

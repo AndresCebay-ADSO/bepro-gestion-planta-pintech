@@ -86,12 +86,14 @@ it('crea una categoría con el código en mayúsculas y la audita', function () 
 
 it('valida los campos de la categoría', function (array $overrides, string $field) {
     actingAsRole(SystemRole::SuperAdmin);
-    RawMaterialCategory::factory()->create(['code' => 'RESINAS']);
+    RawMaterialCategory::factory()->create(['code' => 'RESINAS', 'name' => 'Resinas']);
 
     $this->post(route('catalogs.raw-material-categories.store'), rawCategoryPayload($overrides))
         ->assertSessionHasErrors($field);
 })->with([
-    'código repetido, aunque cambien las mayúsculas' => [['code' => 'resinas'], 'code'],
+    'código repetido, aunque cambien las mayúsculas' => [['code' => 'resinas', 'name' => 'Otra'], 'code'],
+    // Dos categorías con el mismo nombre no se distinguirían en el selector de la materia prima.
+    'nombre repetido, aunque cambien las mayúsculas' => [['code' => 'OTRA', 'name' => 'RESINAS'], 'name'],
     'sin nombre' => [['code' => 'OTRA', 'name' => ''], 'name'],
     'tipo que no existe' => [['code' => 'OTRA', 'type' => 'pintura'], 'type'],
 ]);
@@ -120,6 +122,19 @@ it('deja cambiar el tipo de una categoría vacía y editar el resto de una con m
 
     expect($empty->fresh()->type)->toBe(RawMaterialType::Label)
         ->and($used->fresh()->name)->toBe('Envases de lata');
+});
+
+it('no deja poner el nombre de otra categoría al editar, pero sí cambiar las mayúsculas del propio', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+    RawMaterialCategory::factory()->create(['code' => 'RESINAS', 'name' => 'Resinas']);
+    $solvents = RawMaterialCategory::factory()->create(['code' => 'SOLVENTES', 'name' => 'Solventes']);
+
+    $this->put(route('catalogs.raw-material-categories.update', $solvents), rawCategoryPayload(['code' => 'SOLVENTES', 'name' => 'resinas']))
+        ->assertSessionHasErrors('name');
+    $this->put(route('catalogs.raw-material-categories.update', $solvents), rawCategoryPayload(['code' => 'SOLVENTES', 'name' => 'SOLVENTES']))
+        ->assertSessionHasNoErrors();
+
+    expect($solvents->fresh()->name)->toBe('SOLVENTES');
 });
 
 it('conserva el estado de la categoría si la edición no lo envía', function () {

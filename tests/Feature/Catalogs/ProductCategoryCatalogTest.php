@@ -52,6 +52,22 @@ it('crea una categoría de producto, la audita y no admite nombres repetidos', f
         ->assertSessionHasErrors('name');
 });
 
+it('no admite un nombre repetido aunque cambien las mayúsculas, pero deja cambiar las del propio', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+    ProductCategory::factory()->create(['name' => 'Esmaltes']);
+    $lacquers = ProductCategory::factory()->create(['name' => 'Lacas']);
+
+    $this->post(route('catalogs.product-categories.store'), ['name' => 'ESMALTES'])
+        ->assertSessionHasErrors(['name' => 'El campo nombre ya se encuentra registrado.']);
+    $this->put(route('catalogs.product-categories.update', $lacquers), ['name' => 'esmaltes'])
+        ->assertSessionHasErrors('name');
+    $this->put(route('catalogs.product-categories.update', $lacquers), ['name' => 'LACAS'])
+        ->assertSessionHasNoErrors();
+
+    expect(ProductCategory::query()->count())->toBe(2)
+        ->and($lacquers->fresh()->name)->toBe('LACAS');
+});
+
 it('desactiva una categoría y conserva el estado si la edición no lo envía', function () {
     actingAsRole(SystemRole::SuperAdmin);
     $category = ProductCategory::factory()->create(['name' => 'Esmaltes']);

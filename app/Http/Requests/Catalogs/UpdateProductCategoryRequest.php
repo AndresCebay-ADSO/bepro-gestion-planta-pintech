@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Catalogs;
 
 use App\Models\ProductCategory;
-use Illuminate\Validation\Rule;
+use App\Rules\UniqueIgnoringCase;
 
 class UpdateProductCategoryRequest extends StoreProductCategoryRequest
 {
@@ -25,7 +25,7 @@ class UpdateProductCategoryRequest extends StoreProductCategoryRequest
         $category = $this->route('product_category');
 
         return [
-            'name' => ['bail', 'required', 'string', 'max:100', Rule::unique('product_categories', 'name')->ignore($category?->id)],
+            'name' => ['bail', 'required', 'string', 'max:100', new UniqueIgnoringCase('product_categories', 'name', $category?->id)],
             ...$this->sharedRules(),
         ];
     }

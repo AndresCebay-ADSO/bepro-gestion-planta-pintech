@@ -37,7 +37,7 @@ class SalesOrderSeeder extends Seeder
         ];
 
         foreach ($demoClients as $clientData) {
-            $client = Client::updateOrCreate(
+            $client = Client::firstOrCreate(
                 ['nit' => $clientData['nit']],
                 [
                     'business_name' => $clientData['business_name'],

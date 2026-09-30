@@ -62,6 +62,7 @@ class StoreFormulaRequest extends FormRequest
             'notes' => ['nullable', 'string', 'max:1000'],
             'details' => ['required', 'array', 'min:1'],
             'details.*.raw_material_id' => [
+                'bail',
                 'required',
                 'integer',
                 Rule::exists('raw_materials', 'id')->where('is_active', true),

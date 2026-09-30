@@ -270,7 +270,7 @@ class ProductSeeder extends Seeder
                 continue;
             }
 
-            Product::updateOrCreate(
+            Product::firstOrCreate(
                 ['name' => $name],
                 [
                     'category_id' => $category?->id,
@@ -284,6 +284,6 @@ class ProductSeeder extends Seeder
             $count++;
         }
 
-        $this->command->info("Created/Updated {$count} products from the portfolio.");
+        $this->command->info("{$count} products from the portfolio.");
     }
 }

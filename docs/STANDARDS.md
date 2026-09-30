@@ -150,7 +150,11 @@ form.get(route().url, {
 
 Los seeders deben ser seguros para ejecución repetida y protegidos contra entornos no deseados.
 
-*   **Idempotencia**: Usar siempre `updateOrCreate()` o `firstOrCreate()` en lugar de `create()`.
+*   **Idempotencia**: Usar `firstOrCreate()` en lugar de `create()`, y **nunca** `updateOrCreate()`: los catálogos se
+    editan desde la aplicación y volver a sembrar no debe deshacer esos cambios (lo comprueba `DatabaseSeederTest`).
+    Con producción, un dato base se cambia desde la pantalla (queda auditado) o con una migración de datos, nunca
+    volviendo a correr un seeder. La única excepción es `RolePermissionSeeder`, que en cada despliegue sincroniza los
+    roles del sistema con el código.
 *   **Seguridad**: Si un seeder genera grandes volúmenes de datos (ej. 100 usuarios de prueba), debe estar envuelto en un chequeo de entorno:
 ```php
 if (app()->environment('local', 'testing')) {

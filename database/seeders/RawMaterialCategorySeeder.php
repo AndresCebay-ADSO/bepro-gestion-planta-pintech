@@ -55,14 +55,18 @@ class RawMaterialCategorySeeder extends Seeder
         ];
 
         foreach ($categories as $category) {
-            RawMaterialCategory::updateOrCreate(
-                ['code' => $category['code']],
-                array_merge($category, [
-                    'is_active' => true,
-                ])
-            );
+            // Código y nombre son únicos y los dos se editan desde Configuración: si uno ya existe, la categoría ya
+            // está. Buscar solo por código intentaría crear otra con el mismo nombre y chocaría con el índice único.
+            $exists = RawMaterialCategory::query()
+                ->where('code', $category['code'])
+                ->orWhereRaw('LOWER(name) = ?', [mb_strtolower($category['name'])])
+                ->exists();
+
+            if (! $exists) {
+                RawMaterialCategory::create([...$category, 'is_active' => true]);
+            }
         }
 
-        $this->command->info('Created/Updated '.RawMaterialCategory::count().' raw material categories.');
+        $this->command->info(RawMaterialCategory::count().' raw material categories.');
     }
 }
