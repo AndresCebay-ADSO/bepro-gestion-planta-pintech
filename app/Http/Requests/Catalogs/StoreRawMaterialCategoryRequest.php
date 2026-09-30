@@ -6,6 +6,7 @@ namespace App\Http\Requests\Catalogs;
 
 use App\Enums\RawMaterialType;
 use App\Models\RawMaterialCategory;
+use App\Rules\UniqueIgnoringCase;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -24,6 +25,7 @@ class StoreRawMaterialCategoryRequest extends FormRequest
     {
         return [
             'code' => ['bail', 'required', 'string', 'max:50', Rule::unique('raw_material_categories', 'code')],
+            'name' => ['bail', 'required', 'string', 'max:100', new UniqueIgnoringCase('raw_material_categories', 'name')],
             ...$this->sharedRules(),
         ];
     }
@@ -34,7 +36,6 @@ class StoreRawMaterialCategoryRequest extends FormRequest
     protected function sharedRules(): array
     {
         return [
-            'name' => ['bail', 'required', 'string', 'max:100'],
             'description' => ['nullable', 'string', 'max:1000'],
             'type' => ['bail', 'required', Rule::enum(RawMaterialType::class)],
             'is_active' => ['sometimes', 'boolean'],

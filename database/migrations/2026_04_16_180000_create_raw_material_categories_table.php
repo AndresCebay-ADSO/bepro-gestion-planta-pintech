@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('raw_material_categories', function (Blueprint $table) {
             $table->id();
             $table->string('code', 50)->unique();
-            $table->string('name', 100);
+            $table->string('name', 100)->unique();
             $table->text('description')->nullable();
             // Tipo de insumo (App\Enums\RawMaterialType): decide dónde se ofrece cada materia prima.
             $table->enum('type', ['chemical', 'container', 'label', 'secondary_packaging'])->default('chemical');
