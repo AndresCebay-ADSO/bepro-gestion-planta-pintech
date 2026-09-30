@@ -84,6 +84,16 @@ it('acepta un químico como ingrediente de una fórmula', function () {
         ->assertSessionHasNoErrors();
 });
 
+it('ante una materia prima que no existe da un solo error, sin revisar además su tipo', function () {
+    $product = Product::factory()->create();
+    $payload = typeUsageFormulaPayload($product, $this->chemical, $this->unit);
+    $payload['details'][0]['raw_material_id'] = RawMaterial::query()->max('id') + 1;
+
+    $this->post(route('formulas.store'), $payload)->assertSessionHasErrors('details.0.raw_material_id');
+
+    expect(session('errors')->get('details.0.raw_material_id'))->toHaveCount(1);
+});
+
 it('exige que el envase de una presentación sea de tipo Envase, se llame como se llame su categoría', function () {
     $product = Product::factory()->create();
 
