@@ -1,6 +1,9 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { RawMaterialForm } from '@/components/raw-materials/raw-material-form';
-import type { CategoryOption } from '@/components/raw-materials/raw-material-form';
+import type {
+    CategoryOption,
+    RawMaterialFormData,
+} from '@/components/raw-materials/raw-material-form';
 import { Button } from '@/components/ui/button';
 import {
     index as rawMaterialsIndex,
@@ -22,6 +25,9 @@ type RawMaterial = {
     minimum_stock: string;
     alert_days_before_expiry: number;
     price_variation_threshold: string | null;
+    tracks_inventory: boolean;
+    /** Solo llega con permiso de costos. */
+    current_price?: string | null;
     is_active: boolean;
 };
 
@@ -29,16 +35,7 @@ type Props = {
     rawMaterial: RawMaterial;
     categories: CategoryOption[];
     units: UnitOption[];
-};
-
-type RawMaterialFormData = {
-    code: string;
-    category_id: string;
-    unit_of_measure_id: string;
-    minimum_stock: string;
-    alert_days_before_expiry: string;
-    price_variation_threshold: string;
-    is_active: boolean;
+    can: { updateCosts: boolean };
 };
 
 const trimZeroes = (val: string | null | undefined): string => {
@@ -53,6 +50,7 @@ export default function RawMaterialsEdit({
     rawMaterial,
     categories,
     units,
+    can,
 }: Props) {
     const form = useForm<RawMaterialFormData>({
         code: rawMaterial.code,
@@ -65,12 +63,18 @@ export default function RawMaterialsEdit({
         price_variation_threshold: trimZeroes(
             rawMaterial.price_variation_threshold,
         ),
+        tracks_inventory: rawMaterial.tracks_inventory,
+        current_price: trimZeroes(rawMaterial.current_price),
         is_active: rawMaterial.is_active,
     });
 
     const submit = () => {
-        form.transform((data) => ({
+        form.transform(({ current_price, ...data }) => ({
             ...data,
+            // El precio solo viaja si se puede escribir: sin control de inventario y con permiso de costos.
+            ...(!data.tracks_inventory && can.updateCosts
+                ? { current_price: current_price === '' ? null : current_price }
+                : {}),
             unit_of_measure_id: Number(data.unit_of_measure_id),
             price_variation_threshold:
                 data.price_variation_threshold === ''
@@ -116,6 +120,7 @@ export default function RawMaterialsEdit({
                     units={units}
                     onSubmit={submit}
                     submitLabel="Guardar cambios"
+                    canEditPrice={can.updateCosts}
                 />
 
                 <div className="flex justify-end gap-2 pt-2 pr-2">

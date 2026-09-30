@@ -16,14 +16,14 @@ class VariantPricingService
     ) {}
 
     /**
-     * Calcula y actualiza el costo y precio de una variante basándose en el costo del producto a granel
-     * y el costo del envase.
+     * Calcula y actualiza el costo y precio de una variante: (granel × presentación + envase + etiqueta) × (1 + CIF).
      *
      * @param  ProductVariant  $variant  La variante a actualizar
      * @param  string|float  $bulkCost  Costo del producto a granel (base)
      * @param  string|float|null  $cifPercentage  CIF del producto (porcentaje)
      * @param  string|float  $priceThreshold  Umbral de variación de costo para actualizar el precio
      * @param  string|float  $packageUnitCost  Costo unitario del material de envase
+     * @param  string|float  $labelUnitCost  Costo unitario de la etiqueta habitual
      * @param  bool  $autoUpdatePrice  Si debe actualizar el precio automáticamente si supera el umbral
      * @param  bool  $forceRefresh  Si se debe forzar la actualización del precio ignorando el umbral
      */
@@ -33,6 +33,7 @@ class VariantPricingService
         string|float|null $cifPercentage,
         string|float $priceThreshold,
         string|float $packageUnitCost = '0',
+        string|float $labelUnitCost = '0',
         bool $autoUpdatePrice = true,
         bool $forceRefresh = false
     ): void {
@@ -40,9 +41,12 @@ class VariantPricingService
         $presentationValue = (string) ($variant->presentation_value ?? 1);
         $packageUnitCostStr = (string) $packageUnitCost;
 
-        // El nuevo costo de la variante es el costo a granel por la presentación + el costo del envase
         $variantCostProduct = $this->calculator->mul($bulkCostStr, $presentationValue, 4);
-        $newVariantCost = $this->calculator->add($variantCostProduct, $packageUnitCostStr, 4);
+        $newVariantCost = $this->calculator->add(
+            $this->calculator->add($variantCostProduct, $packageUnitCostStr, 4),
+            (string) $labelUnitCost,
+            4
+        );
 
         $variantUpdates = ['current_cost' => $newVariantCost];
 

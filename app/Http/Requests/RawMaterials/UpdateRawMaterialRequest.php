@@ -6,7 +6,9 @@ namespace App\Http\Requests\RawMaterials;
 
 use App\Enums\RawMaterialType;
 use App\Http\Requests\Concerns\CatalogSelectionRules;
+use App\Http\Requests\RawMaterials\Concerns\ManualReferencePriceRules;
 use App\Models\FormulaDetail;
+use App\Models\InventoryBatch;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
@@ -17,6 +19,7 @@ use Illuminate\Validation\Validator;
 class UpdateRawMaterialRequest extends FormRequest
 {
     use CatalogSelectionRules;
+    use ManualReferencePriceRules;
 
     public function authorize(): bool
     {
@@ -45,6 +48,7 @@ class UpdateRawMaterialRequest extends FormRequest
             'alert_days_before_expiry' => ['bail', 'required', 'integer', 'min:0'],
             'price_variation_threshold' => ['bail', 'nullable', 'numeric', 'min:0.01', 'max:100', 'decimal:0,2'],
             'tracks_inventory' => ['sometimes', 'boolean'],
+            'current_price' => $this->manualPriceRules(),
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
@@ -59,6 +63,14 @@ class UpdateRawMaterialRequest extends FormRequest
     public function after(): array
     {
         return [
+            function (Validator $validator): void {
+                $material = $this->route('raw_material');
+
+                if ($material instanceof RawMaterial) {
+                    $this->validateInventoryTracking($validator, $material);
+                    $this->validateManualPrice($validator, $this->has('tracks_inventory') ? $this->boolean('tracks_inventory') : $material->tracks_inventory);
+                }
+            },
             function (Validator $validator): void {
                 $material = $this->route('raw_material');
 
@@ -86,15 +98,42 @@ class UpdateRawMaterialRequest extends FormRequest
         ];
     }
 
+    /**
+     * Quitar el control de inventario con saldo en bodega dejaría ese saldo congelado: nada lo volvería a descontar.
+     * Activarlo siempre se puede; desde ahí, el precio sale de las compras.
+     */
+    private function validateInventoryTracking(Validator $validator, RawMaterial $material): void
+    {
+        if (! $this->has('tracks_inventory') || $this->boolean('tracks_inventory') || ! $material->tracks_inventory) {
+            return;
+        }
+
+        $hasStock = InventoryBatch::query()
+            ->where('raw_material_id', $material->id)
+            ->where('remaining_quantity', '>', 0)
+            ->exists();
+
+        if ($hasStock) {
+            $validator->errors()->add('tracks_inventory', __('No se puede quitar el control de inventario: la materia prima tiene saldo en bodega. Consúmelo o ajústalo primero.'));
+        }
+    }
+
     private function typeDependentUsage(RawMaterial $material, RawMaterialType $current, RawMaterialType $new): ?string
     {
         $type = mb_strtolower($new->label());
 
-        // Las etiquetas (3.7) y el empaque secundario (3.8) se sumarán aquí cuando tengan usos que dependan del tipo.
+        // El empaque secundario (3.8) se sumará aquí cuando tenga usos que dependan del tipo.
         return match ($current) {
             RawMaterialType::Container => ($count = ProductVariant::query()->where('package_raw_material_id', $material->id)->count()) > 0
                 ? trans_choice(
                     'No se puede pasar a una categoría de tipo :type: esta materia prima es el envase de :count presentación.|No se puede pasar a una categoría de tipo :type: esta materia prima es el envase de :count presentaciones.',
+                    $count,
+                    ['type' => $type, 'count' => $count],
+                )
+                : null,
+            RawMaterialType::Label => ($count = ProductVariant::query()->where('label_raw_material_id', $material->id)->count()) > 0
+                ? trans_choice(
+                    'No se puede pasar a una categoría de tipo :type: esta materia prima es la etiqueta de :count presentación.|No se puede pasar a una categoría de tipo :type: esta materia prima es la etiqueta de :count presentaciones.',
                     $count,
                     ['type' => $type, 'count' => $count],
                 )

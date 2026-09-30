@@ -51,10 +51,27 @@ Ahora se sincroniza automaticamente en:
 4. seeder de lotes (`InventoryBatchSeeder`)
 
 ## Impacto en costos de produccion
-Cuando cambia `raw_materials.current_price` por esta politica, se dispara:
-- recálculo de costos teoricos de productos afectados (`ProductionCostRecalculationService`)
+Cuando cambia `raw_materials.current_price` por esta politica, se dispara
+`ProductionCostRecalculationService::recalculateForRawMaterial`:
+- los productos cuya fórmula activa usa la materia prima se recalculan completos (granel y presentaciones);
+- las presentaciones que la usan como **envase o etiqueta** se recalculan solas, con el costo de granel que ya tiene su
+  producto (`repriceVariantsUsingPackagingMaterial`). No se recalcula el granel, que no cambió, ni se deja un registro
+  sin variación en su historial. Cubre también los productos sin fórmula activa.
+
+Costo teórico de una presentación: `(granel × presentación + envase + etiqueta) × (1 + CIF)` (`VariantPricingService`).
+El precio solo cambia si el costo varía más que el umbral del producto.
 
 Esto no altera el costo real FIFO del cierre de OP.
+
+## Materias primas sin control de inventario
+Las que no se compran por lotes ni se cuentan (`tracks_inventory = false`: agua, etiquetas) no tienen compras de donde
+sacar el precio. Su `current_price` se escribe a mano en el formulario de la materia prima, solo con el permiso
+`costs.update`, y al cambiarlo se guarda el anterior en `previous_price` y se encola
+`RecalculateRawMaterialDependentCosts`. La OP registra su consumo sin lote y lo costea a ese precio.
+
+- Una materia prima con control de inventario no acepta precio manual.
+- No se puede quitar el control de inventario con saldo en bodega (quedaría congelado); activarlo siempre se puede, y
+  desde ahí el precio sale de las compras.
 
 ## Como cambiar la politica mas adelante
 1. Definir variable en `.env`:

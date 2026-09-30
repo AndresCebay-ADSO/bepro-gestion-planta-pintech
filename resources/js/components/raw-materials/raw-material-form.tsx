@@ -35,13 +35,16 @@ export type CategoryOption = {
     type_label: string;
 };
 
-type RawMaterialFormData = {
+export type RawMaterialFormData = {
     code: string;
     category_id: string;
     unit_of_measure_id: string;
     minimum_stock: string;
     alert_days_before_expiry: string;
     price_variation_threshold: string;
+    tracks_inventory: boolean;
+    /** Precio de referencia escrito a mano: solo sin control de inventario y con permiso de costos. */
+    current_price: string;
     is_active: boolean;
 };
 
@@ -70,6 +73,8 @@ type Props = {
     units: UnitOption[];
     onSubmit: () => void;
     submitLabel: string;
+    /** Puede fijar el precio de una materia prima sin control de inventario (`costs.update`). */
+    canEditPrice: boolean;
 };
 
 const MAX_DECIMAL_INTEGER_DIGITS = 14;
@@ -106,6 +111,7 @@ export function RawMaterialForm({
     units,
     onSubmit,
     submitLabel,
+    canEditPrice,
 }: Props) {
     /**
      * Clean submit handler
@@ -126,6 +132,9 @@ export function RawMaterialForm({
 
     const selectedCategory = categories.find(
         (category) => String(category.id) === form.data.category_id,
+    );
+    const selectedUnit = units.find(
+        (unit) => String(unit.id) === form.data.unit_of_measure_id,
     );
 
     return (
@@ -327,6 +336,79 @@ export function RawMaterialForm({
                             message={form.errors.price_variation_threshold}
                         />
                     </div>
+                </div>
+
+                {/* Control de inventario y precio manual (decisión del 2026-09-30) */}
+                <div className="mt-4 space-y-4 rounded-md border border-border p-4">
+                    <div className="flex items-start gap-3">
+                        <Checkbox
+                            id="tracks_inventory"
+                            checked={form.data.tracks_inventory}
+                            onCheckedChange={(checked) =>
+                                form.setData(
+                                    'tracks_inventory',
+                                    checked === true,
+                                )
+                            }
+                        />
+                        <div className="grid gap-1">
+                            <Label
+                                htmlFor="tracks_inventory"
+                                className="cursor-pointer"
+                            >
+                                Controla inventario
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                                Con control se compra por lotes, la orden de
+                                producción descuenta el saldo y el precio sale
+                                de las compras. Sin control (agua, etiquetas),
+                                la orden registra el consumo sin descontar saldo
+                                y lo costea con el precio que se escribe aquí.
+                            </p>
+                        </div>
+                    </div>
+                    <InputError message={form.errors.tracks_inventory} />
+
+                    {!form.data.tracks_inventory &&
+                        (canEditPrice ? (
+                            <div className="grid min-w-0 gap-2 md:max-w-xs">
+                                <Label htmlFor="current_price">
+                                    Precio de referencia
+                                    {selectedUnit
+                                        ? ` por ${selectedUnit.symbol}`
+                                        : ''}
+                                </Label>
+                                <Input
+                                    id="current_price"
+                                    type="text"
+                                    inputMode="decimal"
+                                    maxLength={MAX_DECIMAL_INPUT_LENGTH}
+                                    value={form.data.current_price}
+                                    onChange={(event) =>
+                                        form.setData(
+                                            'current_price',
+                                            sanitizeDecimalInput(
+                                                event.target.value,
+                                            ),
+                                        )
+                                    }
+                                    className="w-full min-w-0 font-mono"
+                                    placeholder="0"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Al cambiarlo se recalcula el costo de los
+                                    productos que la usan.
+                                </p>
+                                <InputError
+                                    message={form.errors.current_price}
+                                />
+                            </div>
+                        ) : (
+                            <p className="text-xs text-muted-foreground">
+                                El precio lo fija quien puede modificar los
+                                parámetros de costo.
+                            </p>
+                        ))}
                 </div>
 
                 {/* Status */}

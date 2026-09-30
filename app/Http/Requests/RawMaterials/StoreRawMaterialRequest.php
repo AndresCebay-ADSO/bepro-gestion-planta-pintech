@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace App\Http\Requests\RawMaterials;
 
 use App\Http\Requests\Concerns\CatalogSelectionRules;
+use App\Http\Requests\RawMaterials\Concerns\ManualReferencePriceRules;
 use App\Models\RawMaterial;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreRawMaterialRequest extends FormRequest
 {
     use CatalogSelectionRules;
+    use ManualReferencePriceRules;
 
     public function authorize(): bool
     {
@@ -34,7 +37,18 @@ class StoreRawMaterialRequest extends FormRequest
             'alert_days_before_expiry' => ['bail', 'required', 'integer', 'min:0'],
             'price_variation_threshold' => ['bail', 'nullable', 'numeric', 'min:0.01', 'max:100', 'decimal:0,2'],
             'tracks_inventory' => ['sometimes', 'boolean'],
+            'current_price' => $this->manualPriceRules(),
             'is_active' => ['sometimes', 'boolean'],
+        ];
+    }
+
+    /**
+     * @return list<callable>
+     */
+    public function after(): array
+    {
+        return [
+            fn (Validator $validator) => $this->validateManualPrice($validator, $this->boolean('tracks_inventory', true)),
         ];
     }
 

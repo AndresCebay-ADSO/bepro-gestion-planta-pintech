@@ -27,6 +27,11 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('raw_materials')
                 ->restrictOnDelete();
+            // Etiqueta habitual (materia prima de tipo Etiqueta): la OP la copia a su plan de envasado y suma su costo.
+            $table->foreignId('label_raw_material_id')
+                ->nullable()
+                ->constrained('raw_materials')
+                ->restrictOnDelete();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 

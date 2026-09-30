@@ -151,6 +151,14 @@ class RawMaterial extends Model
         return $this->hasMany(ProductVariant::class, 'package_raw_material_id');
     }
 
+    /**
+     * Presentaciones que usan esta materia prima como etiqueta habitual.
+     */
+    public function labeledVariants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class, 'label_raw_material_id');
+    }
+
     public function lineAdjustments(): HasMany
     {
         return $this->hasMany(ProductionOrderLineAdjustment::class, 'raw_material_id');

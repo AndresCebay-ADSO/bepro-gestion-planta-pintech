@@ -125,6 +125,7 @@ type Props = {
             current_cost?: number | null;
             current_price?: string | null;
             package_raw_material_id: number | null;
+            label_raw_material_id: number | null;
             is_active: boolean;
             unit_of_measure?: { name: string; symbol: string } | null;
         }>;
@@ -162,7 +163,11 @@ type Props = {
         is_active: boolean;
         category?: { id: number; name: string };
     }>;
+    labelMaterials?: Array<{ id: number; code: string; is_active: boolean }>;
 };
+
+/** Valor del selector para «sin etiqueta»: un SelectItem no admite valor vacío. */
+const NO_LABEL = 'none';
 
 export default function ProductsShow({
     returnTo,
@@ -172,6 +177,7 @@ export default function ProductsShow({
     documentTypes,
     units,
     rawMaterials,
+    labelMaterials,
 }: Props) {
     const [dialogMode, setDialogMode] = useState<'create' | 'edit' | null>(
         null,
@@ -228,6 +234,7 @@ export default function ProductsShow({
         presentation_value: '',
         presentation_label: '',
         package_raw_material_id: '',
+        label_raw_material_id: '',
         is_active: true,
     });
     const documentForm = useForm({
@@ -266,6 +273,16 @@ export default function ProductsShow({
         (rm) => rm.is_active || rm.id === keptPackageId,
     );
 
+    // Igual con la etiqueta habitual.
+    const keptLabelId =
+        dialogMode === 'edit'
+            ? product.variants?.find((v) => v.id === editingVariantId)
+                  ?.label_raw_material_id
+            : null;
+    const labelOptions = (labelMaterials ?? []).filter(
+        (rm) => rm.is_active || rm.id === keptLabelId,
+    );
+
     // Igual con la unidad: una inactiva solo se ofrece a la presentación que ya la usa.
     const keptUnitId =
         dialogMode === 'edit'
@@ -295,6 +312,10 @@ export default function ProductsShow({
             package_raw_material_id:
                 variant.package_raw_material_id != null
                     ? String(variant.package_raw_material_id)
+                    : '',
+            label_raw_material_id:
+                variant.label_raw_material_id != null
+                    ? String(variant.label_raw_material_id)
                     : '',
             is_active: variant.is_active,
         });
@@ -1206,6 +1227,54 @@ export default function ProductsShow({
                                             <p className="text-xs text-muted-foreground">
                                                 Se descontará del inventario al
                                                 completar la orden de producción
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="label_raw_material_id">
+                                                Etiqueta habitual
+                                            </Label>
+                                            <Select
+                                                value={
+                                                    form.data
+                                                        .label_raw_material_id ||
+                                                    NO_LABEL
+                                                }
+                                                onValueChange={(v) =>
+                                                    form.setData(
+                                                        'label_raw_material_id',
+                                                        v === NO_LABEL ? '' : v,
+                                                    )
+                                                }
+                                            >
+                                                <SelectTrigger id="label_raw_material_id">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem
+                                                        value={NO_LABEL}
+                                                    >
+                                                        Sin etiqueta
+                                                    </SelectItem>
+                                                    {labelOptions.map((rm) => (
+                                                        <SelectItem
+                                                            key={rm.id}
+                                                            value={String(
+                                                                rm.id,
+                                                            )}
+                                                        >
+                                                            {rm.is_active
+                                                                ? rm.code
+                                                                : `${rm.code} (inactiva)`}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <p className="text-xs text-muted-foreground">
+                                                La orden de producción la
+                                                propone al envasar; su precio
+                                                entra en el costo de la
+                                                presentación
                                             </p>
                                         </div>
 

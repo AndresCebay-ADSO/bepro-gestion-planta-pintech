@@ -11,10 +11,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\RawMaterials\IndexRawMaterialRequest;
 use App\Http\Requests\RawMaterials\StoreRawMaterialRequest;
 use App\Http\Requests\RawMaterials\UpdateRawMaterialRequest;
+use App\Jobs\RecalculateRawMaterialDependentCosts;
 use App\Models\InventoryBatch;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
+use App\Services\DecimalCalculator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +27,10 @@ use Inertia\Response;
 
 class RawMaterialController extends Controller
 {
-    public function __construct(private readonly DeleteUnusedRecordAction $deleteUnused) {}
+    public function __construct(
+        private readonly DeleteUnusedRecordAction $deleteUnused,
+        private readonly DecimalCalculator $calculator,
+    ) {}
 
     /**
      * Display a listing of the raw materials.
@@ -46,7 +51,7 @@ class RawMaterialController extends Controller
             ->withExists(['inventoryMovements as has_movements'])
             ->withExists(['formulaDetails as has_formulas'])
             ->withExists(['productionOrderDetails as has_orders'])
-            ->withExists(['packagedVariants as has_variants'])
+            ->withExists(['packagedVariants as has_variants', 'labeledVariants as has_labeled_variants'])
             ->withExists(['lineAdjustments as has_adjustments'])
             ->withCount(['alerts as active_alerts_count' => fn ($query) => $query->where('is_resolved', false)])
             ->withExists(['alerts as has_critical_alert' => fn ($query) => $query
@@ -62,6 +67,7 @@ class RawMaterialController extends Controller
                     || $rawMaterial->has_formulas
                     || $rawMaterial->has_orders
                     || $rawMaterial->has_variants
+                    || $rawMaterial->has_labeled_variants
                     || $rawMaterial->has_adjustments);
 
                 return [
@@ -114,6 +120,7 @@ class RawMaterialController extends Controller
         $this->authorize('create', RawMaterial::class);
 
         return Inertia::render('Inventory/RawMaterials/Create', [
+            'can' => ['updateCosts' => Gate::allows(Permission::CostsUpdate->value)],
             'categories' => $this->categoryOptions(RawMaterialCategory::query()->selectable()),
             'units' => UnitOfMeasure::query()
                 ->selectable()
@@ -165,6 +172,7 @@ class RawMaterialController extends Controller
             'formulaDetails as has_formulas',
             'productionOrderDetails as has_orders',
             'packagedVariants as has_variants',
+            'labeledVariants as has_labeled_variants',
             'lineAdjustments as has_adjustments',
         ]);
 
@@ -176,6 +184,7 @@ class RawMaterialController extends Controller
             || $rawMaterial->has_formulas
             || $rawMaterial->has_orders
             || $rawMaterial->has_variants
+            || $rawMaterial->has_labeled_variants
             || $rawMaterial->has_adjustments);
 
         return Inertia::render('Inventory/RawMaterials/Show', [
@@ -191,6 +200,7 @@ class RawMaterialController extends Controller
                 ] : []),
                 'minimum_stock' => $rawMaterial->minimum_stock,
                 'alert_days_before_expiry' => $rawMaterial->alert_days_before_expiry,
+                'tracks_inventory' => $rawMaterial->tracks_inventory,
                 'is_active' => $rawMaterial->is_active,
                 'category' => $rawMaterial->category ? [
                     'id' => $rawMaterial->category->id,
@@ -232,8 +242,11 @@ class RawMaterialController extends Controller
     {
         $this->authorize('update', $rawMaterial);
 
+        $canUpdateCosts = Gate::allows(Permission::CostsUpdate->value);
+
         return Inertia::render('Inventory/RawMaterials/Edit', [
-            // Solo los campos del formulario: los precios son costo y el formulario no los edita.
+            // Solo los campos del formulario. El precio es costo: solo viaja a quien puede fijarlo, y el formulario solo lo
+            // edita si la materia prima no controla inventario.
             'rawMaterial' => [
                 'id' => $rawMaterial->id,
                 'code' => $rawMaterial->code,
@@ -242,8 +255,11 @@ class RawMaterialController extends Controller
                 'minimum_stock' => $rawMaterial->minimum_stock,
                 'alert_days_before_expiry' => $rawMaterial->alert_days_before_expiry,
                 'price_variation_threshold' => $rawMaterial->price_variation_threshold,
+                'tracks_inventory' => $rawMaterial->tracks_inventory,
+                ...($canUpdateCosts ? ['current_price' => $rawMaterial->current_price] : []),
                 'is_active' => $rawMaterial->is_active,
             ],
+            'can' => ['updateCosts' => $canUpdateCosts],
             'categories' => $this->categoryOptions(RawMaterialCategory::query()->selectable([$rawMaterial->category_id])),
             'units' => UnitOfMeasure::query()
                 ->selectable([$rawMaterial->unit_of_measure_id])
@@ -257,11 +273,35 @@ class RawMaterialController extends Controller
     {
         $this->authorize('update', $rawMaterial);
 
-        $rawMaterial->update($request->validated());
+        $validated = $request->validated();
+
+        // Precio escrito a mano (solo sin control de inventario): se guarda el anterior, como al recalcularlo desde las
+        // compras, y se recalculan en segundo plano los productos y presentaciones que lo usan.
+        $priceChanged = array_key_exists('current_price', $validated)
+            && ! $this->samePrice($rawMaterial->current_price, $validated['current_price']);
+
+        if ($priceChanged) {
+            $validated['previous_price'] = $rawMaterial->current_price;
+        }
+
+        $rawMaterial->update($validated);
+
+        if ($priceChanged) {
+            RecalculateRawMaterialDependentCosts::dispatch((int) $rawMaterial->id);
+        }
 
         return redirect()
             ->route('raw-materials.index')
             ->with('success', __('Materia prima actualizada exitosamente.'));
+    }
+
+    private function samePrice(?string $current, mixed $new): bool
+    {
+        if ($current === null || $new === null || $new === '') {
+            return $current === null && ($new === null || $new === '');
+        }
+
+        return $this->calculator->cmp($current, (string) $new, 4) === 0;
     }
 
     /**

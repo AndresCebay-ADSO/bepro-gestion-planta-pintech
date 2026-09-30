@@ -1,6 +1,9 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { RawMaterialForm } from '@/components/raw-materials/raw-material-form';
-import type { CategoryOption } from '@/components/raw-materials/raw-material-form';
+import type {
+    CategoryOption,
+    RawMaterialFormData,
+} from '@/components/raw-materials/raw-material-form';
 import { Button } from '@/components/ui/button';
 import {
     index as rawMaterialsIndex,
@@ -16,19 +19,10 @@ type UnitOption = {
 type Props = {
     categories: CategoryOption[];
     units: UnitOption[];
+    can: { updateCosts: boolean };
 };
 
-type RawMaterialFormData = {
-    code: string;
-    category_id: string;
-    unit_of_measure_id: string;
-    minimum_stock: string;
-    alert_days_before_expiry: string;
-    price_variation_threshold: string;
-    is_active: boolean;
-};
-
-export default function RawMaterialsCreate({ categories, units }: Props) {
+export default function RawMaterialsCreate({ categories, units, can }: Props) {
     const form = useForm<RawMaterialFormData>({
         code: '',
         category_id: '',
@@ -36,11 +30,13 @@ export default function RawMaterialsCreate({ categories, units }: Props) {
         minimum_stock: '0',
         alert_days_before_expiry: '30',
         price_variation_threshold: '',
+        tracks_inventory: true,
+        current_price: '',
         is_active: true,
     });
 
     const submit = () => {
-        form.transform((data) => ({
+        form.transform(({ current_price, ...data }) => ({
             ...data,
             category_id: Number(data.category_id),
             unit_of_measure_id: Number(data.unit_of_measure_id),
@@ -48,6 +44,10 @@ export default function RawMaterialsCreate({ categories, units }: Props) {
                 data.price_variation_threshold === ''
                     ? null
                     : data.price_variation_threshold,
+            // El precio solo viaja si se puede escribir: sin control de inventario y con permiso de costos.
+            ...(!data.tracks_inventory && can.updateCosts
+                ? { current_price: current_price === '' ? null : current_price }
+                : {}),
         }));
 
         form.post(rawMaterialsStore().url);
@@ -83,6 +83,7 @@ export default function RawMaterialsCreate({ categories, units }: Props) {
                     units={units}
                     onSubmit={submit}
                     submitLabel="Crear Materia Prima"
+                    canEditPrice={can.updateCosts}
                 />
 
                 <div className="flex justify-end gap-2 pt-2 pr-2">

@@ -33,13 +33,15 @@ class StoreProductVariantRequest extends FormRequest
             'presentation_label' => ['nullable', 'string', 'max:50'],
             // B40: el envase debe ser una materia prima de tipo Envase, no cualquiera activa.
             'package_raw_material_id' => ['nullable', 'integer', Rule::exists('raw_materials', 'id')->where('is_active', true), new RawMaterialOfType(RawMaterialType::Container)],
+            // 3.7: la etiqueta habitual debe ser una materia prima de tipo Etiqueta.
+            'label_raw_material_id' => ['nullable', 'integer', Rule::exists('raw_materials', 'id')->where('is_active', true), new RawMaterialOfType(RawMaterialType::Label)],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        foreach (['presentation_value', 'package_raw_material_id'] as $key) {
+        foreach (['presentation_value', 'package_raw_material_id', 'label_raw_material_id'] as $key) {
             if ($this->has($key) && ($this->input($key) === '' || $this->input($key) === null)) {
                 $this->merge([$key => null]);
             }

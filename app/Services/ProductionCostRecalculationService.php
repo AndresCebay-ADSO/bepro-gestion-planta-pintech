@@ -9,10 +9,14 @@ use App\Models\Product;
 use App\Models\ProductionCost;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ProductionCostRecalculationService
 {
+    /** Columnas que necesita el cálculo de cada presentación. */
+    private const VARIANT_COLUMNS = ['id', 'presentation_value', 'package_raw_material_id', 'label_raw_material_id', 'current_cost', 'current_price'];
+
     public function __construct(
         private readonly VariantPricingService $variantPricingService,
         private readonly DecimalCalculator $calculator
@@ -61,7 +65,6 @@ class ProductionCostRecalculationService
             $product = Product::query()
                 ->select('id', 'current_price', 'cif_percentage', 'price_threshold')
                 ->find($productId);
-            $autoUpdateVariantPrice = (bool) config('production.auto_update_variant_price', true);
             $productCifPercentage = $product?->cif_percentage !== null ? (string) $product->cif_percentage : null;
             $priceThreshold = (string) ($product?->price_threshold ?? '0');
 
@@ -87,45 +90,13 @@ class ProductionCostRecalculationService
                 $product->update($productUpdates);
             }
 
-            $variants = ProductVariant::query()
-                ->where('product_id', $productId)
-                ->get(['id', 'presentation_value', 'package_raw_material_id', 'current_cost', 'current_price']);
-
-            $packageMaterialIds = $variants
-                ->pluck('package_raw_material_id')
-                ->filter()
-                ->map(fn ($id) => (int) $id)
-                ->unique()
-                ->values()
-                ->all();
-
-            $packageUnitPrices = RawMaterial::query()
-                ->whereIn('id', $packageMaterialIds)
-                ->pluck('current_price', 'id')
-                ->map(fn ($price) => (string) ($price ?? '0'));
-
-            $variants->each(function (ProductVariant $variant) use (
-                $calculatedCost,
-                $autoUpdateVariantPrice,
-                $productCifPercentage,
-                $priceThreshold,
-                $packageUnitPrices,
-                $forcePriceRefresh
-            ): void {
-                $packageUnitCost = $variant->package_raw_material_id !== null
-                    ? (string) ($packageUnitPrices->get((int) $variant->package_raw_material_id) ?? '0')
-                    : '0';
-
-                $this->variantPricingService->updateVariantCostAndPrice(
-                    variant: $variant,
-                    bulkCost: $calculatedCost,
-                    cifPercentage: $productCifPercentage,
-                    priceThreshold: $priceThreshold,
-                    packageUnitCost: $packageUnitCost,
-                    autoUpdatePrice: $autoUpdateVariantPrice,
-                    forceRefresh: $forcePriceRefresh
-                );
-            });
+            $this->repriceVariants(
+                variants: ProductVariant::query()->where('product_id', $productId)->get(self::VARIANT_COLUMNS),
+                bulkCost: $calculatedCost,
+                cifPercentage: $productCifPercentage,
+                priceThreshold: $priceThreshold,
+                forcePriceRefresh: $forcePriceRefresh,
+            );
 
             return ProductionCost::create([
                 'product_id' => $productId,
@@ -156,6 +127,109 @@ class ProductionCostRecalculationService
             }
         }
 
+        // Si es el envase o la etiqueta de alguna presentación, esas también cambian (las de los productos recién
+        // recalculados ya tomaron el precio nuevo).
+        $this->repriceVariantsUsingPackagingMaterial($rawMaterialId, exceptProductIds: $productIds);
+
         return $recalculated;
+    }
+
+    /**
+     * Recalcula solo las presentaciones que usan la materia prima como envase o etiqueta, con el costo de granel que ya
+     * tiene su producto. No pasa por `recalculateForProduct`: el granel no cambió, y recalcularlo dejaría en el historial
+     * de costos un registro sin variación por cada producto que usa ese envase. Cubre también los productos sin fórmula
+     * activa, que `recalculateForProduct` salta.
+     *
+     * @param  list<int>  $exceptProductIds
+     */
+    public function repriceVariantsUsingPackagingMaterial(int $rawMaterialId, array $exceptProductIds = []): int
+    {
+        $variants = ProductVariant::query()
+            ->where(fn ($query) => $query
+                ->where('package_raw_material_id', $rawMaterialId)
+                ->orWhere('label_raw_material_id', $rawMaterialId))
+            ->whereNotIn('product_id', $exceptProductIds)
+            ->get([...self::VARIANT_COLUMNS, 'product_id']);
+
+        $products = Product::query()
+            ->whereIn('id', $variants->pluck('product_id')->unique()->all())
+            ->get(['id', 'current_cost', 'cif_percentage', 'price_threshold'])
+            ->keyBy('id');
+
+        foreach ($variants->groupBy('product_id') as $productId => $productVariants) {
+            $product = $products->get($productId);
+
+            if ($product === null) {
+                continue;
+            }
+
+            DB::transaction(fn () => $this->repriceVariants(
+                variants: $productVariants,
+                bulkCost: (string) ($product->current_cost ?? '0'),
+                cifPercentage: $product->cif_percentage !== null ? (string) $product->cif_percentage : null,
+                priceThreshold: (string) ($product->price_threshold ?? '0'),
+            ));
+        }
+
+        return $variants->count();
+    }
+
+    /**
+     * Recalcula todas las presentaciones de un producto con su costo de granel actual, sin tocar el granel.
+     */
+    public function repriceVariantsOfProduct(Product $product, bool $forcePriceRefresh = false): void
+    {
+        $this->repriceVariants(
+            variants: ProductVariant::query()->where('product_id', $product->id)->get(self::VARIANT_COLUMNS),
+            bulkCost: (string) ($product->current_cost ?? '0'),
+            cifPercentage: $product->cif_percentage !== null ? (string) $product->cif_percentage : null,
+            priceThreshold: (string) ($product->price_threshold ?? '0'),
+            forcePriceRefresh: $forcePriceRefresh,
+        );
+    }
+
+    /**
+     * Costo y precio de cada presentación: granel × presentación + envase + etiqueta, a su precio de referencia actual.
+     *
+     * @param  Collection<int, ProductVariant>  $variants
+     */
+    private function repriceVariants(
+        Collection $variants,
+        string $bulkCost,
+        ?string $cifPercentage,
+        string $priceThreshold,
+        bool $forcePriceRefresh = false,
+    ): void {
+        $materialIds = $variants
+            ->flatMap(fn (ProductVariant $variant): array => [$variant->package_raw_material_id, $variant->label_raw_material_id])
+            ->filter()
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $unitPrices = RawMaterial::query()
+            ->whereIn('id', $materialIds)
+            ->pluck('current_price', 'id')
+            ->map(fn ($price): string => (string) ($price ?? '0'));
+
+        $unitPrice = fn (?int $materialId): string => $materialId !== null
+            ? (string) ($unitPrices->get($materialId) ?? '0')
+            : '0';
+
+        $autoUpdatePrice = (bool) config('production.auto_update_variant_price', true);
+
+        foreach ($variants as $variant) {
+            $this->variantPricingService->updateVariantCostAndPrice(
+                variant: $variant,
+                bulkCost: $bulkCost,
+                cifPercentage: $cifPercentage,
+                priceThreshold: $priceThreshold,
+                packageUnitCost: $unitPrice($variant->package_raw_material_id !== null ? (int) $variant->package_raw_material_id : null),
+                labelUnitCost: $unitPrice($variant->label_raw_material_id !== null ? (int) $variant->label_raw_material_id : null),
+                autoUpdatePrice: $autoUpdatePrice,
+                forceRefresh: $forcePriceRefresh,
+            );
+        }
     }
 }
