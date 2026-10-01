@@ -188,7 +188,6 @@ describe('Raw Material Authorization', function () {
                     'code' => 'MP002',
                     'category_id' => $this->category->id,
                     'unit_of_measure_id' => $this->unit->id,
-                    'current_price' => 150.00,
                     'minimum_stock' => 20,
                     'alert_days_before_expiry' => 30,
                     'is_active' => true,

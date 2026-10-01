@@ -150,7 +150,7 @@ it('sends only an explicit list of product and variant fields to users without c
             ])->sort()->values()->all())
             ->where('product.variants.0', fn ($variant) => collect($variant)->keys()->sort()->values()->all() === collect([
                 'id', 'code', 'name', 'unit_of_measure_id', 'presentation_value', 'presentation_label',
-                'package_raw_material_id', 'is_active', 'unit_of_measure',
+                'package_raw_material_id', 'label_raw_material_id', 'is_active', 'unit_of_measure',
             ])->sort()->values()->all()));
 });
 

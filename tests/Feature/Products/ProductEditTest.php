@@ -118,10 +118,11 @@ test('product variant update ignores manual current_cost and current_price sent 
         ])
         ->assertRedirect(route('products.show', $this->product));
 
+    // Ni 555,55 ni 999,99: se recalcula con el granel del producto (10 × 1 galón, sin envase) y su CIF del 25 %.
     $variant->refresh();
     expect($variant->name)->toBe('Variante Actualizada');
-    expect((float) $variant->current_cost)->toBe(15.0);
-    expect((float) $variant->current_price)->toBe(18.75);
+    expect((float) $variant->current_cost)->toBe(10.0);
+    expect((float) $variant->current_price)->toBe(12.5);
 });
 
 /**

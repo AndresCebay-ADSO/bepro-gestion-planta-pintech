@@ -162,6 +162,15 @@ class ProductController extends Controller
                     ->orWhereIn('id', $product->variants()->whereNotNull('package_raw_material_id')->select('package_raw_material_id')))
                 ->select('id', 'code', 'category_id', 'is_active')
                 ->get(),
+            // Etiquetas (3.7): las activas de tipo Etiqueta, más las inactivas que ya usa alguna presentación.
+            'labelMaterials' => RawMaterial::query()
+                ->where(fn ($q) => $q
+                    ->where(fn ($active) => $active
+                        ->where('is_active', true)
+                        ->ofType(RawMaterialType::Label))
+                    ->orWhereIn('id', $product->variants()->whereNotNull('label_raw_material_id')->select('label_raw_material_id')))
+                ->orderBy('code')
+                ->get(['id', 'code', 'is_active']),
         ]);
     }
 
@@ -249,28 +258,9 @@ class ProductController extends Controller
                     forcePriceRefresh: true
                 );
 
+                // Sin fórmula activa: el precio del producto y el de sus presentaciones con el costo que ya tiene.
                 if ($costRecord === null) {
-                    $costStr = (string) ($product->current_cost ?? '0');
-                    $cifPercentageStr = (string) ($product->cif_percentage ?? '0');
-                    $cifRatio = $this->calculator->div($cifPercentageStr, '100', 4);
-                    $cifFactor = $this->calculator->add('1', $cifRatio, 4);
-                    $newPrice = $this->calculator->mul($costStr, $cifFactor, 4);
-
-                    $product->updateQuietly(['current_price' => $newPrice]);
-
-                    foreach ($product->variants()->with('packageRawMaterial')->get() as $variant) {
-                        $packageCostStr = (string) ($variant->packageRawMaterial?->current_price ?? '0');
-                        $presentationStr = (string) ($variant->presentation_value ?? '1');
-
-                        $costTimesPresentation = $this->calculator->mul($costStr, $presentationStr, 4);
-                        $newVariantCost = $this->calculator->add($costTimesPresentation, $packageCostStr, 4);
-                        $newVariantPrice = $this->calculator->mul($newVariantCost, $cifFactor, 4);
-
-                        $variant->updateQuietly([
-                            'current_cost' => $newVariantCost,
-                            'current_price' => $newVariantPrice,
-                        ]);
-                    }
+                    $this->productionCostRecalculationService->repriceProductWithoutFormula($product);
                 }
             }
 
@@ -336,6 +326,7 @@ class ProductController extends Controller
                 'presentation_value' => $variant->presentation_value,
                 'presentation_label' => $variant->presentation_label,
                 'package_raw_material_id' => $variant->package_raw_material_id,
+                'label_raw_material_id' => $variant->label_raw_material_id,
                 'is_active' => $variant->is_active,
                 'unit_of_measure' => $variant->unitOfMeasure
                     ? ['name' => $variant->unitOfMeasure->name, 'symbol' => $variant->unitOfMeasure->symbol]
@@ -368,15 +359,7 @@ class ProductController extends Controller
 
     private function hasDecimalChanged(string|int|float|null $current, mixed $new): bool
     {
-        if ($current === null && $new === null) {
-            return false;
-        }
-
-        if ($current === null || $new === null) {
-            return true;
-        }
-
-        return $this->calculator->cmp((string) $current, (string) $new) !== 0;
+        return ! $this->calculator->sameOrBothNull($current, $new);
     }
 
     public function destroy(Product $product): RedirectResponse

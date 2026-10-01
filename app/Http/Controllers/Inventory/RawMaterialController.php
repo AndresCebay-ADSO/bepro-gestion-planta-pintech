@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Actions\RawMaterials\UpdateRawMaterialAction;
 use App\Actions\Shared\DeleteUnusedRecordAction;
 use App\Enums\Permission;
 use App\Filters\RawMaterialFilter;
@@ -18,6 +19,7 @@ use App\Models\UnitOfMeasure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -25,7 +27,10 @@ use Inertia\Response;
 
 class RawMaterialController extends Controller
 {
-    public function __construct(private readonly DeleteUnusedRecordAction $deleteUnused) {}
+    public function __construct(
+        private readonly DeleteUnusedRecordAction $deleteUnused,
+        private readonly UpdateRawMaterialAction $updateRawMaterial,
+    ) {}
 
     /**
      * Display a listing of the raw materials.
@@ -46,7 +51,7 @@ class RawMaterialController extends Controller
             ->withExists(['inventoryMovements as has_movements'])
             ->withExists(['formulaDetails as has_formulas'])
             ->withExists(['productionOrderDetails as has_orders'])
-            ->withExists(['packagedVariants as has_variants'])
+            ->withExists(['packagedVariants as has_variants', 'labeledVariants as has_labeled_variants'])
             ->withExists(['lineAdjustments as has_adjustments'])
             ->withCount(['alerts as active_alerts_count' => fn ($query) => $query->where('is_resolved', false)])
             ->withExists(['alerts as has_critical_alert' => fn ($query) => $query
@@ -62,6 +67,7 @@ class RawMaterialController extends Controller
                     || $rawMaterial->has_formulas
                     || $rawMaterial->has_orders
                     || $rawMaterial->has_variants
+                    || $rawMaterial->has_labeled_variants
                     || $rawMaterial->has_adjustments);
 
                 return [
@@ -114,6 +120,7 @@ class RawMaterialController extends Controller
         $this->authorize('create', RawMaterial::class);
 
         return Inertia::render('Inventory/RawMaterials/Create', [
+            'can' => ['updateCosts' => Gate::allows(Permission::CostsUpdate->value)],
             'categories' => $this->categoryOptions(RawMaterialCategory::query()->selectable()),
             'units' => UnitOfMeasure::query()
                 ->selectable()
@@ -165,6 +172,7 @@ class RawMaterialController extends Controller
             'formulaDetails as has_formulas',
             'productionOrderDetails as has_orders',
             'packagedVariants as has_variants',
+            'labeledVariants as has_labeled_variants',
             'lineAdjustments as has_adjustments',
         ]);
 
@@ -176,6 +184,7 @@ class RawMaterialController extends Controller
             || $rawMaterial->has_formulas
             || $rawMaterial->has_orders
             || $rawMaterial->has_variants
+            || $rawMaterial->has_labeled_variants
             || $rawMaterial->has_adjustments);
 
         return Inertia::render('Inventory/RawMaterials/Show', [
@@ -191,6 +200,7 @@ class RawMaterialController extends Controller
                 ] : []),
                 'minimum_stock' => $rawMaterial->minimum_stock,
                 'alert_days_before_expiry' => $rawMaterial->alert_days_before_expiry,
+                'tracks_inventory' => $rawMaterial->tracks_inventory,
                 'is_active' => $rawMaterial->is_active,
                 'category' => $rawMaterial->category ? [
                     'id' => $rawMaterial->category->id,
@@ -232,8 +242,11 @@ class RawMaterialController extends Controller
     {
         $this->authorize('update', $rawMaterial);
 
+        $canUpdateCosts = Gate::allows(Permission::CostsUpdate->value);
+
         return Inertia::render('Inventory/RawMaterials/Edit', [
-            // Solo los campos del formulario: los precios son costo y el formulario no los edita.
+            // Solo los campos del formulario. El precio es costo: solo viaja a quien puede fijarlo, y el formulario solo lo
+            // edita si la materia prima no controla inventario.
             'rawMaterial' => [
                 'id' => $rawMaterial->id,
                 'code' => $rawMaterial->code,
@@ -242,8 +255,13 @@ class RawMaterialController extends Controller
                 'minimum_stock' => $rawMaterial->minimum_stock,
                 'alert_days_before_expiry' => $rawMaterial->alert_days_before_expiry,
                 'price_variation_threshold' => $rawMaterial->price_variation_threshold,
+                'tracks_inventory' => $rawMaterial->tracks_inventory,
+                ...($canUpdateCosts ? ['current_price' => $rawMaterial->current_price] : []),
                 'is_active' => $rawMaterial->is_active,
             ],
+            'can' => ['updateCosts' => $canUpdateCosts],
+            // Activar el control de inventario las dejaría sin poder completarse hasta registrar compras: se confirma.
+            'openProductionOrdersCount' => $canUpdateCosts && ! $rawMaterial->tracks_inventory ? $rawMaterial->openProductionOrdersCount() : 0,
             'categories' => $this->categoryOptions(RawMaterialCategory::query()->selectable([$rawMaterial->category_id])),
             'units' => UnitOfMeasure::query()
                 ->selectable([$rawMaterial->unit_of_measure_id])
@@ -257,7 +275,7 @@ class RawMaterialController extends Controller
     {
         $this->authorize('update', $rawMaterial);
 
-        $rawMaterial->update($request->validated());
+        $this->updateRawMaterial->execute($rawMaterial, Arr::except($request->validated(), 'confirm_tracking_change'));
 
         return redirect()
             ->route('raw-materials.index')

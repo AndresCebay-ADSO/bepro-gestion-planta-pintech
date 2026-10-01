@@ -27,11 +27,19 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('raw_materials')
                 ->restrictOnDelete();
+            // Etiqueta habitual (materia prima de tipo Etiqueta): la OP la copia a su plan de envasado y suma su costo.
+            $table->foreignId('label_raw_material_id')
+                ->nullable()
+                ->constrained('raw_materials')
+                ->restrictOnDelete();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
             $table->index(['product_id', 'is_active']);
             $table->index('name');
+            // PostgreSQL no indexa las llaves foráneas: los usan el recálculo de costos y el borrado de materias primas.
+            $table->index('package_raw_material_id');
+            $table->index('label_raw_material_id');
         });
     }
 

@@ -44,13 +44,23 @@ class UpdateProductVariantRequest extends FormRequest
                 // B40: el envase debe ser una materia prima de tipo Envase.
                 new RawMaterialOfType(RawMaterialType::Container),
             ],
+            // 3.7: etiqueta de tipo Etiqueta. Si está inactiva, solo la conserva la presentación que ya la tiene.
+            'label_raw_material_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('raw_materials', 'id')->when(
+                    $this->label_raw_material_id && (int) $this->label_raw_material_id !== (int) ($this->route('variant')?->label_raw_material_id),
+                    fn ($rule) => $rule->where('is_active', true)
+                ),
+                new RawMaterialOfType(RawMaterialType::Label),
+            ],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        foreach (['presentation_value', 'package_raw_material_id'] as $key) {
+        foreach (['presentation_value', 'package_raw_material_id', 'label_raw_material_id'] as $key) {
             if ($this->has($key) && ($this->input($key) === '' || $this->input($key) === null)) {
                 $this->merge([$key => null]);
             }

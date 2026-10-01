@@ -31,6 +31,7 @@ type Props = {
         previous_price?: string | null;
         minimum_stock: string;
         alert_days_before_expiry: number;
+        tracks_inventory: boolean;
         is_active: boolean;
         unit_of_measure: { id: number; name: string; symbol: string } | null;
         category: {
@@ -171,6 +172,15 @@ export default function RawMaterialsShow({
                     <InfoItem
                         label="Tipo de insumo"
                         value={rawMaterial.category?.type_label ?? '-'}
+                    />
+
+                    <InfoItem
+                        label="Controla inventario"
+                        value={
+                            rawMaterial.tracks_inventory
+                                ? 'Sí'
+                                : 'No (consumo sin descontar saldo, a precio fijado a mano)'
+                        }
                     />
 
                     <InfoItem

@@ -27,6 +27,8 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string|null $presentation_label
  * @property string|null $current_cost
  * @property string|null $current_price
+ * @property int|null $package_raw_material_id
+ * @property int|null $label_raw_material_id
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -47,6 +49,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'current_cost',
     'current_price',
     'package_raw_material_id',
+    'label_raw_material_id',
     'is_active',
 ])]
 class ProductVariant extends Model
@@ -74,6 +77,7 @@ class ProductVariant extends Model
                 'current_cost',
                 'current_price',
                 'package_raw_material_id',
+                'label_raw_material_id',
                 'is_active',
             ])
             ->logOnlyDirty()
@@ -131,5 +135,10 @@ class ProductVariant extends Model
     public function packageRawMaterial(): BelongsTo
     {
         return $this->belongsTo(RawMaterial::class, 'package_raw_material_id');
+    }
+
+    public function labelRawMaterial(): BelongsTo
+    {
+        return $this->belongsTo(RawMaterial::class, 'label_raw_material_id');
     }
 }

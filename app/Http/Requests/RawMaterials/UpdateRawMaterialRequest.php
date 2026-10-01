@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\RawMaterials;
 
+use App\Actions\RawMaterials\UpdateRawMaterialAction;
+use App\Enums\Permission;
 use App\Enums\RawMaterialType;
 use App\Http\Requests\Concerns\CatalogSelectionRules;
+use App\Http\Requests\RawMaterials\Concerns\ManualReferencePriceRules;
 use App\Models\FormulaDetail;
+use App\Models\InventoryBatch;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
@@ -17,6 +21,7 @@ use Illuminate\Validation\Validator;
 class UpdateRawMaterialRequest extends FormRequest
 {
     use CatalogSelectionRules;
+    use ManualReferencePriceRules;
 
     public function authorize(): bool
     {
@@ -41,10 +46,12 @@ class UpdateRawMaterialRequest extends FormRequest
             ],
             'category_id' => $this->activeOrCurrentRules('raw_material_categories', 'category_id', $this->route('raw_material')?->category_id),
             'unit_of_measure_id' => $this->activeOrCurrentRules('unit_of_measures', 'unit_of_measure_id', $this->route('raw_material')?->unit_of_measure_id),
-            'minimum_stock' => ['bail', 'required', 'numeric', 'min:0', 'decimal:0,4'],
+            'minimum_stock' => ['bail', 'required', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999'],
             'alert_days_before_expiry' => ['bail', 'required', 'integer', 'min:0'],
             'price_variation_threshold' => ['bail', 'nullable', 'numeric', 'min:0.01', 'max:100', 'decimal:0,2'],
             'tracks_inventory' => ['sometimes', 'boolean'],
+            'current_price' => $this->manualPriceRules(),
+            'confirm_tracking_change' => ['sometimes', 'boolean'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
@@ -59,6 +66,19 @@ class UpdateRawMaterialRequest extends FormRequest
     public function after(): array
     {
         return [
+            function (Validator $validator): void {
+                $material = $this->route('raw_material');
+
+                if ($material instanceof RawMaterial) {
+                    if (! $this->validateInventoryTracking($validator, $material)) {
+                        return;
+                    }
+
+                    $tracksInventory = $this->has('tracks_inventory') ? $this->boolean('tracks_inventory') : $material->tracks_inventory;
+                    // Solo al quitarle el control hace falta precio: una que ya no lo tenía conserva el suyo si no se envía.
+                    $this->validateManualPrice($validator, $tracksInventory, priceRequired: ! $tracksInventory && $material->tracks_inventory);
+                }
+            },
             function (Validator $validator): void {
                 $material = $this->route('raw_material');
 
@@ -86,15 +106,74 @@ class UpdateRawMaterialRequest extends FormRequest
         ];
     }
 
+    /**
+     * Cambiar el control de inventario cambia cómo se costea y qué exige producir, así que:
+     * - solo lo cambia quien maneja costos (sin control, el precio se escribe a mano);
+     * - no se quita con saldo en bodega: quedaría congelado, nada lo volvería a descontar;
+     * - activarlo con OP abiertas que la usan pide confirmación: desde ahí necesita saldo, y no lo tiene, así que esas
+     *   OP no se podrán completar hasta registrar compras (que sin control no se pueden registrar: por eso se confirma y
+     *   no se bloquea).
+     *
+     * Devuelve false si el cambio no procede y no tiene sentido seguir validando el precio.
+     */
+    private function validateInventoryTracking(Validator $validator, RawMaterial $material): bool
+    {
+        if (! $this->has('tracks_inventory') || $this->boolean('tracks_inventory') === $material->tracks_inventory) {
+            return true;
+        }
+
+        if (! ($this->user()?->can(Permission::CostsUpdate->value) ?? false)) {
+            $validator->errors()->add('tracks_inventory', __(self::TRACKING_PERMISSION_MESSAGE));
+
+            return false;
+        }
+
+        if (! $this->boolean('tracks_inventory')) {
+            $hasStock = InventoryBatch::query()
+                ->where('raw_material_id', $material->id)
+                ->where('remaining_quantity', '>', 0)
+                ->exists();
+
+            if ($hasStock) {
+                $validator->errors()->add('tracks_inventory', __(UpdateRawMaterialAction::STOCK_BLOCKS_UNTRACKING_MESSAGE));
+
+                return false;
+            }
+
+            return true;
+        }
+
+        $openOrders = $material->openProductionOrdersCount();
+
+        if ($openOrders > 0 && ! $this->boolean('confirm_tracking_change')) {
+            $validator->errors()->add('confirm_tracking_change', trans_choice(
+                'Confirma: :count orden de producción abierta usa esta materia prima y, sin saldo, no se podrá completar hasta registrar compras.|Confirma: :count órdenes de producción abiertas usan esta materia prima y, sin saldo, no se podrán completar hasta registrar compras.',
+                $openOrders,
+                ['count' => $openOrders],
+            ));
+
+            return false;
+        }
+
+        return true;
+    }
+
     private function typeDependentUsage(RawMaterial $material, RawMaterialType $current, RawMaterialType $new): ?string
     {
         $type = mb_strtolower($new->label());
 
-        // Las etiquetas (3.7) y el empaque secundario (3.8) se sumarán aquí cuando tengan usos que dependan del tipo.
+        // El empaque secundario (3.8) se sumará aquí cuando tenga usos que dependan del tipo.
         return match ($current) {
             RawMaterialType::Container => ($count = ProductVariant::query()->where('package_raw_material_id', $material->id)->count()) > 0
                 ? trans_choice(
                     'No se puede pasar a una categoría de tipo :type: esta materia prima es el envase de :count presentación.|No se puede pasar a una categoría de tipo :type: esta materia prima es el envase de :count presentaciones.',
+                    $count,
+                    ['type' => $type, 'count' => $count],
+                )
+                : null,
+            RawMaterialType::Label => ($count = ProductVariant::query()->where('label_raw_material_id', $material->id)->count()) > 0
+                ? trans_choice(
+                    'No se puede pasar a una categoría de tipo :type: esta materia prima es la etiqueta de :count presentación.|No se puede pasar a una categoría de tipo :type: esta materia prima es la etiqueta de :count presentaciones.',
                     $count,
                     ['type' => $type, 'count' => $count],
                 )

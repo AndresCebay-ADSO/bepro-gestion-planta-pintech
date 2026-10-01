@@ -209,6 +209,7 @@ Presentaciones (SKU) de cada producto.
 | `current_cost` | DECIMAL(12,4) | sí |  |
 | `current_price` | DECIMAL(12,4) | sí |  |
 | `package_raw_material_id` | BIGINT | sí | FK → `raw_materials` (RESTRICT) |
+| `label_raw_material_id` | BIGINT | sí | FK → `raw_materials` (RESTRICT). Etiqueta habitual, de tipo Etiqueta |
 | `is_active` | BOOLEAN |  | default `true` |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |

@@ -6,6 +6,9 @@ namespace App\Http\Requests\Inventory;
 
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
+use App\Models\RawMaterial;
+use App\Services\InventoryService;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,6 +27,12 @@ class StoreInventoryMovementRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('raw_materials', 'id')->where('is_active', true),
+                // Sin control de inventario (agua, etiquetas) no hay saldo: un lote suyo nunca se descontaría.
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if (RawMaterial::query()->whereKey((int) $value)->where('tracks_inventory', false)->exists()) {
+                        $fail(__(InventoryService::UNTRACKED_MATERIAL_MESSAGE));
+                    }
+                },
             ],
             'warehouse_id' => ['bail', 'required', 'integer', Rule::exists('warehouses', 'id')->where('is_active', true)],
             'batch_id' => ['nullable', 'integer', Rule::exists('inventory_batches', 'id')],

@@ -31,7 +31,9 @@ class ProductVariantController extends Controller
 
         DB::transaction(function () use ($validated, $product): void {
             ProductVariant::create($validated);
-            $this->productionCostRecalculationService->recalculateForProduct((int) $product->id);
+            // Solo cambian las presentaciones, no el granel: recalcular el producto completo no costearía nada sin
+            // fórmula activa y, con ella, dejaría un registro sin variación en el historial de costos.
+            $this->productionCostRecalculationService->repriceVariantsOfProduct($product);
         });
 
         return redirect()
@@ -57,7 +59,7 @@ class ProductVariantController extends Controller
             }
 
             $variant->update($validated);
-            $this->productionCostRecalculationService->recalculateForProduct((int) $product->id);
+            $this->productionCostRecalculationService->repriceVariantsOfProduct($product);
 
             return null;
         });
