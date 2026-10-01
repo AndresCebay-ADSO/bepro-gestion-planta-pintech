@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ProductionOrderStatus;
 use App\Enums\RawMaterialType;
 use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\RawMaterialFactory;
@@ -68,7 +69,7 @@ class RawMaterial extends Model
         return LogOptions::defaults()
             ->useLogName('materias_primas')
             ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
-            ->logOnly(['code', 'unit_of_measure_id', 'current_price', 'minimum_stock', 'is_active'])
+            ->logOnly(['code', 'unit_of_measure_id', 'current_price', 'minimum_stock', 'tracks_inventory', 'is_active'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -149,6 +150,22 @@ class RawMaterial extends Model
     public function packagedVariants(): HasMany
     {
         return $this->hasMany(ProductVariant::class, 'package_raw_material_id');
+    }
+
+    /**
+     * Órdenes de producción abiertas (pendientes, en curso o en revisión) que la consumirán al completarse. Cuenta el uso,
+     * no el tipo de insumo: una línea de su fórmula, un ajuste de línea o el envase de una presentación de su plan de
+     * envasado (que se lee de la presentación al completar). Una forma nueva de consumir en la OP debe sumarse aquí.
+     */
+    public function openProductionOrdersCount(): int
+    {
+        return ProductionOrder::query()
+            ->whereIn('status', ProductionOrderStatus::open())
+            ->where(fn ($query) => $query
+                ->whereHas('details', fn ($details) => $details->where('raw_material_id', $this->id))
+                ->orWhereHas('lineAdjustments', fn ($adjustments) => $adjustments->where('raw_material_id', $this->id))
+                ->orWhereHas('packagingPlans.productVariant', fn ($variants) => $variants->where('package_raw_material_id', $this->id)))
+            ->count();
     }
 
     /**

@@ -77,7 +77,8 @@ type Props = {
     canEditPrice: boolean;
 };
 
-const MAX_DECIMAL_INTEGER_DIGITS = 14;
+// Las columnas son decimal(12,4): 8 dígitos enteros y 4 decimales.
+const MAX_DECIMAL_INTEGER_DIGITS = 8;
 const MAX_DECIMAL_FRACTION_DIGITS = 4;
 const MAX_DECIMAL_INPUT_LENGTH =
     MAX_DECIMAL_INTEGER_DIGITS + 1 + MAX_DECIMAL_FRACTION_DIGITS;
@@ -344,6 +345,8 @@ export function RawMaterialForm({
                         <Checkbox
                             id="tracks_inventory"
                             checked={form.data.tracks_inventory}
+                            // Cambiar el control (en cualquier sentido) cambia cómo se costea: solo quien maneja costos.
+                            disabled={!canEditPrice}
                             onCheckedChange={(checked) =>
                                 form.setData(
                                     'tracks_inventory',
@@ -364,6 +367,8 @@ export function RawMaterialForm({
                                 de las compras. Sin control (agua, etiquetas),
                                 la orden registra el consumo sin descontar saldo
                                 y lo costea con el precio que se escribe aquí.
+                                {!canEditPrice &&
+                                    ' Solo quien puede modificar los parámetros de costo cambia el control.'}
                             </p>
                         </div>
                     </div>
@@ -376,7 +381,8 @@ export function RawMaterialForm({
                                     Precio de referencia
                                     {selectedUnit
                                         ? ` por ${selectedUnit.symbol}`
-                                        : ''}
+                                        : ''}{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <Input
                                     id="current_price"
@@ -396,8 +402,9 @@ export function RawMaterialForm({
                                     placeholder="0"
                                 />
                                 <p className="text-xs text-muted-foreground">
-                                    Al cambiarlo se recalcula el costo de los
-                                    productos que la usan.
+                                    Obligatorio, aunque sea 0. Al cambiarlo se
+                                    recalcula el costo de los productos que la
+                                    usan.
                                 </p>
                                 <InputError
                                     message={form.errors.current_price}

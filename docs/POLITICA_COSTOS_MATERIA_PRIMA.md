@@ -56,7 +56,10 @@ Cuando cambia `raw_materials.current_price` por esta politica, se dispara
 - los productos cuya fórmula activa usa la materia prima se recalculan completos (granel y presentaciones);
 - las presentaciones que la usan como **envase o etiqueta** se recalculan solas, con el costo de granel que ya tiene su
   producto (`repriceVariantsUsingPackagingMaterial`). No se recalcula el granel, que no cambió, ni se deja un registro
-  sin variación en su historial. Cubre también los productos sin fórmula activa.
+  sin variación en su historial. Cubre también los productos sin fórmula activa, pero **no** los que no tienen costo de
+  granel (`products.current_cost` vacío): sus presentaciones quedarían en envase + etiqueta, así que no se tocan.
+
+Guardar una presentación la recalcula de la misma forma (`repriceVariantsOfProduct`), con la misma excepción.
 
 Costo teórico de una presentación: `(granel × presentación + envase + etiqueta) × (1 + CIF)` (`VariantPricingService`).
 El precio solo cambia si el costo varía más que el umbral del producto.
@@ -69,9 +72,19 @@ sacar el precio. Su `current_price` se escribe a mano en el formulario de la mat
 `costs.update`, y al cambiarlo se guarda el anterior en `previous_price` y se encola
 `RecalculateRawMaterialDependentCosts`. La OP registra su consumo sin lote y lo costea a ese precio.
 
+- El precio es **obligatorio**, aunque sea 0 escrito a propósito, y no se puede borrar: vacío, los costos lo tomarían
+  como 0 sin que nadie lo decidiera. Por eso solo quien tiene `costs.update` crea materias primas sin control de
+  inventario o cambia el control de una, en cualquier sentido.
+- Activar el control de una materia prima que usan OP abiertas pide confirmación: desde ahí necesita saldo y esas OP no
+  se podrán completar hasta registrar sus compras.
+- Al cambiar el control se reevalúa la alerta de stock bajo: sin control no hay alerta (la abierta se resuelve).
+- No admiten movimientos manuales (compras ni salidas): un lote suyo nunca se descontaría.
+- El cambio dispara la misma alerta de variación de precio que las compras, si la materia prima tiene umbral.
+- El recálculo desde lotes nunca toca su precio, aunque tenga lotes (una compra registrada por error o de cuando sí
+  controlaba inventario).
 - Una materia prima con control de inventario no acepta precio manual.
 - No se puede quitar el control de inventario con saldo en bodega (quedaría congelado); activarlo siempre se puede, y
-  desde ahí el precio sale de las compras.
+  desde ese momento el precio sale de sus lotes (si ya tiene, se recalcula al activarlo).
 
 ## Como cambiar la politica mas adelante
 1. Definir variable en `.env`:

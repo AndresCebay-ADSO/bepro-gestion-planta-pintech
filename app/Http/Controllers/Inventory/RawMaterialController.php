@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Actions\RawMaterials\UpdateRawMaterialAction;
 use App\Actions\Shared\DeleteUnusedRecordAction;
 use App\Enums\Permission;
 use App\Filters\RawMaterialFilter;
@@ -11,15 +12,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\RawMaterials\IndexRawMaterialRequest;
 use App\Http\Requests\RawMaterials\StoreRawMaterialRequest;
 use App\Http\Requests\RawMaterials\UpdateRawMaterialRequest;
-use App\Jobs\RecalculateRawMaterialDependentCosts;
 use App\Models\InventoryBatch;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
-use App\Services\DecimalCalculator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -29,7 +29,7 @@ class RawMaterialController extends Controller
 {
     public function __construct(
         private readonly DeleteUnusedRecordAction $deleteUnused,
-        private readonly DecimalCalculator $calculator,
+        private readonly UpdateRawMaterialAction $updateRawMaterial,
     ) {}
 
     /**
@@ -260,6 +260,8 @@ class RawMaterialController extends Controller
                 'is_active' => $rawMaterial->is_active,
             ],
             'can' => ['updateCosts' => $canUpdateCosts],
+            // Activar el control de inventario las dejaría sin poder completarse hasta registrar compras: se confirma.
+            'openProductionOrdersCount' => $canUpdateCosts && ! $rawMaterial->tracks_inventory ? $rawMaterial->openProductionOrdersCount() : 0,
             'categories' => $this->categoryOptions(RawMaterialCategory::query()->selectable([$rawMaterial->category_id])),
             'units' => UnitOfMeasure::query()
                 ->selectable([$rawMaterial->unit_of_measure_id])
@@ -273,35 +275,11 @@ class RawMaterialController extends Controller
     {
         $this->authorize('update', $rawMaterial);
 
-        $validated = $request->validated();
-
-        // Precio escrito a mano (solo sin control de inventario): se guarda el anterior, como al recalcularlo desde las
-        // compras, y se recalculan en segundo plano los productos y presentaciones que lo usan.
-        $priceChanged = array_key_exists('current_price', $validated)
-            && ! $this->samePrice($rawMaterial->current_price, $validated['current_price']);
-
-        if ($priceChanged) {
-            $validated['previous_price'] = $rawMaterial->current_price;
-        }
-
-        $rawMaterial->update($validated);
-
-        if ($priceChanged) {
-            RecalculateRawMaterialDependentCosts::dispatch((int) $rawMaterial->id);
-        }
+        $this->updateRawMaterial->execute($rawMaterial, Arr::except($request->validated(), 'confirm_tracking_change'));
 
         return redirect()
             ->route('raw-materials.index')
             ->with('success', __('Materia prima actualizada exitosamente.'));
-    }
-
-    private function samePrice(?string $current, mixed $new): bool
-    {
-        if ($current === null || $new === null || $new === '') {
-            return $current === null && ($new === null || $new === '');
-        }
-
-        return $this->calculator->cmp($current, (string) $new, 4) === 0;
     }
 
     /**

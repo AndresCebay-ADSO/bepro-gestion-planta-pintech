@@ -8,11 +8,14 @@ use App\Enums\InventoryMovementType;
 use App\Jobs\RecalculateRawMaterialReferencePrice;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
+use App\Models\RawMaterial;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class InventoryService
 {
+    public const UNTRACKED_MATERIAL_MESSAGE = 'Esta materia prima no controla inventario: no se registran compras ni salidas de ella.';
+
     public function __construct(
         private readonly DecimalCalculator $calculator,
         private readonly AlertService $alertService,
@@ -23,6 +26,7 @@ class InventoryService
         return DB::transaction(function () use ($data, $userId) {
             $typeValue = $data['type'] instanceof InventoryMovementType ? $data['type']->value : $data['type'];
             $this->rejectManualProductionOrderLink($data['production_order_id'] ?? null);
+            $this->rejectUntrackedMaterial((int) $data['raw_material_id']);
 
             $batchId = $this->resolveBatchIdForEntry($data, $typeValue);
 
@@ -69,6 +73,21 @@ class InventoryService
 
             return $movement;
         });
+    }
+
+    /**
+     * El request ya lo rechaza, pero sin bloqueo. Bloquear la materia prima ordena este movimiento con un cambio de su
+     * control de inventario (UpdateRawMaterialAction, que la bloquea igual): ninguno ve el estado de antes del otro.
+     */
+    private function rejectUntrackedMaterial(int $rawMaterialId): void
+    {
+        $rawMaterial = RawMaterial::query()->select(['id', 'tracks_inventory'])->lockForUpdate()->find($rawMaterialId);
+
+        if ($rawMaterial !== null && ! $rawMaterial->tracks_inventory) {
+            throw ValidationException::withMessages([
+                'raw_material_id' => __(self::UNTRACKED_MATERIAL_MESSAGE),
+            ]);
+        }
     }
 
     private function evaluateAlertsAfterMovement(int $rawMaterialId, int|string|null $batchId): void

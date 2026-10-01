@@ -33,7 +33,7 @@ class StoreRawMaterialRequest extends FormRequest
             ],
             'category_id' => $this->activeOrCurrentRules('raw_material_categories', 'category_id'),
             'unit_of_measure_id' => $this->activeOrCurrentRules('unit_of_measures', 'unit_of_measure_id'),
-            'minimum_stock' => ['bail', 'required', 'numeric', 'min:0', 'decimal:0,4'],
+            'minimum_stock' => ['bail', 'required', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999'],
             'alert_days_before_expiry' => ['bail', 'required', 'integer', 'min:0'],
             'price_variation_threshold' => ['bail', 'nullable', 'numeric', 'min:0.01', 'max:100', 'decimal:0,2'],
             'tracks_inventory' => ['sometimes', 'boolean'],
@@ -48,7 +48,11 @@ class StoreRawMaterialRequest extends FormRequest
     public function after(): array
     {
         return [
-            fn (Validator $validator) => $this->validateManualPrice($validator, $this->boolean('tracks_inventory', true)),
+            fn (Validator $validator) => $this->validateManualPrice(
+                $validator,
+                tracksInventory: $this->boolean('tracks_inventory', true),
+                priceRequired: ! $this->boolean('tracks_inventory', true),
+            ),
         ];
     }
 

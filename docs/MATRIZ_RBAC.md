@@ -88,15 +88,15 @@ combinación, se crea un rol nuevo.
 | | `products.manage_documents` | [x] | [x] | [ ] | [ ] | [ ] | Subir y eliminar fichas técnicas y hojas de seguridad. |
 | | `products.download_documents` | [x] | [x] | [x] | [ ] | [x] | 🆕 Hoy lo hace cualquiera que vea el producto; se separa de `manage_documents`. |
 | **Costos** | `costs.view` | [x] | [x] | [ ] | [ ] | [ ] | 🆕 alcance global (principio 1): sustituye a `products.view_costs`, `raw_materials.view_costs` y `production_orders.preview_costs`, y oculta el costo de remanentes. |
-| | `costs.update` | [x] | [x] | [ ] | [ ] | [ ] | Márgenes, CIF % y umbral de precio (en la página de costos y en el formulario de producto). |
+| | `costs.update` | [x] | [x] | [ ] | [ ] | [ ] | Márgenes, CIF % y umbral de precio (en la página de costos y en el formulario de producto). También el precio manual de las materias primas sin control de inventario y el interruptor «Controla inventario» (ver `raw_materials.edit`). |
 | **Fórmulas** | `formulas.view` | [x] | [x] | [ ] | [ ] | [ ] | ⚠️ hoy Producción ve, crea y edita fórmulas. Cambio intencional (§0). |
 | | `formulas.create` | [x] | [x] | [ ] | [ ] | [ ] | ⚠️ |
 | | `formulas.edit` | [x] | [x] | [ ] | [ ] | [ ] | ⚠️ |
 | | `formulas.activate` | [x] | [x] | [ ] | [ ] | [ ] | Activar una versión desactiva la anterior. |
 | | `formulas.delete` | [x] | [ ] | [ ] | [ ] | [ ] | Solo si ninguna orden la usó. ⚠️ hoy Admin puede. |
 | **Materias primas** | `raw_materials.view` | [x] | [x] | [x] | [ ] | [ ] | Sin costos salvo `costs.view`. |
-| | `raw_materials.create` | [x] | [x] | [ ] | [ ] | [ ] | |
-| | `raw_materials.edit` | [x] | [x] | [ ] | [ ] | [ ] | |
+| | `raw_materials.create` | [x] | [x] | [ ] | [ ] | [ ] | Crearla **sin control de inventario** exige además `costs.update`: su precio se escribe a mano y entra en los costos. |
+| | `raw_materials.edit` | [x] | [x] | [ ] | [ ] | [ ] | Cambiar «Controla inventario» (en cualquier sentido) o el precio manual exige además `costs.update`. Hoy los dos permisos van juntos en los roles del sistema; la regla aplica a roles personalizados. |
 | | `raw_materials.deactivate` | [x] | [x] | [ ] | [ ] | [ ] | 🆕 Se separa de `delete`. Se niega si hay lotes con stock. |
 | | `raw_materials.reactivate` | [x] | [x] | [ ] | [ ] | [ ] | |
 | | `raw_materials.delete` | [x] | [ ] | [ ] | [ ] | [ ] | Borrado físico solo si no tiene lotes, movimientos, fórmulas ni órdenes. |

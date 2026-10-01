@@ -1,9 +1,20 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import { RawMaterialForm } from '@/components/raw-materials/raw-material-form';
 import type {
     CategoryOption,
     RawMaterialFormData,
 } from '@/components/raw-materials/raw-material-form';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
     index as rawMaterialsIndex,
@@ -36,6 +47,8 @@ type Props = {
     categories: CategoryOption[];
     units: UnitOption[];
     can: { updateCosts: boolean };
+    /** OP abiertas que la usan: activar el control de inventario las dejaría sin saldo para completarse. */
+    openProductionOrdersCount: number;
 };
 
 const trimZeroes = (val: string | null | undefined): string => {
@@ -51,6 +64,7 @@ export default function RawMaterialsEdit({
     categories,
     units,
     can,
+    openProductionOrdersCount,
 }: Props) {
     const form = useForm<RawMaterialFormData>({
         code: rawMaterial.code,
@@ -68,9 +82,21 @@ export default function RawMaterialsEdit({
         is_active: rawMaterial.is_active,
     });
 
-    const submit = () => {
+    const [confirming, setConfirming] = useState(false);
+    const startsTracking =
+        !rawMaterial.tracks_inventory && form.data.tracks_inventory;
+    // El servidor también la exige si una OP empezó a usarla mientras se editaba.
+    const confirmationError = (
+        form.errors as Partial<Record<'confirm_tracking_change', string>>
+    ).confirm_tracking_change;
+    const needsConfirmation =
+        startsTracking &&
+        (openProductionOrdersCount > 0 || Boolean(confirmationError));
+
+    const save = (confirmed: boolean) => {
         form.transform(({ current_price, ...data }) => ({
             ...data,
+            confirm_tracking_change: confirmed,
             // El precio solo viaja si se puede escribir: sin control de inventario y con permiso de costos.
             ...(!data.tracks_inventory && can.updateCosts
                 ? { current_price: current_price === '' ? null : current_price }
@@ -82,7 +108,23 @@ export default function RawMaterialsEdit({
                     : data.price_variation_threshold,
         }));
 
-        form.put(rawMaterialsUpdate(rawMaterial.id).url);
+        form.put(rawMaterialsUpdate(rawMaterial.id).url, {
+            onSuccess: () => setConfirming(false),
+            // Si una OP empezó a usarla mientras se editaba, el servidor pide confirmación: se abre el diálogo con su
+            // mensaje en vez de dejar el error sin mostrar.
+            onError: (errors) =>
+                setConfirming(Boolean(errors.confirm_tracking_change)),
+        });
+    };
+
+    const submit = () => {
+        if (needsConfirmation) {
+            setConfirming(true);
+
+            return;
+        }
+
+        save(false);
     };
 
     return (
@@ -129,6 +171,44 @@ export default function RawMaterialsEdit({
                     </Button>
                 </div>
             </div>
+
+            <AlertDialog open={confirming} onOpenChange={setConfirming}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            ¿Activar el control de inventario de{' '}
+                            {rawMaterial.code}?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <div className="space-y-2">
+                                <p>
+                                    {confirmationError ??
+                                        `${openProductionOrdersCount === 1 ? 'Una orden de producción abierta la usa' : `${openProductionOrdersCount} órdenes de producción abiertas la usan`}.`}
+                                </p>
+                                <p>
+                                    Desde ahora necesitará saldo: esas órdenes
+                                    no se podrán completar hasta registrar sus
+                                    compras, y su precio saldrá de ellas.
+                                </p>
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={form.processing}>
+                            Cancelar
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            disabled={form.processing}
+                            onClick={(event) => {
+                                event.preventDefault();
+                                save(true);
+                            }}
+                        >
+                            Sí, activar el control
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 }

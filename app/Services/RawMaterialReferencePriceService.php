@@ -18,11 +18,13 @@ class RawMaterialReferencePriceService
     {
         return DB::transaction(function () use ($rawMaterialId): bool {
             $rawMaterial = RawMaterial::query()
-                ->select(['id', 'current_price', 'previous_price'])
+                ->select(['id', 'current_price', 'previous_price', 'tracks_inventory'])
                 ->lockForUpdate()
                 ->find($rawMaterialId);
 
-            if ($rawMaterial === null) {
+            // Sin control de inventario el precio se escribe a mano (agua, etiquetas): un lote, aunque exista (una compra
+            // registrada por error, o de cuando sí controlaba inventario), no debe reemplazarlo.
+            if ($rawMaterial === null || ! $rawMaterial->tracks_inventory) {
                 return false;
             }
 
@@ -101,10 +103,6 @@ class RawMaterialReferencePriceService
 
     private function pricesAreEqual(?string $priceA, ?string $priceB): bool
     {
-        if ($priceA === null || $priceB === null) {
-            return $priceA === $priceB;
-        }
-
-        return $this->calculator->cmp($priceA, $priceB, 4) === 0;
+        return $this->calculator->sameOrBothNull($priceA, $priceB);
     }
 }

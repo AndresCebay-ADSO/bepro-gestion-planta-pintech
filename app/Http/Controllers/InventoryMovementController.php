@@ -61,7 +61,7 @@ class InventoryMovementController extends Controller
 
         return Inertia::render('Inventory/Movements/Index', [
             'movements' => $movements,
-            'rawMaterials' => Inertia::optional(fn () => RawMaterial::query()->select('id', 'code')->where('is_active', true)->orderBy('code')->get()),
+            'rawMaterials' => Inertia::optional(fn () => RawMaterial::query()->select('id', 'code')->where('is_active', true)->where('tracks_inventory', true)->orderBy('code')->get()),
             // Lotes con precio para el formulario de alta: solo para quien puede registrar movimientos.
             'batches' => Inertia::optional(fn () => Gate::denies('create', InventoryMovement::class) ? [] : InventoryBatch::query()
                 ->when(

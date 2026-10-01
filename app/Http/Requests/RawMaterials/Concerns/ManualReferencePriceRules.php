@@ -14,31 +14,57 @@ use Illuminate\Validation\Validator;
  */
 trait ManualReferencePriceRules
 {
+    /** Cambiar el control de inventario cambia cómo se costea: sin él, el precio se escribe a mano. */
+    public const TRACKING_PERMISSION_MESSAGE = 'Solo quien puede modificar los parámetros de costo cambia el control de inventario: sin él, el precio se escribe a mano y entra en los costos.';
+
     /**
      * @return list<string>
      */
     protected function manualPriceRules(): array
     {
-        return ['nullable', 'numeric', 'min:0', 'decimal:0,4'];
+        // La columna es decimal(12,4): sin tope, PostgreSQL rechaza el valor con un error del servidor.
+        return ['nullable', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999'];
     }
 
     /**
-     * `has()` y no `filled()`: enviar el precio vacío también lo cambia (lo borra), así que exige el mismo permiso.
+     * @param  bool  $priceRequired  La materia prima empieza a no controlar inventario (se crea así o se le quita el
+     *                               control): necesita un precio, aunque sea 0 escrito a propósito. Vacío, los costos la
+     *                               tomarían como 0 sin que nadie lo decidiera.
      */
-    protected function validateManualPrice(Validator $validator, bool $tracksInventory): void
+    protected function validateManualPrice(Validator $validator, bool $tracksInventory, bool $priceRequired): void
     {
-        if (! $this->has('current_price') || $validator->errors()->has('current_price')) {
+        if ($validator->errors()->has('current_price')) {
             return;
         }
 
-        if (! ($this->user()?->can(Permission::CostsUpdate->value) ?? false)) {
+        // `has()` y no `filled()`: enviar el precio vacío también lo cambia (lo borraría).
+        $sent = $this->has('current_price');
+        $missing = $this->input('current_price') === null || $this->input('current_price') === '';
+
+        if ($tracksInventory) {
+            if ($sent) {
+                $validator->errors()->add('current_price', __('Esta materia prima controla inventario: su precio sale de sus compras y no se escribe a mano.'));
+            }
+
+            return;
+        }
+
+        $canUpdateCosts = $this->user()?->can(Permission::CostsUpdate->value) ?? false;
+
+        if ($sent && ! $canUpdateCosts) {
             $validator->errors()->add('current_price', __('No tienes permiso para fijar el precio de una materia prima.'));
 
             return;
         }
 
-        if ($tracksInventory) {
-            $validator->errors()->add('current_price', __('Esta materia prima controla inventario: su precio sale de sus compras y no se escribe a mano.'));
+        if ($priceRequired && ! $canUpdateCosts) {
+            $validator->errors()->add('tracks_inventory', __(self::TRACKING_PERMISSION_MESSAGE));
+
+            return;
+        }
+
+        if (($priceRequired || $sent) && $missing) {
+            $validator->errors()->add('current_price', __('Escribe el precio de referencia: sin control de inventario es el que usan los costos. Puede ser 0.'));
         }
     }
 }
