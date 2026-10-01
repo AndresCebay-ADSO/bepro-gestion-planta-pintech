@@ -37,6 +37,9 @@ return new class extends Migration
 
             $table->index(['product_id', 'is_active']);
             $table->index('name');
+            // PostgreSQL no indexa las llaves foráneas: los usan el recálculo de costos y el borrado de materias primas.
+            $table->index('package_raw_material_id');
+            $table->index('label_raw_material_id');
         });
     }
 

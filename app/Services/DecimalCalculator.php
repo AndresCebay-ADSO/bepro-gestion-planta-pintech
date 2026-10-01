@@ -194,6 +194,22 @@ class DecimalCalculator
     }
 
     /**
+     * Compara dos valores que pueden faltar (precio o parámetro sin definir): iguales si faltan los dos o si valen lo
+     * mismo ("1.5000" = "1.5"). Una cadena vacía cuenta como falta, igual que en un formulario.
+     */
+    public function sameOrBothNull(string|int|float|null $a, string|int|float|null $b, int $scale = self::DEFAULT_SCALE): bool
+    {
+        $aMissing = $a === null || $a === '';
+        $bMissing = $b === null || $b === '';
+
+        if ($aMissing || $bMissing) {
+            return $aMissing && $bMissing;
+        }
+
+        return $this->cmp($a, $b, $scale) === 0;
+    }
+
+    /**
      * Check if a decimal number is negative
      *
      * @param  string|int|float  $value  Value to check

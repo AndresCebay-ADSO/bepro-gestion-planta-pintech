@@ -258,17 +258,9 @@ class ProductController extends Controller
                     forcePriceRefresh: true
                 );
 
+                // Sin fórmula activa: el precio del producto y el de sus presentaciones con el costo que ya tiene.
                 if ($costRecord === null) {
-                    $costStr = (string) ($product->current_cost ?? '0');
-                    $cifPercentageStr = (string) ($product->cif_percentage ?? '0');
-                    $cifRatio = $this->calculator->div($cifPercentageStr, '100', 4);
-                    $cifFactor = $this->calculator->add('1', $cifRatio, 4);
-                    $newPrice = $this->calculator->mul($costStr, $cifFactor, 4);
-
-                    $product->updateQuietly(['current_price' => $newPrice]);
-
-                    // Mismo cálculo que con fórmula (envase y etiqueta incluidos), en un solo sitio.
-                    $this->productionCostRecalculationService->repriceVariantsOfProduct($product, forcePriceRefresh: true);
+                    $this->productionCostRecalculationService->repriceProductWithoutFormula($product);
                 }
             }
 
@@ -367,15 +359,7 @@ class ProductController extends Controller
 
     private function hasDecimalChanged(string|int|float|null $current, mixed $new): bool
     {
-        if ($current === null && $new === null) {
-            return false;
-        }
-
-        if ($current === null || $new === null) {
-            return true;
-        }
-
-        return $this->calculator->cmp((string) $current, (string) $new) !== 0;
+        return ! $this->calculator->sameOrBothNull($current, $new);
     }
 
     public function destroy(Product $product): RedirectResponse

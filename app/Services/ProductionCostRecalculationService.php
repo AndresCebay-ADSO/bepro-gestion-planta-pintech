@@ -156,18 +156,24 @@ class ProductionCostRecalculationService
             ->get(['id', 'current_cost', 'cif_percentage', 'price_threshold'])
             ->keyBy('id');
 
+        // Una sola consulta de precios para todas: un envase puede estar en cientos de productos.
+        $unitPrices = $this->packagingUnitPrices($variants);
+
         foreach ($variants->groupBy('product_id') as $productId => $productVariants) {
             $product = $products->get($productId);
 
-            if ($product === null) {
+            // Sin costo de granel no hay con qué costear: las presentaciones quedarían en envase + etiqueta y su precio
+            // casi en cero. Se dejan como estaban hasta que el producto tenga fórmula o costo.
+            if ($product === null || $product->current_cost === null) {
                 continue;
             }
 
             DB::transaction(fn () => $this->repriceVariants(
                 variants: $productVariants,
-                bulkCost: (string) ($product->current_cost ?? '0'),
+                bulkCost: (string) $product->current_cost,
                 cifPercentage: $product->cif_percentage !== null ? (string) $product->cif_percentage : null,
                 priceThreshold: (string) ($product->price_threshold ?? '0'),
+                unitPrices: $unitPrices,
             ));
         }
 
@@ -175,13 +181,40 @@ class ProductionCostRecalculationService
     }
 
     /**
-     * Recalcula todas las presentaciones de un producto con su costo de granel actual, sin tocar el granel.
+     * Precio de un producto sin fórmula activa y de sus presentaciones, con el costo de granel que ya tiene (al cambiar su
+     * CIF o su umbral). Misma regla que con fórmula: sin costo de granel no se toca nada (el precio quedaría en 0), y sin
+     * CIF no se calcula precio, ni en el producto ni en sus presentaciones (VariantPricingService).
+     */
+    public function repriceProductWithoutFormula(Product $product): void
+    {
+        if ($product->current_cost === null) {
+            return;
+        }
+
+        DB::transaction(function () use ($product): void {
+            if ($product->cif_percentage !== null) {
+                $cifFactor = $this->calculator->add('1', $this->calculator->div((string) $product->cif_percentage, '100', 4), 4);
+                $product->update(['current_price' => $this->calculator->mul((string) $product->current_cost, $cifFactor, 4)]);
+            }
+
+            $this->repriceVariantsOfProduct($product, forcePriceRefresh: true);
+        });
+    }
+
+    /**
+     * Recalcula todas las presentaciones de un producto con su costo de granel actual, sin tocar el granel. Un producto
+     * sin costo de granel (sin fórmula nunca costeada) no se toca.
      */
     public function repriceVariantsOfProduct(Product $product, bool $forcePriceRefresh = false): void
     {
+        // Igual que en repriceVariantsUsingPackagingMaterial: sin costo de granel, nada que recalcular.
+        if ($product->current_cost === null) {
+            return;
+        }
+
         $this->repriceVariants(
             variants: ProductVariant::query()->where('product_id', $product->id)->get(self::VARIANT_COLUMNS),
-            bulkCost: (string) ($product->current_cost ?? '0'),
+            bulkCost: (string) $product->current_cost,
             cifPercentage: $product->cif_percentage !== null ? (string) $product->cif_percentage : null,
             priceThreshold: (string) ($product->price_threshold ?? '0'),
             forcePriceRefresh: $forcePriceRefresh,
@@ -192,6 +225,7 @@ class ProductionCostRecalculationService
      * Costo y precio de cada presentación: granel × presentación + envase + etiqueta, a su precio de referencia actual.
      *
      * @param  Collection<int, ProductVariant>  $variants
+     * @param  Collection<int, string>|null  $unitPrices  Precios ya cargados (`packagingUnitPrices`); si faltan, se consultan.
      */
     private function repriceVariants(
         Collection $variants,
@@ -199,19 +233,9 @@ class ProductionCostRecalculationService
         ?string $cifPercentage,
         string $priceThreshold,
         bool $forcePriceRefresh = false,
+        ?Collection $unitPrices = null,
     ): void {
-        $materialIds = $variants
-            ->flatMap(fn (ProductVariant $variant): array => [$variant->package_raw_material_id, $variant->label_raw_material_id])
-            ->filter()
-            ->map(fn ($id): int => (int) $id)
-            ->unique()
-            ->values()
-            ->all();
-
-        $unitPrices = RawMaterial::query()
-            ->whereIn('id', $materialIds)
-            ->pluck('current_price', 'id')
-            ->map(fn ($price): string => (string) ($price ?? '0'));
+        $unitPrices ??= $this->packagingUnitPrices($variants);
 
         $unitPrice = fn (?int $materialId): string => $materialId !== null
             ? (string) ($unitPrices->get($materialId) ?? '0')
@@ -231,5 +255,27 @@ class ProductionCostRecalculationService
                 forceRefresh: $forcePriceRefresh,
             );
         }
+    }
+
+    /**
+     * Precio de referencia actual del envase y la etiqueta de cada presentación, por id de materia prima.
+     *
+     * @param  Collection<int, ProductVariant>  $variants
+     * @return Collection<int, string>
+     */
+    private function packagingUnitPrices(Collection $variants): Collection
+    {
+        $materialIds = $variants
+            ->flatMap(fn (ProductVariant $variant): array => [$variant->package_raw_material_id, $variant->label_raw_material_id])
+            ->filter()
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        return RawMaterial::query()
+            ->whereIn('id', $materialIds)
+            ->pluck('current_price', 'id')
+            ->map(fn ($price): string => (string) ($price ?? '0'));
     }
 }

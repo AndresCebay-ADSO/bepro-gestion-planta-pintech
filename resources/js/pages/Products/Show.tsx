@@ -23,6 +23,7 @@ import {
 import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
+import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -1153,7 +1154,7 @@ export default function ProductsShow({
                                                     />
                                                     <p className="text-xs text-muted-foreground">
                                                         {activeFormula
-                                                            ? 'Calculado por la fórmula activa y el envase.'
+                                                            ? 'Calculado por la fórmula activa, el envase y la etiqueta.'
                                                             : 'Se calculará al registrar la fórmula de producción.'}
                                                     </p>
                                                 </div>
@@ -1228,6 +1229,12 @@ export default function ProductsShow({
                                                 Se descontará del inventario al
                                                 completar la orden de producción
                                             </p>
+                                            <InputError
+                                                message={
+                                                    form.errors
+                                                        .package_raw_material_id
+                                                }
+                                            />
                                         </div>
 
                                         <div className="space-y-2">
@@ -1276,6 +1283,12 @@ export default function ProductsShow({
                                                 entra en el costo de la
                                                 presentación
                                             </p>
+                                            <InputError
+                                                message={
+                                                    form.errors
+                                                        .label_raw_material_id
+                                                }
+                                            />
                                         </div>
 
                                         {dialogMode === 'edit' && (
