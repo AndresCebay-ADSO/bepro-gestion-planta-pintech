@@ -160,11 +160,14 @@ class CompleteProductionOrderAction
                 $actualUnits = (string) $packData['actual_units'];
 
                 if ($this->calculator->cmp($actualUnits, '0', 4) <= 0) {
-                    // Sin unidades no se consume nada (la validación no deja envases ni etiquetas), pero el envase se
-                    // guarda igual: el documento cerrado no debe cambiar si después se cambia el de la presentación.
+                    // Sin unidades no se consume nada, y el plan cerrado lo dice: sin envases nuevos ni etiquetas usadas
+                    // (un avance guardado antes con unidades pudo dejarlos). El envase se guarda igual: el documento
+                    // cerrado no debe cambiar si después se cambia el de la presentación.
                     $plan->update([
                         'actual_units' => $actualUnits,
                         'package_raw_material_id' => $plan->packagingConsumption($actualUnits)['package_id'],
+                        'new_containers_used' => null,
+                        'labels_used' => null,
                     ]);
 
                     continue;

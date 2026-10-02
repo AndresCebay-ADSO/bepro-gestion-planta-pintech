@@ -89,7 +89,7 @@ class ProductionOrderPackagingPlan extends Model
             'product_variant_id' => $variantId,
             'planned_units' => $plannedUnits,
             'label_raw_material_id' => RawMaterial::query()
-                ->where('is_active', true)
+                ->active()
                 ->whereKey(ProductVariant::query()->whereKey($variantId)->select('label_raw_material_id'))
                 ->value('id'),
         ]);

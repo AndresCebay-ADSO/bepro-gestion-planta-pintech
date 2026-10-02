@@ -436,3 +436,45 @@ it('rechaza una cantidad de ingrediente imposible con un mensaje, sin llegar a l
 
     expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::InProgress);
 });
+
+it('acepta una cantidad de ingrediente con un exponente negativo enorme como cero, sin error del servidor', function () {
+    $plan = packagingPlanFor($this->order, $this->variant);
+
+    $this->post(route('production-orders.complete', $this->order), [
+        ...completePackagingPayload($this->detail, ['id' => $plan->id, 'actual_units' => 10], $this->admin),
+        'ingredients' => [['id' => $this->detail->id, 'actual_quantity' => '1e-65']],
+    ])->assertSessionHasNoErrors();
+
+    expect($this->detail->fresh()->actual_quantity)->toBe('0.0000');
+});
+
+it('unas unidades enviadas como número JSON enorme dan error de validación, no del servidor', function () {
+    $plan = packagingPlanFor($this->order, $this->variant);
+
+    // `bail` corta solo el campo que falla: la regla de los envases leía las unidades (1.0E+65) igual.
+    $this->postJson(route('production-orders.preview-costs', $this->order), [
+        'ingredients' => [['id' => $this->detail->id, 'actual_quantity' => 52]],
+        'packaging' => [['id' => $plan->id, 'actual_units' => 1e65, 'new_containers_used' => 1]],
+    ])->assertUnprocessable()->assertJsonValidationErrors('packaging.0.actual_units');
+});
+
+it('al completar con 0 unidades vacía los envases y etiquetas que dejó un avance guardado', function () {
+    $plan = packagingPlanFor($this->order, $this->variant);
+    $other = ProductVariant::factory()->create(['product_id' => $this->product->id, 'presentation_value' => 1, 'package_raw_material_id' => $this->container->id]);
+    $otherPlan = packagingPlanFor($this->order, $other);
+    $otherPlan->update(['new_containers_used' => '5', 'labels_used' => '5']);
+
+    // Un cliente que no manda esos campos al completar con 0 unidades.
+    $this->post(route('production-orders.complete', $this->order), [
+        ...completePackagingPayload($this->detail, ['id' => $plan->id, 'actual_units' => 10], $this->admin),
+        'packaging' => [
+            ['id' => $plan->id, 'actual_units' => 10],
+            ['id' => $otherPlan->id, 'actual_units' => 0],
+        ],
+    ])->assertSessionHasNoErrors();
+
+    expect($otherPlan->fresh())
+        ->new_containers_used->toBeNull()
+        ->labels_used->toBeNull()
+        ->and($this->containerBatch->fresh()->remaining_quantity)->toBe('10.0000');
+});

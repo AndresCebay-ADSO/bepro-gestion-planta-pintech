@@ -83,10 +83,15 @@ trait ProductionConsumptionRules
             $index = explode('.', $attribute)[1] ?? null;
             $actualUnits = $this->input("packaging.{$index}.actual_units");
 
-            // Las unidades se validan en su propio campo; aquí solo se compara si las dos son decimales normales. Un
-            // valor como «1e999999999» ya tiene su error y no debe llegar a la calculadora.
-            $plainDecimal = fn (mixed $number): bool => is_int($number) || is_float($number)
-                || (is_string($number) && preg_match('/^\d{1,8}(\.\d{1,4})?$/', $number) === 1);
+            // Las unidades se validan en su propio campo, y `bail` solo corta las reglas de ese campo: esta regla puede
+            // leerlas aunque ya tengan su error. Por eso solo compara números escritos sin notación científica (un float
+            // como 1e65 se escribe «1.0E+65»), que nunca hacen fallar a la calculadora. No repite los límites de la
+            // columna: de eso se ocupan `decimal` y `max`.
+            $plainDecimal = function (mixed $number): bool {
+                $text = is_string($number) ? trim($number) : (is_int($number) || is_float($number) ? (string) $number : null);
+
+                return $text !== null && is_numeric($text) && stripos($text, 'e') === false;
+            };
 
             if (! $plainDecimal($value) || ! $plainDecimal($actualUnits)) {
                 return;

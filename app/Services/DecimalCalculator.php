@@ -202,10 +202,12 @@ class DecimalCalculator
      * que la validación `numeric` deja pasar). Las dos se escriben como decimal plano, sin redondear: «0.00001», «10».
      * Todas las operaciones pasan por aquí.
      *
-     * El exponente tiene tope: «1e999999999» pediría mil millones de dígitos y agotaría la memoria. Ninguna cantidad
-     * real del negocio se acerca (las columnas son decimal(12,4)); las validaciones lo frenan antes con un mensaje.
+     * El exponente tiene tope: «1e999999999» pediría mil millones de dígitos y agotaría la memoria. Uno positivo por
+     * encima de MAX_EXPONENT es un error (ninguna cantidad real se acerca: las columnas son decimal(12,4), y `max` lo
+     * frena antes con un mensaje); uno negativo por debajo es un número tan cerca de cero que vale 0 en cualquier escala
+     * del proyecto, y se devuelve así en vez de fallar.
      *
-     * @throws \InvalidArgumentException si el exponente supera MAX_EXPONENT
+     * @throws \InvalidArgumentException si el exponente positivo supera MAX_EXPONENT
      */
     public function normalize(string|int|float $value): string
     {
@@ -217,8 +219,12 @@ class DecimalCalculator
 
         [$mantissa, $exponent] = explode('E', strtoupper($repr));
 
-        if (abs((int) $exponent) > self::MAX_EXPONENT) {
+        if ((int) $exponent > self::MAX_EXPONENT) {
             throw new \InvalidArgumentException("Número fuera de rango: {$repr}");
+        }
+
+        if ((int) $exponent < -self::MAX_EXPONENT) {
+            return '0';
         }
 
         $negative = str_starts_with($mantissa, '-');

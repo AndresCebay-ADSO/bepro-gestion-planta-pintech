@@ -258,6 +258,14 @@ test('normalize() also expands scientific notation that arrives as text', functi
 
 test('normalize() refuses a huge exponent instead of building a number with millions of digits', function () {
     expect(fn () => $this->calc->normalize('1e999999999'))->toThrow(InvalidArgumentException::class)
-        ->and(fn () => $this->calc->normalize('1e-999999999'))->toThrow(InvalidArgumentException::class)
+        ->and(fn () => $this->calc->normalize('1e65'))->toThrow(InvalidArgumentException::class)
         ->and($this->calc->normalize('1e64'))->toBe('1'.str_repeat('0', 64));
+});
+
+test('normalize() treats a hugely negative exponent as zero instead of failing', function () {
+    // Tan cerca de cero que vale 0 en cualquier escala: «1e-65» pasa `numeric`, `min:0` y `max`.
+    expect($this->calc->normalize('1e-65'))->toBe('0')
+        ->and($this->calc->normalize('-1e-999999999'))->toBe('0')
+        ->and($this->calc->normalize(1.0E-70))->toBe('0')
+        ->and($this->calc->normalize('1e-64'))->toBe('0.'.str_repeat('0', 63).'1');
 });
