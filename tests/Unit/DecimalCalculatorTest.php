@@ -255,3 +255,9 @@ test('normalize() also expands scientific notation that arrives as text', functi
         ->and($this->calc->cmp('1e1', '9'))->toBe(1)
         ->and($this->calc->mul('1.0E-5', '100000'))->toBe('1.0000');
 });
+
+test('normalize() refuses a huge exponent instead of building a number with millions of digits', function () {
+    expect(fn () => $this->calc->normalize('1e999999999'))->toThrow(InvalidArgumentException::class)
+        ->and(fn () => $this->calc->normalize('1e-999999999'))->toThrow(InvalidArgumentException::class)
+        ->and($this->calc->normalize('1e64'))->toBe('1'.str_repeat('0', 64));
+});

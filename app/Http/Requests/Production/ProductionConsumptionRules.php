@@ -46,7 +46,9 @@ trait ProductionConsumptionRules
                 Rule::exists('production_order_details', 'id')
                     ->where('production_order_id', $scopedOrderId),
             ],
-            'ingredients.*.actual_quantity' => ['required', 'numeric', 'min:0'],
+            // Sin `decimal`: el navegador la multiplica por el factor de conversión y puede mandar ruido de floats. El tope
+            // es el de la columna decimal(12,4): frena valores como «1e20», que pasan `numeric` y `min:0`.
+            'ingredients.*.actual_quantity' => ['bail', 'required', 'numeric', 'min:0', 'max:99999999.9999'],
             'packaging' => ['array'],
             'packaging.*.id' => [
                 'required',
@@ -55,11 +57,11 @@ trait ProductionConsumptionRules
                     ->where('production_order_id', $scopedOrderId),
             ],
             // Formato decimal: `numeric` deja pasar «1e1», que no es una cantidad que alguien escriba a propósito.
-            'packaging.*.actual_units' => ['required', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999'],
+            'packaging.*.actual_units' => ['bail', 'required', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999'],
             // Empaque (3.7). Vacío = tantos como unidades envasadas. Sin tope: la merma (un envase dañado al llenar, una
             // etiqueta mal pegada) es costo del lote (decisión del 2026-09-30).
-            'packaging.*.new_containers_used' => ['nullable', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999', $this->requiresPackedUnits()],
-            'packaging.*.labels_used' => ['nullable', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999', $this->requiresPackedUnits()],
+            'packaging.*.new_containers_used' => ['bail', 'nullable', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999', $this->requiresPackedUnits()],
+            'packaging.*.labels_used' => ['bail', 'nullable', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999', $this->requiresPackedUnits()],
             'packaging.*.label_raw_material_id' => [
                 'nullable',
                 'integer',
@@ -81,10 +83,18 @@ trait ProductionConsumptionRules
             $index = explode('.', $attribute)[1] ?? null;
             $actualUnits = $this->input("packaging.{$index}.actual_units");
 
+            // Las unidades se validan en su propio campo; aquí solo se compara si las dos son decimales normales. Un
+            // valor como «1e999999999» ya tiene su error y no debe llegar a la calculadora.
+            $plainDecimal = fn (mixed $number): bool => is_int($number) || is_float($number)
+                || (is_string($number) && preg_match('/^\d{1,8}(\.\d{1,4})?$/', $number) === 1);
+
+            if (! $plainDecimal($value) || ! $plainDecimal($actualUnits)) {
+                return;
+            }
+
             $calculator = app(DecimalCalculator::class);
 
-            if (is_numeric($value) && is_numeric($actualUnits)
-                && $calculator->isPositive($calculator->normalize($value))
+            if ($calculator->isPositive($calculator->normalize($value))
                 && ! $calculator->isPositive($calculator->normalize($actualUnits))) {
                 $fail(__('Sin unidades envasadas no hay lote al que cargarlos: deja el campo vacío. Un envase dañado que controla inventario se registra como salida manual con una nota.'));
             }

@@ -407,3 +407,32 @@ it('guarda el envase también en una presentación sin unidades envasadas, para 
     $this->get(route('production-orders.show', $this->order))
         ->assertInertia(fn (AssertableInertia $page) => $page->where('order.packaging_plans.1.package_code', 'GALON-MET'));
 });
+
+it('rechaza un exponente enorme con un mensaje, sin intentar expandirlo', function () {
+    $plan = packagingPlanFor($this->order, $this->variant);
+
+    // Expandido, «1e999999999» serían mil millones de dígitos: la validación lo frena antes de la calculadora.
+    $this->post(route('production-orders.complete', $this->order), [
+        ...completePackagingPayload($this->detail, ['id' => $plan->id, 'actual_units' => 10], $this->admin),
+        'packaging' => [['id' => $plan->id, 'actual_units' => '1e999999999', 'new_containers_used' => '1e999999999', 'labels_used' => '1e999999999']],
+    ])->assertSessionHasErrors([
+        'packaging.0.actual_units',
+        'packaging.0.new_containers_used',
+        'packaging.0.labels_used',
+    ]);
+
+    expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::InProgress);
+});
+
+it('rechaza una cantidad de ingrediente imposible con un mensaje, sin llegar a la calculadora', function () {
+    $plan = packagingPlanFor($this->order, $this->variant);
+
+    // Solo el ingrediente es inválido. «1e20» pasa `numeric` y `min:0`, pero no cabe en la columna decimal(12,4): sin el
+    // tope llegaría a la calculadora y al libro de inventario. «1e999999999» ya lo frena `min:0`.
+    $this->post(route('production-orders.complete', $this->order), [
+        ...completePackagingPayload($this->detail, ['id' => $plan->id, 'actual_units' => 10], $this->admin),
+        'ingredients' => [['id' => $this->detail->id, 'actual_quantity' => '1e20']],
+    ])->assertSessionHasErrors('ingredients.0.actual_quantity');
+
+    expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::InProgress);
+});

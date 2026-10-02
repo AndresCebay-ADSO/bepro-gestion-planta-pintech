@@ -19,6 +19,9 @@ use RuntimeException;
  */
 class DecimalCalculator
 {
+    /** Mayor exponente que normalize() expande: muy por encima de cualquier cantidad del negocio. */
+    public const MAX_EXPONENT = 64;
+
     private const DEFAULT_SCALE = 4;
 
     /**
@@ -198,6 +201,11 @@ class DecimalCalculator
      * float convertido con `(string)` (`(string) 0.00001` da «1.0E-5») y un texto que PHP considera numérico («1e1»,
      * que la validación `numeric` deja pasar). Las dos se escriben como decimal plano, sin redondear: «0.00001», «10».
      * Todas las operaciones pasan por aquí.
+     *
+     * El exponente tiene tope: «1e999999999» pediría mil millones de dígitos y agotaría la memoria. Ninguna cantidad
+     * real del negocio se acerca (las columnas son decimal(12,4)); las validaciones lo frenan antes con un mensaje.
+     *
+     * @throws \InvalidArgumentException si el exponente supera MAX_EXPONENT
      */
     public function normalize(string|int|float $value): string
     {
@@ -208,6 +216,11 @@ class DecimalCalculator
         }
 
         [$mantissa, $exponent] = explode('E', strtoupper($repr));
+
+        if (abs((int) $exponent) > self::MAX_EXPONENT) {
+            throw new \InvalidArgumentException("Número fuera de rango: {$repr}");
+        }
+
         $negative = str_starts_with($mantissa, '-');
         [$integer, $fraction] = array_pad(explode('.', ltrim($mantissa, '+-')), 2, '');
         $digits = $integer.$fraction;
