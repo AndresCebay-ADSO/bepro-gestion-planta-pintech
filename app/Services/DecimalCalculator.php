@@ -19,6 +19,9 @@ use RuntimeException;
  */
 class DecimalCalculator
 {
+    /** Mayor exponente que normalize() expande: muy por encima de cualquier cantidad del negocio. */
+    public const MAX_EXPONENT = 64;
+
     private const DEFAULT_SCALE = 4;
 
     /**
@@ -194,22 +197,38 @@ class DecimalCalculator
     }
 
     /**
-     * Número como texto decimal que bcmath acepta. Un float (de un JSON, por ejemplo) no se convierte con `(string)`:
-     * `(string) 0.00001` da «1.0E-5», que bcmath rechaza. Todas las operaciones pasan por aquí.
+     * Número como texto decimal que bcmath acepta. bcmath rechaza la notación científica, y llega por dos caminos: un
+     * float convertido con `(string)` (`(string) 0.00001` da «1.0E-5») y un texto que PHP considera numérico («1e1»,
+     * que la validación `numeric` deja pasar). Las dos se escriben como decimal plano, sin redondear: «0.00001», «10».
+     * Todas las operaciones pasan por aquí.
+     *
+     * El exponente tiene tope: «1e999999999» pediría mil millones de dígitos y agotaría la memoria. Uno positivo por
+     * encima de MAX_EXPONENT es un error (ninguna cantidad real se acerca: las columnas son decimal(12,4), y `max` lo
+     * frena antes con un mensaje); uno negativo por debajo es un número tan cerca de cero que vale 0 en cualquier escala
+     * del proyecto, y se devuelve así en vez de fallar.
+     *
+     * @throws \InvalidArgumentException si el exponente positivo supera MAX_EXPONENT
      */
     public function normalize(string|int|float $value): string
     {
-        $repr = (string) $value;
+        $repr = is_string($value) ? trim($value) : (string) $value;
 
-        // Lo mismo que daba `(string)` (sus dígitos, sin redondear a una escala fija); solo la notación científica se
-        // escribe como decimal plano: «1.0E-5» → «0.00001», «1.5E+20» → «150000000000000000000».
-        if (! is_float($value) || stripos($repr, 'e') === false) {
+        if (is_int($value) || stripos($repr, 'e') === false || ! is_numeric($repr)) {
             return $repr === '-0' ? '0' : $repr;
         }
 
         [$mantissa, $exponent] = explode('E', strtoupper($repr));
+
+        if ((int) $exponent > self::MAX_EXPONENT) {
+            throw new \InvalidArgumentException("Número fuera de rango: {$repr}");
+        }
+
+        if ((int) $exponent < -self::MAX_EXPONENT) {
+            return '0';
+        }
+
         $negative = str_starts_with($mantissa, '-');
-        [$integer, $fraction] = array_pad(explode('.', ltrim($mantissa, '-')), 2, '');
+        [$integer, $fraction] = array_pad(explode('.', ltrim($mantissa, '+-')), 2, '');
         $digits = $integer.$fraction;
         $point = strlen($integer) + (int) $exponent;
 

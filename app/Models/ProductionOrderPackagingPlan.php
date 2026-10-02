@@ -79,8 +79,8 @@ class ProductionOrderPackagingPlan extends Model
     }
 
     /**
-     * Agrega una presentación al plan de envasado de una OP. Nace con la etiqueta habitual de la presentación; en la OP
-     * se puede cambiar.
+     * Agrega una presentación al plan de envasado de una OP. Nace con la etiqueta habitual de la presentación si sigue
+     * activa (una desactivada no se ofrece para registros nuevos); en la OP se puede cambiar.
      */
     public static function createForVariant(int $orderId, int $variantId, string|int|float $plannedUnits): self
     {
@@ -88,7 +88,10 @@ class ProductionOrderPackagingPlan extends Model
             'production_order_id' => $orderId,
             'product_variant_id' => $variantId,
             'planned_units' => $plannedUnits,
-            'label_raw_material_id' => ProductVariant::query()->whereKey($variantId)->value('label_raw_material_id'),
+            'label_raw_material_id' => RawMaterial::query()
+                ->active()
+                ->whereKey(ProductVariant::query()->whereKey($variantId)->select('label_raw_material_id'))
+                ->value('id'),
         ]);
     }
 

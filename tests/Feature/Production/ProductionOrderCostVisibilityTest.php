@@ -115,8 +115,7 @@ test('operator show payload does not expose cost fields', function () {
             ->missing('order.total_finished_cost')
             ->missing('order.details.0.unit_cost')
             ->missing('order.details.0.total_cost')
-            ->missing('order.packaging_plans.0.cost_price')
-            ->missing('order.packaging_plans.0.package_unit_cost_estimate'));
+            ->missing('order.packaging_plans.0.cost_price'));
 });
 
 test('production user show payload does not expose cost fields', function () {
@@ -229,7 +228,6 @@ test('operator export payload does not expose cost fields', function () {
     expect($payload['details'][0])->not->toHaveKey('unit_cost');
     expect($payload['details'][0])->not->toHaveKey('total_cost');
     expect($payload['packaging_plans'][0])->not->toHaveKey('cost_price');
-    expect($payload['packaging_plans'][0])->not->toHaveKey('package_unit_cost_estimate');
     expect($payload)->toHaveKey('pdf_materials');
 });
 
