@@ -8,6 +8,9 @@ import type {
     ProductionOrderPackagingFormRow,
 } from '@/types/production-orders';
 
+/** Por qué los costos en pantalla no corresponden a lo escrito (null si están al día). */
+export type PreviewStaleReason = 'invalid' | 'failed' | null;
+
 type UseProductionCostPreviewProps = {
     orderId: number;
     ingredients: ProductionOrderIngredientFormRow[];
@@ -43,6 +46,9 @@ export function useProductionCostPreview({
         null,
     );
     const [previewLoading, setPreviewLoading] = useState(false);
+    // Si la última petición falló, los costos en pantalla son de la última vista previa correcta: 'invalid' si el
+    // servidor rechazó los datos (422), 'failed' por cualquier otro fallo (límite de peticiones, error, sin conexión).
+    const [previewStale, setPreviewStale] = useState<PreviewStaleReason>(null);
 
     const ingredientsSignature = JSON.stringify(
         ingredients.map((ingredient) => ({
@@ -132,14 +138,21 @@ export function useProductionCostPreview({
                 );
 
                 if (!response.ok) {
+                    setPreviewStale(
+                        response.status === 422 ? 'invalid' : 'failed',
+                    );
+
                     return;
                 }
 
                 const payload = (await response.json()) as PreviewCostData;
                 setPreviewCosts(payload);
+                setPreviewStale(null);
             } catch (error) {
+                // Una petición cancelada (el operario siguió escribiendo) no es un fallo: la reemplaza la siguiente.
+                // Un fallo de la vista previa no bloquea el formulario, pero sí avisa que los costos no están al día.
                 if ((error as Error).name !== 'AbortError') {
-                    // Preview failures should not block production form editing.
+                    setPreviewStale('failed');
                 }
             } finally {
                 if (loadingIndicatorId !== null) {
@@ -170,5 +183,5 @@ export function useProductionCostPreview({
         remnantQuantityGallons,
     ]);
 
-    return { previewCosts, previewLoading };
+    return { previewCosts, previewLoading, previewStale };
 }

@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import type { PreviewStaleReason } from '@/hooks/use-production-cost-preview';
 import type {
     LabelMaterialOption,
     ProductionOrderErrors,
@@ -39,6 +40,8 @@ type ResultsCardProps = {
     isCompleted: boolean;
     isReadOnly: boolean;
     previewLoading: boolean;
+    /** Por qué los costos mostrados no corresponden a lo escrito (null si están al día). */
+    previewStale?: PreviewStaleReason;
     solidsReferenceLabel: string | null;
     showCosts?: boolean;
 };
@@ -57,6 +60,7 @@ export function ResultsCard({
     isCompleted,
     isReadOnly,
     previewLoading,
+    previewStale = null,
     solidsReferenceLabel,
     showCosts = true,
 }: ResultsCardProps) {
@@ -74,8 +78,16 @@ export function ResultsCard({
                         : ''}
                 </CardDescription>
                 {!isCompleted && showCosts && (
-                    <p className="h-5 text-xs text-muted-foreground">
-                        {previewLoading ? 'Recalculando costos...' : ''}
+                    <p
+                        className={`h-5 text-xs ${previewStale && !previewLoading ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}
+                    >
+                        {previewLoading
+                            ? 'Recalculando costos...'
+                            : previewStale === 'invalid'
+                              ? 'Hay un valor que no es válido: los costos mostrados son de la última vista previa correcta. Al guardar verás el error.'
+                              : previewStale === 'failed'
+                                ? 'No se pudo recalcular: los costos mostrados son de la última vista previa correcta.'
+                                : ''}
                     </p>
                 )}
             </CardHeader>

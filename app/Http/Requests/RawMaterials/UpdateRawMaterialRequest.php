@@ -6,16 +6,13 @@ namespace App\Http\Requests\RawMaterials;
 
 use App\Actions\RawMaterials\UpdateRawMaterialAction;
 use App\Enums\Permission;
-use App\Enums\ProductionOrderStatus;
 use App\Enums\RawMaterialType;
 use App\Http\Requests\Concerns\CatalogSelectionRules;
 use App\Http\Requests\RawMaterials\Concerns\ManualReferencePriceRules;
-use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
-use App\Models\ProductionOrder;
-use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
+use App\Services\RawMaterialUsageService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -98,7 +95,7 @@ class UpdateRawMaterialRequest extends FormRequest
                 $currentType = $material->category?->type ?? RawMaterialType::Chemical;
 
                 if ($newCategory->type !== $currentType) {
-                    $message = $this->typeDependentUsage($material, $currentType, $newCategory->type);
+                    $message = app(RawMaterialUsageService::class)->typeChangeBlocker($material, $currentType, $newCategory->type);
 
                     if ($message !== null) {
                         $validator->errors()->add('category_id', $message);
@@ -145,7 +142,7 @@ class UpdateRawMaterialRequest extends FormRequest
             return true;
         }
 
-        $openOrders = $material->openProductionOrdersCount();
+        $openOrders = app(RawMaterialUsageService::class)->openProductionOrdersCount($material);
 
         if ($openOrders > 0 && ! $this->boolean('confirm_tracking_change')) {
             $validator->errors()->add('confirm_tracking_change', trans_choice(
@@ -158,66 +155,6 @@ class UpdateRawMaterialRequest extends FormRequest
         }
 
         return true;
-    }
-
-    private function typeDependentUsage(RawMaterial $material, RawMaterialType $current, RawMaterialType $new): ?string
-    {
-        $type = mb_strtolower($new->label());
-
-        // El empaque secundario (3.8) se sumará aquí cuando tenga usos que dependan del tipo.
-        $message = match ($current) {
-            RawMaterialType::Container => ($count = ProductVariant::query()->where('package_raw_material_id', $material->id)->count()) > 0
-                ? trans_choice(
-                    'No se puede pasar a una categoría de tipo :type: esta materia prima es el envase de :count presentación.|No se puede pasar a una categoría de tipo :type: esta materia prima es el envase de :count presentaciones.',
-                    $count,
-                    ['type' => $type, 'count' => $count],
-                )
-                : null,
-            RawMaterialType::Label => ($count = ProductVariant::query()->where('label_raw_material_id', $material->id)->count()) > 0
-                ? trans_choice(
-                    'No se puede pasar a una categoría de tipo :type: esta materia prima es la etiqueta de :count presentación.|No se puede pasar a una categoría de tipo :type: esta materia prima es la etiqueta de :count presentaciones.',
-                    $count,
-                    ['type' => $type, 'count' => $count],
-                )
-                : null,
-            RawMaterialType::Chemical => ($count = FormulaDetail::query()->where('raw_material_id', $material->id)->count()) > 0
-                ? trans_choice(
-                    'No se puede pasar a una categoría de tipo :type: esta materia prima está en :count línea de fórmula.|No se puede pasar a una categoría de tipo :type: esta materia prima está en :count líneas de fórmula.',
-                    $count,
-                    ['type' => $type, 'count' => $count],
-                )
-                : null,
-            default => null,
-        };
-
-        return $message ?? $this->openOrderUsage($material, $current, $type);
-    }
-
-    /**
-     * Usos en órdenes abiertas que no pasan por la presentación ni por la fórmula: la etiqueta elegida en el plan de
-     * envasado y los ajustes de línea (solo químicos). Al completar, la OP los consume con la regla de su tipo.
-     */
-    private function openOrderUsage(RawMaterial $material, RawMaterialType $current, string $type): ?string
-    {
-        $openOrders = ProductionOrder::query()->whereIn('status', ProductionOrderStatus::open());
-
-        $count = match ($current) {
-            RawMaterialType::Label => $openOrders
-                ->whereHas('packagingPlans', fn ($plans) => $plans->where('label_raw_material_id', $material->id))
-                ->count(),
-            RawMaterialType::Chemical => $openOrders
-                ->whereHas('lineAdjustments', fn ($adjustments) => $adjustments->where('raw_material_id', $material->id))
-                ->count(),
-            default => 0,
-        };
-
-        return $count > 0
-            ? trans_choice(
-                'No se puede pasar a una categoría de tipo :type: esta materia prima está en uso en :count orden de producción abierta.|No se puede pasar a una categoría de tipo :type: esta materia prima está en uso en :count órdenes de producción abiertas.',
-                $count,
-                ['type' => $type, 'count' => $count],
-            )
-            : null;
     }
 
     protected function prepareForValidation(): void

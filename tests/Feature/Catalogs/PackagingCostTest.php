@@ -26,6 +26,7 @@ use App\Services\AlertService;
 use App\Services\InventoryService;
 use App\Services\ProductionCostRecalculationService;
 use App\Services\RawMaterialReferencePriceService;
+use App\Services\RawMaterialUsageService;
 use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia;
 use Spatie\Activitylog\Models\Activity;
@@ -487,7 +488,7 @@ it('cuenta como uso el envase de una presentación del plan de envasado de una O
     ProductionOrder::factory()->create(['status' => ProductionOrderStatus::Completed, 'product_id' => $this->product->id])
         ->packagingPlans()->create(['product_variant_id' => $this->variant->id, 'planned_units' => '5']);
 
-    expect($this->container->fresh()->openProductionOrdersCount())->toBe(1);
+    expect(app(RawMaterialUsageService::class)->openProductionOrdersCount($this->container->fresh()))->toBe(1);
 
     $this->put(route('raw-materials.update', $this->container), packagingMaterialPayload($this->container, ['tracks_inventory' => true]))
         ->assertSessionHasErrors('confirm_tracking_change');

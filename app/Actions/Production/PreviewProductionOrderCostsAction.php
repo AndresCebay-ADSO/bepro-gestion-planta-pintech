@@ -42,7 +42,8 @@ class PreviewProductionOrderCostsAction
 
         foreach ($ingredients as $ingredientData) {
             $detailId = (int) ($ingredientData['id'] ?? 0);
-            $actualQuantity = max(0.0, (float) ($ingredientData['actual_quantity'] ?? 0));
+            // Como texto decimal, sin pasar por float (la validación ya descarta negativos y valores fuera de la columna).
+            $actualQuantity = $this->calculator->normalize($ingredientData['actual_quantity'] ?? '0');
             $detail = $detailsById->get($detailId);
 
             if ($detail === null) {
@@ -52,7 +53,7 @@ class PreviewProductionOrderCostsAction
             $ingredientMaterialId = (int) $detail->raw_material_id;
             $ingredientRequirements[$ingredientMaterialId] = $this->calculator->add(
                 $ingredientRequirements[$ingredientMaterialId] ?? '0',
-                (string) $actualQuantity,
+                $actualQuantity,
                 4
             );
 
@@ -72,12 +73,12 @@ class PreviewProductionOrderCostsAction
 
         foreach ($ingredientRows as $row) {
             $unitCost = (string) ($ingredientUnitCosts[$row['raw_material_id']] ?? '0');
-            $totalCostStr = $this->calculator->mul((string) $row['actual_quantity'], $unitCost, 4);
+            $totalCostStr = $this->calculator->mul($row['actual_quantity'], $unitCost, 4);
             $totalBulkCost = $this->calculator->add($totalBulkCost, $totalCostStr, 4);
 
             $ingredientResults[] = [
                 'id' => $row['id'],
-                'actual_quantity' => $row['actual_quantity'],
+                'actual_quantity' => (float) $row['actual_quantity'],
                 'unit_cost' => $unitCost,
                 'total_cost' => $totalCostStr,
             ];

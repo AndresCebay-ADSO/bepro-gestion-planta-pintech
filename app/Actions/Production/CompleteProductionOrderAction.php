@@ -186,33 +186,11 @@ class CompleteProductionOrderAction
                     'labels_used' => $labelsUsed,
                 ]);
 
-                $packagingTotalCost = '0';
-
-                if ($newContainers !== null && $this->calculator->isPositive($newContainers)) {
-                    $consumedRawMaterialIds[] = (int) $consumption['package_id'];
-
-                    $packagingTotalCost = $this->calculator->add($packagingTotalCost, $this->fifoStockAllocator->consumeRawMaterialForProduction(
-                        order: $lockedOrder,
-                        rawMaterialId: (int) $consumption['package_id'],
-                        requiredQuantity: $newContainers,
-                        userId: $userId,
-                        errorKey: 'packaging',
-                        contextLabel: 'envase'
-                    ), 4);
-                }
-
-                if ($labelsUsed !== null && $this->calculator->isPositive($labelsUsed)) {
-                    $consumedRawMaterialIds[] = (int) $consumption['label_id'];
-
-                    $packagingTotalCost = $this->calculator->add($packagingTotalCost, $this->fifoStockAllocator->consumeRawMaterialForProduction(
-                        order: $lockedOrder,
-                        rawMaterialId: (int) $consumption['label_id'],
-                        requiredQuantity: $labelsUsed,
-                        userId: $userId,
-                        errorKey: 'packaging',
-                        contextLabel: 'etiqueta'
-                    ), 4);
-                }
+                $packagingTotalCost = $this->calculator->add(
+                    $this->consumePackagingMaterial($lockedOrder, $consumption['package_id'], $newContainers, 'envase', $userId, $consumedRawMaterialIds),
+                    $this->consumePackagingMaterial($lockedOrder, $consumption['label_id'], $labelsUsed, 'etiqueta', $userId, $consumedRawMaterialIds),
+                    4
+                );
 
                 // Envases nuevos y etiquetas, repartidos entre las unidades envasadas.
                 $packagingUnitCost = $this->calculator->div($packagingTotalCost, $actualUnits, 4);
@@ -295,6 +273,37 @@ class CompleteProductionOrderAction
         GenerateQualityInspectionCertificateJob::dispatch($completedOrder, $userId)->afterCommit();
 
         return $completedOrder;
+    }
+
+    /**
+     * Consume un material de empaque del plan (envase nuevo, etiqueta) con la regla de cualquier materia prima: por FIFO
+     * si controla inventario, a su precio de referencia si no. Devuelve su costo total ('0' si no hay nada que consumir).
+     * Un material nuevo del empaque se consume por aquí, no copiando el bloque.
+     *
+     * @param  list<int>  $consumedRawMaterialIds  se le agrega la materia prima, para recalcular su precio y su stock
+     */
+    private function consumePackagingMaterial(
+        ProductionOrder $order,
+        ?int $rawMaterialId,
+        ?string $quantity,
+        string $contextLabel,
+        int $userId,
+        array &$consumedRawMaterialIds,
+    ): string {
+        if ($rawMaterialId === null || $quantity === null || ! $this->calculator->isPositive($quantity)) {
+            return '0';
+        }
+
+        $consumedRawMaterialIds[] = $rawMaterialId;
+
+        return (string) $this->fifoStockAllocator->consumeRawMaterialForProduction(
+            order: $order,
+            rawMaterialId: $rawMaterialId,
+            requiredQuantity: $quantity,
+            userId: $userId,
+            errorKey: 'packaging',
+            contextLabel: $contextLabel
+        );
     }
 
     /**

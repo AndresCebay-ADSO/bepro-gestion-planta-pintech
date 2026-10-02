@@ -136,15 +136,16 @@ export default function ProductionOrderShow({
         setData,
     });
 
-    const { previewCosts, previewLoading } = useProductionCostPreview({
-        orderId: order.id,
-        ingredients: data.ingredients,
-        packaging: data.packaging,
-        lineAdjustments,
-        remnantQuantityGallons: data.remnant_quantity_gallons,
-        isCompleted,
-        enabled: can.previewCosts,
-    });
+    const { previewCosts, previewLoading, previewStale } =
+        useProductionCostPreview({
+            orderId: order.id,
+            ingredients: data.ingredients,
+            packaging: data.packaging,
+            lineAdjustments,
+            remnantQuantityGallons: data.remnant_quantity_gallons,
+            isCompleted,
+            enabled: can.previewCosts,
+        });
 
     const landingFullUrl = useMemo(() => {
         if (!order.qr_landing_url) {
@@ -380,6 +381,7 @@ export default function ProductionOrderShow({
                             isCompleted={isCompleted}
                             isReadOnly={isFormReadOnly}
                             previewLoading={previewLoading}
+                            previewStale={previewStale}
                             solidsReferenceLabel={solidsReferenceLabel}
                             showCosts={can.previewCosts}
                         />

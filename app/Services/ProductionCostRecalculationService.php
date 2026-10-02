@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductionCost;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
+use App\Services\Pricing\ProductionCostCalculatorService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -19,6 +20,7 @@ class ProductionCostRecalculationService
 
     public function __construct(
         private readonly VariantPricingService $variantPricingService,
+        private readonly ProductionCostCalculatorService $productionCostCalculator,
         private readonly DecimalCalculator $calculator
     ) {}
 
@@ -81,10 +83,7 @@ class ProductionCostRecalculationService
                     ) >= 0);
 
                 if ($shouldUpdatePrice && $product->cif_percentage !== null) {
-                    $cifPercentage = (string) $product->cif_percentage;
-                    $cifRatio = $this->calculator->div($cifPercentage, '100', 4);
-                    $cifFactor = $this->calculator->add('1', $cifRatio, 4);
-                    $productUpdates['current_price'] = $this->calculator->mul($calculatedCost, $cifFactor, 4);
+                    $productUpdates['current_price'] = $this->productionCostCalculator->applyCifToCost($calculatedCost, (string) $product->cif_percentage);
                 }
 
                 $product->update($productUpdates);
@@ -193,8 +192,7 @@ class ProductionCostRecalculationService
 
         DB::transaction(function () use ($product): void {
             if ($product->cif_percentage !== null) {
-                $cifFactor = $this->calculator->add('1', $this->calculator->div((string) $product->cif_percentage, '100', 4), 4);
-                $product->update(['current_price' => $this->calculator->mul((string) $product->current_cost, $cifFactor, 4)]);
+                $product->update(['current_price' => $this->productionCostCalculator->applyCifToCost((string) $product->current_cost, (string) $product->cif_percentage)]);
             }
 
             $this->repriceVariantsOfProduct($product, forcePriceRefresh: true);

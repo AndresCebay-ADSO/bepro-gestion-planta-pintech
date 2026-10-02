@@ -194,9 +194,11 @@ class BuildProductionOrderShowDataAction
 
                 return $row;
             })->values(),
-            'packaging_plans' => $productionOrder->packagingPlans->map(function (ProductionOrderPackagingPlan $plan) use ($finishedCostByVariant, $includeCosts) {
+            'packaging_plans' => $productionOrder->packagingPlans->map(function (ProductionOrderPackagingPlan $plan) use ($finishedCostByVariant, $includeCosts, $productionOrder) {
                 $presentationValue = (float) ($plan->productVariant?->presentation_value ?? 1);
-                $packageCode = $plan->package_raw_material_id !== null
+                // Completada, vale solo el envase guardado al completar (vacío si la presentación no tenía): el documento
+                // cerrado no cambia si después se cambia el de la presentación. Antes de completar, el de la presentación.
+                $packageCode = $productionOrder->status === ProductionOrderStatus::Completed
                     ? $plan->packageRawMaterial?->code
                     : $plan->productVariant?->packageRawMaterial?->code;
 
