@@ -31,6 +31,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { usePackagingSync } from '@/hooks/use-packaging-sync';
 import { useProductionCostPreview } from '@/hooks/use-production-cost-preview';
+import { formatForInput } from '@/lib/formatters';
 import { index as productionOrdersIndex } from '@/routes/production-orders';
 import type {
     PreviewCostData,
@@ -43,6 +44,7 @@ import type {
 export default function ProductionOrderShow({
     order,
     rawMaterials,
+    labelMaterials,
     availableVariants,
     qualitySigners,
     returnTo,
@@ -373,6 +375,7 @@ export default function ProductionOrderShow({
                             packagingRows={packagingRows}
                             lineAdjustments={lineAdjustments}
                             rawMaterials={rawMaterials}
+                            labelMaterials={labelMaterials}
                             availableVariants={availableVariants}
                             isCompleted={isCompleted}
                             isReadOnly={isFormReadOnly}
@@ -594,6 +597,13 @@ function normalizeProductionOrderFormData(data: ProductionOrderFormData) {
         packaging: data.packaging.map((pack) => ({
             id: pack.id,
             actual_units: pack.actual_units,
+            // Vacío = tantos como unidades envasadas (lo resuelve el servidor).
+            new_containers_used:
+                pack.new_containers_used === ''
+                    ? null
+                    : pack.new_containers_used,
+            label_raw_material_id: pack.label_raw_material_id,
+            labels_used: pack.labels_used === '' ? null : pack.labels_used,
         })),
     };
 }
@@ -627,5 +637,10 @@ function mapPackagingPlanToFormRow(pack: ProductionOrderPackagingPlan) {
         planned_units: pack.planned_units,
         actual_units: pack.actual_units ?? pack.planned_units,
         cost_price: pack.cost_price ?? null,
+        package_code: pack.package_code ?? null,
+        new_containers_used: formatForInput(pack.new_containers_used),
+        label_raw_material_id: pack.label_raw_material_id ?? null,
+        saved_label_raw_material_id: pack.label_raw_material_id ?? null,
+        labels_used: formatForInput(pack.labels_used),
     };
 }

@@ -54,7 +54,7 @@ class ProductionCostCalculatorService
                 continue;
             }
 
-            $actualUnits = (string) ($packagingDataByPlanId[$plan->id]['actual_units'] ?? 0);
+            $actualUnits = $this->calculator->normalize($packagingDataByPlanId[$plan->id]['actual_units'] ?? 0);
             if ($this->calculator->isZero($actualUnits)) {
                 continue;
             }
@@ -85,7 +85,7 @@ class ProductionCostCalculatorService
                 continue;
             }
 
-            $actualUnits = (string) ($packagingDataByPlanId[$plan->id]['actual_units'] ?? 0);
+            $actualUnits = $this->calculator->normalize($packagingDataByPlanId[$plan->id]['actual_units'] ?? 0);
             if ($this->calculator->isZero($actualUnits)) {
                 continue;
             }

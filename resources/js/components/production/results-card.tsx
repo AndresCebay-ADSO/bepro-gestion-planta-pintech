@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import type {
+    LabelMaterialOption,
     ProductionOrderErrors,
     ProductionOrderFormData,
     ProductionOrderIngredientFormRow,
@@ -33,6 +34,7 @@ type ResultsCardProps = {
     packagingRows: ProductionOrderPackagingFormRow[];
     lineAdjustments: ProductionOrderLineAdjustment[];
     rawMaterials: RawMaterialOption[];
+    labelMaterials: LabelMaterialOption[];
     availableVariants: VariantOption[];
     isCompleted: boolean;
     isReadOnly: boolean;
@@ -50,6 +52,7 @@ export function ResultsCard({
     packagingRows,
     lineAdjustments,
     rawMaterials,
+    labelMaterials,
     availableVariants,
     isCompleted,
     isReadOnly,
@@ -228,6 +231,7 @@ export function ResultsCard({
                     data={data}
                     setData={setData}
                     availableVariants={availableVariants}
+                    labelMaterials={labelMaterials}
                     isReadOnly={isReadOnly}
                     showCosts={showCosts}
                 />

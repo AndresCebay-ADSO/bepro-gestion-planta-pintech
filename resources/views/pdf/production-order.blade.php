@@ -175,7 +175,7 @@
                 @if(count($order['packaging_plans']) > 0)
                     @foreach($order['packaging_plans'] as $plan)
                         {{ number_format($plan['planned_units'], 0) }}
-                        {{ $plan['product_variant']['presentation_label'] ?? 'uds' }}@if(!$loop->last), @endif
+                        {{ $plan['product_variant']['presentation_label'] ?? 'uds' }}{{ $plan['packaging_materials'] !== null ? ' ('.$plan['packaging_materials'].')' : '' }}@if(!$loop->last), @endif
                     @endforeach
                 @else
                     N/A
@@ -192,7 +192,7 @@
                     @foreach($order['packaging_plans'] as $plan)
                         @if($plan['actual_units'] !== null)
                             {{ number_format($plan['actual_units'], 0) }}
-                            {{ $plan['product_variant']['presentation_label'] ?? 'uds' }}@if(!$loop->last), @endif
+                            {{ $plan['product_variant']['presentation_label'] ?? 'uds' }}{{ $plan['packaging_materials'] !== null ? ' ('.$plan['packaging_materials'].')' : '' }}@if(!$loop->last), @endif
                         @endif
                     @endforeach
                 @endif

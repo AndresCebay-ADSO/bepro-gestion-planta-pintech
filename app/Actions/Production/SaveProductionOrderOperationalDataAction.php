@@ -55,9 +55,21 @@ class SaveProductionOrderOperationalDataAction
                 ]);
             }
 
-            $plan->update([
-                'actual_units' => (string) $packData['actual_units'],
-            ]);
+            $planUpdates = ['actual_units' => (string) $packData['actual_units']];
+
+            // Empaque (3.7): solo lo que llega; vacío en envases o etiquetas usadas = tantos como unidades envasadas.
+            foreach (['new_containers_used', 'labels_used', 'label_raw_material_id'] as $field) {
+                if (array_key_exists($field, $packData)) {
+                    $planUpdates[$field] = $packData[$field];
+                }
+            }
+
+            // Sin etiqueta no hay etiquetas usadas: no se guarda una cantidad suelta que nada consumirá.
+            if ((array_key_exists('label_raw_material_id', $planUpdates) ? $planUpdates['label_raw_material_id'] : $plan->label_raw_material_id) === null) {
+                $planUpdates['labels_used'] = null;
+            }
+
+            $plan->update($planUpdates);
         }
 
         return $order->refresh();

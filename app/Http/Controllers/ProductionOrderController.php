@@ -15,6 +15,7 @@ use App\Actions\Production\StartProductionOrderAction;
 use App\Actions\Production\SubmitProductionOrderForReviewAction;
 use App\Enums\Permission;
 use App\Enums\ProductionOrderStatus;
+use App\Enums\RawMaterialType;
 use App\Enums\WarehouseType;
 use App\Exports\ProductionOrderExport;
 use App\Filters\ProductionOrderFilter;
@@ -115,8 +116,10 @@ class ProductionOrderController extends Controller
     {
         $this->authorize('view', $productionOrder);
 
+        // Ajustes de línea: solo químicos, como las fórmulas. Se suman al granel; un envase o una etiqueta no son granel.
         $rawMaterials = RawMaterial::query()
             ->where('is_active', true)
+            ->usableInFormulas()
             ->orderBy('code')
             ->get(['id', 'code'])
             ->map(fn (RawMaterial $rm) => [
@@ -154,6 +157,13 @@ class ProductionOrderController extends Controller
         return Inertia::render('Production/Orders/Show', [
             'order' => $this->buildProductionOrderShowData->execute($productionOrder, $includeCosts),
             'rawMaterials' => $rawMaterials,
+            // Etiquetas para el plan de envasado: las activas, más las inactivas que ya tiene algún plan de esta orden.
+            'labelMaterials' => RawMaterial::query()
+                ->where(fn ($query) => $query
+                    ->where(fn ($active) => $active->where('is_active', true)->ofType(RawMaterialType::Label))
+                    ->orWhereIn('id', $productionOrder->packagingPlans()->whereNotNull('label_raw_material_id')->select('label_raw_material_id')))
+                ->orderBy('code')
+                ->get(['id', 'code', 'is_active']),
             'availableVariants' => $availableVariants,
             'qualitySigners' => $qualitySigners,
             'returnTo' => $this->resolveReturnTo($request),

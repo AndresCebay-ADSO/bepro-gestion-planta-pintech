@@ -19,7 +19,7 @@ class PreviewProductionOrderCostsAction
 
     /**
      * @param  array<int, array{id:int,actual_quantity:float|int}>  $ingredients
-     * @param  array<int, array{id:int,actual_units:float|int}>  $packaging
+     * @param  array<int, array{id:int,actual_units:float|int,new_containers_used?:string|int|float|null,labels_used?:string|int|float|null,label_raw_material_id?:int|null}>  $packaging
      * @return array{
      *   ingredients: array<int, array{id:int,unit_cost:string,total_cost:string,actual_quantity:float}>,
      *   packaging: array<int, array{id:int,cost_price:string,total_cost:string,equivalent:string,actual_units:float}>,
@@ -149,29 +149,36 @@ class PreviewProductionOrderCostsAction
 
         foreach ($packaging as $packagingData) {
             $planId = (int) ($packagingData['id'] ?? 0);
-            $actualUnits = max(0.0, (float) ($packagingData['actual_units'] ?? 0));
+            // Como texto: el JSON trae floats y bcmath no acepta «1.0E-5».
+            $actualUnits = $this->calculator->normalize($packagingData['actual_units'] ?? '0');
             $plan = $plansById->get($planId);
 
-            if ($plan === null || $actualUnits <= 0) {
+            if ($plan === null || ! $this->calculator->isPositive($actualUnits)) {
                 continue;
             }
 
-            $packageRawMaterialId = $plan->productVariant?->package_raw_material_id;
-            if ($packageRawMaterialId !== null) {
-                $pkgMaterialId = (int) $packageRawMaterialId;
-                $packagingRequirements[$pkgMaterialId] = $this->calculator->add(
-                    $packagingRequirements[$pkgMaterialId] ?? '0',
-                    (string) $actualUnits,
-                    4
-                );
+            // Empaque (3.7) con la misma regla que al completar; aquí también cuenta lo que el operario aún no guardó.
+            $requested = collect($packagingData)
+                ->only(['new_containers_used', 'label_raw_material_id', 'labels_used'])
+                ->map(fn ($value) => is_float($value) ? $this->calculator->normalize($value) : $value)
+                ->all();
+            $consumption = $plan->packagingConsumption($actualUnits, $requested);
+
+            foreach ([[$consumption['package_id'], $consumption['new_containers']], [$consumption['label_id'], $consumption['labels_used']]] as [$materialId, $quantity]) {
+                if ($materialId !== null && $quantity !== null) {
+                    $packagingRequirements[$materialId] = $this->calculator->add($packagingRequirements[$materialId] ?? '0', $quantity, 4);
+                }
             }
 
             $packagingRows[] = [
                 'id' => $planId,
                 'actual_units' => $actualUnits,
                 'product_variant_id' => (int) $plan->product_variant_id,
-                'presentation_value' => (float) ($plan->productVariant?->presentation_value ?? 1),
-                'package_raw_material_id' => $packageRawMaterialId !== null ? (int) $packageRawMaterialId : null,
+                'presentation_value' => (string) ($plan->productVariant?->presentation_value ?? '1'),
+                'package_raw_material_id' => $consumption['package_id'],
+                'new_containers' => $consumption['new_containers'] ?? '0',
+                'label_raw_material_id' => $consumption['label_id'],
+                'labels_used' => $consumption['labels_used'] ?? '0',
             ];
         }
 
@@ -186,9 +193,16 @@ class PreviewProductionOrderCostsAction
 
         foreach ($packagingRows as $row) {
             $variantBulkCost = (string) ($distributedBulkCosts[$row['product_variant_id']] ?? '0');
-            $packagingUnitCost = $row['package_raw_material_id'] !== null
-                ? (string) ($packagingUnitCosts[$row['package_raw_material_id']] ?? '0')
+            $materialCost = fn (?int $materialId, string $quantity): string => $materialId !== null
+                ? $this->calculator->mul($quantity, (string) ($packagingUnitCosts[$materialId] ?? '0'), 4)
                 : '0';
+            // Envases nuevos y etiquetas, repartidos entre las unidades envasadas.
+            $packagingTotalCost = $this->calculator->add(
+                $materialCost($row['package_raw_material_id'], $row['new_containers']),
+                $materialCost($row['label_raw_material_id'], $row['labels_used']),
+                4
+            );
+            $packagingUnitCost = $this->calculator->div($packagingTotalCost, (string) $row['actual_units'], 4);
 
             $costPrice = $this->calculator->add($variantBulkCost, $packagingUnitCost, 4);
             $totalCostStr = $this->calculator->mul((string) $row['actual_units'], $costPrice, 4);
@@ -199,7 +213,7 @@ class PreviewProductionOrderCostsAction
 
             $packagingResults[] = [
                 'id' => $row['id'],
-                'actual_units' => $row['actual_units'],
+                'actual_units' => (float) $row['actual_units'],
                 'cost_price' => $costPrice,
                 'total_cost' => $totalCostStr,
                 'equivalent' => $equivalentStr,

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Production;
 
+use App\Enums\RawMaterialType;
+use App\Rules\RawMaterialOfType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -29,6 +31,8 @@ class StoreLineAdjustmentRequest extends FormRequest
             'raw_material_id' => [
                 'required',
                 Rule::exists('raw_materials', 'id')->where('is_active', true),
+                // Se suma al granel al completar: un envase o una etiqueta no son granel (3.7, decisión del 2026-09-30).
+                new RawMaterialOfType(RawMaterialType::Chemical),
             ],
             'quantity' => 'required|numeric|min:0.0001',
             'reason' => 'required|string|max:500',

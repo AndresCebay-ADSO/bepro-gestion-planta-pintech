@@ -18,6 +18,13 @@ export type RawMaterialOption = {
     label: string;
 };
 
+/** Etiqueta elegible en el plan de envasado (materia prima de tipo Etiqueta). */
+export type LabelMaterialOption = {
+    id: number;
+    code: string;
+    is_active: boolean;
+};
+
 export type ProductionOrderRawMaterial = {
     code?: string | null;
     unit_symbol?: string | null;
@@ -46,6 +53,14 @@ export type ProductionOrderPackagingPlan = {
     planned_units: FormNumberValue;
     actual_units?: FormNumberValue | null;
     cost_price?: FormNumberValue | null;
+    /** Envase de la presentación: el que se descuenta al completar. */
+    package_code?: string | null;
+    /** Vacío = tantos como unidades envasadas. */
+    new_containers_used?: FormNumberValue | null;
+    label_raw_material_id?: number | null;
+    label_code?: string | null;
+    /** Vacío = tantas como unidades envasadas. */
+    labels_used?: FormNumberValue | null;
 };
 
 export type ProductionOrderLineAdjustment = {
@@ -153,6 +168,7 @@ export type ProductionOrderCan = {
 export type ProductionOrderShowProps = {
     order: ProductionOrder;
     rawMaterials: RawMaterialOption[];
+    labelMaterials: LabelMaterialOption[];
     availableVariants: VariantOption[];
     qualitySigners: QualitySignerOption[];
     returnTo?: string | null;
@@ -179,6 +195,14 @@ export type ProductionOrderPackagingFormRow = {
     planned_units: FormNumberValue;
     actual_units: FormNumberValue;
     cost_price: FormNumberValue | null;
+    package_code: string | null;
+    /** '' = tantos como unidades envasadas. */
+    new_containers_used: FormNumberValue;
+    label_raw_material_id: number | null;
+    /** La etiqueta guardada en el plan: una inactiva sigue ofreciéndose aunque se elija otra. */
+    saved_label_raw_material_id: number | null;
+    /** '' = tantas como unidades envasadas. */
+    labels_used: FormNumberValue;
 };
 
 export type ProductionOrderFormData = {

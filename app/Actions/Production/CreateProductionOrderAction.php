@@ -110,11 +110,7 @@ class CreateProductionOrderAction
             }
 
             foreach (($data['packaging'] ?? []) as $packData) {
-                ProductionOrderPackagingPlan::create([
-                    'production_order_id' => $order->id,
-                    'product_variant_id' => $packData['product_variant_id'],
-                    'planned_units' => $packData['planned_units'],
-                ]);
+                ProductionOrderPackagingPlan::createForVariant((int) $order->id, (int) $packData['product_variant_id'], $packData['planned_units']);
             }
 
             return $order;
