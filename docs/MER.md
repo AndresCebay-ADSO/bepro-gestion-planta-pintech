@@ -354,6 +354,7 @@ Plan de envasado por presentación.
 | `planned_units` | DECIMAL(12,4) |  |  |
 | `actual_units` | DECIMAL(12,4) | sí |  |
 | `new_containers_used` | DECIMAL(12,4) | sí | Envases nuevos descontados. Vacío = tantos como unidades; los reutilizados no se descuentan ni cuestan |
+| `package_raw_material_id` | BIGINT | sí | FK → `raw_materials` (RESTRICT). Envase consumido, guardado al completar; con la OP abierta vale el de la presentación |
 | `label_raw_material_id` | BIGINT | sí | FK → `raw_materials` (RESTRICT). Se copia de la presentación al agregar el plan; se puede cambiar con la OP abierta |
 | `labels_used` | DECIMAL(12,4) | sí | Etiquetas consumidas. Vacío = tantas como unidades |
 | `notes` | TEXT | sí |  |

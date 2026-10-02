@@ -68,10 +68,11 @@ Esto no altera el costo real FIFO del cierre de OP.
 
 ## Costo real del empaque al completar la OP
 Por cada presentación del plan de envasado, al completar la OP (`CompleteProductionOrderAction`):
-- se descuentan por FIFO solo los **envases nuevos** (`new_containers_used`, por defecto las unidades envasadas); los
-  reutilizados no se descuentan ni cuestan;
-- se consumen las **etiquetas usadas** (`labels_used`, por defecto las unidades envasadas) de la etiqueta del plan, con
-  inventario o sin él (a su precio de referencia);
+- se consumen solo los **envases nuevos** (`new_containers_used`, por defecto las unidades envasadas); los reutilizados
+  no se descuentan ni cuestan;
+- se consumen las **etiquetas usadas** (`labels_used`, por defecto las unidades envasadas) de la etiqueta del plan;
+- los dos con la regla de cualquier materia prima: si controla inventario, por FIFO al precio de sus lotes; si no, sin
+  lote y a su precio de referencia (`current_price`). Un envase o una etiqueta pueden estar en cualquiera de los dos;
 - costo por unidad del lote = granel por unidad + (costo de envases nuevos + costo de etiquetas) ÷ unidades envasadas,
   sin CIF. Sin tope en las cantidades: la merma (envase dañado, etiqueta mal pegada) es costo del lote.
 

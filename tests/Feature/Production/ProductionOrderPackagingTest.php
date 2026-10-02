@@ -339,3 +339,19 @@ it('la vista previa acepta unidades con muchos decimales sin pasar por floats', 
         'packaging' => [['id' => $plan->id, 'actual_units' => 0.00001]],
     ])->assertOk();
 });
+
+it('sin etiqueta no guarda etiquetas usadas, aunque lleguen en la petición', function () {
+    // El operario escribió 12 y después eligió «Sin etiqueta»: el campo queda deshabilitado, pero el valor viajaba.
+    $plan = packagingPlanFor($this->order, $this->variant);
+
+    $this->post(route('production-orders.submit-for-review', $this->order), completePackagingPayload($this->detail, [
+        'id' => $plan->id,
+        'actual_units' => 10,
+        'label_raw_material_id' => null,
+        'labels_used' => 12,
+    ], $this->admin))->assertSessionHasNoErrors();
+
+    expect($plan->fresh())
+        ->label_raw_material_id->toBeNull()
+        ->labels_used->toBeNull();
+});

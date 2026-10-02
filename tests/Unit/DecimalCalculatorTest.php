@@ -237,3 +237,11 @@ test('normalize() turns tiny and large floats into plain decimals that bcmath ac
         ->and($this->calc->normalize(7))->toBe('7')
         ->and($this->calc->add(0.00001, '1'))->toBe('1.0000');
 });
+
+test('normalize() keeps every digit a float already shows, without rounding to a fixed scale', function () {
+    expect($this->calc->normalize(0.123456789012))->toBe('0.123456789012')
+        ->and($this->calc->add(0.123456789012, '0', 12))->toBe('0.123456789012')
+        ->and($this->calc->normalize(1.25E-12))->toBe('0.00000000000125')
+        ->and($this->calc->normalize(-3.5E-7))->toBe('-0.00000035')
+        ->and($this->calc->normalize(1.5E+20))->toBe('150000000000000000000');
+});

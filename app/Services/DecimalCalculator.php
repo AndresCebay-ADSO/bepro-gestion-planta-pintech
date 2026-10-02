@@ -199,13 +199,34 @@ class DecimalCalculator
      */
     public function normalize(string|int|float $value): string
     {
-        if (! is_float($value)) {
-            return (string) $value;
+        $repr = (string) $value;
+
+        // Lo mismo que daba `(string)` (sus dígitos, sin redondear a una escala fija); solo la notación científica se
+        // escribe como decimal plano: «1.0E-5» → «0.00001», «1.5E+20» → «150000000000000000000».
+        if (! is_float($value) || stripos($repr, 'e') === false) {
+            return $repr === '-0' ? '0' : $repr;
         }
 
-        $fixed = rtrim(rtrim(sprintf('%.10F', $value), '0'), '.');
+        [$mantissa, $exponent] = explode('E', strtoupper($repr));
+        $negative = str_starts_with($mantissa, '-');
+        [$integer, $fraction] = array_pad(explode('.', ltrim($mantissa, '-')), 2, '');
+        $digits = $integer.$fraction;
+        $point = strlen($integer) + (int) $exponent;
 
-        return $fixed === '' || $fixed === '-0' ? '0' : $fixed;
+        $plain = match (true) {
+            $point <= 0 => '0.'.str_repeat('0', -$point).$digits,
+            $point >= strlen($digits) => $digits.str_repeat('0', $point - strlen($digits)),
+            default => substr($digits, 0, $point).'.'.substr($digits, $point),
+        };
+
+        if (str_contains($plain, '.')) {
+            $plain = rtrim(rtrim($plain, '0'), '.');
+        }
+
+        $plain = ltrim($plain, '0');
+        $plain = $plain === '' || str_starts_with($plain, '.') ? '0'.$plain : $plain;
+
+        return $negative && $plain !== '0' ? '-'.$plain : $plain;
     }
 
     /**

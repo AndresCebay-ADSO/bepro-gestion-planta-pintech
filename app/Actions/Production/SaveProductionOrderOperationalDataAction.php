@@ -64,6 +64,11 @@ class SaveProductionOrderOperationalDataAction
                 }
             }
 
+            // Sin etiqueta no hay etiquetas usadas: no se guarda una cantidad suelta que nada consumirá.
+            if ((array_key_exists('label_raw_material_id', $planUpdates) ? $planUpdates['label_raw_material_id'] : $plan->label_raw_material_id) === null) {
+                $planUpdates['labels_used'] = null;
+            }
+
             $plan->update($planUpdates);
         }
 

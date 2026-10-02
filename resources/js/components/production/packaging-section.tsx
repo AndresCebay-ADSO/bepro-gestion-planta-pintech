@@ -300,12 +300,18 @@ function PackagingMaterialsRow({
                                     : NO_LABEL
                             }
                             onValueChange={(value) =>
-                                onChange({
-                                    label_raw_material_id:
-                                        value === NO_LABEL
-                                            ? null
-                                            : Number(value),
-                                })
+                                // Sin etiqueta tampoco hay etiquetas usadas: el campo se deshabilita y se vacía.
+                                onChange(
+                                    value === NO_LABEL
+                                        ? {
+                                              label_raw_material_id: null,
+                                              labels_used: '',
+                                          }
+                                        : {
+                                              label_raw_material_id:
+                                                  Number(value),
+                                          },
+                                )
                             }
                             disabled={isReadOnly}
                         >
