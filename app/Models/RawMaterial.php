@@ -154,8 +154,9 @@ class RawMaterial extends Model
 
     /**
      * Órdenes de producción abiertas (pendientes, en curso o en revisión) que la consumirán al completarse. Cuenta el uso,
-     * no el tipo de insumo: una línea de su fórmula, un ajuste de línea o el envase de una presentación de su plan de
-     * envasado (que se lee de la presentación al completar). Una forma nueva de consumir en la OP debe sumarse aquí.
+     * no el tipo de insumo: una línea de su fórmula, un ajuste de línea, el envase de una presentación de su plan de
+     * envasado (que se lee de la presentación al completar) o la etiqueta del plan (la del plan, no la habitual de la
+     * presentación: en la OP se puede cambiar). Una forma nueva de consumir en la OP debe sumarse aquí.
      */
     public function openProductionOrdersCount(): int
     {
@@ -164,7 +165,8 @@ class RawMaterial extends Model
             ->where(fn ($query) => $query
                 ->whereHas('details', fn ($details) => $details->where('raw_material_id', $this->id))
                 ->orWhereHas('lineAdjustments', fn ($adjustments) => $adjustments->where('raw_material_id', $this->id))
-                ->orWhereHas('packagingPlans.productVariant', fn ($variants) => $variants->where('package_raw_material_id', $this->id)))
+                ->orWhereHas('packagingPlans.productVariant', fn ($variants) => $variants->where('package_raw_material_id', $this->id))
+                ->orWhereHas('packagingPlans', fn ($plans) => $plans->where('label_raw_material_id', $this->id)))
             ->count();
     }
 
