@@ -29,18 +29,19 @@ class SubmitProductionOrderForReviewRequest extends FormRequest
         return array_merge(
             $this->consumptionRules(),
             [
-                'actual_yield_quantity' => ['nullable', 'numeric', 'min:0'],
-                'viscosity_ku' => ['nullable', 'numeric', 'min:0'],
-                'grinding_hg' => ['nullable', 'numeric', 'min:0'],
-                'quality_solids' => ['nullable', 'numeric', 'min:0', 'max:100'],
+                // Los mismos topes de columna que al completar (CompleteProductionOrderRequest).
+                'actual_yield_quantity' => ['bail', 'nullable', 'numeric', 'min:0', 'max:99999999.9999'],
+                'viscosity_ku' => ['bail', 'nullable', 'numeric', 'min:0', 'max:999999.99'],
+                'grinding_hg' => ['bail', 'nullable', 'numeric', 'min:0', 'max:999999.99'],
+                'quality_solids' => ['bail', 'nullable', 'numeric', 'min:0', 'max:100'],
                 'agitation_start_time' => ['nullable', 'date'],
                 'agitation_end_time' => ['nullable', 'date'],
                 'packaging_start_time' => ['nullable', 'date'],
                 'packaging_end_time' => ['nullable', 'date'],
                 'responsible_name' => ['nullable', 'string', 'max:255'],
-                'spillage_quantity' => ['nullable', 'numeric', 'min:0'],
-                'density_kg_per_gallon' => ['nullable', 'numeric', 'min:0.0001'],
-                'remnant_quantity_gallons' => ['nullable', 'numeric', 'min:0'],
+                'spillage_quantity' => ['bail', 'nullable', 'numeric', 'min:0', 'max:99999999.9999'],
+                'density_kg_per_gallon' => ['bail', 'nullable', 'numeric', 'min:0.0001', 'max:999999.9999'],
+                'remnant_quantity_gallons' => ['bail', 'nullable', 'numeric', 'min:0', 'max:99999999.9999'],
                 'remnant_notes' => ['nullable', 'string', 'max:1000'],
                 'notes' => ['nullable', 'string'],
             ]

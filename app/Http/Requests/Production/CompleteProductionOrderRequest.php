@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Production;
 
 use App\Enums\Permission;
+use App\Models\ProductionOrder;
 use App\Models\ProductionOrderPackagingPlan;
 use App\Models\User;
 use App\Services\DecimalCalculator;
@@ -38,19 +39,21 @@ class CompleteProductionOrderRequest extends FormRequest
         return array_merge(
             $this->consumptionRules(),
             [
-                'actual_yield_quantity' => [$hasPackaging || $hasRemnant ? 'required' : 'nullable', 'numeric', 'min:0.0001'],
-                'viscosity_ku' => ['nullable', 'numeric', 'min:0'],
-                'grinding_hg' => ['nullable', 'numeric', 'min:0'],
-                'quality_solids' => ['nullable', 'numeric', 'min:0', 'max:100'],
+                // Topes de las columnas (decimal(12,4), (10,4), (8,2)): sin ellos, 1e65 o 1e20 pasan `numeric` y fallan
+                // en el servidor, en la calculadora o al guardar en PostgreSQL.
+                'actual_yield_quantity' => ['bail', $hasPackaging || $hasRemnant ? 'required' : 'nullable', 'numeric', 'min:0.0001', 'max:99999999.9999'],
+                'viscosity_ku' => ['bail', 'nullable', 'numeric', 'min:0', 'max:999999.99'],
+                'grinding_hg' => ['bail', 'nullable', 'numeric', 'min:0', 'max:999999.99'],
+                'quality_solids' => ['bail', 'nullable', 'numeric', 'min:0', 'max:100'],
                 'agitation_start_time' => ['nullable', 'date'],
                 'agitation_end_time' => ['nullable', 'date'],
                 'packaging_start_time' => ['nullable', 'date'],
                 'packaging_end_time' => ['nullable', 'date'],
                 'responsible_name' => ['nullable', 'string', 'max:255'],
                 'quality_responsible_user_id' => ['required', 'exists:users,id'],
-                'spillage_quantity' => ['nullable', 'numeric', 'min:0'],
-                'density_kg_per_gallon' => ['required', 'numeric', 'min:0.0001'],
-                'remnant_quantity_gallons' => ['nullable', 'numeric', 'min:0'],
+                'spillage_quantity' => ['bail', 'nullable', 'numeric', 'min:0', 'max:99999999.9999'],
+                'density_kg_per_gallon' => ['bail', 'required', 'numeric', 'min:0.0001', 'max:999999.9999'],
+                'remnant_quantity_gallons' => ['bail', 'nullable', 'numeric', 'min:0', 'max:99999999.9999'],
                 'remnant_notes' => ['nullable', 'string', 'max:1000'],
                 'notes' => ['nullable', 'string'],
             ]
@@ -65,6 +68,24 @@ class CompleteProductionOrderRequest extends FormRequest
     public function after(): array
     {
         return [
+            // El porcentaje de rendimiento se guarda en decimal(5,2): por encima de 999,99 % PostgreSQL rechaza la OP con
+            // un error del servidor. Un rendimiento así es un error de digitación, no una producción real.
+            function (Validator $validator): void {
+                $order = $this->route('production_order');
+                $actualYield = $this->input('actual_yield_quantity');
+
+                if (! $order instanceof ProductionOrder || $validator->errors()->has('actual_yield_quantity') || ! is_numeric($actualYield)) {
+                    return;
+                }
+
+                $calculator = app(DecimalCalculator::class);
+                $planned = (string) $order->quantity;
+
+                if ($calculator->isPositive($planned)
+                    && $calculator->cmp($calculator->mul($calculator->div($calculator->normalize($actualYield), $planned, 10), '100', 4), '999.99') > 0) {
+                    $validator->errors()->add('actual_yield_quantity', __('El rendimiento real no puede superar 9,99 veces la cantidad proyectada de la orden. Revisa el valor.'));
+                }
+            },
             function (Validator $validator): void {
                 if ($validator->errors()->isNotEmpty()) {
                     return;

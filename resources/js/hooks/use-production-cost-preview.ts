@@ -43,6 +43,8 @@ export function useProductionCostPreview({
         null,
     );
     const [previewLoading, setPreviewLoading] = useState(false);
+    // El servidor rechazó los datos (422): los costos en pantalla son de la última vista previa válida.
+    const [previewStale, setPreviewStale] = useState(false);
 
     const ingredientsSignature = JSON.stringify(
         ingredients.map((ingredient) => ({
@@ -132,11 +134,14 @@ export function useProductionCostPreview({
                 );
 
                 if (!response.ok) {
+                    setPreviewStale(response.status === 422);
+
                     return;
                 }
 
                 const payload = (await response.json()) as PreviewCostData;
                 setPreviewCosts(payload);
+                setPreviewStale(false);
             } catch (error) {
                 if ((error as Error).name !== 'AbortError') {
                     // Preview failures should not block production form editing.
@@ -170,5 +175,5 @@ export function useProductionCostPreview({
         remnantQuantityGallons,
     ]);
 
-    return { previewCosts, previewLoading };
+    return { previewCosts, previewLoading, previewStale };
 }

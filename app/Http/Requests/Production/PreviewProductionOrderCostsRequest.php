@@ -29,7 +29,7 @@ class PreviewProductionOrderCostsRequest extends FormRequest
         return array_merge(
             $this->consumptionRules(),
             [
-                'remnant_quantity_gallons' => ['nullable', 'numeric', 'min:0'],
+                'remnant_quantity_gallons' => ['bail', 'nullable', 'numeric', 'min:0', 'max:99999999.9999'],
             ]
         );
     }
