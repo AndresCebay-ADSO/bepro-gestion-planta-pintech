@@ -12,12 +12,10 @@ use App\Models\ProductionOrderPackagingPlan;
 use App\Models\ProductionRemnant;
 use App\Models\RemnantConsumption;
 use App\Services\DecimalCalculator;
-use App\Services\Inventory\FifoStockAllocatorService;
 
 class BuildProductionOrderShowDataAction
 {
     public function __construct(
-        private readonly FifoStockAllocatorService $fifoStockAllocator,
         private readonly DecimalCalculator $calculator,
     ) {}
 
@@ -57,22 +55,6 @@ class BuildProductionOrderShowDataAction
         $finishedCostByVariant = $includeCosts
             ? $productionOrder->finishedInventoryMovements->keyBy('product_variant_id')
             : collect();
-
-        $packageUnitCostEstimates = [];
-
-        if ($includeCosts) {
-            $packageRawMaterialRequirements = $productionOrder->packagingPlans
-                ->map(fn (ProductionOrderPackagingPlan $plan) => $plan->productVariant?->package_raw_material_id)
-                ->filter()
-                ->unique()
-                ->mapWithKeys(fn ($rawMaterialId) => [(int) $rawMaterialId => 1.0])
-                ->all();
-
-            $packageUnitCostEstimates = $this->fifoStockAllocator->estimateMaterialUnitCostsForPlanning(
-                warehouseId: (int) $productionOrder->warehouse_id,
-                requirementsByMaterialId: $packageRawMaterialRequirements
-            );
-        }
 
         $totalFinishedCostStr = '0';
         $totalBulkCostStr = '0';
@@ -212,7 +194,7 @@ class BuildProductionOrderShowDataAction
 
                 return $row;
             })->values(),
-            'packaging_plans' => $productionOrder->packagingPlans->map(function (ProductionOrderPackagingPlan $plan) use ($finishedCostByVariant, $packageUnitCostEstimates, $includeCosts) {
+            'packaging_plans' => $productionOrder->packagingPlans->map(function (ProductionOrderPackagingPlan $plan) use ($finishedCostByVariant, $includeCosts) {
                 $presentationValue = (float) ($plan->productVariant?->presentation_value ?? 1);
                 $packageCode = $plan->package_raw_material_id !== null
                     ? $plan->packageRawMaterial?->code
@@ -240,13 +222,8 @@ class BuildProductionOrderShowDataAction
 
                 if ($includeCosts) {
                     $costMovement = $finishedCostByVariant->get($plan->product_variant_id);
-                    $packageRawMaterialId = $plan->productVariant?->package_raw_material_id;
-                    $packageUnitCostEstimate = $packageRawMaterialId !== null
-                        ? (string) ($packageUnitCostEstimates[(int) $packageRawMaterialId] ?? '0')
-                        : null;
 
                     $row['cost_price'] = $costMovement?->cost_price !== null ? (string) $costMovement->cost_price : null;
-                    $row['package_unit_cost_estimate'] = $packageUnitCostEstimate;
                 }
 
                 return $row;
