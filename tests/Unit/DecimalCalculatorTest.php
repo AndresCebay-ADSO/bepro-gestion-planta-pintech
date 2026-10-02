@@ -245,3 +245,13 @@ test('normalize() keeps every digit a float already shows, without rounding to a
         ->and($this->calc->normalize(-3.5E-7))->toBe('-0.00000035')
         ->and($this->calc->normalize(1.5E+20))->toBe('150000000000000000000');
 });
+
+test('normalize() also expands scientific notation that arrives as text', function () {
+    // «1e1» pasa la validación `numeric`; «1.0E-5» sale de `(string)` sobre un float antes de llegar aquí.
+    expect($this->calc->normalize('1e1'))->toBe('10')
+        ->and($this->calc->normalize('1.0E-5'))->toBe('0.00001')
+        ->and($this->calc->normalize('-2.5e-3'))->toBe('-0.0025')
+        ->and($this->calc->normalize(' 7 '))->toBe('7')
+        ->and($this->calc->cmp('1e1', '9'))->toBe(1)
+        ->and($this->calc->mul('1.0E-5', '100000'))->toBe('1.0000');
+});
