@@ -66,6 +66,17 @@ El precio solo cambia si el costo varía más que el umbral del producto.
 
 Esto no altera el costo real FIFO del cierre de OP.
 
+## Costo real del empaque al completar la OP
+Por cada presentación del plan de envasado, al completar la OP (`CompleteProductionOrderAction`):
+- se descuentan por FIFO solo los **envases nuevos** (`new_containers_used`, por defecto las unidades envasadas); los
+  reutilizados no se descuentan ni cuestan;
+- se consumen las **etiquetas usadas** (`labels_used`, por defecto las unidades envasadas) de la etiqueta del plan, con
+  inventario o sin él (a su precio de referencia);
+- costo por unidad del lote = granel por unidad + (costo de envases nuevos + costo de etiquetas) ÷ unidades envasadas,
+  sin CIF. Sin tope en las cantidades: la merma (envase dañado, etiqueta mal pegada) es costo del lote.
+
+La vista previa de costos de la OP aplica la misma regla con precios estimados.
+
 ## Materias primas sin control de inventario
 Las que no se compran por lotes ni se cuentan (`tracks_inventory = false`: agua, etiquetas) no tienen compras de donde
 sacar el precio. Su `current_price` se escribe a mano en el formulario de la materia prima, solo con el permiso

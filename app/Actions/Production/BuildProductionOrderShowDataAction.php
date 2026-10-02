@@ -38,6 +38,8 @@ class BuildProductionOrderShowDataAction
             'formula.details.unitOfMeasure',
             'details.rawMaterial.unitOfMeasure',
             'packagingPlans.productVariant.packageRawMaterial',
+            'packagingPlans.packageRawMaterial',
+            'packagingPlans.labelRawMaterial',
             'finishedInventoryMovements',
             'warehouse',
             'lineAdjustments.rawMaterial',
@@ -212,11 +214,23 @@ class BuildProductionOrderShowDataAction
             })->values(),
             'packaging_plans' => $productionOrder->packagingPlans->map(function (ProductionOrderPackagingPlan $plan) use ($finishedCostByVariant, $packageUnitCostEstimates, $includeCosts) {
                 $presentationValue = (float) ($plan->productVariant?->presentation_value ?? 1);
+                $packageCode = $plan->package_raw_material_id !== null
+                    ? $plan->packageRawMaterial?->code
+                    : $plan->productVariant?->packageRawMaterial?->code;
 
                 $row = [
                     'id' => $plan->id,
                     'planned_units' => (float) $plan->planned_units,
                     'actual_units' => $plan->actual_units !== null ? (float) $plan->actual_units : null,
+                    // Empaque (3.7). Vacío = tantos como unidades envasadas. El envase es el consumido (guardado al
+                    // completar) o, con la OP abierta, el de la presentación; la etiqueta es la del plan.
+                    'package_code' => $packageCode,
+                    'new_containers_used' => $plan->new_containers_used,
+                    'label_raw_material_id' => $plan->label_raw_material_id,
+                    'label_code' => $plan->labelRawMaterial?->code,
+                    'labels_used' => $plan->labels_used,
+                    // Para el PDF y el Excel: «GALON-MET · ETQ-GALON», o null si no lleva ninguno.
+                    'packaging_materials' => collect([$packageCode, $plan->labelRawMaterial?->code])->filter()->implode(' · ') ?: null,
                     'product_variant' => $plan->productVariant ? [
                         'id' => $plan->productVariant->id,
                         'presentation_label' => $plan->productVariant->presentation_label,

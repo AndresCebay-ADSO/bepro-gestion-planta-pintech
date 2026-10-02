@@ -14,7 +14,6 @@ use App\Models\Product;
 use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\ProductionRemnant;
-use App\Models\ProductVariant;
 use App\Services\AlertService;
 use App\Services\DecimalCalculator;
 use App\Services\FinishedInventory\FinishedInventoryMovementService;
@@ -159,31 +158,56 @@ class CompleteProductionOrderAction
                 }
 
                 $actualUnits = (string) $packData['actual_units'];
-                $plan->update(['actual_units' => $actualUnits]);
 
                 if ($this->calculator->cmp($actualUnits, '0', 4) <= 0) {
+                    $plan->update(['actual_units' => $actualUnits]);
+
                     continue;
                 }
 
-                $variant = ProductVariant::query()
-                    ->select(['id', 'package_raw_material_id'])
-                    ->find($plan->product_variant_id);
+                // Empaque (3.7). Los datos del plan ya vienen guardados por saveOperationalData. Se guarda lo que se usó,
+                // incluido el envase: el documento no cambia si después se cambia el de la presentación.
+                $consumption = $plan->packagingConsumption($actualUnits);
+                $newContainers = $consumption['new_containers'];
+                $labelsUsed = $consumption['labels_used'];
 
-                $packagingUnitCost = '0';
-                if ($variant?->package_raw_material_id !== null) {
-                    $consumedRawMaterialIds[] = (int) $variant->package_raw_material_id;
+                $plan->update([
+                    'actual_units' => $actualUnits,
+                    'package_raw_material_id' => $consumption['package_id'],
+                    'new_containers_used' => $newContainers,
+                    'labels_used' => $labelsUsed,
+                ]);
 
-                    $packagingTotalCost = $this->fifoStockAllocator->consumeRawMaterialForProduction(
+                $packagingTotalCost = '0';
+
+                if ($newContainers !== null && $this->calculator->isPositive($newContainers)) {
+                    $consumedRawMaterialIds[] = (int) $consumption['package_id'];
+
+                    $packagingTotalCost = $this->calculator->add($packagingTotalCost, $this->fifoStockAllocator->consumeRawMaterialForProduction(
                         order: $lockedOrder,
-                        rawMaterialId: (int) $variant->package_raw_material_id,
-                        requiredQuantity: $actualUnits,
+                        rawMaterialId: (int) $consumption['package_id'],
+                        requiredQuantity: $newContainers,
                         userId: $userId,
                         errorKey: 'packaging',
                         contextLabel: 'envase'
-                    );
-
-                    $packagingUnitCost = $this->calculator->div((string) $packagingTotalCost, (string) $actualUnits, 4);
+                    ), 4);
                 }
+
+                if ($labelsUsed !== null && $this->calculator->isPositive($labelsUsed)) {
+                    $consumedRawMaterialIds[] = (int) $consumption['label_id'];
+
+                    $packagingTotalCost = $this->calculator->add($packagingTotalCost, $this->fifoStockAllocator->consumeRawMaterialForProduction(
+                        order: $lockedOrder,
+                        rawMaterialId: (int) $consumption['label_id'],
+                        requiredQuantity: $labelsUsed,
+                        userId: $userId,
+                        errorKey: 'packaging',
+                        contextLabel: 'etiqueta'
+                    ), 4);
+                }
+
+                // Envases nuevos y etiquetas, repartidos entre las unidades envasadas.
+                $packagingUnitCost = $this->calculator->div($packagingTotalCost, $actualUnits, 4);
 
                 $bulkCostForVariant = (string) ($distributedBulkCosts[$plan->product_variant_id] ?? '0');
                 $costPriceForVariant = $this->calculator->add($bulkCostForVariant, $packagingUnitCost, 4);

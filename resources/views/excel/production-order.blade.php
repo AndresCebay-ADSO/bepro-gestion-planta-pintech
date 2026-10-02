@@ -62,7 +62,7 @@
             <td colspan="6" style="border: 1px solid #000000;">
                 @foreach($order['packaging_plans'] as $plan)
                     {{ $plan['planned_units'] }} x
-                    {{ $plan['product_variant']['presentation_label'] ?? 'N/A' }}@if(!$loop->last), @endif
+                    {{ $plan['product_variant']['presentation_label'] ?? 'N/A' }}{{ $plan['packaging_materials'] !== null ? ' ('.$plan['packaging_materials'].')' : '' }}@if(!$loop->last), @endif
                 @endforeach
             </td>
         </tr>

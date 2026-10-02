@@ -20,7 +20,13 @@ type UseProductionCostPreviewProps = {
 
 type PreviewCostPayload = {
     ingredients: Array<{ id: number; actual_quantity: number }>;
-    packaging: Array<{ id: number; actual_units: number }>;
+    packaging: Array<{
+        id: number;
+        actual_units: number;
+        new_containers_used: string | null;
+        label_raw_material_id: number | null;
+        labels_used: string | null;
+    }>;
     remnant_quantity_gallons: number;
 };
 
@@ -52,6 +58,14 @@ export function useProductionCostPreview({
         packaging.map((pack) => ({
             id: pack.id,
             actual_units: Number(pack.actual_units) || 0,
+            // Como texto: el servidor los calcula con bcmath. Vacío = tantos como unidades envasadas.
+            new_containers_used:
+                pack.new_containers_used === ''
+                    ? null
+                    : String(pack.new_containers_used),
+            label_raw_material_id: pack.label_raw_material_id,
+            labels_used:
+                pack.labels_used === '' ? null : String(pack.labels_used),
         })),
     );
 

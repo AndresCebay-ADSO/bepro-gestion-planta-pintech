@@ -19,11 +19,7 @@ class PackagingPlanController extends Controller
     {
         $validated = $request->validated();
 
-        ProductionOrderPackagingPlan::create([
-            'production_order_id' => $productionOrder->id,
-            'product_variant_id' => $validated['product_variant_id'],
-            'planned_units' => $validated['planned_units'],
-        ]);
+        ProductionOrderPackagingPlan::createForVariant((int) $productionOrder->id, (int) $validated['product_variant_id'], $validated['planned_units']);
 
         return redirect()->route('production-orders.show', $productionOrder)
             ->with('success', 'Plan de envasado agregado.');

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 
+import { formatForInput } from '@/lib/formatters';
+
 import type {
     ProductionOrderPackagingFormRow,
     ProductionOrderPackagingPlan,
@@ -33,6 +35,7 @@ export function usePackagingSync({
                 (item) => item.id === pack.id,
             );
 
+            // Lo que el operario ya escribió se conserva; lo demás viene del plan guardado.
             return {
                 id: pack.id,
                 presentation:
@@ -44,6 +47,17 @@ export function usePackagingSync({
                     ? existingFormItem.actual_units
                     : (pack.actual_units ?? pack.planned_units),
                 cost_price: pack.cost_price ?? null,
+                package_code: pack.package_code ?? null,
+                new_containers_used: existingFormItem
+                    ? existingFormItem.new_containers_used
+                    : formatForInput(pack.new_containers_used),
+                label_raw_material_id: existingFormItem
+                    ? existingFormItem.label_raw_material_id
+                    : (pack.label_raw_material_id ?? null),
+                saved_label_raw_material_id: pack.label_raw_material_id ?? null,
+                labels_used: existingFormItem
+                    ? existingFormItem.labels_used
+                    : formatForInput(pack.labels_used),
             };
         });
 
@@ -64,7 +78,15 @@ export function usePackagingSync({
                         nextItem.presentation_value &&
                     currentItem.planned_units === nextItem.planned_units &&
                     currentItem.actual_units === nextItem.actual_units &&
-                    currentItem.cost_price === nextItem.cost_price
+                    currentItem.cost_price === nextItem.cost_price &&
+                    currentItem.package_code === nextItem.package_code &&
+                    currentItem.new_containers_used ===
+                        nextItem.new_containers_used &&
+                    currentItem.label_raw_material_id ===
+                        nextItem.label_raw_material_id &&
+                    currentItem.labels_used === nextItem.labels_used &&
+                    currentItem.saved_label_raw_material_id ===
+                        nextItem.saved_label_raw_material_id
                 );
             });
 
