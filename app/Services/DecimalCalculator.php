@@ -194,22 +194,22 @@ class DecimalCalculator
     }
 
     /**
-     * Número como texto decimal que bcmath acepta. Un float (de un JSON, por ejemplo) no se convierte con `(string)`:
-     * `(string) 0.00001` da «1.0E-5», que bcmath rechaza. Todas las operaciones pasan por aquí.
+     * Número como texto decimal que bcmath acepta. bcmath rechaza la notación científica, y llega por dos caminos: un
+     * float convertido con `(string)` (`(string) 0.00001` da «1.0E-5») y un texto que PHP considera numérico («1e1»,
+     * que la validación `numeric` deja pasar). Las dos se escriben como decimal plano, sin redondear: «0.00001», «10».
+     * Todas las operaciones pasan por aquí.
      */
     public function normalize(string|int|float $value): string
     {
-        $repr = (string) $value;
+        $repr = is_string($value) ? trim($value) : (string) $value;
 
-        // Lo mismo que daba `(string)` (sus dígitos, sin redondear a una escala fija); solo la notación científica se
-        // escribe como decimal plano: «1.0E-5» → «0.00001», «1.5E+20» → «150000000000000000000».
-        if (! is_float($value) || stripos($repr, 'e') === false) {
+        if (is_int($value) || stripos($repr, 'e') === false || ! is_numeric($repr)) {
             return $repr === '-0' ? '0' : $repr;
         }
 
         [$mantissa, $exponent] = explode('E', strtoupper($repr));
         $negative = str_starts_with($mantissa, '-');
-        [$integer, $fraction] = array_pad(explode('.', ltrim($mantissa, '-')), 2, '');
+        [$integer, $fraction] = array_pad(explode('.', ltrim($mantissa, '+-')), 2, '');
         $digits = $integer.$fraction;
         $point = strlen($integer) + (int) $exponent;
 

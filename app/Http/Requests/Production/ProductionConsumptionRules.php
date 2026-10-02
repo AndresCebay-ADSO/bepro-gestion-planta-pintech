@@ -54,7 +54,8 @@ trait ProductionConsumptionRules
                 Rule::exists('production_order_packaging_plan', 'id')
                     ->where('production_order_id', $scopedOrderId),
             ],
-            'packaging.*.actual_units' => ['required', 'numeric', 'min:0'],
+            // Formato decimal: `numeric` deja pasar «1e1», que no es una cantidad que alguien escriba a propósito.
+            'packaging.*.actual_units' => ['required', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999'],
             // Empaque (3.7). Vacío = tantos como unidades envasadas. Sin tope: la merma (un envase dañado al llenar, una
             // etiqueta mal pegada) es costo del lote (decisión del 2026-09-30).
             'packaging.*.new_containers_used' => ['nullable', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999', $this->requiresPackedUnits()],
@@ -71,7 +72,8 @@ trait ProductionConsumptionRules
 
     /**
      * Sin unidades envasadas la OP no crea lote, y no hay a qué cargarle envases ni etiquetas: quedarían anotados sin
-     * descontarse. Los dañados sueltos van como salida manual con una nota, como cualquier otra merma.
+     * descontarse. Un envase dañado suelto que controla inventario va como salida manual con una nota, como cualquier
+     * merma; una etiqueta sin control de inventario no tiene saldo que ajustar (no admite movimientos manuales).
      */
     private function requiresPackedUnits(): Closure
     {
@@ -84,7 +86,7 @@ trait ProductionConsumptionRules
             if (is_numeric($value) && is_numeric($actualUnits)
                 && $calculator->isPositive($calculator->normalize($value))
                 && ! $calculator->isPositive($calculator->normalize($actualUnits))) {
-                $fail(__('Sin unidades envasadas no hay lote al que cargarlos: regístralos como salida manual de inventario con una nota.'));
+                $fail(__('Sin unidades envasadas no hay lote al que cargarlos: deja el campo vacío. Un envase dañado que controla inventario se registra como salida manual con una nota.'));
             }
         };
     }
