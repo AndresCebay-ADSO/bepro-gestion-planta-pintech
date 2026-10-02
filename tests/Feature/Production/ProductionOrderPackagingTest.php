@@ -21,6 +21,7 @@ use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\RawMaterialUsageService;
 use Database\Seeders\RolePermissionSeeder;
 use Inertia\Testing\AssertableInertia;
 
@@ -259,7 +260,7 @@ it('cuenta la etiqueta del plan de una OP abierta como uso, para el control de i
     $plan = packagingPlanFor($this->order, $this->variant);
     $plan->update(['label_raw_material_id' => $otherLabel->id]);
 
-    expect($otherLabel->openProductionOrdersCount())->toBe(1);
+    expect(app(RawMaterialUsageService::class)->openProductionOrdersCount($otherLabel))->toBe(1);
 
     $chemicals = RawMaterialCategory::factory()->create(['type' => RawMaterialType::Chemical]);
     $this->put(route('raw-materials.update', $otherLabel), [
@@ -477,4 +478,69 @@ it('al completar con 0 unidades vacía los envases y etiquetas que dejó un avan
         ->new_containers_used->toBeNull()
         ->labels_used->toBeNull()
         ->and($this->containerBatch->fresh()->remaining_quantity)->toBe('10.0000');
+});
+
+it('una OP completada no muestra el envase que se le asignó a la presentación después de completarla', function () {
+    // La presentación no tenía envase al completar: el plan guardó vacío y así debe seguir.
+    $this->variant->update(['package_raw_material_id' => null]);
+    $plan = packagingPlanFor($this->order, $this->variant);
+    $this->post(route('production-orders.complete', $this->order), completePackagingPayload($this->detail, [
+        'id' => $plan->id,
+        'actual_units' => 10,
+    ], $this->admin))->assertSessionHasNoErrors();
+
+    $this->variant->update(['package_raw_material_id' => $this->container->id]);
+
+    $order = app(BuildProductionOrderExportDataAction::class)->execute($this->order->fresh(), includeCosts: false);
+
+    expect($order['packaging_plans'][0]['package_code'])->toBeNull()
+        ->and($order['packaging_plans'][0]['packaging_materials'])->toBe('ETQ-GALON');
+});
+
+it('rechaza con un mensaje los valores imposibles en las mediciones de la OP', function (string $route, string $field, string $value) {
+    $plan = packagingPlanFor($this->order, $this->variant);
+    $payload = completePackagingPayload($this->detail, ['id' => $plan->id, 'actual_units' => 10], $this->admin);
+    $payload[$field] = $value;
+
+    // 1e65 hacía fallar a la calculadora y 1e20 no cabía en la columna: los dos eran un error del servidor.
+    $this->post(route($route, $this->order), $payload)->assertSessionHasErrors($field);
+})->with([
+    'derrame al completar' => ['production-orders.complete', 'spillage_quantity', '1e65'],
+    'densidad al completar' => ['production-orders.complete', 'density_kg_per_gallon', '1e20'],
+    'saldo al completar' => ['production-orders.complete', 'remnant_quantity_gallons', '1e65'],
+    'viscosidad al completar' => ['production-orders.complete', 'viscosity_ku', '1e10'],
+    'molienda al completar' => ['production-orders.complete', 'grinding_hg', '1e10'],
+    'rendimiento al completar' => ['production-orders.complete', 'actual_yield_quantity', '1e65'],
+    'derrame al enviar a revisión' => ['production-orders.submit-for-review', 'spillage_quantity', '1e65'],
+    'densidad al enviar a revisión' => ['production-orders.submit-for-review', 'density_kg_per_gallon', '1e20'],
+    'rendimiento al enviar a revisión' => ['production-orders.submit-for-review', 'actual_yield_quantity', '1e20'],
+]);
+
+it('rechaza un saldo imposible en la vista previa', function () {
+    $plan = packagingPlanFor($this->order, $this->variant);
+
+    $this->postJson(route('production-orders.preview-costs', $this->order), [
+        'ingredients' => [['id' => $this->detail->id, 'actual_quantity' => 52]],
+        'packaging' => [['id' => $plan->id, 'actual_units' => 10]],
+        'remnant_quantity_gallons' => '1e65',
+    ])->assertUnprocessable()->assertJsonValidationErrors('remnant_quantity_gallons');
+});
+
+it('rechaza un rendimiento que no cabe en el porcentaje de la OP', function () {
+    // La OP proyecta 10: un rendimiento de 100.000 sería 1.000.000 %, y el porcentaje se guarda en decimal(5,2).
+    $plan = packagingPlanFor($this->order, $this->variant);
+    $payload = completePackagingPayload($this->detail, ['id' => $plan->id, 'actual_units' => 10], $this->admin);
+    $payload['actual_yield_quantity'] = 100000;
+
+    $this->post(route('production-orders.complete', $this->order), $payload)
+        ->assertSessionHasErrors(['actual_yield_quantity' => 'El rendimiento real no puede superar 9,99 veces la cantidad proyectada de la orden. Revisa el valor.']);
+});
+
+it('cuenta el plan de envasado de una OP como actividad: la materia prima no se ofrece para eliminar', function () {
+    // La etiqueta solo queda en el plan de la OP: la presentación ya no la tiene y no se ha consumido.
+    packagingPlanFor($this->order, $this->variant);
+    $this->variant->update(['label_raw_material_id' => null]);
+
+    $this->get(route('raw-materials.show', $this->label))
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('hasActivity', true));
 });

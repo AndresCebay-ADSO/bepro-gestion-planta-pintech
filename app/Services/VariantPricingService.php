@@ -6,13 +6,15 @@ namespace App\Services;
 
 use App\Concerns\DeterminesPriceRefresh;
 use App\Models\ProductVariant;
+use App\Services\Pricing\ProductionCostCalculatorService;
 
 class VariantPricingService
 {
     use DeterminesPriceRefresh;
 
     public function __construct(
-        private readonly DecimalCalculator $calculator
+        private readonly DecimalCalculator $calculator,
+        private readonly ProductionCostCalculatorService $productionCostCalculator,
     ) {}
 
     /**
@@ -62,11 +64,7 @@ class VariantPricingService
             );
 
             if ($shouldUpdateVariantPrice) {
-                $cifPercentageStr = (string) $cifPercentage;
-                $cifRatio = $this->calculator->div($cifPercentageStr, '100', 4);
-                $cifFactor = $this->calculator->add('1', $cifRatio, 4);
-                $newPrice = $this->calculator->mul($newVariantCost, $cifFactor, 4);
-                $variantUpdates['current_price'] = $newPrice;
+                $variantUpdates['current_price'] = $this->productionCostCalculator->applyCifToCost($newVariantCost, (string) $cifPercentage);
             }
         }
 

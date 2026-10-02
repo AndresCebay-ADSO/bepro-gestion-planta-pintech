@@ -16,6 +16,7 @@ use App\Models\InventoryBatch;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
+use App\Services\RawMaterialUsageService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,6 +31,7 @@ class RawMaterialController extends Controller
     public function __construct(
         private readonly DeleteUnusedRecordAction $deleteUnused,
         private readonly UpdateRawMaterialAction $updateRawMaterial,
+        private readonly RawMaterialUsageService $usage,
     ) {}
 
     /**
@@ -52,6 +54,8 @@ class RawMaterialController extends Controller
             ->withExists(['formulaDetails as has_formulas'])
             ->withExists(['productionOrderDetails as has_orders'])
             ->withExists(['packagedVariants as has_variants', 'labeledVariants as has_labeled_variants'])
+            // El plan de envasado de una OP también la referencia (envase consumido, etiqueta): no se puede eliminar.
+            ->withExists(['packagingPlanUses as has_packaging_plans', 'packagingPlanLabels as has_label_plans'])
             ->withExists(['lineAdjustments as has_adjustments'])
             ->withCount(['alerts as active_alerts_count' => fn ($query) => $query->where('is_resolved', false)])
             ->withExists(['alerts as has_critical_alert' => fn ($query) => $query
@@ -68,6 +72,8 @@ class RawMaterialController extends Controller
                     || $rawMaterial->has_orders
                     || $rawMaterial->has_variants
                     || $rawMaterial->has_labeled_variants
+                    || $rawMaterial->has_packaging_plans
+                    || $rawMaterial->has_label_plans
                     || $rawMaterial->has_adjustments);
 
                 return [
@@ -173,6 +179,8 @@ class RawMaterialController extends Controller
             'productionOrderDetails as has_orders',
             'packagedVariants as has_variants',
             'labeledVariants as has_labeled_variants',
+            'packagingPlanUses as has_packaging_plans',
+            'packagingPlanLabels as has_label_plans',
             'lineAdjustments as has_adjustments',
         ]);
 
@@ -185,6 +193,8 @@ class RawMaterialController extends Controller
             || $rawMaterial->has_orders
             || $rawMaterial->has_variants
             || $rawMaterial->has_labeled_variants
+            || $rawMaterial->has_packaging_plans
+            || $rawMaterial->has_label_plans
             || $rawMaterial->has_adjustments);
 
         return Inertia::render('Inventory/RawMaterials/Show', [
@@ -261,7 +271,7 @@ class RawMaterialController extends Controller
             ],
             'can' => ['updateCosts' => $canUpdateCosts],
             // Activar el control de inventario las dejaría sin poder completarse hasta registrar compras: se confirma.
-            'openProductionOrdersCount' => $canUpdateCosts && ! $rawMaterial->tracks_inventory ? $rawMaterial->openProductionOrdersCount() : 0,
+            'openProductionOrdersCount' => $canUpdateCosts && ! $rawMaterial->tracks_inventory ? $this->usage->openProductionOrdersCount($rawMaterial) : 0,
             'categories' => $this->categoryOptions(RawMaterialCategory::query()->selectable([$rawMaterial->category_id])),
             'units' => UnitOfMeasure::query()
                 ->selectable([$rawMaterial->unit_of_measure_id])
