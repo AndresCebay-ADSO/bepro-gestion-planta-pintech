@@ -226,3 +226,14 @@ it('correctly rounds div() for: %s', function (string $a, string $b, string $exp
     '10 ÷ 3 → 3.3333' => ['10', '3', '3.3333'],
     '5 ÷ 6  → 0.8333' => ['5',  '6', '0.8333'],
 ]);
+
+test('normalize() turns tiny and large floats into plain decimals that bcmath accepts', function () {
+    // (string) 0.00001 is "1.0E-5", which bcmath rejects.
+    expect($this->calc->normalize(0.00001))->toBe('0.00001')
+        ->and($this->calc->normalize(1.5))->toBe('1.5')
+        ->and($this->calc->normalize(10.0))->toBe('10')
+        ->and($this->calc->normalize(-0.0))->toBe('0')
+        ->and($this->calc->normalize('1.0000'))->toBe('1.0000')
+        ->and($this->calc->normalize(7))->toBe('7')
+        ->and($this->calc->add(0.00001, '1'))->toBe('1.0000');
+});

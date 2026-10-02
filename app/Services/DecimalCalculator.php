@@ -48,7 +48,7 @@ class DecimalCalculator
      */
     public function add(string|int|float $a, string|int|float $b, int $scale = self::DEFAULT_SCALE): string
     {
-        return bcadd((string) $a, (string) $b, $scale);
+        return bcadd($this->normalize($a), $this->normalize($b), $scale);
     }
 
     /**
@@ -61,7 +61,7 @@ class DecimalCalculator
      */
     public function sub(string|int|float $a, string|int|float $b, int $scale = self::DEFAULT_SCALE): string
     {
-        return bcsub((string) $a, (string) $b, $scale);
+        return bcsub($this->normalize($a), $this->normalize($b), $scale);
     }
 
     /**
@@ -78,7 +78,7 @@ class DecimalCalculator
         // e.g. mul('1.5', '10.1234', 4) internally computes at scale 8, then rounds to 4.
         $internalScale = $scale + self::INTERNAL_EXTRA_SCALE;
 
-        return $this->round(bcmul((string) $a, (string) $b, $internalScale), $scale);
+        return $this->round(bcmul($this->normalize($a), $this->normalize($b), $internalScale), $scale);
     }
 
     /**
@@ -95,7 +95,7 @@ class DecimalCalculator
      */
     public function div(string|int|float $a, string|int|float $b, int $scale = self::DEFAULT_SCALE): string
     {
-        $divisor = (string) $b;
+        $divisor = $this->normalize($b);
         if ($this->isZero($divisor)) {
             throw new RuntimeException('Division by zero');
         }
@@ -104,7 +104,7 @@ class DecimalCalculator
         // e.g. div('1', '6', 4) internally computes at scale 8 → '0.16666666' → rounds to '0.1667'.
         $internalScale = $scale + self::INTERNAL_EXTRA_SCALE;
 
-        return $this->round(bcdiv((string) $a, $divisor, $internalScale), $scale);
+        return $this->round(bcdiv($this->normalize($a), $divisor, $internalScale), $scale);
     }
 
     /**
@@ -122,7 +122,7 @@ class DecimalCalculator
      */
     public function cmp(string|int|float $a, string|int|float $b, int $scale = self::DEFAULT_SCALE): int
     {
-        return bccomp((string) $a, (string) $b, $scale);
+        return bccomp($this->normalize($a), $this->normalize($b), $scale);
     }
 
     /**
@@ -138,7 +138,7 @@ class DecimalCalculator
      */
     public function round(string|int|float $value, int $scale = self::DEFAULT_SCALE): string
     {
-        $val = (string) $value;
+        $val = $this->normalize($value);
 
         // For positives: add 0.5 in place (scale+1) before truncating.
         // We pass $scale + 1 to isNegative to correctly identify negative numbers
@@ -163,7 +163,7 @@ class DecimalCalculator
     {
         $cmp = $this->cmp($a, $b, $scale);
 
-        return $cmp < 0 ? (string) $a : (string) $b;
+        return $cmp < 0 ? $this->normalize($a) : $this->normalize($b);
     }
 
     /**
@@ -178,7 +178,7 @@ class DecimalCalculator
     {
         $cmp = $this->cmp($a, $b, $scale);
 
-        return $cmp > 0 ? (string) $a : (string) $b;
+        return $cmp > 0 ? $this->normalize($a) : $this->normalize($b);
     }
 
     /**
@@ -191,6 +191,21 @@ class DecimalCalculator
     public function isZero(string|int|float $value, int $scale = self::DEFAULT_SCALE): bool
     {
         return $this->cmp($value, '0', $scale) === 0;
+    }
+
+    /**
+     * Número como texto decimal que bcmath acepta. Un float (de un JSON, por ejemplo) no se convierte con `(string)`:
+     * `(string) 0.00001` da «1.0E-5», que bcmath rechaza. Todas las operaciones pasan por aquí.
+     */
+    public function normalize(string|int|float $value): string
+    {
+        if (! is_float($value)) {
+            return (string) $value;
+        }
+
+        $fixed = rtrim(rtrim(sprintf('%.10F', $value), '0'), '.');
+
+        return $fixed === '' || $fixed === '-0' ? '0' : $fixed;
     }
 
     /**
@@ -242,7 +257,7 @@ class DecimalCalculator
      */
     public function abs(string|int|float $value, int $scale = self::DEFAULT_SCALE): string
     {
-        $val = (string) $value;
+        $val = $this->normalize($value);
 
         return bcadd(ltrim($val, '-'), '0', $scale);
     }
@@ -282,8 +297,8 @@ class DecimalCalculator
         $calcScale = $scale + 4;
 
         foreach ($items as $item) {
-            $qty = (string) $item['quantity'];
-            $price = (string) $item['price'];
+            $qty = $this->normalize($item['quantity']);
+            $price = $this->normalize($item['price']);
             $totalValue = $this->add($totalValue, $this->mul($qty, $price, $calcScale), $calcScale);
             $totalQuantity = $this->add($totalQuantity, $qty, $calcScale);
         }
