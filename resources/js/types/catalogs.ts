@@ -66,3 +66,34 @@ export type ProductCategoryFormData = {
     description: string;
     is_active: boolean;
 };
+
+/** Línea de la receta de un tipo de termoencogido: lo que gasta cada aplicación. */
+export type ShrinkWrapTypeItem = {
+    raw_material_id: number;
+    code: string;
+    unit_symbol: string;
+    /** Desactivada después de entrar en la receta: se conserva, pero la pantalla avisa. */
+    is_active: boolean;
+    quantity: string;
+};
+
+export type ShrinkWrapTypeRow = {
+    id: number;
+    name: string;
+    is_active: boolean;
+    items: ShrinkWrapTypeItem[];
+};
+
+export type ShrinkWrapTypeFormData = {
+    name: string;
+    is_active: boolean;
+    items: { raw_material_id: string; quantity: string }[];
+};
+
+/** Materia prima de empaque secundario que se puede poner en una receta. */
+export type ShrinkWrapRawMaterialOption = {
+    value: number;
+    label: string;
+    unit_symbol: string;
+    is_active: boolean;
+};

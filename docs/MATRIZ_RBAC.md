@@ -109,6 +109,7 @@ combinación, se crea un rol nuevo.
 | | `production_orders.cancel` | [x] | [x] | [ ] | [ ] | [ ] | Coincide con hoy: el código usa `can('delete')` para cancelar. **Una orden no se elimina** (principio 4). |
 | | `production_orders.export` | [x] | [x] | [x] | [x] | [ ] | PDF + Excel juntos. Los costos del archivo dependen de `costs.view`. |
 | **Remanentes** | `production_remnants.view` | [x] | [x] | [x] | [x] | [ ] | El costo por galón solo con `costs.view`. ⚠️ hoy se envía a todos (`RemnantController:47`). |
+| **Termoencogido** | `shrink_wrap_types.manage` | [x] | [x] | [ ] | [ ] | [ ] | 🆕 (3.8) Crear, editar, desactivar y eliminar los tipos de termoencogido y su receta, en Configuración → Catálogos (la pestaña se ve con `catalogs.view`, del que depende). No es reservado: a diferencia de `catalogs.*`, también lo tiene Admin. |
 | **Movimientos MP** | `inventory_movements.view` | [x] | [x] | [x] | [x] | [ ] | ⚠️ hoy Operador no los ve. |
 | | `inventory_movements.create` | [x] | [x] | [ ] | [ ] | [ ] | ⚠️ hoy Producción puede crear. Inmutables: no existen `edit` ni `delete` (principio 5). |
 | **Inventario PT** | `finished_inventory.view` | [x] | [x] | [x] | [x] | [x] | ⚠️ hoy Operador no lo ve. La vista no muestra costos ni precios. |
@@ -150,9 +151,10 @@ combinación, se crea un rol nuevo.
 | | `warehouses.assign_users` | [x] | [x] | [ ] | [ ] | [ ] | |
 | | `warehouses.delete` | [x] | [ ] | [ ] | [ ] | [ ] | Solo si está intacta. ⚠️ hoy Admin puede. |
 
-**Total: 85 permisos en 21 módulos.** Por rol: SuperAdmin 85 · Admin 72 · Producción 23 · Operador 8 · Comercial 22.
+**Total: 86 permisos en 22 módulos.** Por rol: SuperAdmin 86 · Admin 73 · Producción 23 · Operador 8 · Comercial 22.
 (La v1 tenía 83. Entran 6: los 4 de catálogos, `products.download_documents` y `raw_materials.deactivate`.
 Salen 5: ver §6. `products.desactive` solo se renombra, igual que los `view` de módulos con dueño → `view_own`.)
+(3.8, tipos de termoencogido: entra `shrink_wrap_types.manage`, módulo Termoencogido.)
 
 ---
 
@@ -251,7 +253,7 @@ el código necesita saber vive aquí.
 
 | # | Decisión | Dónde se aplica |
 | :--- | :--- | :--- |
-| 8.1 | **SuperAdmin sin `Gate::before`.** Recibe los 85 permisos por seeder. Un bypass cortaría la ejecución antes de los invariantes de estado y dejaría completar una orden ya completada (doble descuento FIFO) o convertir dos veces una cotización | `SystemRole`, `RolePermissionSeeder` |
+| 8.1 | **SuperAdmin sin `Gate::before`.** Recibe todos los permisos por seeder. Un bypass cortaría la ejecución antes de los invariantes de estado y dejaría completar una orden ya completada (doble descuento FIFO) o convertir dos veces una cotización | `SystemRole`, `RolePermissionSeeder` |
 | 8.2 | **Permisos reservados.** Un rol creado desde la UI nunca puede tener los permisos exclusivos de SuperAdmin, ni al copiar otro rol | `Permission::isReserved()`, `RoleFormRequest` |
 | 8.3 | **Los roles del sistema se ven en solo lectura.** La pantalla de roles no permite editarlos ni borrarlos | `RoleController`, `role-permissions-fields.tsx` |
 | 8.4 | **No se asigna lo que no se tiene.** Nadie asigna un rol con permisos que él mismo no posee (`User::holdsAllPermissions`) | `AssignableRoleService`, `UserPolicy` |

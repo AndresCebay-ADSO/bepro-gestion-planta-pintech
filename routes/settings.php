@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Permission;
 use App\Http\Controllers\Settings\Catalogs\ProductCategoryController;
 use App\Http\Controllers\Settings\Catalogs\RawMaterialCategoryController;
+use App\Http\Controllers\Settings\Catalogs\ShrinkWrapTypeController;
 use App\Http\Controllers\Settings\Catalogs\UnitOfMeasureController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -45,4 +46,11 @@ Route::middleware(['auth', 'verified'])->prefix('settings/catalogs')->name('cata
         ->middlewareFor(['create', 'store'], 'can:'.Permission::CatalogsCreate->value)
         ->middlewareFor(['edit', 'update'], 'can:'.Permission::CatalogsEdit->value)
         ->middlewareFor('destroy', 'can:'.Permission::CatalogsDelete->value);
+
+    // Tipos de termoencogido (3.8): se ven como cualquier catálogo, pero los gestiona también el Admin.
+    Route::resource('shrink-wrap-types', ShrinkWrapTypeController::class)
+        ->except('show')
+        ->parameters(['shrink-wrap-types' => 'shrink_wrap_type'])
+        ->middlewareFor('index', 'can:'.Permission::CatalogsView->value)
+        ->middlewareFor(['create', 'store', 'edit', 'update', 'destroy'], 'can:'.Permission::ShrinkWrapTypesManage->value);
 });

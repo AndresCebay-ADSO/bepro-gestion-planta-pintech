@@ -36,6 +36,16 @@ class RawMaterialFactory extends Factory
         return $this->state(fn (): array => ['is_active' => false]);
     }
 
+    /**
+     * Bandeja, bolsa u otro material del termoencogido (3.8).
+     */
+    public function secondaryPackaging(): static
+    {
+        return $this->state(fn (): array => [
+            'category_id' => RawMaterialCategory::factory()->secondaryPackaging(),
+        ]);
+    }
+
     public function withoutPrice(): static
     {
         return $this->state(fn (): array => ['current_price' => null]);

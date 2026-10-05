@@ -9,6 +9,7 @@ import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { index as productCategoriesIndex } from '@/routes/catalogs/product-categories';
 import { index as rawMaterialCategoriesIndex } from '@/routes/catalogs/raw-material-categories';
+import { index as shrinkWrapTypesIndex } from '@/routes/catalogs/shrink-wrap-types';
 import { index as unitsOfMeasureIndex } from '@/routes/catalogs/units-of-measure';
 import { edit } from '@/routes/profile';
 import type { NavGroup } from '@/types';
@@ -48,6 +49,12 @@ const settingsNavGroups: NavGroup[] = [
             {
                 title: 'Categorías de producto',
                 href: productCategoriesIndex().url,
+                icon: null,
+                allowedPermissions: ['catalogs.view'],
+            },
+            {
+                title: 'Tipos de termoencogido',
+                href: shrinkWrapTypesIndex().url,
                 icon: null,
                 allowedPermissions: ['catalogs.view'],
             },

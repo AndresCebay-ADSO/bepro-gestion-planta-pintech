@@ -214,6 +214,12 @@ final class RoutePermissionMap
             'catalogs.product-categories.edit' => Permission::CatalogsEdit,
             'catalogs.product-categories.update' => Permission::CatalogsEdit,
             'catalogs.product-categories.destroy' => Permission::CatalogsDelete,
+            'catalogs.shrink-wrap-types.index' => Permission::CatalogsView,
+            'catalogs.shrink-wrap-types.create' => Permission::ShrinkWrapTypesManage,
+            'catalogs.shrink-wrap-types.store' => Permission::ShrinkWrapTypesManage,
+            'catalogs.shrink-wrap-types.edit' => Permission::ShrinkWrapTypesManage,
+            'catalogs.shrink-wrap-types.update' => Permission::ShrinkWrapTypesManage,
+            'catalogs.shrink-wrap-types.destroy' => Permission::ShrinkWrapTypesManage,
 
             // Bodegas
             'warehouses.index' => Permission::WarehousesView,

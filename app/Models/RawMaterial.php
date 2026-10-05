@@ -39,6 +39,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read Collection|FormulaDetail[] $formulaDetails
  * @property-read Collection|InventoryMovement[] $inventoryMovements
  * @property-read Collection|ProductionOrderDetail[] $productionOrderDetails
+ * @property-read Collection|ShrinkWrapTypeItem[] $shrinkWrapTypeItems
  * @property-read Collection|Alert[] $alerts
  */
 #[Fillable([
@@ -163,6 +164,14 @@ class RawMaterial extends Model
     public function labeledVariants(): HasMany
     {
         return $this->hasMany(ProductVariant::class, 'label_raw_material_id');
+    }
+
+    /**
+     * Líneas de recetas de tipos de termoencogido que la gastan (3.8).
+     */
+    public function shrinkWrapTypeItems(): HasMany
+    {
+        return $this->hasMany(ShrinkWrapTypeItem::class, 'raw_material_id');
     }
 
     public function lineAdjustments(): HasMany

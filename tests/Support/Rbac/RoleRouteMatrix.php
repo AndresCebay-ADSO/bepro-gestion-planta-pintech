@@ -81,6 +81,9 @@ final class RoleRouteMatrix
             'catalogs.raw-material-categories.create' => self::only(SystemRole::SuperAdmin),
             'catalogs.product-categories.index' => self::only(SystemRole::SuperAdmin, SystemRole::Admin),
             'catalogs.product-categories.create' => self::only(SystemRole::SuperAdmin),
+            // Tipos de termoencogido (3.8): los gestiona también el Admin.
+            'catalogs.shrink-wrap-types.index' => self::only(SystemRole::SuperAdmin, SystemRole::Admin),
+            'catalogs.shrink-wrap-types.create' => self::only(SystemRole::SuperAdmin, SystemRole::Admin),
 
             // Bodegas y QR.
             'warehouses.index' => self::only(SystemRole::SuperAdmin, SystemRole::Admin, SystemRole::Production, SystemRole::Commercial),

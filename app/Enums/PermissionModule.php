@@ -20,6 +20,7 @@ enum PermissionModule: string
     case RawMaterials = 'raw_materials';
     case ProductionOrders = 'production_orders';
     case ProductionRemnants = 'production_remnants';
+    case ShrinkWraps = 'shrink_wraps';
     case InventoryMovements = 'inventory_movements';
     case FinishedInventory = 'finished_inventory';
     case Quotations = 'quotations';
@@ -45,6 +46,7 @@ enum PermissionModule: string
             self::RawMaterials => __('Materias primas'),
             self::ProductionOrders => __('Órdenes de producción'),
             self::ProductionRemnants => __('Saldos de producción'),
+            self::ShrinkWraps => __('Termoencogido'),
             self::InventoryMovements => __('Movimientos de materia prima'),
             self::FinishedInventory => __('Inventario de producto terminado'),
             self::Quotations => __('Cotizaciones'),

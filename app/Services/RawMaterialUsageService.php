@@ -10,6 +10,7 @@ use App\Models\FormulaDetail;
 use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
+use App\Models\ShrinkWrapTypeItem;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
@@ -40,6 +41,8 @@ class RawMaterialUsageService
         'packagingPlanUses',
         'packagingPlanLabels',
         'lineAdjustments',
+        // Receta de un tipo de termoencogido (3.8).
+        'shrinkWrapTypeItems',
     ];
 
     /**
@@ -153,8 +156,13 @@ class RawMaterialUsageService
                     $inOpenOrders,
                 ],
             ],
-            // El empaque secundario (3.8) se sumará aquí cuando tenga usos que dependan del tipo.
-            RawMaterialType::SecondaryPackaging => [],
+            // Una receta de termoencogido solo acepta empaque secundario (3.8).
+            RawMaterialType::SecondaryPackaging => [
+                [
+                    fn (): int => ShrinkWrapTypeItem::query()->where('raw_material_id', $material->id)->count(),
+                    'No se puede pasar a una categoría de tipo :type: esta materia prima está en la receta de :count tipo de termoencogido.|No se puede pasar a una categoría de tipo :type: esta materia prima está en la receta de :count tipos de termoencogido.',
+                ],
+            ],
         };
     }
 
