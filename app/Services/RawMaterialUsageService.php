@@ -12,14 +12,70 @@ use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 /**
  * Cómo se usa una materia prima, en un solo sitio. Lo consultan el cambio de su control de inventario (qué OP abiertas
- * la consumirían) y el cambio de su tipo de insumo (qué usos dependen del tipo). Un uso nuevo (las bandejas y bolsas del
- * termoencogido, 3.8) se suma aquí y no en cada pantalla que lo necesite.
+ * la consumirían), el cambio de su tipo de insumo (qué usos dependen del tipo) y el borrado (si tiene actividad). Un uso
+ * nuevo se suma aquí y no en cada pantalla que lo necesite.
  */
 class RawMaterialUsageService
 {
+    /**
+     * Relaciones cuya existencia cuenta como actividad: con alguna, la materia prima tiene historial o un uso vivo y solo
+     * se puede desactivar, no eliminar (docs/POLITICA_ELIMINACION.md). Las claves foráneas `RESTRICT` lo impiden de todos
+     * modos; esta lista sirve para que la pantalla no ofrezca un borrado que la base va a rechazar.
+     *
+     * @var list<string>
+     */
+    private const ACTIVITY_RELATIONS = [
+        'inventoryBatches',
+        'inventoryMovements',
+        'formulaDetails',
+        'productionOrderDetails',
+        // Envase y etiqueta habitual de una presentación.
+        'packagedVariants',
+        'labeledVariants',
+        // Envase consumido y etiqueta de un plan de envasado de OP (3.7).
+        'packagingPlanUses',
+        'packagingPlanLabels',
+        'lineAdjustments',
+    ];
+
+    /**
+     * Añade a un listado un indicador por cada relación de actividad, para preguntar después con hasActivity() sin una
+     * consulta por fila.
+     *
+     * @param  Builder<RawMaterial>  $query
+     * @return Builder<RawMaterial>
+     */
+    public function withActivityFlags(Builder $query): Builder
+    {
+        return $query->withExists($this->activityAliases());
+    }
+
+    /**
+     * Si tiene actividad (ver ACTIVITY_RELATIONS). Usa los indicadores de withActivityFlags() si ya vienen todos cargados;
+     * si falta alguno, los carga: uno ausente se leería como «sin actividad» y la pantalla ofrecería un borrado que la
+     * base va a rechazar.
+     */
+    public function hasActivity(RawMaterial $material): bool
+    {
+        $flags = array_map(fn (string $relation): string => $this->activityFlag($relation), self::ACTIVITY_RELATIONS);
+
+        if (array_diff($flags, array_keys($material->getAttributes())) !== []) {
+            $material->loadExists($this->activityAliases());
+        }
+
+        foreach ($flags as $flag) {
+            if ((bool) $material->getAttribute($flag)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Órdenes de producción abiertas (pendientes, en curso o en revisión) que la consumirán al completarse. Cuenta el uso,
      * no el tipo de insumo: una línea de su fórmula, un ajuste de línea, el envase de una presentación de su plan de
@@ -100,6 +156,22 @@ class RawMaterialUsageService
             // El empaque secundario (3.8) se sumará aquí cuando tenga usos que dependan del tipo.
             RawMaterialType::SecondaryPackaging => [],
         };
+    }
+
+    /**
+     * @return list<string> p. ej. `inventoryBatches as activity_inventory_batches`
+     */
+    private function activityAliases(): array
+    {
+        return array_map(
+            fn (string $relation): string => "{$relation} as {$this->activityFlag($relation)}",
+            self::ACTIVITY_RELATIONS,
+        );
+    }
+
+    private function activityFlag(string $relation): string
+    {
+        return 'activity_'.Str::snake($relation);
     }
 
     /**

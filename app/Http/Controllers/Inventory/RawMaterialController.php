@@ -42,21 +42,16 @@ class RawMaterialController extends Controller
         $user = $request->user();
         $canViewCosts = $user?->can(Permission::CostsView->value) ?? false;
 
-        $rawMaterials = (new RawMaterialFilter($request))
+        $query = (new RawMaterialFilter($request))
             ->apply(RawMaterial::query())
             ->with([
                 'category:id,name,type',
                 'unitOfMeasure:id,name,symbol',
             ])
-            ->withSum('inventoryBatches as available_stock', 'remaining_quantity')
-            ->withExists(['inventoryBatches as has_batches'])
-            ->withExists(['inventoryMovements as has_movements'])
-            ->withExists(['formulaDetails as has_formulas'])
-            ->withExists(['productionOrderDetails as has_orders'])
-            ->withExists(['packagedVariants as has_variants', 'labeledVariants as has_labeled_variants'])
-            // El plan de envasado de una OP también la referencia (envase consumido, etiqueta): no se puede eliminar.
-            ->withExists(['packagingPlanUses as has_packaging_plans', 'packagingPlanLabels as has_label_plans'])
-            ->withExists(['lineAdjustments as has_adjustments'])
+            ->withSum('inventoryBatches as available_stock', 'remaining_quantity');
+
+        // Si tiene actividad decide si se puede eliminar; la lista de usos vive en RawMaterialUsageService.
+        $rawMaterials = $this->usage->withActivityFlags($query)
             ->withCount(['alerts as active_alerts_count' => fn ($query) => $query->where('is_resolved', false)])
             ->withExists(['alerts as has_critical_alert' => fn ($query) => $query
                 ->where('is_resolved', false)
@@ -66,15 +61,7 @@ class RawMaterialController extends Controller
             ->onEachSide(1)
             ->withQueryString()
             ->through(function (RawMaterial $rawMaterial) use ($user, $canViewCosts): array {
-                $hasActivity = (bool) ($rawMaterial->has_batches
-                    || $rawMaterial->has_movements
-                    || $rawMaterial->has_formulas
-                    || $rawMaterial->has_orders
-                    || $rawMaterial->has_variants
-                    || $rawMaterial->has_labeled_variants
-                    || $rawMaterial->has_packaging_plans
-                    || $rawMaterial->has_label_plans
-                    || $rawMaterial->has_adjustments);
+                $hasActivity = $this->usage->hasActivity($rawMaterial);
 
                 return [
                     'id' => $rawMaterial->id,
@@ -173,29 +160,12 @@ class RawMaterialController extends Controller
                 )
                 ->orderByDesc('entry_date')
                 ->orderByDesc('id'),
-        ])->loadExists([
-            'inventoryMovements as has_movements',
-            'formulaDetails as has_formulas',
-            'productionOrderDetails as has_orders',
-            'packagedVariants as has_variants',
-            'labeledVariants as has_labeled_variants',
-            'packagingPlanUses as has_packaging_plans',
-            'packagingPlanLabels as has_label_plans',
-            'lineAdjustments as has_adjustments',
         ]);
 
         $hasAvailableStock = $rawMaterial->inventoryBatches
             ->contains(fn ($batch) => (float) $batch->remaining_quantity > 0);
 
-        $hasActivity = (bool) ($rawMaterial->inventoryBatches->isNotEmpty()
-            || $rawMaterial->has_movements
-            || $rawMaterial->has_formulas
-            || $rawMaterial->has_orders
-            || $rawMaterial->has_variants
-            || $rawMaterial->has_labeled_variants
-            || $rawMaterial->has_packaging_plans
-            || $rawMaterial->has_label_plans
-            || $rawMaterial->has_adjustments);
+        $hasActivity = $this->usage->hasActivity($rawMaterial);
 
         return Inertia::render('Inventory/RawMaterials/Show', [
             'returnTo' => $this->resolveReturnTo($request),

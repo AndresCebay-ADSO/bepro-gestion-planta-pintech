@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\RawMaterialType;
 use App\Models\Concerns\HasAuditDescription;
+use App\Models\Concerns\SelectableWhenActive;
 use Database\Factories\RawMaterialFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -55,7 +56,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class RawMaterial extends Model
 {
     /** @use HasFactory<RawMaterialFactory> */
-    use HasAuditDescription, HasFactory, LogsActivity;
+    use HasAuditDescription, HasFactory, LogsActivity, SelectableWhenActive;
 
     protected string $auditLabel = 'Materia prima';
 
@@ -84,14 +85,6 @@ class RawMaterial extends Model
             'tracks_inventory' => 'boolean',
             'is_active' => 'boolean',
         ];
-    }
-
-    /**
-     * Scope a query to only include active materials.
-     */
-    public function scopeActive(Builder $query): void
-    {
-        $query->where('is_active', true);
     }
 
     /**
