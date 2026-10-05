@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\RawMaterialType;
 use App\Models\Concerns\HasAuditDescription;
+use App\Models\Concerns\SelectableWhenActive;
 use Database\Factories\RawMaterialFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -38,6 +39,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read Collection|FormulaDetail[] $formulaDetails
  * @property-read Collection|InventoryMovement[] $inventoryMovements
  * @property-read Collection|ProductionOrderDetail[] $productionOrderDetails
+ * @property-read Collection|ShrinkWrapTypeItem[] $shrinkWrapTypeItems
  * @property-read Collection|Alert[] $alerts
  */
 #[Fillable([
@@ -55,7 +57,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class RawMaterial extends Model
 {
     /** @use HasFactory<RawMaterialFactory> */
-    use HasAuditDescription, HasFactory, LogsActivity;
+    use HasAuditDescription, HasFactory, LogsActivity, SelectableWhenActive;
 
     protected string $auditLabel = 'Materia prima';
 
@@ -84,14 +86,6 @@ class RawMaterial extends Model
             'tracks_inventory' => 'boolean',
             'is_active' => 'boolean',
         ];
-    }
-
-    /**
-     * Scope a query to only include active materials.
-     */
-    public function scopeActive(Builder $query): void
-    {
-        $query->where('is_active', true);
     }
 
     /**
@@ -170,6 +164,14 @@ class RawMaterial extends Model
     public function labeledVariants(): HasMany
     {
         return $this->hasMany(ProductVariant::class, 'label_raw_material_id');
+    }
+
+    /**
+     * Líneas de recetas de tipos de termoencogido que la gastan (3.8).
+     */
+    public function shrinkWrapTypeItems(): HasMany
+    {
+        return $this->hasMany(ShrinkWrapTypeItem::class, 'raw_material_id');
     }
 
     public function lineAdjustments(): HasMany

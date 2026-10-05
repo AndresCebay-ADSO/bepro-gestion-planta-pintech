@@ -61,6 +61,7 @@ y es lo correcto, porque el historial lo referencia.
 | Usuario | `users.edit` (`is_active`) — ya implementado | `users.delete` (SuperAdmin) — ya implementado | es el último SuperAdmin activo — ya implementado |
 | Unidad de medida | `catalogs.edit` (SuperAdmin) — ya implementado, auditada | `catalogs.delete` (SuperAdmin) — ya implementado | nunca: materias primas, productos y presentaciones conservan la suya al editarse; los registros nuevos solo eligen unidades activas. Las **fórmulas** son la excepción: editarlas reescribe todas sus líneas (y solo se puede si ninguna OP las usó), así que exigen unidades y materias primas activas |
 | Categorías (de materia prima y de producto) | `catalogs.edit` (SuperAdmin) — ya implementado, auditadas | `catalogs.delete` (SuperAdmin) — ya implementado | nunca: lo que ya la usa la conserva; los registros nuevos solo eligen categorías activas. El **tipo** de una categoría de materia prima no se cambia si tiene materias primas |
+| Tipo de termoencogido (3.8) | `shrink_wrap_types.manage` (Admin), auditado con su receta | `shrink_wrap_types.manage`: se lleva su receta, auditada línea por línea; los registros de termoencogido (PR B) lo protegerán con `RESTRICT` | nunca: los registros guardan su propia copia de la receta; los nuevos solo eligen tipos activos. Una materia prima ya en la receta se conserva aunque se desactive; las nuevas deben estar activas |
 
 **Desactivar un producto** oculta también sus variantes y fórmulas en los selectores, aunque cada una conserve su
 propio `is_active`: los selectores filtran por el producto y por el hijo.
@@ -115,7 +116,7 @@ conserva (`User::hasActivity()` se reduce a esa consulta).
 
 ### 4.1 Se quedan en `CASCADE` (hijos sin valor propio)
 
-`formula_details` → `formulas` · `qr_documents` → `qr_codes` · `finished_product_batch_stocks` →
+`formula_details` → `formulas` · `shrink_wrap_type_items` → `shrink_wrap_types` · `qr_documents` → `qr_codes` · `finished_product_batch_stocks` →
 `finished_product_batches` · hijos de una orden (`production_order_details`, `_line_adjustments`, `_packaging_plan`,
 `qr_codes`) → `production_orders` (las órdenes no se eliminan; la cascada no llega a actuar) · `alerts` →
 `raw_materials` / `inventory_batches` · `warehouse_user` → `users` / `warehouses` · tablas de Spatie (roles y permisos).

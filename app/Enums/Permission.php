@@ -80,6 +80,9 @@ enum Permission: string
     // Saldos de producción
     case ProductionRemnantsView = 'production_remnants.view';
 
+    // Termoencogido
+    case ShrinkWrapTypesManage = 'shrink_wrap_types.manage';
+
     // Movimientos de materia prima
     case InventoryMovementsView = 'inventory_movements.view';
     case InventoryMovementsCreate = 'inventory_movements.create';
@@ -188,6 +191,7 @@ enum Permission: string
             self::ProductionOrdersCancel => __('Cancelar órdenes de producción'),
             self::ProductionOrdersExport => __('Exportar órdenes de producción'),
             self::ProductionRemnantsView => __('Ver saldos de producción'),
+            self::ShrinkWrapTypesManage => __('Gestionar tipos de termoencogido'),
             self::InventoryMovementsView => __('Ver movimientos de materia prima'),
             self::InventoryMovementsCreate => __('Registrar movimientos de materia prima'),
             self::FinishedInventoryView => __('Ver inventario de producto terminado'),
@@ -279,6 +283,7 @@ enum Permission: string
             self::ProductionOrdersCancel,
             self::ProductionOrdersExport => PermissionModule::ProductionOrders,
             self::ProductionRemnantsView => PermissionModule::ProductionRemnants,
+            self::ShrinkWrapTypesManage => PermissionModule::ShrinkWraps,
             self::InventoryMovementsView,
             self::InventoryMovementsCreate => PermissionModule::InventoryMovements,
             self::FinishedInventoryView,
@@ -366,6 +371,8 @@ enum Permission: string
             self::CatalogsCreate,
             self::CatalogsEdit,
             self::CatalogsDelete => [self::CatalogsView],
+            // Los tipos viven en Configuración → Catálogos, cuya pestaña se ve con catalogs.view.
+            self::ShrinkWrapTypesManage => [self::CatalogsView],
             self::ProductsCreate,
             self::ProductsEdit,
             self::ProductsDelete,
@@ -501,7 +508,8 @@ enum Permission: string
             self::WarehousesViewAll,
             self::WarehousesCreate,
             self::WarehousesEdit,
-            self::WarehousesAssignUsers => [
+            self::WarehousesAssignUsers,
+            self::ShrinkWrapTypesManage => [
                 SystemRole::Admin,
             ],
             self::UsersDelete,

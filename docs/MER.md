@@ -66,6 +66,37 @@ uso (envase de una presentación, línea de fórmula) a una categoría de otro t
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
 
+### 2.1.4 `shrink_wrap_types`
+
+Tipos de termoencogido (3.8, Configuración → Catálogos), auditados (`tipos_termoencogido`). Cada tipo es una receta de
+empaque secundario que se gasta en cada aplicación («Galón» = 1 bolsa + 1 bandeja). Los gestionan Admin y SuperAdmin
+(`shrink_wrap_types.manage`). Un tipo usado se desactiva; uno sin uso se elimina con su receta.
+
+| Columna | Tipo | Nulo | Notas |
+| --- | --- | :-: | --- |
+| `id` | BIGINT |  | PK |
+| `name` | VARCHAR(100) |  | UNIQUE (además, único sin distinguir mayúsculas en la validación) |
+| `is_active` | BOOLEAN |  | default `true` |
+| `created_at` | TIMESTAMP | sí |  |
+| `updated_at` | TIMESTAMP | sí |  |
+
+### 2.1.5 `shrink_wrap_type_items`
+
+Receta de un tipo de termoencogido: cuánto de cada materia prima de tipo Empaque secundario gasta una aplicación.
+Auditada línea por línea (`tipos_termoencogido`): al editar se sincroniza, no se borra y se recrea. Una materia prima en
+una receta tiene actividad (no se elimina) y no puede pasar a una categoría de otro tipo.
+
+| Columna | Tipo | Nulo | Notas |
+| --- | --- | :-: | --- |
+| `id` | BIGINT |  | PK |
+| `shrink_wrap_type_id` | BIGINT |  | FK → `shrink_wrap_types` (CASCADE) |
+| `raw_material_id` | BIGINT |  | FK → `raw_materials` (RESTRICT) |
+| `quantity` | DECIMAL(12,4) |  | por aplicación, > 0 |
+| `created_at` | TIMESTAMP | sí |  |
+| `updated_at` | TIMESTAMP | sí |  |
+
+Índices: UNIQUE (`shrink_wrap_type_id`, `raw_material_id`) · `raw_material_id`.
+
 ## 2.2 Bodegas
 
 ### 2.2.1 `warehouses`
