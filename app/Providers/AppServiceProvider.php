@@ -17,6 +17,7 @@ use App\Models\ProductionRemnant;
 use App\Models\QrCode;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
+use App\Models\ShrinkWrap;
 use App\Models\ShrinkWrapType;
 use App\Models\UnitOfMeasure;
 use App\Models\Warehouse;
@@ -33,6 +34,7 @@ use App\Policies\QrCodePolicy;
 use App\Policies\RawMaterialCategoryPolicy;
 use App\Policies\RawMaterialPolicy;
 use App\Policies\RolePolicy;
+use App\Policies\ShrinkWrapPolicy;
 use App\Policies\ShrinkWrapTypePolicy;
 use App\Policies\UnitOfMeasurePolicy;
 use App\Policies\WarehousePolicy;
@@ -113,6 +115,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(RawMaterial::class, RawMaterialPolicy::class);
         Gate::policy(RawMaterialCategory::class, RawMaterialCategoryPolicy::class);
         Gate::policy(ProductCategory::class, ProductCategoryPolicy::class);
+        Gate::policy(ShrinkWrap::class, ShrinkWrapPolicy::class);
         Gate::policy(ShrinkWrapType::class, ShrinkWrapTypePolicy::class);
         // El modelo Role es de Spatie: la policy no se descubre por convención.
         Gate::policy(Role::class, RolePolicy::class);

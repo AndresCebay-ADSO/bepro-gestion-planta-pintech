@@ -21,6 +21,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $warehouse_id
  * @property int|null $batch_id
  * @property int|null $production_order_id
+ * @property int|null $shrink_wrap_id
  * @property InventoryMovementType $type
  * @property string $quantity
  * @property string $cost_price
@@ -33,6 +34,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read Warehouse $warehouse
  * @property-read InventoryBatch|null $batch
  * @property-read ProductionOrder|null $productionOrder
+ * @property-read ShrinkWrap|null $shrinkWrap
  * @property-read User $createdBy
  */
 #[Fillable([
@@ -40,6 +42,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'warehouse_id',
     'batch_id',
     'production_order_id',
+    'shrink_wrap_id',
     'type',
     'quantity',
     'cost_price',
@@ -61,7 +64,7 @@ class InventoryMovement extends Model
         return LogOptions::defaults()
             ->useLogName('movimientos_inventario')
             ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
-            ->logOnly(['raw_material_id', 'type', 'quantity', 'cost_price', 'production_order_id'])
+            ->logOnly(['raw_material_id', 'type', 'quantity', 'cost_price', 'production_order_id', 'shrink_wrap_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -94,6 +97,14 @@ class InventoryMovement extends Model
     public function productionOrder(): BelongsTo
     {
         return $this->belongsTo(ProductionOrder::class, 'production_order_id');
+    }
+
+    /**
+     * Termoencogido que originó la salida (3.8), si no fue una OP.
+     */
+    public function shrinkWrap(): BelongsTo
+    {
+        return $this->belongsTo(ShrinkWrap::class, 'shrink_wrap_id');
     }
 
     public function createdBy(): BelongsTo

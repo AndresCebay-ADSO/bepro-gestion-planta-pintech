@@ -138,6 +138,10 @@ final class RoutePermissionMap
             'production-orders.export-excel' => Permission::ProductionOrdersExport,
             'production-orders.preview-costs' => Permission::CostsView,
             'production.remnants.index' => Permission::ProductionRemnantsView,
+            'production.shrink-wraps.index' => Permission::ShrinkWrapsView,
+            'production.shrink-wraps.show' => Permission::ShrinkWrapsView,
+            'production.shrink-wraps.create' => Permission::ShrinkWrapsCreate,
+            'production.shrink-wraps.store' => Permission::ShrinkWrapsCreate,
 
             // Inventario
             'inventory-movements.index' => Permission::InventoryMovementsView,

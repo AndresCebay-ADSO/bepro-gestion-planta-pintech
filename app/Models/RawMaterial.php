@@ -40,6 +40,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read Collection|InventoryMovement[] $inventoryMovements
  * @property-read Collection|ProductionOrderDetail[] $productionOrderDetails
  * @property-read Collection|ShrinkWrapTypeItem[] $shrinkWrapTypeItems
+ * @property-read Collection|ShrinkWrapItem[] $shrinkWrapItems
  * @property-read Collection|Alert[] $alerts
  */
 #[Fillable([
@@ -172,6 +173,14 @@ class RawMaterial extends Model
     public function shrinkWrapTypeItems(): HasMany
     {
         return $this->hasMany(ShrinkWrapTypeItem::class, 'raw_material_id');
+    }
+
+    /**
+     * Lo que gastaron los termoencogidos registrados (3.8).
+     */
+    public function shrinkWrapItems(): HasMany
+    {
+        return $this->hasMany(ShrinkWrapItem::class, 'raw_material_id');
     }
 
     public function lineAdjustments(): HasMany

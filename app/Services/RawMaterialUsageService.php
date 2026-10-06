@@ -41,8 +41,9 @@ class RawMaterialUsageService
         'packagingPlanUses',
         'packagingPlanLabels',
         'lineAdjustments',
-        // Receta de un tipo de termoencogido (3.8).
+        // Receta de un tipo de termoencogido y lo que gastaron los registrados (3.8).
         'shrinkWrapTypeItems',
+        'shrinkWrapItems',
     ];
 
     /**

@@ -17,6 +17,7 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\QualityInspectionCertificateService;
+use Carbon\CarbonImmutable;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
@@ -167,4 +168,27 @@ test('regenerating a certificate keeps only one current certificate', function (
             ->where('document_type', QrDocumentType::QualityCertificate->value)
             ->where('is_current', true)
             ->count())->toBe(1);
+});
+
+test('completing an order at night in the plant stores the plant date, not the UTC one', function () {
+    Storage::fake('local');
+    Queue::fake();
+    [$user, $order, $detail] = createCertificateCompletionFixture();
+
+    // 01:30 UTC del 5 de octubre = 20:30 del 4 de octubre en Bogotá.
+    $this->travelTo(CarbonImmutable::parse('2026-10-05 01:30:00', 'UTC'));
+
+    $this->actingAs($user)->post(route('production-orders.start', $order));
+    $this->actingAs($user)->post(route('production-orders.complete', $order), [
+        'viscosity_ku' => 100,
+        'grinding_hg' => 7,
+        'quality_solids' => 50,
+        'responsible_name' => 'Analista Calidad',
+        'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => $user->id,
+        'ingredients' => [['id' => $detail->id, 'actual_quantity' => 10]],
+        'packaging' => [],
+    ])->assertRedirect(route('production-orders.show', $order));
+
+    expect($order->refresh()->completion_date->toDateString())->toBe('2026-10-04');
 });

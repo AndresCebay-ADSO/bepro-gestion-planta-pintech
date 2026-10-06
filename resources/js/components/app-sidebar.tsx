@@ -11,6 +11,7 @@ import {
     KeyRound,
     LayoutGrid,
     Package,
+    PackageCheck,
     QrCode,
     Settings,
     ShieldCheck,
@@ -42,6 +43,7 @@ import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
 import { index as paintDevIndex } from '@/routes/paint-development-requests';
 import { index as pricesIndex } from '@/routes/prices';
 import { index as remnantsIndex } from '@/routes/production/remnants';
+import { index as shrinkWrapsIndex } from '@/routes/production/shrink-wraps';
 import { index as productionOrdersIndex } from '@/routes/production-orders';
 import { index as productsIndex } from '@/routes/products';
 import { edit as editProfile } from '@/routes/profile';
@@ -120,6 +122,12 @@ const navigationGroups: NavGroup[] = [
                 allowedPermissions: ['production_remnants.view'],
                 href: remnantsIndex().url,
                 icon: FlaskConical,
+            },
+            {
+                title: 'Termoencogido',
+                allowedPermissions: ['shrink_wraps.view'],
+                href: shrinkWrapsIndex().url,
+                icon: PackageCheck,
             },
         ],
     },

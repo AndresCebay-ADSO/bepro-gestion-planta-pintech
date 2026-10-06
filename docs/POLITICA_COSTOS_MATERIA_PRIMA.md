@@ -78,6 +78,21 @@ Por cada presentación del plan de envasado, al completar la OP (`CompleteProduc
 
 La vista previa de costos de la OP aplica la misma regla con precios estimados.
 
+## Termoencogido: gasto general, no costo del lote
+El termoencogido (3.8) se registra aparte de la OP, cuando se hace (`RegisterShrinkWrapAction`): una OP completada, un
+tipo y las aplicaciones.
+- se consume receta × aplicaciones de la **bodega de la OP**, con la regla de cualquier materia prima (FIFO si controla
+  inventario; si no, sin lote y a su precio de referencia);
+- su costo queda en el registro (`shrink_wraps.total_cost`) como **gasto general**: no entra al costo del lote, de la
+  presentación ni de la lista de precios;
+- por eso sus salidas se enlazan al registro (`inventory_movements.shrink_wrap_id`) y **no** a la OP: un reporte de
+  consumo por OP no debe contarlas;
+- las salidas se fechan con el **día en que se registra**, aunque el termoencogido haya sido semanas antes (esa fecha
+  queda en el registro): el FIFO toma los lotes con saldo hoy, y fecharlas atrás podría dejar una salida anterior a la
+  entrada de su lote;
+- un costo que no cabe en su columna (posible solo sin control de inventario, que no tiene stock que lo frene) se
+  rechaza como error de validación, nunca como un 500.
+
 ## Materias primas sin control de inventario
 Las que no se compran por lotes ni se cuentan (`tracks_inventory = false`: agua, etiquetas) no tienen compras de donde
 sacar el precio. Su `current_price` se escribe a mano en el formulario de la materia prima, solo con el permiso

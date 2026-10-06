@@ -109,7 +109,9 @@ combinación, se crea un rol nuevo.
 | | `production_orders.cancel` | [x] | [x] | [ ] | [ ] | [ ] | Coincide con hoy: el código usa `can('delete')` para cancelar. **Una orden no se elimina** (principio 4). |
 | | `production_orders.export` | [x] | [x] | [x] | [x] | [ ] | PDF + Excel juntos. Los costos del archivo dependen de `costs.view`. |
 | **Remanentes** | `production_remnants.view` | [x] | [x] | [x] | [x] | [ ] | El costo por galón solo con `costs.view`. ⚠️ hoy se envía a todos (`RemnantController:47`). |
-| **Termoencogido** | `shrink_wrap_types.manage` | [x] | [x] | [ ] | [ ] | [ ] | 🆕 (3.8) Crear, editar, desactivar y eliminar los tipos de termoencogido y su receta, en Configuración → Catálogos (la pestaña se ve con `catalogs.view`, del que depende). No es reservado: a diferencia de `catalogs.*`, también lo tiene Admin. |
+| **Termoencogido** | `shrink_wraps.view` | [x] | [x] | [x] | [x] | [ ] | 🆕 (3.8) Listado y detalle de los registros de termoencogido. El costo (gasto general) solo con `costs.view`. |
+| | `shrink_wraps.create` | [x] | [x] | [x] | [x] | [ ] | 🆕 (3.8) Registrar un termoencogido: OP completada, tipo y aplicaciones; descuenta el empaque secundario de la bodega de la OP. Inmutable: no existen `edit` ni `delete` (un error se corrige con un movimiento opuesto). |
+| | `shrink_wrap_types.manage` | [x] | [x] | [ ] | [ ] | [ ] | 🆕 (3.8) Crear, editar, desactivar y eliminar los tipos de termoencogido y su receta, en Configuración → Catálogos (la pestaña se ve con `catalogs.view`, del que depende). No es reservado: a diferencia de `catalogs.*`, también lo tiene Admin. |
 | **Movimientos MP** | `inventory_movements.view` | [x] | [x] | [x] | [x] | [ ] | ⚠️ hoy Operador no los ve. |
 | | `inventory_movements.create` | [x] | [x] | [ ] | [ ] | [ ] | ⚠️ hoy Producción puede crear. Inmutables: no existen `edit` ni `delete` (principio 5). |
 | **Inventario PT** | `finished_inventory.view` | [x] | [x] | [x] | [x] | [x] | ⚠️ hoy Operador no lo ve. La vista no muestra costos ni precios. |
@@ -151,10 +153,10 @@ combinación, se crea un rol nuevo.
 | | `warehouses.assign_users` | [x] | [x] | [ ] | [ ] | [ ] | |
 | | `warehouses.delete` | [x] | [ ] | [ ] | [ ] | [ ] | Solo si está intacta. ⚠️ hoy Admin puede. |
 
-**Total: 86 permisos en 22 módulos.** Por rol: SuperAdmin 86 · Admin 73 · Producción 23 · Operador 8 · Comercial 22.
+**Total: 88 permisos en 22 módulos.** Por rol: SuperAdmin 88 · Admin 75 · Producción 25 · Operador 10 · Comercial 22.
 (La v1 tenía 83. Entran 6: los 4 de catálogos, `products.download_documents` y `raw_materials.deactivate`.
 Salen 5: ver §6. `products.desactive` solo se renombra, igual que los `view` de módulos con dueño → `view_own`.)
-(3.8, tipos de termoencogido: entra `shrink_wrap_types.manage`, módulo Termoencogido.)
+(3.8, termoencogido: entran `shrink_wrap_types.manage`, `shrink_wraps.view` y `shrink_wraps.create`, módulo Termoencogido.)
 
 ---
 

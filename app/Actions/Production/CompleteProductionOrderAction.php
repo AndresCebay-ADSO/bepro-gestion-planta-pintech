@@ -19,6 +19,7 @@ use App\Services\DecimalCalculator;
 use App\Services\FinishedInventory\FinishedInventoryMovementService;
 use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\Pricing\ProductionCostCalculatorService;
+use App\Services\TimezoneService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -31,6 +32,7 @@ class CompleteProductionOrderAction
         private readonly AlertService $alertService,
         private readonly SaveProductionOrderOperationalDataAction $saveOperationalData,
         private readonly FinishedInventoryMovementService $finishedInventoryMovementService,
+        private readonly TimezoneService $timezone,
     ) {}
 
     /**
@@ -60,7 +62,9 @@ class CompleteProductionOrderAction
 
             $updateData = [
                 'status' => ProductionOrderStatus::Completed,
-                'completion_date' => now(),
+                // Fecha de planta, no UTC: completada a las 8 p. m. en Bogotá ya es el día siguiente en UTC, y el dashboard
+                // («completadas hoy»), el detalle y el QR la mostrarían un día después.
+                'completion_date' => $this->timezone->nowInPlant()->toDateString(),
                 'quality_responsible_user_id' => $data['quality_responsible_user_id'] ?? null,
             ];
 

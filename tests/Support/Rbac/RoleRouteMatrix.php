@@ -61,6 +61,9 @@ final class RoleRouteMatrix
             'production-orders.index' => self::only(SystemRole::SuperAdmin, SystemRole::Admin, SystemRole::Production, SystemRole::Operator),
             'production-orders.create' => self::only(SystemRole::SuperAdmin, SystemRole::Admin, SystemRole::Production),
             'production.remnants.index' => self::only(SystemRole::SuperAdmin, SystemRole::Admin, SystemRole::Production, SystemRole::Operator),
+            // Termoencogido (3.8): lo registra quien lo hace en planta.
+            'production.shrink-wraps.index' => self::only(SystemRole::SuperAdmin, SystemRole::Admin, SystemRole::Production, SystemRole::Operator),
+            'production.shrink-wraps.create' => self::only(SystemRole::SuperAdmin, SystemRole::Admin, SystemRole::Production, SystemRole::Operator),
             'alerts.index' => self::only(SystemRole::SuperAdmin, SystemRole::Admin, SystemRole::Production),
 
             // Comercial: cotizaciones, pedidos, clientes y precios.
