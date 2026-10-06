@@ -29,6 +29,9 @@ use Illuminate\Validation\ValidationException;
  */
 class RegisterShrinkWrapAction
 {
+    /** Tope de las columnas de cantidad: decimal(12,4). */
+    private const MAX_QUANTITY = '99999999.9999';
+
     /** Tope de las columnas de costo: decimal(14,4). */
     private const MAX_COST = '9999999999.9999';
 
@@ -79,6 +82,17 @@ class RegisterShrinkWrapAction
             foreach ($type->items as $item) {
                 /** @var ShrinkWrapTypeItem $item */
                 $quantity = $this->calculator->mul((string) $item->quantity, (string) $applications, 4);
+
+                // Sin tope de negocio (no se compara con las unidades producidas), pero sí técnico: lo descontado debe caber
+                // en su columna. Se revisa aquí, con la receta ya bloqueada: en el request la receta podía cambiar antes
+                // de guardar. Sin control de inventario no hay stock que lo frene, y sería un 500 de la base.
+                if ($this->calculator->cmp($quantity, self::MAX_QUANTITY) > 0) {
+                    throw ValidationException::withMessages([
+                        'applications' => __('Son demasiadas aplicaciones: el consumo de :code no cabe en el registro.', [
+                            'code' => $item->rawMaterial->code,
+                        ]),
+                    ]);
+                }
 
                 $cost = $this->fifoStockAllocator->consumeFromWarehouse(
                     rawMaterialId: $item->raw_material_id,

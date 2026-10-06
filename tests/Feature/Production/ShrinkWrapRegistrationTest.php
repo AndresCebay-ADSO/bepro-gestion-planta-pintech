@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\ShrinkWraps\RegisterShrinkWrapAction;
 use App\Enums\AlertType;
 use App\Enums\InventoryMovementType;
 use App\Enums\ProductionOrderStatus;
@@ -16,6 +17,7 @@ use App\Models\ShrinkWrapType;
 use App\Models\ShrinkWrapTypeItem;
 use App\Models\Warehouse;
 use Carbon\CarbonImmutable;
+use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia;
 use Spatie\Activitylog\Models\Activity;
 
@@ -142,6 +144,26 @@ it('no ofrece ni acepta una OP completada hace más de 6 meses', function () {
 
     $this->post(route('production.shrink-wraps.store'), shrinkWrapPayload(['production_order_id' => $old->id]))
         ->assertSessionHasErrors(['production_order_id' => 'La orden de producción debe estar completada y en los últimos 6 meses.']);
+});
+
+it('revisa la cantidad con la receta bloqueada, aunque cambie después de validar', function () {
+    $user = actingAsRole(SystemRole::Operator);
+    // Sin control de inventario no hay stock que frene una cantidad enorme: sin la revisión en la acción, la salida
+    // intentaría guardar 99.999.999 × 2 en una columna decimal(12,4).
+    $untracked = RawMaterial::factory()->secondaryPackaging()->withoutInventoryTracking()->create(['code' => 'BOLSA-X', 'current_price' => 0]);
+    $type = ShrinkWrapType::factory()->create();
+    ShrinkWrapTypeItem::factory()->create(['shrink_wrap_type_id' => $type->id, 'raw_material_id' => $untracked->id, 'quantity' => '2']);
+
+    // Datos ya validados con la receta anterior (1 por aplicación): la acción no debe confiar en esa validación.
+    expect(fn () => app(RegisterShrinkWrapAction::class)->execute([
+        'production_order_id' => $this->order->id,
+        'shrink_wrap_type_id' => $type->id,
+        'applications' => 99999999,
+        'wrapped_at' => '2026-10-05',
+    ], $user->id))->toThrow(ValidationException::class, 'Son demasiadas aplicaciones: el consumo de BOLSA-X no cabe en el registro.');
+
+    expect(ShrinkWrap::query()->exists())->toBeFalse()
+        ->and(InventoryMovement::query()->exists())->toBeFalse();
 });
 
 it('rechaza un costo que no cabe en el registro sin llegar a la base', function () {

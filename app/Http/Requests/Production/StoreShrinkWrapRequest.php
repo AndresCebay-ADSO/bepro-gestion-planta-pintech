@@ -6,8 +6,6 @@ namespace App\Http\Requests\Production;
 
 use App\Models\ProductionOrder;
 use App\Models\ShrinkWrap;
-use App\Models\ShrinkWrapTypeItem;
-use App\Services\DecimalCalculator;
 use App\Services\TimezoneService;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -19,9 +17,6 @@ use Illuminate\Validation\Validator;
  */
 class StoreShrinkWrapRequest extends FormRequest
 {
-    /** Tope de las cantidades guardadas: columnas decimal(12,4). */
-    private const MAX_QUANTITY = '99999999.9999';
-
     public function authorize(): bool
     {
         return $this->user()?->can('create', ShrinkWrap::class) ?? false;
@@ -53,8 +48,8 @@ class StoreShrinkWrapRequest extends FormRequest
                 'integer',
                 Rule::exists('shrink_wrap_types', 'id')->where('is_active', true),
             ],
-            // Entero: cuántas veces se termoencogió. `integer` rechaza «1e3» y «1.5»; el tope de cada línea de la
-            // receta lo revisa after(), porque depende de la cantidad por aplicación.
+            // Entero: cuántas veces se termoencogió. `integer` rechaza «1e3» y «1.5». Que cada línea de la receta quepa
+            // en su columna lo revisa RegisterShrinkWrapAction, con la receta ya bloqueada.
             'applications' => ['bail', 'required', 'integer', 'min:1', 'max:99999999'],
             // Fecha de planta: puede ser semanas después de completar la OP, pero no futura.
             'wrapped_at' => ['bail', 'required', 'date_format:Y-m-d', 'before_or_equal:'.$this->plantToday()],
@@ -69,7 +64,6 @@ class StoreShrinkWrapRequest extends FormRequest
     {
         return [
             fn (Validator $validator) => $this->validateNotBeforeCompletion($validator),
-            fn (Validator $validator) => $this->validateQuantitiesFit($validator),
         ];
     }
 
@@ -115,35 +109,6 @@ class StoreShrinkWrapRequest extends FormRequest
             $validator->errors()->add('wrapped_at', __('La fecha no puede ser anterior a la fecha en que se completó la orden (:date).', [
                 'date' => app(TimezoneService::class)->formatPlantDate(substr((string) $completionDate, 0, 10)),
             ]));
-        }
-    }
-
-    /**
-     * Sin tope de negocio (no se compara con las unidades producidas), pero sí técnico: lo que se descuenta de cada
-     * materia prima debe caber en su columna. Si no, la base fallaría con un 500, como los que cerró #193.
-     */
-    private function validateQuantitiesFit(Validator $validator): void
-    {
-        if ($validator->errors()->hasAny(['shrink_wrap_type_id', 'applications'])) {
-            return;
-        }
-
-        $calculator = app(DecimalCalculator::class);
-        $applications = (string) (int) $this->input('applications');
-
-        $items = ShrinkWrapTypeItem::query()
-            ->where('shrink_wrap_type_id', (int) $this->input('shrink_wrap_type_id'))
-            ->with('rawMaterial:id,code')
-            ->get();
-
-        foreach ($items as $item) {
-            if ($calculator->cmp($calculator->mul((string) $item->quantity, $applications, 4), self::MAX_QUANTITY) > 0) {
-                $validator->errors()->add('applications', __('Son demasiadas aplicaciones: el consumo de :code no cabe en el registro.', [
-                    'code' => $item->rawMaterial->code,
-                ]));
-
-                return;
-            }
         }
     }
 
