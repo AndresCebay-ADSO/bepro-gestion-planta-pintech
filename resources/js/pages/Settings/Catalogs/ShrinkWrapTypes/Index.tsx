@@ -16,6 +16,7 @@ import type { ShrinkWrapTypeRow } from '@/types';
 import type { PaginationLink } from '@/types/ui';
 
 type TypeRow = ShrinkWrapTypeRow & {
+    in_use: boolean;
     can: {
         update: boolean;
         delete: boolean;
@@ -171,8 +172,12 @@ export default function ShrinkWrapTypesIndex({ types, filters, can }: Props) {
                                                 )
                                             }
                                             onDelete={() => handleDelete(type)}
+                                            // Con registros no se puede eliminar (clave foránea RESTRICT): se desactiva.
+                                            disabled={{ delete: type.in_use }}
                                             tooltips={{
-                                                delete: 'Eliminar tipo',
+                                                delete: type.in_use
+                                                    ? 'Ya tiene termoencogidos registrados: no se puede eliminar. Desactívalo al editarlo.'
+                                                    : 'Eliminar tipo',
                                             }}
                                         />
                                     </td>

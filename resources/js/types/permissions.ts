@@ -62,6 +62,8 @@ export type Permission =
     // Saldos de producción
     | 'production_remnants.view'
     // Termoencogido
+    | 'shrink_wraps.view'
+    | 'shrink_wraps.create'
     | 'shrink_wrap_types.manage'
     // Movimientos de materia prima
     | 'inventory_movements.view'

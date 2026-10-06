@@ -183,6 +183,7 @@ Movimientos de materia prima (libro contable: inmutable).
 | `warehouse_id` | BIGINT |  | FK → `warehouses` (RESTRICT) |
 | `batch_id` | BIGINT | sí | FK → `inventory_batches` (RESTRICT) |
 | `production_order_id` | BIGINT | sí | FK → `production_orders` (RESTRICT) |
+| `shrink_wrap_id` | BIGINT | sí | FK → `shrink_wraps` (RESTRICT). Salida de un termoencogido (3.8): enlazada al registro, no a la OP, porque es gasto general. Migración aparte (`2026_10_05_130002`): esta tabla es anterior a `shrink_wraps` |
 | `type` | VARCHAR(255) |  |  |
 | `quantity` | DECIMAL(12,4) |  |  |
 | `cost_price` | DECIMAL(12,4) |  |  |
@@ -468,6 +469,49 @@ Historial de precios.
 | `created_by` | BIGINT | sí | FK → `users` (RESTRICT) |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
+
+### 2.5.9 `shrink_wraps`
+
+Registros de termoencogido (3.8), auditados (`termoencogidos`; sin el costo, que se calcula después de crear el
+registro). El operario elige una OP **completada en los últimos 6 meses** (`ShrinkWrap::ORDER_WINDOW_MONTHS`), un tipo
+activo y las aplicaciones; al guardar se descuenta receta × aplicaciones de la bodega de la OP, por FIFO, y el costo
+queda como **gasto general**: no entra al lote ni a la OP. Las salidas se fechan con el **día del registro**, no con
+`wrapped_at`: el FIFO toma los lotes con saldo hoy, y fecharlas atrás podría dejar una salida anterior a la entrada de su
+lote. Inmutables: un error se corrige con un movimiento opuesto y una nota.
+
+| Columna | Tipo | Nulo | Notas |
+| --- | --- | :-: | --- |
+| `id` | BIGINT |  | PK |
+| `production_order_id` | BIGINT |  | FK → `production_orders` (RESTRICT) |
+| `shrink_wrap_type_id` | BIGINT |  | FK → `shrink_wrap_types` (RESTRICT): un tipo usado ya no se elimina |
+| `warehouse_id` | BIGINT |  | FK → `warehouses` (RESTRICT). Copiada de la OP |
+| `applications` | INTEGER |  | entero ≥ 1 |
+| `wrapped_at` | DATE |  | fecha de planta del termoencogido; entre la de completar la OP y hoy |
+| `total_cost` | DECIMAL(14,4) |  | suma del costo de sus líneas |
+| `notes` | TEXT | sí |  |
+| `created_by` | BIGINT |  | FK → `users` (RESTRICT) |
+| `created_at` | TIMESTAMP | sí |  |
+| `updated_at` | TIMESTAMP | sí |  |
+
+Índices: `wrapped_at` · `production_order_id` · `shrink_wrap_type_id`.
+
+### 2.5.10 `shrink_wrap_items`
+
+Lo que gastó un termoencogido de cada materia prima: **copia** de la receta del tipo al registrarlo (editar el tipo
+después no cambia el historial), lo descontado y su costo.
+
+| Columna | Tipo | Nulo | Notas |
+| --- | --- | :-: | --- |
+| `id` | BIGINT |  | PK |
+| `shrink_wrap_id` | BIGINT |  | FK → `shrink_wraps` (CASCADE; los registros no se eliminan) |
+| `raw_material_id` | BIGINT |  | FK → `raw_materials` (RESTRICT) |
+| `quantity_per_application` | DECIMAL(12,4) |  | copiada de la receta |
+| `quantity` | DECIMAL(12,4) |  | por aplicación × aplicaciones |
+| `total_cost` | DECIMAL(14,4) |  | FIFO, o precio de referencia sin control de inventario |
+| `created_at` | TIMESTAMP | sí |  |
+| `updated_at` | TIMESTAMP | sí |  |
+
+Índices: UNIQUE (`shrink_wrap_id`, `raw_material_id`) · `raw_material_id`.
 
 ## 2.6 Producto terminado
 

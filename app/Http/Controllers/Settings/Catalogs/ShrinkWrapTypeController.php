@@ -34,7 +34,7 @@ class ShrinkWrapTypeController extends Controller
     public function index(IndexShrinkWrapTypeRequest $request): Response
     {
         $types = (new ShrinkWrapTypeFilter($request))
-            ->apply(ShrinkWrapType::query()->with($this->itemRelations()))
+            ->apply(ShrinkWrapType::query()->with($this->itemRelations())->withCount('shrinkWraps'))
             ->orderBy('name')
             ->orderBy('id')
             ->paginate(15)
@@ -42,6 +42,8 @@ class ShrinkWrapTypeController extends Controller
             ->withQueryString()
             ->through(fn (ShrinkWrapType $type): array => [
                 ...$this->typeData($type),
+                // Con registros ya no se elimina (la clave foránea RESTRICT lo impide): se desactiva.
+                'in_use' => $type->shrink_wraps_count > 0,
                 'can' => [
                     'update' => Gate::allows('update', $type),
                     'delete' => Gate::allows('delete', $type),

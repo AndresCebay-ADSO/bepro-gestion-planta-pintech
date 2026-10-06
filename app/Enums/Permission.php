@@ -81,6 +81,8 @@ enum Permission: string
     case ProductionRemnantsView = 'production_remnants.view';
 
     // Termoencogido
+    case ShrinkWrapsView = 'shrink_wraps.view';
+    case ShrinkWrapsCreate = 'shrink_wraps.create';
     case ShrinkWrapTypesManage = 'shrink_wrap_types.manage';
 
     // Movimientos de materia prima
@@ -191,6 +193,8 @@ enum Permission: string
             self::ProductionOrdersCancel => __('Cancelar órdenes de producción'),
             self::ProductionOrdersExport => __('Exportar órdenes de producción'),
             self::ProductionRemnantsView => __('Ver saldos de producción'),
+            self::ShrinkWrapsView => __('Ver termoencogidos'),
+            self::ShrinkWrapsCreate => __('Registrar termoencogido'),
             self::ShrinkWrapTypesManage => __('Gestionar tipos de termoencogido'),
             self::InventoryMovementsView => __('Ver movimientos de materia prima'),
             self::InventoryMovementsCreate => __('Registrar movimientos de materia prima'),
@@ -283,6 +287,8 @@ enum Permission: string
             self::ProductionOrdersCancel,
             self::ProductionOrdersExport => PermissionModule::ProductionOrders,
             self::ProductionRemnantsView => PermissionModule::ProductionRemnants,
+            self::ShrinkWrapsView,
+            self::ShrinkWrapsCreate,
             self::ShrinkWrapTypesManage => PermissionModule::ShrinkWraps,
             self::InventoryMovementsView,
             self::InventoryMovementsCreate => PermissionModule::InventoryMovements,
@@ -373,6 +379,7 @@ enum Permission: string
             self::CatalogsDelete => [self::CatalogsView],
             // Los tipos viven en Configuración → Catálogos, cuya pestaña se ve con catalogs.view.
             self::ShrinkWrapTypesManage => [self::CatalogsView],
+            self::ShrinkWrapsCreate => [self::ShrinkWrapsView],
             self::ProductsCreate,
             self::ProductsEdit,
             self::ProductsDelete,
@@ -552,7 +559,10 @@ enum Permission: string
             self::ProductionOrdersSubmitForReview,
             self::ProductionOrdersExport,
             self::ProductionRemnantsView,
-            self::InventoryMovementsView => [
+            self::InventoryMovementsView,
+            // Termoencogido (3.8): lo registra quien lo hace en planta.
+            self::ShrinkWrapsView,
+            self::ShrinkWrapsCreate => [
                 SystemRole::Admin,
                 SystemRole::Production,
                 SystemRole::Operator,

@@ -8,6 +8,7 @@ use App\Models\ProductionOrder;
 use App\Models\ProductionRemnant;
 use App\Models\Quotation;
 use App\Models\SalesOrder;
+use App\Models\ShrinkWrap;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Activitylog\Models\Activity;
@@ -78,6 +79,13 @@ it('ordena por id descendente los registros con la misma fecha', function (strin
                 'created_at' => $at,
             ]);
         },
+    ],
+    'termoencogidos' => [
+        'production.shrink-wraps.index',
+        'shrinkWraps',
+        SystemRole::Operator,
+        // Se ordenan por la fecha en que se termoencogió: la misma para los tres.
+        fn (User $user, $at) => ShrinkWrap::factory()->create(['created_by' => $user->id, 'wrapped_at' => $at->toDateString()]),
     ],
     'auditoría' => [
         'audit-logs.index',

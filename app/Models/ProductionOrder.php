@@ -6,9 +6,11 @@ namespace App\Models;
 
 use App\Enums\ProductionOrderStatus;
 use App\Models\Concerns\HasAuditDescription;
+use App\Services\TimezoneService;
 use Carbon\CarbonInterface;
 use Database\Factories\ProductionOrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -160,6 +162,21 @@ class ProductionOrder extends Model
             'submitted_at' => 'datetime',
             'reviewed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * OP a las que se puede registrar un termoencogido (3.8): completadas, y hace a lo sumo
+     * ShrinkWrap::ORDER_WINDOW_MONTHS meses (fecha de planta). Lo usan el selector y la validación del registro.
+     */
+    public function scopeShrinkWrappable(Builder $query): void
+    {
+        $since = app(TimezoneService::class)
+            ->nowInPlant()
+            ->subMonthsNoOverflow(ShrinkWrap::ORDER_WINDOW_MONTHS)
+            ->toDateString();
+
+        $query->where($this->qualifyColumn('status'), ProductionOrderStatus::Completed->value)
+            ->where($this->qualifyColumn('completion_date'), '>=', $since);
     }
 
     public function product(): BelongsTo

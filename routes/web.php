@@ -22,6 +22,7 @@ use App\Http\Controllers\Production\LineAdjustmentController;
 use App\Http\Controllers\Production\PackagingPlanController;
 use App\Http\Controllers\Production\RemnantConsumptionController;
 use App\Http\Controllers\Production\RemnantController;
+use App\Http\Controllers\Production\ShrinkWrapController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\PublicQrLandingController;
@@ -78,6 +79,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('production/remnants', [RemnantController::class, 'index'])
         ->middleware('can:'.Permission::ProductionRemnantsView->value)
         ->name('production.remnants.index');
+
+    // Termoencogido (3.8): registros inmutables, sin editar ni eliminar.
+    Route::prefix('production')->name('production.')->group(function () {
+        Route::resource('shrink-wraps', ShrinkWrapController::class)
+            ->only(['index', 'create', 'store', 'show'])
+            ->where(['shrink_wrap' => '[0-9]+'])
+            ->middlewareFor(['index', 'show'], 'can:'.Permission::ShrinkWrapsView->value)
+            ->middlewareFor(['create', 'store'], 'can:'.Permission::ShrinkWrapsCreate->value);
+    });
 
     // Materias primas
     Route::patch('raw-materials/{raw_material}/reactivate', [RawMaterialController::class, 'reactivate'])

@@ -27,6 +27,8 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property Carbon|null $updated_at
  * @property-read Collection|ShrinkWrapTypeItem[] $items
  * @property-read int|null $items_count
+ * @property-read Collection|ShrinkWrap[] $shrinkWraps
+ * @property-read int|null $shrink_wraps_count
  */
 #[Fillable([
     'name',
@@ -61,5 +63,13 @@ class ShrinkWrapType extends Model
     public function items(): HasMany
     {
         return $this->hasMany(ShrinkWrapTypeItem::class, 'shrink_wrap_type_id');
+    }
+
+    /**
+     * Registros hechos con este tipo (3.8). Con alguno, el tipo ya no se elimina: se desactiva.
+     */
+    public function shrinkWraps(): HasMany
+    {
+        return $this->hasMany(ShrinkWrap::class, 'shrink_wrap_type_id');
     }
 }

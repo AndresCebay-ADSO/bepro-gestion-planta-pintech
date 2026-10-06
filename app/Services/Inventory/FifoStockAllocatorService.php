@@ -166,6 +166,38 @@ class FifoStockAllocatorService
         string $errorKey,
         string $contextLabel = 'materia prima'
     ): string {
+        return $this->consumeFromWarehouse(
+            rawMaterialId: $rawMaterialId,
+            warehouseId: (int) $order->warehouse_id,
+            requiredQuantity: $requiredQuantity,
+            userId: $userId,
+            origin: ['production_order_id' => (int) $order->id],
+            originLabel: "OP #{$order->order_number}",
+            errorKey: $errorKey,
+            contextLabel: $contextLabel,
+            shortageMoment: 'en finalización',
+        );
+    }
+
+    /**
+     * Consume una materia prima de una bodega y devuelve su costo total. Con control de inventario descuenta por FIFO,
+     * lote por lote, al precio de cada lote; sin él (agua, etiquetas) registra el consumo al precio de referencia. Cada
+     * salida queda como movimiento enlazado a su origen: una OP o un termoencogido (3.8).
+     *
+     * @param  array{production_order_id?: int, shrink_wrap_id?: int}  $origin
+     */
+    public function consumeFromWarehouse(
+        int $rawMaterialId,
+        int $warehouseId,
+        float|string $requiredQuantity,
+        int $userId,
+        array $origin,
+        string $originLabel,
+        string $errorKey,
+        string $contextLabel,
+        string $shortageMoment,
+        ?string $movementDate = null,
+    ): string {
         $requiredQtyStr = (string) $requiredQuantity;
 
         if ($this->calculator->cmp($requiredQtyStr, '0') <= 0) {
@@ -184,14 +216,16 @@ class FifoStockAllocatorService
         if ($rawMaterial !== null && ! $rawMaterial->tracks_inventory) {
             $unitPrice = (string) ($rawMaterial->current_price ?? '0');
 
-            $this->inventoryMovementService->recordProductionRawMaterialConsumption(
-                order: $order,
+            $this->inventoryMovementService->recordConsumption(
                 rawMaterialId: $rawMaterialId,
+                warehouseId: $warehouseId,
                 batchId: null,
                 quantity: $requiredQtyStr,
                 unitPrice: $unitPrice,
                 userId: $userId,
-                notes: "Consumo sin control de inventario en OP #{$order->order_number}"
+                notes: "Consumo sin control de inventario en {$originLabel}",
+                origin: $origin,
+                movementDate: $movementDate,
             );
 
             return $this->calculator->mul($requiredQtyStr, $unitPrice, 4);
@@ -199,7 +233,7 @@ class FifoStockAllocatorService
 
         $batches = $this->inventoryBatchService->availableForRawMaterial(
             rawMaterialId: $rawMaterialId,
-            warehouseId: (int) $order->warehouse_id,
+            warehouseId: $warehouseId,
             lockForUpdate: true
         );
 
@@ -216,14 +250,16 @@ class FifoStockAllocatorService
             $consumedQuantity = $this->calculator->min($availableInBatch, $remainingToConsume, 4);
             $unitPrice = (string) $batch->unit_price;
 
-            $this->inventoryMovementService->recordProductionRawMaterialConsumption(
-                order: $order,
+            $this->inventoryMovementService->recordConsumption(
                 rawMaterialId: $rawMaterialId,
+                warehouseId: $warehouseId,
                 batchId: (int) $batch->id,
                 quantity: $consumedQuantity,
                 unitPrice: $unitPrice,
                 userId: $userId,
-                notes: "Consumo FIFO en OP #{$order->order_number}"
+                notes: "Consumo FIFO en {$originLabel}",
+                origin: $origin,
+                movementDate: $movementDate,
             );
 
             $this->inventoryBatchService->decrementRemainingQuantity($batch, $consumedQuantity);
@@ -234,7 +270,7 @@ class FifoStockAllocatorService
 
         if ($this->calculator->cmp($remainingToConsume, '0') > 0) {
             throw ValidationException::withMessages([
-                $errorKey => "Stock insuficiente de {$contextLabel} '{$materialCode}' en finalización. Requerido: {$requiredQtyStr}, faltante: {$remainingToConsume}.",
+                $errorKey => "Stock insuficiente de {$contextLabel} '{$materialCode}' {$shortageMoment}. Requerido: {$requiredQtyStr}, faltante: {$remainingToConsume}.",
             ]);
         }
 
