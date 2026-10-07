@@ -222,12 +222,19 @@ export function PackagingSection({
                 </div>
             </div>
 
-            {!isReadOnly && (
-                <PackagingPlanForm
-                    orderId={orderId}
-                    availableVariants={availableVariants}
-                />
-            )}
+            {/* Una presentación va una sola vez por orden: sin presentaciones por agregar, no hay formulario. */}
+            {!isReadOnly &&
+                (availableVariants.length > 0 ? (
+                    <PackagingPlanForm
+                        orderId={orderId}
+                        availableVariants={availableVariants}
+                    />
+                ) : (
+                    <p className="text-sm text-muted-foreground">
+                        No quedan presentaciones activas por agregar a esta
+                        orden.
+                    </p>
+                ))}
         </div>
     );
 }

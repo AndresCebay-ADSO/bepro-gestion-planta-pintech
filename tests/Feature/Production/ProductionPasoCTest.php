@@ -186,6 +186,7 @@ test('store delegates production order creation to the action', function () {
     $variant = ProductVariant::where('product_id', $this->formula->product_id)->firstOrFail();
     $expectedOrder = ProductionOrder::create([
         'order_number' => 'OP-DELEGATE-01',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -237,6 +238,7 @@ test('it completes order and updates inventory', function () {
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-PROD',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -309,6 +311,7 @@ test('it completes order for materials that do not track inventory without consu
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-NON-TRACKED',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -371,6 +374,7 @@ test('it prevents completing the same production order twice', function () {
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-IDEMPOTENT',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -428,6 +432,7 @@ test('it completes order even when there is no packaging plan', function () {
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-NOPACK',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -476,6 +481,7 @@ test('it rejects completion when actual yield does not match packaging equivalen
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-YIELD-VALID',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -565,6 +571,7 @@ test('it shows production order detail with loaded data for the view', function 
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-VIEW-0001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -613,6 +620,7 @@ test('it creates separate finished inventory records per variant when packaging 
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-MULTI-VAR',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -717,6 +725,7 @@ test('it consumes raw material using fifo across multiple batches', function () 
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-FIFO-001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -800,6 +809,7 @@ test('it consumes packaging raw material when finishing production by variant un
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-ENV-001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -869,6 +879,7 @@ test('it calculates cost_price correctly for single variant with packaging', fun
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-COST-001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -942,6 +953,7 @@ test('it distributes bulk cost across multiple variants by presentation_value', 
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-MULTI-COST',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -1052,6 +1064,7 @@ test('it includes packaging material cost in cost_price', function () {
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-PKG-COST',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -1121,6 +1134,7 @@ test('it creates production_costs record for historical tracking', function () {
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-HIST-001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -1184,6 +1198,7 @@ test('it updates existing production_cost record for the same order instead of f
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-HIST-UPD',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -1256,6 +1271,7 @@ test('it keeps production_costs history for multiple orders with the same formul
 
     $firstOrder = ProductionOrder::create([
         'order_number' => 'OP-HIST-A',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -1287,6 +1303,7 @@ test('it keeps production_costs history for multiple orders with the same formul
 
     $secondOrder = ProductionOrder::create([
         'order_number' => 'OP-HIST-B',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -1341,6 +1358,7 @@ test('it sets unit_cost and total_cost to zero when actual quantity is zero', fu
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-ZERO-001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -1396,6 +1414,7 @@ test('it previews fifo costs from backend endpoint using multiple batches', func
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-PREVIEW-001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -1441,6 +1460,7 @@ test('it rejects completion when ingredient detail ids are duplicated', function
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-DUP-ING',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -1489,6 +1509,7 @@ test('it rejects preview when packaging ids are duplicated', function () {
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-DUP-PREVIEW',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,

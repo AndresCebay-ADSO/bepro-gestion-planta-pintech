@@ -23,7 +23,8 @@ class ProductionOrderFactory extends Factory
     {
         return [
             'order_number' => 'OP-'.fake()->unique()->numerify('2026-####'),
-            'lot_number' => fake()->unique()->numberBetween(100, 99999),
+            // Por encima de los lotes que los tests fijan a mano: el número de lote es único (B55).
+            'lot_number' => fake()->unique()->numberBetween(100000, 999999),
             'product_id' => Product::factory(),
             'formula_id' => fn (array $attributes) => Formula::factory()->create([
                 'product_id' => $attributes['product_id'],

@@ -47,7 +47,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property Carbon|null $packaging_end_time
  * @property string $spillage_quantity
  * @property string|null $density_kg_per_gallon
- * @property int|null $lot_number
+ * @property int $lot_number
  * @property int $created_by
  * @property int|null $submitted_by
  * @property CarbonInterface|null $submitted_at

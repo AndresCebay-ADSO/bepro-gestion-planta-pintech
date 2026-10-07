@@ -194,6 +194,7 @@ test('plantilla de exportacion Excel de orden de produccion muestra numero de lo
     $orderData = [
         'order_number' => 'OP-2026-001',
         'lot_number' => 'LOTE-9988',
+        'lot_caption' => 'LOTE-9988 del 15 de septiembre 2026',
         'planned_date' => '2026-09-18',
         'product' => ['name' => 'Pintura Industrial Test'],
         'quantity' => 500.0,
@@ -217,10 +218,13 @@ test('plantilla de exportacion Excel de orden de produccion muestra numero de lo
     expect($rendered)->not->toContain('<td colspan="6" style="border: 1px solid #000000;">2026-09-18</td>');
 });
 
-test('plantilla de exportacion Excel de orden de produccion usa order_number si lot_number esta vacio', function () {
+// B55: toda OP tiene número de lote (la base lo exige); el Excel muestra el lote con su fecha de fabricación, el mismo
+// texto que el PDF, y no el número de la OP.
+test('plantilla de exportacion Excel de orden de produccion muestra el lote con su fecha de fabricacion', function () {
     $orderData = [
-        'order_number' => 'OP-2026-FALLBACK',
-        'lot_number' => '',
+        'order_number' => 'OP-2026-0042',
+        'lot_number' => 1623,
+        'lot_caption' => '1623 del 15 de septiembre 2026',
         'planned_date' => '2026-09-18',
         'product' => ['name' => 'Pintura Industrial Test'],
         'quantity' => 500.0,
@@ -236,13 +240,14 @@ test('plantilla de exportacion Excel de orden de produccion usa order_number si 
         'order' => $orderData,
     ])->render();
 
-    expect($rendered)->toContain('OP-2026-FALLBACK');
+    expect($rendered)->toContain('<td colspan="6" style="border: 1px solid #000000;">1623 del 15 de septiembre 2026</td>');
 });
 
 test('plantilla de exportacion Excel formatea horas de proceso en la zona horaria de planta configurada', function () {
     $orderData = [
         'order_number' => 'OP-2026-002',
         'lot_number' => 'LOTE-TIME',
+        'lot_caption' => 'LOTE-TIME',
         'planned_date' => '2026-09-18',
         'agitation_start_time' => '2026-09-18T17:00:00Z', // 12:00 en America/Bogota (UTC-5)
         'agitation_end_time' => '2026-09-18T18:30:00Z', // 13:30 en America/Bogota

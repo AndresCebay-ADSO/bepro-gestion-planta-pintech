@@ -98,6 +98,7 @@ function createOrderInState(object $context, ProductionOrderStatus $status): arr
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-ST-'.substr(md5($status->value), 0, 6),
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $context->formula->product_id,
         'formula_id' => $context->formula->id,
         'warehouse_id' => $context->factory->id,

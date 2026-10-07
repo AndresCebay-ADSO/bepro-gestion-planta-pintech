@@ -78,6 +78,7 @@ test('it throws when trying to calculate planned materials with incompatible uni
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-FORM-001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $warehouse->id,
@@ -161,6 +162,7 @@ test('it calculates planned materials and converts units successfully', function
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-FORM-002',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $warehouse->id,

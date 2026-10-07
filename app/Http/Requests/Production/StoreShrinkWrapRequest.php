@@ -114,6 +114,6 @@ class StoreShrinkWrapRequest extends FormRequest
 
     private function plantToday(): string
     {
-        return app(TimezoneService::class)->nowInPlant()->toDateString();
+        return app(TimezoneService::class)->todayInPlant();
     }
 }

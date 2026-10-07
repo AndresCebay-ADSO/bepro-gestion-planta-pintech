@@ -7,10 +7,12 @@ use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductionOrder;
+use App\Models\ProductVariant;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 
@@ -65,6 +67,7 @@ test('guarda una orden de produccion si la bodega es de tipo fabrica', function 
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $warehouse->id,
@@ -87,6 +90,7 @@ test('lanza excepcion si se intenta guardar una orden de produccion en una bodeg
 
     expect(fn () => ProductionOrder::create([
         'order_number' => 'OP-002',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $warehouse->id,
@@ -164,4 +168,86 @@ test('rejects an inactive formula_id', function () {
 
     $response->assertRedirect(route('production-orders.create'));
     $response->assertSessionHasErrors(['formula_id']);
+});
+
+// B55: una presentación va una sola vez por orden. El error viaja por fila (`packaging.N.product_variant_id`): la
+// pantalla de creación lo muestra en la fila repetida.
+test('rejects a repeated presentation when creating an order, with the error on the row', function () {
+    test()->seed(RolePermissionSeeder::class);
+
+    [$product, $user, $formula] = createDependencies();
+    $user->forceFill(['email_verified_at' => now()])->save();
+    $user->assignRole(SystemRole::Admin->value);
+
+    $warehouse = Warehouse::create([
+        'name' => 'Fábrica Cali',
+        'city' => 'Cali',
+        'type' => 'factory',
+        'is_active' => true,
+    ]);
+    $variant = ProductVariant::create([
+        'product_id' => $product->id,
+        'code' => 'TEST-001-GAL',
+        'name' => 'Test Product - Galón',
+        'unit_of_measure_id' => $product->unit_of_measure_id,
+        'presentation_value' => 1,
+        'presentation_label' => 'Galón',
+        'is_active' => true,
+    ]);
+
+    $response = $this->actingAs($user)
+        ->from(route('production-orders.create'))
+        ->post(route('production-orders.store'), [
+            'product_id' => $product->id,
+            'formula_id' => $formula->id,
+            'warehouse_id' => $warehouse->id,
+            'quantity' => 100,
+            'planned_date' => now()->addDay()->toDateString(),
+            'packaging' => [
+                ['product_variant_id' => $variant->id, 'planned_units' => 6],
+                ['product_variant_id' => $variant->id, 'planned_units' => 4],
+            ],
+        ]);
+
+    $response->assertRedirect(route('production-orders.create'));
+    $response->assertSessionHasErrors([
+        'packaging.1.product_variant_id' => 'No puedes repetir la misma presentación de empaque en la planificación.',
+    ]);
+    expect(ProductionOrder::query()->count())->toBe(0);
+});
+
+// B55: el número de lote identifica el lote en documentos, QR y movimientos de PT; la base no deja que falte ni se repita.
+test('the database requires a lot number on every order', function () {
+    [$product, $user, $formula] = createDependencies();
+    $warehouse = Warehouse::create(['name' => 'Fábrica', 'city' => 'Cali', 'type' => 'factory']);
+
+    expect(fn () => ProductionOrder::create([
+        'order_number' => 'OP-2026-0001',
+        'product_id' => $product->id,
+        'formula_id' => $formula->id,
+        'warehouse_id' => $warehouse->id,
+        'quantity' => 10,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $user->id,
+    ]))->toThrow(QueryException::class);
+});
+
+test('the database rejects a repeated lot number', function () {
+    [$product, $user, $formula] = createDependencies();
+    $warehouse = Warehouse::create(['name' => 'Fábrica', 'city' => 'Cali', 'type' => 'factory']);
+    $attributes = [
+        'lot_number' => 1620,
+        'product_id' => $product->id,
+        'formula_id' => $formula->id,
+        'warehouse_id' => $warehouse->id,
+        'quantity' => 10,
+        'status' => 'pending',
+        'planned_date' => now(),
+        'created_by' => $user->id,
+    ];
+    ProductionOrder::create(['order_number' => 'OP-2026-0001', ...$attributes]);
+
+    expect(fn () => ProductionOrder::create(['order_number' => 'OP-2026-0002', ...$attributes]))
+        ->toThrow(QueryException::class);
 });

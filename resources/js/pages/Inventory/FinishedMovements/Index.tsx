@@ -107,7 +107,7 @@ export default function FinishedMovementsIndex({
             type: 'text',
             name: 'search',
             label: 'Buscar',
-            placeholder: 'Buscar por producto o presentación...',
+            placeholder: 'Buscar por producto, presentación, lote u OP...',
         },
         {
             type: 'select',
@@ -334,7 +334,12 @@ export default function FinishedMovementsIndex({
                                             </div>
                                             {movement.batch && (
                                                 <div className="text-xs text-muted-foreground">
-                                                    Lote #{movement.batch.id}
+                                                    Lote{' '}
+                                                    {
+                                                        movement.batch
+                                                            .production_order
+                                                            .lot_number
+                                                    }
                                                 </div>
                                             )}
                                         </td>

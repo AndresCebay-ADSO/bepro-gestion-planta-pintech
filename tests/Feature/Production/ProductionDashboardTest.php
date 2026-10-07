@@ -75,6 +75,7 @@ beforeEach(function (): void {
 
     ProductionOrder::create([
         'order_number' => 'OP-2026-0001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $this->warehouse->id,
@@ -86,6 +87,7 @@ beforeEach(function (): void {
 
     ProductionOrder::create([
         'order_number' => 'OP-2026-0002',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $this->warehouse->id,
@@ -97,6 +99,7 @@ beforeEach(function (): void {
 
     ProductionOrder::create([
         'order_number' => 'OP-2026-0003',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $this->warehouse->id,

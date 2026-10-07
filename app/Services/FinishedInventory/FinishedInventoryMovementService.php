@@ -11,6 +11,7 @@ use App\Models\FinishedInventory;
 use App\Models\FinishedInventoryMovement;
 use App\Models\FinishedProductBatch;
 use App\Services\DecimalCalculator;
+use App\Services\TimezoneService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -30,6 +31,9 @@ class FinishedInventoryMovementService
     public function __construct(
         private readonly FinishedProductBatchStockService $stockService,
         private readonly DecimalCalculator $calculator,
+        // Sin fecha, los movimientos llevan la de hoy en la planta: `movement_date` es una fecha y en UTC uno de las
+        // 8 p. m. en Bogotá quedaría en el día siguiente (B54).
+        private readonly TimezoneService $timezone,
     ) {}
 
     /**
@@ -44,7 +48,7 @@ class FinishedInventoryMovementService
         ?int $productionOrderId = null,
         ?string $costPrice = null,
         ?string $notes = null,
-        ?\DateTimeInterface $movementDate = null,
+        ?string $movementDate = null,
     ): FinishedInventoryMovement {
         return DB::transaction(function () use ($batchId, $warehouseId, $quantity, $reason, $userId, $productionOrderId, $costPrice, $notes, $movementDate) {
             $batch = $this->lockBatch($batchId);
@@ -71,7 +75,7 @@ class FinishedInventoryMovementService
                 'reason' => $reason,
                 'quantity' => $quantity,
                 'cost_price' => $costPrice,
-                'movement_date' => $movementDate ?? now(),
+                'movement_date' => $movementDate ?? $this->timezone->todayInPlant(),
                 'notes' => $notes,
                 'created_by' => $userId,
             ]);
@@ -100,7 +104,7 @@ class FinishedInventoryMovementService
         FinishedInventoryMovementReason $reason,
         int $userId,
         ?string $notes = null,
-        ?\DateTimeInterface $movementDate = null,
+        ?string $movementDate = null,
     ): FinishedInventoryMovement {
         return DB::transaction(function () use ($batchId, $warehouseId, $quantity, $reason, $userId, $notes, $movementDate) {
             $batch = $this->lockBatch($batchId);
@@ -115,7 +119,7 @@ class FinishedInventoryMovementService
                 'type' => InventoryMovementType::Exit,
                 'reason' => $reason,
                 'quantity' => $quantity,
-                'movement_date' => $movementDate ?? now(),
+                'movement_date' => $movementDate ?? $this->timezone->todayInPlant(),
                 'notes' => $notes,
                 'created_by' => $userId,
             ]);
@@ -145,7 +149,7 @@ class FinishedInventoryMovementService
         string $quantity,
         int $userId,
         ?string $notes = null,
-        ?\DateTimeInterface $movementDate = null,
+        ?string $movementDate = null,
     ): void {
         if ($fromWarehouseId === $toWarehouseId) {
             throw ValidationException::withMessages([

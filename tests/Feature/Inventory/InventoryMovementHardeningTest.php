@@ -236,6 +236,7 @@ test('it rejects manual movements linked to production orders', function () {
     ]);
     $order = ProductionOrder::create([
         'order_number' => 'OP-HARD-MANUAL-LINK',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $this->warehouseA->id,

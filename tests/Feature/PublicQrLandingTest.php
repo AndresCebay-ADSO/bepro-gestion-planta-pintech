@@ -63,6 +63,7 @@ function createPublicQrFixture(): array
     ]);
     $order = ProductionOrder::create([
         'order_number' => 'OP-PUBLIC-0001',
+        'lot_number' => 4321,
         'product_id' => $product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $warehouse->id,
@@ -119,7 +120,8 @@ test('public QR landing does not require authentication and shows available docu
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Public/QrLanding/Show')
             ->where('product.name', 'Pintura Pública')
-            ->where('lot.number', 'OP-PUBLIC-0001')
+            // El cliente ve el número de lote (el del certificado y la estampita), no el de la OP (B55).
+            ->where('lot.number', 4321)
             ->has('documents', 2));
 });
 
@@ -135,6 +137,7 @@ test('public downloads only allow documents associated with the scanned token', 
     $order = $qrCode->productionOrder;
     $otherOrder = ProductionOrder::create([
         'order_number' => 'OP-PUBLIC-0002',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $order->product_id,
         'formula_id' => $order->formula_id,
         'warehouse_id' => $order->warehouse_id,

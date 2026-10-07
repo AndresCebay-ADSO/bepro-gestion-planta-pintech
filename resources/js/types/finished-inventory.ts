@@ -44,6 +44,8 @@ export type FinishedBatchOption = {
     product?: FinishedProductOption | null;
     product_variant?: FinishedVariantOption | null;
     variant?: FinishedVariantOption | null;
+    /** Número de lote de la OP que produjo el lote: con la presentación lo identifica (B55). */
+    lot_number: number;
     entry_date: string | null;
     initial_quantity: string | number;
     stocks?: FinishedBatchStock[];
@@ -68,6 +70,10 @@ export type FinishedInventoryMovement = {
         id: number;
         entry_date: string | null;
         initial_quantity?: string | number;
+        production_order: {
+            id: number;
+            lot_number: number;
+        };
     } | null;
     warehouse?: FinishedWarehouseOption | null;
     production_order?: {

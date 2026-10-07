@@ -15,7 +15,11 @@ class ShrinkWrapFilter extends QueryFilter
 
     protected function search(string $value): void
     {
-        $this->applySearch(['productionOrder.order_number', 'shrinkWrapType.name'], $value);
+        $this->applySearch(
+            ['productionOrder.order_number', 'shrinkWrapType.name'],
+            $value,
+            exactIntegerColumns: ['productionOrder.lot_number'],
+        );
     }
 
     protected function shrinkWrapTypeId(string $value): void

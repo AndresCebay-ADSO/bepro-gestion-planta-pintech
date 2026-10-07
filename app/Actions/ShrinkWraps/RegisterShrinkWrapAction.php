@@ -64,7 +64,7 @@ class RegisterShrinkWrapAction
                 ->findOrFail((int) $validated['production_order_id']);
 
             $applications = (int) $validated['applications'];
-            $registeredOn = $this->timezone->nowInPlant()->toDateString();
+            $registeredOn = $this->timezone->todayInPlant();
 
             $shrinkWrap = ShrinkWrap::create([
                 'production_order_id' => $order->id,

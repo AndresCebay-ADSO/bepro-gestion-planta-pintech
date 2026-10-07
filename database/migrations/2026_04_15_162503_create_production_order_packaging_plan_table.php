@@ -27,7 +27,9 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
 
-            $table->index('production_order_id');
+            // Una presentación va una sola vez por orden: cada una deja un lote de PT, que se identifica por el número de
+            // lote de la OP más la presentación (B55). El índice único también sirve las búsquedas por orden.
+            $table->unique(['production_order_id', 'product_variant_id']);
             $table->index('product_variant_id');
             $table->index('package_raw_material_id');
             $table->index('label_raw_material_id');

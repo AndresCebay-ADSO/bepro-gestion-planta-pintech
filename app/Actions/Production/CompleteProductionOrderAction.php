@@ -60,11 +60,15 @@ class CompleteProductionOrderAction
 
             $this->saveOperationalData->execute($lockedOrder, $data);
 
+            // Fecha de planta, no UTC: completada a las 8 p. m. en Bogotá ya es el día siguiente en UTC, y el dashboard
+            // («completadas hoy»), el detalle y el QR la mostrarían un día después. Es la fecha de todo lo que escribe
+            // completar la orden (la orden, sus consumos, sus lotes de PT y sus entradas), calculada una sola vez para
+            // que una orden completada cerca de la medianoche no reparta sus registros en dos días (B54, B55).
+            $completionDate = $this->timezone->todayInPlant();
+
             $updateData = [
                 'status' => ProductionOrderStatus::Completed,
-                // Fecha de planta, no UTC: completada a las 8 p. m. en Bogotá ya es el día siguiente en UTC, y el dashboard
-                // («completadas hoy»), el detalle y el QR la mostrarían un día después.
-                'completion_date' => $this->timezone->nowInPlant()->toDateString(),
+                'completion_date' => $completionDate,
                 'quality_responsible_user_id' => $data['quality_responsible_user_id'] ?? null,
             ];
 
@@ -95,7 +99,8 @@ class CompleteProductionOrderAction
                     order: $lockedOrder,
                     detail: $detail,
                     requiredQuantity: $actualQuantity,
-                    userId: $userId
+                    userId: $userId,
+                    movementDate: $completionDate,
                 );
                 $realUnitCost = $this->calculator->cmp($actualQuantity, '0', 4) > 0
                     ? $this->calculator->div($consumedCost, $actualQuantity, 4)
@@ -119,7 +124,8 @@ class CompleteProductionOrderAction
                     requiredQuantity: (string) $adjustment->quantity,
                     userId: $userId,
                     errorKey: 'line_adjustments',
-                    contextLabel: 'ajuste de línea'
+                    contextLabel: 'ajuste de línea',
+                    movementDate: $completionDate,
                 ), 4);
             }
 
@@ -191,8 +197,8 @@ class CompleteProductionOrderAction
                 ]);
 
                 $packagingTotalCost = $this->calculator->add(
-                    $this->consumePackagingMaterial($lockedOrder, $consumption['package_id'], $newContainers, 'envase', $userId, $consumedRawMaterialIds),
-                    $this->consumePackagingMaterial($lockedOrder, $consumption['label_id'], $labelsUsed, 'etiqueta', $userId, $consumedRawMaterialIds),
+                    $this->consumePackagingMaterial($lockedOrder, $consumption['package_id'], $newContainers, 'envase', $userId, $completionDate, $consumedRawMaterialIds),
+                    $this->consumePackagingMaterial($lockedOrder, $consumption['label_id'], $labelsUsed, 'etiqueta', $userId, $completionDate, $consumedRawMaterialIds),
                     4
                 );
 
@@ -207,7 +213,7 @@ class CompleteProductionOrderAction
                     'product_variant_id' => $plan->product_variant_id,
                     'production_order_id' => $lockedOrder->id,
                     'initial_quantity' => $actualUnits,
-                    'entry_date' => now(),
+                    'entry_date' => $completionDate,
                 ]);
 
                 $this->finishedInventoryMovementService->registerEntry(
@@ -219,6 +225,7 @@ class CompleteProductionOrderAction
                     productionOrderId: (int) $lockedOrder->id,
                     costPrice: $costPriceForVariant,
                     notes: "Finalización OP #{$lockedOrder->order_number}",
+                    movementDate: $completionDate,
                 );
             }
 
@@ -292,6 +299,7 @@ class CompleteProductionOrderAction
         ?string $quantity,
         string $contextLabel,
         int $userId,
+        string $movementDate,
         array &$consumedRawMaterialIds,
     ): string {
         if ($rawMaterialId === null || $quantity === null || ! $this->calculator->isPositive($quantity)) {
@@ -306,7 +314,8 @@ class CompleteProductionOrderAction
             requiredQuantity: $quantity,
             userId: $userId,
             errorKey: 'packaging',
-            contextLabel: $contextLabel
+            contextLabel: $contextLabel,
+            movementDate: $movementDate,
         );
     }
 

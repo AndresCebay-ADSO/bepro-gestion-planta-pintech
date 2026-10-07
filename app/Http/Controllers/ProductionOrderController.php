@@ -127,9 +127,12 @@ class ProductionOrderController extends Controller
                 'label' => $rm->code,
             ]);
 
+        // Presentaciones que se pueden agregar al plan: una presentación va una sola vez por orden, porque cada una deja
+        // un lote de PT y el lote se identifica por el número de la OP más la presentación.
         $availableVariants = ProductVariant::query()
             ->where('product_id', $productionOrder->product_id)
             ->where('is_active', true)
+            ->whereNotIn('id', $productionOrder->packagingPlans()->select('product_variant_id'))
             ->get(['id', 'name', 'presentation_label', 'presentation_value'])
             ->map(fn (ProductVariant $v) => [
                 'id' => $v->id,

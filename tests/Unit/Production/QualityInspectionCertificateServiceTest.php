@@ -70,22 +70,3 @@ test('it uses lot_number for quality certificate lot when present', function () 
     expect($payload['lot'])->toBe(1620)
         ->and($payload['certificate_number'])->toBe('CC-1620');
 });
-
-test('it falls back to order_number for quality certificate lot when lot_number is null', function () {
-    $order = ProductionOrder::create([
-        'order_number' => 'OP-2026-0001',
-        'lot_number' => null,
-        'product_id' => $this->product->id,
-        'formula_id' => $this->formula->id,
-        'warehouse_id' => $this->warehouse->id,
-        'quantity' => 10,
-        'status' => 'pending',
-        'planned_date' => now(),
-        'created_by' => $this->user->id,
-    ]);
-
-    $payload = app(QualityInspectionCertificateService::class)->buildPayload($order);
-
-    expect($payload['lot'])->toBe('OP-2026-0001')
-        ->and($payload['certificate_number'])->toBe('CC-OP-2026-0001');
-});

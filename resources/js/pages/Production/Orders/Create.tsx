@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { Plus, Trash2 } from 'lucide-react';
 
 import { store as productionOrderStore } from '@/actions/App/Http/Controllers/ProductionOrderController';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -41,7 +42,7 @@ export default function ProductionOrdersCreate({
     products,
     warehouses,
 }: Props) {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, clearErrors } = useForm({
         product_id: '',
         formula_id: '',
         quantity: '',
@@ -68,6 +69,34 @@ export default function ProductionOrdersCreate({
         label: `${v.name} — ${v.presentation_label} (${v.presentation_value} gal)`,
     }));
 
+    // Una presentación solo una vez por orden: cada fila ofrece las que no eligieron las demás.
+    const variantOptionsForRow = (index: number) => {
+        const takenByOtherRows = new Set(
+            data.packaging
+                .filter((_, i) => i !== index)
+                .map((pack) => pack.product_variant_id),
+        );
+
+        return variantOptions.filter(
+            (option) => !takenByOtherRows.has(option.id),
+        );
+    };
+
+    const packagingRowError = (index: number, field: keyof PackagingRow) =>
+        (errors as Record<string, string>)[`packaging.${index}.${field}`];
+
+    // Los errores de las filas van por posición (`packaging.N.campo`): al quitar o cambiar una fila dejarían de
+    // corresponder a la fila bajo la que se muestran.
+    const clearPackagingErrors = () => {
+        const packagingErrorKeys = Object.keys(errors).filter((key) =>
+            key.startsWith('packaging'),
+        ) as Parameters<typeof clearErrors>;
+
+        if (packagingErrorKeys.length > 0) {
+            clearErrors(...packagingErrorKeys);
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         post(productionOrderStore().url);
@@ -81,6 +110,7 @@ export default function ProductionOrdersCreate({
     };
 
     const removePackaging = (index: number) => {
+        clearPackagingErrors();
         setData(
             'packaging',
             data.packaging.filter((_, i) => i !== index),
@@ -95,6 +125,7 @@ export default function ProductionOrdersCreate({
         const updated = data.packaging.map((pack, i) =>
             i === index ? { ...pack, [field]: value } : pack,
         );
+        clearPackagingErrors();
         setData('packaging', updated);
     };
 
@@ -156,11 +187,7 @@ export default function ProductionOrdersCreate({
                                     }}
                                     placeholder="Busca o selecciona un producto..."
                                 />
-                                {errors.product_id && (
-                                    <p className="text-sm text-destructive">
-                                        {errors.product_id}
-                                    </p>
-                                )}
+                                <InputError message={errors.product_id} />
                             </div>
 
                             <div className="space-y-2">
@@ -201,11 +228,7 @@ export default function ProductionOrdersCreate({
                                         )}
                                     </SelectContent>
                                 </Select>
-                                {errors.formula_id && (
-                                    <p className="text-sm text-destructive">
-                                        {errors.formula_id}
-                                    </p>
-                                )}
+                                <InputError message={errors.formula_id} />
                             </div>
                         </div>
 
@@ -228,11 +251,7 @@ export default function ProductionOrdersCreate({
                                 <p className="text-xs text-muted-foreground">
                                     Galones totales de producto a fabricar
                                 </p>
-                                {errors.quantity && (
-                                    <p className="text-sm text-destructive">
-                                        {errors.quantity}
-                                    </p>
-                                )}
+                                <InputError message={errors.quantity} />
                             </div>
 
                             <div className="space-y-2">
@@ -257,11 +276,7 @@ export default function ProductionOrdersCreate({
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {errors.warehouse_id && (
-                                    <p className="text-sm text-destructive">
-                                        {errors.warehouse_id}
-                                    </p>
-                                )}
+                                <InputError message={errors.warehouse_id} />
                             </div>
 
                             <div className="space-y-2">
@@ -276,11 +291,7 @@ export default function ProductionOrdersCreate({
                                         setData('planned_date', e.target.value)
                                     }
                                 />
-                                {errors.planned_date && (
-                                    <p className="text-sm text-destructive">
-                                        {errors.planned_date}
-                                    </p>
-                                )}
+                                <InputError message={errors.planned_date} />
                             </div>
                         </div>
 
@@ -295,11 +306,7 @@ export default function ProductionOrdersCreate({
                                 placeholder="Instrucciones especiales para esta producción..."
                                 className="min-h-[80px]"
                             />
-                            {errors.notes && (
-                                <p className="text-sm text-destructive">
-                                    {errors.notes}
-                                </p>
-                            )}
+                            <InputError message={errors.notes} />
                         </div>
                     </div>
 
@@ -342,7 +349,8 @@ export default function ProductionOrdersCreate({
                                 onClick={addPackaging}
                                 disabled={
                                     !data.product_id ||
-                                    availableVariants.length === 0
+                                    data.packaging.length >=
+                                        availableVariants.length
                                 }
                             >
                                 <Plus className="mr-1 h-4 w-4" />
@@ -372,7 +380,9 @@ export default function ProductionOrdersCreate({
                                                 </Label>
                                             )}
                                             <Combobox
-                                                options={variantOptions}
+                                                options={variantOptionsForRow(
+                                                    index,
+                                                )}
                                                 value={pack.product_variant_id}
                                                 onChange={(v) =>
                                                     updatePackaging(
@@ -383,6 +393,12 @@ export default function ProductionOrdersCreate({
                                                 }
                                                 placeholder="Presentación..."
                                                 disabled={!data.product_id}
+                                            />
+                                            <InputError
+                                                message={packagingRowError(
+                                                    index,
+                                                    'product_variant_id',
+                                                )}
                                             />
                                         </div>
 
@@ -406,6 +422,12 @@ export default function ProductionOrdersCreate({
                                                 }
                                                 placeholder="Ej: 10"
                                             />
+                                            <InputError
+                                                message={packagingRowError(
+                                                    index,
+                                                    'planned_units',
+                                                )}
+                                            />
                                         </div>
 
                                         <div className="col-span-2 flex items-center justify-end">
@@ -428,11 +450,12 @@ export default function ProductionOrdersCreate({
                             )}
                         </div>
 
-                        {(errors as Record<string, string>).packaging && (
-                            <p className="px-6 pb-4 text-sm text-destructive">
-                                {(errors as Record<string, string>).packaging}
-                            </p>
-                        )}
+                        <InputError
+                            className="px-6 pb-4"
+                            message={
+                                (errors as Record<string, string>).packaging
+                            }
+                        />
                     </div>
 
                     <div className="flex gap-3">

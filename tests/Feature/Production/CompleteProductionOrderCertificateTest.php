@@ -5,12 +5,17 @@ declare(strict_types=1);
 use App\Enums\QrDocumentType;
 use App\Enums\SystemRole;
 use App\Jobs\GenerateQualityInspectionCertificateJob;
+use App\Models\FinishedInventoryMovement;
+use App\Models\FinishedProductBatch;
 use App\Models\Formula;
 use App\Models\InventoryBatch;
+use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
+use App\Models\ProductionOrderPackagingPlan;
+use App\Models\ProductVariant;
 use App\Models\QrDocument;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
@@ -89,6 +94,7 @@ function createCertificateCompletionFixture(): array
     ]);
     $order = ProductionOrder::create([
         'order_number' => 'OP-CERT-0001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $warehouse->id,
@@ -174,6 +180,16 @@ test('completing an order at night in the plant stores the plant date, not the U
     Storage::fake('local');
     Queue::fake();
     [$user, $order, $detail] = createCertificateCompletionFixture();
+    $variant = ProductVariant::create([
+        'product_id' => $order->product_id,
+        'code' => 'PNT-CERT-01-GAL',
+        'name' => 'Pintura Certificada - Galón',
+        'unit_of_measure_id' => $order->product->unit_of_measure_id,
+        'presentation_value' => 1,
+        'presentation_label' => 'Galón',
+        'is_active' => true,
+    ]);
+    $plan = ProductionOrderPackagingPlan::createForVariant($order->id, $variant->id, 2);
 
     // 01:30 UTC del 5 de octubre = 20:30 del 4 de octubre en Bogotá.
     $this->travelTo(CarbonImmutable::parse('2026-10-05 01:30:00', 'UTC'));
@@ -187,8 +203,15 @@ test('completing an order at night in the plant stores the plant date, not the U
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $user->id,
         'ingredients' => [['id' => $detail->id, 'actual_quantity' => 10]],
-        'packaging' => [],
-    ])->assertRedirect(route('production-orders.show', $order));
+        'packaging' => [['id' => $plan->id, 'actual_units' => 2]],
+        'actual_yield_quantity' => 2,
+    ])->assertSessionHasNoErrors()->assertRedirect(route('production-orders.show', $order));
 
     expect($order->refresh()->completion_date->toDateString())->toBe('2026-10-04');
+
+    // Todo lo que escribe completar la orden lleva la misma fecha de planta (B54, B55): si no, una orden completada de
+    // noche deja sus consumos, su lote y su entrada en el día (o el mes) siguiente.
+    expect(FinishedProductBatch::query()->where('production_order_id', $order->id)->sole()->entry_date->toDateString())->toBe('2026-10-04')
+        ->and(FinishedInventoryMovement::query()->where('production_order_id', $order->id)->sole()->movement_date->toDateString())->toBe('2026-10-04')
+        ->and(InventoryMovement::query()->where('production_order_id', $order->id)->pluck('movement_date')->map->toDateString()->unique()->all())->toBe(['2026-10-04']);
 });

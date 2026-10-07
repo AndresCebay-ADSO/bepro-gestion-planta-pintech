@@ -13,6 +13,7 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\Inventory\FifoStockAllocatorService;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -58,6 +59,7 @@ beforeEach(function () {
 
     $this->order = ProductionOrder::create([
         'order_number' => 'OP-FIFO-SVC',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->warehouse->id,
@@ -86,6 +88,25 @@ test('it consumes tracked raw material across fifo batches', function () {
         ->and((float) $newestBatch->refresh()->remaining_quantity)->toBe(25.0);
 
     expect(InventoryMovement::query()->where('raw_material_id', $rawMaterial->id)->count())->toBe(2);
+});
+
+// B54: sin fecha, el consumo lleva la de hoy en la planta, no la UTC (`movement_date` es una fecha).
+test('a consumption without date takes the plant date, not the UTC one', function () {
+    $rawMaterial = createFifoRawMaterial($this);
+    createFifoBatch($rawMaterial, $this->warehouse, 50, 4, now()->subDays(2));
+    // 01:30 UTC del 5 de octubre = 20:30 del 4 de octubre en Bogotá.
+    $this->travelTo(CarbonImmutable::parse('2026-10-05 01:30:00', 'UTC'));
+
+    app(FifoStockAllocatorService::class)->consumeRawMaterialForProduction(
+        order: $this->order,
+        rawMaterialId: $rawMaterial->id,
+        requiredQuantity: 10,
+        userId: $this->user->id,
+        errorKey: 'ingredients'
+    );
+
+    expect(InventoryMovement::query()->where('raw_material_id', $rawMaterial->id)->sole()->movement_date->toDateString())
+        ->toBe('2026-10-04');
 });
 
 test('it consumes untracked raw material without requiring batches', function () {

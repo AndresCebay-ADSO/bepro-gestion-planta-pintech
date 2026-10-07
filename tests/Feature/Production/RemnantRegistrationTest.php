@@ -86,6 +86,7 @@ beforeEach(function () {
 
     $this->order = ProductionOrder::create([
         'order_number' => 'OP-REMNANT-'.substr(uniqid(), -6),
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->warehouse->id,

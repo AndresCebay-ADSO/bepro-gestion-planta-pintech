@@ -336,6 +336,11 @@ it('busca por número de OP y filtra por tipo', function () {
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('shrinkWraps.data', fn ($rows) => collect($rows)->pluck('order.order_number')->all() === ['OP-2026-0042']));
 
+    // B55: también por el número de lote que muestra la tabla.
+    $this->get(route('production.shrink-wraps.index', ['search' => '1042']))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('shrinkWraps.data', fn ($rows) => collect($rows)->pluck('order.order_number')->all() === ['OP-2026-0042']));
+
     $this->get(route('production.shrink-wraps.index', ['shrink_wrap_type_id' => $other->shrink_wrap_type_id]))
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('shrinkWraps.data', fn ($rows) => collect($rows)->pluck('id')->all() === [$other->id]));

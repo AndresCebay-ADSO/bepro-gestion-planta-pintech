@@ -16,7 +16,9 @@ return new class extends Migration
         Schema::create('production_orders', function (Blueprint $table) {
             $table->id();
             $table->string('order_number', 20)->unique();
-            $table->integer('lot_number')->nullable()->index();
+            // Número de lote: se asigna siempre al crear la orden (CreateProductionOrderAction) y es lo que identifica el
+            // lote en documentos, estampitas, QR y movimientos de PT (B55).
+            $table->integer('lot_number')->unique();
             $table->foreignId('product_id')->constrained('products')->restrictOnDelete();
             $table->foreignId('formula_id')->constrained('formulas')->restrictOnDelete();
             $table->foreignId('warehouse_id')->constrained('warehouses')->restrictOnDelete();
