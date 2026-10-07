@@ -20,13 +20,16 @@ class FinishedInventoryMovementFilter extends QueryFilter
     protected function search(string $value): void
     {
         $this->builder->where(function (Builder $query) use ($value): void {
+            // La OP y su lote se buscan a través del lote del movimiento: solo las entradas guardan la OP, y así una
+            // búsqueda encuentra también las salidas y los traslados de ese lote (B55).
             $this->applySearchNested($query, [
                 'product.code',
                 'product.name',
                 'productVariant.code',
                 'productVariant.name',
-                'productionOrder.order_number',
+                'batch.productionOrder.order_number',
             ], $value);
+            $this->orWhereLotNumber($query, $value, 'batch.productionOrder');
         });
     }
 

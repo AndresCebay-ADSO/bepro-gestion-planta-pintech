@@ -8,6 +8,7 @@ use App\Models\FinishedInventoryMovement;
 use App\Models\FinishedProductBatch;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
@@ -38,6 +39,8 @@ function createFinishedMovementFixture(string $code = 'PROD-RET'): array
 
     $batch = FinishedProductBatch::create([
         'product_id' => $product->id,
+        'production_order_id' => ProductionOrder::factory()->create(['product_id' => $product->id])->id,
+        'product_variant_id' => ProductVariant::factory()->create(['product_id' => $product->id])->id,
         'initial_quantity' => '20',
         'entry_date' => now(),
     ]);
@@ -215,6 +218,7 @@ it('rejects entries into a batch whose variant is inactive', function () {
     $variant = ProductVariant::factory()->create(['product_id' => $product->id, 'is_active' => false]);
     $batch = FinishedProductBatch::create([
         'product_id' => $product->id,
+        'production_order_id' => ProductionOrder::factory()->create(['product_id' => $product->id])->id,
         'product_variant_id' => $variant->id,
         'initial_quantity' => '20',
         'entry_date' => now(),

@@ -71,8 +71,10 @@ abstract class QueryFilter
             }
 
             if (str_contains($column, '.')) {
-                [$relation, $relationColumn] = explode('.', $column, 2);
-                $relationColumns[$relation][] = $relationColumn;
+                // La columna es lo que va después del último punto; lo anterior es la relación, que puede ser anidada
+                // (`batch.productionOrder.order_number`).
+                $relation = substr($column, 0, (int) strrpos($column, '.'));
+                $relationColumns[$relation][] = substr($column, (int) strrpos($column, '.') + 1);
             } else {
                 $directColumns[] = $column;
             }
@@ -91,6 +93,27 @@ abstract class QueryFilter
                 });
             });
         }
+    }
+
+    /**
+     * Busca por el número de lote de la OP, que es un entero: comparación exacta y solo si el texto es un entero, porque
+     * `LOWER()` sobre un entero falla en PostgreSQL. `$relation` es el camino hasta la OP (`productionOrder`,
+     * `batch.productionOrder`), o `null` si el modelo filtrado es la OP. Así se busca el lote en todas las pantallas que
+     * lo muestran (B55).
+     */
+    protected function orWhereLotNumber(Builder $query, string $value, ?string $relation = null): void
+    {
+        if (! $this->isValidInteger($value)) {
+            return;
+        }
+
+        if ($relation === null) {
+            $query->orWhere('lot_number', (int) $value);
+
+            return;
+        }
+
+        $query->orWhereHas($relation, fn (Builder $order) => $order->where('lot_number', (int) $value));
     }
 
     protected function applyDateRange(string $column, ?string $from, ?string $to): void

@@ -20,7 +20,7 @@ import type { PaginationLink } from '@/types/ui';
 type ProductionOrderItem = {
     id: number;
     order_number: string;
-    lot_number?: number | null;
+    lot_number: number;
     product?: { code: string; name: string } | null;
     formula?: { version: number } | null;
     warehouse?: { name: string } | null;
@@ -187,11 +187,9 @@ export default function ProductionOrdersIndex({
                                         <div className="font-mono font-medium text-foreground">
                                             {order.order_number}
                                         </div>
-                                        {order.lot_number ? (
-                                            <div className="text-xs text-muted-foreground">
-                                                #{order.lot_number}
-                                            </div>
-                                        ) : null}
+                                        <div className="text-xs text-muted-foreground">
+                                            Lote {order.lot_number}
+                                        </div>
                                     </td>
                                     <td className="p-4">
                                         <div className="font-medium text-foreground">

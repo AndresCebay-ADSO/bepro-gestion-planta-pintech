@@ -134,6 +134,17 @@ it('filters by production order number', function (): void {
     );
 });
 
+// B55: la tabla muestra «Lote N»; se busca por ese número, exacto.
+it('filters by lot number', function (): void {
+    actingAs($this->admin);
+
+    get(route('qr-codes.index', ['search' => '999']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('qrCodes.data', 1)
+            ->where('qrCodes.data.0.id', $this->qrActive->id));
+});
+
 it('filters by status active', function (): void {
     actingAs($this->admin);
 

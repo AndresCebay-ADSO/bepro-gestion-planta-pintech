@@ -104,7 +104,7 @@ export type ProductionOrderAvailableRemnant = {
 export type ProductionOrder = {
     id: number;
     order_number: string;
-    lot_number?: number | null;
+    lot_number: number;
     status: ProductionOrderStatus;
     quantity: FormNumberValue;
     actual_quantity?: FormNumberValue | null;

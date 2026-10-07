@@ -53,8 +53,7 @@ export function OrderHeader({ order }: OrderHeaderProps) {
             <div>
                 <div className="flex items-center gap-2">
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                        Orden {order.order_number}{' '}
-                        {order.lot_number && `(Lote ${order.lot_number})`}
+                        Orden {order.order_number} (Lote {order.lot_number})
                     </h1>
                     <Badge variant={statusVariant(order.status)}>
                         {statusLabel(order.status)}

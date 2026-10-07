@@ -53,7 +53,7 @@ type QrCodeDetail = {
     production_order: {
         id: number;
         order_number: string;
-        lot_number: string | null;
+        lot_number: number;
         completion_date: string | null;
         planned_date: string | null;
     } | null;
@@ -264,16 +264,13 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                                         .order_number
                                                 }
                                             </Link>
-                                            {qrCode.production_order
-                                                .lot_number && (
-                                                <p className="text-xs text-muted-foreground">
-                                                    Lote:{' '}
-                                                    {
-                                                        qrCode.production_order
-                                                            .lot_number
-                                                    }
-                                                </p>
-                                            )}
+                                            <p className="text-xs text-muted-foreground">
+                                                Lote:{' '}
+                                                {
+                                                    qrCode.production_order
+                                                        .lot_number
+                                                }
+                                            </p>
                                             {qrCode.production_order
                                                 .completion_date && (
                                                 <p className="text-xs text-muted-foreground">

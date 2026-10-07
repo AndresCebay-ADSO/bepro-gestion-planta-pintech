@@ -16,7 +16,10 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Inertia\Testing\AssertableInertia;
 
 uses(RefreshDatabase::class);
 
@@ -81,6 +84,7 @@ beforeEach(function () {
 
     $this->productionOrder = ProductionOrder::create([
         'order_number' => 'OP-001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $warehouse->id,
@@ -238,4 +242,81 @@ test('operator cannot delete a packaging plan from a pending review order', func
 
     $response->assertForbidden();
     $this->assertDatabaseHas('production_order_packaging_plan', ['id' => $plan->id]);
+});
+
+// B55: una presentación va una sola vez por orden. Cada una deja un lote de PT, y el lote se identifica por el número de
+// lote de la OP más la presentación: dos filas de la misma presentación dejarían dos lotes indistinguibles.
+test('cannot add a presentation that is already in the order packaging plan', function () {
+    $this->productionOrder->update(['status' => ProductionOrderStatus::InProgress]);
+    ProductionOrderPackagingPlan::createForVariant($this->productionOrder->id, $this->variant->id, 10);
+
+    $response = $this->post(route('production-orders.packaging-plans.store', $this->productionOrder), [
+        'product_variant_id' => $this->variant->id,
+        'planned_units' => 4,
+    ]);
+
+    $response->assertSessionHasErrors([
+        'product_variant_id' => 'Esta presentación ya está en el plan de envasado de la orden.',
+    ]);
+    expect(ProductionOrderPackagingPlan::query()->where('production_order_id', $this->productionOrder->id)->count())->toBe(1);
+});
+
+test('the same presentation can be planned in different orders', function () {
+    $otherOrder = $this->productionOrder->replicate(['order_number', 'lot_number']);
+    $otherOrder->fill([
+        'order_number' => 'OP-002',
+        'lot_number' => $this->productionOrder->lot_number + 1,
+        'status' => ProductionOrderStatus::InProgress,
+    ])->save();
+    ProductionOrderPackagingPlan::createForVariant($this->productionOrder->id, $this->variant->id, 10);
+
+    $this->post(route('production-orders.packaging-plans.store', $otherOrder), [
+        'product_variant_id' => $this->variant->id,
+        'planned_units' => 4,
+    ])->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('production_order_packaging_plan', [
+        'production_order_id' => $otherOrder->id,
+        'product_variant_id' => $this->variant->id,
+    ]);
+});
+
+test('the database rejects a repeated presentation in the same order', function () {
+    ProductionOrderPackagingPlan::createForVariant($this->productionOrder->id, $this->variant->id, 10);
+
+    expect(fn () => ProductionOrderPackagingPlan::createForVariant($this->productionOrder->id, $this->variant->id, 4))
+        ->toThrow(QueryException::class);
+});
+
+test('the order detail only offers presentations that are not in the plan yet', function () {
+    $this->productionOrder->update(['status' => ProductionOrderStatus::InProgress]);
+    ProductionOrderPackagingPlan::createForVariant($this->productionOrder->id, $this->variant->id, 10);
+
+    $this->get(route('production-orders.show', $this->productionOrder))
+        ->assertSuccessful()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('availableVariants', 1)
+            ->where('availableVariants.0.id', $this->variantCunete->id));
+});
+
+test('a concurrent request with the same presentation gets the validation message, not a server error', function () {
+    $this->productionOrder->update(['status' => ProductionOrderStatus::InProgress]);
+
+    // Simula la otra petición: guarda la misma presentación después de que esta pasó la validación y antes de que la guarde.
+    ProductionOrderPackagingPlan::creating(function (): void {
+        DB::table('production_order_packaging_plan')->insert([
+            'production_order_id' => $this->productionOrder->id,
+            'product_variant_id' => $this->variant->id,
+            'planned_units' => 10,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    });
+
+    $this->post(route('production-orders.packaging-plans.store', $this->productionOrder), [
+        'product_variant_id' => $this->variant->id,
+        'planned_units' => 4,
+    ])->assertSessionHasErrors([
+        'product_variant_id' => ProductionOrderPackagingPlan::DUPLICATE_PRESENTATION_MESSAGE,
+    ]);
 });

@@ -55,6 +55,7 @@ function makeOrderForCancellationTest(object $context, ProductionOrderStatus $st
 {
     return ProductionOrder::create([
         'order_number' => 'OP-CAN-'.fake()->unique()->numerify('####'),
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $context->formula->product_id,
         'formula_id' => $context->formula->id,
         'warehouse_id' => $context->warehouse->id,

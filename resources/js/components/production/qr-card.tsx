@@ -41,7 +41,7 @@ export function QrCard({
                     <div className="flex justify-center rounded-lg border border-border bg-white p-4">
                         <img
                             src={order.qr_image_url}
-                            alt={`Código QR del lote ${order.order_number}`}
+                            alt={`Código QR del lote ${order.lot_number}`}
                             width={160}
                             height={160}
                             className="block"
@@ -74,7 +74,7 @@ export function QrCard({
                         <Button variant="outline" size="sm" asChild>
                             <a
                                 href={order.qr_image_url}
-                                download={`qr-lote-${order.order_number}.png`}
+                                download={`qr-lote-${order.lot_number}.png`}
                             >
                                 <Download className="mr-1.5 h-4 w-4" />
                                 Descargar QR

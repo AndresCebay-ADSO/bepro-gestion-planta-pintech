@@ -99,7 +99,10 @@ export default function FinishedMovementsShow({ movement }: Props) {
                             label="Lote"
                             value={
                                 movement.batch
-                                    ? `#${movement.batch.id}`
+                                    ? String(
+                                          movement.batch.production_order
+                                              .lot_number,
+                                      )
                                     : 'Sin lote'
                             }
                         />

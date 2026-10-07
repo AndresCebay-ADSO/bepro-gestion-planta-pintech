@@ -46,6 +46,7 @@ beforeEach(function () {
 
     $this->sourceOrder = ProductionOrder::create([
         'order_number' => 'OP-SOURCE-'.substr(uniqid(), -6),
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->warehouse->id,
@@ -113,6 +114,7 @@ it('remnant status label returns correct translation', function () {
 it('scope available returns only remnants with stock', function () {
     $order2 = ProductionOrder::create([
         'order_number' => 'OP-SCOPE-1',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->warehouse->id,
@@ -136,6 +138,7 @@ it('scope available returns only remnants with stock', function () {
 
     $order3 = ProductionOrder::create([
         'order_number' => 'OP-SCOPE-2',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->warehouse->id,
@@ -168,6 +171,7 @@ it('scope available returns only remnants with stock', function () {
 it('decimal fields are cast correctly', function () {
     $decimalOrder = ProductionOrder::create([
         'order_number' => 'OP-DECIMAL-'.substr(uniqid(), -6),
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->warehouse->id,
@@ -201,6 +205,7 @@ it('decimal fields are cast correctly', function () {
 it('factory creates a remnant with default values', function () {
     $factoryOrder = ProductionOrder::create([
         'order_number' => 'OP-FACTORY-'.substr(uniqid(), -6),
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->warehouse->id,

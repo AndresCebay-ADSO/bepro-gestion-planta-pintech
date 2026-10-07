@@ -102,6 +102,7 @@ test('completing order generates qr code and quality certificate', function () {
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-CERT-0001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -162,6 +163,7 @@ test('completing order saves quality solids alongside viscosity and grinding', f
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-SOLIDS-0001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -214,6 +216,7 @@ test('regenerating certificate does not duplicate current document', function ()
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-REGEN-0001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -288,6 +291,7 @@ test('quality signer is required on complete', function () {
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-QS-REQ-0001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -342,6 +346,7 @@ test('quality signer must have job_title and signature', function () {
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-QS-INC-0001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -399,6 +404,7 @@ test('quality signer must have admin or produccion role', function () {
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-QS-ROL-0001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -457,6 +463,7 @@ test('quality signer must be active', function () {
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-QS-ACT-0001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -506,6 +513,7 @@ test('certificate uses quality responsible user data', function () {
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-QS-DATA-0001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -531,4 +539,53 @@ test('certificate uses quality responsible user data', function () {
 
     expect($payload['responsible_name'])->toBe($this->user->name)
         ->and($payload['responsible_role'])->toBe($this->user->job_title);
+});
+
+// B55: el certificado se descarga con el nombre que usa la planta: «{producto} LOTE {lote} {fecha de fabricación}», con
+// la fecha de fabricación (creación de la OP) en fecha de planta.
+function completedCertificateOrder(object $context, string $productName): ProductionOrder
+{
+    $context->product->update(['name' => $productName]);
+
+    $order = ProductionOrder::create([
+        'order_number' => 'OP-NAME-0001',
+        'lot_number' => 1682,
+        'product_id' => $context->product->id,
+        'formula_id' => $context->formula->id,
+        'warehouse_id' => $context->factory->id,
+        'quantity' => 100,
+        'status' => 'completed',
+        'planned_date' => '2026-09-20',
+        'completion_date' => '2026-09-12',
+        'actual_quantity' => 100,
+        'viscosity_ku' => 105,
+        'grinding_hg' => 7,
+        'responsible_name' => 'QC 1',
+        'quality_responsible_user_id' => $context->user->id,
+        'created_by' => $context->user->id,
+    ]);
+    // 01:30 UTC del 11 de septiembre = 20:30 del 10 de septiembre en Bogotá.
+    $order->forceFill(['created_at' => '2026-09-11 01:30:00'])->save();
+
+    return $order->fresh();
+}
+
+test('the certificate is named with the product, the lot and its manufacturing date', function () {
+    $order = completedCertificateOrder($this, 'BP PRIMER EPOXICO HS 2K GRIS');
+
+    $document = app(QualityInspectionCertificateService::class)->generateForCompletedOrder($order, $this->user->id);
+
+    expect($document->file_name)->toBe('BP PRIMER EPOXICO HS 2K GRIS LOTE 1682 10-09-2026.pdf');
+});
+
+test('a product name with slashes still downloads its certificate', function () {
+    $order = completedCertificateOrder($this, 'BP CAOBA / CHOCOLATE 1/4');
+
+    $document = app(QualityInspectionCertificateService::class)->generateForCompletedOrder($order, $this->user->id);
+
+    expect($document->file_name)->toBe('BP CAOBA - CHOCOLATE 1-4 LOTE 1682 10-09-2026.pdf');
+
+    $this->get(route('qr.public.documents.download', ['token' => $document->qrCode->token, 'document' => $document]))
+        ->assertSuccessful()
+        ->assertHeader('content-disposition', 'inline; filename="BP CAOBA - CHOCOLATE 1-4 LOTE 1682 10-09-2026.pdf"');
 });

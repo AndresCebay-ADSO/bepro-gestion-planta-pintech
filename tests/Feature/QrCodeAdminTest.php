@@ -73,6 +73,7 @@ function createQrFixture(array $overrides = []): QrCode
     ]);
     $order = ProductionOrder::create([
         'order_number' => 'OP-QR-'.fake()->unique()->randomNumber(3),
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $warehouse->id,

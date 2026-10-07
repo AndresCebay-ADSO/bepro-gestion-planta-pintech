@@ -6,6 +6,8 @@ use App\Exceptions\InsufficientStockException;
 use App\Models\FinishedProductBatch;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductionOrder;
+use App\Models\ProductVariant;
 use App\Models\UnitOfMeasure;
 use App\Models\Warehouse;
 use App\Services\DecimalCalculator;
@@ -31,6 +33,8 @@ it('throws exception when decrementing stock that does not exist', function () {
 
     $batch = FinishedProductBatch::create([
         'product_id' => $product->id,
+        'production_order_id' => ProductionOrder::factory()->create(['product_id' => $product->id])->id,
+        'product_variant_id' => ProductVariant::factory()->create(['product_id' => $product->id])->id,
         'initial_quantity' => '100',
         'entry_date' => now(),
     ]);

@@ -39,7 +39,8 @@ class PublicQrLandingController extends Controller
                 'description' => $qrCode->product->description,
             ],
             'lot' => [
-                'number' => $qrCode->productionOrder->order_number,
+                // El número de lote, el mismo del certificado y la estampita; no el número de la OP (B55).
+                'number' => $qrCode->productionOrder->lot_number,
                 'manufacturing_date' => $this->timezoneService->formatPlantDate($qrCode->productionOrder->getManufacturingDate()),
                 'verification_date' => $this->timezoneService->formatPlantDate($qrCode->productionOrder->getVerificationDate()),
             ],

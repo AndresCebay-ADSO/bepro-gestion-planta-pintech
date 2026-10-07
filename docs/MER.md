@@ -305,7 +305,7 @@ Ingredientes de cada fórmula.
 | --- | --- | :-: | --- |
 | `id` | BIGINT |  | PK |
 | `order_number` | VARCHAR(20) |  | UNIQUE |
-| `lot_number` | INTEGER | sí |  |
+| `lot_number` | INTEGER |  | UNIQUE. Se asigna al crear la orden; identifica el lote en documentos, QR y movimientos de PT |
 | `product_id` | BIGINT |  | FK → `products` (RESTRICT) |
 | `formula_id` | BIGINT |  | FK → `formulas` (RESTRICT) |
 | `warehouse_id` | BIGINT |  | FK → `warehouses` (RESTRICT) |
@@ -392,6 +392,8 @@ Plan de envasado por presentación.
 | `notes` | TEXT | sí |  |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
+
+Restricciones: `UNIQUE (production_order_id, product_variant_id)`: una presentación va una sola vez por orden.
 
 ### 2.5.5 `production_remnants`
 
@@ -539,12 +541,14 @@ Lotes de producto terminado.
 | --- | --- | :-: | --- |
 | `id` | BIGINT |  | PK |
 | `product_id` | BIGINT |  | FK → `products` (RESTRICT) |
-| `product_variant_id` | BIGINT | sí | FK → `product_variants` (RESTRICT) |
-| `production_order_id` | BIGINT | sí | FK → `production_orders` (RESTRICT) |
+| `product_variant_id` | BIGINT |  | FK → `product_variants` (RESTRICT). La presentación de la fila del plan de envasado |
+| `production_order_id` | BIGINT |  | FK → `production_orders` (RESTRICT). Todo lote nace al completar una OP |
 | `initial_quantity` | DECIMAL(12,4) |  |  |
-| `entry_date` | DATE |  |  |
+| `entry_date` | DATE |  | Fecha de planta en que se completó la OP |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
+
+Restricciones: `UNIQUE (production_order_id, product_variant_id)`. El lote se identifica por el `lot_number` de su OP más la presentación.
 
 ### 2.6.3 `finished_product_batch_stocks`
 

@@ -44,7 +44,7 @@ class QualityInspectionCertificateService
             return QrDocument::create([
                 'qr_code_id' => $qrCode->id,
                 'document_type' => QrDocumentType::QualityCertificate,
-                'file_name' => "certificado-calidad-{$order->order_number}.pdf",
+                'file_name' => $this->fileName($order),
                 'file_path' => $storedPdf['path'],
                 'file_size' => $storedPdf['size'],
                 'mime_type' => 'application/pdf',
@@ -64,12 +64,10 @@ class QualityInspectionCertificateService
         $product = $order->product;
         $signer = $order->qualityResponsibleUser;
 
-        $lot = $order->lot_number ?? $order->order_number;
-
         return [
-            'certificate_number' => "CC-{$lot}",
+            'certificate_number' => "CC-{$order->lot_number}",
             'product_name' => $product->name,
-            'lot' => $lot,
+            'lot' => $order->lot_number,
             'manufacturing_date' => $this->timezoneService->formatPlantDate($order->getManufacturingDate()),
             'verification_date' => $this->timezoneService->formatPlantDate($order->getVerificationDate()),
             'responsible_name' => $signer?->name ?? $order->responsible_name ?? 'N/A',
@@ -126,6 +124,23 @@ class QualityInspectionCertificateService
         $qrCode->save();
 
         return $qrCode;
+    }
+
+    /**
+     * Nombre con que el cliente descarga el certificado, como la planta nombra los suyos:
+     * «{producto} LOTE {lote} {fecha de fabricación}.pdf». La fecha es la de fabricación del lote (creación de la OP),
+     * la misma que imprime el certificado.
+     */
+    public function fileName(ProductionOrder $order): string
+    {
+        $order->loadMissing('product');
+
+        // `/` y `\` rompen la descarga: Symfony los rechaza en el nombre del archivo. Qué caracteres admite el nombre
+        // de un producto se decide en 3.6 (repaso de Form Requests).
+        $productName = str_replace(['/', '\\'], '-', $order->product->name);
+        $manufacturedOn = $this->timezoneService->formatPlantDate($order->getManufacturingDate(), 'd-m-Y');
+
+        return "{$productName} LOTE {$order->lot_number} {$manufacturedOn}.pdf";
     }
 
     /**

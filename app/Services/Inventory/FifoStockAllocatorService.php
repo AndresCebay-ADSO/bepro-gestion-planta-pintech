@@ -147,14 +147,16 @@ class FifoStockAllocatorService
         ProductionOrder $order,
         ProductionOrderDetail $detail,
         float|string $requiredQuantity,
-        int $userId
+        int $userId,
+        ?string $movementDate = null,
     ): string {
         return $this->consumeRawMaterialForProduction(
             order: $order,
             rawMaterialId: (int) $detail->raw_material_id,
             requiredQuantity: $requiredQuantity,
             userId: $userId,
-            errorKey: 'ingredients'
+            errorKey: 'ingredients',
+            movementDate: $movementDate,
         );
     }
 
@@ -164,7 +166,8 @@ class FifoStockAllocatorService
         float|string $requiredQuantity,
         int $userId,
         string $errorKey,
-        string $contextLabel = 'materia prima'
+        string $contextLabel = 'materia prima',
+        ?string $movementDate = null,
     ): string {
         return $this->consumeFromWarehouse(
             rawMaterialId: $rawMaterialId,
@@ -176,6 +179,7 @@ class FifoStockAllocatorService
             errorKey: $errorKey,
             contextLabel: $contextLabel,
             shortageMoment: 'en finalización',
+            movementDate: $movementDate,
         );
     }
 

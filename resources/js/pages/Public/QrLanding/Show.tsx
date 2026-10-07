@@ -16,7 +16,7 @@ type Product = {
 };
 
 type Lot = {
-    number: string;
+    number: number;
     manufacturing_date: string | null;
     verification_date: string | null;
 };

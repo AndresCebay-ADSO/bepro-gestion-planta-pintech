@@ -32,7 +32,7 @@ type Props = {
 
 export default function ShrinkWrapsShow({ shrinkWrap, can }: Props) {
     const { order } = shrinkWrap;
-    const orderLabel = `${order.order_number}${order.lot_number !== null ? ` · Lote ${order.lot_number}` : ''}`;
+    const orderLabel = `${order.order_number} · Lote ${order.lot_number}`;
 
     return (
         <>

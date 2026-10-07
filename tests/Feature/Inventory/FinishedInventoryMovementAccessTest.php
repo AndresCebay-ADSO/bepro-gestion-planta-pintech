@@ -10,6 +10,8 @@ use App\Models\FinishedProductBatch;
 use App\Models\FinishedProductBatchStock;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductionOrder;
+use App\Models\ProductVariant;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -90,11 +92,15 @@ it('exposes finished product batches from all warehouses for movement forms', fu
 
     $batchInCurrentWarehouse = FinishedProductBatch::create([
         'product_id' => $product->id,
+        'production_order_id' => ProductionOrder::factory()->create(['product_id' => $product->id])->id,
+        'product_variant_id' => ProductVariant::factory()->create(['product_id' => $product->id])->id,
         'initial_quantity' => '10',
         'entry_date' => now()->subDay()->toDateString(),
     ]);
     $batchInOtherWarehouse = FinishedProductBatch::create([
         'product_id' => $product->id,
+        'production_order_id' => ProductionOrder::factory()->create(['product_id' => $product->id])->id,
+        'product_variant_id' => ProductVariant::factory()->create(['product_id' => $product->id])->id,
         'initial_quantity' => '20',
         'entry_date' => now()->toDateString(),
     ]);
@@ -145,6 +151,8 @@ it('shows finished inventory movement costs only to users with costs.view', func
     ]);
     $batch = FinishedProductBatch::create([
         'product_id' => $product->id,
+        'production_order_id' => ProductionOrder::factory()->create(['product_id' => $product->id])->id,
+        'product_variant_id' => ProductVariant::factory()->create(['product_id' => $product->id])->id,
         'initial_quantity' => '10',
         'entry_date' => now()->toDateString(),
     ]);

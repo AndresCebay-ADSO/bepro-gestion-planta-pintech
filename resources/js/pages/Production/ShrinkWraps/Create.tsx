@@ -50,7 +50,7 @@ export default function ShrinkWrapsCreate({
         id: order.value,
         label: [
             order.order_number,
-            order.lot_number !== null ? `Lote ${order.lot_number}` : null,
+            `Lote ${order.lot_number}`,
             order.product_name,
         ]
             .filter(Boolean)

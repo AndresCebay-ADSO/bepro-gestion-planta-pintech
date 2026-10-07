@@ -152,6 +152,7 @@ test('it does not allow updating a formula already used in production orders', f
 
     ProductionOrder::create([
         'order_number' => 'OP-FORM-0001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $warehouse->id,

@@ -6,14 +6,17 @@ use App\Enums\FinishedInventoryMovementReason;
 use App\Enums\InventoryMovementType;
 use App\Enums\WarehouseType;
 use App\Models\FinishedInventoryMovement;
+use App\Models\FinishedProductBatch;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
@@ -257,4 +260,86 @@ it('forbids unauthorized users from accessing finished inventory movements index
     $response = get(route('finished-inventory-movements.index'));
 
     $response->assertForbidden();
+});
+
+/**
+ * Un lote de PT de la OP-2026-0042 (lote 1042) con su entrada de producción y una venta. Solo la entrada guarda la OP.
+ *
+ * @return array{0: FinishedInventoryMovement, 1: FinishedInventoryMovement}
+ */
+function finishedLotFixture(object $context): array
+{
+    $order = ProductionOrder::factory()->create([
+        'order_number' => 'OP-2026-0042',
+        'lot_number' => 1042,
+        'product_id' => $context->productA->id,
+    ]);
+    $batch = FinishedProductBatch::create([
+        'product_id' => $context->productA->id,
+        'product_variant_id' => $context->variantA->id,
+        'production_order_id' => $order->id,
+        'initial_quantity' => 10,
+        'entry_date' => '2026-06-20',
+    ]);
+    $movement = fn (array $attributes) => FinishedInventoryMovement::create([
+        'product_id' => $context->productA->id,
+        'product_variant_id' => $context->variantA->id,
+        'warehouse_id' => $context->warehouseA->id,
+        'finished_product_batch_id' => $batch->id,
+        'created_by' => $context->admin->id,
+        ...$attributes,
+    ]);
+
+    return [
+        $movement(['type' => InventoryMovementType::Entry, 'reason' => FinishedInventoryMovementReason::Production, 'quantity' => 10, 'movement_date' => '2026-06-20', 'production_order_id' => $order->id]),
+        $movement(['type' => InventoryMovementType::Exit, 'reason' => FinishedInventoryMovementReason::Sale, 'quantity' => 4, 'movement_date' => '2026-06-21']),
+    ];
+}
+
+// B55: el lote de PT se busca por el número de lote de su OP y por el número de la OP, a través del lote. Solo las
+// entradas guardan la OP: sin pasar por el lote, las salidas no aparecerían.
+it('finds the entry and the exits of a lot by its lot number', function (): void {
+    actingAs($this->admin);
+    [$entry, $exit] = finishedLotFixture($this);
+
+    get(route('finished-inventory-movements.index', ['search' => '1042']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('movements.data', 2)
+            ->where('movements.data.0.id', $exit->id)
+            ->where('movements.data.0.batch.production_order.lot_number', 1042)
+            ->where('movements.data.1.id', $entry->id));
+});
+
+it('finds the entry and the exits of a lot by its production order number', function (): void {
+    actingAs($this->admin);
+    [$entry, $exit] = finishedLotFixture($this);
+
+    get(route('finished-inventory-movements.index', ['search' => 'op-2026-0042']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('movements.data', 2)
+            ->where('movements.data.0.id', $exit->id)
+            ->where('movements.data.1.id', $entry->id));
+});
+
+it('offers finished batches identified by the lot number of their order', function (): void {
+    actingAs($this->admin);
+    finishedLotFixture($this);
+
+    get(route('finished-inventory-movements.index'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->reloadOnly('batches', fn (AssertableInertia $reload) => $reload
+                ->where('batches.0.lot_number', 1042)));
+});
+
+it('shows the lot number of the order on the movement detail', function (): void {
+    actingAs($this->admin);
+    [, $exit] = finishedLotFixture($this);
+
+    get(route('finished-inventory-movements.show', $exit))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('movement.batch.production_order.lot_number', 1042));
 });

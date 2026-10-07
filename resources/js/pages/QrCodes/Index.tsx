@@ -21,7 +21,7 @@ type QrCodeRow = {
     production_order: {
         id: number;
         order_number: string;
-        lot_number: string | null;
+        lot_number: number;
     } | null;
     documents_count: number;
     created_at: string | null;
@@ -60,7 +60,7 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
             type: 'text',
             name: 'search',
             label: 'Buscar',
-            placeholder: 'Buscar por producto, orden o token…',
+            placeholder: 'Buscar por producto, OP, lote o token…',
         },
         {
             type: 'select',
@@ -179,17 +179,13 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
                                                                 .order_number
                                                         }
                                                     </Link>
-                                                    {row.production_order
-                                                        .lot_number && (
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Lote:{' '}
-                                                            {
-                                                                row
-                                                                    .production_order
-                                                                    .lot_number
-                                                            }
-                                                        </p>
-                                                    )}
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Lote:{' '}
+                                                        {
+                                                            row.production_order
+                                                                .lot_number
+                                                        }
+                                                    </p>
                                                 </div>
                                             ) : (
                                                 <span className="text-muted-foreground">

@@ -45,7 +45,7 @@ function batchLabel(batch: FinishedBatchOption): string {
     const productCode = batch.product?.code ?? 'PT';
     const variantLabel = variantLabelFor(batch);
 
-    return `${productCode} · ${variantLabel} · Lote #${batch.id}`;
+    return `${productCode} · ${variantLabel} · Lote ${batch.lot_number}`;
 }
 
 function variantLabelFor(batch: FinishedBatchOption): string {

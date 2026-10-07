@@ -257,6 +257,7 @@ test('it falls back to raw material units in show data when formula detail unit 
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-UOM-INCOMPATIBLE',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,
@@ -298,6 +299,7 @@ test('it previews and completes a production order with normalized quantities', 
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-UOM-TEST',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $this->product->id,
         'formula_id' => $this->formula->id,
         'warehouse_id' => $this->factory->id,

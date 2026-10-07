@@ -21,15 +21,15 @@ use Spatie\Activitylog\Traits\LogsActivity;
 /**
  * @property int $id
  * @property int $product_id
- * @property int|null $product_variant_id
- * @property int|null $production_order_id
+ * @property int $product_variant_id
+ * @property int $production_order_id
  * @property string $initial_quantity
  * @property Carbon $entry_date
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Product $product
- * @property-read ProductVariant|null $productVariant
- * @property-read ProductionOrder|null $productionOrder
+ * @property-read ProductVariant $productVariant
+ * @property-read ProductionOrder $productionOrder
  * @property-read Collection|FinishedProductBatchStock[] $stocks
  * @property-read Collection|FinishedInventoryMovement[] $movements
  */

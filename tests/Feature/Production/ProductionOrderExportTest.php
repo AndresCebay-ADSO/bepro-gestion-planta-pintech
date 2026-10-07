@@ -85,6 +85,7 @@ function createExportTestDependencies(): array
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-EXP-0001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $warehouse->id,
@@ -207,4 +208,29 @@ test('show payload does not include export materials', function () {
     $payload = app(BuildProductionOrderShowDataAction::class)->execute($order);
 
     expect($payload)->not->toHaveKey('pdf_materials');
+});
+
+// B55: el lote se fecha con la fabricación (creación de la OP, en fecha de planta), la misma del certificado, la página
+// del QR y la estampita, y con el mismo texto en el PDF y el Excel. La planeada es referencia interna de planta.
+test('the order pdf and excel date the lot with its manufacturing date, not the planned one', function () {
+    [$order, $user] = createExportTestDependencies();
+    // 01:30 UTC del 5 de octubre = 20:30 del 4 de octubre en Bogotá.
+    $order->forceFill(['created_at' => '2026-10-05 01:30:00', 'planned_date' => '2026-10-20'])->save();
+
+    $this->actingAs($user);
+    $payload = app(BuildProductionOrderExportDataAction::class)->execute($order->fresh());
+
+    $caption = "{$order->lot_number} del 04 de octubre 2026";
+    expect($payload['lot_caption'])->toBe($caption)
+        ->and($payload['planned_date'])->toBe('2026-10-20');
+
+    $pdfHtml = view('pdf.production-order', [
+        'order' => $payload,
+        'logoBase64' => null,
+        'generatedAt' => '04/10/2026 20:30',
+    ])->render();
+    $excelHtml = view('excel.production-order', ['order' => $payload])->render();
+
+    expect($pdfHtml)->toContain($caption)
+        ->and($excelHtml)->toContain($caption);
 });

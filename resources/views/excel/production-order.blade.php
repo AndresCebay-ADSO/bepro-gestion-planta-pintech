@@ -40,7 +40,7 @@
                 DE PRODUCCIÓN N°</th>
             <td colspan="4" style="border: 1px solid #000000;">{{ $order['order_number'] }}</td>
             <th colspan="2" style="font-weight: bold; border: 1px solid #000000; background-color: #ffffff;">Lote:</th>
-            <td colspan="6" style="border: 1px solid #000000;">{{ filled($order['lot_number'] ?? null) ? $order['lot_number'] : $order['order_number'] }}</td>
+            <td colspan="6" style="border: 1px solid #000000;">{{ $order['lot_caption'] }}</td>
         </tr>
         <tr>
             <th colspan="3"

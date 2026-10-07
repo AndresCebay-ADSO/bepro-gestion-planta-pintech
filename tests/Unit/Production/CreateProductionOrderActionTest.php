@@ -145,7 +145,7 @@ function createExistingProductionOrder(object $context, string $orderNumber, ?in
 {
     return ProductionOrder::create([
         'order_number' => $orderNumber,
-        'lot_number' => $lotNumber,
+        'lot_number' => $lotNumber ?? fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $context->product->id,
         'formula_id' => $context->formula->id,
         'warehouse_id' => $context->warehouse->id,

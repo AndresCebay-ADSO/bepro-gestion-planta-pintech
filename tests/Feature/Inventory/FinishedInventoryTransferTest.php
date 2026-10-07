@@ -10,11 +10,13 @@ use App\Models\FinishedProductBatch;
 use App\Models\FinishedProductBatchStock;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\FinishedInventory\FinishedInventoryMovementService;
+use Carbon\CarbonImmutable;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Testing\TestResponse;
 
@@ -52,6 +54,7 @@ function finishedTransferFixture(?Warehouse $origin = null, ?Warehouse $destinat
 
     $batch = FinishedProductBatch::create([
         'product_id' => $product->id,
+        'production_order_id' => ProductionOrder::factory()->create(['product_id' => $product->id])->id,
         'product_variant_id' => $variant->id,
         'initial_quantity' => '20',
         'entry_date' => now(),
@@ -195,4 +198,15 @@ it('rejects a batch that has no stock at the origin', function () {
         ->assertSessionHasErrors('finished_product_batch_id');
 
     expect(finishedStockOf($batch, $destination))->toBeNull();
+});
+
+// B54: sin fecha, el movimiento de PT lleva la de hoy en la planta, no la UTC (`movement_date` es una fecha).
+it('records a finished movement without date with the plant date, not the UTC one', function () {
+    // 01:30 UTC del 5 de octubre = 20:30 del 4 de octubre en Bogotá.
+    $this->travelTo(CarbonImmutable::parse('2026-10-05 01:30:00', 'UTC'));
+
+    [, $batch] = finishedTransferFixture();
+
+    expect(FinishedInventoryMovement::query()->where('finished_product_batch_id', $batch->id)->sole()->movement_date->toDateString())
+        ->toBe('2026-10-04');
 });

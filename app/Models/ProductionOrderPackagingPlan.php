@@ -45,6 +45,12 @@ class ProductionOrderPackagingPlan extends Model
     /** @use HasFactory<ProductionOrderPackagingPlanFactory> */
     use HasFactory;
 
+    /**
+     * Una presentación va una sola vez por orden: cada una deja un lote de PT, que se identifica por el número de lote de
+     * la OP más la presentación (B55). Lo usan la validación y el controlador cuando dos peticiones chocan en el índice.
+     */
+    public const DUPLICATE_PRESENTATION_MESSAGE = 'Esta presentación ya está en el plan de envasado de la orden.';
+
     protected $table = 'production_order_packaging_plan';
 
     protected function casts(): array

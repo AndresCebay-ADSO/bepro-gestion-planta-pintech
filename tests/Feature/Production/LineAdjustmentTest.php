@@ -72,6 +72,7 @@ beforeEach(function () {
 
     $this->productionOrder = ProductionOrder::create([
         'order_number' => 'OP-001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $product->id,
         'formula_id' => $formula->id,
         'warehouse_id' => $warehouse->id,

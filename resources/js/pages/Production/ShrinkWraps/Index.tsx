@@ -65,7 +65,7 @@ export default function ShrinkWrapsIndex({
             type: 'text',
             name: 'search',
             label: 'Buscar',
-            placeholder: 'Buscar por orden o tipo...',
+            placeholder: 'Buscar por OP, lote o tipo...',
         },
         {
             type: 'select',
@@ -187,10 +187,7 @@ export default function ShrinkWrapsIndex({
                                                                 row.order
                                                                     .order_number
                                                             }
-                                                            {row.order
-                                                                .lot_number !==
-                                                                null &&
-                                                                ` · Lote ${row.order.lot_number}`}
+                                                            {` · Lote ${row.order.lot_number}`}
                                                         </div>
                                                         {row.order
                                                             .product_name && (

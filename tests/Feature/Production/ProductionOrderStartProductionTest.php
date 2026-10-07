@@ -92,6 +92,7 @@ function createPendingOrderForStartTest(object $context): array
 
     $order = ProductionOrder::create([
         'order_number' => 'OP-START-001',
+        'lot_number' => fake()->unique()->numberBetween(100000, 999999),
         'product_id' => $context->formula->product_id,
         'formula_id' => $context->formula->id,
         'warehouse_id' => $context->factory->id,

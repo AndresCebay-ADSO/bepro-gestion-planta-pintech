@@ -6,7 +6,7 @@ export type ShrinkWrapRow = {
     order: {
         id: number;
         order_number: string;
-        lot_number: number | null;
+        lot_number: number;
         product_name: string | null;
     };
     type_name: string;
@@ -30,7 +30,7 @@ export type ShrinkWrapItemRow = {
 export type ShrinkWrapOrderOption = {
     value: number;
     order_number: string;
-    lot_number: number | null;
+    lot_number: number;
     product_name: string | null;
     warehouse_name: string | null;
     completion_date: string | null;
