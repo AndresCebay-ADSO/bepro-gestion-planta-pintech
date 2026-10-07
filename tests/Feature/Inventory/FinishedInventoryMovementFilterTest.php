@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Models\Warehouse;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
 
 use function Pest\Laravel\actingAs;
@@ -321,6 +322,19 @@ it('finds the entry and the exits of a lot by its production order number', func
             ->has('movements.data', 2)
             ->where('movements.data.0.id', $exit->id)
             ->where('movements.data.1.id', $entry->id));
+});
+
+it('searches the order number and the lot of a batch in a single subquery', function (): void {
+    actingAs($this->admin);
+    finishedLotFixture($this);
+
+    DB::enableQueryLog();
+    get(route('finished-inventory-movements.index', ['search' => '1042']))->assertOk();
+    $listing = collect(DB::getQueryLog())
+        ->pluck('query')
+        ->first(fn (string $sql) => str_contains($sql, 'from "finished_inventory_movements"') && str_contains($sql, 'lot_number'));
+
+    expect(substr_count($listing, 'from "production_orders"'))->toBe(1);
 });
 
 it('offers finished batches identified by the lot number of their order', function (): void {

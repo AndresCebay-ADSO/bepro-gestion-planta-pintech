@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filters;
 
-use Illuminate\Database\Eloquent\Builder;
-
 class ShrinkWrapFilter extends QueryFilter
 {
     protected array $filterable = [
@@ -17,10 +15,11 @@ class ShrinkWrapFilter extends QueryFilter
 
     protected function search(string $value): void
     {
-        $this->builder->where(function (Builder $query) use ($value): void {
-            $this->applySearchNested($query, ['productionOrder.order_number', 'shrinkWrapType.name'], $value);
-            $this->orWhereLotNumber($query, $value, 'productionOrder');
-        });
+        $this->applySearch(
+            ['productionOrder.order_number', 'shrinkWrapType.name'],
+            $value,
+            exactIntegerColumns: ['productionOrder.lot_number'],
+        );
     }
 
     protected function shrinkWrapTypeId(string $value): void

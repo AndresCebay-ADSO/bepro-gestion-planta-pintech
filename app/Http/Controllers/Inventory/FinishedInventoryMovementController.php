@@ -120,7 +120,7 @@ class FinishedInventoryMovementController extends Controller
                 quantity: (string) $validated['quantity'],
                 userId: $userId,
                 notes: $validated['notes'] ?? null,
-                movementDate: $validated['movement_date'] ? new \DateTimeImmutable($validated['movement_date']) : null,
+                movementDate: $validated['movement_date'],
             );
         } elseif ($validated['type'] === 'entry') {
             $this->movementService->registerEntry(
@@ -130,7 +130,7 @@ class FinishedInventoryMovementController extends Controller
                 reason: $reason,
                 userId: $userId,
                 notes: $validated['notes'] ?? null,
-                movementDate: $validated['movement_date'] ? new \DateTimeImmutable($validated['movement_date']) : null,
+                movementDate: $validated['movement_date'],
             );
         } else {
             $this->movementService->registerExit(
@@ -140,7 +140,7 @@ class FinishedInventoryMovementController extends Controller
                 reason: $reason,
                 userId: $userId,
                 notes: $validated['notes'] ?? null,
-                movementDate: $validated['movement_date'] ? new \DateTimeImmutable($validated['movement_date']) : null,
+                movementDate: $validated['movement_date'],
             );
         }
 

@@ -20,13 +20,11 @@ class ProductionOrderFilter extends QueryFilter
     protected function search(string $value): void
     {
         $this->builder->where(function (Builder $query) use ($value) {
-            $this->orWhereLotNumber($query, $value);
-
             $this->applySearchNested($query, [
                 'order_number',
                 'product.name',
                 'product.code',
-            ], $value);
+            ], $value, exactIntegerColumns: ['lot_number']);
         });
     }
 

@@ -42,7 +42,7 @@ export default function ProductionOrdersCreate({
     products,
     warehouses,
 }: Props) {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, clearErrors } = useForm({
         product_id: '',
         formula_id: '',
         quantity: '',
@@ -85,6 +85,18 @@ export default function ProductionOrdersCreate({
     const packagingRowError = (index: number, field: keyof PackagingRow) =>
         (errors as Record<string, string>)[`packaging.${index}.${field}`];
 
+    // Los errores de las filas van por posición (`packaging.N.campo`): al quitar o cambiar una fila dejarían de
+    // corresponder a la fila bajo la que se muestran.
+    const clearPackagingErrors = () => {
+        const packagingErrorKeys = Object.keys(errors).filter((key) =>
+            key.startsWith('packaging'),
+        ) as Parameters<typeof clearErrors>;
+
+        if (packagingErrorKeys.length > 0) {
+            clearErrors(...packagingErrorKeys);
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         post(productionOrderStore().url);
@@ -98,6 +110,7 @@ export default function ProductionOrdersCreate({
     };
 
     const removePackaging = (index: number) => {
+        clearPackagingErrors();
         setData(
             'packaging',
             data.packaging.filter((_, i) => i !== index),
@@ -112,6 +125,7 @@ export default function ProductionOrdersCreate({
         const updated = data.packaging.map((pack, i) =>
             i === index ? { ...pack, [field]: value } : pack,
         );
+        clearPackagingErrors();
         setData('packaging', updated);
     };
 

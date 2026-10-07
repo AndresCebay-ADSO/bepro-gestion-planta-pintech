@@ -28,8 +28,7 @@ class FinishedInventoryMovementFilter extends QueryFilter
                 'productVariant.code',
                 'productVariant.name',
                 'batch.productionOrder.order_number',
-            ], $value);
-            $this->orWhereLotNumber($query, $value, 'batch.productionOrder');
+            ], $value, exactIntegerColumns: ['batch.productionOrder.lot_number']);
         });
     }
 

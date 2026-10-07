@@ -64,7 +64,7 @@ class CompleteProductionOrderAction
             // («completadas hoy»), el detalle y el QR la mostrarían un día después. Es la fecha de todo lo que escribe
             // completar la orden (la orden, sus consumos, sus lotes de PT y sus entradas), calculada una sola vez para
             // que una orden completada cerca de la medianoche no reparta sus registros en dos días (B54, B55).
-            $completionDate = $this->timezone->nowInPlant()->toDateString();
+            $completionDate = $this->timezone->todayInPlant();
 
             $updateData = [
                 'status' => ProductionOrderStatus::Completed,
@@ -225,7 +225,7 @@ class CompleteProductionOrderAction
                     productionOrderId: (int) $lockedOrder->id,
                     costPrice: $costPriceForVariant,
                     notes: "Finalización OP #{$lockedOrder->order_number}",
-                    movementDate: new \DateTimeImmutable($completionDate),
+                    movementDate: $completionDate,
                 );
             }
 

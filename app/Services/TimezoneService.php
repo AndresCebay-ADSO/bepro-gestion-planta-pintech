@@ -71,4 +71,13 @@ class TimezoneService
     {
         return Date::now($this->plantTimezone);
     }
+
+    /**
+     * La fecha de hoy en la planta (`Y-m-d`), para columnas de fecha: con `now()` en UTC, lo que se registra después de
+     * las 7 p. m. en Bogotá quedaría con la fecha del día siguiente (B54).
+     */
+    public function todayInPlant(): string
+    {
+        return $this->nowInPlant()->toDateString();
+    }
 }

@@ -48,7 +48,7 @@ class FinishedInventoryMovementService
         ?int $productionOrderId = null,
         ?string $costPrice = null,
         ?string $notes = null,
-        ?\DateTimeInterface $movementDate = null,
+        ?string $movementDate = null,
     ): FinishedInventoryMovement {
         return DB::transaction(function () use ($batchId, $warehouseId, $quantity, $reason, $userId, $productionOrderId, $costPrice, $notes, $movementDate) {
             $batch = $this->lockBatch($batchId);
@@ -75,7 +75,7 @@ class FinishedInventoryMovementService
                 'reason' => $reason,
                 'quantity' => $quantity,
                 'cost_price' => $costPrice,
-                'movement_date' => $movementDate ?? $this->timezone->nowInPlant(),
+                'movement_date' => $movementDate ?? $this->timezone->todayInPlant(),
                 'notes' => $notes,
                 'created_by' => $userId,
             ]);
@@ -104,7 +104,7 @@ class FinishedInventoryMovementService
         FinishedInventoryMovementReason $reason,
         int $userId,
         ?string $notes = null,
-        ?\DateTimeInterface $movementDate = null,
+        ?string $movementDate = null,
     ): FinishedInventoryMovement {
         return DB::transaction(function () use ($batchId, $warehouseId, $quantity, $reason, $userId, $notes, $movementDate) {
             $batch = $this->lockBatch($batchId);
@@ -119,7 +119,7 @@ class FinishedInventoryMovementService
                 'type' => InventoryMovementType::Exit,
                 'reason' => $reason,
                 'quantity' => $quantity,
-                'movement_date' => $movementDate ?? $this->timezone->nowInPlant(),
+                'movement_date' => $movementDate ?? $this->timezone->todayInPlant(),
                 'notes' => $notes,
                 'created_by' => $userId,
             ]);
@@ -149,7 +149,7 @@ class FinishedInventoryMovementService
         string $quantity,
         int $userId,
         ?string $notes = null,
-        ?\DateTimeInterface $movementDate = null,
+        ?string $movementDate = null,
     ): void {
         if ($fromWarehouseId === $toWarehouseId) {
             throw ValidationException::withMessages([

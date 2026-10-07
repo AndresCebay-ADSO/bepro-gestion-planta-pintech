@@ -108,7 +108,7 @@ class ShrinkWrapController extends Controller
                     ])->values()->all(),
                 ])
                 ->all(),
-            'today' => $this->timezone->nowInPlant()->toDateString(),
+            'today' => $this->timezone->todayInPlant(),
         ]);
     }
 

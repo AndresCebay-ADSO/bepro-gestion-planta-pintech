@@ -41,7 +41,7 @@ class InventoryMovementService
             'type' => InventoryMovementType::Exit,
             'quantity' => $quantity,
             'cost_price' => $unitPrice,
-            'movement_date' => $movementDate ?? $this->timezone->nowInPlant()->toDateString(),
+            'movement_date' => $movementDate ?? $this->timezone->todayInPlant(),
             'notes' => $notes,
             'created_by' => $userId,
         ]);
