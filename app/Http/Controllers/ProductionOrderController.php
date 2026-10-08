@@ -82,6 +82,8 @@ class ProductionOrderController extends Controller
                 'id' => $order->id,
                 'order_number' => $order->order_number,
                 'lot_number' => $order->lot_number,
+                // Nombre con el color que pidió el cliente (3.4); `product.name` sigue siendo el nombre real.
+                'product_display_name' => $order->productDisplayName(),
                 'product' => $order->product ? [
                     'id' => $order->product->id,
                     'code' => $order->product->code,

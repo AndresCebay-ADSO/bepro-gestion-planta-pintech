@@ -48,6 +48,8 @@ type QrCodeDetail = {
         id: number;
         name: string;
         code: string;
+        /** Nombre con el color de la orden (3.4). */
+        display_name: string;
         description: string | null;
     } | null;
     production_order: {
@@ -225,7 +227,7 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                     {qrCode.product ? (
                                         <div className="mt-1">
                                             <p className="font-medium text-foreground">
-                                                {qrCode.product.name}
+                                                {qrCode.product.display_name}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
                                                 {qrCode.product.code}

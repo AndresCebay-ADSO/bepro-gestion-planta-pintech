@@ -382,3 +382,15 @@ it('rejects completed_to earlier than completed_from', function (): void {
 
     $response->assertJsonValidationErrors(['completed_to']);
 });
+
+// 3.4: el listado muestra el nombre con el color que pidió el cliente.
+it('lists the product name with the order color', function (): void {
+    actingAs($this->admin);
+    $this->orderA->update(['color' => 'RAL 3020']);
+
+    get(route('production-orders.index', ['search' => 'OP-2026-001']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('orders.data.0.product_display_name', "{$this->productA->name} RAL 3020")
+            ->where('orders.data.0.product.name', $this->productA->name));
+});

@@ -8,6 +8,7 @@ import {
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
+import { finishedLotLabel } from '@/lib/finished-lot';
 import { index as finishedMovementsIndex } from '@/routes/finished-inventory-movements';
 import type { FinishedInventoryMovement } from '@/types/finished-inventory';
 
@@ -99,9 +100,10 @@ export default function FinishedMovementsShow({ movement }: Props) {
                             label="Lote"
                             value={
                                 movement.batch
-                                    ? String(
+                                    ? finishedLotLabel(
                                           movement.batch.production_order
                                               .lot_number,
+                                          movement.batch.production_order.color,
                                       )
                                     : 'Sin lote'
                             }

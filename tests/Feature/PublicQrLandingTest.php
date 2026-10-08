@@ -189,3 +189,13 @@ test('qr image endpoint returns 404 for inactive token', function () {
 test('qr image endpoint returns 404 for unknown token', function () {
     $this->get(route('qr.public.image', 'nonexistent-token'))->assertNotFound();
 });
+
+// 3.4: el cliente ve el nombre con el color que pidió.
+test('public QR landing shows the product name with the order color', function () {
+    [$qrCode] = createPublicQrFixture();
+    $qrCode->productionOrder->update(['color' => 'RAL 3020']);
+
+    $this->get(route('qr.public.show', $qrCode->token))
+        ->assertSuccessful()
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('product.name', 'Pintura Pública RAL 3020'));
+});

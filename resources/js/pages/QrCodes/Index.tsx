@@ -17,7 +17,13 @@ type QrCodeRow = {
     token: string;
     token_short: string;
     is_active: boolean;
-    product: { id: number; name: string; code: string } | null;
+    product: {
+        id: number;
+        name: string;
+        code: string;
+        /** Nombre con el color de la orden (3.4). */
+        display_name: string;
+    } | null;
     production_order: {
         id: number;
         order_number: string;
@@ -146,7 +152,10 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
                                             {row.product ? (
                                                 <div>
                                                     <p className="font-medium text-foreground">
-                                                        {row.product.name}
+                                                        {
+                                                            row.product
+                                                                .display_name
+                                                        }
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
                                                         {row.product.code}

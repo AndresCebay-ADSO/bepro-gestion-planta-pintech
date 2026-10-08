@@ -396,3 +396,14 @@ it('rejects invalid warehouse_id with 422', function (): void {
     $response->assertUnprocessable()
         ->assertJsonValidationErrors(['warehouse_id']);
 });
+
+// 3.4: el saldo de una OP con color se distingue del producto base.
+it('names the remnant with the color of its source order', function (): void {
+    actingAs($this->admin);
+    $this->orderA->update(['color' => 'RAL 3020']);
+
+    get(route('production.remnants.index', ['search' => $this->orderA->order_number]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('remnants.data.0.product_name', 'Esmalte Sintético Brillante RAL 3020'));
+});

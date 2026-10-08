@@ -292,3 +292,19 @@ test('admin can download old document version', function () {
         ->assertSuccessful()
         ->assertHeader('Content-Type', 'application/pdf');
 });
+
+// 3.4: la administración de QR muestra el nombre con el color de la orden.
+test('qr admin shows the product name with the order color', function () {
+    $user = adminUser();
+    $qrCode = createQrFixture(['created_by' => $user->id]);
+    $qrCode->productionOrder->update(['color' => 'RAL 3020']);
+    $expected = "{$qrCode->product->name} RAL 3020";
+
+    $this->actingAs($user)
+        ->get(route('qr-codes.index'))
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('qrCodes.data.0.product.display_name', $expected));
+
+    $this->actingAs($user)
+        ->get(route('qr-codes.show', $qrCode))
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('qrCode.product.display_name', $expected));
+});

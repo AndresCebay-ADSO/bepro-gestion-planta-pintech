@@ -589,3 +589,15 @@ test('a product name with slashes still downloads its certificate', function () 
         ->assertSuccessful()
         ->assertHeader('content-disposition', 'inline; filename="BP CAOBA - CHOCOLATE 1-4 LOTE 1682 10-09-2026.pdf"');
 });
+
+// 3.4: el certificado (contenido y nombre del archivo) lleva el color que pidió el cliente.
+test('the certificate carries the order color in its content and file name', function () {
+    $order = completedCertificateOrder($this, 'BP PRIMER EPOXICO HS 2K GRIS');
+    $order->update(['color' => 'RAL 9006']);
+
+    $service = app(QualityInspectionCertificateService::class);
+    $document = $service->generateForCompletedOrder($order->fresh(), $this->user->id);
+
+    expect($service->buildPayload($order->fresh())['product_name'])->toBe('BP PRIMER EPOXICO HS 2K GRIS RAL 9006')
+        ->and($document->file_name)->toBe('BP PRIMER EPOXICO HS 2K GRIS RAL 9006 LOTE 1682 10-09-2026.pdf');
+});

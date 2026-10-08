@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFilters } from '@/hooks/use-filters';
+import { finishedLotLabel } from '@/lib/finished-lot';
 import {
     index as finishedMovementsIndex,
     show as showFinishedMovement,
@@ -335,11 +336,14 @@ export default function FinishedMovementsIndex({
                                             {movement.batch && (
                                                 <div className="text-xs text-muted-foreground">
                                                     Lote{' '}
-                                                    {
+                                                    {finishedLotLabel(
                                                         movement.batch
                                                             .production_order
-                                                            .lot_number
-                                                    }
+                                                            .lot_number,
+                                                        movement.batch
+                                                            .production_order
+                                                            .color,
+                                                    )}
                                                 </div>
                                             )}
                                         </td>

@@ -14,6 +14,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { finishedLotLabel } from '@/lib/finished-lot';
 import { formatNumber } from '@/lib/formatters';
 import { finishedMovementReasonLabels } from '@/types/finished-inventory';
 import type {
@@ -45,7 +46,7 @@ function batchLabel(batch: FinishedBatchOption): string {
     const productCode = batch.product?.code ?? 'PT';
     const variantLabel = variantLabelFor(batch);
 
-    return `${productCode} · ${variantLabel} · Lote ${batch.lot_number}`;
+    return `${productCode} · ${variantLabel} · Lote ${finishedLotLabel(batch.lot_number, batch.color)}`;
 }
 
 function variantLabelFor(batch: FinishedBatchOption): string {

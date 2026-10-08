@@ -66,7 +66,8 @@ class QualityInspectionCertificateService
 
         return [
             'certificate_number' => "CC-{$order->lot_number}",
-            'product_name' => $product->name,
+            // Con el color que pidió el cliente (3.4): el certificado es de ese lote.
+            'product_name' => $order->productDisplayName(),
             'lot' => $order->lot_number,
             'manufacturing_date' => $this->timezoneService->formatPlantDate($order->getManufacturingDate()),
             'verification_date' => $this->timezoneService->formatPlantDate($order->getVerificationDate()),
@@ -135,9 +136,9 @@ class QualityInspectionCertificateService
     {
         $order->loadMissing('product');
 
-        // `/` y `\` rompen la descarga: Symfony los rechaza en el nombre del archivo. Qué caracteres admite el nombre
-        // de un producto se decide en 3.6 (repaso de Form Requests).
-        $productName = str_replace(['/', '\\'], '-', $order->product->name);
+        // Con el color de la orden (3.4). `/` y `\` rompen la descarga: Symfony los rechaza en el nombre del archivo.
+        // Qué caracteres admite el nombre de un producto se decide en 3.6 (repaso de Form Requests).
+        $productName = str_replace(['/', '\\'], '-', $order->productDisplayName());
         $manufacturedOn = $this->timezoneService->formatPlantDate($order->getManufacturingDate(), 'd-m-Y');
 
         return "{$productName} LOTE {$order->lot_number} {$manufacturedOn}.pdf";
