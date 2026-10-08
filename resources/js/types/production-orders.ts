@@ -86,6 +86,8 @@ export type ProductionOrderRemnantConsumption = {
     id: number;
     remnant_id: number;
     source_order_number?: string;
+    /** Producto con el color de la orden de origen: qué se mezcló en esta orden (B57). */
+    source_product_name?: string | null;
     quantity_gallons: FormNumberValue;
     quantity_kg: FormNumberValue;
     consumed_cost?: FormNumberValue | null;
@@ -97,6 +99,9 @@ export type ProductionOrderRemnantConsumption = {
 export type ProductionOrderAvailableRemnant = {
     id: number;
     source_order_number: string;
+    source_lot_number: number;
+    /** Producto con el color de la orden de origen: un saldo puede venir de cualquier producto de la bodega (B57). */
+    product_name: string;
     available_quantity_gallons: FormNumberValue;
     density_kg_per_gallon: FormNumberValue;
 };

@@ -9,37 +9,25 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Production\ConsumeRemnantRequest;
 use App\Models\ProductionOrder;
 use App\Models\ProductionRemnant;
+use App\Services\AvailableRemnantsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 
 class RemnantConsumptionController extends Controller
 {
+    public function __construct(
+        private readonly AvailableRemnantsService $availableRemnants,
+    ) {}
+
     /**
-     * Devuelve los saldos disponibles que pueden ser consumidos por la orden indicada
-     * (mismo producto, misma bodega, estado disponible).
+     * Refresca la lista de saldos que la orden puede consumir: los disponibles de su bodega, de cualquier producto
+     * (decisión del 2026-09-23), cada uno con el producto y el color de su orden de origen.
      */
     public function availableRemnants(ProductionOrder $productionOrder): JsonResponse
     {
         $this->authorize('updateOperationalData', $productionOrder);
 
-        $remnants = ProductionRemnant::query()
-            ->with(['sourceOrder:id,order_number'])
-            ->available()
-            ->where('warehouse_id', $productionOrder->warehouse_id)
-            // FIFO, desempatado por id: con la misma fecha, el orden y el corte de los 50 serían arbitrarios.
-            ->orderBy('created_at', 'asc')
-            ->orderBy('id', 'asc')
-            ->limit(50)
-            ->get()
-            ->map(fn (ProductionRemnant $r) => [
-                'id' => $r->id,
-                'source_order_number' => $r->sourceOrder->order_number,
-                'available_quantity_gallons' => (float) $r->available_quantity_gallons,
-                'density_kg_per_gallon' => (float) $r->density_kg_per_gallon,
-            ])
-            ->values();
-
-        return response()->json($remnants);
+        return response()->json($this->availableRemnants->forOrder($productionOrder));
     }
 
     /**

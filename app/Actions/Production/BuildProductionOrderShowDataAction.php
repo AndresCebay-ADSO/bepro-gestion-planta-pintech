@@ -9,14 +9,15 @@ use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\ProductionOrderLineAdjustment;
 use App\Models\ProductionOrderPackagingPlan;
-use App\Models\ProductionRemnant;
 use App\Models\RemnantConsumption;
+use App\Services\AvailableRemnantsService;
 use App\Services\DecimalCalculator;
 
 class BuildProductionOrderShowDataAction
 {
     public function __construct(
         private readonly DecimalCalculator $calculator,
+        private readonly AvailableRemnantsService $availableRemnants,
     ) {}
 
     /**
@@ -31,6 +32,7 @@ class BuildProductionOrderShowDataAction
             'qrCode',
             'remnant',
             'remnantConsumptions.remnant.sourceOrder',
+            'remnantConsumptions.remnant.product:id,name',
             'remnantConsumptions.consumedBy',
             'formula.details.rawMaterial',
             'formula.details.unitOfMeasure',
@@ -262,6 +264,10 @@ class BuildProductionOrderShowDataAction
                 'id' => $consumption->id,
                 'remnant_id' => $consumption->remnant_id,
                 'source_order_number' => $consumption->remnant?->sourceOrder?->order_number,
+                // Qué se mezcló en esta orden: el producto con el color de la orden de origen (B57).
+                'source_product_name' => $consumption->remnant?->sourceOrder !== null && $consumption->remnant->product !== null
+                    ? ProductionOrder::nameWithColor($consumption->remnant->product->name, $consumption->remnant->sourceOrder->color)
+                    : null,
                 'quantity_gallons' => (float) $consumption->quantity_gallons,
                 'quantity_kg' => (float) $consumption->quantity_kg,
                 ...($includeCosts ? [
@@ -275,21 +281,7 @@ class BuildProductionOrderShowDataAction
                 ] : null,
             ])->values(),
             'available_remnants' => $productionOrder->status === ProductionOrderStatus::InProgress
-                ? ProductionRemnant::query()
-                    ->with(['sourceOrder:id,order_number'])
-                    ->available()
-                    ->where('warehouse_id', $productionOrder->warehouse_id)
-                    // Mismo orden que `RemnantConsumptionController::availableRemnants`, que refresca esta lista.
-                    ->orderBy('created_at', 'asc')
-                    ->orderBy('id', 'asc')
-                    ->limit(50)
-                    ->get()
-                    ->map(fn (ProductionRemnant $r) => [
-                        'id' => $r->id,
-                        'source_order_number' => $r->sourceOrder->order_number,
-                        'available_quantity_gallons' => (float) $r->available_quantity_gallons,
-                        'density_kg_per_gallon' => (float) $r->density_kg_per_gallon,
-                    ])->values()
+                ? $this->availableRemnants->forOrder($productionOrder)
                 : [],
         ];
     }
