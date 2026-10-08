@@ -554,6 +554,7 @@ export default function QuotationsShow({
                                     Producto
                                 </th>
                                 <th className="px-4 py-3 text-left">Tipo</th>
+                                <th className="px-4 py-3 text-left">Color</th>
                                 <th className="px-4 py-3 text-left">
                                     Descripción
                                 </th>
@@ -588,6 +589,9 @@ export default function QuotationsShow({
                                     </td>
                                     <td className="px-4 py-3">
                                         {item.type_label ?? '—'}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        {item.color ?? '—'}
                                     </td>
                                     <td className="px-4 py-3">
                                         {item.description ?? '—'}

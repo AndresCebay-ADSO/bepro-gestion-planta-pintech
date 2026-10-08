@@ -511,6 +511,38 @@ it('allows comercial to convert accepted quotation to order', function () {
     expect($quotation->convert_to_order_id)->toBe($order->id);
 });
 
+// 3.4: el color que pidió el cliente pasa de cada ítem de la cotización al pedido.
+it('carries the color of each quotation item to the order', function () {
+    $quotation = Quotation::factory()->create([
+        'client_id' => $this->client->id,
+        'created_by' => $this->comercialUser->id,
+        'status' => QuotationStatus::Accepted,
+    ]);
+    $item = fn (int $sortOrder, ?string $color) => $quotation->items()->create([
+        'product_id' => $this->product->id,
+        'product_variant_id' => $this->variant->id,
+        'type' => 'primer',
+        'quantity' => 1,
+        'color' => $color,
+        'list_unit_price' => 83940,
+        'price_adjustment_pct' => 0,
+        'unit_price' => 83940,
+        'subtotal' => 83940,
+        'sort_order' => $sortOrder,
+    ]);
+    $item(1, 'RAL 3020');
+    $item(2, null);
+
+    $this->actingAs($this->comercialUser)
+        ->post(route('quotations.convert-to-order', $quotation), [
+            'priority' => 'high',
+            'required_date' => now()->addDays(5)->format('Y-m-d'),
+        ])
+        ->assertRedirect();
+
+    expect(SalesOrder::latest('id')->first()->items()->orderBy('id')->pluck('color')->all())->toBe(['RAL 3020', null]);
+});
+
 it('prevents converting non-accepted quotation', function () {
     $quotation = Quotation::factory()->create([
         'client_id' => $this->client->id,

@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $product_id
  * @property int|null $product_variant_id
  * @property string $quantity
+ * @property string|null $color
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read SalesOrder $salesOrder
@@ -28,6 +29,7 @@ use Illuminate\Support\Carbon;
     'product_id',
     'product_variant_id',
     'quantity',
+    'color',
 ])]
 class SalesOrderItem extends Model
 {

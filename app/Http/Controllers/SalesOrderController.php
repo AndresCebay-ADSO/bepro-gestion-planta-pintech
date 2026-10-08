@@ -131,6 +131,7 @@ class SalesOrderController extends Controller
                     'product_id' => $item['product_id'],
                     'product_variant_id' => $item['product_variant_id'] ?? null,
                     'quantity' => $item['quantity'],
+                    'color' => $item['color'] ?? null,
                 ]);
             }
 
@@ -214,6 +215,7 @@ class SalesOrderController extends Controller
                     'presentation_label' => $item->productVariant->presentation_label,
                 ] : null,
                 'quantity' => $item->quantity,
+                'color' => $item->color,
             ]),
             'created_at' => $salesOrder->created_at?->toIso8601String(),
             'creator' => $salesOrder->creator ? ['name' => $salesOrder->creator->name] : null,

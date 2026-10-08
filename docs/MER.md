@@ -731,6 +731,7 @@ Pedidos de venta. Se cancelan por estado, nunca se eliminan.
 | `product_id` | BIGINT |  | FK → `products` (RESTRICT) |
 | `product_variant_id` | BIGINT | sí | FK → `product_variants` (RESTRICT) |
 | `quantity` | DECIMAL(12,4) |  |  |
+| `color` | VARCHAR(100) | sí | Color que pide el cliente («RAL 3020»): heredado del ítem de la cotización o escrito a mano |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
 
