@@ -37,6 +37,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property Carbon $planned_date
  * @property Carbon|null $completion_date
  * @property string|null $notes
+ * @property string|null $color
  * @property Carbon|null $agitation_start_time
  * @property Carbon|null $agitation_end_time
  * @property string|null $viscosity_ku
@@ -87,6 +88,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'planned_date',
     'completion_date',
     'notes',
+    'color',
     'agitation_start_time',
     'agitation_end_time',
     'viscosity_ku',
@@ -132,7 +134,7 @@ class ProductionOrder extends Model
         return LogOptions::defaults()
             ->useLogName('ordenes_produccion')
             ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
-            ->logOnly(['order_number', 'lot_number', 'actual_quantity', 'yield_percentage', 'status', 'completion_date', 'rejection_reason'])
+            ->logOnly(['order_number', 'lot_number', 'color', 'actual_quantity', 'yield_percentage', 'status', 'completion_date', 'rejection_reason'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -177,6 +179,25 @@ class ProductionOrder extends Model
 
         $query->where($this->qualifyColumn('status'), ProductionOrderStatus::Completed->value)
             ->where($this->qualifyColumn('completion_date'), '>=', $since);
+    }
+
+    /**
+     * El nombre del producto con el color que pidió el cliente: «Esmalte rojo RAL 3020», o solo el nombre si la orden no
+     * tiene color (3.4). Es el único sitio que los une: listados, documentos, certificado, QR y estampita lo usan.
+     * Donde el producto llega por otra relación que la orden (QR, saldos), se llama con ese nombre para no consultar el
+     * producto de la orden fila por fila.
+     */
+    public static function nameWithColor(string $productName, ?string $color): string
+    {
+        return filled($color) ? "{$productName} {$color}" : $productName;
+    }
+
+    /**
+     * {@see self::nameWithColor()} con el producto de esta orden.
+     */
+    public function productDisplayName(): string
+    {
+        return self::nameWithColor($this->product->name, $this->color);
     }
 
     public function product(): BelongsTo

@@ -104,6 +104,18 @@ it('filters by order number', function (): void {
     );
 });
 
+// 3.4: «RAL 3020» encuentra las OP de ese color.
+it('filters by color', function (): void {
+    actingAs($this->admin);
+    $this->orderA->update(['color' => 'RAL 3020']);
+
+    get(route('production-orders.index', ['search' => 'ral 3020']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('orders.data', 1)
+            ->where('orders.data.0.id', $this->orderA->id));
+});
+
 it('filters by product code', function (): void {
     actingAs($this->admin);
 

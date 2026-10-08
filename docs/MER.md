@@ -319,6 +319,7 @@ Ingredientes de cada fórmula.
 | `planned_date` | DATE |  |  |
 | `completion_date` | DATE | sí |  |
 | `notes` | TEXT | sí |  |
+| `color` | VARCHAR(100) | sí | Color que pide el cliente («RAL 3020»), escrito a mano. Se une al nombre del producto solo para mostrar; no separa inventario |
 | `agitation_start_time` | TIMESTAMP | sí |  |
 | `agitation_end_time` | TIMESTAMP | sí |  |
 | `viscosity_ku` | DECIMAL(8,2) | sí |  |
