@@ -31,7 +31,7 @@ class BuildProductionOrderShowDataAction
             'product',
             'qrCode',
             'remnant',
-            'remnantConsumptions.remnant.sourceOrder',
+            'remnantConsumptions.remnant.sourceOrder:id,order_number,color',
             'remnantConsumptions.remnant.product:id,name',
             'remnantConsumptions.consumedBy',
             'formula.details.rawMaterial',
@@ -265,9 +265,7 @@ class BuildProductionOrderShowDataAction
                 'remnant_id' => $consumption->remnant_id,
                 'source_order_number' => $consumption->remnant?->sourceOrder?->order_number,
                 // Qué se mezcló en esta orden: el producto con el color de la orden de origen (B57).
-                'source_product_name' => $consumption->remnant?->sourceOrder !== null && $consumption->remnant->product !== null
-                    ? ProductionOrder::nameWithColor($consumption->remnant->product->name, $consumption->remnant->sourceOrder->color)
-                    : null,
+                'source_product_name' => ProductionOrder::nameWithColor($consumption->remnant->product->name, $consumption->remnant->sourceOrder->color),
                 'quantity_gallons' => (float) $consumption->quantity_gallons,
                 'quantity_kg' => (float) $consumption->quantity_kg,
                 ...($includeCosts ? [

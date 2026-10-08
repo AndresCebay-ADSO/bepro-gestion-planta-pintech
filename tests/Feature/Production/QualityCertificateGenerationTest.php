@@ -601,3 +601,16 @@ test('the certificate carries the order color in its content and file name', fun
     expect($service->buildPayload($order->fresh())['product_name'])->toBe('BP PRIMER EPOXICO HS 2K GRIS RAL 9006')
         ->and($document->file_name)->toBe('BP PRIMER EPOXICO HS 2K GRIS RAL 9006 LOTE 1682 10-09-2026.pdf');
 });
+
+// `qr_documents.file_name` es varchar(255): el producto más largo (150) con el color más largo (100) no cabe entero.
+// Se recorta el nombre, nunca el lote ni la fecha (en PostgreSQL, sin recorte, el certificado no se guardaría).
+test('a long product name with a long color still fits the certificate file name column', function () {
+    $order = completedCertificateOrder($this, str_repeat('P', 150));
+    $order->update(['color' => str_repeat('C', 100)]);
+
+    $document = app(QualityInspectionCertificateService::class)->generateForCompletedOrder($order->fresh(), $this->user->id);
+
+    expect(mb_strlen($document->file_name))->toBe(255)
+        ->and($document->file_name)->toStartWith(str_repeat('P', 150).' C')
+        ->and($document->file_name)->toEndWith(' LOTE 1682 10-09-2026.pdf');
+});

@@ -168,13 +168,11 @@ export function ConsumeRemnantsCard({
                                                         {consumption.source_order_number ??
                                                             'Desconocido'}
                                                     </div>
-                                                    {consumption.source_product_name && (
-                                                        <div className="text-xs text-muted-foreground">
-                                                            {
-                                                                consumption.source_product_name
-                                                            }
-                                                        </div>
-                                                    )}
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {
+                                                            consumption.source_product_name
+                                                        }
+                                                    </div>
                                                 </td>
                                                 <td className="p-3 text-right">
                                                     <FormattedNumber

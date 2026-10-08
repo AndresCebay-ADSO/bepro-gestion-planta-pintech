@@ -17,6 +17,9 @@ use Illuminate\Support\Str;
 
 class QualityInspectionCertificateService
 {
+    /** Largo de `qr_documents.file_name`. */
+    private const FILE_NAME_MAX_LENGTH = 255;
+
     public function __construct(
         private readonly TimezoneService $timezoneService,
     ) {}
@@ -140,8 +143,13 @@ class QualityInspectionCertificateService
         // Qué caracteres admite el nombre de un producto se decide en 3.6 (repaso de Form Requests).
         $productName = str_replace(['/', '\\'], '-', $order->productDisplayName());
         $manufacturedOn = $this->timezoneService->formatPlantDate($order->getManufacturingDate(), 'd-m-Y');
+        $suffix = " LOTE {$order->lot_number} {$manufacturedOn}.pdf";
 
-        return "{$productName} LOTE {$order->lot_number} {$manufacturedOn}.pdf";
+        // `qr_documents.file_name` es varchar(255) y el producto (150) con el color (100) más el lote y la fecha no
+        // siempre caben: se recorta el nombre, nunca el lote ni la fecha, que identifican el archivo.
+        $productName = rtrim(mb_substr($productName, 0, self::FILE_NAME_MAX_LENGTH - mb_strlen($suffix)));
+
+        return $productName.$suffix;
     }
 
     /**
