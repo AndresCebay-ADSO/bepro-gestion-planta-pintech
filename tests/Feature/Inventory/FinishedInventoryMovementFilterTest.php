@@ -357,3 +357,33 @@ it('shows the lot number of the order on the movement detail', function (): void
         ->assertInertia(fn ($page) => $page
             ->where('movement.batch.production_order.lot_number', 1042));
 });
+
+// 3.4: el color de la OP va junto al lote al despachar y en los movimientos.
+it('shows the order color next to the lot', function (): void {
+    actingAs($this->admin);
+    [, $exit] = finishedLotFixture($this);
+    ProductionOrder::query()->where('lot_number', 1042)->update(['color' => 'RAL 3020']);
+
+    get(route('finished-inventory-movements.index'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('movements.data.0.batch.production_order.color', 'RAL 3020')
+            ->reloadOnly('batches', fn (AssertableInertia $reload) => $reload->where('batches.0.color', 'RAL 3020')));
+
+    get(route('finished-inventory-movements.show', $exit))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('movement.batch.production_order.color', 'RAL 3020'));
+});
+
+it('finds the entry and the exits of a lot by the order color', function (): void {
+    actingAs($this->admin);
+    [$entry, $exit] = finishedLotFixture($this);
+    ProductionOrder::query()->where('lot_number', 1042)->update(['color' => 'RAL 3020']);
+
+    get(route('finished-inventory-movements.index', ['search' => 'ral 3020']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('movements.data', 2)
+            ->where('movements.data.0.id', $exit->id)
+            ->where('movements.data.1.id', $entry->id));
+});

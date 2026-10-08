@@ -76,6 +76,56 @@ it('allows comercial to create a sales order', function () {
     expect($order->items)->toHaveCount(1);
 });
 
+// 3.4: en un pedido directo el comercial escribe el color por línea (opcional).
+it('stores the color of each line of a direct order, empty as null', function () {
+    $user = User::factory()->create();
+    $user->assignRole(SystemRole::Commercial->value);
+    $client = Client::factory()->create();
+    [$product, $variant] = createTestProduct();
+
+    $this->actingAs($user)
+        ->post(route('sales-orders.store'), [
+            'client_id' => $client->id,
+            'priority' => 'medium',
+            'required_date' => now()->addDays(5)->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $product->id, 'product_variant_id' => $variant->id, 'quantity' => 4, 'color' => 'RAL 3020'],
+                ['product_id' => $product->id, 'product_variant_id' => $variant->id, 'quantity' => 2, 'color' => ''],
+            ],
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+
+    $order = SalesOrder::latest('id')->first();
+    expect($order->items()->orderBy('id')->pluck('color')->all())->toBe(['RAL 3020', null]);
+
+    $this->get(route('sales-orders.show', $order))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('order.items.0.color', 'RAL 3020')
+            ->where('order.items.1.color', null));
+});
+
+it('rejects a line color longer than 100 characters', function () {
+    $user = User::factory()->create();
+    $user->assignRole(SystemRole::Commercial->value);
+    $client = Client::factory()->create();
+    [$product, $variant] = createTestProduct();
+
+    $this->actingAs($user)
+        ->post(route('sales-orders.store'), [
+            'client_id' => $client->id,
+            'priority' => 'medium',
+            'required_date' => now()->addDays(5)->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $product->id, 'product_variant_id' => $variant->id, 'quantity' => 4, 'color' => str_repeat('R', 101)],
+            ],
+        ])
+        ->assertSessionHasErrors('items.0.color');
+
+    expect(SalesOrder::query()->count())->toBe(0);
+});
+
 it('validates required fields when creating a sales order', function () {
     $user = User::factory()->create();
     $user->assignRole(SystemRole::Commercial->value);

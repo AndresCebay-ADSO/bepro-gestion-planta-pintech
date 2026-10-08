@@ -322,6 +322,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('production-orders/{production_order}/cancel', [ProductionOrderController::class, 'cancel'])
         ->middleware('can:'.Permission::ProductionOrdersCancel->value)
         ->name('production-orders.cancel');
+    Route::patch('production-orders/{production_order}/color', [ProductionOrderController::class, 'updateColor'])
+        ->middleware('can:'.Permission::ProductionOrdersCreate->value)
+        ->name('production-orders.update-color');
     Route::post('production-orders/{production_order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])
         ->middleware(['throttle:production-preview-costs', 'can:'.Permission::CostsView->value])
         ->name('production-orders.preview-costs');

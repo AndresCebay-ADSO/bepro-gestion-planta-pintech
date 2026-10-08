@@ -15,6 +15,7 @@ type ProductItem = {
         presentation_label: string | null;
     } | null;
     quantity: number;
+    color: string | null;
 };
 
 type SalesOrderDetail = {
@@ -197,6 +198,9 @@ export default function SalesOrdersShow({
                                                 <th className="p-3 text-left">
                                                     Presentación
                                                 </th>
+                                                <th className="p-3 text-left">
+                                                    Color
+                                                </th>
                                                 <th className="p-3 text-right">
                                                     Cantidad
                                                 </th>
@@ -229,6 +233,9 @@ export default function SalesOrdersShow({
                                                             item.product_variant
                                                                 ?.name ??
                                                             'Base'}
+                                                    </td>
+                                                    <td className="p-3 text-muted-foreground">
+                                                        {item.color ?? '—'}
                                                     </td>
                                                     <td className="p-3 text-right font-medium">
                                                         {item.quantity}

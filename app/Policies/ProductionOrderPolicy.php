@@ -82,6 +82,16 @@ class ProductionOrderPolicy
     }
 
     /**
+     * Corregir el color que pidió el cliente (3.4): quien puede crear la orden, mientras siga abierta (pendiente, en
+     * curso o en revisión). Al completarla se congela: el certificado ya se guardó con el nombre de ese momento.
+     */
+    public function updateColor(User $user, ProductionOrder $productionOrder): bool
+    {
+        return $user->can(Permission::ProductionOrdersCreate->value)
+            && in_array($productionOrder->status, ProductionOrderStatus::open(), true);
+    }
+
+    /**
      * Costos de la orden: vista previa, PDF y Excel.
      */
     public function previewCosts(User $user, ProductionOrder $productionOrder): bool

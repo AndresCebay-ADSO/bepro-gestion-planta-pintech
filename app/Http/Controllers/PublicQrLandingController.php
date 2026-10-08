@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\ProductDocument;
+use App\Models\ProductionOrder;
 use App\Models\QrCode;
 use App\Models\QrDocument;
 use App\Services\QrImageService;
@@ -35,7 +36,8 @@ class PublicQrLandingController extends Controller
 
         return Inertia::render('Public/QrLanding/Show', [
             'product' => [
-                'name' => $qrCode->product->name,
+                // Con el color que pidió el cliente (3.4); el producto ya viene cargado aparte.
+                'name' => ProductionOrder::nameWithColor($qrCode->product->name, $qrCode->productionOrder->color),
                 'description' => $qrCode->product->description,
             ],
             'lot' => [

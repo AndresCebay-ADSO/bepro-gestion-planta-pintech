@@ -43,6 +43,7 @@ type ItemRow = {
     product_id: string;
     product_variant_id: string;
     quantity: string;
+    color: string;
 };
 
 type Props = {
@@ -82,7 +83,12 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
     const addItem = () => {
         setData('items', [
             ...data.items,
-            { product_id: '', product_variant_id: '', quantity: '' },
+            {
+                product_id: '',
+                product_variant_id: '',
+                quantity: '',
+                color: '',
+            },
         ]);
     };
 
@@ -372,7 +378,7 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                             key={index}
                                             className="grid grid-cols-1 gap-3 rounded border border-border p-3 md:grid-cols-12"
                                         >
-                                            <div className="space-y-1 md:col-span-5">
+                                            <div className="space-y-1 md:col-span-4">
                                                 <Label className="text-xs">
                                                     Producto *
                                                 </Label>
@@ -401,7 +407,7 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                                 )}
                                             </div>
 
-                                            <div className="space-y-1 md:col-span-4">
+                                            <div className="space-y-1 md:col-span-3">
                                                 <Label className="text-xs">
                                                     Presentación
                                                 </Label>
@@ -457,6 +463,35 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                                         {
                                                             errors[
                                                                 `items.${index}.quantity`
+                                                            ]
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-1 md:col-span-2">
+                                                <Label className="text-xs">
+                                                    Color
+                                                </Label>
+                                                <Input
+                                                    value={item.color}
+                                                    maxLength={100}
+                                                    placeholder="Ej.: RAL 3020"
+                                                    onChange={(e) =>
+                                                        updateItem(
+                                                            index,
+                                                            'color',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                {errors[
+                                                    `items.${index}.color`
+                                                ] && (
+                                                    <p className="text-xs text-destructive">
+                                                        {
+                                                            errors[
+                                                                `items.${index}.color`
                                                             ]
                                                         }
                                                     </p>

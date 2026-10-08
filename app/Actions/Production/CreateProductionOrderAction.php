@@ -33,6 +33,7 @@ class CreateProductionOrderAction
      *   quantity:float|int|string,
      *   planned_date:mixed,
      *   notes?:string|null,
+     *   color?:string|null,
      *   packaging?:array<int, array{product_variant_id:int, planned_units:float|int}>
      * }  $data
      */
@@ -59,6 +60,7 @@ class CreateProductionOrderAction
                 'quantity' => $quantity,
                 'planned_date' => $data['planned_date'],
                 'notes' => $data['notes'] ?? null,
+                'color' => $data['color'] ?? null,
                 'order_number' => $this->generateOrderNumber(),
                 'lot_number' => $this->generateLotNumber(),
                 'status' => ProductionOrderStatus::Pending,

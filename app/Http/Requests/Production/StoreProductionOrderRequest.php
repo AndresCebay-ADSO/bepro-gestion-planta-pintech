@@ -51,6 +51,7 @@ class StoreProductionOrderRequest extends FormRequest
             'quantity' => ['required', 'numeric', 'min:0.01'],
             'planned_date' => ['required', 'date'],
             'notes' => ['nullable', 'string'],
+            'color' => ['nullable', 'string', 'max:100'],
             'packaging' => ['nullable', 'array'],
             'packaging.*.product_variant_id' => [
                 'required_with:packaging',
@@ -89,6 +90,7 @@ class StoreProductionOrderRequest extends FormRequest
             'quantity' => 'cantidad a producir',
             'planned_date' => 'fecha planificada',
             'notes' => 'observaciones',
+            'color' => 'color',
             'packaging' => 'empaques planificados',
             'packaging.*.product_variant_id' => 'presentación de empaque',
             'packaging.*.planned_units' => 'unidades planificadas',

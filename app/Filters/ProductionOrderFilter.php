@@ -22,6 +22,7 @@ class ProductionOrderFilter extends QueryFilter
         $this->builder->where(function (Builder $query) use ($value) {
             $this->applySearchNested($query, [
                 'order_number',
+                'color',
                 'product.name',
                 'product.code',
             ], $value, exactIntegerColumns: ['lot_number']);

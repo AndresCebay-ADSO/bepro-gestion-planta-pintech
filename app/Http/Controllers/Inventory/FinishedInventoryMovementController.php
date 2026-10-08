@@ -51,7 +51,7 @@ class FinishedInventoryMovementController extends Controller
                     'productVariant:id,code,name,presentation_label',
                     'batch:id,product_id,production_order_id,entry_date',
                     // El lote de PT se identifica con el número de lote de su OP, no con su id (B55).
-                    'batch.productionOrder:id,lot_number',
+                    'batch.productionOrder:id,lot_number,color',
                     'warehouse:id,name,city',
                     'productionOrder:id,order_number',
                     'createdBy:id,name',
@@ -70,7 +70,7 @@ class FinishedInventoryMovementController extends Controller
                 ->with([
                     'product:id,code,name',
                     'productVariant:id,code,name,presentation_label',
-                    'productionOrder:id,lot_number',
+                    'productionOrder:id,lot_number,color',
                     'stocks',
                 ])
                 ->select('id', 'product_id', 'product_variant_id', 'production_order_id', 'entry_date', 'initial_quantity')
@@ -82,6 +82,8 @@ class FinishedInventoryMovementController extends Controller
                     'variant' => $batch->productVariant ? ['id' => $batch->productVariant->id, 'code' => $batch->productVariant->code, 'name' => $batch->productVariant->name, 'presentation_label' => $batch->productVariant->presentation_label] : null,
                     // Número de lote de la OP: con la presentación identifica el lote, porque una OP no repite presentación (B55).
                     'lot_number' => $batch->productionOrder->lot_number,
+                    // El color de la OP junto al lote (3.4): el sobrante de un RAL 3020 no se despacha como el producto base.
+                    'color' => $batch->productionOrder->color,
                     'entry_date' => $batch->entry_date?->toDateString(),
                     'initial_quantity' => $batch->initial_quantity,
                     'stocks' => $batch->stocks->map(fn ($stock) => ['warehouse_id' => $stock->warehouse_id, 'quantity' => $stock->quantity]),
@@ -156,7 +158,7 @@ class FinishedInventoryMovementController extends Controller
             'product:id,code,name',
             'productVariant:id,code,name,presentation_label',
             'batch:id,production_order_id,entry_date,initial_quantity',
-            'batch.productionOrder:id,lot_number',
+            'batch.productionOrder:id,lot_number,color',
             'warehouse:id,name,city',
             'productionOrder:id,order_number',
             'createdBy:id,name',

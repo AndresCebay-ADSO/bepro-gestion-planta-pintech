@@ -273,6 +273,8 @@ class QuotationService
                     'product_id' => $item->product_id,
                     'product_variant_id' => $item->product_variant_id,
                     'quantity' => $item->quantity,
+                    // El color que pidió el cliente pasa al pedido (3.4).
+                    'color' => $item->color,
                 ]);
             }
 

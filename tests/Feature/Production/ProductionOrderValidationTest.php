@@ -251,3 +251,27 @@ test('the database rejects a repeated lot number', function () {
     expect(fn () => ProductionOrder::create(['order_number' => 'OP-2026-0002', ...$attributes]))
         ->toThrow(QueryException::class);
 });
+
+// 3.4: el color es opcional y tiene el mismo tope que el de la cotización y el pedido.
+test('rejects an order color longer than 100 characters', function () {
+    test()->seed(RolePermissionSeeder::class);
+
+    [$product, $user, $formula] = createDependencies();
+    $user->forceFill(['email_verified_at' => now()])->save();
+    $user->assignRole(SystemRole::Admin->value);
+    $warehouse = Warehouse::create(['name' => 'Fábrica Cali', 'city' => 'Cali', 'type' => 'factory', 'is_active' => true]);
+
+    $this->actingAs($user)
+        ->from(route('production-orders.create'))
+        ->post(route('production-orders.store'), [
+            'product_id' => $product->id,
+            'formula_id' => $formula->id,
+            'warehouse_id' => $warehouse->id,
+            'quantity' => 100,
+            'planned_date' => now()->addDay()->toDateString(),
+            'color' => str_repeat('R', 101),
+        ])
+        ->assertSessionHasErrors('color');
+
+    expect(ProductionOrder::query()->count())->toBe(0);
+});

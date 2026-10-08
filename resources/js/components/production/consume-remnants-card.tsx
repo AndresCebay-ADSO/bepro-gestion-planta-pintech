@@ -38,7 +38,8 @@ export function ConsumeRemnantsCard({
 
     const comboboxOptions = availableRemnants.map((remnant) => ({
         id: remnant.id,
-        label: `${remnant.source_order_number} — ${remnant.available_quantity_gallons} gal disponibles`,
+        // Qué es el saldo antes que de dónde viene: se mezcla en este lote (B57).
+        label: `${remnant.product_name} · Lote ${remnant.source_lot_number} (${remnant.source_order_number}) — ${remnant.available_quantity_gallons} gal disponibles`,
     }));
 
     const activeRemnant = availableRemnants.find(
@@ -162,9 +163,16 @@ export function ConsumeRemnantsCard({
                                                 key={consumption.id}
                                                 className="border-b last:border-0"
                                             >
-                                                <td className="p-3 font-medium">
-                                                    {consumption.source_order_number ??
-                                                        'Desconocido'}
+                                                <td className="p-3">
+                                                    <div className="font-medium">
+                                                        {consumption.source_order_number ??
+                                                            'Desconocido'}
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {
+                                                            consumption.source_product_name
+                                                        }
+                                                    </div>
                                                 </td>
                                                 <td className="p-3 text-right">
                                                     <FormattedNumber

@@ -28,6 +28,7 @@ class FinishedInventoryMovementFilter extends QueryFilter
                 'productVariant.code',
                 'productVariant.name',
                 'batch.productionOrder.order_number',
+                'batch.productionOrder.color',
             ], $value, exactIntegerColumns: ['batch.productionOrder.lot_number']);
         });
     }

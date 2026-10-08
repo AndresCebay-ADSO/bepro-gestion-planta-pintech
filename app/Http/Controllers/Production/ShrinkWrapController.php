@@ -40,7 +40,7 @@ class ShrinkWrapController extends Controller
         $shrinkWraps = (new ShrinkWrapFilter($request))
             ->apply(ShrinkWrap::query())
             ->with([
-                'productionOrder:id,order_number,lot_number,product_id',
+                'productionOrder:id,order_number,lot_number,color,product_id',
                 'productionOrder.product:id,name,code',
                 'shrinkWrapType:id,name',
                 'warehouse:id,name',
@@ -82,12 +82,12 @@ class ShrinkWrapController extends Controller
                 ->with(['product:id,name,code', 'warehouse:id,name'])
                 ->latest('completion_date')
                 ->latest('id')
-                ->get(['id', 'order_number', 'lot_number', 'product_id', 'warehouse_id', 'completion_date'])
+                ->get(['id', 'order_number', 'lot_number', 'color', 'product_id', 'warehouse_id', 'completion_date'])
                 ->map(fn (ProductionOrder $order): array => [
                     'value' => $order->id,
                     'order_number' => $order->order_number,
                     'lot_number' => $order->lot_number,
-                    'product_name' => $order->product?->name,
+                    'product_name' => $order->productDisplayName(),
                     'warehouse_name' => $order->warehouse?->name,
                     'completion_date' => $order->completion_date?->toDateString(),
                 ])
@@ -130,7 +130,7 @@ class ShrinkWrapController extends Controller
         $canViewCosts = $request->user()?->can(Permission::CostsView->value) ?? false;
 
         $shrinkWrap->load([
-            'productionOrder:id,order_number,lot_number,product_id',
+            'productionOrder:id,order_number,lot_number,color,product_id',
             'productionOrder.product:id,name,code',
             'shrinkWrapType:id,name',
             'warehouse:id,name',
@@ -177,7 +177,7 @@ class ShrinkWrapController extends Controller
                 'id' => $shrinkWrap->productionOrder->id,
                 'order_number' => $shrinkWrap->productionOrder->order_number,
                 'lot_number' => $shrinkWrap->productionOrder->lot_number,
-                'product_name' => $shrinkWrap->productionOrder->product?->name,
+                'product_name' => $shrinkWrap->productionOrder->productDisplayName(),
             ],
             'type_name' => $shrinkWrap->shrinkWrapType->name,
             'warehouse_name' => $shrinkWrap->warehouse->name,

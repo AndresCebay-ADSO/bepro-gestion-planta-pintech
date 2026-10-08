@@ -501,3 +501,41 @@ it('precarga en la ficha los mismos saldos y en el mismo orden que el endpoint',
             ->where('order.available_remnants', fn ($remnants) => collect($remnants)->pluck('id')->all() === $fromEndpoint)
             ->etc());
 });
+
+// B57: un saldo puede venir de cualquier producto de la bodega y se mezcla en otro lote; quien lo elige ve qué es.
+it('names each available remnant with its product, color and lot', function () {
+    $this->sourceOrder->update(['color' => 'RAL 3020']);
+
+    $remnant = $this->get(route('production-orders.available-remnants', $this->targetOrder))
+        ->assertOk()
+        ->json()[0];
+
+    expect($remnant['id'])->toBe($this->remnant->id)
+        ->and($remnant['product_name'])->toBe('Source Product RAL 3020')
+        ->and($remnant['source_lot_number'])->toBe($this->sourceOrder->lot_number)
+        ->and($remnant['source_order_number'])->toBe($this->sourceOrder->order_number);
+});
+
+it('lists the same remnants in the order detail and in the refresh endpoint', function () {
+    $this->sourceOrder->update(['color' => 'RAL 3020']);
+
+    $fromEndpoint = $this->get(route('production-orders.available-remnants', $this->targetOrder))->json();
+
+    $this->get(route('production-orders.show', $this->targetOrder))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('order.available_remnants', $fromEndpoint));
+});
+
+it('shows which product was mixed in each consumed remnant', function () {
+    $this->sourceOrder->update(['color' => 'RAL 3020']);
+
+    $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
+        'remnant_id' => $this->remnant->id,
+        'quantity_gallons' => 1,
+    ])->assertSessionHasNoErrors();
+
+    $this->get(route('production-orders.show', $this->targetOrder))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('order.remnant_consumptions.0.source_product_name', 'Source Product RAL 3020'));
+});

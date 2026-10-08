@@ -62,6 +62,7 @@ class StoreSalesOrderRequest extends FormRequest
                 },
             ],
             'items.*.quantity' => ['required', 'numeric', 'min:0.0001'],
+            'items.*.color' => ['nullable', 'string', 'max:100'],
         ];
     }
 
@@ -99,6 +100,7 @@ class StoreSalesOrderRequest extends FormRequest
             'items.*.product_id' => 'producto',
             'items.*.product_variant_id' => 'presentación',
             'items.*.quantity' => 'cantidad',
+            'items.*.color' => 'color',
         ];
     }
 }

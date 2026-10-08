@@ -123,6 +123,7 @@ final class RoutePermissionMap
             'production-orders.show' => Permission::ProductionOrdersView,
             'production-orders.create' => Permission::ProductionOrdersCreate,
             'production-orders.store' => Permission::ProductionOrdersCreate,
+            'production-orders.update-color' => Permission::ProductionOrdersCreate,
             'production-orders.start' => Permission::ProductionOrdersOperate,
             'production-orders.line-adjustments.store' => Permission::ProductionOrdersOperate,
             'production-orders.line-adjustments.destroy' => Permission::ProductionOrdersOperate,

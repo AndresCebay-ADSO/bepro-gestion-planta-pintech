@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -129,6 +130,39 @@ test('it respects the configured start value even if historical records have low
 
     expect($order->lot_number)->toBe(2000);
 });
+
+// 3.4: el color que pidió el cliente se escribe a mano al crear la OP y se une al nombre del producto solo para mostrar.
+test('it stores the requested color, audits it and names the product with it', function () {
+    $order = app(CreateProductionOrderAction::class)->execute([
+        'product_id' => $this->product->id,
+        'formula_id' => $this->formula->id,
+        'warehouse_id' => $this->warehouse->id,
+        'quantity' => 10,
+        'planned_date' => now()->addDay()->toDateString(),
+        'color' => 'RAL 3020',
+    ], $this->user->id);
+
+    $created = Activity::query()->where('subject_type', ProductionOrder::class)->where('subject_id', $order->id)->sole();
+
+    expect($order->fresh()->color)->toBe('RAL 3020')
+        ->and($order->productDisplayName())->toBe("{$this->product->name} RAL 3020")
+        ->and($created->properties['attributes']['color'])->toBe('RAL 3020');
+});
+
+test('it leaves the color empty when none is given', function () {
+    $order = createActionProductionOrder($this);
+
+    expect($order->fresh()->color)->toBeNull()
+        ->and($order->productDisplayName())->toBe($this->product->name);
+});
+
+test('it joins the product name and the color in a single place', function (?string $color, string $expected) {
+    expect(ProductionOrder::nameWithColor('Esmalte rojo', $color))->toBe($expected);
+})->with([
+    'con color' => ['RAL 3020', 'Esmalte rojo RAL 3020'],
+    'sin color' => [null, 'Esmalte rojo'],
+    'color vacío' => ['', 'Esmalte rojo'],
+]);
 
 function createActionProductionOrder(object $context): ProductionOrder
 {

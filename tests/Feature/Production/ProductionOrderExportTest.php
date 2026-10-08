@@ -234,3 +234,19 @@ test('the order pdf and excel date the lot with its manufacturing date, not the 
     expect($pdfHtml)->toContain($caption)
         ->and($excelHtml)->toContain($caption);
 });
+
+// 3.4: el PDF y el Excel de la OP muestran el nombre con el color.
+test('the order pdf and excel show the product name with the color', function () {
+    [$order, $user] = createExportTestDependencies();
+    $order->update(['color' => 'RAL 3020']);
+
+    $this->actingAs($user);
+    $payload = app(BuildProductionOrderExportDataAction::class)->execute($order->fresh());
+
+    $pdfHtml = view('pdf.production-order', ['order' => $payload, 'logoBase64' => null, 'generatedAt' => '-'])->render();
+    $excelHtml = view('excel.production-order', ['order' => $payload])->render();
+
+    expect($payload['product_display_name'])->toBe('Pintura Export Test RAL 3020')
+        ->and($pdfHtml)->toContain('Pintura Export Test RAL 3020')
+        ->and($excelHtml)->toContain('Pintura Export Test RAL 3020');
+});

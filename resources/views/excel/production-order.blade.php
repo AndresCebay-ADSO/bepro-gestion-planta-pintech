@@ -46,7 +46,7 @@
             <th colspan="3"
                 style="font-weight: bold; border: 1px solid #000000; background-color: #ffffff; text-align: left;">
                 NOMBRE DEL PRODUCTO</th>
-            <td colspan="8" style="border: 1px solid #000000;">{{ $order['product']['name'] ?? 'N/A' }}</td>
+            <td colspan="8" style="border: 1px solid #000000;">{{ $order['product_display_name'] ?? 'N/A' }}</td>
             <th colspan="2" style="font-weight: bold; border: 1px solid #000000; background-color: #ffffff;">FECHA</th>
             <td colspan="2" style="border: 1px solid #000000; text-align: center;">{{ !empty($order['planned_date']) ? \Carbon\Carbon::parse($order['planned_date'])->format('d/m/Y') : '—' }}</td>
         </tr>

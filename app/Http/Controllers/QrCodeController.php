@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Filters\QrCodeFilter;
 use App\Http\Requests\QrCodes\IndexQrCodeRequest;
 use App\Http\Requests\QrCodes\UpdateQrCodeRequest;
+use App\Models\ProductionOrder;
 use App\Models\QrCode;
 use App\Models\QrDocument;
 use App\Services\QrImageService;
@@ -26,7 +27,7 @@ class QrCodeController extends Controller
             ->apply(QrCode::query())
             ->with([
                 'product:id,name,code',
-                'productionOrder:id,order_number,lot_number',
+                'productionOrder:id,order_number,lot_number,color',
             ])
             ->withCount('documents')
             ->latest('id')
@@ -43,6 +44,8 @@ class QrCodeController extends Controller
                         'id' => $qrCode->product->id,
                         'name' => $qrCode->product->name,
                         'code' => $qrCode->product->code,
+                        // Con el color de la orden (3.4); el producto ya viene cargado aparte.
+                        'display_name' => ProductionOrder::nameWithColor($qrCode->product->name, $qrCode->productionOrder?->color),
                     ] : null,
                     'production_order' => $qrCode->productionOrder ? [
                         'id' => $qrCode->productionOrder->id,
@@ -70,7 +73,7 @@ class QrCodeController extends Controller
 
         $qrCode->load([
             'product:id,name,code,description',
-            'productionOrder:id,order_number,lot_number,completion_date,planned_date',
+            'productionOrder:id,order_number,lot_number,color,completion_date,planned_date',
             'createdBy:id,name',
             'documents' => fn ($query) => $query
                 ->with('uploadedBy:id,name')
@@ -97,6 +100,7 @@ class QrCodeController extends Controller
                     'id' => $qrCode->product->id,
                     'name' => $qrCode->product->name,
                     'code' => $qrCode->product->code,
+                    'display_name' => ProductionOrder::nameWithColor($qrCode->product->name, $qrCode->productionOrder?->color),
                     'description' => $qrCode->product->description,
                 ] : null,
                 'production_order' => $qrCode->productionOrder ? [

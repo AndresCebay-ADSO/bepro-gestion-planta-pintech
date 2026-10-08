@@ -9,6 +9,7 @@ use App\Enums\RemnantStatus;
 use App\Filters\RemnantFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Production\IndexRemnantRequest;
+use App\Models\ProductionOrder;
 use App\Models\ProductionRemnant;
 use App\Models\Warehouse;
 use App\Support\EnumOptions;
@@ -27,7 +28,7 @@ class RemnantController extends Controller
         $remnants = (new RemnantFilter($request))
             ->apply(ProductionRemnant::query())
             ->with([
-                'sourceOrder:id,order_number',
+                'sourceOrder:id,order_number,color',
                 'product:id,name,code',
                 'warehouse:id,name',
             ])
@@ -42,7 +43,8 @@ class RemnantController extends Controller
                 'source_order_id' => $remnant->source_order_id,
                 'source_order_number' => $remnant->sourceOrder->order_number,
                 'product_id' => $remnant->product_id,
-                'product_name' => $remnant->product->name,
+                // Con el color de la orden de origen (3.4): el saldo de un RAL 3020 no es el del producto base.
+                'product_name' => ProductionOrder::nameWithColor($remnant->product->name, $remnant->sourceOrder->color),
                 'product_code' => $remnant->product->code,
                 'warehouse_id' => $remnant->warehouse_id,
                 'warehouse_name' => $remnant->warehouse->name,

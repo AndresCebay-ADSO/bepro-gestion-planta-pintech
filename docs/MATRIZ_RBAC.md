@@ -101,7 +101,7 @@ combinación, se crea un rol nuevo.
 | | `raw_materials.reactivate` | [x] | [x] | [ ] | [ ] | [ ] | |
 | | `raw_materials.delete` | [x] | [ ] | [ ] | [ ] | [ ] | Borrado físico solo si no tiene lotes, movimientos, fórmulas ni órdenes. |
 | **Órdenes de producción** | `production_orders.view` | [x] | [x] | [x] | [x] | [ ] | 🔁 Comercial `[ ]` (§7.3). Sin costos salvo `costs.view`. |
-| | `production_orders.create` | [x] | [x] | [x] | [ ] | [ ] | |
+| | `production_orders.create` | [x] | [x] | [x] | [ ] | [ ] | También corrige el **color** de la orden mientras está abierta (pendiente, en curso o en revisión): quien lo escribe al crear puede corregirlo. Al completar se congela (3.4). |
 | | `production_orders.operate` | [x] | [x] | [x] | [x] | [ ] | Iniciar, ajustes de línea, plan de empaque y consumo de remanentes. |
 | | `production_orders.submit_for_review` | [x] | [x] | [x] | [x] | [ ] | ⚠️ hoy solo Operador puede enviar a revisión. |
 | | `production_orders.reject_review` | [x] | [x] | [x] | [ ] | [ ] | |

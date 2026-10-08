@@ -35,6 +35,9 @@ return new class extends Migration
             $table->date('planned_date');
             $table->date('completion_date')->nullable();
             $table->text('notes')->nullable();
+            // Color que pide el cliente (p. ej. «RAL 3020»), escrito a mano: la OP no se vincula al pedido. Se concatena al
+            // nombre del producto solo para mostrar (3.4); no separa inventario.
+            $table->string('color', 100)->nullable();
 
             // Agitación y Mezcla
             $table->dateTime('agitation_start_time')->nullable();

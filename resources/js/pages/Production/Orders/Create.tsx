@@ -49,6 +49,7 @@ export default function ProductionOrdersCreate({
         warehouse_id: warehouses[0]?.id?.toString() || '',
         planned_date: '',
         notes: '',
+        color: '',
         packaging: [] as PackagingRow[],
     });
 
@@ -293,6 +294,24 @@ export default function ProductionOrdersCreate({
                                 />
                                 <InputError message={errors.planned_date} />
                             </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="color">Color (opcional)</Label>
+                            <Input
+                                id="color"
+                                value={data.color}
+                                maxLength={100}
+                                onChange={(e) =>
+                                    setData('color', e.target.value)
+                                }
+                                placeholder="Ej.: RAL 3020"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                El que pidió el cliente. Se añade al nombre del
+                                producto en la orden, el certificado y el QR.
+                            </p>
+                            <InputError message={errors.color} />
                         </div>
 
                         <div className="space-y-2">

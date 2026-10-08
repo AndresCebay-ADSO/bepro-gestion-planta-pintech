@@ -11,7 +11,7 @@ class QrCodeFilter extends QueryFilter
     protected function search(string $value): void
     {
         $this->applySearch(
-            ['token', 'product.name', 'product.code', 'productionOrder.order_number'],
+            ['token', 'product.name', 'product.code', 'productionOrder.order_number', 'productionOrder.color'],
             $value,
             exactIntegerColumns: ['productionOrder.lot_number'],
         );
