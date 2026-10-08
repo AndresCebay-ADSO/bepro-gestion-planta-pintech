@@ -80,7 +80,7 @@ export default function RemnantsIndex({
             type: 'text',
             name: 'search',
             label: 'Buscar',
-            placeholder: 'Buscar por producto u orden...',
+            placeholder: 'Buscar por producto, color u orden...',
         },
         {
             type: 'select',

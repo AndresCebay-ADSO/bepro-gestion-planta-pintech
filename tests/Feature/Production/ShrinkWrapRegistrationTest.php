@@ -374,3 +374,14 @@ it('muestra el nombre del producto con el color de la OP', function () {
     $this->get(route('production.shrink-wraps.index'))
         ->assertInertia(fn (AssertableInertia $page) => $page->where('shrinkWraps.data.0.order.product_name', $expected));
 });
+
+it('busca por el color de la OP', function () {
+    actingAsRole(SystemRole::Operator);
+    $this->order->update(['color' => 'RAL 3020']);
+    $this->post(route('production.shrink-wraps.store'), shrinkWrapPayload());
+    ShrinkWrap::factory()->create();
+
+    $this->get(route('production.shrink-wraps.index', ['search' => 'ral 3020']))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('shrinkWraps.data', fn ($rows) => collect($rows)->pluck('order.order_number')->all() === ['OP-2026-0042']));
+});

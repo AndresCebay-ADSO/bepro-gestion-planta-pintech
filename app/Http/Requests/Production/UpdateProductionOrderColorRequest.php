@@ -20,7 +20,8 @@ class UpdateProductionOrderColorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'color' => ['nullable', 'string', 'max:100'],
+            // `present`: una petición sin el campo (o con el nombre mal escrito) no borra el color sin avisar; vacío sí lo borra.
+            'color' => ['present', 'nullable', 'string', 'max:100'],
         ];
     }
 

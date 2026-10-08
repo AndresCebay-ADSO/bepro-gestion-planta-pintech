@@ -294,3 +294,15 @@ it('rejects invalid status value', function (): void {
 
     $response->assertJsonValidationErrors(['status']);
 });
+
+// 3.4: la tabla muestra el nombre con el color; se busca también por el color.
+it('filters by the order color', function (): void {
+    actingAs($this->admin);
+    $this->order->update(['color' => 'RAL 3020']);
+
+    get(route('qr-codes.index', ['search' => 'ral 3020']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('qrCodes.data', 1)
+            ->where('qrCodes.data.0.id', $this->qrActive->id));
+});

@@ -66,7 +66,7 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
             type: 'text',
             name: 'search',
             label: 'Buscar',
-            placeholder: 'Buscar por producto, OP, lote o token…',
+            placeholder: 'Buscar por producto, color, OP, lote o token…',
         },
         {
             type: 'select',

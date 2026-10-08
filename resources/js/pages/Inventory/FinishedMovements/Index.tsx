@@ -108,7 +108,8 @@ export default function FinishedMovementsIndex({
             type: 'text',
             name: 'search',
             label: 'Buscar',
-            placeholder: 'Buscar por producto, presentación, lote u OP...',
+            placeholder:
+                'Buscar por producto, presentación, color, lote u OP...',
         },
         {
             type: 'select',

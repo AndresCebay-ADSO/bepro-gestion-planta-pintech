@@ -111,3 +111,13 @@ it('offers the correction on the order detail only while it can be done', functi
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page->where('can.updateColor', false));
 });
+
+it('does not clear the color when the field is missing from the request', function () {
+    actingAsRole(SystemRole::Admin);
+    $order = colorOrder(ProductionOrderStatus::InProgress);
+
+    $this->patch(route('production-orders.update-color', $order), ['colour' => 'RAL 3000'])
+        ->assertSessionHasErrors('color');
+
+    expect($order->fresh()->color)->toBe('RAL 3020');
+});

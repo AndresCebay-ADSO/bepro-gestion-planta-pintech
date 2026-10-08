@@ -65,7 +65,7 @@ export default function ShrinkWrapsIndex({
             type: 'text',
             name: 'search',
             label: 'Buscar',
-            placeholder: 'Buscar por OP, lote o tipo...',
+            placeholder: 'Buscar por OP, lote, color o tipo...',
         },
         {
             type: 'select',

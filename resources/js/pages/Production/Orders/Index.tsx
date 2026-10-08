@@ -78,7 +78,7 @@ export default function ProductionOrdersIndex({
             type: 'text',
             name: 'search',
             label: 'Buscar',
-            placeholder: 'Buscar por orden, lote o producto…',
+            placeholder: 'Buscar por orden, lote, producto o color…',
         },
         {
             type: 'select',
