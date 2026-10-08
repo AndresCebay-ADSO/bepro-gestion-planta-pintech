@@ -88,6 +88,9 @@ class BuildProductionOrderShowDataAction
             'id' => $productionOrder->id,
             'order_number' => $productionOrder->order_number,
             'lot_number' => $productionOrder->lot_number,
+            // Color que pidió el cliente y el nombre del producto con él (3.4): pantalla, PDF y Excel usan el mismo.
+            'color' => $productionOrder->color,
+            'product_display_name' => $productionOrder->productDisplayName(),
             'status' => $productionOrder->status->value,
             'quantity' => (float) $productionOrder->quantity,
             'actual_quantity' => $productionOrder->actual_quantity !== null ? (float) $productionOrder->actual_quantity : null,

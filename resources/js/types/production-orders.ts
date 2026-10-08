@@ -105,6 +105,10 @@ export type ProductionOrder = {
     id: number;
     order_number: string;
     lot_number: number;
+    /** Color que pidió el cliente (3.4). */
+    color?: string | null;
+    /** Nombre del producto con el color: «Esmalte rojo RAL 3020». */
+    product_display_name?: string;
     status: ProductionOrderStatus;
     quantity: FormNumberValue;
     actual_quantity?: FormNumberValue | null;
@@ -163,6 +167,7 @@ export type ProductionOrderCan = {
     rejectReview: boolean;
     previewCosts: boolean;
     updateOperationalData: boolean;
+    updateColor: boolean;
 };
 
 export type ProductionOrderShowProps = {

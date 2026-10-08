@@ -7,6 +7,7 @@ import {
 import { FormattedDate } from '@/components/formatted-date';
 
 import { FormattedNumber } from '@/components/formatted-number';
+import { OrderColorDialog } from '@/components/production/order-color-dialog';
 import { Badge } from '@/components/ui/badge';
 import type {
     ProductionOrder,
@@ -15,6 +16,8 @@ import type {
 
 type OrderHeaderProps = {
     order: ProductionOrder;
+    /** Corregir el color: quien puede crear órdenes, con la orden abierta (`can.updateColor`). */
+    canUpdateColor?: boolean;
 };
 
 function statusLabel(status: ProductionOrderStatus): string {
@@ -47,7 +50,10 @@ function statusVariant(
     }
 }
 
-export function OrderHeader({ order }: OrderHeaderProps) {
+export function OrderHeader({
+    order,
+    canUpdateColor = false,
+}: OrderHeaderProps) {
     return (
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
@@ -59,10 +65,24 @@ export function OrderHeader({ order }: OrderHeaderProps) {
                         {statusLabel(order.status)}
                     </Badge>
                 </div>
-                <p className="mt-1 text-muted-foreground">
-                    {order.product?.name} • Planta Cali •{' '}
-                    <FormattedNumber value={order.quantity} maxDecimals={2} />{' '}
-                    gal Proyectados
+                <p className="mt-1 flex flex-wrap items-center gap-x-1 text-muted-foreground">
+                    <span>
+                        {order.product_display_name ?? order.product?.name}
+                    </span>
+                    {canUpdateColor && (
+                        <OrderColorDialog
+                            orderId={order.id}
+                            color={order.color ?? null}
+                        />
+                    )}
+                    <span>
+                        • Planta Cali •{' '}
+                        <FormattedNumber
+                            value={order.quantity}
+                            maxDecimals={2}
+                        />{' '}
+                        gal Proyectados
+                    </span>
                 </p>
                 {order.status === 'pending_review' && order.submitted_by && (
                     <p className="mt-2 flex items-center gap-1 text-sm text-blue-700 dark:text-blue-300">

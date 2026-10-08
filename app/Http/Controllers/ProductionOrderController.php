@@ -13,6 +13,7 @@ use App\Actions\Production\PreviewProductionOrderCostsAction;
 use App\Actions\Production\RejectProductionOrderReviewAction;
 use App\Actions\Production\StartProductionOrderAction;
 use App\Actions\Production\SubmitProductionOrderForReviewAction;
+use App\Actions\Production\UpdateProductionOrderColorAction;
 use App\Enums\Permission;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\RawMaterialType;
@@ -27,6 +28,7 @@ use App\Http\Requests\Production\RejectProductionOrderReviewRequest;
 use App\Http\Requests\Production\StartProductionOrderRequest;
 use App\Http\Requests\Production\StoreProductionOrderRequest;
 use App\Http\Requests\Production\SubmitProductionOrderForReviewRequest;
+use App\Http\Requests\Production\UpdateProductionOrderColorRequest;
 use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
@@ -57,6 +59,7 @@ class ProductionOrderController extends Controller
         private readonly SubmitProductionOrderForReviewAction $submitProductionOrderForReview,
         private readonly StartProductionOrderAction $startProductionOrder,
         private readonly RejectProductionOrderReviewAction $rejectProductionOrderReview,
+        private readonly UpdateProductionOrderColorAction $updateProductionOrderColor,
         private readonly TimezoneService $timezoneService,
     ) {}
 
@@ -177,6 +180,7 @@ class ProductionOrderController extends Controller
                 'rejectReview' => $user?->can('rejectReview', $productionOrder) ?? false,
                 'previewCosts' => $user?->can('previewCosts', $productionOrder) ?? false,
                 'updateOperationalData' => $user?->can('updateOperationalData', $productionOrder) ?? false,
+                'updateColor' => $user?->can('updateColor', $productionOrder) ?? false,
             ],
         ]);
     }
@@ -377,6 +381,21 @@ class ProductionOrderController extends Controller
 
             return redirect()->route('production-orders.show', $productionOrder)
                 ->with('success', 'Orden de producción cancelada con éxito.');
+        } catch (\DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+    }
+
+    /**
+     * Corregir el color que pidió el cliente mientras la orden sigue abierta (3.4).
+     */
+    public function updateColor(UpdateProductionOrderColorRequest $request, ProductionOrder $productionOrder): RedirectResponse
+    {
+        try {
+            $this->updateProductionOrderColor->execute($productionOrder, $request->validated('color'));
+
+            return redirect()->route('production-orders.show', $productionOrder)
+                ->with('success', 'Color de la orden actualizado.');
         } catch (\DomainException $exception) {
             return back()->with('error', $exception->getMessage());
         }
