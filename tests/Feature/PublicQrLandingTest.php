@@ -122,7 +122,21 @@ test('public QR landing does not require authentication and shows available docu
             ->where('product.name', 'Pintura Pública')
             // El cliente ve el número de lote (el del certificado y la estampita), no el de la OP (B55).
             ->where('lot.number', 4321)
-            ->has('documents', 2));
+            ->has('documents', 2)
+            ->where('certificate_pending', false));
+});
+
+// Las estampitas se imprimen antes de completar la orden: el QR ya abre, pero sin certificado todavía.
+test('public QR landing tells that the quality certificate is pending while the lot has none', function () {
+    [$qrCode, , $certificate] = createPublicQrFixture();
+    $certificate->update(['is_current' => false]);
+
+    $this->get(route('qr.public.show', $qrCode->token))
+        ->assertSuccessful()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('certificate_pending', true)
+            // La hoja de seguridad del producto sigue disponible.
+            ->has('documents', 1));
 });
 
 test('public downloads only allow documents associated with the scanned token', function () {

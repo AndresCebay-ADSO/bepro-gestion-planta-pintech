@@ -15,9 +15,10 @@ use App\Services\TimezoneService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
- * Estampitas de lote de una presentación del plan de envasado. Se imprimen antes de completar la orden: el lote y las
+ * Estampita de lote de una presentación del plan de envasado. Se imprime antes de completar la orden: el lote y las
  * fechas existen desde que se crea, y el QR se crea aquí (si aún no existe) y el certificado lo reutiliza al completar.
- * Queda en la auditoría de la orden quién imprimió cuántas.
+ * El PDF es una sola estampita: las copias se eligen en el diálogo de impresión del navegador, así que la auditoría
+ * registra quién la abrió para imprimir, no cuántas salieron.
  */
 class PrintProductionLabelsAction
 {
@@ -29,49 +30,46 @@ class PrintProductionLabelsAction
     ) {}
 
     /**
-     * El PDF, una página por estampita.
+     * El PDF de una estampita.
      *
      * @throws \DomainException si el QR de la orden está desactivado.
      */
     public function execute(
         ProductionOrder $order,
         ProductionOrderPackagingPlan $plan,
-        int $quantity,
         LabelFormat $format,
         int $userId,
     ): string {
         $qrCode = $this->qrCodeService->ensureForLabels($order, $userId);
-        $labels = $this->buildLabels($order, $plan, $quantity, $format, $qrCode);
+        $label = $this->buildLabel($order, $plan, $format, $qrCode);
 
         /** @var \Barryvdh\DomPDF\PDF $pdf */
-        $pdf = Pdf::loadView($format->view(), ['format' => $format, 'labels' => $labels]);
+        $pdf = Pdf::loadView($format->view(), ['format' => $format, 'labels' => [$label]]);
         $pdf->setPaper($format->paper());
         $output = $pdf->output();
 
-        // Después del PDF: si no se genera (memoria, plantilla), no queda una impresión que no existió.
+        // Después del PDF: si no se genera, no queda una impresión que no existió.
         activity('ordenes_produccion')
             ->performedOn($order)
             ->event('labels_printed')
             ->withProperties([
                 'packaging_plan_id' => $plan->id,
                 'product_variant_id' => $plan->productVariant->id,
-                'quantity' => $quantity,
                 'format' => $format->value,
             ])
-            ->log("{$quantity} estampitas impresas del lote {$order->lot_number} ({$plan->productVariant->presentation_label})");
+            ->log("Estampita del lote {$order->lot_number} ({$plan->productVariant->presentation_label}) abierta para imprimir");
 
         return $output;
     }
 
     /**
-     * Una entrada por estampita, lista para la plantilla del formato.
+     * Los datos de la estampita, listos para la plantilla del formato.
      *
-     * @return list<array{name: string, name_size: int, presentation: string, lot: int, manufactured_on: string, verify_on: string, qr: string}>
+     * @return array{name: string, name_size: int, presentation: string, lot: int, manufactured_on: string, verify_on: string, qr: string}
      */
-    public function buildLabels(
+    public function buildLabel(
         ProductionOrder $order,
         ProductionOrderPackagingPlan $plan,
-        int $quantity,
         LabelFormat $format,
         QrCode $qrCode,
     ): array {
@@ -82,7 +80,7 @@ class PrintProductionLabelsAction
         // El nombre con el color de la orden, ajustado a dos líneas (3.4: nunca se recorta el color).
         $name = $this->nameFitter->fit($order->product->name, $order->color, $format->contentWidthPt());
 
-        $label = [
+        return [
             'name' => $name['name'],
             'name_size' => $name['size'],
             'presentation' => implode(' · ', array_filter(
@@ -95,7 +93,5 @@ class PrintProductionLabelsAction
             'verify_on' => $this->timezoneService->formatPlantDate($order->getVerificationDate()),
             'qr' => 'data:image/png;base64,'.base64_encode($this->qrImageService->generatePng($qrCode)),
         ];
-
-        return array_fill(0, $quantity, $label);
     }
 }

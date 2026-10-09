@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\QrDocumentType;
 use App\Models\ProductDocument;
 use App\Models\ProductionOrder;
 use App\Models\QrCode;
@@ -46,6 +47,11 @@ class PublicQrLandingController extends Controller
                 'manufacturing_date' => $this->timezoneService->formatPlantDate($qrCode->productionOrder->getManufacturingDate()),
                 'verification_date' => $this->timezoneService->formatPlantDate($qrCode->productionOrder->getVerificationDate()),
             ],
+            // Las estampitas se imprimen antes de completar la orden: quien escanea un lote en proceso aún no tiene
+            // certificado de calidad, que se publica al completarla.
+            'certificate_pending' => $qrCode->documents->doesntContain(
+                fn (QrDocument $document): bool => $document->document_type === QrDocumentType::QualityCertificate,
+            ),
             'documents' => [
                 ...$qrCode->product->productDocuments->map(fn (ProductDocument $document) => [
                     'id' => $document->id,

@@ -14,8 +14,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 
 /**
- * Estampitas de lote de una fila del plan de envasado: un PDF de una página por estampita que el navegador manda a la
- * DYMO en tamaño real.
+ * Estampita de lote de una fila del plan de envasado: un PDF de una página que el navegador manda a la DYMO en tamaño
+ * real, con las copias que el operario elija en el diálogo de impresión.
  */
 class ProductionLabelController extends Controller
 {
@@ -39,7 +39,6 @@ class ProductionLabelController extends Controller
             $pdf = $this->printLabels->execute(
                 order: $productionOrder,
                 plan: $plan,
-                quantity: (int) $request->validated('quantity'),
                 format: $format,
                 userId: (int) $request->user()->id,
             );
@@ -50,7 +49,7 @@ class ProductionLabelController extends Controller
         // En línea: se abre en el visor del navegador, que la manda a la DYMO.
         return response($pdf, 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => "inline; filename=\"estampitas-lote-{$productionOrder->lot_number}-{$plan->productVariant->code}.pdf\"",
+            'Content-Disposition' => "inline; filename=\"estampita-lote-{$productionOrder->lot_number}-{$plan->productVariant->code}.pdf\"",
         ]);
     }
 }

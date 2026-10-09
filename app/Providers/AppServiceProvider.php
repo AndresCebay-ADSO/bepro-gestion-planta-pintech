@@ -139,8 +139,8 @@ class AppServiceProvider extends ServiceProvider
 
     private function configureRateLimiting(): void
     {
-        // Cada petición genera un PDF de hasta 200 páginas (~2 s y ~100 MB) y queda en la auditoría: una recarga
-        // repetida o un script no deben tumbar el servidor ni llenar la auditoría.
+        // Cada petición genera el PDF de la estampita y queda en la auditoría: una recarga repetida o un script no deben
+        // llenar la auditoría.
         RateLimiter::for('production-labels', function (Request $request): Limit {
             $user = $request->user();
 

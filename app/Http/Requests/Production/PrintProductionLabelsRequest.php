@@ -18,24 +18,12 @@ class PrintProductionLabelsRequest extends FormRequest
     }
 
     /**
+     * Sin parámetros: el PDF es una sola estampita y las copias se eligen en el diálogo de impresión del navegador.
+     *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        return [
-            // Una página por estampita, y DomPDF crece más que lineal: 200 tardan ~2,4 s y ~100 MB; 300 ya pasan los 128 MB
-            // que PHP trae por defecto. Más de 200 se imprimen en dos tandas (la DYMO tarda minutos en sacar 200).
-            'quantity' => ['required', 'integer', 'min:1', 'max:200'],
-        ];
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function attributes(): array
-    {
-        return [
-            'quantity' => 'cantidad',
-        ];
+        return [];
     }
 }

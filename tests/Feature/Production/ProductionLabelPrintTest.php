@@ -36,19 +36,20 @@ beforeEach(function () {
     $this->plan = ProductionOrderPackagingPlan::createForVariant($this->order->id, $this->variant->id, 40);
 });
 
-function labelsUrl(ProductionOrder $order, ProductionOrderPackagingPlan $plan, mixed $quantity = 38): string
+function labelsUrl(ProductionOrder $order, ProductionOrderPackagingPlan $plan): string
 {
     return route('production-orders.packaging-plans.labels', [
         'production_order' => $order,
         'plan' => $plan,
-        'quantity' => $quantity,
     ]);
 }
 
-test('producción imprime las estampitas de una presentación en PDF', function () {
+test('producción abre el PDF de la estampita de una presentación para imprimirlo', function () {
     $this->get(labelsUrl($this->order, $this->plan))
         ->assertOk()
-        ->assertHeader('content-type', 'application/pdf');
+        ->assertHeader('content-type', 'application/pdf')
+        // En línea: se abre en el visor del navegador, donde se eligen las copias.
+        ->assertHeader('content-disposition', 'inline; filename="estampita-lote-1692-12345678.pdf"');
 });
 
 test('la primera impresión crea el QR de la orden y las siguientes lo reutilizan', function () {
@@ -95,8 +96,8 @@ test('al cancelar la orden su QR deja de abrir el lote', function () {
     $this->get(route('qr.public.show', QrCode::query()->sole()->token))->assertNotFound();
 });
 
-test('registra en la auditoría de la orden quién imprimió cuántas', function () {
-    $this->get(labelsUrl($this->order, $this->plan, 25))->assertOk();
+test('registra en la auditoría de la orden quién abrió la estampita para imprimir', function () {
+    $this->get(labelsUrl($this->order, $this->plan))->assertOk();
 
     $activity = Activity::query()->where('event', 'labels_printed')->sole();
 
@@ -106,7 +107,6 @@ test('registra en la auditoría de la orden quién imprimió cuántas', function
         ->and($activity->properties->all())->toMatchArray([
             'packaging_plan_id' => $this->plan->id,
             'product_variant_id' => $this->variant->id,
-            'quantity' => 25,
             'format' => LabelFormat::Dymo57x32->value,
         ]);
 });
@@ -115,7 +115,7 @@ test('si el PDF falla no queda una impresión en la auditoría', function () {
     Pdf::shouldReceive('loadView')->andThrow(new RuntimeException('Sin memoria'));
 
     expect(fn () => app(PrintProductionLabelsAction::class)
-        ->execute($this->order, $this->plan, 200, LabelFormat::Dymo57x32, $this->user->id))
+        ->execute($this->order, $this->plan, LabelFormat::Dymo57x32, $this->user->id))
         ->toThrow(RuntimeException::class);
 
     expect(Activity::query()->where('event', 'labels_printed')->count())->toBe(0);
@@ -146,23 +146,6 @@ test('sin el permiso no se imprime', function () {
     expect(QrCode::query()->count())->toBe(0);
 });
 
-test('la cantidad es obligatoria, entera y de 1 a 200', function (mixed $quantity) {
-    $this->from(route('production-orders.show', $this->order))
-        ->get(labelsUrl($this->order, $this->plan, $quantity))
-        ->assertSessionHasErrors('quantity');
-
-    expect(QrCode::query()->count())->toBe(0);
-})->with([
-    'vacía' => [''],
-    'cero' => [0],
-    'más de 200' => [201],
-    'decimal' => [2.5],
-]);
-
-test('200 estampitas sí se imprimen de una vez', function () {
-    $this->get(labelsUrl($this->order, $this->plan, 200))->assertOk();
-});
-
 test('una fila del plan de otra orden responde 404', function () {
     $otherOrder = ProductionOrder::factory()->inProgress()->create(['product_id' => $this->order->product_id]);
     $otherPlan = ProductionOrderPackagingPlan::createForVariant($otherOrder->id, $this->variant->id, 10);
@@ -182,19 +165,17 @@ test('con el QR desactivado no imprime ni lo reactiva', function () {
         ->and(Activity::query()->where('event', 'labels_printed')->count())->toBe(0);
 });
 
-test('la estampita lleva el nombre con color, la presentación, el lote y una copia por estampita', function () {
-    $labels = app(PrintProductionLabelsAction::class)
-        ->buildLabels($this->order, $this->plan, 3, LabelFormat::Dymo57x32, QrCode::factory()->create(['production_order_id' => $this->order->id]));
+test('la estampita lleva el nombre con color, la presentación y el lote', function () {
+    $label = app(PrintProductionLabelsAction::class)
+        ->buildLabel($this->order, $this->plan, LabelFormat::Dymo57x32, QrCode::factory()->create(['production_order_id' => $this->order->id]));
 
-    expect($labels)->toHaveCount(3)
-        ->and($labels[0])->toMatchArray([
-            'name' => 'ESMALTE SINTÉTICO RAL 3020',
-            'name_size' => 8,
-            'presentation' => 'Galón · 12345678',
-            'lot' => 1692,
-        ])
-        ->and($labels[0]['qr'])->toStartWith('data:image/png;base64,')
-        ->and($labels[2])->toBe($labels[0]);
+    expect($label)->toMatchArray([
+        'name' => 'ESMALTE SINTÉTICO RAL 3020',
+        'name_size' => 8,
+        'presentation' => 'Galón · 12345678',
+        'lot' => 1692,
+    ])
+        ->and($label['qr'])->toStartWith('data:image/png;base64,');
 });
 
 test('las fechas salen en hora de planta, como el certificado', function () {
@@ -202,7 +183,7 @@ test('las fechas salen en hora de planta, como el certificado', function () {
     $this->order->forceFill(['created_at' => CarbonImmutable::parse('2026-10-10 01:00:00', 'UTC')])->save();
 
     $label = app(PrintProductionLabelsAction::class)
-        ->buildLabels($this->order->refresh(), $this->plan, 1, LabelFormat::Dymo57x32, QrCode::factory()->create(['production_order_id' => $this->order->id]))[0];
+        ->buildLabel($this->order->refresh(), $this->plan, LabelFormat::Dymo57x32, QrCode::factory()->create(['production_order_id' => $this->order->id]));
 
     expect($label['manufactured_on'])->toBe('09/10/2026')
         ->and($label['verify_on'])->toBe('08/10/2027');
@@ -212,16 +193,16 @@ test('sin etiqueta de presentación muestra solo el código', function () {
     $this->variant->update(['presentation_label' => null]);
 
     $label = app(PrintProductionLabelsAction::class)
-        ->buildLabels($this->order, $this->plan->refresh(), 1, LabelFormat::Dymo57x32, QrCode::factory()->create(['production_order_id' => $this->order->id]))[0];
+        ->buildLabel($this->order, $this->plan->refresh(), LabelFormat::Dymo57x32, QrCode::factory()->create(['production_order_id' => $this->order->id]));
 
     expect($label['presentation'])->toBe('12345678');
 });
 
 test('la plantilla dibuja los datos de la estampita', function () {
-    $labels = app(PrintProductionLabelsAction::class)
-        ->buildLabels($this->order, $this->plan, 1, LabelFormat::Dymo57x32, QrCode::factory()->create(['production_order_id' => $this->order->id]));
+    $label = app(PrintProductionLabelsAction::class)
+        ->buildLabel($this->order, $this->plan, LabelFormat::Dymo57x32, QrCode::factory()->create(['production_order_id' => $this->order->id]));
 
-    $html = view(LabelFormat::Dymo57x32->view(), ['format' => LabelFormat::Dymo57x32, 'labels' => $labels])->render();
+    $html = view(LabelFormat::Dymo57x32->view(), ['format' => LabelFormat::Dymo57x32, 'labels' => [$label]])->render();
 
     expect($html)->toContain('ESMALTE SINTÉTICO RAL 3020')
         ->toContain('Galón · 12345678')

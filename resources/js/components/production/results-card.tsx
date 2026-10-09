@@ -44,6 +44,7 @@ type ResultsCardProps = {
     previewStale?: PreviewStaleReason;
     solidsReferenceLabel: string | null;
     showCosts?: boolean;
+    canPrintLabels?: boolean;
 };
 
 export function ResultsCard({
@@ -63,6 +64,7 @@ export function ResultsCard({
     previewStale = null,
     solidsReferenceLabel,
     showCosts = true,
+    canPrintLabels = false,
 }: ResultsCardProps) {
     return (
         <Card className={isCompleted ? 'opacity-90 shadow-none' : ''}>
@@ -246,6 +248,7 @@ export function ResultsCard({
                     labelMaterials={labelMaterials}
                     isReadOnly={isReadOnly}
                     showCosts={showCosts}
+                    canPrintLabels={canPrintLabels}
                 />
             </CardContent>
         </Card>

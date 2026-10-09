@@ -108,7 +108,7 @@ combinación, se crea un rol nuevo.
 | | `production_orders.complete` | [x] | [x] | [x] | [ ] | [ ] | Descuenta inventario FIFO. |
 | | `production_orders.cancel` | [x] | [x] | [ ] | [ ] | [ ] | Coincide con hoy: el código usa `can('delete')` para cancelar. **Una orden no se elimina** (principio 4). |
 | | `production_orders.export` | [x] | [x] | [x] | [x] | [ ] | PDF + Excel juntos. Los costos del archivo dependen de `costs.view`. |
-| | `production_orders.print_labels` | [x] | [x] | [x] | [ ] | [ ] | Estampitas de lote (DYMO) de una presentación del plan de envasado, en cualquier estado menos cancelada. La primera impresión crea el QR de la orden; no reactiva un QR desactivado. |
+| | `production_orders.print_labels` | [x] | [x] | [x] | [ ] | [ ] | Estampita de lote (DYMO) de una presentación del plan de envasado, en cualquier estado menos cancelada; las copias se eligen al imprimir. La primera impresión crea el QR de la orden; no reactiva un QR desactivado. |
 | **Remanentes** | `production_remnants.view` | [x] | [x] | [x] | [x] | [ ] | El costo por galón solo con `costs.view`. ⚠️ hoy se envía a todos (`RemnantController:47`). |
 | **Termoencogido** | `shrink_wraps.view` | [x] | [x] | [x] | [x] | [ ] | 🆕 (3.8) Listado y detalle de los registros de termoencogido. El costo (gasto general) solo con `costs.view`. |
 | | `shrink_wraps.create` | [x] | [x] | [x] | [x] | [ ] | 🆕 (3.8) Registrar un termoencogido: OP completada, tipo y aplicaciones; descuenta el empaque secundario de la bodega de la OP. Inmutable: no existen `edit` ni `delete` (un error se corrige con un movimiento opuesto). |
