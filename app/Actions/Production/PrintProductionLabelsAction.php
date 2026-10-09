@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Production;
 
 use App\Enums\LabelFormat;
+use App\Enums\ProductionOrderStatus;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderPackagingPlan;
 use App\Models\QrCode;
@@ -12,7 +13,9 @@ use App\Services\LabelNameFitterService;
 use App\Services\ProductionOrderQrCodeService;
 use App\Services\QrImageService;
 use App\Services\TimezoneService;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF;
+use Dompdf\FontMetrics;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Estampita de lote de una presentación del plan de envasado. Se imprime antes de completar la orden: el lote y las
@@ -32,7 +35,7 @@ class PrintProductionLabelsAction
     /**
      * El PDF de una estampita.
      *
-     * @throws \DomainException si el QR de la orden está desactivado.
+     * @throws \DomainException si la orden se canceló o su QR está desactivado.
      */
     public function execute(
         ProductionOrder $order,
@@ -40,11 +43,24 @@ class PrintProductionLabelsAction
         LabelFormat $format,
         int $userId,
     ): string {
-        $qrCode = $this->qrCodeService->ensureForLabels($order, $userId);
-        $label = $this->buildLabel($order, $plan, $format, $qrCode);
+        // Con la orden bloqueada, como al cancelarla: si las dos ocurren a la vez, una espera a la otra. Así no nace un
+        // QR activo en una orden que se acaba de cancelar (la política revisó el estado antes, sin bloquear).
+        $qrCode = DB::transaction(function () use ($order, $userId) {
+            $lockedOrder = ProductionOrder::query()->lockForUpdate()->findOrFail($order->id);
 
-        /** @var \Barryvdh\DomPDF\PDF $pdf */
-        $pdf = Pdf::loadView($format->view(), ['format' => $format, 'labels' => [$label]]);
+            if ($lockedOrder->status === ProductionOrderStatus::Cancelled) {
+                throw new \DomainException('Esta orden se canceló: sus estampitas ya no se imprimen.');
+            }
+
+            return $this->qrCodeService->ensureForLabels($lockedOrder, $userId);
+        }, attempts: 3);
+
+        // Una sola instancia de DomPDF: la que mide el nombre es la que dibuja el PDF.
+        /** @var PDF $pdf */
+        $pdf = app('dompdf.wrapper');
+        $label = $this->buildLabel($order, $plan, $format, $qrCode, $pdf->getDomPDF()->getFontMetrics());
+
+        $pdf->loadView($format->view(), ['format' => $format, 'labels' => [$label]]);
         $pdf->setPaper($format->paper());
         $output = $pdf->output();
 
@@ -65,6 +81,7 @@ class PrintProductionLabelsAction
     /**
      * Los datos de la estampita, listos para la plantilla del formato.
      *
+     * @param  FontMetrics  $metrics  las de la instancia de DomPDF que dibuja el PDF, para medir el nombre.
      * @return array{name: string, name_size: int, presentation: string, lot: int, manufactured_on: string, verify_on: string, qr: string}
      */
     public function buildLabel(
@@ -72,13 +89,14 @@ class PrintProductionLabelsAction
         ProductionOrderPackagingPlan $plan,
         LabelFormat $format,
         QrCode $qrCode,
+        FontMetrics $metrics,
     ): array {
         $order->loadMissing('product');
         $plan->loadMissing('productVariant');
         $variant = $plan->productVariant;
 
         // El nombre con el color de la orden, ajustado a dos líneas (3.4: nunca se recorta el color).
-        $name = $this->nameFitter->fit($order->product->name, $order->color, $format->contentWidthPt());
+        $name = $this->nameFitter->fit($order->product->name, $order->color, $format->contentWidthPt(), $metrics);
 
         return [
             'name' => $name['name'],

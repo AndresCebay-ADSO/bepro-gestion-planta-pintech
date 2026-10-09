@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\ProductionOrderStatus;
 use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\Product;
@@ -307,4 +308,27 @@ test('qr admin shows the product name with the order color', function () {
     $this->actingAs($user)
         ->get(route('qr-codes.show', $qrCode))
         ->assertInertia(fn (AssertableInertia $page) => $page->where('qrCode.product.display_name', $expected));
+});
+
+// Con las estampitas, una orden cancelada puede tener QR: desactivado al cancelar, no se vuelve a activar.
+test('the qr code of a cancelled order cannot be activated again, only deactivated', function () {
+    $user = adminUser();
+    $qrCode = createQrFixture(['is_active' => false]);
+    $qrCode->productionOrder->update(['status' => ProductionOrderStatus::Cancelled]);
+
+    $this->actingAs($user)
+        ->from(route('qr-codes.show', $qrCode))
+        ->patch(route('qr-codes.update', $qrCode), ['is_active' => true])
+        ->assertRedirect(route('qr-codes.show', $qrCode))
+        ->assertSessionHas('error');
+
+    expect($qrCode->refresh()->is_active)->toBeFalse();
+
+    $qrCode->update(['is_active' => true]);
+
+    $this->actingAs($user)
+        ->patch(route('qr-codes.update', $qrCode), ['is_active' => false])
+        ->assertSessionHas('success');
+
+    expect($qrCode->refresh()->is_active)->toBeFalse();
 });

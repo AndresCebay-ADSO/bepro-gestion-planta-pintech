@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\ProductionOrderStatus;
 use App\Models\ProductionOrder;
 use App\Models\QrCode;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -16,7 +17,8 @@ use Illuminate\Support\Str;
  * que el QR ya pegado en el envase lleva al certificado sin reimprimir.
  *
  * Solo dos cosas cambian si está activo: un administrador (Códigos QR) y la cancelación de la orden. Ni la estampita
- * ni el certificado lo reactivan: con la orden abierta ya existe y alguien pudo cerrarlo a propósito.
+ * ni el certificado lo reactivan: con la orden abierta ya existe y alguien pudo cerrarlo a propósito. El de una orden
+ * cancelada no se vuelve a activar: llevaría a un lote que no existe.
  */
 class ProductionOrderQrCodeService
 {
@@ -51,6 +53,20 @@ class ProductionOrderQrCodeService
         }
 
         return $qrCode;
+    }
+
+    /**
+     * Activar o desactivar desde Códigos QR.
+     *
+     * @throws \DomainException si se intenta activar el QR de una orden cancelada.
+     */
+    public function setActive(QrCode $qrCode, bool $active): void
+    {
+        if ($active && $qrCode->productionOrder->status === ProductionOrderStatus::Cancelled) {
+            throw new \DomainException('No se puede activar el QR de una orden cancelada: llevaría a un lote que no existe.');
+        }
+
+        $qrCode->update(['is_active' => $active]);
     }
 
     /**
