@@ -62,11 +62,17 @@ class ProductionOrderQrCodeService
      */
     public function setActive(QrCode $qrCode, bool $active): void
     {
-        if ($active && $qrCode->productionOrder->status === ProductionOrderStatus::Cancelled) {
-            throw new \DomainException('No se puede activar el QR de una orden cancelada: llevaría a un lote que no existe.');
-        }
+        // Con la orden bloqueada, como al cancelarla: si un administrador activa mientras otro cancela, una espera a la
+        // otra y la activación ve el estado final, no el que leyó antes.
+        DB::transaction(function () use ($qrCode, $active): void {
+            $order = ProductionOrder::query()->lockForUpdate()->findOrFail($qrCode->production_order_id);
 
-        $qrCode->update(['is_active' => $active]);
+            if ($active && $order->status === ProductionOrderStatus::Cancelled) {
+                throw new \DomainException('No se puede activar el QR de una orden cancelada: llevaría a un lote que no existe.');
+            }
+
+            $qrCode->update(['is_active' => $active]);
+        }, attempts: 3);
     }
 
     /**

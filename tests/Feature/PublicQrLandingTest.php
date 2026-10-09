@@ -123,20 +123,35 @@ test('public QR landing does not require authentication and shows available docu
             // El cliente ve el número de lote (el del certificado y la estampita), no el de la OP (B55).
             ->where('lot.number', 4321)
             ->has('documents', 2)
+            ->where('lot.verified', true)
             ->where('certificate_pending', false));
 });
 
 // Las estampitas se imprimen antes de completar la orden: el QR ya abre, pero sin certificado todavía.
-test('public QR landing tells that the quality certificate is pending while the lot has none', function () {
+test('public QR landing shows an open lot as not verified yet, with its certificate pending', function () {
+    [$qrCode, , $certificate] = createPublicQrFixture();
+    $certificate->delete();
+    $qrCode->productionOrder->update(['status' => 'in_progress', 'completion_date' => null]);
+
+    $this->get(route('qr.public.show', $qrCode->token))
+        ->assertSuccessful()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('lot.verified', false)
+            ->where('certificate_pending', true)
+            // La hoja de seguridad del producto sigue disponible.
+            ->has('documents', 1));
+});
+
+// El certificado llega en cola después de completar: mientras tanto el lote ya está verificado.
+test('public QR landing keeps a completed lot verified while its certificate is still pending', function () {
     [$qrCode, , $certificate] = createPublicQrFixture();
     $certificate->update(['is_current' => false]);
 
     $this->get(route('qr.public.show', $qrCode->token))
         ->assertSuccessful()
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('certificate_pending', true)
-            // La hoja de seguridad del producto sigue disponible.
-            ->has('documents', 1));
+            ->where('lot.verified', true)
+            ->where('certificate_pending', true));
 });
 
 test('public downloads only allow documents associated with the scanned token', function () {

@@ -20,6 +20,8 @@ type Lot = {
     number: number;
     manufacturing_date: string | null;
     verification_date: string | null;
+    /** La orden se completó: el lote pasó el control de calidad. */
+    verified: boolean;
 };
 
 type DocumentItem = {
@@ -35,7 +37,7 @@ type Props = {
     product: Product;
     lot: Lot;
     documents: DocumentItem[];
-    /** Lote aún sin certificado de calidad: la estampita se imprime antes de completar la orden. */
+    /** Aún sin certificado de calidad: la estampita se imprime antes de completar la orden y el certificado llega después. */
     certificate_pending: boolean;
 };
 
@@ -175,7 +177,7 @@ export default function PublicQrLandingShow({
                                 <span className="text-[10px] font-bold tracking-[0.25em] text-bepro-primary/50 uppercase">
                                     Pasaporte de Lote
                                 </span>
-                                {certificatePending ? (
+                                {!lot.verified ? (
                                     <div className="flex items-center gap-1.5 text-[9px] font-bold tracking-wider text-bepro-primary/50 uppercase">
                                         <Clock className="h-3 w-3" />
                                         En verificación
@@ -301,12 +303,11 @@ export default function PublicQrLandingShow({
                                                 </span>
                                             </div>
                                             <h3 className="mb-1 text-sm leading-snug font-bold text-bepro-primary">
-                                                Certificado de calidad en
-                                                emisión
+                                                Certificado de calidad pendiente
                                             </h3>
                                             <p className="text-xs text-slate-400">
-                                                Se publica aquí cuando el lote
-                                                termine su control de calidad.
+                                                Se publica aquí cuando esté
+                                                disponible.
                                             </p>
                                         </div>
                                     </div>
