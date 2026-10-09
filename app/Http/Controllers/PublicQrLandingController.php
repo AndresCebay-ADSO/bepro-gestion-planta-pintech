@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProductionOrderStatus;
+use App\Enums\QrDocumentType;
 use App\Models\ProductDocument;
 use App\Models\ProductionOrder;
 use App\Models\QrCode;
@@ -45,7 +47,15 @@ class PublicQrLandingController extends Controller
                 'number' => $qrCode->productionOrder->lot_number,
                 'manufacturing_date' => $this->timezoneService->formatPlantDate($qrCode->productionOrder->getManufacturingDate()),
                 'verification_date' => $this->timezoneService->formatPlantDate($qrCode->productionOrder->getVerificationDate()),
+                // Verificado = la orden se completó (pasó el control de calidad), no «ya hay certificado»: el certificado
+                // se genera en cola después y puede tardar o fallar.
+                'verified' => $qrCode->productionOrder->status === ProductionOrderStatus::Completed,
             ],
+            // Las estampitas se imprimen antes de completar la orden, y el certificado llega en cola al completarla:
+            // mientras no exista, la página lo dice en vez de mostrar solo la ficha técnica.
+            'certificate_pending' => $qrCode->documents->doesntContain(
+                fn (QrDocument $document): bool => $document->document_type === QrDocumentType::QualityCertificate,
+            ),
             'documents' => [
                 ...$qrCode->product->productDocuments->map(fn (ProductDocument $document) => [
                     'id' => $document->id,

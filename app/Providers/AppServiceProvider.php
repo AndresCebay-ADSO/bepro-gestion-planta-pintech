@@ -139,6 +139,18 @@ class AppServiceProvider extends ServiceProvider
 
     private function configureRateLimiting(): void
     {
+        // Cada petición genera el PDF de la estampita y queda en la auditoría: una recarga repetida o un script no deben
+        // llenar la auditoría.
+        RateLimiter::for('production-labels', function (Request $request): Limit {
+            $user = $request->user();
+
+            return Limit::perMinute(10)->by(
+                $user?->id !== null
+                    ? 'user:'.$user->id
+                    : 'ip:'.$request->ip()
+            );
+        });
+
         RateLimiter::for('production-preview-costs', function (Request $request): Limit {
             $user = $request->user();
 

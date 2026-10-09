@@ -92,6 +92,16 @@ class ProductionOrderPolicy
     }
 
     /**
+     * Estampitas de lote: en cualquier estado menos cancelada. Se imprimen antes de completar (el lote y las fechas
+     * existen desde que se crea la orden) y se reimprimen después.
+     */
+    public function printLabels(User $user, ProductionOrder $productionOrder): bool
+    {
+        return $productionOrder->status !== ProductionOrderStatus::Cancelled
+            && $user->can(Permission::ProductionOrdersPrintLabels->value);
+    }
+
+    /**
      * Costos de la orden: vista previa, PDF y Excel.
      */
     public function previewCosts(User $user, ProductionOrder $productionOrder): bool

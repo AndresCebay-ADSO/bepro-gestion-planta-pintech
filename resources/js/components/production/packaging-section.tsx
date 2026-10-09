@@ -7,6 +7,7 @@ import {
     store as storePackagingPlan,
 } from '@/actions/App/Http/Controllers/Production/PackagingPlanController';
 import { FormattedNumber } from '@/components/formatted-number';
+import { PrintLabelsButton } from '@/components/production/print-labels-button';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,8 @@ type PackagingSectionProps = {
     labelMaterials: LabelMaterialOption[];
     isReadOnly: boolean;
     showCosts?: boolean;
+    /** Estampitas de lote: también con la orden en solo lectura (reimprimir una completada). */
+    canPrintLabels?: boolean;
 };
 
 export function PackagingSection({
@@ -49,8 +52,10 @@ export function PackagingSection({
     labelMaterials,
     isReadOnly,
     showCosts = true,
+    canPrintLabels = false,
 }: PackagingSectionProps) {
-    const columnCount = (showCosts ? 6 : 4) + (isReadOnly ? 0 : 1);
+    const showActions = !isReadOnly || canPrintLabels;
+    const columnCount = (showCosts ? 6 : 4) + (showActions ? 1 : 0);
 
     const updateRow = (
         index: number,
@@ -92,7 +97,7 @@ export function PackagingSection({
                                         </th>
                                     </>
                                 )}
-                                {!isReadOnly && <th className="w-12 p-3"></th>}
+                                {showActions && <th className="w-20 p-3"></th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -161,36 +166,46 @@ export function PackagingSection({
                                                 </td>
                                             </>
                                         )}
-                                        {!isReadOnly && (
+                                        {showActions && (
                                             <td className="p-3">
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 text-destructive hover:text-destructive"
-                                                    onClick={() => {
-                                                        if (
-                                                            confirm(
-                                                                '¿Eliminar esta presentación del plan de envasado?',
-                                                            )
-                                                        ) {
-                                                            router.delete(
-                                                                destroyPackagingPlan(
-                                                                    {
-                                                                        production_order:
-                                                                            orderId,
-                                                                        plan: pack.id,
-                                                                    },
-                                                                ).url,
-                                                                {
-                                                                    preserveScroll: true,
-                                                                },
-                                                            );
-                                                        }
-                                                    }}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {canPrintLabels && (
+                                                        <PrintLabelsButton
+                                                            orderId={orderId}
+                                                            planId={pack.id}
+                                                        />
+                                                    )}
+                                                    {!isReadOnly && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7 text-destructive hover:text-destructive"
+                                                            onClick={() => {
+                                                                if (
+                                                                    confirm(
+                                                                        '¿Eliminar esta presentación del plan de envasado?',
+                                                                    )
+                                                                ) {
+                                                                    router.delete(
+                                                                        destroyPackagingPlan(
+                                                                            {
+                                                                                production_order:
+                                                                                    orderId,
+                                                                                plan: pack.id,
+                                                                            },
+                                                                        ).url,
+                                                                        {
+                                                                            preserveScroll: true,
+                                                                        },
+                                                                    );
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </td>
                                         )}
                                     </tr>

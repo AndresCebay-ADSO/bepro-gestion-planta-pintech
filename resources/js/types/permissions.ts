@@ -59,6 +59,7 @@ export type Permission =
     | 'production_orders.complete'
     | 'production_orders.cancel'
     | 'production_orders.export'
+    | 'production_orders.print_labels'
     // Saldos de producción
     | 'production_remnants.view'
     // Termoencogido

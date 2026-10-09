@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import {
+    Clock,
     FileText,
     FileBadge,
     FileWarning,
@@ -19,6 +20,8 @@ type Lot = {
     number: number;
     manufacturing_date: string | null;
     verification_date: string | null;
+    /** La orden se completó: el lote pasó el control de calidad. */
+    verified: boolean;
 };
 
 type DocumentItem = {
@@ -34,6 +37,8 @@ type Props = {
     product: Product;
     lot: Lot;
     documents: DocumentItem[];
+    /** Aún sin certificado de calidad: la estampita se imprime antes de completar la orden y el certificado llega después. */
+    certificate_pending: boolean;
 };
 
 /** Style map for document type badges & accents */
@@ -81,6 +86,7 @@ export default function PublicQrLandingShow({
     product,
     lot,
     documents,
+    certificate_pending: certificatePending,
 }: Props) {
     const whatsappNumber = '+573188757659';
     const whatsappMessage = encodeURIComponent(
@@ -171,10 +177,17 @@ export default function PublicQrLandingShow({
                                 <span className="text-[10px] font-bold tracking-[0.25em] text-bepro-primary/50 uppercase">
                                     Pasaporte de Lote
                                 </span>
-                                <div className="flex items-center gap-1.5 text-[9px] font-bold tracking-wider text-bepro-accent/70 uppercase">
-                                    <ShieldCheck className="h-3 w-3" />
-                                    Verificado
-                                </div>
+                                {!lot.verified ? (
+                                    <div className="flex items-center gap-1.5 text-[9px] font-bold tracking-wider text-bepro-primary/50 uppercase">
+                                        <Clock className="h-3 w-3" />
+                                        En verificación
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1.5 text-[9px] font-bold tracking-wider text-bepro-accent/70 uppercase">
+                                        <ShieldCheck className="h-3 w-3" />
+                                        Verificado
+                                    </div>
+                                )}
                             </div>
 
                             {/* Lot content */}
@@ -278,18 +291,41 @@ export default function PublicQrLandingShow({
                                     );
                                 })}
 
-                                {documents.length === 0 && (
-                                    <div className="col-span-full rounded-xl border border-dashed border-slate-200 bg-white p-14 text-center">
-                                        <FileText className="mx-auto mb-3 h-8 w-8 text-slate-300" />
-                                        <p className="text-sm font-bold text-bepro-primary">
-                                            Sin archivos cargados
-                                        </p>
-                                        <p className="mt-1 text-xs text-slate-400">
-                                            Este lote aún no cuenta con
-                                            documentos publicados.
-                                        </p>
+                                {certificatePending && (
+                                    <div className="flex flex-col justify-between rounded-xl border border-l-4 border-dashed border-slate-200 border-l-bepro-cert bg-white p-5">
+                                        <div>
+                                            <div className="mb-4 flex items-start justify-between">
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-bepro-cert-bg text-bepro-cert">
+                                                    <Clock className="h-5 w-5" />
+                                                </div>
+                                                <span className="rounded bg-bepro-cert-bg px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-bepro-cert uppercase">
+                                                    Certificado
+                                                </span>
+                                            </div>
+                                            <h3 className="mb-1 text-sm leading-snug font-bold text-bepro-primary">
+                                                Certificado de calidad pendiente
+                                            </h3>
+                                            <p className="text-xs text-slate-400">
+                                                Se publica aquí cuando esté
+                                                disponible.
+                                            </p>
+                                        </div>
                                     </div>
                                 )}
+
+                                {documents.length === 0 &&
+                                    !certificatePending && (
+                                        <div className="col-span-full rounded-xl border border-dashed border-slate-200 bg-white p-14 text-center">
+                                            <FileText className="mx-auto mb-3 h-8 w-8 text-slate-300" />
+                                            <p className="text-sm font-bold text-bepro-primary">
+                                                Sin archivos cargados
+                                            </p>
+                                            <p className="mt-1 text-xs text-slate-400">
+                                                Este lote aún no cuenta con
+                                                documentos publicados.
+                                            </p>
+                                        </div>
+                                    )}
                             </div>
                         </section>
 

@@ -6,10 +6,15 @@ namespace App\Actions\Production;
 
 use App\Enums\ProductionOrderStatus;
 use App\Models\ProductionOrder;
+use App\Services\ProductionOrderQrCodeService;
 use Illuminate\Support\Facades\DB;
 
 class CancelProductionOrderAction
 {
+    public function __construct(
+        private readonly ProductionOrderQrCodeService $qrCodeService,
+    ) {}
+
     public function execute(ProductionOrder $order, ?string $reason = null): ProductionOrder
     {
         return DB::transaction(function () use ($order, $reason): ProductionOrder {
@@ -40,6 +45,9 @@ class CancelProductionOrderAction
                 'status' => ProductionOrderStatus::Cancelled,
                 'notes' => $notes,
             ]);
+
+            // Si ya se imprimieron estampitas, su QR deja de abrir el lote.
+            $this->qrCodeService->deactivateFor($lockedOrder);
 
             return $lockedOrder->refresh();
         }, attempts: 3);

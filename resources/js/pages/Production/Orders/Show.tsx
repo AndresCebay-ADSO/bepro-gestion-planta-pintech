@@ -29,15 +29,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { usePackagingSync } from '@/hooks/use-packaging-sync';
+import {
+    mapPackagingPlanToFormRow,
+    usePackagingSync,
+} from '@/hooks/use-packaging-sync';
 import { useProductionCostPreview } from '@/hooks/use-production-cost-preview';
-import { formatForInput } from '@/lib/formatters';
 import { index as productionOrdersIndex } from '@/routes/production-orders';
 import type {
     PreviewCostData,
     ProductionOrderDetail,
     ProductionOrderFormData,
-    ProductionOrderPackagingPlan,
     ProductionOrderShowProps,
 } from '@/types/production-orders';
 
@@ -112,7 +113,9 @@ export default function ProductionOrderShow({
             remnant_notes: '',
             notes: order.notes ?? '',
             ingredients: orderDetails.map(mapDetailToIngredientFormRow),
-            packaging: orderPackagingPlans.map(mapPackagingPlanToFormRow),
+            packaging: orderPackagingPlans.map((pack) =>
+                mapPackagingPlanToFormRow(pack),
+            ),
         });
 
     const {
@@ -217,7 +220,7 @@ export default function ProductionOrderShow({
           }));
 
     const packagingRows = isFormReadOnly
-        ? orderPackagingPlans.map(mapPackagingPlanToFormRow)
+        ? orderPackagingPlans.map((pack) => mapPackagingPlanToFormRow(pack))
         : data.packaging.map((pack) => ({
               ...pack,
               cost_price:
@@ -384,6 +387,7 @@ export default function ProductionOrderShow({
                             previewStale={previewStale}
                             solidsReferenceLabel={solidsReferenceLabel}
                             showCosts={can.previewCosts}
+                            canPrintLabels={can.printLabels}
                         />
                     </div>
 
@@ -629,20 +633,4 @@ function normalizeIngredientActualQuantity(
     }
 
     return (numericActualQuantity * conversionFactor).toString();
-}
-
-function mapPackagingPlanToFormRow(pack: ProductionOrderPackagingPlan) {
-    return {
-        id: pack.id,
-        presentation: pack.product_variant?.presentation_label ?? 'Unidad',
-        presentation_value: pack.product_variant?.presentation_value ?? 1,
-        planned_units: pack.planned_units,
-        actual_units: pack.actual_units ?? pack.planned_units,
-        cost_price: pack.cost_price ?? null,
-        package_code: pack.package_code ?? null,
-        new_containers_used: formatForInput(pack.new_containers_used),
-        label_raw_material_id: pack.label_raw_material_id ?? null,
-        saved_label_raw_material_id: pack.label_raw_material_id ?? null,
-        labels_used: formatForInput(pack.labels_used),
-    };
 }

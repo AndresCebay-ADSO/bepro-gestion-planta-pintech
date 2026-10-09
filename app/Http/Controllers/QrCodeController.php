@@ -10,6 +10,7 @@ use App\Http\Requests\QrCodes\UpdateQrCodeRequest;
 use App\Models\ProductionOrder;
 use App\Models\QrCode;
 use App\Models\QrDocument;
+use App\Services\ProductionOrderQrCodeService;
 use App\Services\QrImageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -133,9 +134,13 @@ class QrCodeController extends Controller
         ]);
     }
 
-    public function update(UpdateQrCodeRequest $request, QrCode $qrCode): RedirectResponse
+    public function update(UpdateQrCodeRequest $request, QrCode $qrCode, ProductionOrderQrCodeService $qrCodeService): RedirectResponse
     {
-        $qrCode->update(['is_active' => $request->validated('is_active')]);
+        try {
+            $qrCodeService->setActive($qrCode, (bool) $request->validated('is_active'));
+        } catch (\DomainException $exception) {
+            return redirect()->back()->with('error', $exception->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Estado del QR actualizado.');
     }

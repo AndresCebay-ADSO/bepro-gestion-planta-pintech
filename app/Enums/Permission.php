@@ -76,6 +76,7 @@ enum Permission: string
     case ProductionOrdersComplete = 'production_orders.complete';
     case ProductionOrdersCancel = 'production_orders.cancel';
     case ProductionOrdersExport = 'production_orders.export';
+    case ProductionOrdersPrintLabels = 'production_orders.print_labels';
 
     // Saldos de producción
     case ProductionRemnantsView = 'production_remnants.view';
@@ -192,6 +193,7 @@ enum Permission: string
             self::ProductionOrdersComplete => __('Completar órdenes de producción'),
             self::ProductionOrdersCancel => __('Cancelar órdenes de producción'),
             self::ProductionOrdersExport => __('Exportar órdenes de producción'),
+            self::ProductionOrdersPrintLabels => __('Imprimir estampitas de lote'),
             self::ProductionRemnantsView => __('Ver saldos de producción'),
             self::ShrinkWrapsView => __('Ver termoencogidos'),
             self::ShrinkWrapsCreate => __('Registrar termoencogido'),
@@ -285,7 +287,8 @@ enum Permission: string
             self::ProductionOrdersRejectReview,
             self::ProductionOrdersComplete,
             self::ProductionOrdersCancel,
-            self::ProductionOrdersExport => PermissionModule::ProductionOrders,
+            self::ProductionOrdersExport,
+            self::ProductionOrdersPrintLabels => PermissionModule::ProductionOrders,
             self::ProductionRemnantsView => PermissionModule::ProductionRemnants,
             self::ShrinkWrapsView,
             self::ShrinkWrapsCreate,
@@ -404,7 +407,8 @@ enum Permission: string
             self::ProductionOrdersRejectReview,
             self::ProductionOrdersComplete,
             self::ProductionOrdersCancel,
-            self::ProductionOrdersExport => [self::ProductionOrdersView],
+            self::ProductionOrdersExport,
+            self::ProductionOrdersPrintLabels => [self::ProductionOrdersView],
             // Registrar una entrada exige escribir el precio del lote (B19).
             self::InventoryMovementsCreate => [self::InventoryMovementsView, self::CostsView],
             self::FinishedInventoryMovementsView => [self::FinishedInventoryView],
@@ -546,6 +550,8 @@ enum Permission: string
             self::ProductionOrdersCreate,
             self::ProductionOrdersRejectReview,
             self::ProductionOrdersComplete,
+            // Estampitas de lote: las imprime Producción (decisión del 2026-10-02).
+            self::ProductionOrdersPrintLabels,
             self::FinishedInventoryMovementsView,
             self::FinishedInventoryMovementsCreate,
             self::SalesOrdersViewAll,
