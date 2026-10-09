@@ -13,7 +13,6 @@ use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class QualityInspectionCertificateService
 {
@@ -22,6 +21,7 @@ class QualityInspectionCertificateService
 
     public function __construct(
         private readonly TimezoneService $timezoneService,
+        private readonly ProductionOrderQrCodeService $qrCodeService,
     ) {}
 
     public function generateForCompletedOrder(ProductionOrder $order, int $userId): QrDocument
@@ -32,7 +32,8 @@ class QualityInspectionCertificateService
             throw new \DomainException('Solo se puede generar certificado para órdenes completadas.');
         }
 
-        $qrCode = $this->createOrReuseQrCode($order, $userId);
+        // Si ya se imprimieron estampitas, reutiliza ese QR: el que está pegado en el envase.
+        $qrCode = $this->qrCodeService->ensureActive($order, $userId);
         $version = $this->nextVersion($qrCode);
         $payload = $this->buildPayload($order);
         $storedPdf = $this->storePdf($order, $payload, $version);
@@ -109,27 +110,6 @@ class QualityInspectionCertificateService
         ];
     }
 
-    private function createOrReuseQrCode(ProductionOrder $order, int $userId): QrCode
-    {
-        $qrCode = QrCode::query()->firstOrNew([
-            'production_order_id' => $order->id,
-        ]);
-
-        if (! $qrCode->exists) {
-            $qrCode->token = $this->generateToken();
-            $qrCode->created_by = $userId;
-        }
-
-        $qrCode->fill([
-            'product_id' => $order->product_id,
-            'url' => route('qr.public.show', ['token' => $qrCode->token]),
-            'is_active' => true,
-        ]);
-        $qrCode->save();
-
-        return $qrCode;
-    }
-
     /**
      * Nombre con que el cliente descarga el certificado, como la planta nombra los suyos:
      * «{producto} LOTE {lote} {fecha de fabricación}.pdf». La fecha es la de fabricación del lote (creación de la OP),
@@ -190,15 +170,6 @@ class QualityInspectionCertificateService
         return ((int) $qrCode->documents()
             ->where('document_type', QrDocumentType::QualityCertificate->value)
             ->max('version')) + 1;
-    }
-
-    private function generateToken(): string
-    {
-        do {
-            $token = Str::random(40);
-        } while (QrCode::query()->where('token', $token)->exists());
-
-        return $token;
     }
 
     /**

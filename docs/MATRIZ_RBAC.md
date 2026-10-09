@@ -108,6 +108,7 @@ combinación, se crea un rol nuevo.
 | | `production_orders.complete` | [x] | [x] | [x] | [ ] | [ ] | Descuenta inventario FIFO. |
 | | `production_orders.cancel` | [x] | [x] | [ ] | [ ] | [ ] | Coincide con hoy: el código usa `can('delete')` para cancelar. **Una orden no se elimina** (principio 4). |
 | | `production_orders.export` | [x] | [x] | [x] | [x] | [ ] | PDF + Excel juntos. Los costos del archivo dependen de `costs.view`. |
+| | `production_orders.print_labels` | [x] | [x] | [x] | [ ] | [ ] | Estampitas de lote (DYMO) de una presentación del plan de envasado, en cualquier estado menos cancelada. La primera impresión crea el QR de la orden; no reactiva un QR desactivado. |
 | **Remanentes** | `production_remnants.view` | [x] | [x] | [x] | [x] | [ ] | El costo por galón solo con `costs.view`. ⚠️ hoy se envía a todos (`RemnantController:47`). |
 | **Termoencogido** | `shrink_wraps.view` | [x] | [x] | [x] | [x] | [ ] | 🆕 (3.8) Listado y detalle de los registros de termoencogido. El costo (gasto general) solo con `costs.view`. |
 | | `shrink_wraps.create` | [x] | [x] | [x] | [x] | [ ] | 🆕 (3.8) Registrar un termoencogido: OP completada, tipo y aplicaciones; descuenta el empaque secundario de la bodega de la OP. Inmutable: no existen `edit` ni `delete` (un error se corrige con un movimiento opuesto). |
@@ -153,7 +154,7 @@ combinación, se crea un rol nuevo.
 | | `warehouses.assign_users` | [x] | [x] | [ ] | [ ] | [ ] | |
 | | `warehouses.delete` | [x] | [ ] | [ ] | [ ] | [ ] | Solo si está intacta. ⚠️ hoy Admin puede. |
 
-**Total: 88 permisos en 22 módulos.** Por rol: SuperAdmin 88 · Admin 75 · Producción 25 · Operador 10 · Comercial 22.
+**Total: 89 permisos en 22 módulos.** Por rol: SuperAdmin 89 · Admin 76 · Producción 26 · Operador 10 · Comercial 22.
 (La v1 tenía 83. Entran 6: los 4 de catálogos, `products.download_documents` y `raw_materials.deactivate`.
 Salen 5: ver §6. `products.desactive` solo se renombra, igual que los `view` de módulos con dueño → `view_own`.)
 (3.8, termoencogido: entran `shrink_wrap_types.manage`, `shrink_wraps.view` y `shrink_wraps.create`, módulo Termoencogido.)

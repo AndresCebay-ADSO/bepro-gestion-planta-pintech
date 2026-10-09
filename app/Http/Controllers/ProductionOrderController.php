@@ -183,6 +183,7 @@ class ProductionOrderController extends Controller
                 'previewCosts' => $user?->can('previewCosts', $productionOrder) ?? false,
                 'updateOperationalData' => $user?->can('updateOperationalData', $productionOrder) ?? false,
                 'updateColor' => $user?->can('updateColor', $productionOrder) ?? false,
+                'printLabels' => $user?->can('printLabels', $productionOrder) ?? false,
             ],
         ]);
     }

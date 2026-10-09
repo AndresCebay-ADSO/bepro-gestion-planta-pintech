@@ -173,6 +173,7 @@ export type ProductionOrderCan = {
     previewCosts: boolean;
     updateOperationalData: boolean;
     updateColor: boolean;
+    printLabels: boolean;
 };
 
 export type ProductionOrderShowProps = {

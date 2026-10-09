@@ -20,6 +20,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductDocumentController;
 use App\Http\Controllers\Production\LineAdjustmentController;
 use App\Http\Controllers\Production\PackagingPlanController;
+use App\Http\Controllers\Production\ProductionLabelController;
 use App\Http\Controllers\Production\RemnantConsumptionController;
 use App\Http\Controllers\Production\RemnantController;
 use App\Http\Controllers\Production\ShrinkWrapController;
@@ -328,6 +329,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('production-orders/{production_order}/preview-costs', [ProductionOrderController::class, 'previewCosts'])
         ->middleware(['throttle:production-preview-costs', 'can:'.Permission::CostsView->value])
         ->name('production-orders.preview-costs');
+    Route::get('production-orders/{production_order}/packaging-plans/{plan}/labels', [ProductionLabelController::class, 'print'])
+        ->middleware('can:'.Permission::ProductionOrdersPrintLabels->value)
+        ->name('production-orders.packaging-plans.labels');
     Route::middleware('can:'.Permission::ProductionOrdersOperate->value)->group(function () {
         Route::post('production-orders/{production_order}/line-adjustments', [LineAdjustmentController::class, 'store'])->name('production-orders.line-adjustments.store');
         Route::delete('production-orders/{production_order}/line-adjustments/{adjustment}', [LineAdjustmentController::class, 'destroy'])->name('production-orders.line-adjustments.destroy');
