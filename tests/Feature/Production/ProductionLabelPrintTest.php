@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\Production\CancelProductionOrderAction;
 use App\Actions\Production\PrintProductionLabelsAction;
 use App\Enums\LabelFormat;
 use App\Enums\ProductionOrderStatus;
@@ -12,7 +13,9 @@ use App\Models\ProductionOrderPackagingPlan;
 use App\Models\ProductVariant;
 use App\Models\QrCode;
 use App\Services\ProductionOrderQrCodeService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia;
 use Spatie\Activitylog\Models\Activity;
 
@@ -67,10 +70,29 @@ test('el certificado reutiliza el QR que ya está impreso en el envase', functio
     $printedToken = QrCode::query()->sole()->token;
 
     // Lo que llama el certificado de calidad al completar la orden.
-    $certificateQr = app(ProductionOrderQrCodeService::class)->ensureActive($this->order, $this->user->id);
+    $certificateQr = app(ProductionOrderQrCodeService::class)->ensureForCertificate($this->order, $this->user->id);
 
     expect($certificateQr->token)->toBe($printedToken)
         ->and(QrCode::query()->count())->toBe(1);
+});
+
+test('el certificado no reactiva un QR que un administrador desactivó con la orden abierta', function () {
+    $qrCode = QrCode::factory()->inactive()->create(['production_order_id' => $this->order->id]);
+
+    $certificateQr = app(ProductionOrderQrCodeService::class)->ensureForCertificate($this->order, $this->user->id);
+
+    expect($certificateQr->id)->toBe($qrCode->id)
+        ->and($qrCode->refresh()->is_active)->toBeFalse();
+});
+
+test('al cancelar la orden su QR deja de abrir el lote', function () {
+    $this->order->update(['status' => ProductionOrderStatus::Pending]);
+    $this->get(labelsUrl($this->order, $this->plan))->assertOk();
+
+    app(CancelProductionOrderAction::class)->execute($this->order);
+
+    expect(QrCode::query()->sole()->is_active)->toBeFalse();
+    $this->get(route('qr.public.show', QrCode::query()->sole()->token))->assertNotFound();
 });
 
 test('registra en la auditoría de la orden quién imprimió cuántas', function () {
@@ -87,6 +109,21 @@ test('registra en la auditoría de la orden quién imprimió cuántas', function
             'quantity' => 25,
             'format' => LabelFormat::Dymo57x32->value,
         ]);
+});
+
+test('si el PDF falla no queda una impresión en la auditoría', function () {
+    Pdf::shouldReceive('loadView')->andThrow(new RuntimeException('Sin memoria'));
+
+    expect(fn () => app(PrintProductionLabelsAction::class)
+        ->execute($this->order, $this->plan, 200, LabelFormat::Dymo57x32, $this->user->id))
+        ->toThrow(RuntimeException::class);
+
+    expect(Activity::query()->where('event', 'labels_printed')->count())->toBe(0);
+});
+
+test('la impresión tiene límite de peticiones', function () {
+    expect(Route::getRoutes()->getByName('production-orders.packaging-plans.labels')->gatherMiddleware())
+        ->toContain('throttle:production-labels');
 });
 
 test('se imprime en cualquier estado menos cancelada', function (ProductionOrderStatus $status, int $expected) {
@@ -147,7 +184,7 @@ test('con el QR desactivado no imprime ni lo reactiva', function () {
 
 test('la estampita lleva el nombre con color, la presentación, el lote y una copia por estampita', function () {
     $labels = app(PrintProductionLabelsAction::class)
-        ->execute($this->order, $this->plan, 3, LabelFormat::Dymo57x32, $this->user->id);
+        ->buildLabels($this->order, $this->plan, 3, LabelFormat::Dymo57x32, QrCode::factory()->create(['production_order_id' => $this->order->id]));
 
     expect($labels)->toHaveCount(3)
         ->and($labels[0])->toMatchArray([
@@ -165,7 +202,7 @@ test('las fechas salen en hora de planta, como el certificado', function () {
     $this->order->forceFill(['created_at' => CarbonImmutable::parse('2026-10-10 01:00:00', 'UTC')])->save();
 
     $label = app(PrintProductionLabelsAction::class)
-        ->execute($this->order->refresh(), $this->plan, 1, LabelFormat::Dymo57x32, $this->user->id)[0];
+        ->buildLabels($this->order->refresh(), $this->plan, 1, LabelFormat::Dymo57x32, QrCode::factory()->create(['production_order_id' => $this->order->id]))[0];
 
     expect($label['manufactured_on'])->toBe('09/10/2026')
         ->and($label['verify_on'])->toBe('08/10/2027');
@@ -175,21 +212,24 @@ test('sin etiqueta de presentación muestra solo el código', function () {
     $this->variant->update(['presentation_label' => null]);
 
     $label = app(PrintProductionLabelsAction::class)
-        ->execute($this->order, $this->plan->refresh(), 1, LabelFormat::Dymo57x32, $this->user->id)[0];
+        ->buildLabels($this->order, $this->plan->refresh(), 1, LabelFormat::Dymo57x32, QrCode::factory()->create(['production_order_id' => $this->order->id]))[0];
 
     expect($label['presentation'])->toBe('12345678');
 });
 
 test('la plantilla dibuja los datos de la estampita', function () {
     $labels = app(PrintProductionLabelsAction::class)
-        ->execute($this->order, $this->plan, 1, LabelFormat::Dymo57x32, $this->user->id);
+        ->buildLabels($this->order, $this->plan, 1, LabelFormat::Dymo57x32, QrCode::factory()->create(['production_order_id' => $this->order->id]));
 
-    $html = view(LabelFormat::Dymo57x32->view(), ['labels' => $labels])->render();
+    $html = view(LabelFormat::Dymo57x32->view(), ['format' => LabelFormat::Dymo57x32, 'labels' => $labels])->render();
 
     expect($html)->toContain('ESMALTE SINTÉTICO RAL 3020')
         ->toContain('Galón · 12345678')
         ->toContain('1692')
-        ->toContain('Verificación');
+        ->toContain('Verificación')
+        // Medidas de LabelFormat: 57 − 2 × 2 mm de ancho útil y 2 mm de margen.
+        ->toContain('width: 53mm')
+        ->toContain('padding: 2mm');
 });
 
 test('la página de la orden dice si se pueden imprimir estampitas', function (ProductionOrderStatus $status, bool $expected) {

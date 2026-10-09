@@ -32,8 +32,9 @@ class QualityInspectionCertificateService
             throw new \DomainException('Solo se puede generar certificado para órdenes completadas.');
         }
 
-        // Si ya se imprimieron estampitas, reutiliza ese QR: el que está pegado en el envase.
-        $qrCode = $this->qrCodeService->ensureActive($order, $userId);
+        // Si ya se imprimieron estampitas, reutiliza ese QR: el que está pegado en el envase. No lo reactiva si un
+        // administrador lo desactivó con la orden abierta.
+        $qrCode = $this->qrCodeService->ensureForCertificate($order, $userId);
         $version = $this->nextVersion($qrCode);
         $payload = $this->buildPayload($order);
         $storedPdf = $this->storePdf($order, $payload, $version);

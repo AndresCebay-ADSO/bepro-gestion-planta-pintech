@@ -10,7 +10,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Production\PrintProductionLabelsRequest;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderPackagingPlan;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 
@@ -37,7 +36,7 @@ class ProductionLabelController extends Controller
         $format = LabelFormat::Dymo57x32;
 
         try {
-            $labels = $this->printLabels->execute(
+            $pdf = $this->printLabels->execute(
                 order: $productionOrder,
                 plan: $plan,
                 quantity: (int) $request->validated('quantity'),
@@ -48,10 +47,10 @@ class ProductionLabelController extends Controller
             return back()->with('error', $exception->getMessage());
         }
 
-        /** @var \Barryvdh\DomPDF\PDF $pdf */
-        $pdf = Pdf::loadView($format->view(), ['labels' => $labels]);
-        $pdf->setPaper($format->paper());
-
-        return $pdf->stream("estampitas-lote-{$productionOrder->lot_number}-{$plan->productVariant->code}.pdf");
+        // En línea: se abre en el visor del navegador, que la manda a la DYMO.
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "inline; filename=\"estampitas-lote-{$productionOrder->lot_number}-{$plan->productVariant->code}.pdf\"",
+        ]);
     }
 }

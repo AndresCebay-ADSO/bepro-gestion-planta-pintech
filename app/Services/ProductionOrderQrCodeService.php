@@ -14,20 +14,22 @@ use Illuminate\Support\Str;
  * El QR de una orden: uno por orden (`qr_codes.production_order_id` es único), creado por quien lo necesite primero.
  * La estampita lo crea en la primera impresión y el certificado de calidad reutiliza el mismo token al completar, así
  * que el QR ya pegado en el envase lleva al certificado sin reimprimir.
+ *
+ * Solo dos cosas cambian si está activo: un administrador (Códigos QR) y la cancelación de la orden. Ni la estampita
+ * ni el certificado lo reactivan: con la orden abierta ya existe y alguien pudo cerrarlo a propósito.
  */
 class ProductionOrderQrCodeService
 {
     /**
-     * Para el certificado: lo crea si no existe y lo deja activo con la URL y el producto actuales.
+     * Para el certificado: lo crea si no existe y actualiza la URL y el producto, sin tocar si está activo.
      */
-    public function ensureActive(ProductionOrder $order, int $userId): QrCode
+    public function ensureForCertificate(ProductionOrder $order, int $userId): QrCode
     {
         $qrCode = $this->findOrCreate($order, $userId);
 
         $qrCode->fill([
             'product_id' => $order->product_id,
             'url' => route('qr.public.show', ['token' => $qrCode->token]),
-            'is_active' => true,
         ]);
         $qrCode->save();
 
@@ -51,6 +53,15 @@ class ProductionOrderQrCodeService
         return $qrCode;
     }
 
+    /**
+     * Al cancelar la orden: quien escanee una estampita ya impresa no debe ver un lote que no existe (las estampitas se
+     * desechan, decisión del 2026-10-02).
+     */
+    public function deactivateFor(ProductionOrder $order): void
+    {
+        QrCode::query()->where('production_order_id', $order->id)->update(['is_active' => false]);
+    }
+
     private function findOrCreate(ProductionOrder $order, int $userId): QrCode
     {
         $existing = QrCode::query()->where('production_order_id', $order->id)->first();
@@ -72,10 +83,10 @@ class ProductionOrderQrCodeService
         try {
             // En su propia transacción: si choca, PostgreSQL revierte solo esta inserción y la conexión sigue usable.
             DB::transaction(fn () => $qrCode->save());
-        } catch (UniqueConstraintViolationException) {
+        } catch (UniqueConstraintViolationException $exception) {
             // Dos impresiones a la vez (o una impresión y el certificado) crean el QR de la misma orden: la segunda choca
-            // con el índice único y usa el que ganó.
-            return QrCode::query()->where('production_order_id', $order->id)->firstOrFail();
+            // con el índice único y usa el que ganó. Si el choque fue del token (improbable), no hay QR y se reporta.
+            return QrCode::query()->where('production_order_id', $order->id)->first() ?? throw $exception;
         }
 
         return $qrCode;

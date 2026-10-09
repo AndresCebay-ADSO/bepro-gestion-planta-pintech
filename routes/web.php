@@ -330,7 +330,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware(['throttle:production-preview-costs', 'can:'.Permission::CostsView->value])
         ->name('production-orders.preview-costs');
     Route::get('production-orders/{production_order}/packaging-plans/{plan}/labels', [ProductionLabelController::class, 'print'])
-        ->middleware('can:'.Permission::ProductionOrdersPrintLabels->value)
+        ->middleware(['throttle:production-labels', 'can:'.Permission::ProductionOrdersPrintLabels->value])
         ->name('production-orders.packaging-plans.labels');
     Route::middleware('can:'.Permission::ProductionOrdersOperate->value)->group(function () {
         Route::post('production-orders/{production_order}/line-adjustments', [LineAdjustmentController::class, 'store'])->name('production-orders.line-adjustments.store');

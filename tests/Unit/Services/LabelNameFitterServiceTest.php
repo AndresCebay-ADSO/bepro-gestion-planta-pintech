@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 use App\Enums\LabelFormat;
 use App\Services\LabelNameFitterService;
+use Dompdf\Dompdf;
 
 beforeEach(function () {
-    $this->fitter = new LabelNameFitterService;
+    $this->fitter = new LabelNameFitterService(new Dompdf);
     $this->width = LabelFormat::Dymo57x32->contentWidthPt();
 });
 
@@ -42,4 +43,21 @@ test('un color de más de 25 caracteres también se recorta', function () {
     $fitted = $this->fitter->fit('ESMALTE', 'AZUL CORPORATIVO DEL CLIENTE PRINCIPAL', $this->width);
 
     expect($fitted['name'])->toBe('ESMALTE AZUL CORPORATIVO DEL CLIE…');
+});
+
+test('parte después de un guion, como DomPDF, y no recorta de más', function () {
+    // Sin el corte en el guion, «LENTICULAR-EXTRA-FINO-1/4-AP-301» contaría como una palabra que no cabe.
+    $fitted = $this->fitter->fit('BP POLIESTER ALUMINIO LENTICULAR-EXTRA-FINO-1/4-AP-301', 'RAL 3020', $this->width);
+
+    expect($fitted)->toBe([
+        'name' => 'BP POLIESTER ALUMINIO LENTICULAR-EXTRA-FINO-1/4-AP-301 RAL 3020',
+        'size' => 7,
+    ]);
+});
+
+test('una palabra más ancha que la línea cuenta las líneas que ocupa partida', function () {
+    $fitted = $this->fitter->fit(str_repeat('M', 60), null, $this->width);
+
+    expect($fitted['size'])->toBe(7)
+        ->and($fitted['name'])->toEndWith('…');
 });

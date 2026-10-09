@@ -5,11 +5,18 @@
     más nombres en 2 líneas. El nombre llega ya ajustado a 2 líneas con su tamaño (8 pt, o 7 pt si no cabe; DomPDF no
     tiene line-clamp).
 
+    $format: LabelFormat (medidas y margen: una sola fuente con el ajuste del nombre).
     $labels: list<array{name: string, name_size: int, presentation: string, lot: int,
                         manufactured_on: string, verify_on: string, qr: string}>
     Lo arma PrintProductionLabelsAction: `presentation` es «Galón · 12345678», `qr` un data URI PNG y las fechas van
     formateadas en hora de planta.
 --}}
+@php
+    $margin = $format->marginMm();
+    $contentWidth = $format->widthMm() - 2 * $margin;
+    // Un poco menos de alto para que nada se desborde a otra página.
+    $contentHeight = $format->heightMm() - 2 * $margin - 0.2;
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 
@@ -27,17 +34,16 @@
         }
 
         body {
-            font-family: Helvetica, Arial, sans-serif;
+            font-family: {{ \App\Services\LabelNameFitterService::FONT_FAMILY }}, Arial, sans-serif;
             color: #000;
             background: #fff;
         }
 
-        /* 2 mm de margen por lado como padding: DomPDF no aplica el margen de @page aquí. Zona útil 53×28 mm, un poco
-           menos de alto para que nada se desborde a otra página. */
+        /* El margen va como padding: DomPDF no aplica el margen de @page aquí. */
         .label {
-            width: 53mm;
-            height: 27.8mm;
-            padding: 2mm;
+            width: {{ $contentWidth }}mm;
+            height: {{ $contentHeight }}mm;
+            padding: {{ $margin }}mm;
             overflow: hidden;
         }
 
@@ -50,6 +56,8 @@
             overflow: hidden;
             font-weight: bold;
             line-height: 1.12;
+            /* Una palabra más ancha que la línea se parte en vez de salirse por el costado. */
+            overflow-wrap: break-word;
         }
 
         .rule {
