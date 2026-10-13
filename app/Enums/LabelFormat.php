@@ -54,11 +54,42 @@ enum LabelFormat: string
     }
 
     /**
+     * Ancho útil en mm: el de la estampita menos el margen de cada lado.
+     */
+    public function contentWidthMm(): float
+    {
+        return $this->widthMm() - 2 * $this->marginMm();
+    }
+
+    /**
      * Ancho útil en puntos, el que ocupa el nombre del producto.
      */
     public function contentWidthPt(): float
     {
-        return ($this->widthMm() - 2 * $this->marginMm()) * self::POINTS_PER_MM;
+        return $this->contentWidthMm() * self::POINTS_PER_MM;
+    }
+
+    /**
+     * Lado del QR, a la derecha bajo el nombre.
+     */
+    public function qrSizeMm(): float
+    {
+        return match ($this) {
+            self::Dymo57x32 => 18.0,
+        };
+    }
+
+    /**
+     * Ancho de la columna de la presentación y el código, a la izquierda del QR, con 1 mm de aire antes del QR.
+     */
+    public function presentationWidthMm(): float
+    {
+        return $this->contentWidthMm() - $this->qrSizeMm() - 1;
+    }
+
+    public function presentationWidthPt(): float
+    {
+        return $this->presentationWidthMm() * self::POINTS_PER_MM;
     }
 
     /**

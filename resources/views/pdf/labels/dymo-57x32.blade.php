@@ -6,10 +6,10 @@
     tiene line-clamp).
 
     $format: LabelFormat (medidas y margen: una sola fuente con el ajuste del nombre).
-    $labels: list<array{name: string, name_size: int, presentation: string, lot: int,
-                        manufactured_on: string, verify_on: string, qr: string}>
-    Lo arma PrintProductionLabelsAction: `presentation` es «Galón · 12345678», `qr` un data URI PNG y las fechas van
-    formateadas en hora de planta.
+    $labels: list<array{name: string, name_size: int, presentation_lines: list<string>, presentation_size: int,
+                        lot: int, manufactured_on: string, verify_on: string, qr: string}>
+    Lo arma PrintProductionLabelsAction con LabelTextFitterService: `presentation_lines` es «Galón · 12345678» o, si no
+    cabe, la presentación y el código en dos líneas; `qr` un data URI PNG y las fechas van formateadas en hora de planta.
 --}}
 @php
     $margin = $format->marginMm();
@@ -34,7 +34,7 @@
         }
 
         body {
-            font-family: {{ \App\Services\LabelNameFitterService::FONT_FAMILY }}, Arial, sans-serif;
+            font-family: {{ \App\Services\LabelTextFitterService::FONT_FAMILY }}, Arial, sans-serif;
             color: #000;
             background: #fff;
         }
@@ -76,11 +76,21 @@
         }
 
         .presentation {
-            font-size: 7pt;
+            line-height: 1.15;
         }
 
+        /* Cada línea en un solo renglón: si algo no cabe se corta de lado y nunca crece de alto. Un bloque más alto que
+           la página lo pasa DomPDF entero a otra (un overflow: hidden de alto fijo no lo evita). */
+        .presentation-line {
+            width: {{ $format->presentationWidthMm() }}mm;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        /* Espacios de 0,8 mm entre presentación, lote y fechas: con la presentación en dos líneas a 7 pt, 1,3 mm ya no
+           cabía y DomPDF pasaba el bloque a otra página. Igual en todas las estampitas, para que se vean iguales. */
         .lot {
-            margin-top: 1.3mm;
+            margin-top: 0.8mm;
             font-size: 6pt;
             font-weight: bold;
         }
@@ -90,9 +100,9 @@
         }
 
         .dates {
-            margin-top: 1.3mm;
+            margin-top: 0.8mm;
             font-size: 6.5pt;
-            line-height: 1.35;
+            line-height: 1.3;
         }
 
         .dates td {
@@ -108,13 +118,13 @@
         }
 
         .qr-cell {
-            width: 18mm;
+            width: {{ $format->qrSizeMm() }}mm;
             text-align: right;
         }
 
         .qr-cell img {
-            width: 18mm;
-            height: 18mm;
+            width: {{ $format->qrSizeMm() }}mm;
+            height: {{ $format->qrSizeMm() }}mm;
         }
     </style>
 </head>
@@ -127,7 +137,11 @@
             <table>
                 <tr>
                     <td>
-                        <div class="presentation">{{ $label['presentation'] }}</div>
+                        <div class="presentation" style="font-size: {{ $label['presentation_size'] }}pt">
+                            @foreach ($label['presentation_lines'] as $line)
+                                <div class="presentation-line">{{ $line }}</div>
+                            @endforeach
+                        </div>
                         <div class="lot">LOTE <span class="lot-number">{{ $label['lot'] }}</span></div>
                         <table class="dates">
                             <tr>

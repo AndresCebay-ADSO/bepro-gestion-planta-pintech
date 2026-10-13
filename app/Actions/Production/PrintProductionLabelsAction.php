@@ -9,7 +9,7 @@ use App\Enums\ProductionOrderStatus;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderPackagingPlan;
 use App\Models\QrCode;
-use App\Services\LabelNameFitterService;
+use App\Services\LabelTextFitterService;
 use App\Services\ProductionOrderQrCodeService;
 use App\Services\QrImageService;
 use App\Services\TimezoneService;
@@ -28,7 +28,7 @@ class PrintProductionLabelsAction
     public function __construct(
         private readonly ProductionOrderQrCodeService $qrCodeService,
         private readonly QrImageService $qrImageService,
-        private readonly LabelNameFitterService $nameFitter,
+        private readonly LabelTextFitterService $textFitter,
         private readonly TimezoneService $timezoneService,
     ) {}
 
@@ -55,7 +55,7 @@ class PrintProductionLabelsAction
             return $this->qrCodeService->ensureForLabels($lockedOrder, $userId);
         }, attempts: 3);
 
-        // Una sola instancia de DomPDF: la que mide el nombre es la que dibuja el PDF.
+        // Una sola instancia de DomPDF: la que mide el texto es la que dibuja el PDF.
         /** @var PDF $pdf */
         $pdf = app('dompdf.wrapper');
         $label = $this->buildLabel($order, $plan, $format, $qrCode, $pdf->getDomPDF()->getFontMetrics());
@@ -81,8 +81,8 @@ class PrintProductionLabelsAction
     /**
      * Los datos de la estampita, listos para la plantilla del formato.
      *
-     * @param  FontMetrics  $metrics  las de la instancia de DomPDF que dibuja el PDF, para medir el nombre.
-     * @return array{name: string, name_size: int, presentation: string, lot: int, manufactured_on: string, verify_on: string, qr: string}
+     * @param  FontMetrics  $metrics  las de la instancia de DomPDF que dibuja el PDF, para medir el texto.
+     * @return array{name: string, name_size: int, presentation_lines: list<string>, presentation_size: int, lot: int, manufactured_on: string, verify_on: string, qr: string}
      */
     public function buildLabel(
         ProductionOrder $order,
@@ -96,15 +96,15 @@ class PrintProductionLabelsAction
         $variant = $plan->productVariant;
 
         // El nombre con el color de la orden, ajustado a dos líneas (3.4: nunca se recorta el color).
-        $name = $this->nameFitter->fit($order->product->name, $order->color, $format->contentWidthPt(), $metrics);
+        $name = $this->textFitter->fitName($order->product->name, $order->color, $format->contentWidthPt(), $metrics);
+        // El código es texto libre de hasta 80 caracteres: sin ajustar, una línea partida pasaba la estampita a 2 páginas.
+        $presentation = $this->textFitter->fitPresentation($variant->presentation_label, $variant->code, $format->presentationWidthPt(), $metrics);
 
         return [
             'name' => $name['name'],
             'name_size' => $name['size'],
-            'presentation' => implode(' · ', array_filter(
-                [$variant->presentation_label, $variant->code],
-                fn (?string $part): bool => filled($part),
-            )),
+            'presentation_lines' => $presentation['lines'],
+            'presentation_size' => $presentation['size'],
             'lot' => $order->lot_number,
             // En hora de planta, como el certificado y la página del QR: la base guarda UTC (B54).
             'manufactured_on' => $this->timezoneService->formatPlantDate($order->getManufacturingDate()),

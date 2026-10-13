@@ -200,7 +200,8 @@ test('la estampita lleva el nombre con color, la presentación y el lote', funct
     expect($label)->toMatchArray([
         'name' => 'ESMALTE SINTÉTICO RAL 3020',
         'name_size' => 8,
-        'presentation' => 'Galón · 12345678',
+        'presentation_lines' => ['Galón · 12345678'],
+        'presentation_size' => 7,
         'lot' => 1692,
     ])
         ->and($label['qr'])->toStartWith('data:image/png;base64,');
@@ -223,7 +224,37 @@ test('sin etiqueta de presentación muestra solo el código', function () {
     $label = app(PrintProductionLabelsAction::class)
         ->buildLabel($this->order, $this->plan->refresh(), LabelFormat::Dymo57x32, QrCode::factory()->create(['production_order_id' => $this->order->id]), app(Dompdf::class)->getFontMetrics());
 
-    expect($label['presentation'])->toBe('12345678');
+    expect($label['presentation_lines'])->toBe(['12345678']);
+});
+
+/**
+ * Páginas del PDF generado: cada estampita debe ocupar una sola.
+ */
+function labelPdfPageCount(string $pdf): int
+{
+    return preg_match_all('#/Type\s*/Page[^s]#', $pdf);
+}
+
+test('un código de presentación largo no pasa la estampita a una segunda página', function () {
+    // El caso real: «Tambor 50G · 7707477132250891» partía la línea y DomPDF pasaba el bloque entero a otra página.
+    $this->variant->update(['presentation_label' => 'Tambor 50G', 'code' => '7707477132250891']);
+
+    $pdf = app(PrintProductionLabelsAction::class)
+        ->execute($this->order, $this->plan->refresh(), LabelFormat::Dymo57x32, $this->user->id);
+
+    expect(labelPdfPageCount($pdf))->toBe(1);
+});
+
+test('con todos los textos al máximo que admiten los formularios, la estampita sigue en una página', function () {
+    // Nombre del producto 150, color 100, presentación 50 y código 80: los máximos de sus Form Requests.
+    $this->order->product->update(['name' => mb_substr(str_repeat('ESMALTE ', 19), 0, 150)]);
+    $this->order->update(['color' => str_repeat('AZUL ', 20)]);
+    $this->variant->update(['presentation_label' => str_repeat('P', 50), 'code' => str_repeat('7', 80)]);
+
+    $pdf = app(PrintProductionLabelsAction::class)
+        ->execute($this->order->refresh(), $this->plan->refresh(), LabelFormat::Dymo57x32, $this->user->id);
+
+    expect(labelPdfPageCount($pdf))->toBe(1);
 });
 
 test('la plantilla dibuja los datos de la estampita', function () {
@@ -236,9 +267,11 @@ test('la plantilla dibuja los datos de la estampita', function () {
         ->toContain('Galón · 12345678')
         ->toContain('1692')
         ->toContain('Verificación')
-        // Medidas de LabelFormat: 57 − 2 × 2 mm de ancho útil y 2 mm de margen.
+        // Medidas de LabelFormat: 57 − 2 × 2 mm de ancho útil, 2 mm de margen, QR de 18 mm y 34 mm para la presentación.
         ->toContain('width: 53mm')
-        ->toContain('padding: 2mm');
+        ->toContain('padding: 2mm')
+        ->toContain('height: 18mm')
+        ->toContain('width: 34mm');
 });
 
 test('la página de la orden dice si se pueden imprimir estampitas', function (ProductionOrderStatus $status, bool $expected) {
