@@ -33,7 +33,7 @@
          * No usar un reinicio `* { margin: 0 }`: en DomPDF también alcanza a la página y anula estos márgenes.
          */
         @page {
-            margin: 32pt 40pt 100pt 40pt;
+            margin: 32pt 40pt 90pt 40pt;
         }
 
         body {
@@ -190,7 +190,7 @@
 
         /* ── Notas y asesor: uno debajo del otro, o lado a lado si no caben así ── */
         .closing {
-            margin-top: 10pt;
+            margin-top: 6pt;
             page-break-inside: avoid;
         }
 
@@ -201,7 +201,7 @@
         }
 
         .observations {
-            margin-top: 10pt;
+            margin-top: 8pt;
             line-height: 1.3;
         }
 
@@ -233,12 +233,12 @@
         }
 
         .advisor-signature {
-            height: 40pt;
+            height: 34pt;
             margin-top: 2pt;
         }
 
         .advisor-signature img {
-            max-height: 40pt;
+            max-height: 34pt;
             max-width: 160pt;
         }
 
@@ -251,7 +251,7 @@
         }
 
         .advisor-detail {
-            line-height: 1.35;
+            line-height: 1.25;
         }
 
         /* ── Pie fijo: sedes y logo Pintech ── */
@@ -259,7 +259,7 @@
             position: fixed;
             left: 0;
             right: 0;
-            bottom: -78pt;
+            bottom: -70pt;
             height: 62pt;
         }
 

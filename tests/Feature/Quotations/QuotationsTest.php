@@ -99,6 +99,38 @@ function quotationPayload(int $clientId, int $productId, int $variantId, array $
     ], $overrides);
 }
 
+/**
+ * Cotización con textos fijos y realistas para los tests que cuentan hojas del PDF. La factory inventa el nombre del
+ * cliente y deja el teléfono del asesor a veces sí y a veces no; un renglón de más o de menos volvía esos tests una
+ * lotería (fallaban 4 de cada 10 corridas).
+ */
+function quotationWithFixedPdfTexts(int $clientId, User $advisor, array $overrides = []): Quotation
+{
+    $advisor->update([
+        'name' => 'Andrea Catalina Rodríguez',
+        'job_title' => 'Asesora comercial',
+        'phone' => '317 404 1993',
+        'email' => 'asesora.comercial@example.org',
+    ]);
+
+    return Quotation::factory()->create([
+        'client_id' => $clientId,
+        'created_by' => $advisor->id,
+        'client_business_name' => 'Constructora e Inversiones del Pacífico S.A.S',
+        'client_nit' => '9001234567',
+        'client_contact_name' => 'María Fernanda Ospina',
+        'client_phone' => '315 678 9012',
+        'technology' => 'Epóxico',
+        'line' => 'Industrial Series',
+        'thickness_mils' => '8',
+        'application_method' => 'Airless',
+        'delivery_time' => '5 Días Hab.',
+        'area' => '1250',
+        'notes' => null,
+        ...$overrides,
+    ]);
+}
+
 it('allows comercial to create a quotation using sales list price', function () {
     $salesPriceService = app(VariantSalesPriceService::class);
     $expectedListPrice = (float) $salesPriceService->resolveForVariant($this->variant);
@@ -289,9 +321,7 @@ it('prints the commercial observations apart from the legal fine print, only whe
 it('lets long observations flow instead of pushing the signature block to the next page', function () {
     // El bloque de notas y firma no se parte entre hojas; si las observaciones vivieran dentro de él, un texto largo lo
     // empujaría entero a la hoja 2 y dejaría la primera a medio llenar.
-    $quotation = Quotation::factory()->create([
-        'client_id' => $this->client->id,
-        'created_by' => $this->comercialUser->id,
+    $quotation = quotationWithFixedPdfTexts($this->client->id, $this->comercialUser, [
         'notes' => str_repeat('Condición particular de este negocio acordada con el cliente. ', 24),
     ]);
 
@@ -320,9 +350,7 @@ it('fits eight products with long names on a single letter page', function () {
     // cabe debajo de las notas y RenderQuotationPdfAction las pone lado a lado para no pasar a otra hoja.
     $this->product->update(['name' => 'BP PRIMER EPÓXICO ESTRUCTURAL 60% SÓLIDOS GRIS CLARO']);
 
-    $quotation = Quotation::factory()->create([
-        'client_id' => $this->client->id,
-        'created_by' => $this->comercialUser->id,
+    $quotation = quotationWithFixedPdfTexts($this->client->id, $this->comercialUser, [
         'notes' => 'Incluye visita técnica de inicio de obra.',
     ]);
 
