@@ -84,6 +84,12 @@ test('baja a 6 pt cuando el código solo cabe así en su línea', function () {
         ->toBe(['lines' => ['Galón', $code], 'size' => 6]);
 });
 
+test('a 6 pt prueba una línea antes que dos', function () {
+    // La presentación sola no cabe a 7 pt (ni partida), pero con un código corto cabe en una línea a 6 pt.
+    expect($this->fitter->fitPresentation('Tambor metálico de 55 galones', '7', $this->presentationWidth, $this->metrics))
+        ->toBe(['lines' => ['Tambor metálico de 55 galones · 7'], 'size' => 6]);
+});
+
 test('recorta la presentación y deja el código entero', function () {
     $fitted = $this->fitter->fitPresentation(str_repeat('P', 50), '7707477132250891', $this->presentationWidth, $this->metrics);
 

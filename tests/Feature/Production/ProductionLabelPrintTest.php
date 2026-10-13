@@ -247,7 +247,7 @@ test('un código de presentación largo no pasa la estampita a una segunda pági
 
 test('con todos los textos al máximo que admiten los formularios, la estampita sigue en una página', function () {
     // Nombre del producto 150, color 100, presentación 50 y código 80: los máximos de sus Form Requests.
-    $this->order->product->update(['name' => str_repeat('ESMALTE ', 18).'ESMALTE']);
+    $this->order->product->update(['name' => mb_substr(str_repeat('ESMALTE ', 19), 0, 150)]);
     $this->order->update(['color' => str_repeat('AZUL ', 20)]);
     $this->variant->update(['presentation_label' => str_repeat('P', 50), 'code' => str_repeat('7', 80)]);
 

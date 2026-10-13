@@ -16,8 +16,9 @@ use Illuminate\Support\Str;
  *
  * - Nombre (producto + color): dos líneas en negrita; 8 pt si cabe, si no 7 pt, y solo entonces recorta el nombre del
  *   producto con «…», nunca el color: el color es lo que distingue esa estampita de la del producto base.
- * - Presentación y código: «Galón · 12345678» en una línea; si no cabe, presentación arriba y código abajo. Recorta
- *   primero la presentación y el código solo si ni solo en su línea cabe: el código identifica el producto.
+ * - Presentación y código: «Galón · 12345678» en una línea; si no cabe, presentación arriba y código abajo. A un mismo
+ *   tamaño, una línea antes que dos (7 pt: una, dos; 6 pt: una, dos). Recorta primero la presentación y el código solo
+ *   si ni solo en su línea cabe: el código identifica el producto.
  */
 class LabelTextFitterService
 {
@@ -79,7 +80,6 @@ class LabelTextFitterService
         $maxWidth = $widthPt - self::WIDTH_SLACK_PT;
         $fits = fn (string $text, int $size): bool => $this->width($text, $size, 'normal', $metrics) <= $maxWidth;
         $minimumSize = self::PRESENTATION_FONT_SIZES[array_key_last(self::PRESENTATION_FONT_SIZES)];
-        $preferredSize = self::PRESENTATION_FONT_SIZES[0];
 
         // Sin presentación va solo el código.
         if (blank($presentationLabel)) {
@@ -95,11 +95,12 @@ class LabelTextFitterService
         $presentationLabel = (string) $presentationLabel;
         $oneLine = $presentationLabel.self::PRESENTATION_SEPARATOR.$code;
 
-        if ($fits($oneLine, $preferredSize)) {
-            return ['lines' => [$oneLine], 'size' => $preferredSize];
-        }
-
+        // A cada tamaño, una línea antes que dos: ahorra alto y conserva el formato «Galón · 12345678».
         foreach (self::PRESENTATION_FONT_SIZES as $size) {
+            if ($fits($oneLine, $size)) {
+                return ['lines' => [$oneLine], 'size' => $size];
+            }
+
             if ($fits($presentationLabel, $size) && $fits($code, $size)) {
                 return ['lines' => [$presentationLabel, $code], 'size' => $size];
             }
