@@ -10,6 +10,7 @@ use App\Models\ProductionOrder;
 use App\Models\QrCode;
 use App\Models\QrDocument;
 use App\Models\User;
+use App\Support\ImageDataUri;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -138,11 +139,11 @@ class QualityInspectionCertificateService
      */
     private function storePdf(ProductionOrder $order, array $payload, int $version): array
     {
-        $logoBase64 = $this->assetBase64(public_path('images/logo-bepro-calidad.png'));
+        $logoBase64 = ImageDataUri::fromFile(public_path('images/logo-bepro-calidad.png'));
 
         $signatureBase64 = null;
         if ($order->qualityResponsibleUser?->signature_path) {
-            $signatureBase64 = $this->assetBase64(
+            $signatureBase64 = ImageDataUri::fromFile(
                 Storage::disk(User::SIGNATURE_DISK)->path($order->qualityResponsibleUser->signature_path)
             );
         }
@@ -192,16 +193,5 @@ class QualityInspectionCertificateService
     private function formatNumber(float $value): string
     {
         return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
-    }
-
-    private function assetBase64(string $path): ?string
-    {
-        if (! file_exists($path)) {
-            return null;
-        }
-
-        $mimeType = mime_content_type($path) ?: 'image/png';
-
-        return 'data:'.$mimeType.';base64,'.base64_encode((string) file_get_contents($path));
     }
 }

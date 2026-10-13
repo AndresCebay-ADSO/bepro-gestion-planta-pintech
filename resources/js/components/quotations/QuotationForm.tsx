@@ -450,11 +450,17 @@ export default function QuotationForm({
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label>Notas</Label>
+                        <Label htmlFor="notes">Observaciones</Label>
                         <Textarea
+                            id="notes"
                             value={data.notes}
                             onChange={(e) => setData('notes', e.target.value)}
                         />
+                        <p className="text-xs text-muted-foreground">
+                            Opcional. Solo para condiciones particulares de esta
+                            cotización (transporte, pedido mínimo, anticipo…).
+                            Sale en el PDF; si no aplica, déjelo vacío.
+                        </p>
                     </div>
                 </div>
 

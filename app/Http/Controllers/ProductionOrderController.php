@@ -37,6 +37,7 @@ use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\TimezoneService;
 use App\Support\EnumOptions;
+use App\Support\ImageDataUri;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -201,10 +202,7 @@ class ProductionOrderController extends Controller
 
         // Copia opaca y pequeña, como en la cotización: sin Imagick, DomPDF recorre la transparencia píxel por píxel y,
         // con Xdebug activo (desarrollo), el logo transparente sube el pico de 14 a 46 MB.
-        $logoPath = public_path('images/logo-pintech-pdf.png');
-        $logoBase64 = file_exists($logoPath)
-            ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath))
-            : null;
+        $logoBase64 = ImageDataUri::fromFile(public_path('images/logo-pintech-pdf.png'));
 
         /** @var \Barryvdh\DomPDF\PDF $pdf */
         $pdf = Pdf::loadView('pdf.production-order', [

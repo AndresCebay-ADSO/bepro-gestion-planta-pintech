@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\Quotations\BuildQuotationPdfDataAction;
+use App\Actions\Quotations\RenderQuotationPdfAction;
 use App\Enums\Permission;
 use App\Enums\QuotationStatus;
 use App\Enums\SystemRole;
@@ -246,13 +247,102 @@ it('renders quotation pdf template with bepro layout sections', function () {
         ->toContain('www.beprocoatings.com')
         ->toContain('Sistema ofertado')
         ->toContain('Condiciones comerciales')
-        ->toContain('Producto / Referencia')
+        ->toContain('Producto / Descripción')
         ->toContain('SEDE CALI')
         ->toContain('Calle 23 No. 17-100')
         ->toContain('SEDE NEIVA')
         ->toContain('Calle 4 No. 2-06')
         ->toContain('Notas y alcance')
-        ->toContain('Móvil: 3009876543');
+        ->toContain('Móvil: 3009876543')
+        // Se busca el atributo y no el nombre suelto: las clases también aparecen en el CSS de la plantilla.
+        ->toContain('class="closing closing-stacked"')
+        ->not->toContain('class="closing closing-side"');
+});
+
+it('prints the commercial observations apart from the legal fine print, only when there are any', function (?string $notes, bool $printed) {
+    $quotation = Quotation::factory()->create([
+        'client_id' => $this->client->id,
+        'created_by' => $this->comercialUser->id,
+        'notes' => $notes,
+    ]);
+
+    $html = view('pdf.quotation', [
+        'quotation' => app(BuildQuotationPdfDataAction::class)->execute($quotation),
+        'beproLogoBase64' => null,
+        'pintechLogoBase64' => null,
+    ])->render();
+
+    expect($html)->toContain('Notas y alcance');
+    expect(str_contains($html, 'Observaciones:'))->toBe($printed);
+
+    if ($printed) {
+        expect($html)->toContain('No incluye transporte.<br />');
+    }
+})->with([
+    'con observación' => ["No incluye transporte.\nAnticipo del 50 %.", true],
+    'sin observación' => [null, false],
+    'solo espacios' => ['   ', false],
+]);
+
+it('lets long observations flow instead of pushing the signature block to the next page', function () {
+    // El bloque de notas y firma no se parte entre hojas; si las observaciones vivieran dentro de él, un texto largo lo
+    // empujaría entero a la hoja 2 y dejaría la primera a medio llenar.
+    $quotation = Quotation::factory()->create([
+        'client_id' => $this->client->id,
+        'created_by' => $this->comercialUser->id,
+        'notes' => str_repeat('Condición particular de este negocio acordada con el cliente. ', 24),
+    ]);
+
+    foreach (range(1, 4) as $position) {
+        $quotation->items()->create([
+            'product_id' => $this->product->id,
+            'product_variant_id' => $this->variant->id,
+            'type' => 'primer',
+            'description' => 'Imprimante epóxico anticorrosivo de alto espesor',
+            'quantity' => 12,
+            'list_unit_price' => 685000,
+            'price_adjustment_pct' => 0,
+            'unit_price' => 685000,
+            'subtotal' => 8220000,
+            'sort_order' => $position,
+        ]);
+    }
+
+    $pdf = app(RenderQuotationPdfAction::class)->execute($quotation);
+
+    expect($pdf->getDomPDF()->getCanvas()->get_page_count())->toBe(1);
+});
+
+it('fits eight products with long names on a single letter page', function () {
+    // El jefe comercial: en promedio 4 a 6 productos, fácilmente 8. Con nombres largos del catálogo la firma ya no
+    // cabe debajo de las notas y RenderQuotationPdfAction las pone lado a lado para no pasar a otra hoja.
+    $this->product->update(['name' => 'BP PRIMER EPÓXICO ESTRUCTURAL 60% SÓLIDOS GRIS CLARO']);
+
+    $quotation = Quotation::factory()->create([
+        'client_id' => $this->client->id,
+        'created_by' => $this->comercialUser->id,
+        'notes' => 'Incluye visita técnica de inicio de obra.',
+    ]);
+
+    foreach (range(1, 8) as $position) {
+        $quotation->items()->create([
+            'product_id' => $this->product->id,
+            'product_variant_id' => $this->variant->id,
+            'type' => 'primer',
+            'description' => 'Imprimante epóxico anticorrosivo de alto espesor',
+            'color' => 'Negro RAL 9006',
+            'quantity' => 12,
+            'list_unit_price' => 685000,
+            'price_adjustment_pct' => 0,
+            'unit_price' => 685000,
+            'subtotal' => 8220000,
+            'sort_order' => $position,
+        ]);
+    }
+
+    $pdf = app(RenderQuotationPdfAction::class)->execute($quotation);
+
+    expect($pdf->getDomPDF()->getCanvas()->get_page_count())->toBe(1);
 });
 
 it('keeps the quotation pdf logos small and without transparency', function (string $logo) {

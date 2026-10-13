@@ -665,7 +665,9 @@ export default function QuotationsShow({
 
                 {quotation.notes && (
                     <div className="rounded-lg border border-border bg-card p-6">
-                        <h2 className="mb-2 text-lg font-semibold">Notas</h2>
+                        <h2 className="mb-2 text-lg font-semibold">
+                            Observaciones
+                        </h2>
                         <p className="text-sm text-muted-foreground">
                             {quotation.notes}
                         </p>
