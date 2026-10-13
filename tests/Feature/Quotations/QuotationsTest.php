@@ -17,6 +17,8 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Services\QuotationService;
 use App\Services\VariantSalesPriceService;
+use App\Support\ImageDataUri;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -339,6 +341,19 @@ it('fits eight products with long names on a single letter page', function () {
             'sort_order' => $position,
         ]);
     }
+
+    // Precondición: con la firma debajo estos datos ocupan 2 hojas, así que la hoja única solo sale del cambio a lado a
+    // lado. Si un día caben en 1, el test ya no prueba ese cambio y hay que alargar los datos.
+    $stacked = Pdf::loadView('pdf.quotation', [
+        'quotation' => app(BuildQuotationPdfDataAction::class)->execute($quotation),
+        'beproLogoBase64' => ImageDataUri::fromFile(public_path(config('quotation.pdf_logos.header'))),
+        'pintechLogoBase64' => ImageDataUri::fromFile(public_path(config('quotation.pdf_logos.footer'))),
+        'closingLayout' => RenderQuotationPdfAction::LAYOUT_STACKED,
+    ])->setPaper('letter');
+    $stacked->render();
+
+    expect($stacked->getDomPDF()->getCanvas()->get_page_count())
+        ->toBe(2, 'Con la firma debajo los datos ya caben en una hoja: alárgalos para seguir probando el cambio a lado a lado.');
 
     $pdf = app(RenderQuotationPdfAction::class)->execute($quotation);
 
