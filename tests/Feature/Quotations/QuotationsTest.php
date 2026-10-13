@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\Quotations\BuildQuotationPdfDataAction;
+use App\Actions\Quotations\RenderQuotationPdfAction;
 use App\Enums\Permission;
 use App\Enums\QuotationStatus;
 use App\Enums\SystemRole;
@@ -16,6 +17,8 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Services\QuotationService;
 use App\Services\VariantSalesPriceService;
+use App\Support\ImageDataUri;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -94,6 +97,38 @@ function quotationPayload(int $clientId, int $productId, int $variantId, array $
             ],
         ],
     ], $overrides);
+}
+
+/**
+ * Cotización con textos fijos y realistas para los tests que cuentan hojas del PDF. La factory inventa el nombre del
+ * cliente y deja el teléfono del asesor a veces sí y a veces no; un renglón de más o de menos volvía esos tests una
+ * lotería (fallaban 4 de cada 10 corridas).
+ */
+function quotationWithFixedPdfTexts(int $clientId, User $advisor, array $overrides = []): Quotation
+{
+    $advisor->update([
+        'name' => 'Andrea Catalina Rodríguez',
+        'job_title' => 'Asesora comercial',
+        'phone' => '317 404 1993',
+        'email' => 'asesora.comercial@example.org',
+    ]);
+
+    return Quotation::factory()->create([
+        'client_id' => $clientId,
+        'created_by' => $advisor->id,
+        'client_business_name' => 'Constructora e Inversiones del Pacífico S.A.S',
+        'client_nit' => '9001234567',
+        'client_contact_name' => 'María Fernanda Ospina',
+        'client_phone' => '315 678 9012',
+        'technology' => 'Epóxico',
+        'line' => 'Industrial Series',
+        'thickness_mils' => '8',
+        'application_method' => 'Airless',
+        'delivery_time' => '5 Días Hab.',
+        'area' => '1250',
+        'notes' => null,
+        ...$overrides,
+    ]);
 }
 
 it('allows comercial to create a quotation using sales list price', function () {
@@ -246,13 +281,111 @@ it('renders quotation pdf template with bepro layout sections', function () {
         ->toContain('www.beprocoatings.com')
         ->toContain('Sistema ofertado')
         ->toContain('Condiciones comerciales')
-        ->toContain('Producto / Referencia')
+        ->toContain('Producto / Descripción')
         ->toContain('SEDE CALI')
         ->toContain('Calle 23 No. 17-100')
         ->toContain('SEDE NEIVA')
         ->toContain('Calle 4 No. 2-06')
         ->toContain('Notas y alcance')
-        ->toContain('Móvil: 3009876543');
+        ->toContain('Móvil: 3009876543')
+        // Se busca el atributo y no el nombre suelto: las clases también aparecen en el CSS de la plantilla.
+        ->toContain('class="closing closing-stacked"')
+        ->not->toContain('class="closing closing-side"');
+});
+
+it('prints the commercial observations apart from the legal fine print, only when there are any', function (?string $notes, bool $printed) {
+    $quotation = Quotation::factory()->create([
+        'client_id' => $this->client->id,
+        'created_by' => $this->comercialUser->id,
+        'notes' => $notes,
+    ]);
+
+    $html = view('pdf.quotation', [
+        'quotation' => app(BuildQuotationPdfDataAction::class)->execute($quotation),
+        'beproLogoBase64' => null,
+        'pintechLogoBase64' => null,
+    ])->render();
+
+    expect($html)->toContain('Notas y alcance');
+    expect(str_contains($html, 'Observaciones:'))->toBe($printed);
+
+    if ($printed) {
+        expect($html)->toContain('No incluye transporte.<br />');
+    }
+})->with([
+    'con observación' => ["No incluye transporte.\nAnticipo del 50 %.", true],
+    'sin observación' => [null, false],
+    'solo espacios' => ['   ', false],
+]);
+
+it('lets long observations flow instead of pushing the signature block to the next page', function () {
+    // El bloque de notas y firma no se parte entre hojas; si las observaciones vivieran dentro de él, un texto largo lo
+    // empujaría entero a la hoja 2 y dejaría la primera a medio llenar.
+    $quotation = quotationWithFixedPdfTexts($this->client->id, $this->comercialUser, [
+        'notes' => str_repeat('Condición particular de este negocio acordada con el cliente. ', 24),
+    ]);
+
+    foreach (range(1, 4) as $position) {
+        $quotation->items()->create([
+            'product_id' => $this->product->id,
+            'product_variant_id' => $this->variant->id,
+            'type' => 'primer',
+            'description' => 'Imprimante epóxico anticorrosivo de alto espesor',
+            'quantity' => 12,
+            'list_unit_price' => 685000,
+            'price_adjustment_pct' => 0,
+            'unit_price' => 685000,
+            'subtotal' => 8220000,
+            'sort_order' => $position,
+        ]);
+    }
+
+    $pdf = app(RenderQuotationPdfAction::class)->execute($quotation);
+
+    expect($pdf->getDomPDF()->getCanvas()->get_page_count())->toBe(1);
+});
+
+it('fits eight products with long names on a single letter page', function () {
+    // El jefe comercial: en promedio 4 a 6 productos, fácilmente 8. Con nombres largos del catálogo la firma ya no
+    // cabe debajo de las notas y RenderQuotationPdfAction las pone lado a lado para no pasar a otra hoja.
+    $this->product->update(['name' => 'BP PRIMER EPÓXICO ESTRUCTURAL 60% SÓLIDOS GRIS CLARO']);
+
+    $quotation = quotationWithFixedPdfTexts($this->client->id, $this->comercialUser, [
+        'notes' => 'Incluye visita técnica de inicio de obra.',
+    ]);
+
+    foreach (range(1, 8) as $position) {
+        $quotation->items()->create([
+            'product_id' => $this->product->id,
+            'product_variant_id' => $this->variant->id,
+            'type' => 'primer',
+            'description' => 'Imprimante epóxico anticorrosivo de alto espesor',
+            'color' => 'Negro RAL 9006',
+            'quantity' => 12,
+            'list_unit_price' => 685000,
+            'price_adjustment_pct' => 0,
+            'unit_price' => 685000,
+            'subtotal' => 8220000,
+            'sort_order' => $position,
+        ]);
+    }
+
+    // Precondición: con la firma debajo estos datos ocupan 2 hojas, así que la hoja única solo sale del cambio a lado a
+    // lado. Si un día caben en 1, el test ya no prueba ese cambio y hay que alargar los datos.
+    $stacked = Pdf::loadView('pdf.quotation', [
+        'quotation' => app(BuildQuotationPdfDataAction::class)->execute($quotation),
+        'beproLogoBase64' => ImageDataUri::fromFile(public_path(config('quotation.pdf_logos.header'))),
+        'pintechLogoBase64' => ImageDataUri::fromFile(public_path(config('quotation.pdf_logos.footer'))),
+        'closingLayout' => RenderQuotationPdfAction::LAYOUT_STACKED,
+    ])->setPaper('letter');
+    $stacked->render();
+
+    expect($stacked->getDomPDF()->getCanvas()->get_page_count())
+        ->toBe(2, 'Con la firma debajo los datos ya caben en una hoja: alárgalos para seguir probando el cambio a lado a lado.');
+
+    $pdf = app(RenderQuotationPdfAction::class)->execute($quotation);
+
+    expect($pdf->getDomPDF()->getCanvas()->get_page_count())->toBe(1);
 });
 
 it('keeps the quotation pdf logos small and without transparency', function (string $logo) {

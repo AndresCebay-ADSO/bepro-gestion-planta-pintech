@@ -17,29 +17,31 @@
         );
 
         $footerBand = $svgUri(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="810" height="118" viewBox="0 0 810 118">'
-            .'<polygon points="0,0 810,0 804,8 0,8" fill="'.$brandPink.'"/>'
-            .'<polygon points="0,8 804,8 722,118 0,118" fill="'.$brandBlue.'"/>'
+            '<svg xmlns="http://www.w3.org/2000/svg" width="530" height="100" viewBox="0 0 530 100">'
+            .'<polygon points="0,0 530,0 525,6 0,6" fill="'.$brandPink.'"/>'
+            .'<polygon points="0,6 525,6 460,100 0,100" fill="'.$brandBlue.'"/>'
             .'</svg>'
         );
 
         $money = fn ($value): string => '$'.number_format((float) ($value ?? 0), 0, ',', '.');
+
+        $sideBySide = ($closingLayout ?? null) === \App\Actions\Quotations\RenderQuotationPdfAction::LAYOUT_SIDE_BY_SIDE;
     @endphp
     <style>
+        /*
+         * Carta vertical. El margen inferior reserva el pie de sedes, que es fijo y se repite en cada hoja.
+         * No usar un reinicio `* { margin: 0 }`: en DomPDF también alcanza a la página y anula estos márgenes.
+         */
         @page {
-            margin: 26pt 36pt 22pt 36pt;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
+            margin: 32pt 40pt 90pt 40pt;
         }
 
         body {
+            margin: 0;
             font-family: Helvetica, Arial, sans-serif;
-            font-size: 9.5pt;
+            font-size: 8.5pt;
             color: #222;
-            line-height: 1.15;
+            line-height: 1.2;
         }
 
         table {
@@ -47,24 +49,29 @@
             border-collapse: collapse;
         }
 
+        td,
+        th {
+            padding: 0;
+            vertical-align: top;
+        }
+
         /* ── Encabezado ── */
         .header-logo {
-            height: 124pt;
-            margin-left: 40pt;
+            height: 58pt;
         }
 
         .quotation-no {
-            font-size: 13pt;
+            font-size: 12pt;
             font-weight: bold;
             color: #333;
             text-align: right;
-            padding-right: 50pt;
-            margin-bottom: 8pt;
+            padding-right: 14pt;
+            margin-bottom: 6pt;
         }
 
         .band {
             position: relative;
-            height: 41pt;
+            height: 32pt;
         }
 
         .band img {
@@ -72,24 +79,24 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 41pt;
+            height: 32pt;
         }
 
         .band-website {
             position: absolute;
-            top: 9pt;
-            right: 18pt;
+            top: 7pt;
+            right: 14pt;
             color: #fff;
-            font-size: 17pt;
+            font-size: 13pt;
             font-weight: bold;
         }
 
-        /* ── Cliente / Sistema ofertado / Condiciones comerciales ── */
-        .info-table {
-            margin-top: 12pt;
+        /* ── Cliente / Condiciones comerciales / Sistema ofertado ── */
+        .info {
+            margin-top: 10pt;
         }
 
-        .info-table th {
+        .info-block th {
             background: #595959;
             color: #fff;
             font-weight: bold;
@@ -99,22 +106,37 @@
             border-bottom: 1.5pt solid #000;
         }
 
-        .info-table td {
+        .info-block td {
             padding: 1pt 3pt;
-            white-space: nowrap;
         }
 
-        .info-table .label {
+        .info-block .label {
             font-weight: bold;
+            white-space: nowrap;
         }
 
         .stripe td {
             background: #f2f2f2;
         }
 
+        .system {
+            margin-top: 6pt;
+        }
+
+        .system td {
+            width: 25%;
+            padding: 1pt 3pt;
+        }
+
+        .system .label {
+            font-weight: bold;
+            background: #f2f2f2;
+        }
+
         /* ── Ítems ── */
         .items-table {
-            margin-top: 4pt;
+            margin-top: 8pt;
+            font-size: 8pt;
         }
 
         .items-table th {
@@ -122,21 +144,33 @@
             color: #fff;
             font-weight: bold;
             text-align: center;
-            padding: 4pt 2pt;
+            vertical-align: middle;
+            padding: 3pt 2pt;
             border-bottom: 1.5pt solid #000;
         }
 
-        .items-table th.small {
-            font-size: 8.5pt;
+        .items-table td {
+            padding: 1.5pt 3pt;
+            text-align: center;
+            vertical-align: middle;
         }
 
-        .items-table td {
-            padding: 1pt 3pt;
-            text-align: center;
+        .items-table td.product {
+            text-align: left;
+        }
+
+        .product-name {
+            font-weight: bold;
+        }
+
+        .product-description {
+            font-size: 7.5pt;
+            color: #555;
         }
 
         .items-table td.amount {
             text-align: right;
+            white-space: nowrap;
         }
 
         .totals-first td.totals {
@@ -146,44 +180,51 @@
         .items-table td.totals {
             text-align: right;
             padding-top: 1.5pt;
+            white-space: nowrap;
         }
 
         .items-table .grand-total td.totals {
             font-weight: bold;
+            font-size: 9.5pt;
         }
 
-        /* ── Notas ── */
+        /* ── Notas y asesor: uno debajo del otro, o lado a lado si no caben así ── */
+        .closing {
+            margin-top: 6pt;
+            page-break-inside: avoid;
+        }
+
         .notes-title {
-            margin-top: 12pt;
-            margin-bottom: 4pt;
-            padding-left: 12pt;
+            margin-bottom: 3pt;
             color: {{ $brandBlue }};
             font-weight: bold;
         }
 
-        .notes-table {
-            width: 88%;
-        }
-
-        .notes-table td {
-            vertical-align: top;
-            padding-bottom: 3pt;
+        .observations {
+            margin-top: 8pt;
             line-height: 1.3;
         }
 
+        /* Notas legales: letra pequeña, como en un contrato. */
+        .notes-table td {
+            padding-bottom: 1.5pt;
+            font-size: 6.5pt;
+            color: #666;
+            line-height: 1.3;
+            text-align: justify;
+        }
+
         .notes-table td.dash {
-            width: 12pt;
-            padding-left: 4pt;
+            width: 9pt;
         }
 
-        /* ── Asesor y pie ── */
-        .closing {
-            page-break-inside: avoid;
+        .closing-side .advisor {
+            padding-left: 18pt;
         }
 
-        .advisor {
-            margin-top: 18pt;
-            padding-left: 10pt;
+        .closing-stacked .advisor {
+            width: 200pt;
+            margin-top: 12pt;
         }
 
         .advisor-label {
@@ -192,33 +233,39 @@
         }
 
         .advisor-signature {
-            height: 40pt;
-            margin-top: 4pt;
+            height: 34pt;
+            margin-top: 2pt;
         }
 
         .advisor-signature img {
-            max-height: 40pt;
-            max-width: 190pt;
+            max-height: 34pt;
+            max-width: 160pt;
         }
 
         .advisor-name {
             font-weight: bold;
             text-transform: uppercase;
-            margin-bottom: 2pt;
+            margin-bottom: 1pt;
+            border-top: 0.75pt solid #999;
+            padding-top: 2pt;
         }
 
         .advisor-detail {
-            font-size: 8.5pt;
-            line-height: 1.35;
+            line-height: 1.25;
         }
 
+        /* ── Pie fijo: sedes y logo Pintech ── */
         .footer {
-            margin-top: 12pt;
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: -70pt;
+            height: 62pt;
         }
 
         .footer-band {
             position: relative;
-            height: 64pt;
+            height: 62pt;
         }
 
         .footer-band img {
@@ -226,22 +273,21 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 64pt;
+            height: 62pt;
         }
 
         .footer-offices {
             position: absolute;
-            top: 12pt;
-            left: 22pt;
-            width: 390pt;
+            top: 10pt;
+            left: 14pt;
+            width: 290pt;
             color: #fff;
         }
 
         .footer-offices td {
             width: 50%;
-            vertical-align: top;
-            font-size: 10pt;
-            line-height: 1.15;
+            font-size: 8pt;
+            line-height: 1.2;
         }
 
         .footer-office-title {
@@ -254,23 +300,53 @@
         }
 
         .footer-logo img {
-            width: 130pt;
+            width: 110pt;
         }
     </style>
 </head>
 <body>
 
+    {{-- ⑦ PIE FIJO: SEDES Y LOGO PINTECH (va primero para que DomPDF lo repita en cada hoja) --}}
+    <table class="footer">
+        <tr>
+            <td style="width: 66%;">
+                <div class="footer-band">
+                    <img src="{{ $footerBand }}" alt="">
+                    <table class="footer-offices">
+                        <tr>
+                            @foreach (config('quotation.footer_offices', []) as $office)
+                                <td>
+                                    <div class="footer-office-title">{{ $office['label'] }}</div>
+                                    <div>{{ implode(' / ', $office['phones'] ?? []) }}</div>
+                                    <div>{{ $office['address'] ?? '' }}</div>
+                                    <div>{{ $office['city'] ?? '' }}</div>
+                                </td>
+                            @endforeach
+                        </tr>
+                    </table>
+                </div>
+            </td>
+            <td class="footer-logo" style="width: 34%;">
+                @if ($pintechLogoBase64)
+                    <img src="{{ $pintechLogoBase64 }}" alt="Pintech">
+                @else
+                    <div style="font-size: 18pt; font-weight: bold; color: #444;">Pintech</div>
+                @endif
+            </td>
+        </tr>
+    </table>
+
     {{-- ① ENCABEZADO --}}
     <table>
         <tr>
-            <td style="width: 35%; vertical-align: top;">
+            <td style="width: 30%;">
                 @if ($beproLogoBase64)
                     <img src="{{ $beproLogoBase64 }}" alt="BePro Coatings" class="header-logo">
                 @else
-                    <div style="font-size: 20pt; font-weight: bold;">BePro COATINGS</div>
+                    <div style="font-size: 18pt; font-weight: bold;">BePro COATINGS</div>
                 @endif
             </td>
-            <td style="width: 65%; vertical-align: bottom;">
+            <td style="width: 70%; vertical-align: bottom;">
                 <div class="quotation-no">Cotización No.{{ $quotation['quotation_number'] }}</div>
                 <div class="band">
                     <img src="{{ $headerBand }}" alt="">
@@ -280,65 +356,87 @@
         </tr>
     </table>
 
-    {{-- ② CLIENTE / SISTEMA OFERTADO / CONDICIONES COMERCIALES --}}
-    <table class="info-table">
+    {{-- ② CLIENTE / CONDICIONES COMERCIALES --}}
+    <table class="info">
         <tr>
-            <th colspan="2" style="width: 31.5%;">Cliente</th>
-            <th colspan="2" style="width: 31%;">Sistema ofertado</th>
-            <th colspan="2" style="width: 37.5%;">Condiciones comerciales</th>
-        </tr>
-        <tr>
-            <td class="label" style="width: 7%;">Cliente</td>
-            <td style="width: 24.5%;">{{ $quotation['client']['business_name'] ?? 'N.D.' }}</td>
-            <td class="label" style="width: 18%;">Tecnología</td>
-            <td style="width: 13%;">{{ $quotation['technology'] ?? 'N.D.' }}</td>
-            <td class="label" style="width: 13.5%;">Fecha</td>
-            <td style="width: 24%;">{{ $quotation['quotation_date'] ?? 'N.D.' }}</td>
-        </tr>
-        <tr class="stripe">
-            <td class="label">NIT</td>
-            <td>{{ $quotation['client']['nit'] ?? 'N.D.' }}</td>
-            <td class="label">Línea</td>
-            <td>{{ $quotation['line'] ?? 'N.D.' }}</td>
-            <td class="label">Validez</td>
-            <td>{{ $quotation['validity_days'] ?? 'N.D.' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Contacto</td>
-            <td>{{ $quotation['client']['contact_name'] ?? 'N.D.' }}</td>
-            <td class="label">Espesor en Mils</td>
-            <td>{{ $quotation['thickness_mils'] }}</td>
-            <td class="label">Forma de Pago</td>
-            <td>{{ $quotation['payment_method'] ?? 'N.D.' }}</td>
-        </tr>
-        <tr class="stripe">
-            <td class="label">Teléfono</td>
-            <td>{{ $quotation['client']['phone'] ?? 'N.D.' }}</td>
-            <td class="label">Método de aplicación</td>
-            <td>{{ $quotation['application_method'] ?? 'N.A.' }}</td>
-            <td class="label">Tiempo de entrega</td>
-            <td>{{ $quotation['delivery_time'] ?? 'N.D.' }}</td>
-        </tr>
-        <tr>
-            <td class="label">M2</td>
-            <td>{{ $quotation['area'] }}</td>
-            <td colspan="4"></td>
+            <td style="width: 54%; padding-right: 6pt;">
+                <table class="info-block">
+                    <tr><th colspan="2">Cliente</th></tr>
+                    <tr>
+                        <td class="label" style="width: 22%;">Cliente</td>
+                        <td>{{ $quotation['client']['business_name'] ?? 'N.D.' }}</td>
+                    </tr>
+                    <tr class="stripe">
+                        <td class="label">NIT</td>
+                        <td>{{ $quotation['client']['nit'] ?? 'N.D.' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Contacto</td>
+                        <td>{{ $quotation['client']['contact_name'] ?? 'N.D.' }}</td>
+                    </tr>
+                    <tr class="stripe">
+                        <td class="label">Teléfono</td>
+                        <td>{{ $quotation['client']['phone'] ?? 'N.D.' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">M2</td>
+                        <td>{{ $quotation['area'] }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td style="width: 46%;">
+                <table class="info-block">
+                    <tr><th colspan="2">Condiciones comerciales</th></tr>
+                    <tr>
+                        <td class="label" style="width: 42%;">Fecha</td>
+                        <td>{{ $quotation['quotation_date'] ?? 'N.D.' }}</td>
+                    </tr>
+                    <tr class="stripe">
+                        <td class="label">Validez</td>
+                        <td>{{ $quotation['validity_days'] ?? 'N.D.' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Forma de Pago</td>
+                        <td>{{ $quotation['payment_method'] ?? 'N.D.' }}</td>
+                    </tr>
+                    <tr class="stripe">
+                        <td class="label">Tiempo de entrega</td>
+                        <td>{{ $quotation['delivery_time'] ?? 'N.D.' }}</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
     </table>
 
-    {{-- ③ ÍTEMS Y TOTALES --}}
+    {{-- ③ SISTEMA OFERTADO --}}
+    <table class="info-block system">
+        <tr><th colspan="4">Sistema ofertado</th></tr>
+        <tr>
+            <td class="label">Tecnología</td>
+            <td class="label">Línea</td>
+            <td class="label">Espesor en Mils</td>
+            <td class="label">Método de aplicación</td>
+        </tr>
+        <tr>
+            <td>{{ $quotation['technology'] ?? 'N.D.' }}</td>
+            <td>{{ $quotation['line'] ?? 'N.D.' }}</td>
+            <td>{{ $quotation['thickness_mils'] }}</td>
+            <td>{{ $quotation['application_method'] ?? 'N.A.' }}</td>
+        </tr>
+    </table>
+
+    {{-- ④ ÍTEMS Y TOTALES --}}
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 6.5%;">Ítem</th>
-                <th style="width: 10%;">Tipo</th>
-                <th style="width: 16%;">Producto / Referencia</th>
-                <th style="width: 16%;">Descripción comercial</th>
-                <th style="width: 13.5%;">Color</th>
-                <th style="width: 11.5%;">Presentación</th>
-                <th style="width: 8.5%;">Cantidad</th>
-                <th class="small" style="width: 9%;">Precio Unitario</th>
-                <th class="small" style="width: 9%;">Precio Total</th>
+                <th style="width: 4%;">Ítem</th>
+                <th style="width: 11%;">Tipo</th>
+                <th style="width: 36%;">Producto / Descripción</th>
+                <th style="width: 11%;">Color</th>
+                <th style="width: 10%;">Presentación</th>
+                <th style="width: 6%;">Cant.</th>
+                <th style="width: 10%;">Precio Unitario</th>
+                <th style="width: 12%;">Precio Total</th>
             </tr>
         </thead>
         <tbody>
@@ -346,8 +444,12 @@
                 <tr class="{{ $index % 2 ? 'stripe' : '' }}">
                     <td>{{ $item['sort_order'] ?? ($index + 1) }}</td>
                     <td>{{ $item['item_type'] ?? '' }}</td>
-                    <td>{{ $item['product_reference'] ?? '' }}</td>
-                    <td>{{ $item['description'] ?? $item['product_reference'] ?? '' }}</td>
+                    <td class="product">
+                        <div class="product-name">{{ $item['product_reference'] ?? '' }}</div>
+                        @if (filled($item['description'] ?? null) && $item['description'] !== ($item['product_reference'] ?? null))
+                            <div class="product-description">{{ $item['description'] }}</div>
+                        @endif
+                    </td>
                     <td>{{ $item['color'] ?? '' }}</td>
                     <td>{{ $item['presentation_label'] ?? '' }}</td>
                     <td>{{ $item['quantity'] }}</td>
@@ -357,93 +459,51 @@
             @endforeach
 
             <tr class="totals-first">
-                <td colspan="7"></td>
+                <td colspan="6"></td>
                 <td class="totals">Subtotal</td>
                 <td class="totals">{{ $money($quotation['subtotal']) }}</td>
             </tr>
             <tr>
-                <td colspan="7"></td>
+                <td colspan="6"></td>
                 <td class="totals">IVA {{ number_format((float) ($quotation['iva_percentage'] ?? 0), 0) }}%</td>
                 <td class="totals">{{ $money($quotation['iva_amount']) }}</td>
             </tr>
             <tr class="grand-total">
-                <td colspan="7"></td>
+                <td colspan="6"></td>
                 <td class="totals">Total</td>
                 <td class="totals">{{ $money($quotation['total']) }}</td>
             </tr>
         </tbody>
     </table>
 
-    {{-- ④ NOTAS Y ALCANCE --}}
-    <div class="notes-title">Notas y alcance:</div>
-    <table class="notes-table">
-        @foreach (config('quotation.legal_notes', []) as $note)
-            <tr>
-                <td class="dash">-</td>
-                <td>{{ $note }}</td>
-            </tr>
-        @endforeach
-        @if (!empty($quotation['notes']))
-            <tr>
-                <td class="dash">-</td>
-                <td>{{ $quotation['notes'] }}</td>
-            </tr>
-        @endif
-    </table>
-
-    <div class="closing">
-        {{-- ⑤ ASESOR --}}
-        <div class="advisor">
-            <div class="advisor-label">Asesor:</div>
-            <div class="advisor-signature">
-                @if (!empty($quotation['advisor']['signature']))
-                    <img src="{{ $quotation['advisor']['signature'] }}" alt="Firma del asesor">
-                @endif
-            </div>
-            <div class="advisor-name">{{ $quotation['advisor']['name'] ?? 'N.D.' }}</div>
-            <div class="advisor-detail">
-                @if (!empty($quotation['advisor']['job_title']))
-                    <div>{{ $quotation['advisor']['job_title'] }}</div>
-                @endif
-                @if (!empty($quotation['advisor']['phone']))
-                    <div>Móvil: {{ $quotation['advisor']['phone'] }}</div>
-                @endif
-                @if (!empty($quotation['advisor']['email']))
-                    <div>Email: {{ $quotation['advisor']['email'] }}</div>
-                @endif
-            </div>
+    {{--
+        ⑤ OBSERVACIONES DEL COMERCIAL. Van fuera del bloque de cierre: ese bloque no se parte entre hojas, y un texto
+        largo dentro de él lo empujaría entero a la hoja siguiente dejando la primera a medio llenar.
+    --}}
+    @if (filled($quotation['notes'] ?? null))
+        <div class="observations">
+            <div class="notes-title">Observaciones:</div>
+            <div>{!! nl2br(e($quotation['notes'])) !!}</div>
         </div>
+    @endif
 
-        {{-- ⑥ PIE: SEDES Y LOGO PINTECH --}}
-        <table class="footer">
+    {{--
+        ⑥ NOTAS Y ASESOR. Por defecto el asesor firma debajo de las notas. RenderQuotationPdfAction los pone lado a
+        lado solo cuando así la firma se pasaría a otra hoja.
+    --}}
+    @if ($sideBySide)
+        <table class="closing closing-side">
             <tr>
-                <td style="width: 63%;">
-                    <div class="footer-band">
-                        <img src="{{ $footerBand }}" alt="">
-                        <table class="footer-offices">
-                            <tr>
-                                @foreach (config('quotation.footer_offices', []) as $office)
-                                    <td>
-                                        <div class="footer-office-title">{{ $office['label'] }}</div>
-                                        <div>{{ implode(' / ', $office['phones'] ?? []) }}</div>
-                                        <div>{{ $office['address'] ?? '' }}</div>
-                                        <div>{{ $office['city'] ?? '' }}</div>
-                                    </td>
-                                @endforeach
-                            </tr>
-                        </table>
-                    </div>
-                </td>
-                <td class="footer-logo" style="width: 37%;">
-                    @if ($pintechLogoBase64)
-                        <img src="{{ $pintechLogoBase64 }}" alt="Pintech">
-                    @else
-                        <div style="font-size: 20pt; font-weight: bold; color: #444;">Pintech</div>
-                    @endif
-                </td>
+                <td style="width: 64%;">@include('pdf.partials.quotation-notes')</td>
+                <td class="advisor" style="width: 36%;">@include('pdf.partials.quotation-advisor')</td>
             </tr>
         </table>
-    </div>
+    @else
+        <div class="closing closing-stacked">
+            @include('pdf.partials.quotation-notes')
+            <div class="advisor">@include('pdf.partials.quotation-advisor')</div>
+        </div>
+    @endif
 
 </body>
 </html>

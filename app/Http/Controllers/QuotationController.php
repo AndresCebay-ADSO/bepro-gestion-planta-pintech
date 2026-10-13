@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\Quotations\BuildQuotationPdfDataAction;
+use App\Actions\Quotations\RenderQuotationPdfAction;
 use App\Enums\PaymentMethod;
 use App\Enums\Permission;
 use App\Enums\QuotationItemType;
@@ -20,9 +20,7 @@ use App\Models\Client;
 use App\Models\Quotation;
 use App\Models\User;
 use App\Services\QuotationService;
-use App\Services\TimezoneService;
 use App\Support\EnumOptions;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -32,8 +30,7 @@ class QuotationController extends Controller
 {
     public function __construct(
         private readonly QuotationService $quotationService,
-        private readonly BuildQuotationPdfDataAction $buildQuotationPdfData,
-        private readonly TimezoneService $timezoneService,
+        private readonly RenderQuotationPdfAction $renderQuotationPdf,
     ) {}
 
     public function index(IndexQuotationRequest $request): Response
@@ -182,31 +179,9 @@ class QuotationController extends Controller
     {
         $this->authorize('exportPdf', $quotation);
 
-        $quotationData = $this->buildQuotationPdfData->execute($quotation);
-        $filename = 'COT. '.($quotationData['quotation_number'] ?? $quotation->id).'.pdf';
+        $filename = 'COT. '.($quotation->quotation_number ?? $quotation->id).'.pdf';
 
-        /** @var \Barryvdh\DomPDF\PDF $pdf */
-        $pdf = Pdf::loadView('pdf.quotation', [
-            'quotation' => $quotationData,
-            'beproLogoBase64' => $this->imageToBase64(public_path(config('quotation.pdf_logos.header'))),
-            'pintechLogoBase64' => $this->imageToBase64(public_path(config('quotation.pdf_logos.footer'))),
-            'generatedAt' => $this->timezoneService->formatPlantDateTime(now()),
-        ]);
-
-        $pdf->setPaper('letter', 'landscape');
-
-        return $pdf->download($filename);
-    }
-
-    private function imageToBase64(string $path): ?string
-    {
-        if (! file_exists($path)) {
-            return null;
-        }
-
-        $mime = mime_content_type($path) ?: 'image/png';
-
-        return 'data:'.$mime.';base64,'.base64_encode((string) file_get_contents($path));
+        return $this->renderQuotationPdf->execute($quotation)->download($filename);
     }
 
     /**
