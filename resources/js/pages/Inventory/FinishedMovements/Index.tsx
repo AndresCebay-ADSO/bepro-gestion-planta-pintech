@@ -150,7 +150,7 @@ export default function FinishedMovementsIndex({
         load: loadFormData,
         isLoading: isLoadingFormData,
         loadError: fetchError,
-    } = useDrawerFormProps(DRAWER_FORM_PROPS, Boolean(batches && warehouses));
+    } = useDrawerFormProps(DRAWER_FORM_PROPS);
 
     const openDrawer = useCallback(
         (mode: DrawerMode) => {

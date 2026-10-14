@@ -12,12 +12,12 @@ const LOAD_ERROR =
  *
  * Como el cliente las recuerda, se piden de nuevo en cada apertura, con el esqueleto a la vista, para no ofrecer
  * por un instante los saldos de antes (de un movimiento recién registrado o de otro usuario). No se pierde nada:
- * el cajón descarta el formulario al cerrarse.
+ * el cajón descarta el formulario al cerrarse. Por lo mismo, si el refresco falla se muestra el error con
+ * «Reintentar», aunque haya opciones de una apertura anterior.
  *
- * @param props  Nombres de las props que pide el cajón; debe ser una constante del módulo.
- * @param loaded Si las props ya están en la página.
+ * @param props Nombres de las props que pide el cajón; debe ser una constante del módulo.
  */
-export function useDrawerFormProps(props: string[], loaded: boolean) {
+export function useDrawerFormProps(props: string[]) {
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -41,10 +41,5 @@ export function useDrawerFormProps(props: string[], loaded: boolean) {
         });
     }, [props]);
 
-    return {
-        load,
-        isLoading,
-        // Si falla un refresco con datos ya cargados, el formulario sigue con los que tiene.
-        loadError: loaded ? null : loadError,
-    };
+    return { load, isLoading, loadError };
 }

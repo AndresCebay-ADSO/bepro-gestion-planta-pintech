@@ -119,10 +119,7 @@ export default function InventoryMovementsIndex({
         load: loadFormData,
         isLoading: isLoadingFormData,
         loadError: fetchError,
-    } = useDrawerFormProps(
-        DRAWER_FORM_PROPS,
-        Boolean(rawMaterials && batches && warehouses),
-    );
+    } = useDrawerFormProps(DRAWER_FORM_PROPS);
 
     const openDrawer = useCallback(
         (mode: 'entry' | 'exit') => {
