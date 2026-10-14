@@ -150,6 +150,13 @@ export default function ProductionOrdersCreate({
 
         return sum + units * value;
     }, 0);
+    // A la escala de la cantidad (4 decimales): la suma con float deja ruido (3 × 0,1 = 0,30000000000000004), y con
+    // `===` se mostraba «Diferencia: 0.00» aunque el plan coincidiera.
+    const plannedDifference =
+        plannedQuantity === null
+            ? null
+            : Number((plannedQuantity - totalPlannedGallons).toFixed(4));
+    const packagingMatches = plannedDifference === 0;
 
     return (
         <>
@@ -349,21 +356,19 @@ export default function ProductionOrdersCreate({
                                     <strong>
                                         {totalPlannedGallons.toFixed(2)} gal
                                     </strong>
-                                    {plannedQuantity !== null &&
+                                    {plannedDifference !== null &&
                                         totalPlannedGallons > 0 && (
                                             <span
                                                 className={
-                                                    totalPlannedGallons ===
-                                                    plannedQuantity
+                                                    packagingMatches
                                                         ? 'text-green-600'
                                                         : 'text-amber-600'
                                                 }
                                             >
                                                 {' '}
-                                                {totalPlannedGallons ===
-                                                plannedQuantity
+                                                {packagingMatches
                                                     ? '✓ Coincide con la cantidad'
-                                                    : `⚠ Diferencia: ${(plannedQuantity - totalPlannedGallons).toFixed(2)} gal`}
+                                                    : `⚠ Diferencia: ${plannedDifference} gal`}
                                             </span>
                                         )}
                                 </p>
