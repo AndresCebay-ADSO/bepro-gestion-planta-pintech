@@ -28,6 +28,7 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useDrawerFormProps } from '@/hooks/use-drawer-form-props';
 import { useFilters } from '@/hooks/use-filters';
 import { finishedLotLabel } from '@/lib/finished-lot';
 import {
@@ -37,6 +38,8 @@ import {
 import type { FinishedMovementsPage } from '@/types/finished-inventory';
 
 type DrawerMode = 'entry' | 'exit' | 'transfer';
+
+const DRAWER_FORM_PROPS = ['batches', 'warehouses', 'currentWarehouseId'];
 
 const drawerCopy: Record<
     DrawerMode,
@@ -141,29 +144,20 @@ export default function FinishedMovementsIndex({
         isOpen: boolean;
         mode: DrawerMode;
     }>({ isOpen: false, mode: 'entry' });
-    const [isLoadingFormData, setIsLoadingFormData] = useState(false);
-    const [fetchError, setFetchError] = useState<string | null>(null);
     const hasOpenedFromUrl = useRef(false);
     const flash = usePage().props.flash;
+    const {
+        load: loadFormData,
+        isLoading: isLoadingFormData,
+        loadError: fetchError,
+    } = useDrawerFormProps(DRAWER_FORM_PROPS, Boolean(batches && warehouses));
 
     const openDrawer = useCallback(
         (mode: DrawerMode) => {
             setDrawerState({ isOpen: true, mode });
-            setFetchError(null);
-
-            if (!batches || !warehouses) {
-                setIsLoadingFormData(true);
-                router.reload({
-                    only: ['batches', 'warehouses', 'currentWarehouseId'],
-                    onFinish: () => setIsLoadingFormData(false),
-                    onError: () =>
-                        setFetchError(
-                            'No se pudieron cargar lotes y bodegas. Intenta nuevamente.',
-                        ),
-                });
-            }
+            loadFormData();
         },
-        [batches, warehouses],
+        [loadFormData],
     );
 
     useEffect(() => {
@@ -187,7 +181,7 @@ export default function FinishedMovementsIndex({
 
     const closeDrawerAfterSuccess = () => {
         setDrawerState((state) => ({ ...state, isOpen: false }));
-        router.reload({ only: ['movements', 'batches'] });
+        router.reload({ only: ['movements'] });
     };
 
     const drawer = drawerCopy[drawerState.mode];
