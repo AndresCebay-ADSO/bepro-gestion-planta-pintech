@@ -1,5 +1,6 @@
 import { Beaker } from 'lucide-react';
 
+import { DecimalInput } from '@/components/decimal-input';
 import { IngredientsTable } from '@/components/production/ingredients-table';
 import { LineAdjustmentsPanel } from '@/components/production/line-adjustments-panel';
 import { PackagingSection } from '@/components/production/packaging-section';
@@ -10,7 +11,6 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import type { PreviewStaleReason } from '@/hooks/use-production-cost-preview';
@@ -99,17 +99,12 @@ export function ResultsCard({
                         <Label htmlFor="actual-yield">
                             Rendimiento Real (eq. gal)
                         </Label>
-                        <Input
+                        <DecimalInput
                             id="actual-yield"
-                            type="number"
-                            step="0.0001"
-                            placeholder="Ej: 19.7500"
+                            placeholder="Ej: 19,75"
                             value={data.actual_yield_quantity}
-                            onChange={(event) =>
-                                setData(
-                                    'actual_yield_quantity',
-                                    event.target.value,
-                                )
+                            onValueChange={(value) =>
+                                setData('actual_yield_quantity', value)
                             }
                             disabled={isReadOnly}
                         />
@@ -139,17 +134,14 @@ export function ResultsCard({
                                 <Label htmlFor="viscosity">
                                     Viscosidad (KU)
                                 </Label>
-                                <Input
+                                <DecimalInput
                                     id="viscosity"
-                                    type="number"
-                                    step="0.01"
-                                    placeholder="Ej: 105.5"
+                                    maxDecimals={2}
+                                    maxIntegerDigits={6}
+                                    placeholder="Ej: 105,5"
                                     value={data.viscosity_ku}
-                                    onChange={(event) =>
-                                        setData(
-                                            'viscosity_ku',
-                                            event.target.value,
-                                        )
+                                    onValueChange={(value) =>
+                                        setData('viscosity_ku', value)
                                     }
                                     disabled={isReadOnly}
                                 />
@@ -161,17 +153,14 @@ export function ResultsCard({
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="grinding">Molienda (HG)</Label>
-                                <Input
+                                <DecimalInput
                                     id="grinding"
-                                    type="number"
-                                    step="0.01"
-                                    placeholder="Ej: 7.2"
+                                    maxDecimals={2}
+                                    maxIntegerDigits={6}
+                                    placeholder="Ej: 7,2"
                                     value={data.grinding_hg}
-                                    onChange={(event) =>
-                                        setData(
-                                            'grinding_hg',
-                                            event.target.value,
-                                        )
+                                    onValueChange={(value) =>
+                                        setData('grinding_hg', value)
                                     }
                                     disabled={isReadOnly}
                                 />
@@ -185,17 +174,14 @@ export function ResultsCard({
                                 <Label htmlFor="quality-solids">
                                     Sólidos (%)
                                 </Label>
-                                <Input
+                                <DecimalInput
                                     id="quality-solids"
-                                    type="number"
-                                    step="0.01"
-                                    placeholder="Ej: 52.4"
+                                    maxDecimals={2}
+                                    maxIntegerDigits={3}
+                                    placeholder="Ej: 52,4"
                                     value={data.quality_solids}
-                                    onChange={(event) =>
-                                        setData(
-                                            'quality_solids',
-                                            event.target.value,
-                                        )
+                                    onValueChange={(value) =>
+                                        setData('quality_solids', value)
                                     }
                                     disabled={isReadOnly}
                                 />

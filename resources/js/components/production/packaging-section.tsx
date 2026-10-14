@@ -7,10 +7,10 @@ import {
     store as storePackagingPlan,
 } from '@/actions/App/Http/Controllers/Production/PackagingPlanController';
 import { FormattedNumber } from '@/components/formatted-number';
+import { IntegerInput } from '@/components/integer-input';
 import { PrintLabelsButton } from '@/components/production/print-labels-button';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -114,15 +114,12 @@ export function PackagingSection({
                                             />
                                         </td>
                                         <td className="p-3">
-                                            <Input
+                                            <IntegerInput
                                                 className="h-8 text-right"
-                                                type="number"
-                                                step="1"
                                                 value={pack.actual_units}
-                                                onChange={(event) =>
+                                                onValueChange={(value) =>
                                                     updateRow(index, {
-                                                        actual_units:
-                                                            event.target.value,
+                                                        actual_units: value,
                                                     })
                                                 }
                                                 disabled={isReadOnly}
@@ -294,18 +291,13 @@ function PackagingMaterialsRow({
                         <Label htmlFor={`new-containers-${pack.id}`}>
                             Envases nuevos usados
                         </Label>
-                        <Input
+                        <IntegerInput
                             id={`new-containers-${pack.id}`}
                             className="h-8 text-right"
-                            type="number"
-                            step="1"
-                            min="0"
                             value={pack.new_containers_used}
                             placeholder={unitsPlaceholder}
-                            onChange={(event) =>
-                                onChange({
-                                    new_containers_used: event.target.value,
-                                })
+                            onValueChange={(value) =>
+                                onChange({ new_containers_used: value })
                             }
                             disabled={isReadOnly || !pack.package_code}
                         />
@@ -364,16 +356,13 @@ function PackagingMaterialsRow({
                         <Label htmlFor={`labels-used-${pack.id}`}>
                             Etiquetas usadas
                         </Label>
-                        <Input
+                        <IntegerInput
                             id={`labels-used-${pack.id}`}
                             className="h-8 text-right"
-                            type="number"
-                            step="1"
-                            min="0"
                             value={pack.labels_used}
                             placeholder={unitsPlaceholder}
-                            onChange={(event) =>
-                                onChange({ labels_used: event.target.value })
+                            onValueChange={(value) =>
+                                onChange({ labels_used: value })
                             }
                             disabled={
                                 isReadOnly || pack.label_raw_material_id == null
@@ -427,7 +416,7 @@ function PackagingPlanForm({
             storePackagingPlan({ production_order: orderId }).url,
             {
                 product_variant_id: variantId,
-                planned_units: Number(plannedUnits),
+                planned_units: plannedUnits,
             },
             {
                 preserveScroll: true,
@@ -464,16 +453,11 @@ function PackagingPlanForm({
                     )}
                 </div>
                 <div className="space-y-1">
-                    <Input
-                        type="number"
-                        step="1"
-                        min="1"
+                    <IntegerInput
                         placeholder="Unidades planeadas"
                         className="h-9"
                         value={plannedUnits}
-                        onChange={(event) =>
-                            setPlannedUnits(event.target.value)
-                        }
+                        onValueChange={setPlannedUnits}
                     />
                     {formErrors.planned_units && (
                         <p className="text-xs text-destructive">

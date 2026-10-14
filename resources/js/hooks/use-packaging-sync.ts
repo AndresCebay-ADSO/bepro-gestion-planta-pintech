@@ -23,7 +23,7 @@ export function mapPackagingPlanToFormRow(
         planned_units: pack.planned_units,
         actual_units: edited
             ? edited.actual_units
-            : (pack.actual_units ?? pack.planned_units),
+            : formatForInput(pack.actual_units ?? pack.planned_units),
         cost_price: pack.cost_price ?? null,
         package_code: pack.package_code ?? null,
         new_containers_used: edited

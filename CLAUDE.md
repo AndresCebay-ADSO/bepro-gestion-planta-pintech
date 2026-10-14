@@ -13,10 +13,11 @@ Guidance for Claude Code (claude.ai/code) when working with Pintech OS.
 ```bash
 # Development & Quality
 composer dev                   # server + queue:listen + pail + vite (recommended)
-composer ci:check              # Full gate: eslint + prettier + tsc + pint + tests
+composer ci:check              # Full gate: eslint + prettier + tsc + vitest + pint + tests
 composer lint                  # pint --parallel (PHP format fix)
 npm run lint / lint:check      # ESLint fix / check
 npm run types:check            # tsc --noEmit
+npm run test:js                # Vitest: pure frontend functions only (resources/js/**/*.test.ts, no DOM)
 npm run format / format:check  # Prettier fix / check
 php artisan optimize:clear     # Clear all application caches
 php artisan roles:audit        # Custom roles with reserved permissions or broken dependencies (run on deploy)

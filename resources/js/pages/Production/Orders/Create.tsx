@@ -2,7 +2,9 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { Plus, Trash2 } from 'lucide-react';
 
 import { store as productionOrderStore } from '@/actions/App/Http/Controllers/ProductionOrderController';
+import { DecimalInput } from '@/components/decimal-input';
 import InputError from '@/components/input-error';
+import { IntegerInput } from '@/components/integer-input';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -15,6 +17,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
 import { index as productionOrderIndex } from '@/routes/production-orders';
 import type { VariantOption } from '@/types/production-orders';
 
@@ -42,16 +45,17 @@ export default function ProductionOrdersCreate({
     products,
     warehouses,
 }: Props) {
-    const { data, setData, post, processing, errors, clearErrors } = useForm({
-        product_id: '',
-        formula_id: '',
-        quantity: '',
-        warehouse_id: warehouses[0]?.id?.toString() || '',
-        planned_date: '',
-        notes: '',
-        color: '',
-        packaging: [] as PackagingRow[],
-    });
+    const { data, setData, post, processing, errors, clearErrors, transform } =
+        useForm({
+            product_id: '',
+            formula_id: '',
+            quantity: '',
+            warehouse_id: warehouses[0]?.id?.toString() || '',
+            planned_date: '',
+            notes: '',
+            color: '',
+            packaging: [] as PackagingRow[],
+        });
 
     // Cuando cambia el producto, actualizamos las fórmulas disponibles
     const selectedProduct = products.find(
@@ -100,6 +104,10 @@ export default function ProductionOrdersCreate({
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        transform((formData) => ({
+            ...formData,
+            quantity: toDecimalPayload(formData.quantity),
+        }));
         post(productionOrderStore().url);
     };
 
@@ -130,12 +138,14 @@ export default function ProductionOrdersCreate({
         setData('packaging', updated);
     };
 
+    const plannedQuantity = parseDecimal(data.quantity);
+
     // Calcular total de galones planificados
     const totalPlannedGallons = data.packaging.reduce((sum, pack) => {
         const variant = availableVariants.find(
             (v) => v.id === Number(pack.product_variant_id),
         );
-        const units = parseFloat(pack.planned_units) || 0;
+        const units = parseDecimal(pack.planned_units) ?? 0;
         const value = variant?.presentation_value || 0;
 
         return sum + units * value;
@@ -238,14 +248,11 @@ export default function ProductionOrdersCreate({
                                 <Label htmlFor="quantity">
                                     Cantidad a Producir (galones) *
                                 </Label>
-                                <Input
+                                <DecimalInput
                                     id="quantity"
-                                    type="number"
-                                    step="0.01"
-                                    min="0.01"
                                     value={data.quantity}
-                                    onChange={(e) =>
-                                        setData('quantity', e.target.value)
+                                    onValueChange={(value) =>
+                                        setData('quantity', value)
                                     }
                                     placeholder="Ej: 50"
                                 />
@@ -342,21 +349,21 @@ export default function ProductionOrdersCreate({
                                     <strong>
                                         {totalPlannedGallons.toFixed(2)} gal
                                     </strong>
-                                    {data.quantity &&
+                                    {plannedQuantity !== null &&
                                         totalPlannedGallons > 0 && (
                                             <span
                                                 className={
                                                     totalPlannedGallons ===
-                                                    parseFloat(data.quantity)
+                                                    plannedQuantity
                                                         ? 'text-green-600'
                                                         : 'text-amber-600'
                                                 }
                                             >
                                                 {' '}
                                                 {totalPlannedGallons ===
-                                                parseFloat(data.quantity)
+                                                plannedQuantity
                                                     ? '✓ Coincide con la cantidad'
-                                                    : `⚠ Diferencia: ${(parseFloat(data.quantity) - totalPlannedGallons).toFixed(2)} gal`}
+                                                    : `⚠ Diferencia: ${(plannedQuantity - totalPlannedGallons).toFixed(2)} gal`}
                                             </span>
                                         )}
                                 </p>
@@ -427,16 +434,13 @@ export default function ProductionOrdersCreate({
                                                     Unidades a Producir
                                                 </Label>
                                             )}
-                                            <Input
-                                                type="number"
-                                                step="1"
-                                                min="0"
+                                            <IntegerInput
                                                 value={pack.planned_units}
-                                                onChange={(e) =>
+                                                onValueChange={(value) =>
                                                     updatePackaging(
                                                         index,
                                                         'planned_units',
-                                                        e.target.value,
+                                                        value,
                                                     )
                                                 }
                                                 placeholder="Ej: 10"

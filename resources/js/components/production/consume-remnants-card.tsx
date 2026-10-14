@@ -3,12 +3,14 @@ import { FlaskConical } from 'lucide-react';
 import { useState } from 'react';
 
 import { store as consumeRemnant } from '@/actions/App/Http/Controllers/Production/RemnantConsumptionController';
+import { DecimalInput } from '@/components/decimal-input';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
 import type { ProductionOrder } from '@/types/production-orders';
 
 type ConsumeRemnantsCardProps = {
@@ -45,6 +47,7 @@ export function ConsumeRemnantsCard({
     const activeRemnant = availableRemnants.find(
         (r) => r.id === selectedRemnantId,
     );
+    const gallonsToConsume = parseDecimal(quantityGallons);
 
     const handleAdd = () => {
         if (!selectedRemnantId || !quantityGallons) {
@@ -70,7 +73,7 @@ export function ConsumeRemnantsCard({
             consumeRemnant({ production_order: orderId }).url,
             {
                 remnant_id: selectedRemnantId,
-                quantity_gallons: Number(quantityGallons),
+                quantity_gallons: toDecimalPayload(quantityGallons),
                 notes: notes || undefined,
             },
             {
@@ -241,16 +244,11 @@ export function ConsumeRemnantsCard({
                                 )}
                             </div>
                             <div className="space-y-1">
-                                <Input
-                                    type="number"
-                                    step="0.0001"
-                                    min="0.0001"
+                                <DecimalInput
                                     placeholder="Galones"
                                     className="h-9"
                                     value={quantityGallons}
-                                    onChange={(event) =>
-                                        setQuantityGallons(event.target.value)
-                                    }
+                                    onValueChange={setQuantityGallons}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                             e.preventDefault();
@@ -264,12 +262,12 @@ export function ConsumeRemnantsCard({
                                 )}
                             </div>
                         </div>
-                        {quantityGallons &&
+                        {gallonsToConsume !== null &&
                             activeRemnant?.density_kg_per_gallon && (
                                 <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
                                     ≈{' '}
                                     {(
-                                        Number(quantityGallons) *
+                                        gallonsToConsume *
                                         Number(
                                             activeRemnant.density_kg_per_gallon,
                                         )

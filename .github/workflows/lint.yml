@@ -1,6 +1,6 @@
 name: quality
 
-# Comprueba formato, estilo y tipos. Nunca corrige: si algo no cumple, el job falla.
+# Comprueba formato, estilo, tipos y las pruebas del front. Nunca corrige: si algo no cumple, el job falla.
 on:
   push:
     branches:
@@ -115,6 +115,10 @@ jobs:
 
       - name: TypeScript
         run: npm run types:check
+
+      # Funciones puras del front, como la que interpreta los campos decimales (auditoría 3.6, INV-15).
+      - name: Vitest
+        run: npm run test:js
 
       # Bloqueantes desde 2026-09 (partimos de 0 avisos): una vulnerabilidad conocida frena el merge, y el arreglo suele
       # llegar solo como PR de Dependabot. Un paquete abandonado avisa pero no bloquea.

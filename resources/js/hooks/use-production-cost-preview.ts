@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 
 import { previewCosts as productionOrderPreviewCosts } from '@/actions/App/Http/Controllers/ProductionOrderController';
+import { parseDecimal } from '@/lib/numeric-input';
+import { ingredientQuantityForServer } from '@/lib/production-ingredient-quantity';
 import type {
     PreviewCostData,
     ProductionOrderIngredientFormRow,
@@ -53,17 +55,20 @@ export function useProductionCostPreview({
     const ingredientsSignature = JSON.stringify(
         ingredients.map((ingredient) => ({
             id: ingredient.id,
-            actual_quantity: ingredient.conversion_factor
-                ? (Number(ingredient.actual_quantity) || 0) *
-                  ingredient.conversion_factor
-                : Number(ingredient.actual_quantity) || 0,
+            actual_quantity:
+                parseDecimal(
+                    ingredientQuantityForServer(
+                        ingredient.actual_quantity,
+                        ingredient.conversion_factor,
+                    ),
+                ) ?? 0,
         })),
     );
 
     const packagingSignature = JSON.stringify(
         packaging.map((pack) => ({
             id: pack.id,
-            actual_units: Number(pack.actual_units) || 0,
+            actual_units: parseDecimal(pack.actual_units) ?? 0,
             // Como texto: el servidor los calcula con bcmath. Vacío = tantos como unidades envasadas.
             new_containers_used:
                 pack.new_containers_used === ''
@@ -114,7 +119,8 @@ export function useProductionCostPreview({
                 packaging: JSON.parse(
                     packagingSignature,
                 ) as PreviewCostPayload['packaging'],
-                remnant_quantity_gallons: Number(remnantQuantityGallons) || 0,
+                remnant_quantity_gallons:
+                    parseDecimal(remnantQuantityGallons) ?? 0,
             };
 
             loadingIndicatorId = window.setTimeout(() => {

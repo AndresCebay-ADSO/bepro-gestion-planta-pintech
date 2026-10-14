@@ -2,6 +2,7 @@ import type { useForm } from '@inertiajs/react';
 import type { ChangeEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { DecimalInput } from '@/components/decimal-input';
 import { formatSafeDate } from '@/components/formatted-date';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -378,15 +379,11 @@ export function FinishedMovementFormFields({
 
             <div className="space-y-2">
                 <Label htmlFor="quantity">Cantidad</Label>
-                <Input
+                <DecimalInput
                     id="quantity"
-                    type="number"
-                    step="0.0001"
                     value={form.data.quantity}
-                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                        form.setData('quantity', event.target.value)
-                    }
-                    placeholder="0.0000"
+                    onValueChange={(value) => form.setData('quantity', value)}
+                    placeholder="0"
                 />
                 {form.errors.quantity && (
                     <p className="text-sm text-destructive">
