@@ -61,12 +61,7 @@ class InventoryMovementController extends Controller
 
         return Inertia::render('Inventory/Movements/Index', [
             'movements' => $movements,
-            // Opciones del formulario del cajón: solo llegan en la recarga parcial que hace al abrirse. Con `once()` el
-            // cliente las recuerda y las conserva en el 422 de un envío inválido; sin eso, la página completa llega
-            // sin ellas y el cajón desmonta el formulario (auditoría 3.6, INV-14). La clave propia evita que se mezclen
-            // con las props del mismo nombre de Movimientos PT.
-            'rawMaterials' => Inertia::optional(fn () => RawMaterial::query()->select('id', 'code')->where('is_active', true)->where('tracks_inventory', true)->orderBy('code')->get())
-                ->once(as: 'inventory-movements:raw-materials'),
+            'rawMaterials' => Inertia::optional(fn () => RawMaterial::query()->select('id', 'code')->where('is_active', true)->where('tracks_inventory', true)->orderBy('code')->get()),
             // Lotes con precio para el formulario de alta: solo para quien puede registrar movimientos.
             'batches' => Inertia::optional(fn () => Gate::denies('create', InventoryMovement::class) ? [] : InventoryBatch::query()
                 ->when(
@@ -77,11 +72,9 @@ class InventoryMovementController extends Controller
                 ->where('remaining_quantity', '>', 0)
                 ->select('id', 'raw_material_id', 'warehouse_id', 'lot_number', 'remaining_quantity', 'unit_price')
                 ->orderByDesc('id')
-                ->get())
-                ->once(as: 'inventory-movements:batches'),
+                ->get()),
             // Formulario de alta: solo bodegas activas. `warehouseOptions` es el filtro del historial y muestra todas.
-            'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->where('is_active', true)->get())
-                ->once(as: 'inventory-movements:warehouses'),
+            'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->where('is_active', true)->get()),
             'warehouseOptions' => Warehouse::query()
                 ->select('id', 'name')
                 ->orderBy('name')

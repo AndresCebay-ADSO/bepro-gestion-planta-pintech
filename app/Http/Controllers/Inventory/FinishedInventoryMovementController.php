@@ -66,8 +66,6 @@ class FinishedInventoryMovementController extends Controller
 
         return Inertia::render('Inventory/FinishedMovements/Index', [
             'movements' => $movements,
-            // Opciones del formulario del cajón: con `once()` el cliente las conserva en el 422 de un envío inválido
-            // (auditoría 3.6, PT-01; ver InventoryMovementController).
             'batches' => Inertia::optional(fn () => FinishedProductBatch::query()
                 ->with([
                     'product:id,code,name',
@@ -89,11 +87,9 @@ class FinishedInventoryMovementController extends Controller
                     'entry_date' => $batch->entry_date?->toDateString(),
                     'initial_quantity' => $batch->initial_quantity,
                     'stocks' => $batch->stocks->map(fn ($stock) => ['warehouse_id' => $stock->warehouse_id, 'quantity' => $stock->quantity]),
-                ]))
-                ->once(as: 'finished-inventory-movements:batches'),
+                ])),
             // Formulario de alta: solo bodegas activas. `warehouseOptions` es el filtro del historial y muestra todas.
-            'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->where('is_active', true)->get())
-                ->once(as: 'finished-inventory-movements:warehouses'),
+            'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->where('is_active', true)->get()),
             'warehouseOptions' => Warehouse::query()
                 ->select('id', 'name')
                 ->orderBy('name')

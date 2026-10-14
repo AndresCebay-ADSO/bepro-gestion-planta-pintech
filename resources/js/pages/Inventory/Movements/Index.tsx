@@ -18,13 +18,10 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDrawerFormProps } from '@/hooks/use-drawer-form-props';
 import { useFilters } from '@/hooks/use-filters';
 
 import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
 import type { InventoryOption, PaginationLink } from '@/types';
-
-const DRAWER_FORM_PROPS = ['rawMaterials', 'batches', 'warehouses'];
 
 type Props = {
     movements: {
@@ -114,22 +111,31 @@ export default function InventoryMovementsIndex({
         isOpen: boolean;
         mode: 'entry' | 'exit';
     }>({ isOpen: false, mode: 'entry' });
+    const [isLoadingFormData, setIsLoadingFormData] = useState(false);
+    const [fetchError, setFetchError] = useState<string | null>(null);
     const flash = usePage().props.flash;
-    const {
-        load: loadFormData,
-        isLoading: isLoadingFormData,
-        loadError: fetchError,
-    } = useDrawerFormProps(
-        DRAWER_FORM_PROPS,
-        Boolean(rawMaterials && batches && warehouses),
-    );
 
     const openDrawer = useCallback(
         (mode: 'entry' | 'exit') => {
             setDrawerState({ isOpen: true, mode });
-            loadFormData();
+            setFetchError(null);
+
+            // Lazy load form dependencies if missing
+            if (!rawMaterials || !batches || !warehouses) {
+                setIsLoadingFormData(true);
+                router.reload({
+                    only: ['rawMaterials', 'batches', 'warehouses'],
+                    onSuccess: () => setIsLoadingFormData(false),
+                    onError: () => {
+                        setIsLoadingFormData(false);
+                        setFetchError(
+                            'Error de red al cargar los datos. Por favor, intente nuevamente.',
+                        );
+                    },
+                });
+            }
         },
-        [loadFormData],
+        [rawMaterials, batches, warehouses],
     );
 
     const hasOpenedFromUrl = useRef(false);
