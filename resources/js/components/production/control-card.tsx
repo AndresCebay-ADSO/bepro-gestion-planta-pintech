@@ -1,5 +1,6 @@
 import { Clock, FlaskConical, User as UserIcon } from 'lucide-react';
 
+import { DecimalInput } from '@/components/decimal-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { toLocalDateTimeInput, toUtcIsoString } from '@/lib/date-time-helpers';
+import { parseDecimal } from '@/lib/numeric-input';
 import type {
     ProductionOrderErrors,
     ProductionOrderFormData,
@@ -55,6 +57,8 @@ export function ControlCard({
     const selectedSigner = qualitySigners.find(
         (s) => s.id === data.quality_responsible_user_id,
     );
+    const remnantGallons = parseDecimal(data.remnant_quantity_gallons);
+    const density = parseDecimal(data.density_kg_per_gallon);
 
     return (
         <Card>
@@ -185,16 +189,12 @@ export function ControlCard({
                             Densidad (kg/gal){' '}
                             <span className="text-destructive">*</span>
                         </Label>
-                        <Input
+                        <DecimalInput
                             id="density"
-                            type="number"
-                            step="0.0001"
+                            maxIntegerDigits={6}
                             value={data.density_kg_per_gallon}
-                            onChange={(event) =>
-                                setData(
-                                    'density_kg_per_gallon',
-                                    event.target.value,
-                                )
+                            onValueChange={(value) =>
+                                setData('density_kg_per_gallon', value)
                             }
                             disabled={isReadOnly}
                         />
@@ -206,13 +206,11 @@ export function ControlCard({
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="spillage">Derrame (gal)</Label>
-                        <Input
+                        <DecimalInput
                             id="spillage"
-                            type="number"
-                            step="0.01"
                             value={data.spillage_quantity}
-                            onChange={(event) =>
-                                setData('spillage_quantity', event.target.value)
+                            onValueChange={(value) =>
+                                setData('spillage_quantity', value)
                             }
                             disabled={isReadOnly}
                         />
@@ -233,33 +231,20 @@ export function ControlCard({
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
                             <Label htmlFor="remnant">Galones Sobrantes</Label>
-                            <Input
+                            <DecimalInput
                                 id="remnant"
-                                type="number"
-                                step="0.0001"
-                                placeholder="0.0"
+                                placeholder="0"
                                 value={data.remnant_quantity_gallons}
-                                onChange={(event) =>
-                                    setData(
-                                        'remnant_quantity_gallons',
-                                        event.target.value,
-                                    )
+                                onValueChange={(value) =>
+                                    setData('remnant_quantity_gallons', value)
                                 }
                                 disabled={isReadOnly}
                             />
-                            {data.remnant_quantity_gallons &&
-                                data.density_kg_per_gallon && (
-                                    <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                                        ≈{' '}
-                                        {(
-                                            Number(
-                                                data.remnant_quantity_gallons,
-                                            ) *
-                                            Number(data.density_kg_per_gallon)
-                                        ).toFixed(4)}{' '}
-                                        kg
-                                    </p>
-                                )}
+                            {remnantGallons !== null && density !== null && (
+                                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                                    ≈ {(remnantGallons * density).toFixed(4)} kg
+                                </p>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="remnant_notes">

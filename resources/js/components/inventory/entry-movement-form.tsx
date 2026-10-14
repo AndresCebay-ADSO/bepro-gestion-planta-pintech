@@ -1,9 +1,11 @@
 import { useForm } from '@inertiajs/react';
 import type { FormEvent, ChangeEvent } from 'react';
+import { DecimalInput } from '@/components/decimal-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getLocalDateString } from '@/lib/date-time-helpers';
+import { toDecimalPayload } from '@/lib/numeric-input';
 import { store as inventoryMovementsStore } from '@/routes/inventory-movements';
 import type { InventoryOption } from '@/types';
 import { MovementFormBase } from './movement-form-base';
@@ -57,8 +59,11 @@ export function EntryMovementForm({
             raw_material_id: Number(data.raw_material_id),
             warehouse_id: Number(data.warehouse_id),
             batch_id: data.batch_id === '' ? null : Number(data.batch_id),
-            quantity: Number(data.quantity),
-            cost_price: data.cost_price === '' ? null : Number(data.cost_price),
+            quantity: toDecimalPayload(data.quantity),
+            cost_price:
+                data.cost_price === ''
+                    ? null
+                    : toDecimalPayload(data.cost_price),
             lot_number: data.batch_id === '' ? data.lot_number : null,
             supplier:
                 data.batch_id === '' && data.supplier !== ''
@@ -102,14 +107,12 @@ export function EntryMovementForm({
             >
                 <div className="space-y-2">
                     <Label htmlFor="cost_price">Precio de Costo (u)</Label>
-                    <Input
+                    <DecimalInput
                         id="cost_price"
-                        type="number"
-                        step="0.0001"
                         value={form.data.cost_price}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                        onValueChange={(value) => {
                             if (!isCostReadOnly) {
-                                form.setData('cost_price', e.target.value);
+                                form.setData('cost_price', value);
                             }
                         }}
                         readOnly={isCostReadOnly}
@@ -118,7 +121,7 @@ export function EntryMovementForm({
                                 ? 'cursor-not-allowed bg-muted/50'
                                 : ''
                         }
-                        placeholder="0.00"
+                        placeholder="0"
                     />
                     {isCostReadOnly && (
                         <p className="text-xs text-muted-foreground">

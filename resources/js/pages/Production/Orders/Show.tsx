@@ -34,6 +34,11 @@ import {
     usePackagingSync,
 } from '@/hooks/use-packaging-sync';
 import { useProductionCostPreview } from '@/hooks/use-production-cost-preview';
+import { toDecimalPayload } from '@/lib/numeric-input';
+import {
+    ingredientQuantityForInput,
+    ingredientQuantityForServer,
+} from '@/lib/production-ingredient-quantity';
 import { index as productionOrdersIndex } from '@/routes/production-orders';
 import type {
     PreviewCostData,
@@ -581,9 +586,10 @@ function mapDetailToIngredientFormRow(detail: ProductionOrderDetail) {
         conversion_factor: detail.conversion_factor ?? null,
         actual_quantity:
             detail.actual_quantity != null
-                ? detail.conversion_factor
-                    ? Number(detail.actual_quantity) / detail.conversion_factor
-                    : detail.actual_quantity
+                ? ingredientQuantityForInput(
+                      detail.actual_quantity,
+                      detail.conversion_factor,
+                  )
                 : (detail.display_quantity ?? detail.planned_quantity),
         unit_cost: detail.unit_cost ?? 0,
         total_cost: detail.total_cost ?? 0,
@@ -593,9 +599,18 @@ function mapDetailToIngredientFormRow(detail: ProductionOrderDetail) {
 function normalizeProductionOrderFormData(data: ProductionOrderFormData) {
     return {
         ...data,
+        actual_yield_quantity: toDecimalPayload(data.actual_yield_quantity),
+        viscosity_ku: toDecimalPayload(data.viscosity_ku),
+        grinding_hg: toDecimalPayload(data.grinding_hg),
+        quality_solids: toDecimalPayload(data.quality_solids),
+        spillage_quantity: toDecimalPayload(data.spillage_quantity),
+        density_kg_per_gallon: toDecimalPayload(data.density_kg_per_gallon),
+        remnant_quantity_gallons: toDecimalPayload(
+            data.remnant_quantity_gallons,
+        ),
         ingredients: data.ingredients.map((ingredient) => ({
             id: ingredient.id,
-            actual_quantity: normalizeIngredientActualQuantity(
+            actual_quantity: ingredientQuantityForServer(
                 ingredient.actual_quantity,
                 ingredient.conversion_factor,
             ),
@@ -612,25 +627,4 @@ function normalizeProductionOrderFormData(data: ProductionOrderFormData) {
             labels_used: pack.labels_used === '' ? null : pack.labels_used,
         })),
     };
-}
-
-function normalizeIngredientActualQuantity(
-    actualQuantity: string | number,
-    conversionFactor?: number | null,
-) {
-    if (actualQuantity === '') {
-        return actualQuantity;
-    }
-
-    const numericActualQuantity = Number(actualQuantity);
-
-    if (!Number.isFinite(numericActualQuantity)) {
-        return actualQuantity;
-    }
-
-    if (!conversionFactor) {
-        return actualQuantity;
-    }
-
-    return (numericActualQuantity * conversionFactor).toString();
 }

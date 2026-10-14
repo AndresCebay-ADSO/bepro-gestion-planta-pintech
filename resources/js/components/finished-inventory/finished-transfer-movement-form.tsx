@@ -3,6 +3,7 @@ import type { SubmitEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { getLocalDateString } from '@/lib/date-time-helpers';
+import { toDecimalPayload } from '@/lib/numeric-input';
 import { store as storeFinishedMovement } from '@/routes/finished-inventory-movements';
 import type {
     FinishedBatchOption,
@@ -44,7 +45,7 @@ export function FinishedTransferMovementForm({
             finished_product_batch_id: Number(data.finished_product_batch_id),
             warehouse_id: Number(data.warehouse_id),
             destination_warehouse_id: Number(data.destination_warehouse_id),
-            quantity: data.quantity,
+            quantity: toDecimalPayload(data.quantity),
         }));
 
         form.post(storeFinishedMovement.url(), {

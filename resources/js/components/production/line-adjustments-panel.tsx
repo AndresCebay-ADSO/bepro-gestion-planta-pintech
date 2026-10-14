@@ -6,11 +6,13 @@ import {
     destroy as destroyLineAdjustment,
     store as storeLineAdjustment,
 } from '@/actions/App/Http/Controllers/Production/LineAdjustmentController';
+import { DecimalInput } from '@/components/decimal-input';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toDecimalPayload } from '@/lib/numeric-input';
 import type {
     ProductionOrderLineAdjustment,
     RawMaterialOption,
@@ -184,7 +186,7 @@ function LineAdjustmentForm({
             storeLineAdjustment({ production_order: orderId }).url,
             {
                 raw_material_id: rawMaterialId,
-                quantity: Number(quantity),
+                quantity: toDecimalPayload(quantity),
                 reason: reason.trim(),
             },
             {
@@ -223,14 +225,11 @@ function LineAdjustmentForm({
                     )}
                 </div>
                 <div className="space-y-1">
-                    <Input
-                        type="number"
-                        step="0.0001"
-                        min="0.0001"
+                    <DecimalInput
                         placeholder="Cantidad"
                         className="h-9"
                         value={quantity}
-                        onChange={(event) => setQuantity(event.target.value)}
+                        onValueChange={setQuantity}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                                 e.preventDefault();

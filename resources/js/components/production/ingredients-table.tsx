@@ -1,5 +1,5 @@
+import { DecimalInput } from '@/components/decimal-input';
 import { FormattedNumber } from '@/components/formatted-number';
-import { Input } from '@/components/ui/input';
 import type {
     ProductionOrderFormData,
     ProductionOrderIngredientFormRow,
@@ -69,19 +69,16 @@ export function IngredientsTable({
                                 </td>
                                 <td className="p-3">
                                     <div className="flex items-center justify-end gap-1.5">
-                                        <Input
+                                        <DecimalInput
                                             className="h-8 w-28 text-right"
-                                            type="number"
-                                            step="0.0001"
                                             value={ingredient.actual_quantity}
-                                            onChange={(event) => {
+                                            onValueChange={(value) => {
                                                 const newIngredients = [
                                                     ...data.ingredients,
                                                 ];
                                                 newIngredients[index] = {
                                                     ...newIngredients[index],
-                                                    actual_quantity:
-                                                        event.target.value,
+                                                    actual_quantity: value,
                                                 };
                                                 setData(
                                                     'ingredients',
