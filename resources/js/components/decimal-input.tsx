@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ComponentProps } from 'react';
 
 import { Input } from '@/components/ui/input';
@@ -33,11 +34,15 @@ export function DecimalInput({
     const text = value === null || value === undefined ? '' : String(value);
     const hasSeparatorError =
         checkDecimalText(text, limits) === 'separator-error';
-    const hint = decimalAmbiguityHint(text);
+    // El aviso es sobre lo que escribió el usuario: un valor que llega del servidor con tres decimales (2,125 kg) no lo
+    // muestra al abrir la página.
+    const [isEdited, setIsEdited] = useState(false);
+    const hint = isEdited ? decimalAmbiguityHint(text) : null;
     const isEditable = !props.disabled && !props.readOnly;
 
     // El contenedor está siempre, aunque no haya mensaje: si apareciera solo con el mensaje, React volvería a montar
-    // el campo y se perdería el foco mientras se escribe.
+    // el campo y se perdería el foco mientras se escribe. `w-0 min-w-full`: el mensaje toma el ancho del campo y se
+    // parte en líneas, sin ensanchar una celda angosta (consumo real en la tabla de ingredientes).
     return (
         <div className="space-y-1">
             <Input
@@ -51,12 +56,16 @@ export function DecimalInput({
                     const next = event.target.value;
 
                     if (checkDecimalText(next, limits) !== 'reject') {
+                        setIsEdited(true);
                         onValueChange(next);
                     }
                 }}
             />
             {hasSeparatorError ? (
-                <p role="alert" className="text-xs text-destructive">
+                <p
+                    role="alert"
+                    className="w-0 min-w-full text-xs text-destructive"
+                >
                     {DECIMAL_SEPARATOR_ERROR}
                 </p>
             ) : (
@@ -64,7 +73,7 @@ export function DecimalInput({
                 isEditable && (
                     <p
                         role="status"
-                        className="text-xs text-amber-700 dark:text-amber-400"
+                        className="w-0 min-w-full text-xs text-amber-700 dark:text-amber-400"
                     >
                         {hint}
                     </p>

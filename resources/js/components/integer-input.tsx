@@ -27,7 +27,7 @@ export function IntegerInput({
     const hasSeparatorError =
         checkIntegerText(text, maxDigits) === 'separator-error';
 
-    // Contenedor fijo, como en DecimalInput, para no perder el foco cuando aparece el mensaje.
+    // Contenedor fijo y mensaje con el ancho del campo, como en DecimalInput.
     return (
         <div className="space-y-1">
             <Input
@@ -49,7 +49,10 @@ export function IntegerInput({
                 }}
             />
             {hasSeparatorError && (
-                <p role="alert" className="text-xs text-destructive">
+                <p
+                    role="alert"
+                    className="w-0 min-w-full text-xs text-destructive"
+                >
                     {INTEGER_SEPARATOR_ERROR}
                 </p>
             )}
