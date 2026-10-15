@@ -266,6 +266,14 @@ describe('acceptsEdit: un valor que ya no cabe en el campo se puede borrar', () 
         expect(acceptsEdit('-1900x', '-1900', margin)).toBe(false);
     });
 
+    it('con el valor fuera de límites, las letras se rechazan aunque acorten el texto', () => {
+        expect(acceptsEdit('a', '-5.26', margin)).toBe(false);
+        expect(acceptsEdit('-5a', '-5.26', margin)).toBe(false);
+        expect(acceptsEdit(' 5', '-5.26', margin)).toBe(false);
+        expect(acceptsEdit('5-', '-5.26', margin)).toBe(false);
+        expect(acceptsEdit('-5.2', '-5.26', margin)).toBe(true);
+    });
+
     it('con un valor válido, borrar no habilita lo inválido', () => {
         expect(acceptsEdit('12', '123', margin)).toBe(true);
         expect(acceptsEdit('1,234', '1,23', margin)).toBe(false);

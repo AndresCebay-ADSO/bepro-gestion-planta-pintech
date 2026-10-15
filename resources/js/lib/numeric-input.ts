@@ -104,7 +104,8 @@ export function checkIntegerText(
 /**
  * Si el campo acepta el cambio. Un valor que ya no cumple las reglas del campo (calculado en pantalla, como un margen
  * negativo, o guardado antes con otra regla) se puede seguir borrando hasta corregirlo: si no, el campo quedaría
- * congelado y solo se podría reescribir seleccionando todo.
+ * congelado y solo se podría reescribir seleccionando todo. Lo que queda tiene que ser un número a medio corregir
+ * (dígitos, separadores y el signo al principio): las letras se rechazan siempre.
  */
 export function acceptsEdit(
     next: string,
@@ -115,7 +116,11 @@ export function acceptsEdit(
         return true;
     }
 
-    return check(current) === 'reject' && next.length < current.length;
+    return (
+        check(current) === 'reject' &&
+        next.length < current.length &&
+        SIGNED_DIGITS_AND_SEPARATORS.test(next)
+    );
 }
 
 /** Mensaje para un valor que no cabe en el campo decimal (ver `acceptsEdit`). */
