@@ -88,7 +88,7 @@ function postFinishedTransfer(User $user, FinishedProductBatch $batch, Warehouse
         'type' => InventoryMovementType::Exit->value,
         'reason' => FinishedInventoryMovementReason::Transfer->value,
         'quantity' => $quantity,
-        'movement_date' => now()->toDateString(),
+        'movement_date' => plantToday(),
     ], $overrides));
 }
 
