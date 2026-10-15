@@ -39,7 +39,8 @@ export default function ContextStep({
     setPayload,
     setData,
     errors,
-}: StepProps) {
+    sampleDueDateMin,
+}: StepProps & { sampleDueDateMin: string }) {
     const ctx = data.context_payload;
 
     return (
@@ -89,6 +90,7 @@ export default function ContextStep({
                         onChange={(v) => setData('sample_due_date', v)}
                         required
                         type="date"
+                        min={sampleDueDateMin}
                         error={errors.sample_due_date}
                     />
                     <div className="md:col-span-2">

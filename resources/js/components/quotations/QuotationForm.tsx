@@ -1,4 +1,4 @@
-import { Link, useForm } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
 
@@ -149,6 +149,7 @@ export default function QuotationForm({
     backUrl,
     submitLabel,
 }: Props) {
+    const { plantToday } = usePage().props;
     const { data, setData, post, put, processing, errors, transform } =
         useForm(initialData);
 
@@ -429,6 +430,7 @@ export default function QuotationForm({
                             <Label>Fecha cotización</Label>
                             <Input
                                 type="date"
+                                max={plantToday}
                                 value={data.quotation_date}
                                 onChange={(e) =>
                                     setData('quotation_date', e.target.value)

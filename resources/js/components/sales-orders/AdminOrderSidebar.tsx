@@ -33,6 +33,8 @@ type SalesOrderMeta = {
     shipping_address: string | null;
     required_date: string | null;
     created_at: string;
+    /** Día de planta en que se creó el pedido: la fecha estimada de entrega no puede ser anterior (D-PV3). */
+    created_on: string | null;
     creator: { name: string } | null;
     client: { contact_name: string | null; phone: string | null };
 };
@@ -165,6 +167,7 @@ export default function AdminOrderSidebar({
                         <Input
                             id="estimated_delivery_date"
                             type="date"
+                            min={order.created_on ?? undefined}
                             value={dataForm.data.estimated_delivery_date}
                             onChange={(e) =>
                                 dataForm.setData(

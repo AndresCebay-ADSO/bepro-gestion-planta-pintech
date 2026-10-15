@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 
 import { store as quotationStore } from '@/actions/App/Http/Controllers/QuotationController';
 import QuotationForm, {
@@ -9,7 +9,6 @@ import type {
     ProductOption,
 } from '@/components/quotations/QuotationForm';
 import type { ComboboxOptionType } from '@/components/ui/combobox';
-import { getLocalDateString } from '@/lib/date-time-helpers';
 import { index as quotationsIndex } from '@/routes/quotations';
 
 type Props = {
@@ -27,7 +26,7 @@ export default function QuotationsCreate({
     paymentMethodOptions,
     itemTypeOptions,
 }: Props) {
-    const today = getLocalDateString();
+    const { plantToday: today } = usePage().props;
 
     return (
         <>

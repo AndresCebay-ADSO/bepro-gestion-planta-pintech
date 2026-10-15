@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import type { useForm } from '@inertiajs/react';
 import type { ChangeEvent, ReactNode } from 'react';
 import { useMemo } from 'react';
@@ -33,6 +34,7 @@ export function MovementFormBase({
     type,
     children,
 }: Props) {
+    const { plantToday } = usePage().props;
     const filteredBatches = useMemo(() => {
         if (!form.data.raw_material_id) {
             return [];
@@ -223,6 +225,7 @@ export function MovementFormBase({
                 <Input
                     id="movement_date"
                     type="date"
+                    max={plantToday}
                     value={form.data.movement_date}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                         form.setData('movement_date', e.target.value)

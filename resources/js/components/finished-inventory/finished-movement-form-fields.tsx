@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import type { useForm } from '@inertiajs/react';
 import type { ChangeEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
@@ -122,6 +123,7 @@ export function FinishedMovementFormFields({
     reasons,
     showDestinationWarehouse = false,
 }: Props) {
+    const { plantToday } = usePage().props;
     const selectedOriginWarehouseId = Number(form.data.warehouse_id);
     const selectedOriginWarehouse =
         Number.isFinite(selectedOriginWarehouseId) &&
@@ -397,6 +399,7 @@ export function FinishedMovementFormFields({
                 <Input
                     id="movement_date"
                     type="date"
+                    max={plantToday}
                     value={form.data.movement_date}
                     onChange={(event: ChangeEvent<HTMLInputElement>) =>
                         form.setData('movement_date', event.target.value)

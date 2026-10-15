@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { Plus, Trash2 } from 'lucide-react';
 
 import { store as productionOrderStore } from '@/actions/App/Http/Controllers/ProductionOrderController';
@@ -45,6 +45,7 @@ export default function ProductionOrdersCreate({
     products,
     warehouses,
 }: Props) {
+    const { plantToday } = usePage().props;
     const { data, setData, post, processing, errors, clearErrors, transform } =
         useForm({
             product_id: '',
@@ -301,6 +302,7 @@ export default function ProductionOrdersCreate({
                                 <Input
                                     id="planned_date"
                                     type="date"
+                                    min={plantToday}
                                     value={data.planned_date}
                                     onChange={(e) =>
                                         setData('planned_date', e.target.value)

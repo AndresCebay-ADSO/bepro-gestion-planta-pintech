@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 
 import { store as salesOrderStore } from '@/actions/App/Http/Controllers/SalesOrderController';
@@ -54,6 +54,7 @@ type Props = {
 };
 
 export default function SalesOrdersCreate({ clients, products }: Props) {
+    const { plantToday } = usePage().props;
     const { data, setData, post, processing, errors, transform } = useForm({
         client_id: '',
         client_business_name: '',
@@ -203,6 +204,7 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                 <Input
                                     id="required_date"
                                     type="date"
+                                    min={plantToday}
                                     value={data.required_date}
                                     onChange={(e) =>
                                         setData('required_date', e.target.value)

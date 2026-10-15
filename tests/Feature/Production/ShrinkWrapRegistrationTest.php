@@ -320,7 +320,7 @@ it('ofrece solo OP completadas y tipos activos con su receta', function () {
     $this->get(route('production.shrink-wraps.create'))
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Production/ShrinkWraps/Create')
-            ->where('today', '2026-10-05')
+            ->where('plantToday', '2026-10-05')
             ->where('orderOptions', fn ($orders) => collect($orders)->pluck('order_number')->all() === ['OP-2026-0042'])
             ->where('orderOptions.0.completion_date', '2026-10-01')
             ->where('typeOptions', fn ($types) => collect($types)->pluck('label')->all() === ['Galón'])

@@ -1,4 +1,4 @@
-import { Link, useForm } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, ChevronRight, Save, Send } from 'lucide-react';
 import { useState } from 'react';
 
@@ -271,8 +271,16 @@ export default function PaintDevelopmentRequestForm({
     saveLabel,
     submitLabel,
 }: Props) {
+    const { plantToday } = usePage().props;
     const { data, setData, post, put, processing, errors, transform } =
         useForm<PaintDevFormData>(toFormData(initialData));
+
+    // No antes de hoy; un borrador viejo puede conservar la fecha que ya tenía (D-PDR1, igual que el servidor).
+    const savedSampleDueDate = initialData.sample_due_date ?? '';
+    const sampleDueDateMin =
+        savedSampleDueDate !== '' && savedSampleDueDate < plantToday
+            ? savedSampleDueDate
+            : plantToday;
 
     const [step, setStep] = useState(1);
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -742,6 +750,7 @@ export default function PaintDevelopmentRequestForm({
                             setPayload={handleSetPayload}
                             setData={handleSetData}
                             errors={combinedErrors}
+                            sampleDueDateMin={sampleDueDateMin}
                         />
                     )}
                     {step === 2 && (

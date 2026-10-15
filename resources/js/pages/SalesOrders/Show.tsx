@@ -38,6 +38,7 @@ type SalesOrderDetail = {
     quotation_id: number | null;
     items: ProductItem[];
     created_at: string;
+    created_on: string | null;
     creator: { name: string } | null;
 };
 

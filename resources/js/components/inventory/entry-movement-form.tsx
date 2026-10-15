@@ -1,10 +1,9 @@
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import type { FormEvent, ChangeEvent } from 'react';
 import { DecimalInput } from '@/components/decimal-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getLocalDateString } from '@/lib/date-time-helpers';
 import { toDecimalPayload } from '@/lib/numeric-input';
 import { store as inventoryMovementsStore } from '@/routes/inventory-movements';
 import type { InventoryOption } from '@/types';
@@ -25,6 +24,7 @@ export function EntryMovementForm({
     defaultWarehouseId,
     onSuccess,
 }: Props) {
+    const { plantToday } = usePage().props;
     const form = useForm<{
         raw_material_id: string;
         warehouse_id: string;
@@ -47,7 +47,7 @@ export function EntryMovementForm({
         lot_number: '',
         supplier: '',
         expiry_date: '',
-        movement_date: getLocalDateString(),
+        movement_date: plantToday,
         notes: '',
     });
 
