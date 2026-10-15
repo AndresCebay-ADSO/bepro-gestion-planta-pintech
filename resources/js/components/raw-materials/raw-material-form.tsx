@@ -1,8 +1,10 @@
 import React from 'react';
 import type { ChangeEvent } from 'react';
 
+import { DecimalInput } from '@/components/decimal-input';
 import { FormattedNumber } from '@/components/formatted-number';
 import InputError from '@/components/input-error';
+import { IntegerInput } from '@/components/integer-input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -14,6 +16,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
 import { RAW_MATERIAL_TYPE_HINTS } from '@/lib/raw-material-types';
 import type { RawMaterialType } from '@/types';
 
@@ -77,30 +80,34 @@ type Props = {
     canEditPrice: boolean;
 };
 
-// Las columnas son decimal(12,4): 8 dígitos enteros y 4 decimales.
-const MAX_DECIMAL_INTEGER_DIGITS = 8;
-const MAX_DECIMAL_FRACTION_DIGITS = 4;
-const MAX_DECIMAL_INPUT_LENGTH =
-    MAX_DECIMAL_INTEGER_DIGITS + 1 + MAX_DECIMAL_FRACTION_DIGITS;
-const MAX_ALERT_DAYS_INPUT_LENGTH = 4;
+// Stock mínimo y precio: decimal(12,4), los límites por defecto de DecimalInput. Umbral: hasta 100 con 2 decimales.
+const MAX_ALERT_DAYS_DIGITS = 4;
 
-function sanitizeDecimalInput(rawValue: string): string {
-    const normalized = rawValue.replace(',', '.').replace(/[^\d.]/g, '');
-    const [rawIntegerPart = '', rawFractionPart = ''] = normalized.split('.');
-    const integerPart = rawIntegerPart.slice(0, MAX_DECIMAL_INTEGER_DIGITS);
-    const hasDot = normalized.includes('.');
-
-    if (!hasDot) {
-        return integerPart;
-    }
-
-    const fractionPart = rawFractionPart.slice(0, MAX_DECIMAL_FRACTION_DIGITS);
-
-    return `${integerPart}.${fractionPart}`;
-}
-
-function sanitizeIntegerInput(rawValue: string, maxLength: number): string {
-    return rawValue.replace(/\D/g, '').slice(0, maxLength);
+/**
+ * Lo que se envía al crear o editar: decimales con punto, el umbral vacío como null, y el precio manual solo si se puede
+ * escribir (sin control de inventario y con permiso de costos).
+ */
+export function rawMaterialPayload<T extends RawMaterialFormData>(
+    { current_price, ...data }: T,
+    canEditPrice: boolean,
+) {
+    return {
+        ...data,
+        unit_of_measure_id: Number(data.unit_of_measure_id),
+        minimum_stock: toDecimalPayload(data.minimum_stock),
+        price_variation_threshold:
+            data.price_variation_threshold === ''
+                ? null
+                : toDecimalPayload(data.price_variation_threshold),
+        ...(!data.tracks_inventory && canEditPrice
+            ? {
+                  current_price:
+                      current_price === ''
+                          ? null
+                          : toDecimalPayload(current_price),
+              }
+            : {}),
+    };
 }
 
 /**
@@ -137,6 +144,7 @@ export function RawMaterialForm({
     const selectedUnit = units.find(
         (unit) => String(unit.id) === form.data.unit_of_measure_id,
     );
+    const minimumStock = parseDecimal(form.data.minimum_stock);
 
     return (
         <form onSubmit={handleSubmit} className="grid min-w-0 gap-6">
@@ -253,30 +261,19 @@ export function RawMaterialForm({
                             Stock mínimo en planta{' '}
                             <span className="text-destructive">*</span>
                         </Label>
-                        <Input
+                        <DecimalInput
                             id="minimum_stock"
-                            type="text"
-                            inputMode="decimal"
-                            maxLength={MAX_DECIMAL_INPUT_LENGTH}
                             value={form.data.minimum_stock}
-                            onChange={(event) =>
-                                form.setData(
-                                    'minimum_stock',
-                                    sanitizeDecimalInput(event.target.value),
-                                )
+                            onValueChange={(value) =>
+                                form.setData('minimum_stock', value)
                             }
                             className="w-full min-w-0 font-mono"
-                            placeholder="0.00"
+                            placeholder="0"
                         />
-                        {form.data.minimum_stock && (
+                        {minimumStock !== null && (
                             <p className="min-w-0 text-xs break-all text-muted-foreground">
                                 Resguardo:{' '}
-                                <FormattedNumber
-                                    value={form.data.minimum_stock.replace(
-                                        /\.$/,
-                                        '',
-                                    )}
-                                />
+                                <FormattedNumber value={minimumStock} />
                             </p>
                         )}
                         <InputError message={form.errors.minimum_stock} />
@@ -287,20 +284,12 @@ export function RawMaterialForm({
                             Días de alerta por vencimiento{' '}
                             <span className="text-destructive">*</span>
                         </Label>
-                        <Input
+                        <IntegerInput
                             id="alert_days"
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={MAX_ALERT_DAYS_INPUT_LENGTH}
+                            maxDigits={MAX_ALERT_DAYS_DIGITS}
                             value={form.data.alert_days_before_expiry}
-                            onChange={(event) =>
-                                form.setData(
-                                    'alert_days_before_expiry',
-                                    sanitizeIntegerInput(
-                                        event.target.value,
-                                        MAX_ALERT_DAYS_INPUT_LENGTH,
-                                    ),
-                                )
+                            onValueChange={(value) =>
+                                form.setData('alert_days_before_expiry', value)
                             }
                             className="w-full min-w-0"
                             placeholder="30"
@@ -314,17 +303,13 @@ export function RawMaterialForm({
                         <Label htmlFor="price_variation_threshold">
                             Umbral de alerta por variación de precio (%)
                         </Label>
-                        <Input
+                        <DecimalInput
                             id="price_variation_threshold"
-                            type="text"
-                            inputMode="decimal"
-                            maxLength={6}
+                            maxDecimals={2}
+                            maxIntegerDigits={3}
                             value={form.data.price_variation_threshold}
-                            onChange={(event) =>
-                                form.setData(
-                                    'price_variation_threshold',
-                                    sanitizeDecimalInput(event.target.value),
-                                )
+                            onValueChange={(value) =>
+                                form.setData('price_variation_threshold', value)
                             }
                             className="w-full min-w-0"
                             placeholder="Vacío = sin alerta"
@@ -384,19 +369,11 @@ export function RawMaterialForm({
                                         : ''}{' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
-                                <Input
+                                <DecimalInput
                                     id="current_price"
-                                    type="text"
-                                    inputMode="decimal"
-                                    maxLength={MAX_DECIMAL_INPUT_LENGTH}
                                     value={form.data.current_price}
-                                    onChange={(event) =>
-                                        form.setData(
-                                            'current_price',
-                                            sanitizeDecimalInput(
-                                                event.target.value,
-                                            ),
-                                        )
+                                    onValueChange={(value) =>
+                                        form.setData('current_price', value)
                                     }
                                     className="w-full min-w-0 font-mono"
                                     placeholder="0"

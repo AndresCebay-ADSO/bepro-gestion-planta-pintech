@@ -6,6 +6,7 @@ import {
     describeConversionUsage,
     describeUnitUsage,
     sameFactor,
+    UNIT_FACTOR_FIELDS,
 } from '@/components/catalogs/unit-of-measure-form';
 import Heading from '@/components/heading';
 import {
@@ -19,6 +20,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { withDecimalPayloads } from '@/lib/numeric-input';
 import {
     edit as unitsEdit,
     index as unitsIndex,
@@ -54,7 +56,7 @@ export default function UnitsOfMeasureEdit({ unit }: Props) {
 
     const save = (confirmed: boolean) => {
         form.transform((data) => ({
-            ...data,
+            ...withDecimalPayloads(data, UNIT_FACTOR_FIELDS),
             confirm_factor_change: confirmed,
         }));
         form.put(unitsUpdate(unit.id).url, {

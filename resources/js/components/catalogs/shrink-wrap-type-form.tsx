@@ -1,12 +1,14 @@
 import type { useForm } from '@inertiajs/react';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { DecimalInput } from '@/components/decimal-input';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { withDecimalPayloads } from '@/lib/numeric-input';
 import { cn } from '@/lib/utils';
 import type {
     ShrinkWrapRawMaterialOption,
@@ -17,6 +19,18 @@ import type {
 // (texto de búsqueda) pasaría a la fila siguiente.
 let rowKeySequence = 0;
 const nextRowKey = () => ++rowKeySequence;
+
+/** Lo que se envía: la cantidad de cada fila con punto decimal (se escribe con coma o punto). */
+export function shrinkWrapTypePayload(
+    data: ShrinkWrapTypeFormData,
+): ShrinkWrapTypeFormData {
+    return {
+        ...data,
+        items: data.items.map((item) =>
+            withDecimalPayloads(item, ['quantity']),
+        ),
+    };
+}
 
 type Props = {
     form: ReturnType<typeof useForm<ShrinkWrapTypeFormData>>;
@@ -160,29 +174,17 @@ export function ShrinkWrapTypeFields({ form, rawMaterialOptions }: Props) {
                                         Cantidad
                                     </Label>
                                 )}
-                                <div className="flex items-center gap-2">
-                                    <Input
-                                        type="text"
-                                        inputMode="decimal"
+                                <div className="flex items-start gap-2">
+                                    <DecimalInput
+                                        containerClassName="min-w-0 flex-1"
                                         value={item.quantity}
-                                        onChange={(event) => {
-                                            const value = event.target.value;
-
-                                            if (
-                                                value === '' ||
-                                                /^\d*[.,]?\d{0,4}$/.test(value)
-                                            ) {
-                                                updateItem(
-                                                    index,
-                                                    'quantity',
-                                                    value,
-                                                );
-                                            }
-                                        }}
+                                        onValueChange={(value) =>
+                                            updateItem(index, 'quantity', value)
+                                        }
                                         placeholder="Ej: 1"
                                         aria-label="Cantidad por aplicación"
                                     />
-                                    <span className="w-10 text-sm text-muted-foreground">
+                                    <span className="w-10 text-sm leading-9 text-muted-foreground">
                                         {optionOf(item.raw_material_id)
                                             ?.unit_symbol ?? ''}
                                     </span>

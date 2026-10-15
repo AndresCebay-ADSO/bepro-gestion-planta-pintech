@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedNumber } from '@/components/formatted-number';
 import InputError from '@/components/input-error';
+import { IntegerInput } from '@/components/integer-input';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { isValidIntegerText } from '@/lib/numeric-input';
 import {
     create as shrinkWrapsCreate,
     index as shrinkWrapsIndex,
@@ -148,18 +150,13 @@ export default function ShrinkWrapsCreate({
                     <div className="grid gap-5 sm:grid-cols-2">
                         <div className="grid gap-2">
                             <Label htmlFor="applications">Aplicaciones</Label>
-                            <Input
+                            {/* Cuántas veces se termoencogió: solo enteros. */}
+                            <IntegerInput
                                 id="applications"
-                                inputMode="numeric"
                                 value={form.data.applications}
-                                onChange={(event) => {
-                                    const value = event.target.value;
-
-                                    // Cuántas veces se termoencogió: solo enteros.
-                                    if (/^\d{0,8}$/.test(value)) {
-                                        form.setData('applications', value);
-                                    }
-                                }}
+                                onValueChange={(value) =>
+                                    form.setData('applications', value)
+                                }
                                 placeholder="Ej: 20"
                             />
                             <InputError message={form.errors.applications} />
@@ -205,11 +202,13 @@ export default function ShrinkWrapsCreate({
                                     </li>
                                 ))}
                             </ul>
-                            {form.data.applications !== '' && (
-                                <p className="mt-2 text-sm font-medium text-foreground">
-                                    × {form.data.applications} aplicaciones
-                                </p>
-                            )}
+                            {/* Solo con un entero: con «3,5» el campo ya marca el error. */}
+                            {form.data.applications !== '' &&
+                                isValidIntegerText(form.data.applications) && (
+                                    <p className="mt-2 text-sm font-medium text-foreground">
+                                        × {form.data.applications} aplicaciones
+                                    </p>
+                                )}
                         </div>
                     )}
 

@@ -1,7 +1,10 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
-import { FormulaForm } from '@/components/formulas/formula-form';
+import {
+    FormulaForm,
+    formulaPayload,
+} from '@/components/formulas/formula-form';
 import type { FormulaFormData } from '@/components/formulas/formula-form';
 import { Button } from '@/components/ui/button';
 import { formatForInput } from '@/lib/formatters';
@@ -57,13 +60,10 @@ export default function FormulasEdit({
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        router.put(formulasUpdate({ formula: formula.id }).url, {
-            ...data,
-            details: data.details.map((detail) => ({
-                ...detail,
-                quantity: detail.quantity.replace(',', '.'),
-            })),
-        });
+        router.put(
+            formulasUpdate({ formula: formula.id }).url,
+            formulaPayload(data),
+        );
     };
 
     return (

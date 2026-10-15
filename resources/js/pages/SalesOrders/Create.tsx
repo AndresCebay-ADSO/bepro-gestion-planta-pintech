@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 
 import { store as salesOrderStore } from '@/actions/App/Http/Controllers/SalesOrderController';
+import { DecimalInput } from '@/components/decimal-input';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { withDecimalPayloads } from '@/lib/numeric-input';
 import { index as salesOrdersIndex } from '@/routes/sales-orders';
 
 type ClientOption = {
@@ -52,7 +54,7 @@ type Props = {
 };
 
 export default function SalesOrdersCreate({ clients, products }: Props) {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, transform } = useForm({
         client_id: '',
         client_business_name: '',
         client_nit: '',
@@ -77,6 +79,12 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        transform((formData) => ({
+            ...formData,
+            items: formData.items.map((item) =>
+                withDecimalPayloads(item, ['quantity']),
+            ),
+        }));
         post(salesOrderStore().url);
     };
 
@@ -443,16 +451,13 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                                 <Label className="text-xs">
                                                     Cantidad *
                                                 </Label>
-                                                <Input
-                                                    type="number"
-                                                    step="0.0001"
-                                                    min="0.0001"
+                                                <DecimalInput
                                                     value={item.quantity}
-                                                    onChange={(e) =>
+                                                    onValueChange={(value) =>
                                                         updateItem(
                                                             index,
                                                             'quantity',
-                                                            e.target.value,
+                                                            value,
                                                         )
                                                     }
                                                 />

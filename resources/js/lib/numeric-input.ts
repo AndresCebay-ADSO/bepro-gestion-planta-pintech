@@ -10,6 +10,9 @@
  *   bloqueara, los dígitos siguientes caerían en otro lugar: `1.200,5` quedaría en 1,2005 y `3,5` unidades en 35;
  * - lo demás que no cabe (letras, espacios, un decimal o un dígito de más) se rechaza completo, tecla o texto pegado:
  *   el campo conserva lo que tenía.
+ *
+ * El signo menos solo se admite al principio y en los campos que lo piden (`allowNegative`): el ajuste de precio de una
+ * cotización o una temperatura.
  */
 
 export type DecimalLimits = {
@@ -17,6 +20,8 @@ export type DecimalLimits = {
     maxDecimals?: number;
     /** Dígitos enteros que admite el campo: precisión menos escala (8 en `numeric(12,4)`). */
     maxIntegerDigits?: number;
+    /** Si admite un `-` al principio. */
+    allowNegative?: boolean;
 };
 
 export const DEFAULT_MAX_DECIMALS = 4;
@@ -30,9 +35,10 @@ export function isValidDecimalText(
     {
         maxDecimals = DEFAULT_MAX_DECIMALS,
         maxIntegerDigits = DEFAULT_MAX_INTEGER_DIGITS,
+        allowNegative = false,
     }: DecimalLimits = {},
 ): boolean {
-    const integerPart = `\\d{0,${maxIntegerDigits}}`;
+    const integerPart = `${allowNegative ? '-?' : ''}\\d{0,${maxIntegerDigits}}`;
     const pattern =
         maxDecimals > 0
             ? new RegExp(`^${integerPart}(?:[.,]\\d{0,${maxDecimals}})?$`)
@@ -57,6 +63,7 @@ export const INTEGER_SEPARATOR_ERROR =
     'Solo números enteros, sin punto ni coma.';
 
 const DIGITS_AND_SEPARATORS = /^[\d.,]*$/;
+const SIGNED_DIGITS_AND_SEPARATORS = /^-?[\d.,]*$/;
 
 function separatorCount(text: string): number {
     return (text.match(/[.,]/g) ?? []).length;
@@ -71,7 +78,11 @@ export function checkDecimalText(
         return 'valid';
     }
 
-    return DIGITS_AND_SEPARATORS.test(text) && separatorCount(text) > 1
+    const allowed = limits.allowNegative
+        ? SIGNED_DIGITS_AND_SEPARATORS
+        : DIGITS_AND_SEPARATORS;
+
+    return allowed.test(text) && separatorCount(text) > 1
         ? 'separator-error'
         : 'reject';
 }
@@ -91,9 +102,53 @@ export function checkIntegerText(
 }
 
 /**
- * Lo que se envía al servidor: la coma pasa a punto, `1,` queda en `1` y `,5` en `0.5`. El vacío sigue vacío (nunca
- * 0), para que el servidor diga si el campo es obligatorio. Un texto que no es un número se envía tal cual, para que
- * el servidor lo rechace en vez de cambiarlo aquí sin aviso.
+ * Si el campo acepta el cambio. Un valor que ya no cumple las reglas del campo (calculado en pantalla, como un margen
+ * negativo, o guardado antes con otra regla) se puede seguir borrando hasta corregirlo: si no, el campo quedaría
+ * congelado y solo se podría reescribir seleccionando todo. Lo que queda tiene que ser un número a medio corregir
+ * (dígitos, separadores y el signo al principio): las letras se rechazan siempre.
+ */
+export function acceptsEdit(
+    next: string,
+    current: string,
+    check: (text: string) => NumericTextCheck,
+): boolean {
+    if (check(next) !== 'reject') {
+        return true;
+    }
+
+    return (
+        check(current) === 'reject' &&
+        next.length < current.length &&
+        SIGNED_DIGITS_AND_SEPARATORS.test(next)
+    );
+}
+
+/** Mensaje para un valor que no cabe en el campo decimal (ver `acceptsEdit`). */
+export function decimalLimitsMessage({
+    maxDecimals = DEFAULT_MAX_DECIMALS,
+    maxIntegerDigits = DEFAULT_MAX_INTEGER_DIGITS,
+    allowNegative = false,
+}: DecimalLimits = {}): string {
+    // Corto: también sale bajo campos angostos (el margen en costos).
+    const decimals =
+        maxDecimals === 0
+            ? 'sin decimales'
+            : `y ${maxDecimals} ${maxDecimals === 1 ? 'decimal' : 'decimales'}`;
+
+    return `No cabe: hasta ${maxIntegerDigits} enteros ${decimals}${allowNegative ? '' : ', sin negativos'}.`;
+}
+
+/** Lo mismo para un campo de enteros. */
+export function integerLimitsMessage(
+    maxDigits: number = DEFAULT_MAX_INTEGER_DIGITS,
+): string {
+    return `No cabe: solo enteros, hasta ${maxDigits} dígitos.`;
+}
+
+/**
+ * Lo que se envía al servidor: la coma pasa a punto, `1,` queda en `1` y `,5` en `0.5` (`-,5` en `-0.5`). El vacío
+ * sigue vacío (nunca 0), para que el servidor diga si el campo es obligatorio; un `-` o un separador solos, también.
+ * Un texto que no es un número se envía tal cual, para que el servidor lo rechace en vez de cambiarlo aquí sin aviso.
  */
 export function toDecimalPayload(value: FormValue): string {
     if (value === null || value === undefined) {
@@ -102,22 +157,42 @@ export function toDecimalPayload(value: FormValue): string {
 
     const text = String(value).trim();
 
-    if (!/^\d*[.,]?\d*$/.test(text) || !/\d/.test(text)) {
-        return text === '.' || text === ',' ? '' : text;
+    if (!/^-?\d*[.,]?\d*$/.test(text) || !/\d/.test(text)) {
+        return /^-?[.,]?$/.test(text) ? '' : text;
     }
 
-    const [integerPart, fractionPart = ''] = text.replace(',', '.').split('.');
+    const sign = text.startsWith('-') ? '-' : '';
+    const [integerPart, fractionPart = ''] = text
+        .slice(sign.length)
+        .replace(',', '.')
+        .split('.');
 
     return fractionPart === ''
-        ? integerPart
-        : `${integerPart === '' ? '0' : integerPart}.${fractionPart}`;
+        ? `${sign}${integerPart}`
+        : `${sign}${integerPart === '' ? '0' : integerPart}.${fractionPart}`;
+}
+
+/** `toDecimalPayload` en varios campos de un formulario; los demás quedan igual. */
+export function withDecimalPayloads<T extends Record<string, unknown>>(
+    data: T,
+    fields: readonly (keyof T)[],
+): T {
+    const converted = { ...data };
+
+    for (const field of fields) {
+        converted[field] = toDecimalPayload(
+            data[field] as FormValue,
+        ) as T[keyof T];
+    }
+
+    return converted;
 }
 
 /** El número escrito, para los cálculos que se muestran en pantalla; `null` si el campo está vacío o no es un número. */
 export function parseDecimal(value: FormValue): number | null {
     const payload = toDecimalPayload(value);
 
-    if (!/^\d+(?:\.\d+)?$/.test(payload)) {
+    if (!/^-?\d+(?:\.\d+)?$/.test(payload)) {
         return null;
     }
 
@@ -130,18 +205,18 @@ export function parseDecimal(value: FormValue): number | null {
  */
 export function decimalAmbiguityHint(value: FormValue): string | null {
     const text = value === null || value === undefined ? '' : String(value);
-    const match = /^(\d+)([.,])(\d{3})$/.exec(text);
+    const match = /^(-?)(\d+)([.,])(\d{3})$/.exec(text);
 
-    if (!match || /^0+$/.test(match[1])) {
+    if (!match || /^0+$/.test(match[2])) {
         return null;
     }
 
-    const [, integerPart, separator, fractionPart] = match;
+    const [, sign, integerPart, separator, fractionPart] = match;
     const registered = toDecimalPayload(text)
         .replace(/0+$/, '')
         .replace(/\.$/, '')
         .replace('.', ',');
     const separatorName = separator === '.' ? 'punto' : 'coma';
 
-    return `Se registrará ${registered}. Si es un número sin decimales, escríbelo sin ${separatorName}: ${integerPart}${fractionPart}.`;
+    return `Se registrará ${registered}. Si es un número sin decimales, escríbelo sin ${separatorName}: ${sign}${integerPart}${fractionPart}.`;
 }

@@ -1,4 +1,5 @@
-import { Input } from '@/components/ui/input';
+import { DecimalInput } from '@/components/decimal-input';
+import { IntegerInput } from '@/components/integer-input';
 import { Label } from '@/components/ui/label';
 
 type Props = {
@@ -9,7 +10,8 @@ type Props = {
     suffix?: string;
     required?: boolean;
     error?: string;
-    step?: string;
+    /** Solo enteros (número de manos, pot life en minutos). */
+    integer?: boolean;
 };
 
 export default function NumberField({
@@ -20,8 +22,10 @@ export default function NumberField({
     suffix,
     required,
     error,
-    step,
+    integer,
 }: Props) {
+    const NumberInput = integer ? IntegerInput : DecimalInput;
+
     return (
         <div className="space-y-1.5">
             <Label>
@@ -29,11 +33,9 @@ export default function NumberField({
                 {required && <span className="ml-0.5 text-destructive">*</span>}
             </Label>
             <div className="relative">
-                <Input
-                    type="number"
-                    step={step}
+                <NumberInput
                     value={value}
-                    onChange={(e) => onChange(e.target.value)}
+                    onValueChange={onChange}
                     placeholder={placeholder}
                 />
                 {suffix && (

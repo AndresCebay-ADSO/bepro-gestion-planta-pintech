@@ -1,5 +1,8 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { RawMaterialForm } from '@/components/raw-materials/raw-material-form';
+import {
+    RawMaterialForm,
+    rawMaterialPayload,
+} from '@/components/raw-materials/raw-material-form';
 import type {
     CategoryOption,
     RawMaterialFormData,
@@ -36,18 +39,9 @@ export default function RawMaterialsCreate({ categories, units, can }: Props) {
     });
 
     const submit = () => {
-        form.transform(({ current_price, ...data }) => ({
-            ...data,
+        form.transform((data) => ({
+            ...rawMaterialPayload(data, can.updateCosts),
             category_id: Number(data.category_id),
-            unit_of_measure_id: Number(data.unit_of_measure_id),
-            price_variation_threshold:
-                data.price_variation_threshold === ''
-                    ? null
-                    : data.price_variation_threshold,
-            // El precio solo viaja si se puede escribir: sin control de inventario y con permiso de costos.
-            ...(!data.tracks_inventory && can.updateCosts
-                ? { current_price: current_price === '' ? null : current_price }
-                : {}),
         }));
 
         form.post(rawMaterialsStore().url);

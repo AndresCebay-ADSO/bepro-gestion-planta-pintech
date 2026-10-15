@@ -1,10 +1,10 @@
 import { Plus, Trash2 } from 'lucide-react';
 import type { FormEvent } from 'react';
 
+import { DecimalInput } from '@/components/decimal-input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -14,6 +14,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { withDecimalPayloads } from '@/lib/numeric-input';
 
 type RawMaterial = { id: number; code: string };
 type ProductOption = { id: number; code: string; name: string };
@@ -31,6 +32,16 @@ export type FormulaFormData = {
     is_active: boolean;
     details: DetailRow[];
 };
+
+/** Lo que se envía al crear o editar: la cantidad de cada ingrediente con punto decimal. */
+export function formulaPayload<T extends FormulaFormData>(data: T): T {
+    return {
+        ...data,
+        details: data.details.map((detail) =>
+            withDecimalPayloads(detail, ['quantity']),
+        ),
+    };
+}
 
 type FormulaFormProps = {
     data: FormulaFormData;
@@ -245,24 +256,11 @@ export function FormulaForm({
                                         Cantidad (por galón)
                                     </Label>
                                 )}
-                                <Input
-                                    type="text"
-                                    inputMode="decimal"
+                                <DecimalInput
                                     value={detail.quantity}
-                                    onChange={(event) => {
-                                        const value = event.target.value;
-
-                                        if (
-                                            value === '' ||
-                                            /^\d*[.,]?\d{0,4}$/.test(value)
-                                        ) {
-                                            updateDetail(
-                                                index,
-                                                'quantity',
-                                                value,
-                                            );
-                                        }
-                                    }}
+                                    onValueChange={(value) =>
+                                        updateDetail(index, 'quantity', value)
+                                    }
                                     placeholder="Ej: 1,5"
                                 />
                                 {errors[`details.${index}.quantity`] && (

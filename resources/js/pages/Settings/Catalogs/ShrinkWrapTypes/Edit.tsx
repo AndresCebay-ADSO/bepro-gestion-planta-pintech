@@ -1,5 +1,8 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ShrinkWrapTypeFields } from '@/components/catalogs/shrink-wrap-type-form';
+import {
+    ShrinkWrapTypeFields,
+    shrinkWrapTypePayload,
+} from '@/components/catalogs/shrink-wrap-type-form';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,6 +48,7 @@ export default function ShrinkWrapTypesEdit({
                 <form
                     onSubmit={(event) => {
                         event.preventDefault();
+                        form.transform(shrinkWrapTypePayload);
                         form.put(typesUpdate(type.id).url);
                     }}
                     className="grid gap-6"

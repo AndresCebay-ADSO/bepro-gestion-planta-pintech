@@ -2,6 +2,7 @@ import { Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { DecimalInput } from '@/components/decimal-input';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
@@ -9,6 +10,11 @@ import type { ComboboxOptionType } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+    parseDecimal,
+    toDecimalPayload,
+    withDecimalPayloads,
+} from '@/lib/numeric-input';
 
 export type ClientOption = {
     id: number;
@@ -110,8 +116,8 @@ function applyAdjustment(
 }
 
 function calculateLineSubtotal(quantity: string, unitPrice: string): number {
-    const qty = Number(quantity) || 0;
-    const price = Number(unitPrice) || 0;
+    const qty = parseDecimal(quantity) ?? 0;
+    const price = parseDecimal(unitPrice) ?? 0;
 
     return qty * price;
 }
@@ -143,7 +149,7 @@ export default function QuotationForm({
     backUrl,
     submitLabel,
 }: Props) {
-    const { data, setData, post, put, processing, errors } =
+    const { data, setData, post, put, processing, errors, transform } =
         useForm(initialData);
 
     const clientOptions = clients.map((client) => ({
@@ -162,7 +168,7 @@ export default function QuotationForm({
                 sum + calculateLineSubtotal(item.quantity, item.unit_price),
             0,
         );
-        const ivaPercentage = Number(data.iva_percentage) || 0;
+        const ivaPercentage = parseDecimal(data.iva_percentage) ?? 0;
         const ivaAmount = subtotal * (ivaPercentage / 100);
 
         return {
@@ -174,6 +180,18 @@ export default function QuotationForm({
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        transform((formData) => ({
+            ...formData,
+            iva_percentage: toDecimalPayload(formData.iva_percentage),
+            items: formData.items.map((item) =>
+                withDecimalPayloads(item, [
+                    'quantity',
+                    'price_adjustment_pct',
+                    'unit_price',
+                ]),
+            ),
+        }));
 
         if (method === 'put') {
             put(submitUrl);
@@ -231,8 +249,8 @@ export default function QuotationForm({
             }
 
             if (field === 'price_adjustment_pct') {
-                const listPrice = Number(next.list_unit_price) || 0;
-                const adjustment = Number(value) || 0;
+                const listPrice = parseDecimal(next.list_unit_price) ?? 0;
+                const adjustment = parseDecimal(value) ?? 0;
                 const adjustedPrice = applyAdjustment(listPrice, adjustment);
 
                 if (adjustedPrice !== null) {
@@ -241,8 +259,8 @@ export default function QuotationForm({
             }
 
             if (field === 'unit_price') {
-                const listPrice = Number(next.list_unit_price) || 0;
-                const unitPrice = Number(value) || 0;
+                const listPrice = parseDecimal(next.list_unit_price) ?? 0;
+                const unitPrice = parseDecimal(value) ?? 0;
 
                 // Inverse of the margin formula:
                 //   adjustment = (1 - listPrice / unitPrice) * 100
@@ -572,16 +590,13 @@ export default function QuotationForm({
                                                 <Label className="text-xs">
                                                     Cantidad *
                                                 </Label>
-                                                <Input
-                                                    type="number"
-                                                    step="0.0001"
-                                                    min="0.0001"
+                                                <DecimalInput
                                                     value={item.quantity}
-                                                    onChange={(e) =>
+                                                    onValueChange={(value) =>
                                                         updateItem(
                                                             index,
                                                             'quantity',
-                                                            e.target.value,
+                                                            value,
                                                         )
                                                     }
                                                 />
@@ -645,36 +660,34 @@ export default function QuotationForm({
                                                 <Label className="text-xs">
                                                     Ajuste %
                                                 </Label>
-                                                <Input
-                                                    type="number"
-                                                    step="0.01"
+                                                <DecimalInput
+                                                    allowNegative
+                                                    maxIntegerDigits={3}
                                                     value={
                                                         item.price_adjustment_pct
                                                     }
-                                                    onChange={(e) =>
+                                                    onValueChange={(value) =>
                                                         updateItem(
                                                             index,
                                                             'price_adjustment_pct',
-                                                            e.target.value,
+                                                            value,
                                                         )
                                                     }
-                                                    placeholder="-10 o +5"
+                                                    placeholder="-10 o 5"
                                                 />
                                             </div>
                                             <div className="md:col-span-2">
                                                 <Label className="text-xs">
                                                     Precio unitario
                                                 </Label>
-                                                <Input
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
+                                                <DecimalInput
+                                                    maxIntegerDigits={12}
                                                     value={item.unit_price}
-                                                    onChange={(e) =>
+                                                    onValueChange={(value) =>
                                                         updateItem(
                                                             index,
                                                             'unit_price',
-                                                            e.target.value,
+                                                            value,
                                                         )
                                                     }
                                                 />
@@ -706,21 +719,17 @@ export default function QuotationForm({
                                 maxDecimals={0}
                             />
                         </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                        {/* items-start: si aparece un mensaje bajo el IVA, el texto de la fila no baja con él. */}
+                        <div className="flex items-start justify-between leading-8">
+                            <div className="flex items-start gap-2">
                                 <span>IVA</span>
-                                <div className="flex items-center gap-1">
-                                    <Input
-                                        type="number"
-                                        min="0"
-                                        max="100"
-                                        step="0.1"
+                                <div className="flex items-start gap-1">
+                                    <DecimalInput
+                                        maxDecimals={2}
+                                        maxIntegerDigits={3}
                                         value={data.iva_percentage}
-                                        onChange={(e) =>
-                                            setData(
-                                                'iva_percentage',
-                                                e.target.value,
-                                            )
+                                        onValueChange={(value) =>
+                                            setData('iva_percentage', value)
                                         }
                                         className="h-8 w-20 text-right"
                                     />

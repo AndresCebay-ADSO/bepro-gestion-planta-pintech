@@ -247,6 +247,7 @@ export default function ContextStep({
                                 setPayload('context_payload', 'temp_min', v),
                             placeholder: 'Mín.',
                             suffix: '°C',
+                            allowNegative: true,
                         }}
                         b={{
                             name: 'temp_max',
@@ -255,6 +256,7 @@ export default function ContextStep({
                                 setPayload('context_payload', 'temp_max', v),
                             placeholder: 'Máx.',
                             suffix: '°C',
+                            allowNegative: true,
                         }}
                         error={
                             errors['context_payload.temp_max'] ||
