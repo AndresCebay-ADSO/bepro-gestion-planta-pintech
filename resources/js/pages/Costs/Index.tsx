@@ -2,10 +2,11 @@ import { Head, router } from '@inertiajs/react';
 import { useCallback, useEffect, useReducer } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
+import { DecimalInput } from '@/components/decimal-input';
 import { FormattedNumber } from '@/components/formatted-number';
-import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
+import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
 import {
     index as adminCostsIndex,
     update as adminCostsUpdate,
@@ -278,10 +279,9 @@ export default function CostsIndex({
                 return;
             }
 
-            const numericValue =
-                marginValue === '' ? null : parseFloat(marginValue);
+            const numericValue = parseDecimal(marginValue);
             const price =
-                numericValue === null || isNaN(numericValue)
+                numericValue === null
                     ? ''
                     : String(
                           calculateSalesPrice(
@@ -312,7 +312,7 @@ export default function CostsIndex({
                 return;
             }
 
-            const price = parseFloat(priceValue) || 0;
+            const price = parseDecimal(priceValue) ?? 0;
 
             if (price <= 0) {
                 dispatch({
@@ -353,13 +353,12 @@ export default function CostsIndex({
                 return;
             }
 
-            let payload: Record<string, number | null> = {};
+            let payload: Record<string, string> = {};
 
             if (state.lastEdited === 'margin') {
-                const numericValue =
-                    state.margin === '' ? null : parseFloat(state.margin);
+                const numericValue = parseDecimal(state.margin);
 
-                if (numericValue === null || isNaN(numericValue)) {
+                if (numericValue === null) {
                     dispatch({
                         type: 'SET_ERROR',
                         productId,
@@ -379,12 +378,11 @@ export default function CostsIndex({
                     return;
                 }
 
-                payload = { sales_margin: numericValue };
+                payload = { sales_margin: toDecimalPayload(state.margin) };
             } else {
-                const numericValue =
-                    state.price === '' ? null : parseFloat(state.price);
+                const numericValue = parseDecimal(state.price);
 
-                if (numericValue === null || isNaN(numericValue)) {
+                if (numericValue === null) {
                     dispatch({
                         type: 'SET_ERROR',
                         productId,
@@ -404,7 +402,7 @@ export default function CostsIndex({
                     return;
                 }
 
-                payload = { sales_price: numericValue };
+                payload = { sales_price: toDecimalPayload(state.price) };
             }
 
             // Clear error before attempting save
@@ -588,22 +586,22 @@ export default function CostsIndex({
                                                     {can.update_margin ? (
                                                         <div className="flex flex-col items-end gap-1">
                                                             <div className="flex items-center justify-end gap-2">
-                                                                <Input
-                                                                    type="number"
-                                                                    min={0}
-                                                                    max={99.99}
-                                                                    step={0.01}
+                                                                <DecimalInput
+                                                                    maxDecimals={
+                                                                        2
+                                                                    }
+                                                                    maxIntegerDigits={
+                                                                        3
+                                                                    }
                                                                     value={
                                                                         state.margin
                                                                     }
-                                                                    onChange={(
-                                                                        e,
+                                                                    onValueChange={(
+                                                                        value,
                                                                     ) =>
                                                                         syncMargin(
                                                                             product.id,
-                                                                            e
-                                                                                .target
-                                                                                .value,
+                                                                            value,
                                                                         )
                                                                     }
                                                                     onBlur={() =>
@@ -653,18 +651,20 @@ export default function CostsIndex({
                                                     {can.update_margin &&
                                                     hasCurrentPrice(product) ? (
                                                         <div className="flex items-center justify-end gap-2">
-                                                            <Input
-                                                                type="number"
-                                                                min={0}
-                                                                step={0.01}
+                                                            <DecimalInput
+                                                                maxDecimals={2}
+                                                                maxIntegerDigits={
+                                                                    12
+                                                                }
                                                                 value={
                                                                     state.price
                                                                 }
-                                                                onChange={(e) =>
+                                                                onValueChange={(
+                                                                    value,
+                                                                ) =>
                                                                     syncPrice(
                                                                         product.id,
-                                                                        e.target
-                                                                            .value,
+                                                                        value,
                                                                     )
                                                                 }
                                                                 onBlur={() =>

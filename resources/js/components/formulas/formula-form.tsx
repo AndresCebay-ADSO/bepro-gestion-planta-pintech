@@ -1,10 +1,10 @@
 import { Plus, Trash2 } from 'lucide-react';
 import type { FormEvent } from 'react';
 
+import { DecimalInput } from '@/components/decimal-input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -245,24 +245,11 @@ export function FormulaForm({
                                         Cantidad (por galón)
                                     </Label>
                                 )}
-                                <Input
-                                    type="text"
-                                    inputMode="decimal"
+                                <DecimalInput
                                     value={detail.quantity}
-                                    onChange={(event) => {
-                                        const value = event.target.value;
-
-                                        if (
-                                            value === '' ||
-                                            /^\d*[.,]?\d{0,4}$/.test(value)
-                                        ) {
-                                            updateDetail(
-                                                index,
-                                                'quantity',
-                                                value,
-                                            );
-                                        }
-                                    }}
+                                    onValueChange={(value) =>
+                                        updateDetail(index, 'quantity', value)
+                                    }
                                     placeholder="Ej: 1,5"
                                 />
                                 {errors[`details.${index}.quantity`] && (

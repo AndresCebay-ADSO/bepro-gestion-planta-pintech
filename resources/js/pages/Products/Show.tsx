@@ -20,6 +20,7 @@ import {
     store,
     update,
 } from '@/actions/App/Http/Controllers/ProductVariantController';
+import { DecimalInput } from '@/components/decimal-input';
 import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -57,6 +58,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { withReturnTo } from '@/lib/navigation';
+import { toDecimalPayload } from '@/lib/numeric-input';
 import { index as finishedInventoryIndex } from '@/routes/finished-inventory';
 import {
     create as formulasCreate,
@@ -326,6 +328,11 @@ export default function ProductsShow({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        form.transform((data) => ({
+            ...data,
+            presentation_value: toDecimalPayload(data.presentation_value),
+        }));
 
         if (dialogMode === 'edit' && editingVariantId != null) {
             form.patch(
@@ -1087,27 +1094,31 @@ export default function ProductsShow({
                                                     Valor Presentación (en
                                                     galones)
                                                 </Label>
-                                                <Input
+                                                <DecimalInput
                                                     id="presentation_value"
-                                                    type="number"
-                                                    step="0.0001"
                                                     value={
                                                         form.data
                                                             .presentation_value
                                                     }
-                                                    onChange={(e) =>
+                                                    onValueChange={(value) =>
                                                         form.setData(
                                                             'presentation_value',
-                                                            e.target.value,
+                                                            value,
                                                         )
                                                     }
-                                                    placeholder="Ej: 1 , 3, 5, 0.25"
+                                                    placeholder="Ej: 1, 3, 5 o 0,25"
                                                 />
                                                 <p className="text-xs text-muted-foreground">
                                                     Ejemplos: 1 = Galón, 3 =
                                                     Bidón 3gal, 5 = Cuñete 5gal,
-                                                    0.25 = 1/4 galón
+                                                    0,25 = 1/4 galón
                                                 </p>
+                                                <InputError
+                                                    message={
+                                                        form.errors
+                                                            .presentation_value
+                                                    }
+                                                />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="presentation_label">
@@ -1138,8 +1149,6 @@ export default function ProductsShow({
                                                     </Label>
                                                     <Input
                                                         id="current_cost"
-                                                        type="number"
-                                                        step="0.0001"
                                                         value={
                                                             editingVariant?.current_cost !=
                                                             null
@@ -1166,8 +1175,6 @@ export default function ProductsShow({
                                                     </Label>
                                                     <Input
                                                         id="current_price"
-                                                        type="number"
-                                                        step="0.0001"
                                                         value={
                                                             editingVariant?.current_price !=
                                                             null

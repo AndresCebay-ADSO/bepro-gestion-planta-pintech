@@ -28,9 +28,10 @@ export function DecimalInput({
     onValueChange,
     maxDecimals,
     maxIntegerDigits,
+    allowNegative,
     ...props
 }: DecimalInputProps) {
-    const limits = { maxDecimals, maxIntegerDigits };
+    const limits = { maxDecimals, maxIntegerDigits, allowNegative };
     const text = value === null || value === undefined ? '' : String(value);
     const hasSeparatorError =
         checkDecimalText(text, limits) === 'separator-error';
@@ -48,7 +49,8 @@ export function DecimalInput({
             <Input
                 {...props}
                 type="text"
-                inputMode="decimal"
+                // El teclado decimal del celular (iOS) no tiene el signo menos: con negativos va el teclado completo.
+                inputMode={allowNegative ? 'text' : 'decimal'}
                 autoComplete="off"
                 aria-invalid={hasSeparatorError || props['aria-invalid']}
                 value={text}

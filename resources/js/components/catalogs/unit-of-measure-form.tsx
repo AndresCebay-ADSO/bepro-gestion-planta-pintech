@@ -1,5 +1,6 @@
 import type { useForm } from '@inertiajs/react';
 import { useState } from 'react';
+import { DecimalInput } from '@/components/decimal-input';
 import { FormattedNumber } from '@/components/formatted-number';
 import InputError from '@/components/input-error';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,6 +14,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { toDecimalPayload } from '@/lib/numeric-input';
 import type { UnitOfMeasureFormData, UnitOfMeasureUsage } from '@/types';
 
 type ConversionKind = 'none' | 'weight' | 'volume';
@@ -21,6 +23,12 @@ const CONVERSION_TARGET: Record<Exclude<ConversionKind, 'none'>, string> = {
     weight: 'kg',
     volume: 'L',
 };
+
+/** Las equivalencias: se escriben con coma o punto y se convierten al enviar con `withDecimalPayloads`. */
+export const UNIT_FACTOR_FIELDS = [
+    'to_kg_conversion',
+    'to_liter_conversion',
+] as const;
 
 function conversionKindOf(data: UnitOfMeasureFormData): ConversionKind {
     if (data.to_kg_conversion.trim() !== '') {
@@ -42,7 +50,8 @@ export function UnitEquivalence({
     liter: string | null;
     emptyLabel?: string;
 }) {
-    const factor = kg || liter;
+    // En la confirmación llega lo que se está escribiendo («1,5»).
+    const factor = toDecimalPayload(kg || liter);
 
     if (!factor) {
         return <>{emptyLabel}</>;
@@ -82,12 +91,12 @@ export function describeUnitUsage(usage: UnitOfMeasureUsage): string {
 }
 
 /**
- * Compara dos equivalencias como texto normalizado ("1.0000" = "1"), sin pasar por float.
+ * Compara dos equivalencias como texto normalizado ("1.0000" = "1" = "1,0"), sin pasar por float.
  * Solo decide si mostrar la confirmación; el servidor vuelve a comparar con bcmath.
  */
 export function sameFactor(a: string | null, b: string): boolean {
     const normalize = (value: string | null) => {
-        const trimmed = (value ?? '').trim();
+        const trimmed = toDecimalPayload(value);
 
         return trimmed.includes('.')
             ? trimmed.replace(/0+$/, '').replace(/\.$/, '')
@@ -237,18 +246,13 @@ export function UnitOfMeasureFields({ form, usageSummary = null }: Props) {
                                 a
                             </Label>
                             <div className="flex items-center gap-2">
-                                <Input
+                                <DecimalInput
                                     id="factor"
-                                    type="number"
-                                    inputMode="decimal"
-                                    step="0.0001"
-                                    min="0.0001"
+                                    // decimal(10,4): 6 dígitos enteros.
+                                    maxIntegerDigits={6}
                                     value={form.data[factorField]}
-                                    onChange={(event) =>
-                                        form.setData(
-                                            factorField,
-                                            event.target.value,
-                                        )
+                                    onValueChange={(value) =>
+                                        form.setData(factorField, value)
                                     }
                                 />
                                 <span className="text-sm text-muted-foreground">

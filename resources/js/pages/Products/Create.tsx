@@ -1,6 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
+import { DecimalInput } from '@/components/decimal-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { withDecimalPayloads } from '@/lib/numeric-input';
+import { PRODUCT_DECIMAL_FIELDS } from '@/lib/product-form';
 import { index as productsIndex } from '@/routes/products';
 
 type Option = { id: number; name: string; symbol?: string };
@@ -41,26 +44,28 @@ type ProductForm = {
 };
 
 export default function ProductsCreate({ categories, units, can }: Props) {
-    const { data, setData, post, processing, errors } = useForm<ProductForm>({
-        code: '',
-        name: '',
-        brand: 'BEPRO',
-        description: '',
-        category_id: '',
-        unit_of_measure_id: '',
-        cif_percentage: '0',
-        price_threshold: '0',
-        quality_viscosity_lower: '',
-        quality_viscosity_upper: '',
-        quality_fineness_lower: '',
-        quality_fineness_upper: '',
-        quality_solids_lower: '',
-        quality_solids_upper: '',
-        is_active: true,
-    });
+    const { data, setData, post, transform, processing, errors } =
+        useForm<ProductForm>({
+            code: '',
+            name: '',
+            brand: 'BEPRO',
+            description: '',
+            category_id: '',
+            unit_of_measure_id: '',
+            cif_percentage: '0',
+            price_threshold: '0',
+            quality_viscosity_lower: '',
+            quality_viscosity_upper: '',
+            quality_fineness_lower: '',
+            quality_fineness_upper: '',
+            quality_solids_lower: '',
+            quality_solids_upper: '',
+            is_active: true,
+        });
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        transform((form) => withDecimalPayloads(form, PRODUCT_DECIMAL_FIELDS));
         post(productsIndex().url);
     };
 
@@ -268,16 +273,15 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                         >
                                             Mínimo
                                         </Label>
-                                        <Input
+                                        <DecimalInput
                                             id="quality_viscosity_lower"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
+                                            maxDecimals={1}
+                                            maxIntegerDigits={3}
                                             value={data.quality_viscosity_lower}
-                                            onChange={(e) =>
+                                            onValueChange={(value) =>
                                                 setData(
                                                     'quality_viscosity_lower',
-                                                    e.target.value,
+                                                    value,
                                                 )
                                             }
                                             placeholder="Ej: 90"
@@ -295,16 +299,15 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                         >
                                             Máximo
                                         </Label>
-                                        <Input
+                                        <DecimalInput
                                             id="quality_viscosity_upper"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
+                                            maxDecimals={1}
+                                            maxIntegerDigits={3}
                                             value={data.quality_viscosity_upper}
-                                            onChange={(e) =>
+                                            onValueChange={(value) =>
                                                 setData(
                                                     'quality_viscosity_upper',
-                                                    e.target.value,
+                                                    value,
                                                 )
                                             }
                                             placeholder="Ej: 110"
@@ -327,16 +330,15 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                         >
                                             Mínimo
                                         </Label>
-                                        <Input
+                                        <DecimalInput
                                             id="quality_fineness_lower"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
+                                            maxDecimals={1}
+                                            maxIntegerDigits={3}
                                             value={data.quality_fineness_lower}
-                                            onChange={(e) =>
+                                            onValueChange={(value) =>
                                                 setData(
                                                     'quality_fineness_lower',
-                                                    e.target.value,
+                                                    value,
                                                 )
                                             }
                                         />
@@ -353,16 +355,15 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                         >
                                             Máximo
                                         </Label>
-                                        <Input
+                                        <DecimalInput
                                             id="quality_fineness_upper"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
+                                            maxDecimals={1}
+                                            maxIntegerDigits={3}
                                             value={data.quality_fineness_upper}
-                                            onChange={(e) =>
+                                            onValueChange={(value) =>
                                                 setData(
                                                     'quality_fineness_upper',
-                                                    e.target.value,
+                                                    value,
                                                 )
                                             }
                                         />
@@ -384,17 +385,15 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                         >
                                             Mínimo
                                         </Label>
-                                        <Input
+                                        <DecimalInput
                                             id="quality_solids_lower"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="100"
+                                            maxDecimals={1}
+                                            maxIntegerDigits={3}
                                             value={data.quality_solids_lower}
-                                            onChange={(e) =>
+                                            onValueChange={(value) =>
                                                 setData(
                                                     'quality_solids_lower',
-                                                    e.target.value,
+                                                    value,
                                                 )
                                             }
                                         />
@@ -411,17 +410,15 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                         >
                                             Máximo
                                         </Label>
-                                        <Input
+                                        <DecimalInput
                                             id="quality_solids_upper"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="100"
+                                            maxDecimals={1}
+                                            maxIntegerDigits={3}
                                             value={data.quality_solids_upper}
-                                            onChange={(e) =>
+                                            onValueChange={(value) =>
                                                 setData(
                                                     'quality_solids_upper',
-                                                    e.target.value,
+                                                    value,
                                                 )
                                             }
                                         />
@@ -456,9 +453,6 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                     </Label>
                                     <Input
                                         id="current_cost"
-                                        type="number"
-                                        step="0.0001"
-                                        min="0"
                                         value=""
                                         readOnly
                                         className="cursor-not-allowed bg-muted/50"
@@ -476,9 +470,6 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                     </Label>
                                     <Input
                                         id="current_price"
-                                        type="number"
-                                        step="0.0001"
-                                        min="0"
                                         value=""
                                         readOnly
                                         className="cursor-not-allowed bg-muted/50"
@@ -494,19 +485,14 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                     <Label htmlFor="cif_percentage">
                                         CIF (%) *
                                     </Label>
-                                    <Input
+                                    <DecimalInput
                                         id="cif_percentage"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        max="100"
+                                        maxDecimals={2}
+                                        maxIntegerDigits={3}
                                         required
                                         value={data.cif_percentage}
-                                        onChange={(e) =>
-                                            setData(
-                                                'cif_percentage',
-                                                e.target.value,
-                                            )
+                                        onValueChange={(value) =>
+                                            setData('cif_percentage', value)
                                         }
                                         placeholder="0.00"
                                     />
@@ -521,18 +507,13 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                     <Label htmlFor="price_threshold">
                                         Umbral mínimo de precio (%)
                                     </Label>
-                                    <Input
+                                    <DecimalInput
                                         id="price_threshold"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        max="100"
+                                        maxDecimals={2}
+                                        maxIntegerDigits={3}
                                         value={data.price_threshold}
-                                        onChange={(e) =>
-                                            setData(
-                                                'price_threshold',
-                                                e.target.value,
-                                            )
+                                        onValueChange={(value) =>
+                                            setData('price_threshold', value)
                                         }
                                     />
                                     {errors.price_threshold && (

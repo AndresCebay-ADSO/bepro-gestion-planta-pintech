@@ -1,6 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
+import { DecimalInput } from '@/components/decimal-input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { withDecimalPayloads } from '@/lib/numeric-input';
+import { PRODUCT_DECIMAL_FIELDS } from '@/lib/product-form';
 import {
     show as productsShow,
     index as productsIndex,
@@ -101,7 +104,9 @@ export default function ProductsEdit({
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         // Sin costs.view no llegan CIF ni umbral: no se envían y el servidor conserva los guardados.
-        transform((form) => {
+        transform((rawForm) => {
+            const form = withDecimalPayloads(rawForm, PRODUCT_DECIMAL_FIELDS);
+
             if (can.viewCosts) {
                 return form;
             }
@@ -319,16 +324,15 @@ export default function ProductsEdit({
                                         >
                                             Mínimo
                                         </Label>
-                                        <Input
+                                        <DecimalInput
                                             id="quality_viscosity_lower"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
+                                            maxDecimals={1}
+                                            maxIntegerDigits={3}
                                             value={data.quality_viscosity_lower}
-                                            onChange={(e) =>
+                                            onValueChange={(value) =>
                                                 setData(
                                                     'quality_viscosity_lower',
-                                                    e.target.value,
+                                                    value,
                                                 )
                                             }
                                         />
@@ -345,16 +349,15 @@ export default function ProductsEdit({
                                         >
                                             Máximo
                                         </Label>
-                                        <Input
+                                        <DecimalInput
                                             id="quality_viscosity_upper"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
+                                            maxDecimals={1}
+                                            maxIntegerDigits={3}
                                             value={data.quality_viscosity_upper}
-                                            onChange={(e) =>
+                                            onValueChange={(value) =>
                                                 setData(
                                                     'quality_viscosity_upper',
-                                                    e.target.value,
+                                                    value,
                                                 )
                                             }
                                         />
@@ -376,16 +379,15 @@ export default function ProductsEdit({
                                         >
                                             Mínimo
                                         </Label>
-                                        <Input
+                                        <DecimalInput
                                             id="quality_fineness_lower"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
+                                            maxDecimals={1}
+                                            maxIntegerDigits={3}
                                             value={data.quality_fineness_lower}
-                                            onChange={(e) =>
+                                            onValueChange={(value) =>
                                                 setData(
                                                     'quality_fineness_lower',
-                                                    e.target.value,
+                                                    value,
                                                 )
                                             }
                                         />
@@ -402,16 +404,15 @@ export default function ProductsEdit({
                                         >
                                             Máximo
                                         </Label>
-                                        <Input
+                                        <DecimalInput
                                             id="quality_fineness_upper"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
+                                            maxDecimals={1}
+                                            maxIntegerDigits={3}
                                             value={data.quality_fineness_upper}
-                                            onChange={(e) =>
+                                            onValueChange={(value) =>
                                                 setData(
                                                     'quality_fineness_upper',
-                                                    e.target.value,
+                                                    value,
                                                 )
                                             }
                                         />
@@ -433,17 +434,15 @@ export default function ProductsEdit({
                                         >
                                             Mínimo
                                         </Label>
-                                        <Input
+                                        <DecimalInput
                                             id="quality_solids_lower"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="100"
+                                            maxDecimals={1}
+                                            maxIntegerDigits={3}
                                             value={data.quality_solids_lower}
-                                            onChange={(e) =>
+                                            onValueChange={(value) =>
                                                 setData(
                                                     'quality_solids_lower',
-                                                    e.target.value,
+                                                    value,
                                                 )
                                             }
                                         />
@@ -460,17 +459,15 @@ export default function ProductsEdit({
                                         >
                                             Máximo
                                         </Label>
-                                        <Input
+                                        <DecimalInput
                                             id="quality_solids_upper"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="100"
+                                            maxDecimals={1}
+                                            maxIntegerDigits={3}
                                             value={data.quality_solids_upper}
-                                            onChange={(e) =>
+                                            onValueChange={(value) =>
                                                 setData(
                                                     'quality_solids_upper',
-                                                    e.target.value,
+                                                    value,
                                                 )
                                             }
                                         />
@@ -499,9 +496,6 @@ export default function ProductsEdit({
                                     </Label>
                                     <Input
                                         id="current_cost"
-                                        type="number"
-                                        step="0.0001"
-                                        min="0"
                                         value={toInput(product.current_cost)}
                                         readOnly
                                         className="cursor-not-allowed bg-muted/50"
@@ -519,9 +513,6 @@ export default function ProductsEdit({
                                     </Label>
                                     <Input
                                         id="current_price"
-                                        type="number"
-                                        step="0.0001"
-                                        min="0"
                                         value={toInput(product.current_price)}
                                         readOnly
                                         className="cursor-not-allowed bg-muted/50"
@@ -536,19 +527,14 @@ export default function ProductsEdit({
                                     <Label htmlFor="cif_percentage">
                                         CIF (%) *
                                     </Label>
-                                    <Input
+                                    <DecimalInput
                                         id="cif_percentage"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        max="100"
+                                        maxDecimals={2}
+                                        maxIntegerDigits={3}
                                         required
                                         value={data.cif_percentage}
-                                        onChange={(e) =>
-                                            setData(
-                                                'cif_percentage',
-                                                e.target.value,
-                                            )
+                                        onValueChange={(value) =>
+                                            setData('cif_percentage', value)
                                         }
                                     />
                                 </div>
@@ -557,18 +543,13 @@ export default function ProductsEdit({
                                     <Label htmlFor="price_threshold">
                                         Umbral mínimo (%)
                                     </Label>
-                                    <Input
+                                    <DecimalInput
                                         id="price_threshold"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        max="100"
+                                        maxDecimals={2}
+                                        maxIntegerDigits={3}
                                         value={data.price_threshold}
-                                        onChange={(e) =>
-                                            setData(
-                                                'price_threshold',
-                                                e.target.value,
-                                            )
+                                        onValueChange={(value) =>
+                                            setData('price_threshold', value)
                                         }
                                     />
                                 </div>

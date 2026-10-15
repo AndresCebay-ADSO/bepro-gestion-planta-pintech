@@ -72,6 +72,7 @@ export default function ApplicationStep({
                                 ),
                             placeholder: 'Temperatura',
                             suffix: '°C',
+                            allowNegative: true,
                         }}
                         b={{
                             name: 'humedad_aplicacion',
@@ -130,6 +131,7 @@ export default function ApplicationStep({
                             setPayload('application_payload', 'manos', v)
                         }
                         placeholder="Ej. 2"
+                        integer
                         required
                         error={errors['application_payload.manos']}
                     />
@@ -265,6 +267,7 @@ export default function ApplicationStep({
                             setPayload('application_payload', 'pot_life', v)
                         }
                         suffix="min"
+                        integer
                         error={errors['application_payload.pot_life']}
                     />
                     <NumberField

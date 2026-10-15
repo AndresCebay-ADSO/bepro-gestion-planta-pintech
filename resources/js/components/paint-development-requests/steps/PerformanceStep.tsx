@@ -203,8 +203,7 @@ export default function PerformanceStep({
                         onChange={(v) =>
                             setPayload('performance_payload', 'delta_e', v)
                         }
-                        placeholder="Ej. 1.0"
-                        step="0.1"
+                        placeholder="Ej. 1,0"
                         error={errors['performance_payload.delta_e']}
                     />
                     <SelectField

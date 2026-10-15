@@ -2,6 +2,10 @@ import { Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, ChevronRight, Save, Send } from 'lucide-react';
 import { useState } from 'react';
 
+import {
+    NUMERIC_PAYLOAD_FIELDS,
+    withNumericPayloads,
+} from '@/components/paint-development-requests/numeric-payload';
 import ApplicationStep from '@/components/paint-development-requests/steps/ApplicationStep';
 import ContextStep from '@/components/paint-development-requests/steps/ContextStep';
 import PerformanceStep from '@/components/paint-development-requests/steps/PerformanceStep';
@@ -15,6 +19,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { parseDecimal } from '@/lib/numeric-input';
 
 export type RawPaintDevFormData = {
     client_name: string | null;
@@ -292,7 +297,7 @@ export default function PaintDevelopmentRequestForm({
         }
 
         transform((formData) => ({
-            ...formData,
+            ...withNumericPayloads(formData),
             _draft: asDraft,
         }));
 
@@ -302,22 +307,6 @@ export default function PaintDevelopmentRequestForm({
             post(submitUrl);
         }
     };
-
-    const numericPayloadFields = new Set([
-        'context_payload.temp_min',
-        'context_payload.temp_max',
-        'application_payload.temp_aplicacion',
-        'application_payload.humedad_aplicacion',
-        'application_payload.dft_min',
-        'application_payload.dft_max',
-        'application_payload.manos',
-        'application_payload.pot_life',
-        'application_payload.solidos_vol',
-        'application_payload.voc',
-        'performance_payload.adherencia_obj',
-        'performance_payload.camara_obj',
-        'performance_payload.delta_e',
-    ]);
 
     const clearLocalError = (key: string) => {
         setLocalErrors((prev) => {
@@ -349,7 +338,7 @@ export default function PaintDevelopmentRequestForm({
         clearLocalError(errorKey);
 
         const normalizedValue =
-            value === '' && numericPayloadFields.has(errorKey) ? null : value;
+            value === '' && NUMERIC_PAYLOAD_FIELDS.has(errorKey) ? null : value;
 
         setData((prev) => ({
             ...prev,
@@ -436,8 +425,8 @@ export default function PaintDevelopmentRequestForm({
                     'Describe el sistema de pintura actual.';
             }
 
-            const tempMin = ctx.temp_min ? parseFloat(ctx.temp_min) : null;
-            const tempMax = ctx.temp_max ? parseFloat(ctx.temp_max) : null;
+            const tempMin = parseDecimal(ctx.temp_min);
+            const tempMax = parseDecimal(ctx.temp_max);
 
             if (tempMin !== null && tempMax !== null && tempMin > tempMax) {
                 errs['context_payload.temp_max'] =
@@ -557,47 +546,51 @@ export default function PaintDevelopmentRequestForm({
             }
 
             if (app.manos) {
-                const manosVal = parseFloat(app.manos);
+                const manosVal = parseDecimal(app.manos);
 
-                if (!Number.isInteger(manosVal) || manosVal < 1) {
+                if (
+                    manosVal === null ||
+                    !Number.isInteger(manosVal) ||
+                    manosVal < 1
+                ) {
                     errs['application_payload.manos'] =
                         'El número de manos debe ser un entero mayor o igual a 1.';
                 }
             }
 
             if (app.pot_life) {
-                const potLifeVal = parseFloat(app.pot_life);
+                const potLifeVal = parseDecimal(app.pot_life);
 
-                if (!Number.isInteger(potLifeVal) || potLifeVal < 1) {
+                if (
+                    potLifeVal === null ||
+                    !Number.isInteger(potLifeVal) ||
+                    potLifeVal < 1
+                ) {
                     errs['application_payload.pot_life'] =
                         'El pot life debe ser un entero mayor o igual a 1.';
                 }
             }
 
             if (app.solidos_vol) {
-                const solidosVal = parseFloat(app.solidos_vol);
+                const solidosVal = parseDecimal(app.solidos_vol);
 
-                if (
-                    Number.isNaN(solidosVal) ||
-                    solidosVal < 0 ||
-                    solidosVal > 100
-                ) {
+                if (solidosVal === null || solidosVal < 0 || solidosVal > 100) {
                     errs['application_payload.solidos_vol'] =
                         'Los sólidos en volumen deben estar entre 0 y 100.';
                 }
             }
 
             if (app.voc) {
-                const vocVal = parseFloat(app.voc);
+                const vocVal = parseDecimal(app.voc);
 
-                if (Number.isNaN(vocVal) || vocVal < 0) {
+                if (vocVal === null || vocVal < 0) {
                     errs['application_payload.voc'] =
                         'El VOC debe ser un número mayor o igual a 0.';
                 }
             }
 
-            const dftMin = app.dft_min ? parseFloat(app.dft_min) : null;
-            const dftMax = app.dft_max ? parseFloat(app.dft_max) : null;
+            const dftMin = parseDecimal(app.dft_min);
+            const dftMax = parseDecimal(app.dft_max);
 
             if (dftMin !== null && dftMax !== null && dftMin > dftMax) {
                 errs['application_payload.dft_max'] =

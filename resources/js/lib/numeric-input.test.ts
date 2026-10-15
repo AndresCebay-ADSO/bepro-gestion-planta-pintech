@@ -8,6 +8,7 @@ import {
     isValidIntegerText,
     parseDecimal,
     toDecimalPayload,
+    withDecimalPayloads,
 } from '@/lib/numeric-input';
 
 /*
@@ -166,12 +167,90 @@ describe('toDecimalPayload: lo que se envía al servidor', () => {
         expect(toDecimalPayload(value)).toBe('');
     });
 
-    it.each(['abc', '1.200,5', '-1'])(
+    it.each(['abc', '1.200,5', '1-'])(
         'un texto que no es un número se envía tal cual, para que lo rechace el servidor: %j',
         (value) => {
             expect(toDecimalPayload(value)).toBe(value);
         },
     );
+});
+
+describe('negativos: solo en los campos con allowNegative (ajuste de precio, temperaturas)', () => {
+    const signed = { allowNegative: true, maxDecimals: 2, maxIntegerDigits: 3 };
+
+    it.each(['', '-', '-1', '-10,5', '-,5', '-100', '5', '99,99'])(
+        'acepta %j',
+        (text) => {
+            expect(checkDecimalText(text, signed)).toBe('valid');
+        },
+    );
+
+    it.each(['1-', '--1', '-1-', '+5', '- 1', '-1000', '-1,234', '-a'])(
+        'rechaza %j',
+        (text) => {
+            expect(checkDecimalText(text, signed)).toBe('reject');
+        },
+    );
+
+    it('un separador de más también marca el error con signo', () => {
+        expect(checkDecimalText('-1.200,5', signed)).toBe('separator-error');
+    });
+
+    it('al teclear -10,5 queda -10,5; el signo en medio se rechaza', () => {
+        expect(
+            typeKeys('-10,5', (text) => checkDecimalText(text, signed)),
+        ).toBe('-10,5');
+        expect(typeKeys('10-5', (text) => checkDecimalText(text, signed))).toBe(
+            '105',
+        );
+    });
+
+    it('sin allowNegative el signo se rechaza', () => {
+        expect(checkDecimalText('-', { maxDecimals: 2 })).toBe('reject');
+        expect(checkDecimalText('-1', { maxDecimals: 2 })).toBe('reject');
+    });
+
+    it.each<[string, string]>([
+        ['-10,5', '-10.5'],
+        ['-10.5', '-10.5'],
+        ['-,5', '-0.5'],
+        ['-1,', '-1'],
+        ['-15', '-15'],
+    ])('se envía %j como %j', (value, expected) => {
+        expect(toDecimalPayload(value)).toBe(expected);
+    });
+
+    it.each(['-', '-,', '-.'])(
+        'un signo solo se envía vacío, nunca 0: %j',
+        (value) => {
+            expect(toDecimalPayload(value)).toBe('');
+        },
+    );
+
+    it.each<[string, number | null]>([
+        ['-10,5', -10.5],
+        ['-,5', -0.5],
+        ['-', null],
+    ])('parseDecimal(%j) → %j', (value, expected) => {
+        expect(parseDecimal(value)).toBe(expected);
+    });
+
+    it('el aviso de miles conserva el signo', () => {
+        expect(decimalAmbiguityHint('-1.200')).toBe(
+            'Se registrará -1,2. Si es un número sin decimales, escríbelo sin punto: -1200.',
+        );
+    });
+});
+
+describe('withDecimalPayloads', () => {
+    it('convierte solo los campos indicados', () => {
+        expect(
+            withDecimalPayloads(
+                { name: 'A,B', cif: '15,5', threshold: '', active: true },
+                ['cif', 'threshold'],
+            ),
+        ).toEqual({ name: 'A,B', cif: '15.5', threshold: '', active: true });
+    });
 });
 
 describe('parseDecimal: el número para los cálculos en pantalla', () => {

@@ -1,4 +1,4 @@
-import { Input } from '@/components/ui/input';
+import { DecimalInput } from '@/components/decimal-input';
 import { Label } from '@/components/ui/label';
 
 type FieldDef = {
@@ -7,6 +7,8 @@ type FieldDef = {
     onChange: (v: string) => void;
     placeholder: string;
     suffix: string;
+    /** Admite valores bajo cero (temperaturas). */
+    allowNegative?: boolean;
 };
 
 type Props = {
@@ -17,6 +19,22 @@ type Props = {
     error?: string;
 };
 
+function PairInput({ field }: { field: FieldDef }) {
+    return (
+        <div className="relative">
+            <DecimalInput
+                allowNegative={field.allowNegative}
+                value={field.value}
+                onValueChange={field.onChange}
+                placeholder={field.placeholder}
+            />
+            <span className="pointer-events-none absolute top-2.5 right-3 text-xs text-muted-foreground">
+                {field.suffix}
+            </span>
+        </div>
+    );
+}
+
 export default function PairFields({ label, a, b, required, error }: Props) {
     return (
         <div className="space-y-1.5">
@@ -25,28 +43,8 @@ export default function PairFields({ label, a, b, required, error }: Props) {
                 {required && <span className="ml-0.5 text-destructive">*</span>}
             </Label>
             <div className="grid grid-cols-2 gap-3">
-                <div className="relative">
-                    <Input
-                        type="number"
-                        value={a.value}
-                        onChange={(e) => a.onChange(e.target.value)}
-                        placeholder={a.placeholder}
-                    />
-                    <span className="pointer-events-none absolute top-2.5 right-3 text-xs text-muted-foreground">
-                        {a.suffix}
-                    </span>
-                </div>
-                <div className="relative">
-                    <Input
-                        type="number"
-                        value={b.value}
-                        onChange={(e) => b.onChange(e.target.value)}
-                        placeholder={b.placeholder}
-                    />
-                    <span className="pointer-events-none absolute top-2.5 right-3 text-xs text-muted-foreground">
-                        {b.suffix}
-                    </span>
-                </div>
+                <PairInput field={a} />
+                <PairInput field={b} />
             </div>
             {error && <p className="text-xs text-destructive">{error}</p>}
         </div>

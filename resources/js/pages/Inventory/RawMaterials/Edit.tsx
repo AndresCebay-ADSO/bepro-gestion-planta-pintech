@@ -16,6 +16,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { toDecimalPayload } from '@/lib/numeric-input';
 import {
     index as rawMaterialsIndex,
     show as rawMaterialsShow,
@@ -99,13 +100,19 @@ export default function RawMaterialsEdit({
             confirm_tracking_change: confirmed,
             // El precio solo viaja si se puede escribir: sin control de inventario y con permiso de costos.
             ...(!data.tracks_inventory && can.updateCosts
-                ? { current_price: current_price === '' ? null : current_price }
+                ? {
+                      current_price:
+                          current_price === ''
+                              ? null
+                              : toDecimalPayload(current_price),
+                  }
                 : {}),
             unit_of_measure_id: Number(data.unit_of_measure_id),
+            minimum_stock: toDecimalPayload(data.minimum_stock),
             price_variation_threshold:
                 data.price_variation_threshold === ''
                     ? null
-                    : data.price_variation_threshold,
+                    : toDecimalPayload(data.price_variation_threshold),
         }));
 
         form.put(rawMaterialsUpdate(rawMaterial.id).url, {

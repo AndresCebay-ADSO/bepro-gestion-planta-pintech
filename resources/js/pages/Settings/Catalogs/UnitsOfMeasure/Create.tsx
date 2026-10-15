@@ -1,7 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { UnitOfMeasureFields } from '@/components/catalogs/unit-of-measure-form';
+import {
+    UNIT_FACTOR_FIELDS,
+    UnitOfMeasureFields,
+} from '@/components/catalogs/unit-of-measure-form';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
+import { withDecimalPayloads } from '@/lib/numeric-input';
 import {
     create as unitsCreate,
     index as unitsIndex,
@@ -35,6 +39,9 @@ export default function UnitsOfMeasureCreate() {
                 <form
                     onSubmit={(event) => {
                         event.preventDefault();
+                        form.transform((data) =>
+                            withDecimalPayloads(data, UNIT_FACTOR_FIELDS),
+                        );
                         form.post(unitsStore().url);
                     }}
                     className="grid gap-6"

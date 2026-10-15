@@ -7,6 +7,7 @@ import {
     FormulaForm,
 } from '@/components/formulas/formula-form';
 import type { FormulaFormData } from '@/components/formulas/formula-form';
+import { toDecimalPayload } from '@/lib/numeric-input';
 import {
     index as formulasIndex,
     store as formulasStore,
@@ -51,7 +52,7 @@ export default function FormulasCreate({
             ...data,
             details: data.details.map((detail) => ({
                 ...detail,
-                quantity: detail.quantity.replace(',', '.'),
+                quantity: toDecimalPayload(detail.quantity),
             })),
         });
     };
