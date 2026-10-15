@@ -8,6 +8,8 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            /** Hoy en la planta (`Y-m-d`): valor por defecto y límite de los campos de fecha. Lo valida PlantDate. */
+            plantToday: string;
             /** `null` sin sesión. */
             warehouseContext: WarehouseContext | null;
             unresolvedAlertsCount: number;

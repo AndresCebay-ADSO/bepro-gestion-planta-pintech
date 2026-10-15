@@ -82,6 +82,8 @@ class InventoryMovementController extends Controller
             // Formulario de alta: solo bodegas activas. `warehouseOptions` es el filtro del historial y muestra todas.
             'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->where('is_active', true)->get())
                 ->once(as: 'inventory-movements:warehouses'),
+            // Fecha más vieja que admite una entrada (D1b): sin `once`, para que cambie con el día.
+            'oldestEntryDate' => Inertia::optional(fn (): string => InventoryMovement::oldestEntryDate()),
             'warehouseOptions' => Warehouse::query()
                 ->select('id', 'name')
                 ->orderBy('name')

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\SystemRole;
 use App\Models\User;
+use App\Services\TimezoneService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
@@ -49,6 +50,15 @@ expect()->extend('toBeOne', function () {
 | global functions to help you to reduce the number of lines of code in your test files.
 |
 */
+
+/**
+ * Hoy en la planta (`Y-m-d`), para las fechas que un test envía a un formulario. `now()->toDateString()` es el día en
+ * UTC: de 7 p. m. a medianoche en Bogotá ya es mañana, y PlantDate lo rechaza como fecha futura (auditoría 3.6, PR 3).
+ */
+function plantToday(): string
+{
+    return app(TimezoneService::class)->todayInPlant();
+}
 
 /**
  * Crea un usuario con un rol del sistema y los permisos de la matriz ya sembrados.

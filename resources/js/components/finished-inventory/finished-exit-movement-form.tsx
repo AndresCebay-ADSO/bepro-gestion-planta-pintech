@@ -1,8 +1,7 @@
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import type { SubmitEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { getLocalDateString } from '@/lib/date-time-helpers';
 import { toDecimalPayload } from '@/lib/numeric-input';
 import { store as storeFinishedMovement } from '@/routes/finished-inventory-movements';
 import { exitReasons } from '@/types/finished-inventory';
@@ -27,13 +26,14 @@ export function FinishedExitMovementForm({
     defaultWarehouseId,
     onSuccess,
 }: Props) {
+    const { plantToday } = usePage().props;
     const form = useForm<FinishedMovementFormData>({
         finished_product_batch_id: '',
         warehouse_id: defaultWarehouseId ? String(defaultWarehouseId) : '',
         type: 'exit' as const,
         reason: 'sale' as FinishedMovementReason,
         quantity: '',
-        movement_date: getLocalDateString(),
+        movement_date: plantToday,
         notes: '',
     });
 

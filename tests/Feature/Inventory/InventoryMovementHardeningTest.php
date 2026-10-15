@@ -78,7 +78,7 @@ test('it rejects movements when batch belongs to another warehouse', function ()
             'batch_id' => $batch->id,
             'type' => 'exit',
             'quantity' => 10,
-            'movement_date' => now()->toDateString(),
+            'movement_date' => plantToday(),
         ]);
 
     $response->assertRedirect(route('inventory-movements.index'));
@@ -98,7 +98,7 @@ test('it dispatches reference price recalculation after storing a movement', fun
             'quantity' => 10,
             'cost_price' => 12,
             'lot_number' => 'LOT-JOB-001',
-            'movement_date' => now()->toDateString(),
+            'movement_date' => plantToday(),
         ]);
 
     $response->assertRedirect(route('inventory-movements.index'));
@@ -119,7 +119,7 @@ test('it requires a lot number when an entry creates a new batch', function () {
             'type' => 'entry',
             'quantity' => 10,
             'cost_price' => 12,
-            'movement_date' => now()->toDateString(),
+            'movement_date' => plantToday(),
         ]);
 
     $response->assertRedirect(route('inventory-movements.index'));
@@ -146,7 +146,7 @@ test('it rejects adding stock with a different cost to an existing batch', funct
             'type' => 'entry',
             'quantity' => 30,
             'cost_price' => 30,
-            'movement_date' => now()->toDateString(),
+            'movement_date' => plantToday(),
         ]);
 
     $response->assertRedirect(route('inventory-movements.index'));
@@ -176,7 +176,7 @@ test('it allows adding stock to an existing batch when cost matches', function (
             'type' => 'entry',
             'quantity' => 30,
             'cost_price' => 10,
-            'movement_date' => now()->toDateString(),
+            'movement_date' => plantToday(),
         ]);
 
     $response->assertRedirect(route('inventory-movements.index'));
@@ -206,7 +206,7 @@ test('it ignores submitted cost price for exits and stores the batch cost', func
             'type' => 'exit',
             'quantity' => 5,
             'cost_price' => 999,
-            'movement_date' => now()->toDateString(),
+            'movement_date' => plantToday(),
         ]);
 
     $response->assertRedirect(route('inventory-movements.index'));
@@ -256,7 +256,7 @@ test('it rejects manual movements linked to production orders', function () {
             'quantity' => 5,
             'cost_price' => 10,
             'lot_number' => 'LOT-MANUAL-LINK',
-            'movement_date' => now()->toDateString(),
+            'movement_date' => plantToday(),
         ]);
 
     $response->assertRedirect(route('inventory-movements.index'));
@@ -311,7 +311,7 @@ test('it does not expose edit, update or delete routes for raw material movement
         'type' => 'entry',
         'quantity' => 5,
         'cost_price' => 10,
-        'movement_date' => now()->toDateString(),
+        'movement_date' => plantToday(),
         'created_by' => $this->admin->id,
     ]);
 
@@ -339,7 +339,7 @@ test('it denies update and delete abilities even for super-admin', function () {
         'type' => 'entry',
         'quantity' => 5,
         'cost_price' => 10,
-        'movement_date' => now()->toDateString(),
+        'movement_date' => plantToday(),
         'created_by' => $this->admin->id,
     ]);
 

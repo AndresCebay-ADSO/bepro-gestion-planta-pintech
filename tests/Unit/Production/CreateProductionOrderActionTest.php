@@ -84,6 +84,16 @@ test('it restarts the production order sequence every year', function () {
     expect($order->order_number)->toBe('OP-2027-0001');
 });
 
+// OPC-04: el 31-dic a las 20:00 de Bogotá ya es 1-ene en UTC, pero la OP pertenece al año de la planta.
+test('it takes the production order year from the plant day, not from UTC', function () {
+    Carbon::setTestNow(Carbon::parse('2027-01-01 01:00:00', 'UTC'));
+    createExistingProductionOrder($this, 'OP-2026-1200');
+
+    $order = createActionProductionOrder($this);
+
+    expect($order->order_number)->toBe('OP-2026-1201');
+});
+
 test('it uses numeric order when production order sequence exceeds four digits', function () {
     Carbon::setTestNow('2026-12-01 09:00:00');
     createExistingProductionOrder($this, 'OP-2026-9999');

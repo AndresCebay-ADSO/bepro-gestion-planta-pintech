@@ -9,6 +9,8 @@ type Props = {
     required?: boolean;
     error?: string;
     type?: 'text' | 'date' | 'number';
+    /** Solo para `type="date"`: el primer día que ofrece el calendario. */
+    min?: string;
 };
 
 export default function TextField({
@@ -19,6 +21,7 @@ export default function TextField({
     required,
     error,
     type = 'text',
+    min,
 }: Props) {
     return (
         <div className="space-y-1.5">
@@ -28,6 +31,7 @@ export default function TextField({
             </Label>
             <Input
                 type={type}
+                min={min}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}

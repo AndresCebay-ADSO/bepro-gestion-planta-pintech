@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import type { useForm } from '@inertiajs/react';
 import type { ChangeEvent, ReactNode } from 'react';
 import { useMemo } from 'react';
@@ -22,6 +23,8 @@ type Props = {
     batches: InventoryOption[];
     warehouses: InventoryOption[];
     type: 'entry' | 'exit';
+    /** Solo en una entrada: no más de un mes atrás (D1b). */
+    movementDateMin?: string;
     children?: ReactNode;
 };
 
@@ -31,8 +34,10 @@ export function MovementFormBase({
     batches,
     warehouses,
     type,
+    movementDateMin,
     children,
 }: Props) {
+    const { plantToday } = usePage().props;
     const filteredBatches = useMemo(() => {
         if (!form.data.raw_material_id) {
             return [];
@@ -223,6 +228,8 @@ export function MovementFormBase({
                 <Input
                     id="movement_date"
                     type="date"
+                    min={movementDateMin}
+                    max={plantToday}
                     value={form.data.movement_date}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                         form.setData('movement_date', e.target.value)

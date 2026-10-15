@@ -218,6 +218,8 @@ class SalesOrderController extends Controller
                 'color' => $item->color,
             ]),
             'created_at' => $salesOrder->created_at?->toIso8601String(),
+            // Límite inferior de la fecha estimada de entrega (D-PV3), el mismo que valida UpdateSalesOrderRequest.
+            'created_on' => $salesOrder->createdOnPlantDay(),
             'creator' => $salesOrder->creator ? ['name' => $salesOrder->creator->name] : null,
         ];
     }

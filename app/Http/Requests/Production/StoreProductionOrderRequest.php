@@ -6,6 +6,7 @@ namespace App\Http\Requests\Production;
 
 use App\Enums\WarehouseType;
 use App\Models\ProductionOrder;
+use App\Rules\PlantDate;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -49,7 +50,8 @@ class StoreProductionOrderRequest extends FormRequest
                     ->where('is_active', true),
             ],
             'quantity' => ['required', 'numeric', 'min:0.01'],
-            'planned_date' => ['required', 'date'],
+            // No se registran OP con fecha planificada pasada (D-OP2).
+            'planned_date' => ['bail', 'required', PlantDate::make()->notPast()],
             'notes' => ['nullable', 'string'],
             'color' => ['nullable', 'string', 'max:100'],
             'packaging' => ['nullable', 'array'],

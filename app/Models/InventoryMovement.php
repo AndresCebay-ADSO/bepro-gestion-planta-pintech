@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\InventoryMovementType;
 use App\Models\Concerns\HasAuditDescription;
+use App\Services\TimezoneService;
 use Database\Factories\InventoryMovementFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -55,6 +56,12 @@ class InventoryMovement extends Model
     /** @use HasFactory<InventoryMovementFactory> */
     use HasAuditDescription, HasFactory, LogsActivity;
 
+    /**
+     * Cuántos meses atrás puede ir la fecha de una entrada (D1b, 2026-10-15). La entrada fija el `entry_date` del lote,
+     * que ordena el FIFO: una fecha muy vieja haría consumir ese lote antes que los que llegaron primero.
+     */
+    public const ENTRY_DATE_WINDOW_MONTHS = 1;
+
     protected string $auditLabel = 'Movimiento de inventario';
 
     protected string $auditIdentifierAttribute = 'id';
@@ -67,6 +74,16 @@ class InventoryMovement extends Model
             ->logOnly(['raw_material_id', 'type', 'quantity', 'cost_price', 'production_order_id', 'shrink_wrap_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
+    }
+
+    /**
+     * La fecha más vieja que admite una entrada (`Y-m-d`, día de planta). La usan la validación y el calendario.
+     */
+    public static function oldestEntryDate(): string
+    {
+        return app(TimezoneService::class)->nowInPlant()
+            ->subMonthsNoOverflow(self::ENTRY_DATE_WINDOW_MONTHS)
+            ->toDateString();
     }
 
     protected function casts(): array

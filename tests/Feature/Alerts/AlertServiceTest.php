@@ -145,6 +145,44 @@ test('it creates expiry alerts for batches within alert window', function (): vo
     Carbon::setTestNow();
 });
 
+// D-PV3: a las 20:30 del 13-oct en Bogotá ya es 14-oct en UTC. El umbral se cuenta desde el día de la planta, como día
+// de calendario: con el «hoy» en UTC, un lote que vence hoy saldría vencido y el umbral llegaría un día más lejos.
+test('it measures the expiry window from the plant day', function (string $expiryDate, ?AlertSeverity $severity, ?string $message): void {
+    Carbon::setTestNow(Carbon::parse('2026-10-14 01:30:00', 'UTC'));
+
+    $rawMaterial = createRawMaterialForAlerts(['alert_days_before_expiry' => 15]);
+
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $rawMaterial->id,
+        'warehouse_id' => $this->warehouse->id,
+        'initial_quantity' => 5,
+        'remaining_quantity' => 5,
+        'unit_price' => 10,
+        'entry_date' => '2026-10-01',
+        'expiry_date' => $expiryDate,
+        'lot_number' => 'LOT-BORDE',
+    ]);
+
+    $this->alertService->evaluateBatchExpiry((int) $batch->id);
+
+    $alert = Alert::query()->where('type', AlertType::VencimientoProximo)->where('is_resolved', false)->first();
+
+    if ($severity === null) {
+        expect($alert)->toBeNull();
+    } else {
+        expect($alert)->not->toBeNull()
+            ->and($alert->severity)->toBe($severity)
+            ->and($alert->message)->toContain($message);
+    }
+
+    Carbon::setTestNow();
+})->with([
+    'venció ayer' => ['2026-10-12', AlertSeverity::Alta, 'vencido desde 2026-10-12'],
+    'vence hoy' => ['2026-10-13', AlertSeverity::Media, 'vence el 2026-10-13'],
+    'vence justo en el umbral' => ['2026-10-28', AlertSeverity::Media, 'vence el 2026-10-28'],
+    'un día después del umbral' => ['2026-10-29', null, null],
+]);
+
 test('it does not create price variation alert when threshold is not configured', function (): void {
     $rawMaterial = createRawMaterialForAlerts([
         'price_variation_threshold' => null,

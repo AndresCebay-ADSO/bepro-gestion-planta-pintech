@@ -4,8 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\PaintDevelopmentRequests;
 
+use App\Models\PaintDevelopmentRequest;
+use App\Rules\PlantDate;
+
 trait PaintDevelopmentRequestRules
 {
+    /**
+     * La fecha de muestra guardada, al editar; null al crear.
+     */
+    private function savedSampleDueDate(): ?string
+    {
+        $request = $this->route('paintDevelopmentRequest');
+
+        return $request instanceof PaintDevelopmentRequest ? $request->sample_due_date?->toDateString() : null;
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -16,7 +29,8 @@ trait PaintDevelopmentRequestRules
             'project_name' => ['required', 'string', 'max:255'],
             'responsible' => ['required', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:255'],
-            'sample_due_date' => ['required', 'date'],
+            // No antes de hoy en planta; un borrador viejo conserva la fecha que ya tenía (D-PDR1).
+            'sample_due_date' => ['bail', 'required', PlantDate::make()->notPast()->allowing($this->savedSampleDueDate())],
             'current_product' => ['nullable', 'string', 'max:255'],
 
             // Contexto

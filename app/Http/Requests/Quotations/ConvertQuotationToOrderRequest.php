@@ -6,6 +6,7 @@ namespace App\Http\Requests\Quotations;
 
 use App\Enums\SalesOrderPriority;
 use App\Models\Quotation;
+use App\Rules\PlantDate;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,7 +27,7 @@ class ConvertQuotationToOrderRequest extends FormRequest
     {
         return [
             'priority' => ['required', Rule::enum(SalesOrderPriority::class)],
-            'required_date' => ['required', 'date', 'after_or_equal:today'],
+            'required_date' => ['bail', 'required', PlantDate::make()->notPast()],
             'notes' => ['nullable', 'string', 'max:2000'],
             'shipping_address' => ['nullable', 'string', 'max:500'],
         ];

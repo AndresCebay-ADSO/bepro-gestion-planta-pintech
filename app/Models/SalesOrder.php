@@ -8,6 +8,7 @@ use App\Enums\Permission;
 use App\Enums\SalesOrderPriority;
 use App\Enums\SalesOrderStatus;
 use App\Models\Concerns\HasAuditDescription;
+use App\Services\TimezoneService;
 use Database\Factories\SalesOrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -133,5 +134,14 @@ class SalesOrder extends Model
     public function items(): HasMany
     {
         return $this->hasMany(SalesOrderItem::class, 'sales_order_id');
+    }
+
+    /**
+     * Día de planta en que se creó el pedido (`Y-m-d`): la fecha estimada de entrega no puede ser anterior (D-PV3).
+     * `created_at` está en UTC, así que un pedido creado de noche en Bogotá ya diría el día siguiente.
+     */
+    public function createdOnPlantDay(): ?string
+    {
+        return app(TimezoneService::class)->plantDateOf($this->created_at);
     }
 }

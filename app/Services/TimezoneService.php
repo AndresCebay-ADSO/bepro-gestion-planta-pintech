@@ -80,4 +80,13 @@ class TimezoneService
     {
         return $this->nowInPlant()->toDateString();
     }
+
+    /**
+     * El día de planta (`Y-m-d`) de un instante guardado en UTC, como `created_at`: lo que se registra después de las
+     * 7 p. m. en Bogotá ya dice el día siguiente en UTC.
+     */
+    public function plantDateOf(?CarbonInterface $instant): ?string
+    {
+        return $instant === null ? null : $this->toPlantTime($instant)?->toDateString();
+    }
 }

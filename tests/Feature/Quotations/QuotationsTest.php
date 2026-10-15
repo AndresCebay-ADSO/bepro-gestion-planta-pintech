@@ -81,7 +81,7 @@ function quotationPayload(int $clientId, int $productId, int $variantId, array $
         'client_phone' => '311-3068435',
         'technology' => 'Alquídico',
         'line' => 'Core Series',
-        'quotation_date' => now()->toDateString(),
+        'quotation_date' => plantToday(),
         'validity_days' => 30,
         'payment_method' => 'cash',
         'delivery_time' => '2 Días Hab.',

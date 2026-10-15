@@ -1,10 +1,9 @@
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import type { FormEvent, ChangeEvent } from 'react';
 import { DecimalInput } from '@/components/decimal-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getLocalDateString } from '@/lib/date-time-helpers';
 import { toDecimalPayload } from '@/lib/numeric-input';
 import { store as inventoryMovementsStore } from '@/routes/inventory-movements';
 import type { InventoryOption } from '@/types';
@@ -15,6 +14,8 @@ type Props = {
     batches: InventoryOption[];
     warehouses: InventoryOption[];
     defaultWarehouseId?: number;
+    /** Fecha más vieja que admite una entrada (D1b); la valida el servidor. */
+    oldestEntryDate?: string;
     onSuccess?: () => void;
 };
 
@@ -23,8 +24,10 @@ export function EntryMovementForm({
     batches,
     warehouses,
     defaultWarehouseId,
+    oldestEntryDate,
     onSuccess,
 }: Props) {
+    const { plantToday } = usePage().props;
     const form = useForm<{
         raw_material_id: string;
         warehouse_id: string;
@@ -47,7 +50,7 @@ export function EntryMovementForm({
         lot_number: '',
         supplier: '',
         expiry_date: '',
-        movement_date: getLocalDateString(),
+        movement_date: plantToday,
         notes: '',
     });
 
@@ -104,6 +107,7 @@ export function EntryMovementForm({
                 batches={batches}
                 warehouses={warehouses}
                 type="entry"
+                movementDateMin={oldestEntryDate}
             >
                 <div className="space-y-2">
                     <Label htmlFor="cost_price">Precio de Costo (u)</Label>
@@ -178,6 +182,7 @@ export function EntryMovementForm({
                             <Input
                                 id="expiry_date"
                                 type="date"
+                                min={form.data.movement_date}
                                 value={form.data.expiry_date}
                                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                                     form.setData('expiry_date', e.target.value)

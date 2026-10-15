@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Download,
@@ -41,7 +41,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { getLocalDateString } from '@/lib/date-time-helpers';
 import {
     convertToOrder as quotationsConvertToOrder,
     edit as quotationsEdit,
@@ -140,9 +139,10 @@ export default function QuotationsShow({
 
     const [convertDialogOpen, setConvertDialogOpen] = useState(false);
 
+    const { plantToday } = usePage().props;
     const convertForm = useForm({
         priority: 'medium',
-        required_date: getLocalDateString(),
+        required_date: plantToday,
         notes: quotation.notes ?? '',
         shipping_address: quotation.client.shipping_address ?? '',
     });
@@ -305,6 +305,7 @@ export default function QuotationsShow({
                                             <Input
                                                 id="required_date"
                                                 type="date"
+                                                min={plantToday}
                                                 value={
                                                     convertForm.data
                                                         .required_date

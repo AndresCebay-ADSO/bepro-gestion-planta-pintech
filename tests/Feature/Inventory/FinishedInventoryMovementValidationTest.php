@@ -63,7 +63,7 @@ function registerFinishedMovement(
             'type' => $type,
             'reason' => $reason,
             'quantity' => $quantity,
-            'movement_date' => now()->toDateString(),
+            'movement_date' => plantToday(),
         ])
         ->assertRedirect();
 }
@@ -130,7 +130,7 @@ it('allows return up to the exited quantity of the batch in the same warehouse',
             'type' => 'entry',
             'reason' => 'return',
             'quantity' => '1',
-            'movement_date' => now()->toDateString(),
+            'movement_date' => plantToday(),
         ])
         ->assertInvalid(['quantity']);
 });
@@ -150,7 +150,7 @@ it('blocks return in a warehouse that never had exits for the batch', function (
             'type' => 'entry',
             'reason' => 'return',
             'quantity' => '5',
-            'movement_date' => now()->toDateString(),
+            'movement_date' => plantToday(),
         ])
         ->assertInvalid(['quantity']);
 });
@@ -174,7 +174,7 @@ it('keeps returnable quotas independent per warehouse', function () {
             'type' => 'entry',
             'reason' => 'return',
             'quantity' => '1',
-            'movement_date' => now()->toDateString(),
+            'movement_date' => plantToday(),
         ])
         ->assertInvalid(['quantity']);
 
@@ -185,7 +185,7 @@ it('keeps returnable quotas independent per warehouse', function () {
             'type' => 'entry',
             'reason' => 'return',
             'quantity' => '1',
-            'movement_date' => now()->toDateString(),
+            'movement_date' => plantToday(),
         ])
         ->assertInvalid(['quantity']);
 });
@@ -201,7 +201,7 @@ it('rejects entries into an inactive product but still allows exits of its remai
         'finished_product_batch_id' => $batch->id,
         'warehouse_id' => $warehouse->id,
         'quantity' => '5',
-        'movement_date' => now()->toDateString(),
+        'movement_date' => plantToday(),
     ];
 
     actingAs($admin)
@@ -231,7 +231,7 @@ it('rejects entries into a batch whose variant is inactive', function () {
             'type' => 'entry',
             'reason' => 'adjustment',
             'quantity' => '5',
-            'movement_date' => now()->toDateString(),
+            'movement_date' => plantToday(),
         ])
         ->assertSessionHasErrors('finished_product_batch_id');
 });

@@ -7,6 +7,7 @@ namespace App\Http\Requests\SalesOrders;
 use App\Enums\SalesOrderPriority;
 use App\Models\ProductVariant;
 use App\Models\SalesOrder;
+use App\Rules\PlantDate;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,7 +26,7 @@ class StoreSalesOrderRequest extends FormRequest
         return [
             'client_id' => ['required', Rule::exists('clients', 'id')->where('is_active', true)],
             'priority' => ['required', Rule::enum(SalesOrderPriority::class)],
-            'required_date' => ['required', 'date', 'after_or_equal:today'],
+            'required_date' => ['bail', 'required', PlantDate::make()->notPast()],
             'notes' => ['nullable', 'string', 'max:2000'],
             'shipping_address' => ['nullable', 'string', 'max:500'],
             'client_business_name' => ['nullable', 'string', 'max:255'],
@@ -77,7 +78,6 @@ class StoreSalesOrderRequest extends FormRequest
             'items.*.product_id.required' => 'Debes seleccionar un producto.',
             'items.*.quantity.required' => 'La cantidad es obligatoria.',
             'items.*.quantity.min' => 'La cantidad debe ser mayor a cero.',
-            'required_date.after_or_equal' => 'La fecha requerida debe ser igual o posterior a la fecha actual.',
         ];
     }
 

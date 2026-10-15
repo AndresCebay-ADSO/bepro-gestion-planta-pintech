@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 
 import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -31,15 +31,14 @@ import type {
 type Props = {
     orderOptions: ShrinkWrapOrderOption[];
     typeOptions: ShrinkWrapTypeOption[];
-    /** Hoy en la planta: la fecha por defecto y la máxima. */
-    today: string;
 };
 
 export default function ShrinkWrapsCreate({
     orderOptions,
     typeOptions,
-    today,
 }: Props) {
+    // Hoy en la planta (prop compartido): la fecha por defecto y la máxima.
+    const { plantToday: today } = usePage().props;
     const form = useForm<ShrinkWrapFormData>({
         production_order_id: '',
         shrink_wrap_type_id: '',

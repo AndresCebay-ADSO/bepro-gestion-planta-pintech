@@ -164,7 +164,7 @@ Lotes de materia prima (base del costeo FIFO).
 | `remaining_quantity` | DECIMAL(12,4) |  |  |
 | `unit_price` | DECIMAL(12,4) |  |  |
 | `entry_date` | DATE |  |  |
-| `expiry_date` | DATE | sí |  |
+| `expiry_date` | DATE | sí | vencimiento del lote; `Y-m-d`, no anterior a la fecha del movimiento que lo crea |
 | `supplier` | VARCHAR(150) | sí |  |
 | `lot_number` | VARCHAR(50) | sí |  |
 | `created_at` | TIMESTAMP | sí |  |
@@ -187,7 +187,7 @@ Movimientos de materia prima (libro contable: inmutable).
 | `type` | VARCHAR(255) |  |  |
 | `quantity` | DECIMAL(12,4) |  |  |
 | `cost_price` | DECIMAL(12,4) |  |  |
-| `movement_date` | DATE |  |  |
+| `movement_date` | DATE |  | fecha de planta del movimiento; no futura (`PlantDate`). En una entrada, tampoco más de un mes atrás (`InventoryMovement::ENTRY_DATE_WINDOW_MONTHS`); en una entrada a lote nuevo también es su `entry_date`, que ordena el FIFO |
 | `notes` | TEXT | sí |  |
 | `created_by` | BIGINT |  | FK → `users` (RESTRICT) |
 | `created_at` | TIMESTAMP | sí |  |
@@ -316,7 +316,7 @@ Ingredientes de cada fórmula.
 | `yield_variance_quantity` | DECIMAL(12,4) | sí |  |
 | `yield_percentage` | DECIMAL(5,2) | sí |  |
 | `status` | VARCHAR(255) |  | default `pending` |
-| `planned_date` | DATE |  |  |
+| `planned_date` | DATE |  | fecha de planta planificada; al crear la OP, no antes de hoy en planta (`PlantDate`) |
 | `completion_date` | DATE | sí |  |
 | `notes` | TEXT | sí |  |
 | `color` | VARCHAR(100) | sí | Color que pide el cliente («RAL 3020»), escrito a mano. Se une al nombre del producto solo para mostrar; no separa inventario |
@@ -580,7 +580,7 @@ Movimientos de producto terminado (libro contable: inmutable).
 | `type` | VARCHAR(255) |  |  |
 | `reason` | VARCHAR(50) |  |  |
 | `quantity` | DECIMAL(12,4) |  |  |
-| `movement_date` | DATE |  |  |
+| `movement_date` | DATE |  | fecha de planta del movimiento; no futura (`PlantDate`) |
 | `notes` | TEXT | sí |  |
 | `created_by` | BIGINT |  | FK → `users` (RESTRICT) |
 | `created_at` | TIMESTAMP | sí |  |
@@ -660,7 +660,7 @@ Cotizaciones (COT-YYYY-XXXX). Se cancelan por estado, nunca se eliminan.
 | `line` | VARCHAR(255) | sí |  |
 | `thickness_mils` | VARCHAR(255) | sí |  |
 | `application_method` | VARCHAR(255) | sí |  |
-| `quotation_date` | DATE | sí |  |
+| `quotation_date` | DATE | sí | fecha de planta de la cotización; no futura (`PlantDate`); vacía al crear → hoy en planta |
 | `validity_days` | SMALLINT | sí |  |
 | `payment_method` | VARCHAR(255) | sí |  |
 | `delivery_time` | VARCHAR(255) | sí |  |
@@ -707,8 +707,8 @@ Pedidos de venta. Se cancelan por estado, nunca se eliminan.
 | `id` | BIGINT |  | PK |
 | `client_id` | BIGINT |  | FK → `clients` (RESTRICT) |
 | `status` | VARCHAR(255) |  | default `pending` |
-| `required_date` | DATE | sí |  |
-| `estimated_delivery_date` | DATE | sí |  |
+| `required_date` | DATE | sí | fecha requerida por el cliente; al crear o convertir, no antes de hoy en planta (`PlantDate`) |
+| `estimated_delivery_date` | DATE | sí | no antes del día de planta en que se creó el pedido (`PlantDate`); la ya guardada se conserva |
 | `notes` | TEXT | sí |  |
 | `shipping_address` | TEXT | sí |  |
 | `client_business_name` | VARCHAR(255) | sí |  |
@@ -749,7 +749,7 @@ Solicitudes de desarrollo de pintura.
 | `project_name` | VARCHAR(255) |  |  |
 | `responsible` | VARCHAR(255) |  |  |
 | `city` | VARCHAR(255) |  |  |
-| `sample_due_date` | DATE |  |  |
+| `sample_due_date` | DATE |  | entrega comprometida de la muestra; no antes de hoy en planta al crear; un borrador conserva la suya (`PlantDate`), pero no se envía a revisión si ya pasó |
 | `current_product` | VARCHAR(255) | sí |  |
 | `context_payload` | JSONB | sí |  |
 | `performance_payload` | JSONB | sí |  |

@@ -46,14 +46,18 @@ export function toUtcIsoString(localDateTimeString: string): string {
 }
 
 /**
- * Retorna la fecha local en formato YYYY-MM-DD para inicializar inputs date
- * evitando desfases de día por zonas horarias (ej. después de las 7:00 PM en UTC-5).
+ * Límite (`min` o `max`) de un campo de fecha que permite conservar la fecha ya guardada, como `PlantDate::allowing()`
+ * en el servidor: sin límite mientras el campo tenga exactamente esa fecha, y con el límite normal si el usuario la
+ * cambia. Un `min`/`max` fijo no puede decir «desde hoy, o justo la guardada».
  */
-export function getLocalDateString(date: Date = new Date()): string {
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const year = date.getFullYear();
-    const month = pad(date.getMonth() + 1);
-    const day = pad(date.getDate());
+export function dateBoundKeepingSaved(
+    value: string,
+    saved: string | null | undefined,
+    bound: string | null | undefined,
+): string | undefined {
+    if (saved && value === saved) {
+        return undefined;
+    }
 
-    return `${year}-${month}-${day}`;
+    return bound ?? undefined;
 }

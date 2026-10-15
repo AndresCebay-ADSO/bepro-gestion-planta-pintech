@@ -6,6 +6,7 @@ namespace App\Http\Requests\Production;
 
 use App\Models\ProductionOrder;
 use App\Models\ShrinkWrap;
+use App\Rules\PlantDate;
 use App\Services\TimezoneService;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -52,7 +53,7 @@ class StoreShrinkWrapRequest extends FormRequest
             // en su columna lo revisa RegisterShrinkWrapAction, con la receta ya bloqueada.
             'applications' => ['bail', 'required', 'integer', 'min:1', 'max:99999999'],
             // Fecha de planta: puede ser semanas después de completar la OP, pero no futura.
-            'wrapped_at' => ['bail', 'required', 'date_format:Y-m-d', 'before_or_equal:'.$this->plantToday()],
+            'wrapped_at' => ['bail', 'required', PlantDate::make()->notFuture()],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
@@ -74,7 +75,6 @@ class StoreShrinkWrapRequest extends FormRequest
     {
         return [
             'shrink_wrap_type_id.exists' => __('El tipo de termoencogido no existe o está inactivo.'),
-            'wrapped_at.before_or_equal' => __('La fecha no puede ser futura.'),
         ];
     }
 
@@ -110,10 +110,5 @@ class StoreShrinkWrapRequest extends FormRequest
                 'date' => app(TimezoneService::class)->formatPlantDate(substr((string) $completionDate, 0, 10)),
             ]));
         }
-    }
-
-    private function plantToday(): string
-    {
-        return app(TimezoneService::class)->todayInPlant();
     }
 }

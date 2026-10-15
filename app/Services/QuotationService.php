@@ -17,7 +17,8 @@ use Illuminate\Validation\ValidationException;
 class QuotationService
 {
     public function __construct(
-        private readonly QuotationPricingService $pricingService
+        private readonly QuotationPricingService $pricingService,
+        private readonly TimezoneService $timezone,
     ) {}
 
     /**
@@ -41,7 +42,7 @@ class QuotationService
                 'line' => $data['line'] ?? null,
                 'thickness_mils' => $data['thickness_mils'] ?? null,
                 'application_method' => $data['application_method'] ?? null,
-                'quotation_date' => $data['quotation_date'] ?? now()->toDateString(),
+                'quotation_date' => $data['quotation_date'] ?? $this->timezone->todayInPlant(),
                 'validity_days' => $data['validity_days'] ?? null,
                 'payment_method' => $data['payment_method'] ?? null,
                 'delivery_time' => $data['delivery_time'] ?? null,

@@ -16,6 +16,7 @@ class PaintDevelopmentRequestService
 {
     public function __construct(
         private readonly AlertService $alertService,
+        private readonly TimezoneService $timezone,
     ) {}
 
     /**
@@ -79,6 +80,15 @@ class PaintDevelopmentRequestService
             if ($locked?->status !== PaintDevelopmentRequestStatus::Draft) {
                 throw ValidationException::withMessages([
                     'status' => __('Solo se pueden enviar solicitudes en borrador.'),
+                ]);
+            }
+
+            // I+D no debe recibir un compromiso que ya venció: un borrador olvidado pudo quedar con la fecha pasada (D-PDR2).
+            $sampleDueDate = $locked->sample_due_date?->toDateString();
+
+            if ($sampleDueDate !== null && $sampleDueDate < $this->timezone->todayInPlant()) {
+                throw ValidationException::withMessages([
+                    'sample_due_date' => __('La fecha de entrega de muestra ya pasó; actualízala antes de enviar.'),
                 ]);
             }
 
