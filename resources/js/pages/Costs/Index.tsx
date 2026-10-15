@@ -312,20 +312,11 @@ export default function CostsIndex({
                 return;
             }
 
-            const price = parseDecimal(priceValue) ?? 0;
-
-            if (price <= 0) {
-                dispatch({
-                    type: 'SET_ERROR',
-                    productId,
-                    error: 'El precio de venta debe ser mayor a 0.',
-                });
-
-                return;
-            }
-
+            // El texto siempre queda en el campo (vacío, «0,» a medio escribir o con un separador de más): si se
+            // descartara la tecla, no se podría borrar ni escribir un precio menor que 1. Se valida al guardar.
+            const price = parseDecimal(priceValue);
             const margin =
-                priceValue === ''
+                price === null || price <= 0
                     ? ''
                     : String(calculateMargin(product.current_price, price));
 
@@ -386,17 +377,20 @@ export default function CostsIndex({
                     dispatch({
                         type: 'SET_ERROR',
                         productId,
-                        error: 'El precio debe ser un número válido.',
+                        error:
+                            state.price === ''
+                                ? 'Escribe el precio de venta.'
+                                : 'El precio debe ser un número válido.',
                     });
 
                     return;
                 }
 
-                if (numericValue < 0) {
+                if (numericValue <= 0) {
                     dispatch({
                         type: 'SET_ERROR',
                         productId,
-                        error: 'El precio no puede ser negativo.',
+                        error: 'El precio de venta debe ser mayor a 0.',
                     });
 
                     return;
@@ -585,7 +579,7 @@ export default function CostsIndex({
                                                 <td className="p-4 text-right">
                                                     {can.update_margin ? (
                                                         <div className="flex flex-col items-end gap-1">
-                                                            <div className="flex items-center justify-end gap-2">
+                                                            <div className="flex items-start justify-end gap-2">
                                                                 <DecimalInput
                                                                     maxDecimals={
                                                                         2
@@ -614,13 +608,13 @@ export default function CostsIndex({
                                                                     }
                                                                     className="w-20 text-right"
                                                                 />
-                                                                <span className="text-xs text-muted-foreground">
+                                                                <span className="text-xs leading-9 text-muted-foreground">
                                                                     %
                                                                 </span>
                                                                 {savingIds.has(
                                                                     product.id,
                                                                 ) && (
-                                                                    <span className="animate-pulse text-xs text-muted-foreground">
+                                                                    <span className="animate-pulse text-xs leading-9 text-muted-foreground">
                                                                         Guardando...
                                                                     </span>
                                                                 )}
@@ -650,7 +644,7 @@ export default function CostsIndex({
                                                 <td className="p-4 text-right">
                                                     {can.update_margin &&
                                                     hasCurrentPrice(product) ? (
-                                                        <div className="flex items-center justify-end gap-2">
+                                                        <div className="flex items-start justify-end gap-2">
                                                             <DecimalInput
                                                                 maxDecimals={2}
                                                                 maxIntegerDigits={
@@ -680,7 +674,7 @@ export default function CostsIndex({
                                                             {savingIds.has(
                                                                 product.id,
                                                             ) && (
-                                                                <span className="animate-pulse text-xs text-muted-foreground">
+                                                                <span className="animate-pulse text-xs leading-9 text-muted-foreground">
                                                                     Guardando...
                                                                 </span>
                                                             )}

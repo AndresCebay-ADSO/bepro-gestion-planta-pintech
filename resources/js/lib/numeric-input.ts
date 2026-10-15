@@ -102,6 +102,45 @@ export function checkIntegerText(
 }
 
 /**
+ * Si el campo acepta el cambio. Un valor que ya no cumple las reglas del campo (calculado en pantalla, como un margen
+ * negativo, o guardado antes con otra regla) se puede seguir borrando hasta corregirlo: si no, el campo quedaría
+ * congelado y solo se podría reescribir seleccionando todo.
+ */
+export function acceptsEdit(
+    next: string,
+    current: string,
+    check: (text: string) => NumericTextCheck,
+): boolean {
+    if (check(next) !== 'reject') {
+        return true;
+    }
+
+    return check(current) === 'reject' && next.length < current.length;
+}
+
+/** Mensaje para un valor que no cabe en el campo decimal (ver `acceptsEdit`). */
+export function decimalLimitsMessage({
+    maxDecimals = DEFAULT_MAX_DECIMALS,
+    maxIntegerDigits = DEFAULT_MAX_INTEGER_DIGITS,
+    allowNegative = false,
+}: DecimalLimits = {}): string {
+    // Corto: también sale bajo campos angostos (el margen en costos).
+    const decimals =
+        maxDecimals === 0
+            ? 'sin decimales'
+            : `y ${maxDecimals} ${maxDecimals === 1 ? 'decimal' : 'decimales'}`;
+
+    return `No cabe: hasta ${maxIntegerDigits} enteros ${decimals}${allowNegative ? '' : ', sin negativos'}.`;
+}
+
+/** Lo mismo para un campo de enteros. */
+export function integerLimitsMessage(
+    maxDigits: number = DEFAULT_MAX_INTEGER_DIGITS,
+): string {
+    return `No cabe: solo enteros, hasta ${maxDigits} dígitos.`;
+}
+
+/**
  * Lo que se envía al servidor: la coma pasa a punto, `1,` queda en `1` y `,5` en `0.5` (`-,5` en `-0.5`). El vacío
  * sigue vacío (nunca 0), para que el servidor diga si el campo es obligatorio; un `-` o un separador solos, también.
  * Un texto que no es un número se envía tal cual, para que el servidor lo rechace en vez de cambiarlo aquí sin aviso.

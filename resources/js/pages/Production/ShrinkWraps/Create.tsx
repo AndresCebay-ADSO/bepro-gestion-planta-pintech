@@ -16,6 +16,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { isValidIntegerText } from '@/lib/numeric-input';
 import {
     create as shrinkWrapsCreate,
     index as shrinkWrapsIndex,
@@ -201,11 +202,13 @@ export default function ShrinkWrapsCreate({
                                     </li>
                                 ))}
                             </ul>
-                            {form.data.applications !== '' && (
-                                <p className="mt-2 text-sm font-medium text-foreground">
-                                    × {form.data.applications} aplicaciones
-                                </p>
-                            )}
+                            {/* Solo con un entero: con «3,5» el campo ya marca el error. */}
+                            {form.data.applications !== '' &&
+                                isValidIntegerText(form.data.applications) && (
+                                    <p className="mt-2 text-sm font-medium text-foreground">
+                                        × {form.data.applications} aplicaciones
+                                    </p>
+                                )}
                         </div>
                     )}
 

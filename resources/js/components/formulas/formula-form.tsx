@@ -14,6 +14,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { withDecimalPayloads } from '@/lib/numeric-input';
 
 type RawMaterial = { id: number; code: string };
 type ProductOption = { id: number; code: string; name: string };
@@ -31,6 +32,16 @@ export type FormulaFormData = {
     is_active: boolean;
     details: DetailRow[];
 };
+
+/** Lo que se envía al crear o editar: la cantidad de cada ingrediente con punto decimal. */
+export function formulaPayload<T extends FormulaFormData>(data: T): T {
+    return {
+        ...data,
+        details: data.details.map((detail) =>
+            withDecimalPayloads(detail, ['quantity']),
+        ),
+    };
+}
 
 type FormulaFormProps = {
     data: FormulaFormData;

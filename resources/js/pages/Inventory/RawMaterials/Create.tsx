@@ -1,11 +1,13 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { RawMaterialForm } from '@/components/raw-materials/raw-material-form';
+import {
+    RawMaterialForm,
+    rawMaterialPayload,
+} from '@/components/raw-materials/raw-material-form';
 import type {
     CategoryOption,
     RawMaterialFormData,
 } from '@/components/raw-materials/raw-material-form';
 import { Button } from '@/components/ui/button';
-import { toDecimalPayload } from '@/lib/numeric-input';
 import {
     index as rawMaterialsIndex,
     store as rawMaterialsStore,
@@ -37,24 +39,9 @@ export default function RawMaterialsCreate({ categories, units, can }: Props) {
     });
 
     const submit = () => {
-        form.transform(({ current_price, ...data }) => ({
-            ...data,
+        form.transform((data) => ({
+            ...rawMaterialPayload(data, can.updateCosts),
             category_id: Number(data.category_id),
-            unit_of_measure_id: Number(data.unit_of_measure_id),
-            minimum_stock: toDecimalPayload(data.minimum_stock),
-            price_variation_threshold:
-                data.price_variation_threshold === ''
-                    ? null
-                    : toDecimalPayload(data.price_variation_threshold),
-            // El precio solo viaja si se puede escribir: sin control de inventario y con permiso de costos.
-            ...(!data.tracks_inventory && can.updateCosts
-                ? {
-                      current_price:
-                          current_price === ''
-                              ? null
-                              : toDecimalPayload(current_price),
-                  }
-                : {}),
         }));
 
         form.post(rawMaterialsStore().url);

@@ -1,7 +1,13 @@
 import type { ComponentProps } from 'react';
 
 import { Input } from '@/components/ui/input';
-import { checkIntegerText, INTEGER_SEPARATOR_ERROR } from '@/lib/numeric-input';
+import {
+    acceptsEdit,
+    checkIntegerText,
+    INTEGER_SEPARATOR_ERROR,
+    integerLimitsMessage,
+} from '@/lib/numeric-input';
+import { cn } from '@/lib/utils';
 
 type IntegerInputProps = Omit<
     ComponentProps<typeof Input>,
@@ -9,6 +15,8 @@ type IntegerInputProps = Omit<
 > & {
     value: string | number | null | undefined;
     onValueChange: (value: string) => void;
+    /** Clases del contenedor (campo y mensaje), p. ej. `flex-1` dentro de una fila flex. */
+    containerClassName?: string;
     maxDigits?: number;
 };
 
@@ -20,16 +28,22 @@ type IntegerInputProps = Omit<
 export function IntegerInput({
     value,
     onValueChange,
+    containerClassName,
     maxDigits,
     ...props
 }: IntegerInputProps) {
     const text = value === null || value === undefined ? '' : String(value);
-    const hasSeparatorError =
-        checkIntegerText(text, maxDigits) === 'separator-error';
+    const textCheck = checkIntegerText(text, maxDigits);
+    const error =
+        textCheck === 'separator-error'
+            ? INTEGER_SEPARATOR_ERROR
+            : textCheck === 'reject'
+              ? integerLimitsMessage(maxDigits)
+              : null;
 
     // Contenedor fijo y mensaje con el ancho del campo, como en DecimalInput.
     return (
-        <div className="space-y-1">
+        <div className={cn('space-y-1', containerClassName)}>
             <Input
                 {...props}
                 type="text"
@@ -38,22 +52,26 @@ export function IntegerInput({
                 // decimales en las unidades (pasan a enteras en el PR 5 de la auditoría 3.6).
                 pattern="[0-9]*"
                 autoComplete="off"
-                aria-invalid={hasSeparatorError || props['aria-invalid']}
+                aria-invalid={error !== null || props['aria-invalid']}
                 value={text}
                 onChange={(event) => {
                     const next = event.target.value;
 
-                    if (checkIntegerText(next, maxDigits) !== 'reject') {
+                    if (
+                        acceptsEdit(next, text, (value) =>
+                            checkIntegerText(value, maxDigits),
+                        )
+                    ) {
                         onValueChange(next);
                     }
                 }}
             />
-            {hasSeparatorError && (
+            {error && (
                 <p
                     role="alert"
                     className="w-0 min-w-full text-xs text-destructive"
                 >
-                    {INTEGER_SEPARATOR_ERROR}
+                    {error}
                 </p>
             )}
         </div>

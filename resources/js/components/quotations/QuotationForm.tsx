@@ -10,7 +10,11 @@ import type { ComboboxOptionType } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
+import {
+    parseDecimal,
+    toDecimalPayload,
+    withDecimalPayloads,
+} from '@/lib/numeric-input';
 
 export type ClientOption = {
     id: number;
@@ -180,14 +184,13 @@ export default function QuotationForm({
         transform((formData) => ({
             ...formData,
             iva_percentage: toDecimalPayload(formData.iva_percentage),
-            items: formData.items.map((item) => ({
-                ...item,
-                quantity: toDecimalPayload(item.quantity),
-                price_adjustment_pct: toDecimalPayload(
-                    item.price_adjustment_pct,
-                ),
-                unit_price: toDecimalPayload(item.unit_price),
-            })),
+            items: formData.items.map((item) =>
+                withDecimalPayloads(item, [
+                    'quantity',
+                    'price_adjustment_pct',
+                    'unit_price',
+                ]),
+            ),
         }));
 
         if (method === 'put') {
@@ -716,10 +719,11 @@ export default function QuotationForm({
                                 maxDecimals={0}
                             />
                         </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                        {/* items-start: si aparece un mensaje bajo el IVA, el texto de la fila no baja con él. */}
+                        <div className="flex items-start justify-between leading-8">
+                            <div className="flex items-start gap-2">
                                 <span>IVA</span>
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-start gap-1">
                                     <DecimalInput
                                         maxDecimals={2}
                                         maxIntegerDigits={3}

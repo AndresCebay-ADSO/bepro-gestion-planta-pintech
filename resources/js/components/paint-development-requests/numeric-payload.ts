@@ -1,43 +1,58 @@
-import { toDecimalPayload } from '@/lib/numeric-input';
+import { withDecimalPayloads } from '@/lib/numeric-input';
 
-/** Números técnicos de la solicitud, como `bloque.campo`: vacíos se guardan como null. */
-export const NUMERIC_PAYLOAD_FIELDS = new Set([
-    'context_payload.temp_min',
-    'context_payload.temp_max',
-    'application_payload.temp_aplicacion',
-    'application_payload.humedad_aplicacion',
-    'application_payload.dft_min',
-    'application_payload.dft_max',
-    'application_payload.manos',
-    'application_payload.pot_life',
-    'application_payload.solidos_vol',
-    'application_payload.voc',
-    'performance_payload.adherencia_obj',
-    'performance_payload.camara_obj',
-    'performance_payload.delta_e',
-]);
+/** Números técnicos de la solicitud, por bloque del JSON. */
+const NUMERIC_FIELDS_BY_PAYLOAD = {
+    context_payload: ['temp_min', 'temp_max'],
+    application_payload: [
+        'temp_aplicacion',
+        'humedad_aplicacion',
+        'dft_min',
+        'dft_max',
+        'manos',
+        'pot_life',
+        'solidos_vol',
+        'voc',
+    ],
+    performance_payload: ['adherencia_obj', 'camara_obj', 'delta_e'],
+} as const;
+
+type NumericPayloadKey = keyof typeof NUMERIC_FIELDS_BY_PAYLOAD;
+
+/** Los mismos campos como `bloque.campo`: vacíos se guardan como null. */
+export const NUMERIC_PAYLOAD_FIELDS = new Set(
+    Object.entries(NUMERIC_FIELDS_BY_PAYLOAD).flatMap(([payloadKey, fields]) =>
+        fields.map((field) => `${payloadKey}.${field}`),
+    ),
+);
 
 /** Los números técnicos se escriben con coma o punto: se envían con punto, y vacíos como null. */
-export function withNumericPayloads<T extends object>(formData: T): T {
-    const converted = { ...formData } as Record<string, unknown>;
+export function withNumericPayloads<
+    T extends Partial<Record<NumericPayloadKey, Record<string, unknown>>>,
+>(formData: T): T {
+    const converted = { ...formData };
 
-    for (const key of NUMERIC_PAYLOAD_FIELDS) {
-        const [payloadKey, field] = key.split('.');
-        const payload = converted[payloadKey] as
-            Record<string, unknown> | undefined;
-        const value = payload?.[field];
+    for (const payloadKey of Object.keys(
+        NUMERIC_FIELDS_BY_PAYLOAD,
+    ) as NumericPayloadKey[]) {
+        const payload = formData[payloadKey];
 
-        if (value === null || value === undefined) {
+        if (!payload) {
             continue;
         }
 
-        const payloadValue = toDecimalPayload(value as string | number);
+        const fields = NUMERIC_FIELDS_BY_PAYLOAD[payloadKey].filter(
+            (field) => field in payload,
+        );
+        const withDots = withDecimalPayloads(payload, fields);
 
-        converted[payloadKey] = {
-            ...payload,
-            [field]: payloadValue === '' ? null : payloadValue,
-        };
+        for (const field of fields) {
+            if (withDots[field] === '') {
+                withDots[field] = null;
+            }
+        }
+
+        converted[payloadKey] = withDots as T[NumericPayloadKey];
     }
 
-    return converted as T;
+    return converted;
 }

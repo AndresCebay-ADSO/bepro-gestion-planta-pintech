@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+    acceptsEdit,
     checkDecimalText,
     checkIntegerText,
     decimalAmbiguityHint,
+    decimalLimitsMessage,
+    integerLimitsMessage,
     isValidDecimalText,
     isValidIntegerText,
     parseDecimal,
@@ -238,6 +241,49 @@ describe('negativos: solo en los campos con allowNegative (ajuste de precio, tem
     it('el aviso de miles conserva el signo', () => {
         expect(decimalAmbiguityHint('-1.200')).toBe(
             'Se registrará -1,2. Si es un número sin decimales, escríbelo sin punto: -1200.',
+        );
+    });
+});
+
+describe('acceptsEdit: un valor que ya no cabe en el campo se puede borrar', () => {
+    // Margen de costos: 2 decimales, 3 enteros, sin negativos. El precio por debajo del costo lo deja en -1900.
+    const margin = (text: string) =>
+        checkDecimalText(text, { maxDecimals: 2, maxIntegerDigits: 3 });
+
+    it('borrar desde -1900 avanza tecla por tecla hasta quedar vacío', () => {
+        let text = '-1900';
+
+        for (const next of ['-190', '-19', '-1', '-', '']) {
+            expect(acceptsEdit(next, text, margin)).toBe(true);
+            text = next;
+        }
+
+        expect(margin(text)).toBe('valid');
+    });
+
+    it('con el valor fuera de límites, lo que lo alarga sigue rechazado', () => {
+        expect(acceptsEdit('-19005', '-1900', margin)).toBe(false);
+        expect(acceptsEdit('-1900x', '-1900', margin)).toBe(false);
+    });
+
+    it('con un valor válido, borrar no habilita lo inválido', () => {
+        expect(acceptsEdit('12', '123', margin)).toBe(true);
+        expect(acceptsEdit('1,234', '1,23', margin)).toBe(false);
+    });
+
+    it('cada componente explica por qué el valor no cabe', () => {
+        expect(
+            decimalLimitsMessage({ maxDecimals: 2, maxIntegerDigits: 3 }),
+        ).toBe('No cabe: hasta 3 enteros y 2 decimales, sin negativos.');
+        expect(
+            decimalLimitsMessage({
+                maxDecimals: 1,
+                maxIntegerDigits: 3,
+                allowNegative: true,
+            }),
+        ).toBe('No cabe: hasta 3 enteros y 1 decimal.');
+        expect(integerLimitsMessage(4)).toBe(
+            'No cabe: solo enteros, hasta 4 dígitos.',
         );
     });
 });

@@ -1,6 +1,9 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
-import { RawMaterialForm } from '@/components/raw-materials/raw-material-form';
+import {
+    RawMaterialForm,
+    rawMaterialPayload,
+} from '@/components/raw-materials/raw-material-form';
 import type {
     CategoryOption,
     RawMaterialFormData,
@@ -16,7 +19,6 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { toDecimalPayload } from '@/lib/numeric-input';
 import {
     index as rawMaterialsIndex,
     show as rawMaterialsShow,
@@ -95,24 +97,9 @@ export default function RawMaterialsEdit({
         (openProductionOrdersCount > 0 || Boolean(confirmationError));
 
     const save = (confirmed: boolean) => {
-        form.transform(({ current_price, ...data }) => ({
-            ...data,
+        form.transform((data) => ({
+            ...rawMaterialPayload(data, can.updateCosts),
             confirm_tracking_change: confirmed,
-            // El precio solo viaja si se puede escribir: sin control de inventario y con permiso de costos.
-            ...(!data.tracks_inventory && can.updateCosts
-                ? {
-                      current_price:
-                          current_price === ''
-                              ? null
-                              : toDecimalPayload(current_price),
-                  }
-                : {}),
-            unit_of_measure_id: Number(data.unit_of_measure_id),
-            minimum_stock: toDecimalPayload(data.minimum_stock),
-            price_variation_threshold:
-                data.price_variation_threshold === ''
-                    ? null
-                    : toDecimalPayload(data.price_variation_threshold),
         }));
 
         form.put(rawMaterialsUpdate(rawMaterial.id).url, {

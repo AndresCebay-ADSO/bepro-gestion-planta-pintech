@@ -212,7 +212,8 @@ export function UnitOfMeasureFields({ form, usageSummary = null }: Props) {
                 </p>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="grid gap-2">
+                    {/* content-start: el mensaje bajo el factor no estira esta columna. */}
+                    <div className="grid content-start gap-2">
                         <Label htmlFor="conversion_kind">
                             Se convierte por
                         </Label>
@@ -240,14 +241,15 @@ export function UnitOfMeasureFields({ form, usageSummary = null }: Props) {
                     </div>
 
                     {kind !== 'none' && (
-                        <div className="grid gap-2">
+                        <div className="grid content-start gap-2">
                             <Label htmlFor="factor">
                                 1 {form.data.symbol.trim() || 'unidad'} equivale
                                 a
                             </Label>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-start gap-2">
                                 <DecimalInput
                                     id="factor"
+                                    containerClassName="min-w-0 flex-1"
                                     // decimal(10,4): 6 dígitos enteros.
                                     maxIntegerDigits={6}
                                     value={form.data[factorField]}
@@ -255,7 +257,7 @@ export function UnitOfMeasureFields({ form, usageSummary = null }: Props) {
                                         form.setData(factorField, value)
                                     }
                                 />
-                                <span className="text-sm text-muted-foreground">
+                                <span className="text-sm leading-9 text-muted-foreground">
                                     {CONVERSION_TARGET[kind]}
                                 </span>
                             </div>

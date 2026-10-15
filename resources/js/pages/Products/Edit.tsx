@@ -15,7 +15,10 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { withDecimalPayloads } from '@/lib/numeric-input';
-import { PRODUCT_DECIMAL_FIELDS } from '@/lib/product-form';
+import {
+    PRODUCT_DECIMAL_FIELDS,
+    PRODUCT_DECIMAL_LIMITS,
+} from '@/lib/product-form';
 import {
     show as productsShow,
     index as productsIndex,
@@ -326,8 +329,7 @@ export default function ProductsEdit({
                                         </Label>
                                         <DecimalInput
                                             id="quality_viscosity_lower"
-                                            maxDecimals={1}
-                                            maxIntegerDigits={3}
+                                            {...PRODUCT_DECIMAL_LIMITS.quality_viscosity_lower}
                                             value={data.quality_viscosity_lower}
                                             onValueChange={(value) =>
                                                 setData(
@@ -351,8 +353,7 @@ export default function ProductsEdit({
                                         </Label>
                                         <DecimalInput
                                             id="quality_viscosity_upper"
-                                            maxDecimals={1}
-                                            maxIntegerDigits={3}
+                                            {...PRODUCT_DECIMAL_LIMITS.quality_viscosity_upper}
                                             value={data.quality_viscosity_upper}
                                             onValueChange={(value) =>
                                                 setData(
@@ -381,8 +382,7 @@ export default function ProductsEdit({
                                         </Label>
                                         <DecimalInput
                                             id="quality_fineness_lower"
-                                            maxDecimals={1}
-                                            maxIntegerDigits={3}
+                                            {...PRODUCT_DECIMAL_LIMITS.quality_fineness_lower}
                                             value={data.quality_fineness_lower}
                                             onValueChange={(value) =>
                                                 setData(
@@ -406,8 +406,7 @@ export default function ProductsEdit({
                                         </Label>
                                         <DecimalInput
                                             id="quality_fineness_upper"
-                                            maxDecimals={1}
-                                            maxIntegerDigits={3}
+                                            {...PRODUCT_DECIMAL_LIMITS.quality_fineness_upper}
                                             value={data.quality_fineness_upper}
                                             onValueChange={(value) =>
                                                 setData(
@@ -436,8 +435,7 @@ export default function ProductsEdit({
                                         </Label>
                                         <DecimalInput
                                             id="quality_solids_lower"
-                                            maxDecimals={1}
-                                            maxIntegerDigits={3}
+                                            {...PRODUCT_DECIMAL_LIMITS.quality_solids_lower}
                                             value={data.quality_solids_lower}
                                             onValueChange={(value) =>
                                                 setData(
@@ -461,8 +459,7 @@ export default function ProductsEdit({
                                         </Label>
                                         <DecimalInput
                                             id="quality_solids_upper"
-                                            maxDecimals={1}
-                                            maxIntegerDigits={3}
+                                            {...PRODUCT_DECIMAL_LIMITS.quality_solids_upper}
                                             value={data.quality_solids_upper}
                                             onValueChange={(value) =>
                                                 setData(
@@ -529,8 +526,7 @@ export default function ProductsEdit({
                                     </Label>
                                     <DecimalInput
                                         id="cif_percentage"
-                                        maxDecimals={2}
-                                        maxIntegerDigits={3}
+                                        {...PRODUCT_DECIMAL_LIMITS.cif_percentage}
                                         required
                                         value={data.cif_percentage}
                                         onValueChange={(value) =>
@@ -545,8 +541,7 @@ export default function ProductsEdit({
                                     </Label>
                                     <DecimalInput
                                         id="price_threshold"
-                                        maxDecimals={2}
-                                        maxIntegerDigits={3}
+                                        {...PRODUCT_DECIMAL_LIMITS.price_threshold}
                                         value={data.price_threshold}
                                         onValueChange={(value) =>
                                             setData('price_threshold', value)

@@ -16,7 +16,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { parseDecimal } from '@/lib/numeric-input';
+import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
 import { RAW_MATERIAL_TYPE_HINTS } from '@/lib/raw-material-types';
 import type { RawMaterialType } from '@/types';
 
@@ -82,6 +82,33 @@ type Props = {
 
 // Stock mínimo y precio: decimal(12,4), los límites por defecto de DecimalInput. Umbral: hasta 100 con 2 decimales.
 const MAX_ALERT_DAYS_DIGITS = 4;
+
+/**
+ * Lo que se envía al crear o editar: decimales con punto, el umbral vacío como null, y el precio manual solo si se puede
+ * escribir (sin control de inventario y con permiso de costos).
+ */
+export function rawMaterialPayload<T extends RawMaterialFormData>(
+    { current_price, ...data }: T,
+    canEditPrice: boolean,
+) {
+    return {
+        ...data,
+        unit_of_measure_id: Number(data.unit_of_measure_id),
+        minimum_stock: toDecimalPayload(data.minimum_stock),
+        price_variation_threshold:
+            data.price_variation_threshold === ''
+                ? null
+                : toDecimalPayload(data.price_variation_threshold),
+        ...(!data.tracks_inventory && canEditPrice
+            ? {
+                  current_price:
+                      current_price === ''
+                          ? null
+                          : toDecimalPayload(current_price),
+              }
+            : {}),
+    };
+}
 
 /**
  * Reusable raw material form

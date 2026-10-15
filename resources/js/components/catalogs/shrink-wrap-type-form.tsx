@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toDecimalPayload } from '@/lib/numeric-input';
+import { withDecimalPayloads } from '@/lib/numeric-input';
 import { cn } from '@/lib/utils';
 import type {
     ShrinkWrapRawMaterialOption,
@@ -26,10 +26,9 @@ export function shrinkWrapTypePayload(
 ): ShrinkWrapTypeFormData {
     return {
         ...data,
-        items: data.items.map((item) => ({
-            ...item,
-            quantity: toDecimalPayload(item.quantity),
-        })),
+        items: data.items.map((item) =>
+            withDecimalPayloads(item, ['quantity']),
+        ),
     };
 }
 
@@ -175,8 +174,9 @@ export function ShrinkWrapTypeFields({ form, rawMaterialOptions }: Props) {
                                         Cantidad
                                     </Label>
                                 )}
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-start gap-2">
                                     <DecimalInput
+                                        containerClassName="min-w-0 flex-1"
                                         value={item.quantity}
                                         onValueChange={(value) =>
                                             updateItem(index, 'quantity', value)
@@ -184,7 +184,7 @@ export function ShrinkWrapTypeFields({ form, rawMaterialOptions }: Props) {
                                         placeholder="Ej: 1"
                                         aria-label="Cantidad por aplicación"
                                     />
-                                    <span className="w-10 text-sm text-muted-foreground">
+                                    <span className="w-10 text-sm leading-9 text-muted-foreground">
                                         {optionOf(item.raw_material_id)
                                             ?.unit_symbol ?? ''}
                                     </span>

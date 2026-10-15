@@ -5,9 +5,9 @@ import { DetailPageHeader } from '@/components/detail-page-header';
 import {
     createEmptyFormulaDetail,
     FormulaForm,
+    formulaPayload,
 } from '@/components/formulas/formula-form';
 import type { FormulaFormData } from '@/components/formulas/formula-form';
-import { toDecimalPayload } from '@/lib/numeric-input';
 import {
     index as formulasIndex,
     store as formulasStore,
@@ -48,13 +48,7 @@ export default function FormulasCreate({
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        router.post(formulasStore().url, {
-            ...data,
-            details: data.details.map((detail) => ({
-                ...detail,
-                quantity: toDecimalPayload(detail.quantity),
-            })),
-        });
+        router.post(formulasStore().url, formulaPayload(data));
     };
 
     const breadcrumbs = returnTo

@@ -19,7 +19,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { parseDecimal } from '@/lib/numeric-input';
+import { isValidIntegerText, parseDecimal } from '@/lib/numeric-input';
 
 export type RawPaintDevFormData = {
     client_name: string | null;
@@ -546,25 +546,17 @@ export default function PaintDevelopmentRequestForm({
             }
 
             if (app.manos) {
-                const manosVal = parseDecimal(app.manos);
-
-                if (
-                    manosVal === null ||
-                    !Number.isInteger(manosVal) ||
-                    manosVal < 1
-                ) {
+                // Como texto: «3,» o «3,0» se leerían como 3, pero el campo los marca como error.
+                if (!isValidIntegerText(app.manos) || Number(app.manos) < 1) {
                     errs['application_payload.manos'] =
                         'El número de manos debe ser un entero mayor o igual a 1.';
                 }
             }
 
             if (app.pot_life) {
-                const potLifeVal = parseDecimal(app.pot_life);
-
                 if (
-                    potLifeVal === null ||
-                    !Number.isInteger(potLifeVal) ||
-                    potLifeVal < 1
+                    !isValidIntegerText(app.pot_life) ||
+                    Number(app.pot_life) < 1
                 ) {
                     errs['application_payload.pot_life'] =
                         'El pot life debe ser un entero mayor o igual a 1.';

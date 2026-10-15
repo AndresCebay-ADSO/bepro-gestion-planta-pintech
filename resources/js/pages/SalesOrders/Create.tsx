@@ -15,7 +15,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { toDecimalPayload } from '@/lib/numeric-input';
+import { withDecimalPayloads } from '@/lib/numeric-input';
 import { index as salesOrdersIndex } from '@/routes/sales-orders';
 
 type ClientOption = {
@@ -81,10 +81,9 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
         e.preventDefault();
         transform((formData) => ({
             ...formData,
-            items: formData.items.map((item) => ({
-                ...item,
-                quantity: toDecimalPayload(item.quantity),
-            })),
+            items: formData.items.map((item) =>
+                withDecimalPayloads(item, ['quantity']),
+            ),
         }));
         post(salesOrderStore().url);
     };
