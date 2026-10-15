@@ -106,6 +106,24 @@ describe('pedidos de venta: fecha estimada de entrega (PV-05, D-PV3)', function 
         'año 1' => ['0001-01-01', 'La fecha estimada de entrega no puede ser anterior a la fecha del pedido (13/10/2026).'],
         'formato de EE. UU.' => ['12/31/2026', 'Elige una fecha válida.'],
     ]);
+
+    // Una fecha estimada vieja (de antes de la regla) no debe dejar el pedido sin poder guardarse: el formulario la
+    // reenvía aunque solo cambien las notas.
+    it('keeps an old estimated date before the creation day, but only that one', function (string $date, ?string $message): void {
+        $this->order->update(['estimated_delivery_date' => '2026-10-10']);
+
+        $response = $this->actingAs($this->admin)->patch(route('sales-orders.update', $this->order), [
+            'estimated_delivery_date' => $date,
+            'notes' => 'Cambio de nota',
+        ]);
+
+        $message === null
+            ? $response->assertSessionHasNoErrors()
+            : $response->assertSessionHasErrors(['estimated_delivery_date' => $message]);
+    })->with([
+        'la fecha guardada, sin cambiarla' => ['2026-10-10', null],
+        'otra fecha anterior a la creación' => ['2026-10-11', 'La fecha estimada de entrega no puede ser anterior a la fecha del pedido (13/10/2026).'],
+    ]);
 });
 
 describe('cotizaciones: fecha requerida al convertir en pedido (COT-01)', function (): void {
@@ -140,7 +158,7 @@ describe('cotizaciones: fecha requerida al convertir en pedido (COT-01)', functi
 
 describe('cotizaciones: fecha de cotización (COT-06, D-COT2)', function (): void {
     beforeEach(function (): void {
-        $this->send = fn (string $date) => $this->actingAs($this->admin)->post(route('quotations.store'), [
+        $this->payload = fn (string $date) => [
             'client_id' => $this->client->id,
             'quotation_date' => $date,
             'validity_days' => 30,
@@ -150,7 +168,9 @@ describe('cotizaciones: fecha de cotización (COT-06, D-COT2)', function (): voi
                 'product_id' => $this->product->id, 'product_variant_id' => $this->variant->id, 'type' => 'primer',
                 'description' => 'Esmalte', 'quantity' => '3', 'price_adjustment_pct' => '0',
             ]],
-        ]);
+        ];
+        $this->send = fn (string $date) => $this->actingAs($this->admin)
+            ->post(route('quotations.store'), ($this->payload)($date));
     });
 
     it('accepts today in the plant and a past date', function (string $date): void {
@@ -164,6 +184,26 @@ describe('cotizaciones: fecha de cotización (COT-06, D-COT2)', function (): voi
     })->with([
         'hoy en UTC (mañana en planta)' => ['2026-10-14', 'La fecha de cotización no puede ser futura.'],
         'formato de EE. UU.' => ['09/10/2026', 'Elige una fecha válida.'],
+    ]);
+
+    // Un borrador viejo con fecha futura (de antes de la regla) se puede volver a guardar sin cambiarla.
+    it('keeps the saved future date of an old draft, but only that one', function (string $date, ?string $message): void {
+        $draft = Quotation::factory()->create([
+            'client_id' => $this->client->id,
+            'created_by' => $this->admin->id,
+            'status' => QuotationStatus::Draft,
+            'quotation_date' => '2026-10-20',
+        ]);
+
+        $response = $this->actingAs($this->admin)->put(route('quotations.update', $draft), ($this->payload)($date));
+
+        $message === null
+            ? $response->assertSessionHasNoErrors()
+            : $response->assertSessionHasErrors(['quotation_date' => $message]);
+    })->with([
+        'la fecha guardada, sin cambiarla' => ['2026-10-20', null],
+        'otra fecha futura' => ['2026-10-21', 'La fecha de cotización no puede ser futura.'],
+        'hoy en planta' => ['2026-10-13', null],
     ]);
 });
 

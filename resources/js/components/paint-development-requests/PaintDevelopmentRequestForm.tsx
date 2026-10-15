@@ -19,6 +19,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { dateBoundKeepingSaved } from '@/lib/date-time-helpers';
 import { isValidIntegerText, parseDecimal } from '@/lib/numeric-input';
 
 export type RawPaintDevFormData = {
@@ -275,12 +276,12 @@ export default function PaintDevelopmentRequestForm({
     const { data, setData, post, put, processing, errors, transform } =
         useForm<PaintDevFormData>(toFormData(initialData));
 
-    // No antes de hoy; un borrador viejo puede conservar la fecha que ya tenía (D-PDR1, igual que el servidor).
-    const savedSampleDueDate = initialData.sample_due_date ?? '';
-    const sampleDueDateMin =
-        savedSampleDueDate !== '' && savedSampleDueDate < plantToday
-            ? savedSampleDueDate
-            : plantToday;
+    // No antes de hoy; un borrador viejo puede conservar exactamente la fecha que ya tenía (D-PDR1, como el servidor).
+    const sampleDueDateMin = dateBoundKeepingSaved(
+        data.sample_due_date,
+        initialData.sample_due_date,
+        plantToday,
+    );
 
     const [step, setStep] = useState(1);
     const [confirmOpen, setConfirmOpen] = useState(false);

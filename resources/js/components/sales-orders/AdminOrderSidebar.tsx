@@ -12,6 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { dateBoundKeepingSaved } from '@/lib/date-time-helpers';
 import {
     update as salesOrderUpdate,
     updateStatus as salesOrderUpdateStatus,
@@ -167,7 +168,11 @@ export default function AdminOrderSidebar({
                         <Input
                             id="estimated_delivery_date"
                             type="date"
-                            min={order.created_on ?? undefined}
+                            min={dateBoundKeepingSaved(
+                                dataForm.data.estimated_delivery_date,
+                                order.estimated_delivery_date,
+                                order.created_on,
+                            )}
                             value={dataForm.data.estimated_delivery_date}
                             onChange={(e) =>
                                 dataForm.setData(

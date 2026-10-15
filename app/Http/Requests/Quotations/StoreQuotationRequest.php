@@ -51,7 +51,7 @@ class StoreQuotationRequest extends FormRequest
             'thickness_mils' => ['nullable', 'string', 'max:50'],
             'application_method' => ['nullable', 'string', 'max:100'],
             // Sin fechas futuras; si llega vacía, QuotationService pone hoy en planta (D-COT2).
-            'quotation_date' => ['bail', 'nullable', PlantDate::make()->notFuture()],
+            'quotation_date' => ['bail', 'nullable', PlantDate::make()->notFuture()->allowing($this->savedQuotationDate())],
             'validity_days' => ['nullable', 'integer', Rule::enum(QuotationValidity::class)],
             'payment_method' => ['nullable', Rule::enum(PaymentMethod::class)],
             'delivery_time' => ['nullable', 'string', 'max:100'],
@@ -110,6 +110,15 @@ class StoreQuotationRequest extends FormRequest
     protected function keptRecords(): array
     {
         return ['client_id' => null, 'product_ids' => [], 'variant_ids' => []];
+    }
+
+    /**
+     * La fecha que la cotización ya tiene: se acepta aunque sea futura, para que un borrador de antes de la regla se
+     * pueda volver a guardar sin cambiarla. Al crear no hay ninguna.
+     */
+    protected function savedQuotationDate(): ?string
+    {
+        return null;
     }
 
     /**

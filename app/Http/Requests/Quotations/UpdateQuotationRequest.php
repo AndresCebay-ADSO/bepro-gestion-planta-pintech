@@ -27,4 +27,13 @@ class UpdateQuotationRequest extends StoreQuotationRequest
             ? $quotation->keptRecords()
             : parent::keptRecords();
     }
+
+    protected function savedQuotationDate(): ?string
+    {
+        $quotation = $this->route('quotation');
+
+        return $quotation instanceof Quotation
+            ? $quotation->quotation_date?->toDateString()
+            : parent::savedQuotationDate();
+    }
 }

@@ -38,13 +38,19 @@ class UpdateSalesOrderRequest extends FormRequest
     }
 
     /**
-     * No antes del día en que se creó el pedido (D-PV3).
+     * No antes del día en que se creó el pedido (D-PV3). La fecha que el pedido ya tiene se acepta igual: el formulario
+     * la reenvía aunque solo cambien las notas, y una de antes de la regla no debe dejar el pedido sin poder guardarse.
      */
     private function estimatedDeliveryDateRule(): PlantDate
     {
-        $rule = PlantDate::make();
         $salesOrder = $this->route('sales_order');
-        $createdOn = $salesOrder instanceof SalesOrder ? $salesOrder->createdOnPlantDay() : null;
+
+        if (! $salesOrder instanceof SalesOrder) {
+            return PlantDate::make();
+        }
+
+        $rule = PlantDate::make()->allowing($salesOrder->estimated_delivery_date?->toDateString());
+        $createdOn = $salesOrder->createdOnPlantDay();
 
         return $createdOn === null ? $rule : $rule->notBefore($createdOn, __('la fecha del pedido'));
     }

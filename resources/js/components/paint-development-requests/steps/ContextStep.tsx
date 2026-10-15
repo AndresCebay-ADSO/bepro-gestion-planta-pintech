@@ -40,7 +40,7 @@ export default function ContextStep({
     setData,
     errors,
     sampleDueDateMin,
-}: StepProps & { sampleDueDateMin: string }) {
+}: StepProps & { sampleDueDateMin: string | undefined }) {
     const ctx = data.context_payload;
 
     return (
