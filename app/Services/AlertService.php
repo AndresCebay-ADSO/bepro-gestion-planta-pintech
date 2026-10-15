@@ -18,7 +18,8 @@ class AlertService
     private array $createdInRequest = [];
 
     public function __construct(
-        private readonly DecimalCalculator $calculator
+        private readonly DecimalCalculator $calculator,
+        private readonly TimezoneService $timezone,
     ) {}
 
     public function unresolvedCount(?User $user): int
@@ -164,7 +165,9 @@ class AlertService
             return;
         }
 
-        $today = Carbon::today();
+        // Día de la planta, a medianoche como `expiry_date`: se comparan días de calendario, no instantes. Con
+        // `Carbon::today()` en UTC, de 7 p. m. a medianoche un lote que vence hoy salía vencido.
+        $today = Carbon::parse($this->timezone->todayInPlant());
         $expiryDate = $batch->expiry_date->startOfDay();
         $alertDays = max(0, (int) $rawMaterial->alert_days_before_expiry);
         $thresholdDate = $today->copy()->addDays($alertDays);
