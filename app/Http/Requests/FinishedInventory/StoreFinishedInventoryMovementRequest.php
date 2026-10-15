@@ -8,6 +8,7 @@ use App\Enums\FinishedInventoryMovementReason;
 use App\Enums\InventoryMovementType;
 use App\Models\FinishedInventoryMovement;
 use App\Models\FinishedProductBatch;
+use App\Rules\PlantDate;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -43,7 +44,7 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
                 Rule::in(array_column(FinishedInventoryMovementReason::cases(), 'value')),
             ],
             'quantity' => ['bail', 'required', 'numeric', 'gt:0', 'decimal:0,4', 'max:99999999.9999'],
-            'movement_date' => ['bail', 'required', 'date'],
+            'movement_date' => ['bail', 'required', PlantDate::make()->notFuture()],
             'destination_warehouse_id' => ['nullable', 'integer', Rule::exists('warehouses', 'id')->where('is_active', true)],
             'notes' => ['nullable', 'string', 'max:2000'],
             'production_order_id' => ['prohibited'],

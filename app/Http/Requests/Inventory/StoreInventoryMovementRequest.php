@@ -7,6 +7,7 @@ namespace App\Http\Requests\Inventory;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
 use App\Models\RawMaterial;
+use App\Rules\PlantDate;
 use App\Services\InventoryService;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -48,10 +49,11 @@ class StoreInventoryMovementRequest extends FormRequest
                 'decimal:0,4',
                 'max:99999999.9999',
             ],
-            'movement_date' => ['bail', 'required', 'date'],
+            // Día de planta, sin futuras: también es el `entry_date` del lote nuevo, que ordena FIFO (D1).
+            'movement_date' => ['bail', 'required', PlantDate::make()->notFuture()],
             'lot_number' => ['nullable', 'string', 'max:50'],
             'supplier' => ['nullable', 'string', 'max:150'],
-            'expiry_date' => ['nullable', 'date', 'after_or_equal:movement_date'],
+            'expiry_date' => ['bail', 'nullable', PlantDate::make(), 'after_or_equal:movement_date'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'created_by' => ['prohibited'],
         ];

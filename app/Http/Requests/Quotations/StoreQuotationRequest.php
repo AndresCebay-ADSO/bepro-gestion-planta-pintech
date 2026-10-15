@@ -9,6 +9,7 @@ use App\Enums\QuotationItemType;
 use App\Enums\QuotationValidity;
 use App\Models\ProductVariant;
 use App\Models\Quotation;
+use App\Rules\PlantDate;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -49,7 +50,8 @@ class StoreQuotationRequest extends FormRequest
             'line' => ['nullable', 'string', 'max:100'],
             'thickness_mils' => ['nullable', 'string', 'max:50'],
             'application_method' => ['nullable', 'string', 'max:100'],
-            'quotation_date' => ['nullable', 'date'],
+            // Sin fechas futuras; si llega vacía, QuotationService pone hoy en planta (D-COT2).
+            'quotation_date' => ['bail', 'nullable', PlantDate::make()->notFuture()],
             'validity_days' => ['nullable', 'integer', Rule::enum(QuotationValidity::class)],
             'payment_method' => ['nullable', Rule::enum(PaymentMethod::class)],
             'delivery_time' => ['nullable', 'string', 'max:100'],

@@ -6,6 +6,7 @@ namespace App\Http\Requests\SalesOrders;
 
 use App\Enums\SalesOrderPriority;
 use App\Models\SalesOrder;
+use App\Rules\PlantDate;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,7 +27,7 @@ class UpdateSalesOrderRequest extends FormRequest
     {
         return [
             'priority' => ['sometimes', Rule::enum(SalesOrderPriority::class)],
-            'estimated_delivery_date' => ['sometimes', 'nullable', 'date'],
+            'estimated_delivery_date' => ['sometimes', 'bail', 'nullable', $this->estimatedDeliveryDateRule()],
             'notes' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'shipping_address' => ['sometimes', 'nullable', 'string', 'max:500'],
             'client_contact_name' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -34,6 +35,18 @@ class UpdateSalesOrderRequest extends FormRequest
             'client_business_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'client_nit' => ['sometimes', 'nullable', 'string', 'max:20'],
         ];
+    }
+
+    /**
+     * No antes del día en que se creó el pedido (D-PV3).
+     */
+    private function estimatedDeliveryDateRule(): PlantDate
+    {
+        $rule = PlantDate::make();
+        $salesOrder = $this->route('sales_order');
+        $createdOn = $salesOrder instanceof SalesOrder ? $salesOrder->createdOnPlantDay() : null;
+
+        return $createdOn === null ? $rule : $rule->notBefore($createdOn, __('la fecha del pedido'));
     }
 
     /**
