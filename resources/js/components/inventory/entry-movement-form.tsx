@@ -14,6 +14,8 @@ type Props = {
     batches: InventoryOption[];
     warehouses: InventoryOption[];
     defaultWarehouseId?: number;
+    /** Fecha más vieja que admite una entrada (D1b); la valida el servidor. */
+    oldestEntryDate?: string;
     onSuccess?: () => void;
 };
 
@@ -22,6 +24,7 @@ export function EntryMovementForm({
     batches,
     warehouses,
     defaultWarehouseId,
+    oldestEntryDate,
     onSuccess,
 }: Props) {
     const { plantToday } = usePage().props;
@@ -104,6 +107,7 @@ export function EntryMovementForm({
                 batches={batches}
                 warehouses={warehouses}
                 type="entry"
+                movementDateMin={oldestEntryDate}
             >
                 <div className="space-y-2">
                     <Label htmlFor="cost_price">Precio de Costo (u)</Label>
@@ -178,6 +182,7 @@ export function EntryMovementForm({
                             <Input
                                 id="expiry_date"
                                 type="date"
+                                min={form.data.movement_date}
                                 value={form.data.expiry_date}
                                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                                     form.setData('expiry_date', e.target.value)

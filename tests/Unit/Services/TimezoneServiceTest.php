@@ -67,3 +67,10 @@ test('nowInPlant retorna la hora en la zona de planta', function () {
 
     expect($nowInPlant->timezoneName)->toBe('America/Bogota');
 });
+
+test('plantDateOf da el día de planta de un instante guardado en UTC', function () {
+    // 01:30 UTC del 14-oct = 20:30 del 13-oct en Bogotá.
+    expect($this->service->plantDateOf(CarbonImmutable::parse('2026-10-14 01:30:00', 'UTC')))->toBe('2026-10-13')
+        ->and($this->service->plantDateOf(CarbonImmutable::parse('2026-10-14 05:00:00', 'UTC')))->toBe('2026-10-14')
+        ->and($this->service->plantDateOf(null))->toBeNull();
+});

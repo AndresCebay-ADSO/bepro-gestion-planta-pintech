@@ -14,6 +14,7 @@ use App\Enums\ProductionOrderStatus;
 use App\Enums\QuotationStatus;
 use App\Enums\SalesOrderStatus;
 use App\Enums\SystemRole;
+use App\Models\Alert;
 use App\Models\Client;
 use App\Models\FinishedProductBatch;
 use App\Models\Formula;
@@ -244,6 +245,21 @@ describe('movimientos de materia prima (INV-03, D1)', function (): void {
     it('rejects an expiry date that does not exist', function (): void {
         ($this->entry)(['expiry_date' => '2027-02-30'])->assertSessionHasErrors(['expiry_date' => 'Elige una fecha válida.']);
     });
+
+    // D1b: una entrada fija el `entry_date` del lote, que ordena el FIFO. Una fecha muy vieja (un error de digitación
+    // como 2020) haría consumir ese lote antes que los que llegaron primero. Las salidas no mueven el FIFO.
+    it('limits raw material entries to one month back', function (string $type, string $date, ?string $message): void {
+        $response = ($this->{$type})(['movement_date' => $date]);
+
+        $message === null
+            ? $response->assertSessionHasNoErrors()
+            : $response->assertSessionHasErrors(['movement_date' => $message]);
+    })->with([
+        'entrada de hace exactamente un mes' => ['entry', '2026-09-13', null],
+        'entrada de hace más de un mes' => ['entry', '2026-09-12', 'La fecha de movimiento no puede ser anterior a la fecha de hace un mes (13/09/2026).'],
+        'entrada de 2020' => ['entry', '2020-10-13', 'La fecha de movimiento no puede ser anterior a la fecha de hace un mes (13/09/2026).'],
+        'salida de hace más de un mes' => ['exit', '2026-09-01', null],
+    ]);
 });
 
 describe('movimientos de producto terminado (PT-05, D-PT2)', function (): void {
@@ -372,6 +388,31 @@ describe('solicitudes de I+D: fecha de entrega de muestra (PDR-01, D-PDR1)', fun
         'otra fecha pasada' => ['2026-09-02', 'La fecha de entrega de muestra no puede ser anterior a hoy.'],
         'hoy en planta' => ['2026-10-13', null],
         'una fecha futura' => ['2026-11-15', null],
+    ]);
+
+    // D-PDR2: no se envía a I+D una solicitud cuya fecha de muestra ya pasó; primero hay que actualizarla.
+    it('does not submit a draft whose sample date already passed', function (string $date, bool $submitted): void {
+        $draft = PaintDevelopmentRequest::factory()->create([
+            'status' => PaintDevelopmentRequestStatus::Draft,
+            'created_by' => $this->admin->id,
+            'sample_due_date' => $date,
+        ]);
+
+        $response = $this->actingAs($this->admin)->patch(route('paint-development-requests.submit', $draft));
+
+        if ($submitted) {
+            $response->assertSessionHasNoErrors();
+            expect($draft->refresh()->status)->toBe(PaintDevelopmentRequestStatus::Submitted);
+        } else {
+            $response->assertSessionHasErrors([
+                'sample_due_date' => 'La fecha de entrega de muestra ya pasó; actualízala antes de enviar.',
+            ]);
+            expect($draft->refresh()->status)->toBe(PaintDevelopmentRequestStatus::Draft)
+                ->and(Alert::query()->count())->toBe(0);
+        }
+    })->with([
+        'vencida ayer' => ['2026-10-12', false],
+        'hoy en planta, después de las 7 p. m.' => ['2026-10-13', true],
     ]);
 });
 

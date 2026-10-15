@@ -143,7 +143,7 @@ class ShrinkWrapController extends Controller
             'shrinkWrap' => [
                 ...$this->shrinkWrapData($shrinkWrap, $canViewCosts),
                 // Día en que se descontó del inventario: el del registro, que puede ser posterior al termoencogido.
-                'registered_on' => $this->timezone->toPlantTime($shrinkWrap->created_at)?->toDateString(),
+                'registered_on' => $this->timezone->plantDateOf($shrinkWrap->created_at),
                 'notes' => $shrinkWrap->notes,
                 'items' => $shrinkWrap->items->map(fn (ShrinkWrapItem $item): array => [
                     'id' => $item->id,

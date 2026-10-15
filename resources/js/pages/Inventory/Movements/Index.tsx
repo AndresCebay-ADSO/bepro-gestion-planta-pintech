@@ -24,7 +24,12 @@ import { useFilters } from '@/hooks/use-filters';
 import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
 import type { InventoryOption, PaginationLink } from '@/types';
 
-const DRAWER_FORM_PROPS = ['rawMaterials', 'batches', 'warehouses'];
+const DRAWER_FORM_PROPS = [
+    'rawMaterials',
+    'batches',
+    'warehouses',
+    'oldestEntryDate',
+];
 
 type Props = {
     movements: {
@@ -41,6 +46,8 @@ type Props = {
     rawMaterials?: InventoryOption[];
     batches?: InventoryOption[];
     warehouses?: InventoryOption[];
+    /** Fecha más vieja que admite una entrada (D1b). Llega con la recarga parcial del cajón. */
+    oldestEntryDate?: string;
     warehouseOptions: { value: string; label: string }[];
     typeOptions: { value: string; label: string }[];
     can: { create: boolean };
@@ -59,6 +66,7 @@ export default function InventoryMovementsIndex({
     rawMaterials,
     batches,
     warehouses,
+    oldestEntryDate,
     warehouseOptions,
     typeOptions,
     can,
@@ -372,6 +380,7 @@ export default function InventoryMovementsIndex({
                         ) : rawMaterials && batches && warehouses ? (
                             drawerState.mode === 'entry' ? (
                                 <EntryMovementForm
+                                    oldestEntryDate={oldestEntryDate}
                                     rawMaterials={rawMaterials}
                                     batches={batches}
                                     warehouses={warehouses}

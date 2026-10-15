@@ -10,6 +10,7 @@ declare(strict_types=1);
 use App\Enums\QuotationStatus;
 use App\Enums\SalesOrderStatus;
 use App\Enums\SystemRole;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\Client;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -77,6 +78,23 @@ describe('fecha de cotización por defecto (COT-06, D-COT2)', function (): void 
 
         expect($draft->refresh()->getRawOriginal('quotation_date'))->toStartWith('2026-01-15');
     });
+});
+
+// El cajón de movimientos se abre con una recarga parcial, que no trae los props compartidos salvo los `always`: sin
+// eso, una página cargada ayer propondría la fecha de ayer al abrir el cajón hoy.
+it('refreshes today in the plant on the partial reload that opens a movement drawer', function (): void {
+    $response = $this->actingAs($this->admin)
+        ->withHeaders([
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => (string) app(HandleInertiaRequests::class)->version(request()),
+            'X-Inertia-Partial-Component' => 'Inventory/Movements/Index',
+            'X-Inertia-Partial-Data' => 'rawMaterials,oldestEntryDate',
+        ])
+        ->get(route('inventory-movements.index'));
+
+    $response->assertOk();
+    expect($response->json('props.plantToday'))->toBe('2026-10-13')
+        ->and($response->json('props.oldestEntryDate'))->toBe('2026-09-13');
 });
 
 it('shares today in the plant with every page', function (): void {

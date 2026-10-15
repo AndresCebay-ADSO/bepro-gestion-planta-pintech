@@ -142,6 +142,6 @@ class SalesOrder extends Model
      */
     public function createdOnPlantDay(): ?string
     {
-        return app(TimezoneService::class)->toPlantTime($this->created_at)?->toDateString();
+        return app(TimezoneService::class)->plantDateOf($this->created_at);
     }
 }

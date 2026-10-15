@@ -131,6 +131,8 @@ export default function PaintDevelopmentRequestShow({
     const [selectedStatus, setSelectedStatus] = useState('');
     const [reviewNotes, setReviewNotes] = useState('');
     const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+    // El servidor puede rechazar el envío (por ejemplo, la fecha de muestra ya pasó: D-PDR2).
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
     const handleStatusSubmit = () => {
         router.patch(
@@ -362,7 +364,13 @@ export default function PaintDevelopmentRequestShow({
             </Dialog>
 
             {/* Confirm submit dialog */}
-            <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+            <Dialog
+                open={submitDialogOpen}
+                onOpenChange={(open) => {
+                    setSubmitDialogOpen(open);
+                    setSubmitError(null);
+                }}
+            >
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Enviar solicitud</DialogTitle>
@@ -371,6 +379,11 @@ export default function PaintDevelopmentRequestShow({
                             editarla después.
                         </DialogDescription>
                     </DialogHeader>
+                    {submitError && (
+                        <p className="text-sm text-destructive">
+                            {submitError}
+                        </p>
+                    )}
                     <DialogFooter>
                         <Button
                             variant="outline"
@@ -380,8 +393,19 @@ export default function PaintDevelopmentRequestShow({
                         </Button>
                         <Button
                             onClick={() => {
-                                setSubmitDialogOpen(false);
-                                router.patch(requestsSubmit(request.id).url);
+                                router.patch(
+                                    requestsSubmit(request.id).url,
+                                    {},
+                                    {
+                                        onSuccess: () =>
+                                            setSubmitDialogOpen(false),
+                                        onError: (errors) =>
+                                            setSubmitError(
+                                                Object.values(errors)[0] ??
+                                                    null,
+                                            ),
+                                    },
+                                );
                             }}
                         >
                             Enviar

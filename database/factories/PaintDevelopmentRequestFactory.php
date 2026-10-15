@@ -28,7 +28,8 @@ class PaintDevelopmentRequestFactory extends Factory
             'project_name' => fake()->words(3, true),
             'responsible' => fake()->name(),
             'city' => fake()->city(),
-            'sample_due_date' => fake()->date(),
+            // Futura: una fecha de muestra pasada no deja enviar el borrador a revisión (D-PDR2).
+            'sample_due_date' => now()->addDays(fake()->numberBetween(7, 60))->toDateString(),
             'current_product' => fake()->optional()->word(),
             'context_payload' => [
                 'sustrato' => fake()->randomElement([

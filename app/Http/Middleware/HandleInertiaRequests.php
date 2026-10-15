@@ -12,6 +12,7 @@ use App\Services\AlertService;
 use App\Services\TimezoneService;
 use App\Services\WarehouseContextService;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -75,7 +76,9 @@ class HandleInertiaRequests extends Middleware
                 'new_alerts' => $this->visibleNewAlerts($request, $user),
             ],
             // Hoy en la planta: valor por defecto y límite de los campos de fecha, el mismo «hoy» que valida PlantDate.
-            'plantToday' => fn (): string => $this->timezone->todayInPlant(),
+            // `always`: también llega en las recargas parciales (las que abren los cajones de movimientos), para que una
+            // página cargada ayer no proponga la fecha de ayer.
+            'plantToday' => Inertia::always(fn (): string => $this->timezone->todayInPlant()),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'warehouseContext' => fn (): ?array => $user ? $this->warehouseContext($request, $user) : null,
             'unresolvedAlertsCount' => fn (): int => $user?->can(Permission::AlertsView->value)
