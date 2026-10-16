@@ -23,14 +23,12 @@ beforeEach(function (): void {
     $this->uom = UnitOfMeasure::factory()->create();
 
     $this->productA = Product::factory()->create([
-        'code' => 'FORM-001',
         'name' => 'Pintura Epóxica',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
     ]);
 
     $this->productB = Product::factory()->create([
-        'code' => 'FORM-002',
         'name' => 'Sellador Acrílico',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
@@ -49,19 +47,6 @@ beforeEach(function (): void {
         'is_active' => false,
         'created_by' => $this->admin->id,
     ]);
-});
-
-it('filters by product code', function (): void {
-    actingAs($this->admin);
-
-    $response = get(route('formulas.index', ['search' => 'FORM-001']));
-
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('Formulas/Index')
-        ->has('formulas.data', 1)
-        ->where('formulas.data.0.id', $this->formulaActive->id)
-    );
 });
 
 it('filters by product name', function (): void {
@@ -127,7 +112,7 @@ it('shows all formulas when status is all or absent', function (): void {
 it('normalizes whitespace in search', function (): void {
     actingAs($this->admin);
 
-    $response = get(route('formulas.index', ['search' => '   FORM-001  ']));
+    $response = get(route('formulas.index', ['search' => '   Epóxica  ']));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -162,20 +147,20 @@ it('preserves query string in pagination', function (): void {
         ]);
     }
 
-    $response = get(route('formulas.index', ['search' => 'FORM-001']));
+    $response = get(route('formulas.index', ['search' => 'Pintura']));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->has('formulas.links.1', fn ($link) => $link
             ->where('active', true)
             ->where('label', '1')
-            ->where('url', fn (?string $url) => $url === null || str_contains($url, 'search=FORM-001'))
+            ->where('url', fn (?string $url) => $url === null || str_contains($url, 'search=Pintura'))
             ->etc()
         )
         ->has('formulas.links.2', fn ($link) => $link
             ->where('active', false)
             ->where('label', '2')
-            ->where('url', fn (?string $url) => $url !== null && str_contains($url, 'search=FORM-001'))
+            ->where('url', fn (?string $url) => $url !== null && str_contains($url, 'search=Pintura'))
             ->etc()
         )
     );

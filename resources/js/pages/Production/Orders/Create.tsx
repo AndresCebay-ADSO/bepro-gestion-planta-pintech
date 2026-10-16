@@ -25,7 +25,6 @@ type FormulaOption = { id: number; version: number; is_active: boolean };
 type WarehouseOption = { id: number; name: string };
 type ProductOption = {
     id: number;
-    code: string;
     name: string;
     formulas?: FormulaOption[];
     variants?: VariantOption[];
@@ -67,7 +66,7 @@ export default function ProductionOrdersCreate({
 
     const productOptions = products.map((p) => ({
         id: String(p.id),
-        label: `${p.code} — ${p.name}`,
+        label: p.name,
     }));
 
     const variantOptions = availableVariants.map((v) => ({

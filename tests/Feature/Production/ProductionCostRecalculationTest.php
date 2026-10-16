@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\NumberType;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -45,7 +46,6 @@ beforeEach(function () {
     ]);
 
     $this->product = Product::create([
-        'code' => 'P-RECALC-01',
         'name' => 'Pintura Recalculo',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
@@ -387,4 +387,48 @@ test('it refreshes product and variant prices when profit margin is updated', fu
     expect((float) $this->product->current_price)->toBe(49.0);
     expect((float) $variant->current_cost)->toBe(35.0);
     expect((float) $variant->current_price)->toBe(49.0);
+});
+
+/**
+ * Crea la fórmula con las dos materias primas a un precio de relleno y luego le pone el precio real a la primera.
+ */
+function recalculateFromPlaceholderPrice(object $t, string $placeholderPrice): ProductionCost
+{
+    $t->rawMaterialOne->update(['current_price' => $placeholderPrice]);
+    $t->rawMaterialTwo->update(['current_price' => $placeholderPrice]);
+
+    $t->post(route('formulas.store'), [
+        'product_id' => $t->product->id,
+        'details' => [
+            ['raw_material_id' => $t->rawMaterialOne->id, 'quantity' => 2, 'unit_of_measure_id' => $t->unit->id],
+            ['raw_material_id' => $t->rawMaterialTwo->id, 'quantity' => 3, 'unit_of_measure_id' => $t->unit->id],
+        ],
+    ])->assertRedirect(route('formulas.index'));
+
+    $t->rawMaterialOne->update(['current_price' => 50000]);
+    app(ProductionCostRecalculationService::class)->recalculateForRawMaterial((int) $t->rawMaterialOne->id);
+
+    return ProductionCost::query()
+        ->where('product_id', $t->product->id)
+        ->whereNull('production_order_id')
+        ->latest('id')
+        ->firstOrFail();
+}
+
+// ESQ-01 (PR 4 de 3.6): con precios de relleno en la carga inicial, la variación pasa de 9.999 % y el insert fallaba
+// en PostgreSQL dentro del job asíncrono, sin que nadie lo viera.
+test('it stores a cost variation above 9999 percent', function () {
+    // Costo anterior 5 (2 × 1 + 3 × 1); nuevo 100.003 (2 × 50.000 + 3 × 1): +1.999.960 %.
+    $latestCost = recalculateFromPlaceholderPrice($this, '1');
+
+    expect(bccomp((string) $latestCost->cost, '100003', 4))->toBe(0)
+        ->and(bccomp((string) $latestCost->variation_percentage, '1999960', 4))->toBe(0);
+});
+
+test('it caps a cost variation that does not fit its column', function () {
+    // Costo anterior 0,0005; la variación real (casi +20.000.000.000 %) no cabe ni en 12,4: se guarda el tope.
+    $latestCost = recalculateFromPlaceholderPrice($this, '0.0001');
+
+    expect(bccomp((string) $latestCost->cost, '100000.0003', 4))->toBe(0)
+        ->and((string) $latestCost->variation_percentage)->toBe(NumberType::ComputedPercentage->max());
 });

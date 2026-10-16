@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\NumberType;
 use App\Models\ProductionOrder;
 use App\Models\UnitOfMeasure;
 use Illuminate\Support\Collection;
@@ -58,7 +59,7 @@ class FormulaService
     public function getConversionFactor(UnitOfMeasure $fromUnit, UnitOfMeasure $toUnit): string
     {
         if ($fromUnit->id === $toUnit->id) {
-            return '1.0000';
+            return '1.000000';
         }
 
         // Conversión basada en Volumen (Litros)
@@ -66,7 +67,7 @@ class FormulaService
             return $this->calculator->div(
                 (string) $fromUnit->to_liter_conversion,
                 (string) $toUnit->to_liter_conversion,
-                4
+                NumberType::Factor->scale()
             );
         }
 
@@ -75,7 +76,7 @@ class FormulaService
             return $this->calculator->div(
                 (string) $fromUnit->to_kg_conversion,
                 (string) $toUnit->to_kg_conversion,
-                4
+                NumberType::Factor->scale()
             );
         }
 

@@ -29,9 +29,7 @@ type Props = {
 };
 
 type ProductForm = {
-    code: string;
     name: string;
-    brand: string;
     description: string;
     category_id: string;
     unit_of_measure_id: string;
@@ -49,9 +47,7 @@ type ProductForm = {
 export default function ProductsCreate({ categories, units, can }: Props) {
     const { data, setData, post, transform, processing, errors } =
         useForm<ProductForm>({
-            code: '',
             name: '',
-            brand: 'BEPRO',
             description: '',
             category_id: '',
             unit_of_measure_id: '',
@@ -103,29 +99,6 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                         </h2>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="code">
-                                    Referencia / Código interno
-                                </Label>
-                                <Input
-                                    id="code"
-                                    value={data.code}
-                                    onChange={(e) =>
-                                        setData(
-                                            'code',
-                                            e.target.value.toUpperCase(),
-                                        )
-                                    }
-                                    placeholder="Opcional..."
-                                    className="font-mono"
-                                />
-                                {errors.code && (
-                                    <p className="text-sm text-destructive">
-                                        {errors.code}
-                                    </p>
-                                )}
-                            </div>
-
                             <div className="space-y-2">
                                 <Label htmlFor="name">Nombre *</Label>
                                 <Input
@@ -210,29 +183,12 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                         <div>
                             <h2 className="font-medium text-foreground">
-                                Marca y descripción
+                                Descripción
                             </h2>
                             <p className="mt-1 text-xs text-muted-foreground">
-                                Marca comercial del catálogo. La descripción
-                                puede mostrarse en la ficha pública del QR.
+                                La descripción puede mostrarse en la ficha
+                                pública del QR.
                             </p>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="brand">Marca comercial *</Label>
-                            <Input
-                                id="brand"
-                                value={data.brand}
-                                onChange={(e) =>
-                                    setData('brand', e.target.value)
-                                }
-                                placeholder="Ej: BEPRO"
-                                maxLength={100}
-                            />
-                            {errors.brand && (
-                                <p className="text-sm text-destructive">
-                                    {errors.brand}
-                                </p>
-                            )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="description">Descripción</Label>

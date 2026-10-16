@@ -36,7 +36,6 @@ test('it throws when trying to calculate planned materials with incompatible uni
     ]);
 
     $product = Product::create([
-        'code' => 'P-FORM-01',
         'name' => 'Producto Fórmula',
         'category_id' => $category->id,
         'unit_of_measure_id' => $liter->id,
@@ -120,7 +119,6 @@ test('it calculates planned materials and converts units successfully', function
     ]);
 
     $product = Product::create([
-        'code' => 'P-FORM-02',
         'name' => 'Producto Fórmula 2',
         'category_id' => $category->id,
         'unit_of_measure_id' => $liter->id,
@@ -180,4 +178,13 @@ test('it calculates planned materials and converts units successfully', function
         'planned_quantity' => 2.5, // 250g * 0.001 * 10
         'unit_of_measure_id' => $kilogram->id, // Debe ser la unidad base de la materia prima
     ]);
+});
+
+// El factor entre dos unidades conserva 6 decimales (PR 4 de 3.6): con 4, mL → galón daba 0,0003 (13 % de error).
+test('it keeps six decimals in the conversion factor between units', function () {
+    $milliliter = UnitOfMeasure::create(['code' => 'mlf', 'name' => 'Mililitro', 'symbol' => 'mL', 'to_liter_conversion' => '0.001']);
+    $gallon = UnitOfMeasure::create(['code' => 'glf', 'name' => 'Galón', 'symbol' => 'gal', 'to_liter_conversion' => '3.7854']);
+
+    expect(app(FormulaService::class)->getConversionFactor($milliliter, $gallon))->toBe('0.000264')
+        ->and(app(FormulaService::class)->getConversionFactor($gallon, $milliliter))->toBe('3785.400000');
 });

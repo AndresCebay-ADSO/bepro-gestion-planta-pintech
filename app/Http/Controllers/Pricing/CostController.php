@@ -25,7 +25,6 @@ class CostController extends Controller
             ->apply(Product::query())
             ->select([
                 'id',
-                'code',
                 'name',
                 'current_cost',
                 'cif_percentage',

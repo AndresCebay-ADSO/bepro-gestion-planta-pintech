@@ -23,7 +23,7 @@ type ProductionOrderItem = {
     lot_number: number;
     /** Nombre con el color que pidió el cliente (3.4). */
     product_display_name: string;
-    product?: { code: string; name: string } | null;
+    product?: { name: string } | null;
     formula?: { version: number } | null;
     warehouse?: { name: string } | null;
     quantity: string | number;

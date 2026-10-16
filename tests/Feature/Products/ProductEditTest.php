@@ -29,7 +29,6 @@ beforeEach(function (): void {
     $this->category = ProductCategory::factory()->create(['name' => 'Pinturas Test']);
     $this->uom = UnitOfMeasure::factory()->create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
     $this->product = Product::factory()->create([
-        'code' => 'P-TEST-01',
         'name' => 'Pintura Test',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,

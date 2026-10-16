@@ -42,7 +42,6 @@ beforeEach(function () {
     ]);
 
     $this->product = Product::create([
-        'code' => 'P-REDIR',
         'name' => 'Pintura Redirect',
         'category_id' => $this->productCategory->id,
         'unit_of_measure_id' => $this->unit->id,

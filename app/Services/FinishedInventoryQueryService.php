@@ -72,7 +72,7 @@ class FinishedInventoryQueryService
         $baseQuery = $this->scopedQuery($user)
             ->where('quantity', '>', 0)
             ->with([
-                'product:id,code,name,category_id',
+                'product:id,name,category_id',
                 'product.category:id,name',
                 'productVariant:id,code,name,presentation_label,presentation_value',
                 'warehouse:id,name,city,type',
@@ -90,7 +90,6 @@ class FinishedInventoryQueryService
                 'quantity' => $row->quantity,
                 'product' => $row->product ? [
                     'id' => $row->product->id,
-                    'code' => $row->product->code,
                     'name' => $row->product->name,
                     'category' => $row->product->category ? [
                         'name' => $row->product->category->name,

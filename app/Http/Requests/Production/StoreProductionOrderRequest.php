@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Production;
 
+use App\Enums\NumberType;
 use App\Enums\WarehouseType;
 use App\Models\ProductionOrder;
 use App\Rules\PlantDate;
@@ -63,7 +64,8 @@ class StoreProductionOrderRequest extends FormRequest
                     ->where('is_active', true)
                     ->when($this->input('product_id') !== null, fn ($query) => $query->where('product_id', $this->input('product_id'))),
             ],
-            'packaging.*.planned_units' => ['required_with:packaging', 'numeric', 'min:0.01'],
+            // Unidades enteras desde 1 (D-OP1); la cantidad a producir sí lleva decimales (una muestra de ⅛ de galón).
+            'packaging.*.planned_units' => ['required_with:packaging', ...NumberType::Units->rules(), 'min:1'],
         ];
     }
 

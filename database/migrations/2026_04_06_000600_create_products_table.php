@@ -15,16 +15,14 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 50)->nullable()->unique();
             $table->string('name', 150);
-            $table->string('brand', 100)->default('BEPRO');
             $table->text('description')->nullable();
             $table->foreignId('category_id')->constrained('product_categories')->restrictOnDelete();
             $table->foreignId('unit_of_measure_id')->constrained('unit_of_measures')->restrictOnDelete();
-            $table->decimal('current_cost', 12, 4)->nullable();
+            $table->decimal('current_cost', 16, 4)->nullable();
             $table->decimal('cif_percentage', 5, 2)->nullable();
             $table->decimal('sales_margin', 5, 2)->nullable();
-            $table->decimal('current_price', 12, 4)->nullable();
+            $table->decimal('current_price', 16, 4)->nullable();
             $table->decimal('price_threshold', 5, 2)->default(3.00);
             $table->decimal('quality_viscosity_lower', 4, 1)->nullable();
             $table->decimal('quality_viscosity_upper', 4, 1)->nullable();

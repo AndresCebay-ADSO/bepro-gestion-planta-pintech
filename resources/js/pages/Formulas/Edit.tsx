@@ -15,7 +15,7 @@ import {
 } from '@/routes/formulas';
 
 type RawMaterial = { id: number; code: string };
-type ProductOption = { id: number; code: string; name: string };
+type ProductOption = { id: number; name: string };
 type UnitOption = { id: number; name: string; symbol: string };
 
 type Props = {
@@ -26,7 +26,6 @@ type Props = {
         is_active: boolean;
         product: {
             id: number;
-            code: string;
             name: string;
         };
         details: Array<{
@@ -69,7 +68,7 @@ export default function FormulasEdit({
     return (
         <>
             <Head
-                title={`Editar Fórmula v${formula.version} — ${formula.product.code}`}
+                title={`Editar Fórmula v${formula.version} — ${formula.product.name}`}
             />
 
             <div className="space-y-6 p-6">

@@ -36,9 +36,7 @@ beforeEach(function (): void {
     $this->comercialUser->assignRole(SystemRole::Commercial->value);
 
     $this->product = Product::create([
-        'code' => 'PROD-001',
         'name' => 'Producto Test',
-        'brand' => 'BEPRO',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
         'current_cost' => 80.0000,
@@ -57,7 +55,7 @@ describe('index', function () {
                 ->component('Costs/Index')
                 ->has('products.data', 1)
                 ->where('products.data.0.id', $this->product->id)
-                ->where('products.data.0.code', 'PROD-001')
+                ->where('products.data.0.name', 'Producto Test')
                 ->where('products.data.0.current_cost', '80.0000')
                 ->where('products.data.0.cif_percentage', '15.00')
                 ->where('products.data.0.current_price', '92.0000')
@@ -84,9 +82,7 @@ describe('index', function () {
 
     it('filters products by search term', function () {
         Product::create([
-            'code' => 'PROD-002',
             'name' => 'Otro Producto',
-            'brand' => 'BEPRO',
             'category_id' => $this->category->id,
             'unit_of_measure_id' => $this->unit->id,
             'is_active' => true,
@@ -97,7 +93,7 @@ describe('index', function () {
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->has('products.data', 1)
-                ->where('products.data.0.code', 'PROD-001')
+                ->where('products.data.0.name', 'Producto Test')
             );
     });
 });

@@ -35,14 +35,12 @@ beforeEach(function (): void {
     ]);
 
     $this->productA = Product::factory()->create([
-        'code' => 'PROD-001',
         'name' => 'Pintura Blanca Tipo 1',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
     ]);
 
     $this->productB = Product::factory()->create([
-        'code' => 'PROD-002',
         'name' => 'Esmalte Sintético Negro',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
@@ -114,19 +112,6 @@ it('filters by color', function (): void {
         ->assertInertia(fn ($page) => $page
             ->has('orders.data', 1)
             ->where('orders.data.0.id', $this->orderA->id));
-});
-
-it('filters by product code', function (): void {
-    actingAs($this->admin);
-
-    $response = get(route('production-orders.index', ['search' => 'PROD-001']));
-
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('Production/Orders/Index')
-        ->has('orders.data', 1)
-        ->where('orders.data.0.id', $this->orderA->id)
-    );
 });
 
 it('filters by product name', function (): void {
@@ -317,20 +302,20 @@ it('preserves query string in pagination', function (): void {
         ]);
     }
 
-    $response = get(route('production-orders.index', ['search' => 'PROD-001']));
+    $response = get(route('production-orders.index', ['search' => 'Pintura']));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->has('orders.links.1', fn ($link) => $link
             ->where('active', true)
             ->where('label', '1')
-            ->where('url', fn (?string $url) => $url === null || str_contains($url, 'search=PROD-001'))
+            ->where('url', fn (?string $url) => $url === null || str_contains($url, 'search=Pintura'))
             ->etc()
         )
         ->has('orders.links.2', fn ($link) => $link
             ->where('active', false)
             ->where('label', '2')
-            ->where('url', fn (?string $url) => $url !== null && str_contains($url, 'search=PROD-001'))
+            ->where('url', fn (?string $url) => $url !== null && str_contains($url, 'search=Pintura'))
             ->etc()
         )
     );

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('raw_material_id')->constrained('raw_materials')->restrictOnDelete();
             $table->decimal('quantity_per_application', 12, 4);
             $table->decimal('quantity', 12, 4);
-            $table->decimal('total_cost', 14, 4);
+            $table->decimal('total_cost', 16, 4);
             $table->timestamps();
 
             $table->unique(['shrink_wrap_id', 'raw_material_id']);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\WholeUnits;
 use Database\Factories\SalesOrderItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,7 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $sales_order_id
  * @property int $product_id
  * @property int|null $product_variant_id
- * @property string $quantity
+ * @property int $quantity
  * @property string|null $color
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -39,7 +40,7 @@ class SalesOrderItem extends Model
     protected function casts(): array
     {
         return [
-            'quantity' => 'decimal:4',
+            'quantity' => WholeUnits::class,
         ];
     }
 

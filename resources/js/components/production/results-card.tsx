@@ -14,6 +14,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import type { PreviewStaleReason } from '@/hooks/use-production-cost-preview';
+import { HEGMAN_LIMITS, NUMBER_TYPES } from '@/lib/number-types';
 import type {
     LabelMaterialOption,
     ProductionOrderErrors,
@@ -136,8 +137,7 @@ export function ResultsCard({
                                 </Label>
                                 <DecimalInput
                                     id="viscosity"
-                                    maxDecimals={2}
-                                    maxIntegerDigits={6}
+                                    {...NUMBER_TYPES.quality}
                                     placeholder="Ej: 105,5"
                                     value={data.viscosity_ku}
                                     onValueChange={(value) =>
@@ -155,8 +155,7 @@ export function ResultsCard({
                                 <Label htmlFor="grinding">Molienda (HG)</Label>
                                 <DecimalInput
                                     id="grinding"
-                                    maxDecimals={2}
-                                    maxIntegerDigits={6}
+                                    {...HEGMAN_LIMITS}
                                     placeholder="Ej: 7,2"
                                     value={data.grinding_hg}
                                     onValueChange={(value) =>
@@ -176,8 +175,7 @@ export function ResultsCard({
                                 </Label>
                                 <DecimalInput
                                     id="quality-solids"
-                                    maxDecimals={2}
-                                    maxIntegerDigits={3}
+                                    {...NUMBER_TYPES.quality}
                                     placeholder="Ej: 52,4"
                                     value={data.quality_solids}
                                     onValueChange={(value) =>

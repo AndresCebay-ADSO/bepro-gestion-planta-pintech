@@ -21,21 +21,18 @@ beforeEach(function (): void {
     $this->uom = UnitOfMeasure::factory()->create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
 
     $this->productA = Product::factory()->create([
-        'code' => 'PROD-001',
         'name' => 'Pintura Epóxica',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
     ]);
 
     $this->productB = Product::factory()->create([
-        'code' => 'PROD-002',
         'name' => 'Sellador Acrílico',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
     ]);
 
     $this->productC = Product::factory()->create([
-        'code' => 'PROD-003',
         'name' => 'Esmalte Industrial',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
@@ -50,17 +47,6 @@ test('filters products by name search', function (): void {
         ->has('products.data', 1)
         ->where('products.data.0.id', $this->productA->id)
         ->where('filters.search', 'Epóxica')
-    );
-});
-
-test('filters products by code search', function (): void {
-    $response = $this->actingAs($this->admin)
-        ->get(route('products.index', ['search' => 'PROD-002']));
-
-    $response->assertInertia(fn ($page) => $page
-        ->has('products.data', 1)
-        ->where('products.data.0.id', $this->productB->id)
-        ->where('filters.search', 'PROD-002')
     );
 });
 

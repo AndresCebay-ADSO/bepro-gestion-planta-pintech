@@ -21,8 +21,8 @@ return new class extends Migration
             $table->foreignId('unit_of_measure_id')->constrained('unit_of_measures')->restrictOnDelete();
             $table->decimal('presentation_value', 12, 4)->nullable();
             $table->string('presentation_label', 50)->nullable();
-            $table->decimal('current_cost', 12, 4)->nullable();
-            $table->decimal('current_price', 12, 4)->nullable();
+            $table->decimal('current_cost', 16, 4)->nullable();
+            $table->decimal('current_price', 16, 4)->nullable();
             $table->foreignId('package_raw_material_id')
                 ->nullable()
                 ->constrained('raw_materials')

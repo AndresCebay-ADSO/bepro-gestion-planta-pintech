@@ -35,7 +35,7 @@ describe('fecha de cotización por defecto (COT-06, D-COT2)', function (): void 
     beforeEach(function (): void {
         $unit = UnitOfMeasure::factory()->create();
         $product = Product::create([
-            'code' => 'COT-DEF', 'name' => 'Esmalte por defecto', 'brand' => 'BEPRO',
+            'name' => 'Esmalte por defecto',
             'category_id' => ProductCategory::create(['name' => 'Categoría por defecto'])->id,
             'unit_of_measure_id' => $unit->id, 'current_price' => 1000, 'sales_margin' => 25, 'cif_percentage' => 15,
             'price_threshold' => 3, 'is_active' => true,

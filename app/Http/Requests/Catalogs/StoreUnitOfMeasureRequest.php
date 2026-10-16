@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Catalogs;
 
+use App\Enums\NumberType;
 use App\Models\UnitOfMeasure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -43,8 +44,8 @@ class StoreUnitOfMeasureRequest extends FormRequest
     protected function sharedRules(): array
     {
         // Un solo factor: getConversionFactor() prefiere el de volumen, así que con los dos el de peso se ignoraría.
-        // El tope es el de la columna, decimal(10,4).
-        $factor = ['nullable', 'numeric', 'gt:0', 'decimal:0,4', 'max:999999.9999'];
+        // Seis decimales y el tope de su columna (NumberType::Factor): un mililitro son 0,001 L.
+        $factor = ['nullable', ...NumberType::Factor->rules(), 'gt:0'];
 
         return [
             'name' => ['bail', 'required', 'string', 'max:100'],

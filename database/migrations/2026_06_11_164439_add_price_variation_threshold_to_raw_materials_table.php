@@ -14,7 +14,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('raw_materials', function (Blueprint $table) {
-            $table->decimal('price_variation_threshold', 8, 2)
+            $table->decimal('price_variation_threshold', 5, 2)
                 ->nullable()
                 ->after('alert_days_before_expiry');
         });

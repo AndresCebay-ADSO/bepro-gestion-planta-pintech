@@ -76,8 +76,8 @@ class UnitOfMeasure extends Model
     protected function casts(): array
     {
         return [
-            'to_kg_conversion' => 'decimal:4',
-            'to_liter_conversion' => 'decimal:4',
+            'to_kg_conversion' => 'decimal:6',
+            'to_liter_conversion' => 'decimal:6',
             'is_active' => 'boolean',
         ];
     }

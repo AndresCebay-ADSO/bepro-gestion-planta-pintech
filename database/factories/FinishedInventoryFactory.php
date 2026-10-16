@@ -21,7 +21,7 @@ class FinishedInventoryFactory extends Factory
         return [
             'product_variant_id' => ProductVariant::factory(),
             'warehouse_id' => Warehouse::factory(),
-            'quantity' => $this->faker->randomFloat(2, 1, 500),
+            'quantity' => $this->faker->numberBetween(1, 500),
         ];
     }
 

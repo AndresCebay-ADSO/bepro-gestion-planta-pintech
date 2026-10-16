@@ -102,7 +102,6 @@ type Props = {
     finishedInventory: FinishedInventoryRow[];
     product: {
         id: number;
-        code: string;
         name: string;
         is_active: boolean;
         category?: { name: string } | null;
@@ -110,7 +109,6 @@ type Props = {
         current_cost?: string | null;
         current_price?: string | null;
         cif_percentage?: string | null;
-        brand?: string;
         description?: string | null;
         quality_viscosity_lower?: number | string | null;
         quality_viscosity_upper?: number | string | null;
@@ -246,7 +244,7 @@ export default function ProductsShow({
     });
 
     const handleDelete = () => {
-        if (!window.confirm(`¿Eliminar el producto ${product.code}?`)) {
+        if (!window.confirm(`¿Eliminar el producto ${product.name}?`)) {
             return;
         }
 
@@ -373,7 +371,7 @@ export default function ProductsShow({
 
     return (
         <>
-            <Head title={`Producto ${product.code}`} />
+            <Head title={`Producto ${product.name}`} />
             <div className="space-y-6 p-6">
                 <DetailPageHeader
                     breadcrumbs={[
@@ -381,10 +379,9 @@ export default function ProductsShow({
                             title: 'Productos',
                             href: returnTo ?? productsIndex().url,
                         },
-                        { title: product.code, href: '#' },
+                        { title: product.name, href: '#' },
                     ]}
                     title={product.name}
-                    subtitle={<span className="font-mono">{product.code}</span>}
                     badge={
                         <Badge
                             variant={
@@ -420,14 +417,6 @@ export default function ProductsShow({
 
                 {/* Info del producto */}
                 <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-2 lg:grid-cols-4">
-                    <div>
-                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                            Marca
-                        </p>
-                        <p className="text-sm font-medium text-foreground">
-                            {product.brand ?? '—'}
-                        </p>
-                    </div>
                     <div>
                         <p className="text-xs tracking-wide text-muted-foreground uppercase">
                             Categoría

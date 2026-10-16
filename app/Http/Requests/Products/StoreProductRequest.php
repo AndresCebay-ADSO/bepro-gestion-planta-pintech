@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Products;
 
+use App\Enums\NumberType;
+use App\Enums\QualityMeasurement;
 use App\Http\Requests\Concerns\CatalogSelectionRules;
 use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreProductRequest extends FormRequest
@@ -24,12 +25,7 @@ class StoreProductRequest extends FormRequest
      */
     public function rules(): array
     {
-        return array_merge(
-            [
-                'code' => ['bail', 'nullable', 'string', 'max:50', Rule::unique('products', 'code')],
-            ],
-            $this->baseRules()
-        );
+        return $this->baseRules();
     }
 
     /**
@@ -39,18 +35,19 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'name' => ['bail', 'required', 'string', 'min:3', 'max:150'],
-            'brand' => ['bail', 'required', 'string', 'max:100'],
             'description' => ['nullable', 'string', 'max:10000'],
             'category_id' => $this->activeOrCurrentRules('product_categories', 'category_id', $this->route('product')?->category_id),
             'unit_of_measure_id' => $this->activeOrCurrentRules('unit_of_measures', 'unit_of_measure_id', $this->route('product')?->unit_of_measure_id),
-            'cif_percentage' => ['bail', 'required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
+            // El CIF es un recargo sobre el costo (costo × (1 + CIF)): puede pasar de 100 %, hasta el tope de su columna.
+            'cif_percentage' => ['bail', 'required', ...NumberType::Percentage->rules(), 'min:0'],
             'price_threshold' => ['bail', 'required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
-            'quality_viscosity_lower' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
-            'quality_viscosity_upper' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
-            'quality_fineness_lower' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
-            'quality_fineness_upper' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
-            'quality_solids_lower' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'quality_solids_upper' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            // Un decimal y el tope de cada medición, los mismos que al medir en la OP (PRD-01).
+            'quality_viscosity_lower' => QualityMeasurement::Viscosity->rules(),
+            'quality_viscosity_upper' => QualityMeasurement::Viscosity->rules(),
+            'quality_fineness_lower' => QualityMeasurement::Fineness->rules(),
+            'quality_fineness_upper' => QualityMeasurement::Fineness->rules(),
+            'quality_solids_lower' => QualityMeasurement::Solids->rules(),
+            'quality_solids_upper' => QualityMeasurement::Solids->rules(),
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
@@ -58,10 +55,6 @@ class StoreProductRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->normalizeEmptyInputs();
-
-        if (! $this->filled('brand') || $this->string('brand')->trim()->isEmpty()) {
-            $this->merge(['brand' => 'BEPRO']);
-        }
     }
 
     /**
@@ -71,9 +64,9 @@ class StoreProductRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
-                $this->assertQualityRange($validator, 'quality_viscosity_lower', 'quality_viscosity_upper', 'Viscosidad');
-                $this->assertQualityRange($validator, 'quality_fineness_lower', 'quality_fineness_upper', 'Molienda');
-                $this->assertQualityRange($validator, 'quality_solids_lower', 'quality_solids_upper', 'Sólidos');
+                $this->assertQualityRange($validator, 'quality_viscosity_lower', 'quality_viscosity_upper', QualityMeasurement::Viscosity->label());
+                $this->assertQualityRange($validator, 'quality_fineness_lower', 'quality_fineness_upper', QualityMeasurement::Fineness->label());
+                $this->assertQualityRange($validator, 'quality_solids_lower', 'quality_solids_upper', QualityMeasurement::Solids->label());
             },
         ];
     }
@@ -84,9 +77,7 @@ class StoreProductRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'code' => 'código',
             'name' => 'nombre',
-            'brand' => 'marca',
             'description' => 'descripción',
             'category_id' => 'categoría',
             'unit_of_measure_id' => 'unidad de medida',

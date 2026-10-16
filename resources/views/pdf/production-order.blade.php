@@ -157,7 +157,6 @@
             <td colspan="2" class="label">NOMBRE DEL PRODUCTO</td>
             <td colspan="3" class="value">
                 {{ $order['product_display_name'] ?? 'N/A' }}
-                {{ !empty($order['product']['code']) ? '(' . $order['product']['code'] . ')' : '' }}
             </td>
             <td class="label">FECHA</td>
             @php

@@ -21,7 +21,6 @@ type VariantRow = {
 
 type ProductRow = {
     id: number;
-    code: string | null;
     name: string;
     current_cost?: number | null;
     cif_percentage?: number | null;
@@ -113,11 +112,6 @@ export default function PricesIndex({
                                             <h3 className="font-semibold text-foreground">
                                                 {product.name}
                                             </h3>
-                                            {product.code && (
-                                                <span className="font-mono text-xs text-muted-foreground">
-                                                    {product.code}
-                                                </span>
-                                            )}
                                         </div>
                                         {can.view_costs && (
                                             <div className="flex items-center gap-4 text-sm text-muted-foreground">

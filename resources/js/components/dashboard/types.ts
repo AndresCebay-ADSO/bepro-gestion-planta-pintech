@@ -3,7 +3,7 @@ export type RecentOrder = {
     order_number: string;
     status: string;
     status_label: string;
-    product_code: string | null;
+    product_name: string | null;
     planned_date: string | null;
     completion_date: string | null;
 };

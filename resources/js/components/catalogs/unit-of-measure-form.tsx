@@ -14,6 +14,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { NUMBER_TYPES } from '@/lib/number-types';
 import { toDecimalPayload } from '@/lib/numeric-input';
 import type { UnitOfMeasureFormData, UnitOfMeasureUsage } from '@/types';
 
@@ -59,7 +60,11 @@ export function UnitEquivalence({
 
     return (
         <>
-            1 {symbol} = <FormattedNumber value={factor} maxDecimals={4} />{' '}
+            1 {symbol} ={' '}
+            <FormattedNumber
+                value={factor}
+                maxDecimals={NUMBER_TYPES.factor.maxDecimals}
+            />{' '}
             {kg ? 'kg' : 'L'}
         </>
     );
@@ -250,8 +255,8 @@ export function UnitOfMeasureFields({ form, usageSummary = null }: Props) {
                                 <DecimalInput
                                     id="factor"
                                     containerClassName="min-w-0 flex-1"
-                                    // decimal(10,4): 6 dígitos enteros.
-                                    maxIntegerDigits={6}
+                                    // numeric(14,6): 6 decimales (un mililitro son 0,001 L).
+                                    {...NUMBER_TYPES.factor}
                                     value={form.data[factorField]}
                                     onValueChange={(value) =>
                                         form.setData(factorField, value)

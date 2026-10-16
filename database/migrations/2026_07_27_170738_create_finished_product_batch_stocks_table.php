@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('finished_product_batch_id')->constrained('finished_product_batches')->onDelete('cascade');
             $table->foreignId('warehouse_id')->constrained('warehouses')->restrictOnDelete();
-            $table->decimal('quantity', 12, 4);
+            $table->integer('quantity');
 
             $table->unique(['finished_product_batch_id', 'warehouse_id']);
             $table->timestamps();

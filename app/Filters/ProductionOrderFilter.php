@@ -24,7 +24,6 @@ class ProductionOrderFilter extends QueryFilter
                 'order_number',
                 'color',
                 'product.name',
-                'product.code',
             ], $value, exactIntegerColumns: ['lot_number']);
         });
     }

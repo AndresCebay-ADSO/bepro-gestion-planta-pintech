@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Production;
 
+use App\Enums\NumberType;
+use App\Enums\QualityMeasurement;
 use App\Enums\RawMaterialType;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderPackagingPlan;
@@ -56,12 +58,12 @@ trait ProductionConsumptionRules
                 Rule::exists('production_order_packaging_plan', 'id')
                     ->where('production_order_id', $scopedOrderId),
             ],
-            // Formato decimal: `numeric` deja pasar «1e1», que no es una cantidad que alguien escriba a propósito.
-            'packaging.*.actual_units' => ['bail', 'required', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999'],
-            // Empaque (3.7). Vacío = tantos como unidades envasadas. Sin tope: la merma (un envase dañado al llenar, una
-            // etiqueta mal pegada) es costo del lote (decisión del 2026-09-30).
-            'packaging.*.new_containers_used' => ['bail', 'nullable', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999', $this->requiresPackedUnits()],
-            'packaging.*.labels_used' => ['bail', 'nullable', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999', $this->requiresPackedUnits()],
+            // Unidades enteras (D-OP1): se cuentan envases de la presentación; el ¼ ya está en su tamaño.
+            'packaging.*.actual_units' => ['bail', 'required', ...NumberType::Units->rules(), 'min:0'],
+            // Empaque (3.7). Vacío = tantos como unidades envasadas. Sin tope de negocio: la merma (un envase dañado al
+            // llenar, una etiqueta mal pegada) es costo del lote (decisión del 2026-09-30).
+            'packaging.*.new_containers_used' => ['bail', 'nullable', ...NumberType::Units->rules(), 'min:0', $this->requiresPackedUnits()],
+            'packaging.*.labels_used' => ['bail', 'nullable', ...NumberType::Units->rules(), 'min:0', $this->requiresPackedUnits()],
             'packaging.*.label_raw_material_id' => [
                 'nullable',
                 'integer',
@@ -69,6 +71,22 @@ trait ProductionConsumptionRules
                 new RawMaterialOfType(RawMaterialType::Label),
                 $this->activeOrCurrentPlanLabel($scopedOrderId),
             ],
+        ];
+    }
+
+    /**
+     * Mediciones de calidad y responsable, iguales al enviar a revisión y al completar. La calidad usa el mismo tipo y
+     * tope que el rango del producto (QualityMeasurement); el responsable cabe en su columna de 150 (OPL-04).
+     *
+     * @return array<string, list<string>>
+     */
+    protected function qualityAndResponsibleRules(): array
+    {
+        return [
+            'viscosity_ku' => QualityMeasurement::Viscosity->rules(),
+            'grinding_hg' => QualityMeasurement::Fineness->rules(),
+            'quality_solids' => QualityMeasurement::Solids->rules(),
+            'responsible_name' => ['nullable', 'string', 'max:150'],
         ];
     }
 

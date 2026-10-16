@@ -82,9 +82,7 @@ it('exposes finished product batches from all warehouses for movement forms', fu
     $unit = UnitOfMeasure::factory()->create();
     $category = ProductCategory::create(['name' => 'PT']);
     $product = Product::create([
-        'code' => 'PT-001',
         'name' => 'Producto terminado',
-        'brand' => 'BEPRO',
         'unit_of_measure_id' => $unit->id,
         'category_id' => $category->id,
         'is_active' => true,
@@ -142,9 +140,7 @@ it('shows finished inventory movement costs only to users with costs.view', func
     $unit = UnitOfMeasure::factory()->create();
     $category = ProductCategory::create(['name' => 'PT costos']);
     $product = Product::create([
-        'code' => 'PT-COST-001',
         'name' => 'Producto con costo',
-        'brand' => 'BEPRO',
         'unit_of_measure_id' => $unit->id,
         'category_id' => $category->id,
         'is_active' => true,

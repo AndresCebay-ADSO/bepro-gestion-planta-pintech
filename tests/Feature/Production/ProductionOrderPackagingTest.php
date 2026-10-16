@@ -151,8 +151,8 @@ it('descuenta solo los envases nuevos, consume las etiquetas usadas y suma los d
         ->quantity->toBe('12.0000')
         ->batch_id->toBeNull()
         ->and($plan->fresh())
-        ->new_containers_used->toBe('7.0000')
-        ->labels_used->toBe('12.0000');
+        ->new_containers_used->toBe(7)
+        ->labels_used->toBe(12);
 
     // Granel 52 × 5 = 260 entre 10 = 26. Empaque (7 × 1.000 + 12 × 300) / 10 = 1.060.
     expect(FinishedInventoryMovement::query()->where('production_order_id', $this->order->id)->sole()->cost_price)
@@ -173,7 +173,7 @@ it('sin cantidades usa una por unidad envasada, y sin etiqueta no consume ningun
     expect($this->containerBatch->fresh()->remaining_quantity)->toBe('10.0000')
         ->and(InventoryMovement::query()->where('raw_material_id', $this->label->id)->exists())->toBeFalse()
         ->and($plan->fresh())
-        ->new_containers_used->toBe('10.0000')
+        ->new_containers_used->toBe(10)
         ->labels_used->toBeNull()
         // Granel 26 + 10 envases de 1.000 entre 10.
         ->and(FinishedInventoryMovement::query()->where('production_order_id', $this->order->id)->sole()->cost_price)
@@ -209,13 +209,13 @@ it('guarda el empaque del plan al guardar el avance y lo muestra en la orden', f
     ])->assertSessionHasNoErrors();
 
     expect($plan->fresh())
-        ->new_containers_used->toBe('4.0000')
+        ->new_containers_used->toBe(4)
         ->label_raw_material_id->toBeNull();
 
     $this->get(route('production-orders.show', $this->order))
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('order.packaging_plans.0.package_code', 'GALON-MET')
-            ->where('order.packaging_plans.0.new_containers_used', '4.0000')
+            ->where('order.packaging_plans.0.new_containers_used', 4)
             ->where('labelMaterials', fn ($labels) => collect($labels)->pluck('id')->contains($this->label->id)));
 });
 

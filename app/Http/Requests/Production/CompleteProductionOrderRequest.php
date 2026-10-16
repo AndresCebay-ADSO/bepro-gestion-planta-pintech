@@ -38,18 +38,15 @@ class CompleteProductionOrderRequest extends FormRequest
 
         return array_merge(
             $this->consumptionRules(),
+            $this->qualityAndResponsibleRules(),
             [
-                // Topes de las columnas (decimal(12,4), (10,4), (8,2)): sin ellos, 1e65 o 1e20 pasan `numeric` y fallan
-                // en el servidor, en la calculadora o al guardar en PostgreSQL.
+                // Topes de las columnas (decimal(12,4), (10,4)): sin ellos, 1e65 o 1e20 pasan `numeric` y fallan en el
+                // servidor, en la calculadora o al guardar en PostgreSQL.
                 'actual_yield_quantity' => ['bail', $hasPackaging || $hasRemnant ? 'required' : 'nullable', 'numeric', 'min:0.0001', 'max:99999999.9999'],
-                'viscosity_ku' => ['bail', 'nullable', 'numeric', 'min:0', 'max:999999.99'],
-                'grinding_hg' => ['bail', 'nullable', 'numeric', 'min:0', 'max:999999.99'],
-                'quality_solids' => ['bail', 'nullable', 'numeric', 'min:0', 'max:100'],
                 'agitation_start_time' => ['nullable', 'date'],
                 'agitation_end_time' => ['nullable', 'date'],
                 'packaging_start_time' => ['nullable', 'date'],
                 'packaging_end_time' => ['nullable', 'date'],
-                'responsible_name' => ['nullable', 'string', 'max:255'],
                 'quality_responsible_user_id' => ['required', 'exists:users,id'],
                 'spillage_quantity' => ['bail', 'nullable', 'numeric', 'min:0', 'max:99999999.9999'],
                 'density_kg_per_gallon' => ['bail', 'required', 'numeric', 'min:0.0001', 'max:999999.9999'],

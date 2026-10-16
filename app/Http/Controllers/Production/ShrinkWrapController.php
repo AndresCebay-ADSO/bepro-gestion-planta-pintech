@@ -41,7 +41,7 @@ class ShrinkWrapController extends Controller
             ->apply(ShrinkWrap::query())
             ->with([
                 'productionOrder:id,order_number,lot_number,color,product_id',
-                'productionOrder.product:id,name,code',
+                'productionOrder.product:id,name',
                 'shrinkWrapType:id,name',
                 'warehouse:id,name',
                 'createdBy:id,name',
@@ -79,7 +79,7 @@ class ShrinkWrapController extends Controller
         return Inertia::render('Production/ShrinkWraps/Create', [
             'orderOptions' => ProductionOrder::query()
                 ->shrinkWrappable()
-                ->with(['product:id,name,code', 'warehouse:id,name'])
+                ->with(['product:id,name', 'warehouse:id,name'])
                 ->latest('completion_date')
                 ->latest('id')
                 ->get(['id', 'order_number', 'lot_number', 'color', 'product_id', 'warehouse_id', 'completion_date'])
@@ -130,7 +130,7 @@ class ShrinkWrapController extends Controller
 
         $shrinkWrap->load([
             'productionOrder:id,order_number,lot_number,color,product_id',
-            'productionOrder.product:id,name,code',
+            'productionOrder.product:id,name',
             'shrinkWrapType:id,name',
             'warehouse:id,name',
             'createdBy:id,name',

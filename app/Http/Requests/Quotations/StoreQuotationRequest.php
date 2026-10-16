@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Quotations;
 
+use App\Enums\NumberType;
 use App\Enums\PaymentMethod;
 use App\Enums\QuotationItemType;
 use App\Enums\QuotationValidity;
@@ -95,8 +96,8 @@ class StoreQuotationRequest extends FormRequest
             'items.*.type' => ['nullable', Rule::enum(QuotationItemType::class)],
             'items.*.description' => ['nullable', 'string', 'max:255'],
             'items.*.color' => ['nullable', 'string', 'max:100'],
-            'items.*.quantity' => ['required', 'numeric', 'min:0.0001'],
-            'items.*.price_adjustment_pct' => ['nullable', 'numeric', 'min:-100', 'max:99.99'],
+            'items.*.quantity' => ['required', ...NumberType::Units->rules(), 'min:1'],
+            'items.*.price_adjustment_pct' => ['nullable', ...NumberType::Percentage->rules('99.99'), 'min:-100'],
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
         ];
     }

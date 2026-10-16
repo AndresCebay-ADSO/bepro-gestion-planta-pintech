@@ -20,9 +20,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
- * @property string|null $code
  * @property string $name
- * @property string $brand
  * @property string|null $description
  * @property int $category_id
  * @property int $unit_of_measure_id
@@ -48,15 +46,12 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read Collection|Formula[] $formulas
  * @property-read Collection|ProductionOrder[] $productionOrders
  * @property-read Collection|ProductionCost[] $productionCosts
- * @property-read Collection|PriceList[] $priceLists
  * @property-read Collection|QrCode[] $qrCodes
  * @property-read Collection|ProductDocument[] $productDocuments
  * @property-read Collection|ProductVariant[] $variants
  */
 #[Fillable([
-    'code',
     'name',
-    'brand',
     'description',
     'category_id',
     'unit_of_measure_id',
@@ -87,7 +82,7 @@ class Product extends Model
         return LogOptions::defaults()
             ->useLogName('productos')
             ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
-            ->logOnly(['code', 'name', 'category_id', 'is_active'])
+            ->logOnly(['name', 'category_id', 'is_active'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -162,11 +157,6 @@ class Product extends Model
     public function productionCosts(): HasMany
     {
         return $this->hasMany(ProductionCost::class, 'product_id');
-    }
-
-    public function priceLists(): HasMany
-    {
-        return $this->hasMany(PriceList::class, 'product_id');
     }
 
     public function qrCodes(): HasMany

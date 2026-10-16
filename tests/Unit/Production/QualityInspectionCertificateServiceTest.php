@@ -27,7 +27,6 @@ beforeEach(function () {
     $category = ProductCategory::create(['name' => 'Pinturas Cert']);
 
     $this->product = Product::create([
-        'code' => 'P-CERT-UNIT',
         'name' => 'Producto Cert Unit',
         'category_id' => $category->id,
         'unit_of_measure_id' => $unitOfMeasure->id,

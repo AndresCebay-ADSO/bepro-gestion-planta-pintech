@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\NumberType;
 use App\Models\ProductVariant;
 
 class QuotationPricingService
@@ -43,7 +44,11 @@ class QuotationPricingService
     ): array {
         if ($manualUnitPrice !== null && $manualUnitPrice !== '') {
             $unitPrice = $this->calculator->round($manualUnitPrice, 4);
-            $adjustmentPct = $this->resolveAdjustmentFromPrices($listUnitPrice, $unitPrice);
+            // El precio digitado es el que vale; el ajuste solo informa, con los 2 decimales de su columna.
+            $adjustmentPct = $this->calculator->round(
+                $this->resolveAdjustmentFromPrices($listUnitPrice, $unitPrice),
+                NumberType::Percentage->scale(),
+            );
 
             // Clamp adjustment to valid bounds [-100, 99.99]
             if ($this->calculator->cmp($adjustmentPct, '-100', 4) < 0) {
@@ -60,7 +65,7 @@ class QuotationPricingService
         }
 
         $adjustmentPct = $adjustmentPct !== null && $adjustmentPct !== ''
-            ? $this->calculator->round($adjustmentPct, 4)
+            ? $this->calculator->round($adjustmentPct, NumberType::Percentage->scale())
             : '0';
 
         $adjustmentDecimal = $this->calculator->div($adjustmentPct, '100', 4);

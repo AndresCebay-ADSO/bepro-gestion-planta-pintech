@@ -29,9 +29,7 @@ function createFinishedMovementFixture(string $code = 'PROD-RET'): array
     $category = ProductCategory::create(['name' => "Cat {$code}"]);
 
     $product = Product::create([
-        'code' => $code,
         'name' => "Producto {$code}",
-        'brand' => 'BEPRO',
         'unit_of_measure_id' => $unit->id,
         'category_id' => $category->id,
         'is_active' => true,

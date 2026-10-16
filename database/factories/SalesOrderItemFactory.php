@@ -29,7 +29,7 @@ class SalesOrderItemFactory extends Factory
                 ->inRandomOrder()
                 ->first()
                 ?->id,
-            'quantity' => $this->faker->randomFloat(4, 1, 1000),
+            'quantity' => $this->faker->numberBetween(1, 1000),
         ];
     }
 }

@@ -19,9 +19,7 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => 'PROD-'.$this->faker->unique()->numberBetween(1000, 9999),
             'name' => $this->faker->words(3, true),
-            'brand' => 'Pintech',
             'description' => $this->faker->optional()->sentence(),
             'category_id' => ProductCategory::factory(),
             'unit_of_measure_id' => UnitOfMeasure::factory(),

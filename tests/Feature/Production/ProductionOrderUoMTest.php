@@ -59,7 +59,6 @@ beforeEach(function () {
     ]);
 
     $this->product = Product::create([
-        'code' => 'P-UOM-001',
         'name' => 'Pintura UoM Test',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->liter->id,
@@ -170,7 +169,7 @@ test('it stores the conversion factor each line was created with', function () {
     $order = createUomProductionOrder();
 
     // 1 g = 0,001 kg
-    expect($order->details()->sole()->conversion_factor)->toBe('0.0010');
+    expect($order->details()->sole()->conversion_factor)->toBe('0.001000');
 });
 
 test('it keeps converting an existing order with its stored factor when the unit changes in the catalog', function () {

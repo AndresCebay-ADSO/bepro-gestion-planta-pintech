@@ -26,7 +26,6 @@ test('it recalculates one product and updates variant prices from command', func
     ]);
 
     $product = Product::create([
-        'code' => 'P-CMD-001',
         'name' => 'Producto Cmd',
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,

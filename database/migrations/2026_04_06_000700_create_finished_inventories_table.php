@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('products')->restrictOnDelete();
             $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->restrictOnDelete();
             $table->foreignId('warehouse_id')->constrained('warehouses')->restrictOnDelete();
-            $table->decimal('quantity', 12, 4)->default(0);
+            $table->integer('quantity')->default(0);
             $table->timestamps();
 
             // Composite unique constraint to allow multiple variants of the same product in the same warehouse

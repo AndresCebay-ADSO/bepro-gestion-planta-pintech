@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\WholeUnits;
 use App\Enums\FinishedInventoryMovementReason;
 use App\Enums\InventoryMovementType;
 use App\Models\Concerns\HasAuditDescription;
@@ -26,7 +27,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int|null $finished_product_batch_id
  * @property InventoryMovementType $type
  * @property FinishedInventoryMovementReason $reason
- * @property string $quantity
+ * @property int $quantity
  * @property string|null $cost_price
  * @property Carbon $movement_date
  * @property string|null $notes
@@ -78,7 +79,7 @@ class FinishedInventoryMovement extends Model
         return [
             'type' => InventoryMovementType::class,
             'reason' => FinishedInventoryMovementReason::class,
-            'quantity' => 'decimal:4',
+            'quantity' => WholeUnits::class,
             'cost_price' => 'decimal:4',
             'movement_date' => 'date:Y-m-d',
         ];

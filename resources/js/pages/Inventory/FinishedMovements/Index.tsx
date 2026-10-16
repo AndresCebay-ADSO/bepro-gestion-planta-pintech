@@ -320,8 +320,6 @@ export default function FinishedMovementsIndex({
                                                 {movement.product?.name ?? '-'}
                                             </div>
                                             <div className="text-xs text-muted-foreground">
-                                                {movement.product?.code ?? '-'}{' '}
-                                                ·{' '}
                                                 {movement.product_variant
                                                     ?.presentation_label ??
                                                     movement.product_variant

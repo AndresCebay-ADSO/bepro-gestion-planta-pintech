@@ -21,7 +21,7 @@ return new class extends Migration
             $table->foreignId('production_order_id')->nullable()->constrained('production_orders')->restrictOnDelete();
             $table->enum('type', ['entry', 'exit']);
             $table->string('reason', 50);
-            $table->decimal('quantity', 12, 4);
+            $table->integer('quantity');
             $table->date('movement_date');
             $table->text('notes')->nullable();
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();

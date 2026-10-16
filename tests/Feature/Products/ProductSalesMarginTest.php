@@ -23,9 +23,7 @@ beforeEach(function (): void {
 
 it('defaults sales_margin to null on product creation', function () {
     $product = Product::create([
-        'code' => 'PROD-001',
         'name' => 'Producto Test',
-        'brand' => 'BEPRO',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
         'is_active' => true,
@@ -40,9 +38,7 @@ it('defaults sales_margin to null on product creation', function () {
 
 it('accepts sales_margin values between 0 and 100', function () {
     $product = Product::create([
-        'code' => 'PROD-002',
         'name' => 'Producto Margen',
-        'brand' => 'BEPRO',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
         'sales_margin' => 15.50,
@@ -58,9 +54,7 @@ it('accepts sales_margin values between 0 and 100', function () {
 
 it('accepts zero as sales_margin', function () {
     $product = Product::create([
-        'code' => 'PROD-003',
         'name' => 'Producto Sin Margen',
-        'brand' => 'BEPRO',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
         'sales_margin' => 0,
@@ -72,9 +66,7 @@ it('accepts zero as sales_margin', function () {
 
 it('accepts maximum valid sales_margin of 99.99', function () {
     $product = Product::create([
-        'code' => 'PROD-004',
         'name' => 'Producto Margen Max',
-        'brand' => 'BEPRO',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
         'sales_margin' => 99.99,

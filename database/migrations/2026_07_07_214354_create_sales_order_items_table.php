@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('sales_order_id')->constrained()->restrictOnDelete();
             $table->foreignId('product_id')->constrained()->restrictOnDelete();
             $table->foreignId('product_variant_id')->nullable()->constrained()->restrictOnDelete();
-            $table->decimal('quantity', 12, 4);
+            $table->integer('quantity');
             // Color que pide el cliente (p. ej. «RAL 3020»): se hereda del ítem de la cotización o se escribe a mano (3.4).
             // Mismo tope que la cotización, para que heredarlo nunca falle por longitud.
             $table->string('color', 100)->nullable();

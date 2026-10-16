@@ -33,7 +33,6 @@ beforeEach(function () {
     $category = ProductCategory::create(['name' => 'Pinturas FIFO']);
 
     $this->product = Product::create([
-        'code' => 'P-FIFO',
         'name' => 'Producto FIFO',
         'category_id' => $category->id,
         'unit_of_measure_id' => $this->unitOfMeasure->id,

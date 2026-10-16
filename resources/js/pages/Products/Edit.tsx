@@ -29,9 +29,7 @@ type Option = { id: number; name: string; symbol?: string };
 type Props = {
     product: {
         id: number;
-        code: string;
         name: string;
-        brand: string;
         description: string | null;
         category_id: number | null;
         unit_of_measure_id: number | null;
@@ -54,9 +52,7 @@ type Props = {
 };
 
 type ProductForm = {
-    code: string;
     name: string;
-    brand: string;
     description: string;
     category_id: string;
     unit_of_measure_id: string;
@@ -85,9 +81,7 @@ export default function ProductsEdit({
 
     const { data, setData, put, transform, processing, errors } =
         useForm<ProductForm>({
-            code: product.code,
             name: product.name,
-            brand: product.brand ?? 'BEPRO',
             description: product.description ?? '',
             category_id: product.category_id ? String(product.category_id) : '',
             unit_of_measure_id: product.unit_of_measure_id
@@ -124,7 +118,7 @@ export default function ProductsEdit({
 
     return (
         <>
-            <Head title={`Editar ${product.code}`} />
+            <Head title={`Editar ${product.name}`} />
             <div className="space-y-6 p-6">
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -137,16 +131,15 @@ export default function ProductsEdit({
                         <span>/</span>
                         <Link
                             href={productsShow({ product: product.id }).url}
-                            className="font-mono hover:text-foreground"
+                            className="hover:text-foreground"
                         >
-                            {product.code}
+                            {product.name}
                         </Link>
                         <span>/</span>
                         <span>Editar</span>
                     </div>
                     <h1 className="text-2xl font-semibold text-foreground">
-                        Editar Producto:{' '}
-                        <span className="font-mono">{product.code}</span>
+                        Editar Producto: {product.name}
                     </h1>
                 </div>
 
@@ -158,26 +151,6 @@ export default function ProductsEdit({
                         </h2>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="code">Código *</Label>
-                                <Input
-                                    id="code"
-                                    value={data.code}
-                                    onChange={(e) =>
-                                        setData(
-                                            'code',
-                                            e.target.value.toUpperCase(),
-                                        )
-                                    }
-                                    className="font-mono"
-                                />
-                                {errors.code && (
-                                    <p className="text-sm text-destructive">
-                                        {errors.code}
-                                    </p>
-                                )}
-                            </div>
-
                             <div className="space-y-2">
                                 <Label htmlFor="name">Nombre *</Label>
                                 <Input
@@ -255,23 +228,6 @@ export default function ProductsEdit({
                                     </p>
                                 )}
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="brand">Marca comercial *</Label>
-                            <Input
-                                id="brand"
-                                value={data.brand}
-                                onChange={(e) =>
-                                    setData('brand', e.target.value)
-                                }
-                                maxLength={100}
-                            />
-                            {errors.brand && (
-                                <p className="text-sm text-destructive">
-                                    {errors.brand}
-                                </p>
-                            )}
                         </div>
 
                         <div className="space-y-2">

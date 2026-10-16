@@ -229,9 +229,6 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                             <p className="font-medium text-foreground">
                                                 {qrCode.product.display_name}
                                             </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {qrCode.product.code}
-                                            </p>
                                             {qrCode.product.description && (
                                                 <p className="mt-1 text-xs text-muted-foreground">
                                                     {qrCode.product.description}

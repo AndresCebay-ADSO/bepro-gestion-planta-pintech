@@ -8,7 +8,7 @@ import { index as salesOrdersIndex } from '@/routes/sales-orders';
 
 type ProductItem = {
     id: number;
-    product: { id: number; code: string | null; name: string };
+    product: { id: number; name: string };
     product_variant: {
         id: number;
         name: string;
@@ -217,16 +217,6 @@ export default function SalesOrdersShow({
                                                         <span className="font-medium">
                                                             {item.product.name}
                                                         </span>
-                                                        {item.product.code && (
-                                                            <span className="ml-2 font-mono text-xs text-muted-foreground">
-                                                                (
-                                                                {
-                                                                    item.product
-                                                                        .code
-                                                                }
-                                                                )
-                                                            </span>
-                                                        )}
                                                     </td>
                                                     <td className="p-3 text-muted-foreground">
                                                         {item.product_variant

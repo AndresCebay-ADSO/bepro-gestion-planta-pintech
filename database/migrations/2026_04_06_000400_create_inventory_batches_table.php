@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('warehouse_id')->constrained('warehouses')->restrictOnDelete();
             $table->decimal('initial_quantity', 12, 4);
             $table->decimal('remaining_quantity', 12, 4);
-            $table->decimal('unit_price', 12, 4);
+            $table->decimal('unit_price', 16, 4);
             $table->date('entry_date');
             $table->date('expiry_date')->nullable();
             $table->string('supplier', 150)->nullable();

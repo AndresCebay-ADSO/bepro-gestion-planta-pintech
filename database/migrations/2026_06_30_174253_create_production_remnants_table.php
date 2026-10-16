@@ -23,7 +23,7 @@ return new class extends Migration
             $table->decimal('available_quantity_gallons', 12, 4);
             $table->decimal('available_quantity_kg', 12, 4);
             $table->decimal('density_kg_per_gallon', 10, 4);
-            $table->decimal('cost_per_gallon', 12, 4)->nullable();
+            $table->decimal('cost_per_gallon', 16, 4)->nullable();
             $table->enum('status', ['available', 'partially_consumed', 'consumed'])->default('available');
             $table->text('notes')->nullable();
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();

@@ -29,7 +29,7 @@ class ConvertQuotationToOrderRequest extends FormRequest
             'priority' => ['required', Rule::enum(SalesOrderPriority::class)],
             'required_date' => ['bail', 'required', PlantDate::make()->notPast()],
             'notes' => ['nullable', 'string', 'max:2000'],
-            'shipping_address' => ['nullable', 'string', 'max:500'],
+            'shipping_address' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

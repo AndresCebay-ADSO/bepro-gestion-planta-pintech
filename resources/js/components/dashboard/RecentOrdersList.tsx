@@ -66,7 +66,7 @@ export function RecentOrdersList({
                                     {order.order_number}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    {order.product_code ?? 'Sin producto'}
+                                    {order.product_name ?? 'Sin producto'}
                                     {order.planned_date
                                         ? ` · Plan: ${formatBackendDate(order.planned_date)}`
                                         : ''}
@@ -121,7 +121,7 @@ export function RecentOrdersCompact({
                                     {order.order_number}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    {order.product_code ?? 'Sin producto'} •
+                                    {order.product_name ?? 'Sin producto'} •
                                     Plan:{' '}
                                     {order.planned_date
                                         ? formatBackendDate(order.planned_date)

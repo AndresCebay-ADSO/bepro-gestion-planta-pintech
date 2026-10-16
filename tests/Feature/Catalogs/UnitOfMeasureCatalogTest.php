@@ -107,7 +107,7 @@ it('crea una unidad con el código en minúsculas y lo audita', function () {
 
     $unit = UnitOfMeasure::query()->where('code', 'cun')->sole();
 
-    expect($unit->to_liter_conversion)->toBe('18.9271')
+    expect($unit->to_liter_conversion)->toBe('18.927100')
         ->and($unit->to_kg_conversion)->toBeNull();
 
     $log = Activity::query()->where('subject_type', UnitOfMeasure::class)->where('subject_id', $unit->id)->sole();
@@ -128,10 +128,20 @@ it('valida los campos de la unidad', function (array $overrides, string $field) 
     'sin símbolo' => [['symbol' => ''], 'symbol'],
     'equivalencia en cero' => [['to_liter_conversion' => '0'], 'to_liter_conversion'],
     'equivalencia negativa' => [['to_liter_conversion' => '-1'], 'to_liter_conversion'],
-    'más de 4 decimales' => [['to_liter_conversion' => '1.00001'], 'to_liter_conversion'],
-    'por encima del tope de la columna' => [['to_liter_conversion' => '1000000'], 'to_liter_conversion'],
+    'más de 6 decimales' => [['to_liter_conversion' => '1.0000001'], 'to_liter_conversion'],
+    'por encima del tope de la columna' => [['to_liter_conversion' => '100000000'], 'to_liter_conversion'],
     'peso y volumen a la vez' => [['to_kg_conversion' => '1', 'to_liter_conversion' => '1'], 'to_kg_conversion'],
 ]);
+
+// Factor de 6 decimales (PR 4 de 3.6): un mililitro son 0,001 L, y mL → galón necesita 0,000264.
+it('guarda la equivalencia con 6 decimales', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+
+    $this->post(route('catalogs.units-of-measure.store'), uomPayload(['code' => 'mlx', 'to_liter_conversion' => '0.000264']))
+        ->assertSessionHasNoErrors();
+
+    expect(UnitOfMeasure::query()->where('code', 'mlx')->sole()->to_liter_conversion)->toBe('0.000264');
+});
 
 it('admite una unidad que no se convierte', function () {
     actingAsRole(SystemRole::SuperAdmin);
@@ -175,11 +185,11 @@ it('exige confirmar el cambio de equivalencia de una unidad en uso y lo audita c
 
     $this->put(route('catalogs.units-of-measure.update', $unit), $payload)
         ->assertSessionHasErrors('confirm_factor_change');
-    expect($unit->fresh()->to_liter_conversion)->toBe('3.7854');
+    expect($unit->fresh()->to_liter_conversion)->toBe('3.785400');
 
     $this->put(route('catalogs.units-of-measure.update', $unit), [...$payload, 'confirm_factor_change' => true])
         ->assertSessionHasNoErrors();
-    expect($unit->fresh()->to_liter_conversion)->toBe('3.8000');
+    expect($unit->fresh()->to_liter_conversion)->toBe('3.800000');
 
     $log = Activity::query()
         ->where('subject_type', UnitOfMeasure::class)
@@ -187,8 +197,8 @@ it('exige confirmar el cambio de equivalencia de una unidad en uso y lo audita c
         ->where('event', 'updated')
         ->sole();
 
-    expect($log->properties['old']['to_liter_conversion'])->toBe('3.7854')
-        ->and($log->properties['attributes']['to_liter_conversion'])->toBe('3.8000');
+    expect($log->properties['old']['to_liter_conversion'])->toBe('3.785400')
+        ->and($log->properties['attributes']['to_liter_conversion'])->toBe('3.800000');
 });
 
 it('exige confirmación también al pasar de volumen a peso o a no convertirse', function (array $factors) {
@@ -220,7 +230,7 @@ it('no cuenta como cambio una equivalencia que no viene en la petición', functi
 
     $this->put(route('catalogs.units-of-measure.update', $unit), $payload)->assertSessionHasNoErrors();
 
-    expect($unit->fresh()->to_liter_conversion)->toBe('3.7854');
+    expect($unit->fresh()->to_liter_conversion)->toBe('3.785400');
 });
 
 it('conserva el estado de la unidad si la edición no lo envía', function () {
@@ -249,7 +259,7 @@ it('cambia la equivalencia de una unidad sin uso sin pedir confirmación', funct
     $this->put(route('catalogs.units-of-measure.update', $unit), uomPayload(['code' => 'gl', 'to_liter_conversion' => '3.8']))
         ->assertSessionHasNoErrors();
 
-    expect($unit->fresh()->to_liter_conversion)->toBe('3.8000');
+    expect($unit->fresh()->to_liter_conversion)->toBe('3.800000');
 });
 
 it('elimina una unidad que nunca se usó y la audita', function () {

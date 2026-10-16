@@ -85,10 +85,9 @@ class SalesOrderController extends Controller
             ])
             ->where('is_active', true)
             ->orderBy('name')
-            ->get(['id', 'code', 'name'])
+            ->get(['id', 'name'])
             ->map(fn ($p) => [
                 'id' => $p->id,
-                'code' => $p->code,
                 'name' => $p->name,
                 'variants' => $p->variants->map(fn ($v) => [
                     'id' => $v->id,
@@ -206,7 +205,6 @@ class SalesOrderController extends Controller
                 'id' => $item->id,
                 'product' => $item->product ? [
                     'id' => $item->product->id,
-                    'code' => $item->product->code,
                     'name' => $item->product->name,
                 ] : null,
                 'product_variant' => $item->productVariant ? [

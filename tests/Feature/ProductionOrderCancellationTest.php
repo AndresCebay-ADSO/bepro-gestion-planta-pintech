@@ -26,7 +26,6 @@ beforeEach(function () {
     $unit = UnitOfMeasure::create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
 
     $product = Product::create([
-        'code' => 'P-CANCEL-01',
         'name' => 'Producto Cancelable',
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,

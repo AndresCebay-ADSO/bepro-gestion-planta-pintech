@@ -3,8 +3,8 @@ import type { useForm } from '@inertiajs/react';
 import type { ChangeEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { DecimalInput } from '@/components/decimal-input';
 import { formatSafeDate } from '@/components/formatted-date';
+import { IntegerInput } from '@/components/integer-input';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +18,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { finishedLotLabel } from '@/lib/finished-lot';
 import { formatNumber } from '@/lib/formatters';
+import { UNITS_MAX_DIGITS } from '@/lib/number-types';
 import { finishedMovementReasonLabels } from '@/types/finished-inventory';
 import type {
     FinishedBatchOption,
@@ -45,10 +46,10 @@ type Props = {
 };
 
 function batchLabel(batch: FinishedBatchOption): string {
-    const productCode = batch.product?.code ?? 'PT';
+    const productName = batch.product?.name ?? 'PT';
     const variantLabel = variantLabelFor(batch);
 
-    return `${productCode} · ${variantLabel} · Lote ${finishedLotLabel(batch.lot_number, batch.color)}`;
+    return `${productName} · ${variantLabel} · Lote ${finishedLotLabel(batch.lot_number, batch.color)}`;
 }
 
 function variantLabelFor(batch: FinishedBatchOption): string {
@@ -66,13 +67,11 @@ function productOptionKey(batch: FinishedBatchOption): string {
 }
 
 function productLabel(batch: FinishedBatchOption): string {
-    const productCode = batch.product?.code ?? 'PT';
-
-    return `${productCode} · ${variantLabelFor(batch)}`;
+    return batch.product?.name ?? 'Producto terminado';
 }
 
 function productDescription(batch: FinishedBatchOption): string {
-    return batch.product?.name ?? 'Producto terminado';
+    return variantLabelFor(batch);
 }
 
 function batchStockInWarehouse(
@@ -381,8 +380,9 @@ export function FinishedMovementFormFields({
 
             <div className="space-y-2">
                 <Label htmlFor="quantity">Cantidad</Label>
-                <DecimalInput
+                <IntegerInput
                     id="quantity"
+                    maxDigits={UNITS_MAX_DIGITS}
                     value={form.data.quantity}
                     onValueChange={(value) => form.setData('quantity', value)}
                     placeholder="0"

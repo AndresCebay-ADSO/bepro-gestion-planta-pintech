@@ -17,8 +17,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained('products')->restrictOnDelete();
             $table->foreignId('formula_id')->constrained('formulas')->restrictOnDelete();
-            $table->decimal('cost', 12, 4);
-            $table->decimal('variation_percentage', 8, 4)->nullable();
+            $table->decimal('cost', 16, 4);
+            $table->decimal('variation_percentage', 12, 4)->nullable();
             $table->timestamp('calculated_at')->useCurrent();
             $table->timestamps();
 

@@ -101,7 +101,7 @@ class WarehouseController extends Controller
             'finishedInventories' => fn ($query) => $query
                 ->select('id', 'warehouse_id', 'product_id', 'product_variant_id', 'quantity')
                 ->with([
-                    'product:id,code,name',
+                    'product:id,name',
                     'productVariant:id,code,name,presentation_label,presentation_value',
                 ])
                 ->where('quantity', '>', 0)

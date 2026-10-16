@@ -130,6 +130,7 @@ export default function ClientForm({
                         <Label htmlFor="shipping_address">Dirección</Label>
                         <Textarea
                             id="shipping_address"
+                            maxLength={255}
                             value={data.shipping_address}
                             onChange={(e) =>
                                 setData('shipping_address', e.target.value)

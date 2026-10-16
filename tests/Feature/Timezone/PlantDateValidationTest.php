@@ -46,7 +46,7 @@ beforeEach(function (): void {
     $unit = UnitOfMeasure::factory()->create();
     $this->unit = $unit;
     $this->product = Product::create([
-        'code' => 'FECHA-1', 'name' => 'Esmalte fecha', 'brand' => 'BEPRO',
+        'name' => 'Esmalte fecha',
         'category_id' => ProductCategory::create(['name' => 'Categoría fechas'])->id,
         'unit_of_measure_id' => $unit->id, 'current_cost' => 10, 'current_price' => 1000, 'sales_margin' => 25,
         'cif_percentage' => 15, 'price_threshold' => 3, 'is_active' => true,
