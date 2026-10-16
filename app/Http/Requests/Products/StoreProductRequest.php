@@ -42,12 +42,12 @@ class StoreProductRequest extends FormRequest
             'cif_percentage' => ['bail', 'required', ...NumberType::Percentage->rules(), 'min:0'],
             'price_threshold' => ['bail', 'required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
             // Un decimal y el tope de cada medición, los mismos que al medir en la OP (PRD-01).
-            'quality_viscosity_lower' => QualityMeasurement::Viscosity->rules(),
-            'quality_viscosity_upper' => QualityMeasurement::Viscosity->rules(),
-            'quality_fineness_lower' => QualityMeasurement::Fineness->rules(),
-            'quality_fineness_upper' => QualityMeasurement::Fineness->rules(),
-            'quality_solids_lower' => QualityMeasurement::Solids->rules(),
-            'quality_solids_upper' => QualityMeasurement::Solids->rules(),
+            'quality_viscosity_lower' => ['bail', 'nullable', ...QualityMeasurement::Viscosity->rules()],
+            'quality_viscosity_upper' => ['bail', 'nullable', ...QualityMeasurement::Viscosity->rules()],
+            'quality_fineness_lower' => ['bail', 'nullable', ...QualityMeasurement::Fineness->rules()],
+            'quality_fineness_upper' => ['bail', 'nullable', ...QualityMeasurement::Fineness->rules()],
+            'quality_solids_lower' => ['bail', 'nullable', ...QualityMeasurement::Solids->rules()],
+            'quality_solids_upper' => ['bail', 'nullable', ...QualityMeasurement::Solids->rules()],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }

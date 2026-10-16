@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\ProductionCostRecalculationService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
@@ -426,8 +427,14 @@ test('it stores a cost variation above 9999 percent', function () {
 });
 
 test('it caps a cost variation that does not fit its column', function () {
-    // Costo anterior 0,0005; la variación real (casi +20.000.000.000 %) no cabe ni en 12,4: se guarda el tope.
+    // Costo anterior 0,0005; la variación real (casi +20.000.000.000 %) no cabe ni en 12,4: se guarda el tope y queda
+    // un aviso en el log para corregir el precio de relleno.
+    Log::spy();
     $latestCost = recalculateFromPlaceholderPrice($this, '0.0001');
+
+    Log::shouldHaveReceived('warning')
+        ->withArgs(fn (string $message): bool => str_contains($message, 'Variación de costo fuera de rango'))
+        ->once();
 
     expect(bccomp((string) $latestCost->cost, '100000.0003', 4))->toBe(0)
         ->and((string) $latestCost->variation_percentage)->toBe(NumberType::ComputedPercentage->max());

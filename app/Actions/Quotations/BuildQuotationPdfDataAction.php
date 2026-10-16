@@ -93,10 +93,6 @@ class BuildQuotationPdfDataAction
         return preg_match('/^\d+([.,]\d+)?$/', $thickness) === 1 ? $thickness.' Mils' : $thickness;
     }
 
-    /**
-     * Cantidad con formato colombiano y decimales solo cuando los tiene: «55», «2,5», «1.200».
-     * Se trabaja sobre el string del cast decimal para no pasar por float.
-     */
     /** Las cantidades de la cotización son unidades enteras (NumberType::Units): solo llevan separador de miles. */
     private function formatQuantity(string $quantity): string
     {

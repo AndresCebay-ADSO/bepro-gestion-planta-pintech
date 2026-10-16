@@ -38,10 +38,12 @@ enum QualityMeasurement
     }
 
     /**
+     * Tipo, decimal y tope de la medición. Como en NumberType::rules(), cada request agrega `required` o `nullable`.
+     *
      * @return list<string>
      */
     public function rules(): array
     {
-        return ['bail', 'nullable', ...NumberType::Quality->rules($this->max()), 'min:0'];
+        return [...NumberType::Quality->rules($this->max()), 'min:0'];
     }
 }

@@ -13,6 +13,7 @@ use App\Models\RawMaterial;
 use App\Services\Pricing\ProductionCostCalculatorService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProductionCostRecalculationService
 {
@@ -68,6 +69,13 @@ class ProductionCostRecalculationService
                 // su columna. Se guarda el tope: el dato sigue diciendo «subió muchísimo» y el recálculo no se cae (ESQ-01).
                 $maxVariation = NumberType::ComputedPercentage->max();
                 if ($this->calculator->cmp($variationPercentage, $maxVariation, 4) > 0) {
+                    // Deja rastro: casi siempre es un precio de relleno que alguien debe corregir.
+                    Log::warning('Variación de costo fuera de rango: se guarda el tope.', [
+                        'product_id' => $productId,
+                        'previous_cost' => (string) $previousCost->cost,
+                        'new_cost' => $calculatedCost,
+                        'variation_percentage' => $variationPercentage,
+                    ]);
                     $variationPercentage = $maxVariation;
                 }
             }

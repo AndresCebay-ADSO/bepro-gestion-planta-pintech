@@ -83,9 +83,9 @@ trait ProductionConsumptionRules
     protected function qualityAndResponsibleRules(): array
     {
         return [
-            'viscosity_ku' => QualityMeasurement::Viscosity->rules(),
-            'grinding_hg' => QualityMeasurement::Fineness->rules(),
-            'quality_solids' => QualityMeasurement::Solids->rules(),
+            'viscosity_ku' => ['bail', 'nullable', ...QualityMeasurement::Viscosity->rules()],
+            'grinding_hg' => ['bail', 'nullable', ...QualityMeasurement::Fineness->rules()],
+            'quality_solids' => ['bail', 'nullable', ...QualityMeasurement::Solids->rules()],
             'responsible_name' => ['nullable', 'string', 'max:150'],
         ];
     }

@@ -19,7 +19,7 @@ type UserItem = {
 
 type FinishedInventoryItem = {
     id: number;
-    quantity: string;
+    quantity: number;
     product: {
         id: number;
         name: string;

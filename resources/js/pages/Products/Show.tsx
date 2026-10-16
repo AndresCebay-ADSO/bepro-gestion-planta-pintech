@@ -71,7 +71,7 @@ import {
 
 type FinishedInventoryRow = {
     id: number;
-    quantity: string | number;
+    quantity: number;
     warehouse: {
         id: number;
         name: string;

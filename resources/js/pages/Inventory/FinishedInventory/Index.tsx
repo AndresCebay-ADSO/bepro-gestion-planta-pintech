@@ -14,7 +14,7 @@ import type { PaginationLink } from '@/types/ui';
 
 type InventoryRow = {
     id: number;
-    quantity: string | number;
+    quantity: number;
     product: {
         id: number;
         name: string;
