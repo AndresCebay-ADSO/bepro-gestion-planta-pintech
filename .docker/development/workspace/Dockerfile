@@ -38,22 +38,22 @@ COPY --from=composer:2.9 --link /usr/bin/composer /usr/local/bin/composer
 
 # Use ARG to define environment variables passed from the Docker build command or Docker Compose.
 ARG XDEBUG_ENABLED
-ARG XDEBUG_MODE
 ARG XDEBUG_HOST
 ARG XDEBUG_IDE_KEY
 ARG XDEBUG_LOG
 ARG XDEBUG_LOG_LEVEL
 
 # Configure Xdebug if enabled
+# Igual que en php-fpm: apagado en el ini y encendido con la variable de entorno XDEBUG_MODE.
 RUN if [ "${XDEBUG_ENABLED}" = "true" ]; then \
     pecl install xdebug && \
     docker-php-ext-enable xdebug && \
-    echo "xdebug.mode=${XDEBUG_MODE}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
+    echo "xdebug.mode=off" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
     echo "xdebug.idekey=${XDEBUG_IDE_KEY}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
     echo "xdebug.log=${XDEBUG_LOG}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
     echo "xdebug.log_level=${XDEBUG_LOG_LEVEL}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
     echo "xdebug.client_host=${XDEBUG_HOST}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
-    echo "xdebug.start_with_request=yes" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini ; \
+    echo "xdebug.start_with_request=trigger" >>/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini ; \
 fi
 
 # If the group already exists, use it; otherwise, create the 'www' group
