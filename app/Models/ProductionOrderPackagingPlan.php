@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\WholeUnits;
 use Database\Factories\ProductionOrderPackagingPlanFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,12 +16,12 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $production_order_id
  * @property int $product_variant_id
- * @property string $planned_units
- * @property string|null $actual_units
- * @property string|null $new_containers_used
+ * @property int $planned_units
+ * @property int|null $actual_units
+ * @property int|null $new_containers_used
  * @property int|null $package_raw_material_id
  * @property int|null $label_raw_material_id
- * @property string|null $labels_used
+ * @property int|null $labels_used
  * @property string|null $notes
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -56,10 +57,10 @@ class ProductionOrderPackagingPlan extends Model
     protected function casts(): array
     {
         return [
-            'planned_units' => 'decimal:4',
-            'actual_units' => 'decimal:4',
-            'new_containers_used' => 'decimal:4',
-            'labels_used' => 'decimal:4',
+            'planned_units' => WholeUnits::class,
+            'actual_units' => WholeUnits::class,
+            'new_containers_used' => WholeUnits::class,
+            'labels_used' => WholeUnits::class,
         ];
     }
 

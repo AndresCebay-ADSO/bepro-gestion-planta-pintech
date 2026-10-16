@@ -27,7 +27,7 @@ class QrCodeController extends Controller
         $qrCodes = (new QrCodeFilter($request))
             ->apply(QrCode::query())
             ->with([
-                'product:id,name,code',
+                'product:id,name',
                 'productionOrder:id,order_number,lot_number,color',
             ])
             ->withCount('documents')
@@ -44,7 +44,6 @@ class QrCodeController extends Controller
                     'product' => $qrCode->product ? [
                         'id' => $qrCode->product->id,
                         'name' => $qrCode->product->name,
-                        'code' => $qrCode->product->code,
                         // Con el color de la orden (3.4); el producto ya viene cargado aparte.
                         'display_name' => ProductionOrder::nameWithColor($qrCode->product->name, $qrCode->productionOrder?->color),
                     ] : null,
@@ -73,7 +72,7 @@ class QrCodeController extends Controller
         $this->authorize('view', $qrCode);
 
         $qrCode->load([
-            'product:id,name,code,description',
+            'product:id,name,description',
             'productionOrder:id,order_number,lot_number,color,completion_date,planned_date',
             'createdBy:id,name',
             'documents' => fn ($query) => $query
@@ -100,7 +99,6 @@ class QrCodeController extends Controller
                 'product' => $qrCode->product ? [
                     'id' => $qrCode->product->id,
                     'name' => $qrCode->product->name,
-                    'code' => $qrCode->product->code,
                     'display_name' => ProductionOrder::nameWithColor($qrCode->product->name, $qrCode->productionOrder?->color),
                     'description' => $qrCode->product->description,
                 ] : null,

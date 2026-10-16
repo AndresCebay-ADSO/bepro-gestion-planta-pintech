@@ -17,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { withDecimalPayloads } from '@/lib/numeric-input';
 
 type RawMaterial = { id: number; code: string };
-type ProductOption = { id: number; code: string; name: string };
+type ProductOption = { id: number; name: string };
 type UnitOption = { id: number; name: string; symbol: string };
 
 export type DetailRow = {
@@ -89,7 +89,7 @@ export function FormulaForm({
 }: FormulaFormProps) {
     const productOptions = products.map((product) => ({
         id: String(product.id),
-        label: `${product.code} — ${product.name}`,
+        label: product.name,
     }));
 
     const rawMaterialOptions = rawMaterials.map((rawMaterial) => ({

@@ -19,7 +19,7 @@ return new class extends Migration
                 ->after('formula_id')
                 ->constrained('production_orders')
                 ->restrictOnDelete();
-            $table->decimal('unit_cost', 12, 4)->nullable()->after('cost');
+            $table->decimal('unit_cost', 16, 4)->nullable()->after('cost');
             $table->unique('production_order_id');
         });
     }

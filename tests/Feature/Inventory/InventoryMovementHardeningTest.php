@@ -221,7 +221,6 @@ test('it ignores submitted cost price for exits and stores the batch cost', func
 test('it rejects manual movements linked to production orders', function () {
     $category = ProductCategory::create(['name' => 'General']);
     $product = Product::create([
-        'code' => 'P-HARD-MANUAL-LINK',
         'name' => 'Producto Manual Link',
         'category_id' => $category->id,
         'unit_of_measure_id' => $this->rawMaterial->unit_of_measure_id,

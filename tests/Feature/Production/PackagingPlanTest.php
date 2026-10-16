@@ -38,7 +38,6 @@ beforeEach(function () {
     $pCat = ProductCategory::create(['name' => 'Prod Cat']);
 
     $product = Product::create([
-        'code' => 'P-01',
         'name' => 'Pintura',
         'category_id' => $pCat->id,
         'unit_of_measure_id' => $unit->id,

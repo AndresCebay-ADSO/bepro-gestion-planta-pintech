@@ -47,7 +47,6 @@ beforeEach(function (): void {
     ]);
 
     $this->product = Product::create([
-        'code' => 'PROD-001',
         'name' => 'Producto Test',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,

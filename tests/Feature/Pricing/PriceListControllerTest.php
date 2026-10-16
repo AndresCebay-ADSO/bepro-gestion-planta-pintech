@@ -39,9 +39,7 @@ beforeEach(function (): void {
     $this->comercialUser->assignRole(SystemRole::Commercial->value);
 
     $this->product = Product::create([
-        'code' => 'PROD-001',
         'name' => 'Producto Test',
-        'brand' => 'BEPRO',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
         'current_cost' => 80.0000,
@@ -144,9 +142,7 @@ it('calculates sales_price correctly when sales_margin is null', function () {
 
 it('filters by search term', function () {
     Product::create([
-        'code' => 'PROD-002',
         'name' => 'Otro Producto',
-        'brand' => 'BEPRO',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
         'is_active' => true,

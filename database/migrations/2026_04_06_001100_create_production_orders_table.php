@@ -44,9 +44,9 @@ return new class extends Migration
             $table->dateTime('agitation_end_time')->nullable();
 
             // Calidad
-            $table->decimal('viscosity_ku', 8, 2)->nullable()->comment('Viscosidad en unidades Krebs (KU)');
-            $table->decimal('grinding_hg', 8, 2)->nullable()->comment('Molienda en unidades Hegman (HG)');
-            $table->decimal('quality_solids', 5, 2)->nullable()->comment('Porcentaje de sólidos');
+            $table->decimal('viscosity_ku', 4, 1)->nullable()->comment('Viscosidad en unidades Krebs (KU)');
+            $table->decimal('grinding_hg', 4, 1)->nullable()->comment('Molienda en unidades Hegman (HG)');
+            $table->decimal('quality_solids', 4, 1)->nullable()->comment('Porcentaje de sólidos');
 
             // Operación y Cierre
             $table->string('responsible_name', 150)->nullable();

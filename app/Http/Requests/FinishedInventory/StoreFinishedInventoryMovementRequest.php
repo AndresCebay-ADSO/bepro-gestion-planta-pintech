@@ -6,6 +6,7 @@ namespace App\Http\Requests\FinishedInventory;
 
 use App\Enums\FinishedInventoryMovementReason;
 use App\Enums\InventoryMovementType;
+use App\Enums\NumberType;
 use App\Models\FinishedInventoryMovement;
 use App\Models\FinishedProductBatch;
 use App\Rules\PlantDate;
@@ -43,7 +44,8 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
                 'required',
                 Rule::in(array_column(FinishedInventoryMovementReason::cases(), 'value')),
             ],
-            'quantity' => ['bail', 'required', 'numeric', 'gt:0', 'decimal:0,4', 'max:99999999.9999'],
+            // El PT se cuenta en unidades enteras de su presentación (P4-1 de la auditoría 3.6).
+            'quantity' => ['bail', 'required', ...NumberType::Units->rules(), 'min:1'],
             'movement_date' => ['bail', 'required', PlantDate::make()->notFuture()],
             'destination_warehouse_id' => ['nullable', 'integer', Rule::exists('warehouses', 'id')->where('is_active', true)],
             'notes' => ['nullable', 'string', 'max:2000'],

@@ -52,7 +52,7 @@ import { show as salesOrdersShow } from '@/routes/sales-orders';
 
 type QuotationItem = {
     id: number;
-    product: { id: number; code: string | null; name: string };
+    product: { id: number; name: string };
     product_variant: {
         id: number;
         name: string;
@@ -334,6 +334,7 @@ export default function QuotationsShow({
                                             <Textarea
                                                 id="shipping_address"
                                                 rows={2}
+                                                maxLength={255}
                                                 value={
                                                     convertForm.data
                                                         .shipping_address

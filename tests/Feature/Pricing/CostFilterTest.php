@@ -22,7 +22,6 @@ beforeEach(function (): void {
     $this->uom = UnitOfMeasure::factory()->create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
 
     $this->productA = Product::factory()->create([
-        'code' => 'COST-001',
         'name' => 'Pintura Epóxica',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
@@ -30,7 +29,6 @@ beforeEach(function (): void {
     ]);
 
     $this->productB = Product::factory()->create([
-        'code' => 'COST-002',
         'name' => 'Sellador Acrílico',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
@@ -38,7 +36,6 @@ beforeEach(function (): void {
     ]);
 
     $this->productC = Product::factory()->create([
-        'code' => 'COST-003',
         'name' => 'Esmalte Industrial',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
@@ -54,17 +51,6 @@ test('filters costs by product name search', function (): void {
         ->has('products.data', 1)
         ->where('products.data.0.id', $this->productA->id)
         ->where('filters.search', 'Epóxica')
-    );
-});
-
-test('filters costs by product code search', function (): void {
-    $response = $this->actingAs($this->admin)
-        ->get(route('admin.costs.index', ['search' => 'COST-002']));
-
-    $response->assertInertia(fn ($page) => $page
-        ->has('products.data', 1)
-        ->where('products.data.0.id', $this->productB->id)
-        ->where('filters.search', 'COST-002')
     );
 });
 
@@ -101,7 +87,6 @@ test('invalid filter keys are ignored', function (): void {
 
 test('only active products are shown in costs', function (): void {
     Product::factory()->create([
-        'code' => 'COST-004',
         'name' => 'Producto Inactivo',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,

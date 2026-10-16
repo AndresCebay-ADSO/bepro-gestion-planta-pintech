@@ -48,8 +48,8 @@ export function IntegerInput({
                 {...props}
                 type="text"
                 inputMode="numeric"
-                // Dentro de un <form>, el navegador no deja enviar `3.5`, como hacía `step="1"`: el servidor aún acepta
-                // decimales en las unidades (pasan a enteras en el PR 5 de la auditoría 3.6).
+                // Dentro de un <form>, el navegador no deja enviar `3.5`, como hacía `step="1"`. El servidor también lo
+                // rechaza: las unidades son columnas enteras (NumberType::Units, PR 4 de la auditoría 3.6).
                 pattern="[0-9]*"
                 autoComplete="off"
                 aria-invalid={error !== null || props['aria-invalid']}

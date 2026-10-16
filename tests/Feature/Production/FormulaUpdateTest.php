@@ -47,7 +47,6 @@ beforeEach(function () {
     ]);
 
     $this->product = Product::create([
-        'code' => 'P-FORM-UPD',
         'name' => 'Pintura Editable',
         'category_id' => $this->productCategory->id,
         'unit_of_measure_id' => $this->unit->id,

@@ -135,7 +135,6 @@ class BuildProductionOrderShowDataAction
             'product' => $productionOrder->product ? [
                 'id' => $productionOrder->product->id,
                 'name' => $productionOrder->product->name,
-                'code' => $productionOrder->product->code,
                 ...($includeCosts ? [
                     'cif_percentage' => $productionOrder->product->cif_percentage !== null ? (float) $productionOrder->product->cif_percentage : null,
                 ] : []),

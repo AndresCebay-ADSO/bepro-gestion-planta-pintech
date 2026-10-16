@@ -99,7 +99,7 @@ test('volver a sembrar no deshace lo editado desde la aplicación', function () 
 
     expect($unit->fresh())
         ->name->toBe('Galón USA')
-        ->to_liter_conversion->toBe('3.7900')
+        ->to_liter_conversion->toBe('3.790000')
         ->and($category->fresh())
         ->name->toBe('Rótulos')
         ->type->toBe(RawMaterialType::SecondaryPackaging)

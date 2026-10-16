@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\WholeUnits;
 use App\Models\Concerns\HasAuditDescription;
 use App\Models\Concerns\ValidatesProductVariant;
 use Database\Factories\FinishedProductBatchFactory;
@@ -23,7 +24,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $product_id
  * @property int $product_variant_id
  * @property int $production_order_id
- * @property string $initial_quantity
+ * @property int $initial_quantity
  * @property Carbon $entry_date
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -62,7 +63,7 @@ class FinishedProductBatch extends Model
     protected function casts(): array
     {
         return [
-            'initial_quantity' => 'decimal:4',
+            'initial_quantity' => WholeUnits::class,
             'entry_date' => 'date:Y-m-d',
         ];
     }

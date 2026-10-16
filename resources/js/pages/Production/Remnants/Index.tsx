@@ -23,7 +23,6 @@ type RemnantItem = {
     source_order_number: string;
     product_id: number;
     product_name: string;
-    product_code: string | null;
     warehouse_id: number;
     warehouse_name: string;
     available_quantity_gallons: number;
@@ -200,13 +199,6 @@ export default function RemnantsIndex({
                                                                 remnant.product_name
                                                             }
                                                         </div>
-                                                        {remnant.product_code && (
-                                                            <div className="text-xs text-muted-foreground">
-                                                                {
-                                                                    remnant.product_code
-                                                                }
-                                                            </div>
-                                                        )}
                                                     </td>
                                                     <td className="p-4">
                                                         <Link

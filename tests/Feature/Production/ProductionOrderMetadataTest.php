@@ -30,7 +30,6 @@ function createMetadataDependencies(): array
     ]);
 
     $product = Product::create([
-        'code' => 'PNT-123',
         'name' => 'Super Paint',
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,
@@ -77,7 +76,7 @@ test('permite guardar y recuperar metadata operacional en una orden de producciÃ
         'agitation_start_time' => $agitationStart,
         'agitation_end_time' => $agitationEnd,
         'viscosity_ku' => 105.50,
-        'grinding_hg' => 7.25,
+        'grinding_hg' => 7.5,
         'responsible_name' => 'Juan Perez',
         'spillage_quantity' => 2.50,
     ]);
@@ -87,7 +86,7 @@ test('permite guardar y recuperar metadata operacional en una orden de producciÃ
     expect($order->agitation_start_time->format('Y-m-d H:i:s'))->toBe($agitationStart->format('Y-m-d H:i:s'));
     expect($order->agitation_end_time->format('Y-m-d H:i:s'))->toBe($agitationEnd->format('Y-m-d H:i:s'));
     expect((float) $order->viscosity_ku)->toBe(105.5);
-    expect((float) $order->grinding_hg)->toBe(7.25);
+    expect((float) $order->grinding_hg)->toBe(7.5);
     expect($order->responsible_name)->toBe('Juan Perez');
     expect((float) $order->spillage_quantity)->toBe(2.5);
 });

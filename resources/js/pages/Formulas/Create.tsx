@@ -14,7 +14,7 @@ import {
 } from '@/routes/formulas';
 
 type RawMaterial = { id: number; code: string };
-type ProductOption = { id: number; code: string; name: string };
+type ProductOption = { id: number; name: string };
 type UnitOption = { id: number; name: string; symbol: string };
 
 type FormulaCreateFormData = FormulaFormData & {

@@ -24,8 +24,8 @@ beforeEach(function (): void {
     $this->admin = User::factory()->create(['email_verified_at' => now()]);
     $this->admin->assignRole('admin');
 
-    $this->productA = Product::factory()->create(['name' => 'Pintura Roja', 'code' => 'PT-RED']);
-    $this->productB = Product::factory()->create(['name' => 'Sellador', 'code' => 'PT-SEAL']);
+    $this->productA = Product::factory()->create(['name' => 'Pintura Roja']);
+    $this->productB = Product::factory()->create(['name' => 'Sellador']);
 
     $formulaA = Formula::create([
         'product_id' => $this->productA->id,
@@ -96,20 +96,6 @@ it('filters by product name', function (): void {
     actingAs($this->admin);
 
     $response = get(route('qr-codes.index', ['search' => 'Pintura Roja']));
-
-    $response->assertOk();
-    $response->assertInertia(
-        fn ($page) => $page
-            ->component('QrCodes/Index')
-            ->has('qrCodes.data', 1)
-            ->where('qrCodes.data.0.id', $this->qrActive->id)
-    );
-});
-
-it('filters by product code', function (): void {
-    actingAs($this->admin);
-
-    $response = get(route('qr-codes.index', ['search' => 'PT-RED']));
 
     $response->assertOk();
     $response->assertInertia(
@@ -199,7 +185,7 @@ it('shows all qr codes when status is all or absent', function (): void {
 it('normalizes whitespace in search', function (): void {
     actingAs($this->admin);
 
-    $response = get(route('qr-codes.index', ['search' => '   PT-RED  ']));
+    $response = get(route('qr-codes.index', ['search' => '   Pintura Roja  ']));
 
     $response->assertOk();
     $response->assertInertia(
@@ -254,7 +240,7 @@ it('preserves query string in pagination', function (): void {
         ]);
     }
 
-    $response = get(route('qr-codes.index', ['search' => 'PT-RED']));
+    $response = get(route('qr-codes.index', ['search' => 'Roja']));
 
     $response->assertOk();
     $response->assertInertia(
@@ -264,7 +250,7 @@ it('preserves query string in pagination', function (): void {
                 fn ($link) => $link
                     ->where('active', true)
                     ->where('label', '1')
-                    ->where('url', fn (?string $url) => $url === null || str_contains($url, 'search=PT-RED'))
+                    ->where('url', fn (?string $url) => $url === null || str_contains($url, 'search=Roja'))
                     ->etc()
             )
             ->has(
@@ -272,7 +258,7 @@ it('preserves query string in pagination', function (): void {
                 fn ($link) => $link
                     ->where('active', false)
                     ->where('label', '2')
-                    ->where('url', fn (?string $url) => $url !== null && str_contains($url, 'search=PT-RED'))
+                    ->where('url', fn (?string $url) => $url !== null && str_contains($url, 'search=Roja'))
                     ->etc()
             )
     );

@@ -19,10 +19,9 @@ type UserItem = {
 
 type FinishedInventoryItem = {
     id: number;
-    quantity: string;
+    quantity: number;
     product: {
         id: number;
-        code: string;
         name: string;
     } | null;
     product_variant: {
@@ -206,9 +205,6 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                             <thead className="border-b border-border bg-muted/40">
                                 <tr>
                                     <th className="p-3 text-left font-medium text-foreground">
-                                        Código
-                                    </th>
-                                    <th className="p-3 text-left font-medium text-foreground">
                                         Producto
                                     </th>
                                     <th className="p-3 text-left font-medium text-foreground">
@@ -226,9 +222,6 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                                         className="border-b border-border/60 last:border-0"
                                     >
                                         <td className="p-3 text-foreground">
-                                            {item.product?.code ?? '-'}
-                                        </td>
-                                        <td className="p-3 text-muted-foreground">
                                             {item.product?.name ?? '-'}
                                         </td>
                                         <td className="p-3 text-muted-foreground">

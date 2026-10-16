@@ -2,7 +2,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 
 import { store as salesOrderStore } from '@/actions/App/Http/Controllers/SalesOrderController';
-import { DecimalInput } from '@/components/decimal-input';
+import { IntegerInput } from '@/components/integer-input';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { withDecimalPayloads } from '@/lib/numeric-input';
+import { UNITS_MAX_DIGITS } from '@/lib/number-types';
 import { index as salesOrdersIndex } from '@/routes/sales-orders';
 
 type ClientOption = {
@@ -36,7 +36,6 @@ type VariantOption = {
 
 type ProductOption = {
     id: number;
-    code: string;
     name: string;
     variants: VariantOption[];
 };
@@ -55,7 +54,7 @@ type Props = {
 
 export default function SalesOrdersCreate({ clients, products }: Props) {
     const { plantToday } = usePage().props;
-    const { data, setData, post, processing, errors, transform } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
         client_id: '',
         client_business_name: '',
         client_nit: '',
@@ -75,17 +74,12 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
 
     const productOptions = products.map((p) => ({
         id: String(p.id),
-        label: `${p.code} — ${p.name}`,
+        label: p.name,
     }));
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        transform((formData) => ({
-            ...formData,
-            items: formData.items.map((item) =>
-                withDecimalPayloads(item, ['quantity']),
-            ),
-        }));
+        // Las cantidades son unidades enteras (<IntegerInput>): se envían como se escribieron.
         post(salesOrderStore().url);
     };
 
@@ -314,6 +308,7 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                             </Label>
                             <Textarea
                                 id="shipping_address"
+                                maxLength={255}
                                 value={data.shipping_address}
                                 onChange={(e) =>
                                     setData('shipping_address', e.target.value)
@@ -453,7 +448,8 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                                 <Label className="text-xs">
                                                     Cantidad *
                                                 </Label>
-                                                <DecimalInput
+                                                <IntegerInput
+                                                    maxDigits={UNITS_MAX_DIGITS}
                                                     value={item.quantity}
                                                     onValueChange={(value) =>
                                                         updateItem(

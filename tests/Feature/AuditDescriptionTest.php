@@ -30,7 +30,6 @@ beforeEach(function () {
 
 test('product audit description uses Spanish with identifier on create', function () {
     $product = Product::create([
-        'code' => 'P-001',
         'name' => 'Pintura Blanca',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
@@ -114,7 +113,6 @@ test('warehouse audit description uses feminine Spanish on create', function () 
 test('formula audit description uses feminine Spanish on update', function () {
     $user = User::factory()->create();
     $product = Product::create([
-        'code' => 'P-FORM',
         'name' => 'Pintura Test',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
@@ -169,7 +167,6 @@ test('production order audit description uses feminine Spanish on create', funct
         'is_active' => true,
     ]);
     $product = Product::create([
-        'code' => 'P-OP',
         'name' => 'Pintura OP',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
@@ -212,7 +209,6 @@ test('production order audit description uses feminine Spanish on create', funct
 
 test('product audit description uses Spanish on delete', function () {
     $product = Product::create([
-        'code' => 'P-DEL',
         'name' => 'Producto Test',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
@@ -291,7 +287,6 @@ test('inventory batch audit description uses lot_number as identifier', function
 
 test('unknown event names pass through untranslated', function () {
     $product = Product::create([
-        'code' => 'P-UNK',
         'name' => 'Test',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,

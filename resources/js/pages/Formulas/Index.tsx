@@ -22,7 +22,7 @@ type FormulaItem = {
     is_active: boolean;
     notes: string | null;
     created_at: string;
-    product?: { id: number; code: string; name: string } | null;
+    product?: { id: number; name: string } | null;
     created_by?: { name: string } | null;
 };
 
@@ -128,10 +128,7 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                                     className="border-b border-border/50 transition-colors hover:bg-muted/30"
                                 >
                                     <td className="p-4">
-                                        <div className="font-mono font-medium text-foreground">
-                                            {formula.product?.code ?? '-'}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
+                                        <div className="font-medium text-foreground">
                                             {formula.product?.name ?? '-'}
                                         </div>
                                     </td>
@@ -179,7 +176,7 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                                             onDelete={() => {
                                                 if (
                                                     window.confirm(
-                                                        `¿Eliminar la fórmula v${formula.version} de ${formula.product?.code}?`,
+                                                        `¿Eliminar la fórmula v${formula.version} de ${formula.product?.name}?`,
                                                     )
                                                 ) {
                                                     router.delete(

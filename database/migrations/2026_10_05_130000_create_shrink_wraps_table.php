@@ -23,7 +23,7 @@ return new class extends Migration
             $table->unsignedInteger('applications');
             // Fecha de planta en que se termoencogió (puede ser semanas después de completar la OP).
             $table->date('wrapped_at');
-            $table->decimal('total_cost', 14, 4);
+            $table->decimal('total_cost', 16, 4);
             $table->text('notes')->nullable();
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
             $table->timestamps();

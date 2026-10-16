@@ -14,10 +14,9 @@ import type { PaginationLink } from '@/types/ui';
 
 type InventoryRow = {
     id: number;
-    quantity: string | number;
+    quantity: number;
     product: {
         id: number;
-        code: string;
         name: string;
         category?: { name: string } | null;
     } | null;
@@ -188,11 +187,6 @@ export default function FinishedInventoryIndex({
                                             ) : (
                                                 '-'
                                             )}
-                                            {row.product?.code ? (
-                                                <div className="font-mono text-xs text-muted-foreground">
-                                                    {row.product.code}
-                                                </div>
-                                            ) : null}
                                         </td>
                                         <td className="p-3 text-muted-foreground">
                                             {row.variant ? (

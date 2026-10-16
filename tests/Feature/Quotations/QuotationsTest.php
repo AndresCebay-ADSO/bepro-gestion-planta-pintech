@@ -39,9 +39,7 @@ beforeEach(function (): void {
     ]);
 
     $this->product = Product::create([
-        'code' => 'PROD-COT',
         'name' => 'Esmalte Dualtech',
-        'brand' => 'BEPRO',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
         'current_price' => 67192.0000,
@@ -460,7 +458,8 @@ it('formats the free-text area and thickness for the quotation pdf', function (?
     'texto libre' => ['600 m2 aprox', '4 Mils', '600 m2 aprox', '4 Mils'],
 ]);
 
-it('prints item quantities without rounding away their decimals', function (string $quantity, string $expected) {
+// Las cantidades de la cotización son unidades enteras (PR 4 de 3.6); el PDF las imprime con separador de miles.
+it('prints item quantities with the thousands separator', function (string $quantity, string $expected) {
     $quotation = Quotation::factory()->create([
         'client_id' => $this->client->id,
         'created_by' => $this->comercialUser->id,
@@ -483,9 +482,7 @@ it('prints item quantities without rounding away their decimals', function (stri
     expect($data['items'][0]['quantity'])->toBe($expected);
 })->with([
     'entero' => ['55', '55'],
-    'decimal' => ['2.5', '2,5'],
     'miles' => ['1200', '1.200'],
-    'miles con decimales' => ['1234.125', '1.234,125'],
 ]);
 
 it('uses shared sales price service for list prices', function () {

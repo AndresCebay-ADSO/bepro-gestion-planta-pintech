@@ -157,9 +157,6 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
                                                                 .display_name
                                                         }
                                                     </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {row.product.code}
-                                                    </p>
                                                 </div>
                                             ) : (
                                                 <span className="text-muted-foreground">

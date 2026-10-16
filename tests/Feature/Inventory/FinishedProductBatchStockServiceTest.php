@@ -23,9 +23,7 @@ it('throws exception when decrementing stock that does not exist', function () {
     $category = ProductCategory::create(['name' => 'Cat Test']);
 
     $product = Product::create([
-        'code' => 'PROD-TEST',
         'name' => 'Producto Test',
-        'brand' => 'BEPRO',
         'unit_of_measure_id' => $unit->id,
         'category_id' => $category->id,
         'is_active' => true,

@@ -53,7 +53,6 @@ class ProductController extends Controller
             ->withQueryString()
             ->through(fn (Product $product) => [
                 'id' => $product->id,
-                'code' => $product->code,
                 'name' => $product->name,
                 'is_active' => $product->is_active,
                 ...($canViewCosts ? ['current_price' => $product->current_price] : []),
@@ -184,9 +183,7 @@ class ProductController extends Controller
             // Array explícito: solo viaja lo que el formulario usa; los costos, CIF y umbral incluidos, solo con costs.view.
             'product' => [
                 'id' => $product->id,
-                'code' => $product->code,
                 'name' => $product->name,
-                'brand' => $product->brand,
                 'description' => $product->description,
                 'category_id' => $product->category_id,
                 'unit_of_measure_id' => $product->unit_of_measure_id,
@@ -295,9 +292,7 @@ class ProductController extends Controller
 
         return [
             'id' => $product->id,
-            'code' => $product->code,
             'name' => $product->name,
-            'brand' => $product->brand,
             'description' => $product->description,
             'is_active' => $product->is_active,
             'category' => $product->category ? ['name' => $product->category->name] : null,

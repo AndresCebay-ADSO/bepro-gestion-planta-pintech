@@ -34,7 +34,6 @@ function createProductDocumentFixture(): array
     ]);
     $user->assignRole('admin');
     $product = Product::create([
-        'code' => 'PNT-DOC',
         'name' => 'Pintura con Docs',
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,

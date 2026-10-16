@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Production;
 
+use App\Enums\NumberType;
 use App\Models\ProductionOrderPackagingPlan;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -40,7 +41,8 @@ class StorePackagingPlanRequest extends FormRequest
                 Rule::unique('production_order_packaging_plan', 'product_variant_id')
                     ->where('production_order_id', $orderId),
             ],
-            'planned_units' => 'required|numeric|min:1',
+            // Unidades enteras desde 1, como al crear la OP (D-OP1).
+            'planned_units' => ['required', ...NumberType::Units->rules(), 'min:1'],
         ];
     }
 

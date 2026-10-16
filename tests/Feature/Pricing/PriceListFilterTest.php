@@ -58,9 +58,7 @@ beforeEach(function (): void {
     ]);
 
     $this->productA = Product::create([
-        'code' => 'PROD-EPOXY-A',
         'name' => 'Esmalte Epóxico Gris',
-        'brand' => 'PINTECH',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
         'current_cost' => 80.0000,
@@ -84,9 +82,7 @@ beforeEach(function (): void {
     ]);
 
     $this->productB = Product::create([
-        'code' => 'PROD-ACRYLIC-B',
         'name' => 'Laca Acrílica Brillante',
-        'brand' => 'PINTECH',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
         'current_cost' => 60.0000,
@@ -121,20 +117,6 @@ it('filters by product name', function (): void {
             ->component('Prices/Index')
             ->has('products.data', 1)
             ->where('products.data.0.id', $this->productA->id)
-    );
-});
-
-it('filters by product code', function (): void {
-    actingAs($this->admin);
-
-    $response = get(route('prices.index', ['search' => 'ACRYLIC-B']));
-
-    $response->assertOk();
-    $response->assertInertia(
-        fn ($page) => $page
-            ->component('Prices/Index')
-            ->has('products.data', 1)
-            ->where('products.data.0.id', $this->productB->id)
     );
 });
 

@@ -113,9 +113,6 @@ export default function FinishedMovementsShow({ movement }: Props) {
                             value={
                                 <>
                                     <div>{movement.product?.name ?? '-'}</div>
-                                    <div className="text-xs text-muted-foreground">
-                                        {movement.product?.code ?? '-'}
-                                    </div>
                                 </>
                             }
                         />

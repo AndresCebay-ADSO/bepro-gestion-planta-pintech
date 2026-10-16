@@ -30,9 +30,7 @@ beforeEach(function (): void {
     ]);
 
     $this->product = Product::create([
-        'code' => 'PT-001',
         'name' => 'Esmalte PT',
-        'brand' => 'BEPRO',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
         'is_active' => true,
@@ -92,7 +90,7 @@ it('scopes finished inventory to assigned warehouses for comercial', function ()
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->has('inventory.data', 1)
-            ->where('inventory.data.0.quantity', '120.0000')
+            ->where('inventory.data.0.quantity', 120)
         );
 });
 
@@ -107,7 +105,7 @@ it('includes finished inventory on product show', function (): void {
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->has('finishedInventory', 1)
-            ->where('finishedInventory.0.quantity', '120.0000')
+            ->where('finishedInventory.0.quantity', 120)
         );
 });
 

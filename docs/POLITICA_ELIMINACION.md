@@ -87,7 +87,7 @@ Se retira el `SoftDeletes` que tenían (código muerto: ninguna ruta los borraba
 | `finished_inventory_movements`, `finished_product_batches` | Libro contable de producto terminado |
 | `production_remnants`, `remnant_consumptions` | Movimientos de saldos de producción |
 | `shrink_wraps`, `shrink_wrap_items` | Registros de termoencogido (3.8): ya descontaron inventario. Un error se corrige con un movimiento opuesto y una nota; no hay editar ni eliminar |
-| `price_lists`, `production_costs` | Historial de precios y costos |
+| `production_costs` | Historial de costos |
 | `finished_inventories`, `finished_product_batch_stocks` | Saldos calculados por los movimientos |
 | `alerts` | Se resuelven, no se borran |
 
@@ -126,14 +126,14 @@ conserva (`User::hasActivity()` se reduce a esa consulta).
 
 | Padre | Hijo | Antes |
 | --- | --- | --- |
-| `products` | `price_lists`, `production_costs`, `formulas`, `finished_inventories`, `product_variants`, `product_documents`, `qr_codes` | CASCADE |
+| `products` | `production_costs`, `formulas`, `finished_inventories`, `product_variants`, `product_documents`, `qr_codes` | CASCADE |
 | `warehouses` | `finished_inventories` | CASCADE |
-| `product_variants` | `finished_inventories`, `finished_inventory_movements`, `finished_product_batches`, `price_lists` | SET NULL |
+| `product_variants` | `finished_inventories`, `finished_inventory_movements`, `finished_product_batches` | SET NULL |
 | `production_orders` | `finished_inventory_movements`, `finished_product_batches`, `inventory_movements`, `production_costs`, `remnant_consumptions` (`target_order_id`) | SET NULL |
 | `finished_product_batches` | `finished_inventory_movements` | SET NULL |
 | `raw_materials` | `product_variants.package_raw_material_id` | SET NULL |
 | `quotations` / `sales_orders` | `sales_orders.quotation_id` / `quotations.convert_to_order_id` | SET NULL |
-| `users` | `alerts.resolved_by`, `alerts.updated_by`, `paint_development_requests.reviewed_by`, `price_lists.created_by`, `production_orders.submitted_by`, `production_orders.reviewed_by` | SET NULL |
+| `users` | `alerts.resolved_by`, `alerts.updated_by`, `paint_development_requests.reviewed_by`, `production_orders.submitted_by`, `production_orders.reviewed_by` | SET NULL |
 | `users` / `raw_materials` | `production_order_line_adjustments.created_by`, `production_orders.quality_responsible_user_id`, `production_order_line_adjustments.raw_material_id` | sin regla (NO ACTION) |
 
 Eliminar un producto sin historial se lleva antes, en la misma transacción, sus variantes y documentos sin uso: con

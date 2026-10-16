@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 
 import { DecimalInput } from '@/components/decimal-input';
 import { FormattedNumber } from '@/components/formatted-number';
+import { IntegerInput } from '@/components/integer-input';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import type { ComboboxOptionType } from '@/components/ui/combobox';
@@ -11,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { dateBoundKeepingSaved } from '@/lib/date-time-helpers';
+import { NUMBER_TYPES, UNITS_MAX_DIGITS } from '@/lib/number-types';
 import {
     parseDecimal,
     toDecimalPayload,
@@ -35,7 +37,6 @@ export type VariantOption = {
 
 export type ProductOption = {
     id: number;
-    code: string;
     name: string;
     description: string | null;
     variants: VariantOption[];
@@ -161,7 +162,7 @@ export default function QuotationForm({
 
     const productOptions = products.map((product) => ({
         id: String(product.id),
-        label: `${product.code} — ${product.name}`,
+        label: product.name,
     }));
 
     const totals = useMemo(() => {
@@ -188,7 +189,6 @@ export default function QuotationForm({
             iva_percentage: toDecimalPayload(formData.iva_percentage),
             items: formData.items.map((item) =>
                 withDecimalPayloads(item, [
-                    'quantity',
                     'price_adjustment_pct',
                     'unit_price',
                 ]),
@@ -599,7 +599,8 @@ export default function QuotationForm({
                                                 <Label className="text-xs">
                                                     Cantidad *
                                                 </Label>
-                                                <DecimalInput
+                                                <IntegerInput
+                                                    maxDigits={UNITS_MAX_DIGITS}
                                                     value={item.quantity}
                                                     onValueChange={(value) =>
                                                         updateItem(
@@ -670,8 +671,8 @@ export default function QuotationForm({
                                                     Ajuste %
                                                 </Label>
                                                 <DecimalInput
+                                                    {...NUMBER_TYPES.percentage}
                                                     allowNegative
-                                                    maxIntegerDigits={3}
                                                     value={
                                                         item.price_adjustment_pct
                                                     }

@@ -21,7 +21,6 @@ beforeEach(function () {
     $uom = UnitOfMeasure::create(['code' => 'gal', 'name' => 'Galon', 'symbol' => 'gal']);
 
     $product = Product::create([
-        'code' => 'P-CONSUME-'.uniqid(),
         'name' => 'Test Product',
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,

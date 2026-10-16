@@ -25,7 +25,6 @@ beforeEach(function (): void {
     $unit = UnitOfMeasure::create(['code' => 'GAL-SHOW', 'name' => 'Galón', 'symbol' => 'gal']);
 
     $this->product = Product::create([
-        'code' => 'P-SHOW-001',
         'name' => 'Producto Show',
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
@@ -144,7 +143,7 @@ it('sends only an explicit list of product and variant fields to users without c
         ->get(route('products.show', $this->product))
         ->assertInertia(fn (Assert $page) => $page
             ->where('product', fn ($product) => collect($product)->keys()->sort()->values()->all() === collect([
-                'id', 'code', 'name', 'brand', 'description', 'is_active', 'category', 'unit_of_measure',
+                'id', 'name', 'description', 'is_active', 'category', 'unit_of_measure',
                 'quality_viscosity_lower', 'quality_viscosity_upper', 'quality_fineness_lower', 'quality_fineness_upper',
                 'quality_solids_lower', 'quality_solids_upper', 'variants', 'product_documents',
             ])->sort()->values()->all())

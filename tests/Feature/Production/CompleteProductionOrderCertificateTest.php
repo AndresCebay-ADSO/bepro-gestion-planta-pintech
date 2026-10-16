@@ -50,7 +50,6 @@ function createCertificateCompletionFixture(): array
     $user->assignRole(SystemRole::Production->value);
 
     $product = Product::create([
-        'code' => 'PNT-CERT-01',
         'name' => 'Pintura Certificada',
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,

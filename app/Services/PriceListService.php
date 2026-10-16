@@ -27,7 +27,6 @@ class PriceListService
         $baseQuery = Product::query()
             ->select([
                 'id',
-                'code',
                 'name',
                 'current_cost',
                 'cif_percentage',
@@ -72,7 +71,6 @@ class PriceListService
 
             $productData = [
                 'id' => $product->id,
-                'code' => $product->code,
                 'name' => $product->name,
                 'sales_price' => $productSalesPrice,
             ];

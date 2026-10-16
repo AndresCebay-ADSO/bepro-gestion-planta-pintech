@@ -42,7 +42,6 @@ function createPublicQrFixture(): array
     ]);
     $user->assignRole(SystemRole::Production->value);
     $product = Product::create([
-        'code' => 'PT-PUBLIC',
         'name' => 'Pintura Pública',
         'description' => 'Producto visible en QR.',
         'category_id' => $category->id,

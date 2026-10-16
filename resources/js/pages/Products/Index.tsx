@@ -14,7 +14,6 @@ import type { PaginationLink } from '@/types/ui';
 
 type ProductRow = {
     id: number;
-    code: string;
     name: string;
     category?: { id: number; name: string } | null;
     is_active: boolean;
@@ -99,7 +98,6 @@ export default function ProductsIndex({
                         <thead className="border-b border-border">
                             <tr>
                                 <th className="p-3 text-left">Nombre</th>
-                                <th className="p-3 text-left">Referencia</th>
                                 <th className="p-3 text-left">Categoría</th>
                                 <th className="p-3 text-left">Estado</th>
                                 <th className="p-3 text-right">Acciones</th>
@@ -113,9 +111,6 @@ export default function ProductsIndex({
                                 >
                                     <td className="p-3 font-medium">
                                         {product.name}
-                                    </td>
-                                    <td className="p-3 font-mono text-muted-foreground">
-                                        {product.code || '-'}
                                     </td>
                                     <td className="p-3">
                                         {product.category?.name ?? '-'}

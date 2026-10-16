@@ -259,7 +259,6 @@ class QuotationController extends Controller
                 'product_variant_id' => $item->product_variant_id,
                 'product' => [
                     'id' => $item->product?->id,
-                    'code' => $item->product?->code,
                     'name' => $item->product?->name,
                 ],
                 'product_variant' => $item->productVariant ? [

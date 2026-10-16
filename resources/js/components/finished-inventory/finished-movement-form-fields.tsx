@@ -3,8 +3,8 @@ import type { useForm } from '@inertiajs/react';
 import type { ChangeEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { DecimalInput } from '@/components/decimal-input';
 import { formatSafeDate } from '@/components/formatted-date';
+import { IntegerInput } from '@/components/integer-input';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +18,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { finishedLotLabel } from '@/lib/finished-lot';
 import { formatNumber } from '@/lib/formatters';
+import { UNITS_MAX_DIGITS } from '@/lib/number-types';
 import { finishedMovementReasonLabels } from '@/types/finished-inventory';
 import type {
     FinishedBatchOption,
@@ -45,10 +46,10 @@ type Props = {
 };
 
 function batchLabel(batch: FinishedBatchOption): string {
-    const productCode = batch.product?.code ?? 'PT';
+    const productName = batch.product?.name ?? 'PT';
     const variantLabel = variantLabelFor(batch);
 
-    return `${productCode} · ${variantLabel} · Lote ${finishedLotLabel(batch.lot_number, batch.color)}`;
+    return `${productName} · ${variantLabel} · Lote ${finishedLotLabel(batch.lot_number, batch.color)}`;
 }
 
 function variantLabelFor(batch: FinishedBatchOption): string {
@@ -61,18 +62,32 @@ function variantLabelFor(batch: FinishedBatchOption): string {
     );
 }
 
-function productOptionKey(batch: FinishedBatchOption): string {
-    return `${batch.product?.id ?? batch.product_id ?? 'product'}:${batch.product_variant?.id ?? batch.variant?.id ?? batch.product_variant_id ?? 'base'}`;
+function productKeyFor(batch: FinishedBatchOption): string {
+    return String(batch.product?.id ?? batch.product_id ?? 'product');
 }
 
-function productLabel(batch: FinishedBatchOption): string {
-    const productCode = batch.product?.code ?? 'PT';
-
-    return `${productCode} · ${variantLabelFor(batch)}`;
+/** Producto y presentación: dos lotes de la misma presentación comparten esta clave. */
+function variantKeyFor(batch: FinishedBatchOption): string {
+    return `${productKeyFor(batch)}:${batch.product_variant?.id ?? batch.variant?.id ?? batch.product_variant_id ?? 'base'}`;
 }
 
-function productDescription(batch: FinishedBatchOption): string {
-    return batch.product?.name ?? 'Producto terminado';
+/** Opciones únicas por clave, en el orden en que aparecen los lotes. */
+function uniqueOptions(
+    batches: FinishedBatchOption[],
+    keyFor: (batch: FinishedBatchOption) => string,
+    labelFor: (batch: FinishedBatchOption) => string,
+): Array<{ id: string; label: string }> {
+    const options = new Map<string, { id: string; label: string }>();
+
+    batches.forEach((batch) => {
+        const id = keyFor(batch);
+
+        if (!options.has(id)) {
+            options.set(id, { id, label: labelFor(batch) });
+        }
+    });
+
+    return Array.from(options.values());
 }
 
 function batchStockInWarehouse(
@@ -132,6 +147,7 @@ export function FinishedMovementFormFields({
             : null;
     const shouldRequireWarehouseStock = form.data.type === 'exit';
     const [selectedProductKey, setSelectedProductKey] = useState('');
+    const [selectedVariantKey, setSelectedVariantKey] = useState('');
     const destinationWarehouses = warehouses.filter(
         (warehouse) => warehouse.id !== selectedOriginWarehouseId,
     );
@@ -149,40 +165,49 @@ export function FinishedMovementFormFields({
                 : batches,
         [batches, selectedOriginWarehouse, shouldRequireWarehouseStock],
     );
-    const productOptions = useMemo(() => {
-        const options = new Map<
-            string,
-            { id: string; label: string; description: string }
-        >();
-
-        warehouseFilteredBatches.forEach((batch) => {
-            const id = productOptionKey(batch);
-
-            if (!options.has(id)) {
-                options.set(id, {
-                    id,
-                    label: productLabel(batch),
-                    description: productDescription(batch),
-                });
-            }
-        });
-
-        return Array.from(options.values());
-    }, [warehouseFilteredBatches]);
-    const isSelectedProductAvailable =
-        selectedProductKey === '' ||
-        productOptions.some((option) => option.id === selectedProductKey);
-    const activeProductKey = isSelectedProductAvailable
+    // Producto → presentación → lote, como en la cotización y el pedido.
+    const productOptions = useMemo(
+        () =>
+            uniqueOptions(
+                warehouseFilteredBatches,
+                productKeyFor,
+                (batch) => batch.product?.name ?? 'Producto terminado',
+            ),
+        [warehouseFilteredBatches],
+    );
+    const activeProductKey = productOptions.some(
+        (option) => option.id === selectedProductKey,
+    )
         ? selectedProductKey
         : '';
-    const filteredBatches = useMemo(
+    const variantOptions = useMemo(
         () =>
             activeProductKey
-                ? warehouseFilteredBatches.filter(
-                      (batch) => productOptionKey(batch) === activeProductKey,
+                ? uniqueOptions(
+                      warehouseFilteredBatches.filter(
+                          (batch) => productKeyFor(batch) === activeProductKey,
+                      ),
+                      variantKeyFor,
+                      variantLabelFor,
                   )
                 : [],
         [activeProductKey, warehouseFilteredBatches],
+    );
+    // Con una sola presentación disponible no hay nada que elegir.
+    const activeVariantKey =
+        variantOptions.length === 1
+            ? variantOptions[0].id
+            : variantOptions.some((option) => option.id === selectedVariantKey)
+              ? selectedVariantKey
+              : '';
+    const filteredBatches = useMemo(
+        () =>
+            activeVariantKey
+                ? warehouseFilteredBatches.filter(
+                      (batch) => variantKeyFor(batch) === activeVariantKey,
+                  )
+                : [],
+        [activeVariantKey, warehouseFilteredBatches],
     );
     const selectedBatchId = form.data.finished_product_batch_id;
     const setFormData = form.setData;
@@ -210,6 +235,7 @@ export function FinishedMovementFormFields({
                         form.setData('warehouse_id', value);
                         form.setData('finished_product_batch_id', '');
                         setSelectedProductKey('');
+                        setSelectedVariantKey('');
 
                         if (form.data.destination_warehouse_id === value) {
                             form.setData('destination_warehouse_id', '');
@@ -239,21 +265,20 @@ export function FinishedMovementFormFields({
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="finished_product_key">
-                    Producto / presentación
-                </Label>
+                <Label htmlFor="finished_product_key">Producto</Label>
                 <Combobox
                     options={productOptions}
                     value={activeProductKey}
                     onChange={(value) => {
                         setSelectedProductKey(String(value));
+                        setSelectedVariantKey('');
                         form.setData('finished_product_batch_id', '');
                     }}
                     placeholder={
                         shouldRequireWarehouseStock &&
                         selectedOriginWarehouse === null
                             ? 'Selecciona bodega primero'
-                            : 'Busca producto o presentación...'
+                            : 'Busca producto...'
                     }
                     emptyText={
                         shouldRequireWarehouseStock
@@ -267,7 +292,36 @@ export function FinishedMovementFormFields({
                 />
             </div>
 
-            <div className="space-y-2 md:col-span-2">
+            <div className="space-y-2">
+                <Label htmlFor="finished_variant_key">Presentación</Label>
+                <Select
+                    value={activeVariantKey}
+                    onValueChange={(value) => {
+                        setSelectedVariantKey(value);
+                        form.setData('finished_product_batch_id', '');
+                    }}
+                    disabled={variantOptions.length === 0}
+                >
+                    <SelectTrigger id="finished_variant_key">
+                        <SelectValue
+                            placeholder={
+                                activeProductKey
+                                    ? 'Selecciona presentación'
+                                    : 'Selecciona producto primero'
+                            }
+                        />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {variantOptions.map((option) => (
+                            <SelectItem key={option.id} value={option.id}>
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <div className="space-y-2">
                 <Label htmlFor="finished_product_batch_id">Lote PT</Label>
                 <Combobox
                     options={filteredBatches.map((batch) => ({
@@ -283,12 +337,12 @@ export function FinishedMovementFormFields({
                         form.setData('finished_product_batch_id', String(value))
                     }
                     placeholder={
-                        activeProductKey
+                        activeVariantKey
                             ? 'Busca o selecciona lote...'
-                            : 'Selecciona producto primero'
+                            : 'Selecciona presentación primero'
                     }
                     emptyText="No hay lotes disponibles"
-                    disabled={!activeProductKey}
+                    disabled={!activeVariantKey}
                 />
                 {form.errors.finished_product_batch_id && (
                     <p className="text-sm text-destructive">
@@ -381,8 +435,9 @@ export function FinishedMovementFormFields({
 
             <div className="space-y-2">
                 <Label htmlFor="quantity">Cantidad</Label>
-                <DecimalInput
+                <IntegerInput
                     id="quantity"
+                    maxDigits={UNITS_MAX_DIGITS}
                     value={form.data.quantity}
                     onValueChange={(value) => form.setData('quantity', value)}
                     placeholder="0"

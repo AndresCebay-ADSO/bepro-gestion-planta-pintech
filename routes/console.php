@@ -25,7 +25,7 @@ Artisan::command(
         $productId = $this->argument('product_id');
 
         if ($productId !== null) {
-            $product = Product::query()->select('id', 'code')->find((int) $productId);
+            $product = Product::query()->select('id', 'name')->find((int) $productId);
 
             if ($product === null) {
                 $this->error("No existe producto con ID {$productId}.");
@@ -36,12 +36,12 @@ Artisan::command(
             $result = $service->recalculateForProduct((int) $product->id);
 
             if ($result === null) {
-                $this->warn("Producto {$product->code}: sin fórmula activa, no se recalculó.");
+                $this->warn("Producto {$product->name}: sin fórmula activa, no se recalculó.");
 
                 return Command::SUCCESS;
             }
 
-            $this->info("Producto {$product->code}: recálculo completado.");
+            $this->info("Producto {$product->name}: recálculo completado.");
 
             return Command::SUCCESS;
         }

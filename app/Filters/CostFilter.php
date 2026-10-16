@@ -10,6 +10,6 @@ class CostFilter extends QueryFilter
 
     protected function search(string $value): void
     {
-        $this->applySearch(['name', 'code'], $value);
+        $this->applySearch(['name'], $value);
     }
 }

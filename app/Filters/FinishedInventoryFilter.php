@@ -18,7 +18,6 @@ class FinishedInventoryFilter extends QueryFilter
     {
         $this->builder->where(function (Builder $query) use ($value): void {
             $this->applySearchNested($query, [
-                'product.code',
                 'product.name',
                 'productVariant.code',
                 'productVariant.name',

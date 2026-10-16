@@ -79,6 +79,7 @@ export function ControlCard({
                     <Input
                         id="responsible"
                         placeholder="Nombre del operario"
+                        maxLength={150}
                         value={data.responsible_name}
                         onChange={(event) =>
                             setData('responsible_name', event.target.value)

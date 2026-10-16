@@ -27,7 +27,6 @@ function createTestProduct(): array
     $uom = UnitOfMeasure::create(['code' => 'U', 'name' => 'Unidad', 'symbol' => 'u']);
 
     $product = Product::create([
-        'code' => 'TEST-001',
         'name' => 'Test Product',
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,

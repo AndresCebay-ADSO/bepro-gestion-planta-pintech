@@ -28,7 +28,6 @@ function setupVariantManagementDependencies(): array
     $uom = UnitOfMeasure::factory()->create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
 
     $product = Product::factory()->create([
-        'code' => 'VINIL-BASE',
         'name' => 'Vinil Base',
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,

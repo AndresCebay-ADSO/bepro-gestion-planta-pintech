@@ -41,7 +41,6 @@ beforeEach(function (): void {
     $uom = UnitOfMeasure::factory()->create(['code' => 'gal', 'name' => 'Galón', 'symbol' => 'gal']);
 
     $this->productA = Product::factory()->create([
-        'code' => 'PROD-ALFA-001',
         'name' => 'Esmalte Sintético Brillante',
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,
@@ -52,7 +51,6 @@ beforeEach(function (): void {
     ]);
 
     $this->productB = Product::factory()->create([
-        'code' => 'PROD-BETA-002',
         'name' => 'Vinilo Tipo 1 Blanco',
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,
@@ -195,20 +193,6 @@ it('filters remnants by search matching product name', function (): void {
             ->component('Production/Remnants/Index')
             ->has('remnants.data', 2)
             ->where('remnants.data.0.product_name', 'Esmalte Sintético Brillante')
-    );
-});
-
-it('filters remnants by search matching product code', function (): void {
-    actingAs($this->admin);
-
-    $response = get(route('production.remnants.index', ['search' => 'PROD-BETA-002']));
-
-    $response->assertOk();
-    $response->assertInertia(
-        fn ($page) => $page
-            ->component('Production/Remnants/Index')
-            ->has('remnants.data', 1)
-            ->where('remnants.data.0.id', $this->remnantB->id)
     );
 });
 

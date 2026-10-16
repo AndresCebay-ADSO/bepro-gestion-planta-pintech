@@ -32,7 +32,6 @@ type Props = {
         created_at: string;
         product?: {
             id: number;
-            code: string;
             name: string;
             unit_of_measure?: { name: string; symbol: string } | null;
         } | null;
@@ -53,7 +52,7 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
     const handleDelete = () => {
         if (
             !window.confirm(
-                `¿Eliminar la fórmula v${formula.version} de ${formula.product?.code}?`,
+                `¿Eliminar la fórmula v${formula.version} de ${formula.product?.name}?`,
             )
         ) {
             return;
@@ -69,7 +68,7 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
     return (
         <>
             <Head
-                title={`Fórmula v${formula.version} — ${formula.product?.code}`}
+                title={`Fórmula v${formula.version} — ${formula.product?.name}`}
             />
             <div className="space-y-6 p-6">
                 <DetailPageHeader
@@ -81,7 +80,7 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                         ...(formula.product
                             ? [
                                   {
-                                      title: formula.product.code,
+                                      title: formula.product.name,
                                       href: productsShow({
                                           product: formula.product.id,
                                       }).url,
@@ -94,10 +93,9 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                     subtitle={
                         <>
                             Producto:{' '}
-                            <span className="font-mono font-medium text-foreground">
-                                {formula.product?.code}
-                            </span>{' '}
-                            — {formula.product?.name}
+                            <span className="font-medium text-foreground">
+                                {formula.product?.name}
+                            </span>
                         </>
                     }
                     badge={
@@ -188,8 +186,8 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                         <p className="mt-0.5 text-xs text-muted-foreground">
                             Materias primas necesarias para producir una unidad
                             de{' '}
-                            <span className="font-mono">
-                                {formula.product?.code}
+                            <span className="font-medium">
+                                {formula.product?.name}
                             </span>
                             {formula.product?.unit_of_measure
                                 ? ` (1 ${formula.product.unit_of_measure.symbol})`

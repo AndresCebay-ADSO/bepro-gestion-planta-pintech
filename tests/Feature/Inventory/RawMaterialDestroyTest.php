@@ -203,7 +203,6 @@ describe('Raw Material Destroy', function () {
         $productCategory = ProductCategory::create(['name' => 'Test Category']);
 
         $product = Product::create([
-            'code' => 'PROD001',
             'name' => 'Test Product',
             'category_id' => $productCategory->id,
             'unit_of_measure_id' => $this->unit->id,
@@ -237,7 +236,6 @@ describe('Raw Material Destroy', function () {
         $productCategory = ProductCategory::create(['name' => 'Test Category']);
 
         $product = Product::create([
-            'code' => 'PROD002',
             'name' => 'Test Product 2',
             'category_id' => $productCategory->id,
             'unit_of_measure_id' => $this->unit->id,

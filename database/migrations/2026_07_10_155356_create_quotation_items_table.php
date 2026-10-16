@@ -21,9 +21,9 @@ return new class extends Migration
             $table->string('type', 20)->nullable();
             $table->string('description', 255)->nullable();
             $table->string('color', 100)->nullable();
-            $table->decimal('quantity', 12, 4);
+            $table->integer('quantity');
             $table->decimal('list_unit_price', 16, 4);
-            $table->decimal('price_adjustment_pct', 8, 4)->default(0);
+            $table->decimal('price_adjustment_pct', 5, 2)->default(0);
             $table->decimal('unit_price', 16, 4);
             $table->decimal('subtotal', 16, 4);
             $table->integer('sort_order')->default(0);

@@ -21,7 +21,8 @@ class QuotationItemFactory extends Factory
     public function definition(): array
     {
         $listPrice = $this->faker->randomFloat(4, 10000, 500000);
-        $quantity = $this->faker->randomFloat(4, 1, 20);
+        // Unidades enteras de la presentación (NumberType::Units).
+        $quantity = $this->faker->numberBetween(1, 20);
         $unitPrice = $listPrice;
 
         return [

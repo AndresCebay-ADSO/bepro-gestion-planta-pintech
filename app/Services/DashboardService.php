@@ -300,22 +300,22 @@ class DashboardService
     }
 
     /**
-     * @return list<array{id: int, order_number: string, status: string, status_label: string, product_code: string|null, planned_date: string|null, completion_date: string|null}>
+     * @return list<array{id: int, order_number: string, status: string, status_label: string, product_name: string|null, planned_date: string|null, completion_date: string|null}>
      */
     private function recentProductionOrders(int $limit): array
     {
         return ProductionOrder::query()
-            ->with(['product:id,code'])
+            ->with(['product:id,name'])
             ->where('status', '!=', ProductionOrderStatus::Cancelled)
             ->latest('id')
             ->limit($limit)
-            ->get(['id', 'order_number', 'status', 'product_id', 'planned_date', 'completion_date'])
+            ->get(['id', 'order_number', 'status', 'product_id', 'color', 'planned_date', 'completion_date'])
             ->map(fn (ProductionOrder $order): array => [
                 'id' => $order->id,
                 'order_number' => $order->order_number,
                 'status' => $order->status->value,
                 'status_label' => $order->status->label(),
-                'product_code' => $order->product?->code,
+                'product_name' => $order->product !== null ? $order->productDisplayName() : null,
                 'planned_date' => $order->planned_date?->format('Y-m-d'),
                 'completion_date' => $order->completion_date?->format('Y-m-d'),
             ])
@@ -324,12 +324,12 @@ class DashboardService
     }
 
     /**
-     * @return list<array{id: int, order_number: string, status: string, status_label: string, product_code: string|null, planned_date: string|null, completion_date: string|null}>
+     * @return list<array{id: int, order_number: string, status: string, status_label: string, product_name: string|null, planned_date: string|null, completion_date: string|null}>
      */
     private function recentActiveProductionOrders(int $limit): array
     {
         return ProductionOrder::query()
-            ->with(['product:id,code'])
+            ->with(['product:id,name'])
             ->whereIn('status', [
                 ProductionOrderStatus::Pending,
                 ProductionOrderStatus::InProgress,
@@ -337,13 +337,13 @@ class DashboardService
             ])
             ->latest('id')
             ->limit($limit)
-            ->get(['id', 'order_number', 'status', 'product_id', 'planned_date', 'completion_date'])
+            ->get(['id', 'order_number', 'status', 'product_id', 'color', 'planned_date', 'completion_date'])
             ->map(fn (ProductionOrder $order): array => [
                 'id' => $order->id,
                 'order_number' => $order->order_number,
                 'status' => $order->status->value,
                 'status_label' => $order->status->label(),
-                'product_code' => $order->product?->code,
+                'product_name' => $order->product !== null ? $order->productDisplayName() : null,
                 'planned_date' => $order->planned_date?->format('Y-m-d'),
                 'completion_date' => $order->completion_date?->format('Y-m-d'),
             ])

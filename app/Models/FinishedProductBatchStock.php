@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\WholeUnits;
 use App\Models\Concerns\HasAuditDescription;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,7 +19,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $id
  * @property int $finished_product_batch_id
  * @property int $warehouse_id
- * @property string $quantity
+ * @property int $quantity
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read FinishedProductBatch $batch
@@ -50,7 +51,7 @@ class FinishedProductBatchStock extends Model
     protected function casts(): array
     {
         return [
-            'quantity' => 'decimal:4',
+            'quantity' => WholeUnits::class,
         ];
     }
 

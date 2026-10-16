@@ -16,7 +16,6 @@ class RemnantFilter extends QueryFilter
     {
         $this->applySearch([
             'product.name',
-            'product.code',
             'sourceOrder.order_number',
             'sourceOrder.color',
         ], $value);

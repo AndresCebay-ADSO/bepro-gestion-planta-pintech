@@ -12,7 +12,10 @@ migración, actualiza este documento.
   `POLITICA_ELIMINACION.md`.
 - **Reglas de borrado de las claves foráneas:** `RESTRICT` hacia todo lo que es historial (la base de datos impide
   borrar lo que se usó); `CASCADE` solo en hijos sin valor propio; ningún `SET NULL`. Se indican en cada columna.
-- Dinero y cantidades: `DECIMAL`, calculados siempre con `DecimalCalculator` (bcmath).
+- Dinero y cantidades: `DECIMAL`, calculados siempre con `DecimalCalculator` (bcmath). Cada columna numérica pertenece a
+  un tipo de `App\Enums\NumberType` (auditoría 3.6, PR 4), que decide su tamaño: cantidad `12,4`, unidades `INTEGER`,
+  dinero `16,4`, porcentaje `5,2`, porcentaje calculado `12,4`, factor `14,6`, densidad `10,4` y calidad `4,1`.
+  `tests/Feature/Schema/NumberTypeColumnsTest.php` falla si una columna no coincide con su tipo o queda fuera.
 
 ## 2. Entidades de negocio
 
@@ -29,8 +32,8 @@ Catálogo de unidades de medida (Configuración → Catálogos), auditado (`unid
 | `name` | VARCHAR(100) |  |  |
 | `symbol` | VARCHAR(10) |  |  |
 | `description` | TEXT | sí |  |
-| `to_kg_conversion` | DECIMAL(10,4) | sí | Excluyente con `to_liter_conversion`: una unidad se convierte por peso o por volumen, o no se convierte |
-| `to_liter_conversion` | DECIMAL(10,4) | sí | `FormulaService::getConversionFactor()` convierte con estos factores |
+| `to_kg_conversion` | DECIMAL(14,6) | sí | Excluyente con `to_liter_conversion`: una unidad se convierte por peso o por volumen, o no se convierte |
+| `to_liter_conversion` | DECIMAL(14,6) | sí | `FormulaService::getConversionFactor()` convierte con estos factores |
 | `is_active` | BOOLEAN |  | default `true` |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
@@ -140,8 +143,8 @@ Materias primas. **Sin columna `name`**: se identifican solo por `code` (privaci
 | `id` | BIGINT |  | PK |
 | `code` | VARCHAR(50) |  | UNIQUE |
 | `unit_of_measure_id` | BIGINT |  | FK → `unit_of_measures` (RESTRICT) |
-| `current_price` | DECIMAL(12,4) | sí |  |
-| `previous_price` | DECIMAL(12,4) | sí |  |
+| `current_price` | DECIMAL(16,4) | sí |  |
+| `previous_price` | DECIMAL(16,4) | sí |  |
 | `minimum_stock` | DECIMAL(12,4) |  | default `0` |
 | `alert_days_before_expiry` | INTEGER |  | default `30` |
 | `tracks_inventory` | BOOLEAN |  | default `true` |
@@ -149,7 +152,7 @@ Materias primas. **Sin columna `name`**: se identifican solo por `code` (privaci
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
 | `category_id` | BIGINT | sí | FK → `raw_material_categories` (RESTRICT) |
-| `price_variation_threshold` | DECIMAL(8,2) | sí |  |
+| `price_variation_threshold` | DECIMAL(5,2) | sí |  |
 
 ### 2.3.2 `inventory_batches`
 
@@ -162,7 +165,7 @@ Lotes de materia prima (base del costeo FIFO).
 | `warehouse_id` | BIGINT |  | FK → `warehouses` (RESTRICT) |
 | `initial_quantity` | DECIMAL(12,4) |  |  |
 | `remaining_quantity` | DECIMAL(12,4) |  |  |
-| `unit_price` | DECIMAL(12,4) |  |  |
+| `unit_price` | DECIMAL(16,4) |  |  |
 | `entry_date` | DATE |  |  |
 | `expiry_date` | DATE | sí | vencimiento del lote; `Y-m-d`, no anterior a la fecha del movimiento que lo crea |
 | `supplier` | VARCHAR(150) | sí |  |
@@ -186,7 +189,7 @@ Movimientos de materia prima (libro contable: inmutable).
 | `shrink_wrap_id` | BIGINT | sí | FK → `shrink_wraps` (RESTRICT). Salida de un termoencogido (3.8): enlazada al registro, no a la OP, porque es gasto general. Migración aparte (`2026_10_05_130002`): esta tabla es anterior a `shrink_wraps` |
 | `type` | VARCHAR(255) |  |  |
 | `quantity` | DECIMAL(12,4) |  |  |
-| `cost_price` | DECIMAL(12,4) |  |  |
+| `cost_price` | DECIMAL(16,4) |  |  |
 | `movement_date` | DATE |  | fecha de planta del movimiento; no futura (`PlantDate`). En una entrada, tampoco más de un mes atrás (`InventoryMovement::ENTRY_DATE_WINDOW_MONTHS`); en una entrada a lote nuevo también es su `entry_date`, que ordena el FIFO |
 | `notes` | TEXT | sí |  |
 | `created_by` | BIGINT |  | FK → `users` (RESTRICT) |
@@ -204,16 +207,14 @@ Productos terminados.
 | Columna | Tipo | Nulo | Notas |
 | --- | --- | :-: | --- |
 | `id` | BIGINT |  | PK |
-| `code` | VARCHAR(50) | sí | UNIQUE |
 | `name` | VARCHAR(150) |  |  |
-| `brand` | VARCHAR(100) |  | default `BEPRO` |
 | `description` | TEXT | sí |  |
 | `category_id` | BIGINT |  | FK → `product_categories` (RESTRICT) |
 | `unit_of_measure_id` | BIGINT |  | FK → `unit_of_measures` (RESTRICT) |
-| `current_cost` | DECIMAL(12,4) | sí |  |
+| `current_cost` | DECIMAL(16,4) | sí |  |
 | `cif_percentage` | DECIMAL(5,2) | sí |  |
 | `sales_margin` | DECIMAL(5,2) | sí |  |
-| `current_price` | DECIMAL(12,4) | sí |  |
+| `current_price` | DECIMAL(16,4) | sí |  |
 | `price_threshold` | DECIMAL(5,2) |  | default `3` |
 | `quality_viscosity_lower` | DECIMAL(4,1) | sí |  |
 | `quality_viscosity_upper` | DECIMAL(4,1) | sí |  |
@@ -238,8 +239,8 @@ Presentaciones (SKU) de cada producto.
 | `unit_of_measure_id` | BIGINT |  | FK → `unit_of_measures` (RESTRICT) |
 | `presentation_value` | DECIMAL(12,4) | sí |  |
 | `presentation_label` | VARCHAR(50) | sí |  |
-| `current_cost` | DECIMAL(12,4) | sí |  |
-| `current_price` | DECIMAL(12,4) | sí |  |
+| `current_cost` | DECIMAL(16,4) | sí |  |
+| `current_price` | DECIMAL(16,4) | sí |  |
 | `package_raw_material_id` | BIGINT | sí | FK → `raw_materials` (RESTRICT) |
 | `label_raw_material_id` | BIGINT | sí | FK → `raw_materials` (RESTRICT). Etiqueta habitual, de tipo Etiqueta |
 | `is_active` | BOOLEAN |  | default `true` |
@@ -322,9 +323,9 @@ Ingredientes de cada fórmula.
 | `color` | VARCHAR(100) | sí | Color que pide el cliente («RAL 3020»), escrito a mano. Se une al nombre del producto solo para mostrar; no separa inventario |
 | `agitation_start_time` | TIMESTAMP | sí |  |
 | `agitation_end_time` | TIMESTAMP | sí |  |
-| `viscosity_ku` | DECIMAL(8,2) | sí |  |
-| `grinding_hg` | DECIMAL(8,2) | sí |  |
-| `quality_solids` | DECIMAL(5,2) | sí |  |
+| `viscosity_ku` | DECIMAL(4,1) | sí |  |
+| `grinding_hg` | DECIMAL(4,1) | sí |  |
+| `quality_solids` | DECIMAL(4,1) | sí |  |
 | `responsible_name` | VARCHAR(150) | sí |  |
 | `packaging_start_time` | TIMESTAMP | sí |  |
 | `packaging_end_time` | TIMESTAMP | sí |  |
@@ -351,10 +352,10 @@ Consumo de materia prima por lote en cada orden.
 | `batch_id` | BIGINT | sí | FK → `inventory_batches` (RESTRICT) |
 | `raw_material_id` | BIGINT |  | FK → `raw_materials` (RESTRICT) |
 | `planned_quantity` | DECIMAL(12,4) |  |  |
-| `conversion_factor` | DECIMAL(12,4) | sí | Equivalencia con que se creó la línea (1 unidad de la fórmula = N de la MP). La OP convierte siempre con ella, aunque la unidad cambie en el catálogo. NULL = sin conversión |
+| `conversion_factor` | DECIMAL(14,6) | sí | Equivalencia con que se creó la línea (1 unidad de la fórmula = N de la MP). La OP convierte siempre con ella, aunque la unidad cambie en el catálogo. NULL = sin conversión |
 | `actual_quantity` | DECIMAL(12,4) | sí |  |
-| `unit_cost` | DECIMAL(12,4) |  |  |
-| `total_cost` | DECIMAL(12,4) |  |  |
+| `unit_cost` | DECIMAL(16,4) |  |  |
+| `total_cost` | DECIMAL(16,4) |  |  |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
 | `step_order` | SMALLINT |  | default `0` |
@@ -384,12 +385,12 @@ Plan de envasado por presentación.
 | `id` | BIGINT |  | PK |
 | `production_order_id` | BIGINT |  | FK → `production_orders` (CASCADE) |
 | `product_variant_id` | BIGINT |  | FK → `product_variants` (RESTRICT) |
-| `planned_units` | DECIMAL(12,4) |  |  |
-| `actual_units` | DECIMAL(12,4) | sí |  |
-| `new_containers_used` | DECIMAL(12,4) | sí | Envases nuevos descontados. Vacío = tantos como unidades; los reutilizados no se descuentan ni cuestan |
+| `planned_units` | INTEGER |  |  |
+| `actual_units` | INTEGER | sí |  |
+| `new_containers_used` | INTEGER | sí | Envases nuevos descontados. Vacío = tantos como unidades; los reutilizados no se descuentan ni cuestan |
 | `package_raw_material_id` | BIGINT | sí | FK → `raw_materials` (RESTRICT). Envase consumido, guardado al completar; con la OP abierta vale el de la presentación |
 | `label_raw_material_id` | BIGINT | sí | FK → `raw_materials` (RESTRICT). Se copia de la presentación al agregar el plan; se puede cambiar con la OP abierta |
-| `labels_used` | DECIMAL(12,4) | sí | Etiquetas consumidas. Vacío = tantas como unidades |
+| `labels_used` | INTEGER | sí | Etiquetas consumidas. Vacío = tantas como unidades |
 | `notes` | TEXT | sí |  |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
@@ -411,7 +412,7 @@ Saldos de producción sobrantes de una orden.
 | `available_quantity_gallons` | DECIMAL(12,4) |  |  |
 | `available_quantity_kg` | DECIMAL(12,4) |  |  |
 | `density_kg_per_gallon` | DECIMAL(10,4) |  |  |
-| `cost_per_gallon` | DECIMAL(12,4) | sí |  |
+| `cost_per_gallon` | DECIMAL(16,4) | sí |  |
 | `status` | VARCHAR(255) |  | default `available` |
 | `notes` | TEXT | sí |  |
 | `created_by` | BIGINT |  | FK → `users` (RESTRICT) |
@@ -445,35 +446,15 @@ Historial de costos calculados.
 | `id` | BIGINT |  | PK |
 | `product_id` | BIGINT |  | FK → `products` (RESTRICT) |
 | `formula_id` | BIGINT |  | FK → `formulas` (RESTRICT) |
-| `cost` | DECIMAL(12,4) |  |  |
-| `variation_percentage` | DECIMAL(8,4) | sí |  |
+| `cost` | DECIMAL(16,4) |  |  |
+| `variation_percentage` | DECIMAL(12,4) | sí |  |
 | `calculated_at` | TIMESTAMP |  | default `CURRENT_TIMESTAMP` |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
 | `production_order_id` | BIGINT | sí | FK → `production_orders` (RESTRICT); UNIQUE |
-| `unit_cost` | DECIMAL(12,4) | sí |  |
+| `unit_cost` | DECIMAL(16,4) | sí |  |
 
-### 2.5.8 `price_lists`
-
-Historial de precios.
-
-| Columna | Tipo | Nulo | Notas |
-| --- | --- | :-: | --- |
-| `id` | BIGINT |  | PK |
-| `product_id` | BIGINT |  | FK → `products` (RESTRICT) |
-| `product_variant_id` | BIGINT | sí | FK → `product_variants` (RESTRICT) |
-| `price` | DECIMAL(12,4) |  |  |
-| `cost_at_time` | DECIMAL(12,4) |  |  |
-| `profit_margin` | DECIMAL(5,2) |  |  |
-| `update_type` | VARCHAR(255) |  |  |
-| `variation_percentage` | DECIMAL(8,4) | sí |  |
-| `valid_from` | DATE |  |  |
-| `valid_to` | DATE | sí |  |
-| `created_by` | BIGINT | sí | FK → `users` (RESTRICT) |
-| `created_at` | TIMESTAMP | sí |  |
-| `updated_at` | TIMESTAMP | sí |  |
-
-### 2.5.9 `shrink_wraps`
+### 2.5.8 `shrink_wraps`
 
 Registros de termoencogido (3.8), auditados (`termoencogidos`; sin el costo, que se calcula después de crear el
 registro). El operario elige una OP **completada en los últimos 6 meses** (`ShrinkWrap::ORDER_WINDOW_MONTHS`), un tipo
@@ -490,7 +471,7 @@ lote. Inmutables: un error se corrige con un movimiento opuesto y una nota.
 | `warehouse_id` | BIGINT |  | FK → `warehouses` (RESTRICT). Copiada de la OP |
 | `applications` | INTEGER |  | entero ≥ 1 |
 | `wrapped_at` | DATE |  | fecha de planta del termoencogido; entre la de completar la OP y hoy |
-| `total_cost` | DECIMAL(14,4) |  | suma del costo de sus líneas |
+| `total_cost` | DECIMAL(16,4) |  | suma del costo de sus líneas |
 | `notes` | TEXT | sí |  |
 | `created_by` | BIGINT |  | FK → `users` (RESTRICT) |
 | `created_at` | TIMESTAMP | sí |  |
@@ -498,7 +479,7 @@ lote. Inmutables: un error se corrige con un movimiento opuesto y una nota.
 
 Índices: `wrapped_at` · `production_order_id` · `shrink_wrap_type_id`.
 
-### 2.5.10 `shrink_wrap_items`
+### 2.5.9 `shrink_wrap_items`
 
 Lo que gastó un termoencogido de cada materia prima: **copia** de la receta del tipo al registrarlo (editar el tipo
 después no cambia el historial), lo descontado y su costo.
@@ -510,7 +491,7 @@ después no cambia el historial), lo descontado y su costo.
 | `raw_material_id` | BIGINT |  | FK → `raw_materials` (RESTRICT) |
 | `quantity_per_application` | DECIMAL(12,4) |  | copiada de la receta |
 | `quantity` | DECIMAL(12,4) |  | por aplicación × aplicaciones |
-| `total_cost` | DECIMAL(14,4) |  | FIFO, o precio de referencia sin control de inventario |
+| `total_cost` | DECIMAL(16,4) |  | FIFO, o precio de referencia sin control de inventario |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
 
@@ -528,7 +509,7 @@ Stock de producto terminado por presentación y bodega (saldo calculado).
 | `product_id` | BIGINT |  | FK → `products` (RESTRICT) |
 | `product_variant_id` | BIGINT | sí | FK → `product_variants` (RESTRICT) |
 | `warehouse_id` | BIGINT |  | FK → `warehouses` (RESTRICT) |
-| `quantity` | DECIMAL(12,4) |  | default `0` |
+| `quantity` | INTEGER |  | default `0` |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
 
@@ -544,7 +525,7 @@ Lotes de producto terminado.
 | `product_id` | BIGINT |  | FK → `products` (RESTRICT) |
 | `product_variant_id` | BIGINT |  | FK → `product_variants` (RESTRICT). La presentación de la fila del plan de envasado |
 | `production_order_id` | BIGINT |  | FK → `production_orders` (RESTRICT). Todo lote nace al completar una OP |
-| `initial_quantity` | DECIMAL(12,4) |  |  |
+| `initial_quantity` | INTEGER |  |  |
 | `entry_date` | DATE |  | Fecha de planta en que se completó la OP |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
@@ -560,7 +541,7 @@ Stock de cada lote de producto terminado por bodega.
 | `id` | BIGINT |  | PK |
 | `finished_product_batch_id` | BIGINT |  | FK → `finished_product_batches` (CASCADE) |
 | `warehouse_id` | BIGINT |  | FK → `warehouses` (RESTRICT) |
-| `quantity` | DECIMAL(12,4) |  |  |
+| `quantity` | INTEGER |  |  |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
 
@@ -579,13 +560,13 @@ Movimientos de producto terminado (libro contable: inmutable).
 | `production_order_id` | BIGINT | sí | FK → `production_orders` (RESTRICT) |
 | `type` | VARCHAR(255) |  |  |
 | `reason` | VARCHAR(50) |  |  |
-| `quantity` | DECIMAL(12,4) |  |  |
+| `quantity` | INTEGER |  |  |
 | `movement_date` | DATE |  | fecha de planta del movimiento; no futura (`PlantDate`) |
 | `notes` | TEXT | sí |  |
 | `created_by` | BIGINT |  | FK → `users` (RESTRICT) |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
-| `cost_price` | DECIMAL(12,4) | sí |  |
+| `cost_price` | DECIMAL(16,4) | sí |  |
 | `finished_product_batch_id` | BIGINT | sí | FK → `finished_product_batches` (RESTRICT) |
 
 ## 2.7 QR
@@ -689,9 +670,9 @@ Cotizaciones (COT-YYYY-XXXX). Se cancelan por estado, nunca se eliminan.
 | `type` | VARCHAR(20) | sí |  |
 | `description` | VARCHAR(255) | sí |  |
 | `color` | VARCHAR(100) | sí |  |
-| `quantity` | DECIMAL(12,4) |  |  |
+| `quantity` | INTEGER |  |  |
 | `list_unit_price` | DECIMAL(16,4) |  |  |
-| `price_adjustment_pct` | DECIMAL(8,4) |  | default `0` |
+| `price_adjustment_pct` | DECIMAL(5,2) |  | default `0` |
 | `unit_price` | DECIMAL(16,4) |  |  |
 | `subtotal` | DECIMAL(16,4) |  |  |
 | `sort_order` | INTEGER |  | default `0` |
@@ -710,7 +691,7 @@ Pedidos de venta. Se cancelan por estado, nunca se eliminan.
 | `required_date` | DATE | sí | fecha requerida por el cliente; al crear o convertir, no antes de hoy en planta (`PlantDate`) |
 | `estimated_delivery_date` | DATE | sí | no antes del día de planta en que se creó el pedido (`PlantDate`); la ya guardada se conserva |
 | `notes` | TEXT | sí |  |
-| `shipping_address` | TEXT | sí |  |
+| `shipping_address` | VARCHAR(255) | sí |  |
 | `client_business_name` | VARCHAR(255) | sí |  |
 | `client_nit` | VARCHAR(255) | sí |  |
 | `client_contact_name` | VARCHAR(255) | sí |  |
@@ -731,7 +712,7 @@ Pedidos de venta. Se cancelan por estado, nunca se eliminan.
 | `sales_order_id` | BIGINT |  | FK → `sales_orders` (RESTRICT) |
 | `product_id` | BIGINT |  | FK → `products` (RESTRICT) |
 | `product_variant_id` | BIGINT | sí | FK → `product_variants` (RESTRICT) |
-| `quantity` | DECIMAL(12,4) |  |  |
+| `quantity` | INTEGER |  |  |
 | `color` | VARCHAR(100) | sí | Color que pide el cliente («RAL 3020»): heredado del ítem de la cotización o escrito a mano |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
@@ -949,7 +930,6 @@ Algunas tienen además una restricción `CHECK` en PostgreSQL.
 | `FinishedInventoryMovementReason` | `finished_inventory_movements.reason` | production, return, adjustment, sale, sample, transfer, transformation, deterioration |
 | `ProductionOrderStatus` | `production_orders.status` | pending, in_progress, pending_review, completed, cancelled |
 | `RemnantStatus` | `production_remnants.status` | available, partially_consumed, consumed |
-| `PriceUpdateType` | `price_lists.update_type` | manual, automatico |
 | `QrDocumentType` | `qr_documents.document_type`, `product_documents.document_type` | technical_data_sheet, safety_data_sheet, quality_certificate |
 | `QuotationStatus` | `quotations.status` | draft, sent, accepted, rejected |
 | `QuotationValidity` | `quotations.validity_days` | 30, 45, 60 |

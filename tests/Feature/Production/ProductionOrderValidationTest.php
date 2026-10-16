@@ -37,7 +37,6 @@ function createDependencies(): array
     ]);
 
     $product = Product::create([
-        'code' => 'TEST-001',
         'name' => 'Test Product',
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,
@@ -109,7 +108,6 @@ test('rejects formula_id that belongs to another product', function () {
     $user->assignRole(SystemRole::Admin->value);
 
     $otherProduct = Product::create([
-        'code' => 'TEST-002',
         'name' => 'Otro Producto',
         'category_id' => $product->category_id,
         'unit_of_measure_id' => $product->unit_of_measure_id,

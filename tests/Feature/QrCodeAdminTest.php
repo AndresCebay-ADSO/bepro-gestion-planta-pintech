@@ -53,7 +53,6 @@ function createQrFixture(array $overrides = []): QrCode
     );
     $category = ProductCategory::firstOrCreate(['name' => 'Pinturas QR']);
     $product = Product::create([
-        'code' => 'PT-QR-'.fake()->unique()->randomNumber(3),
         'name' => fake()->words(3, true),
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,

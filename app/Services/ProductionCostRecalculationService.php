@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\NumberType;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductionCost;
@@ -12,6 +13,7 @@ use App\Models\RawMaterial;
 use App\Services\Pricing\ProductionCostCalculatorService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProductionCostRecalculationService
 {
@@ -62,6 +64,20 @@ class ProductionCostRecalculationService
                 $difference = $this->calculator->sub($calculatedCost, (string) $previousCost->cost, 10);
                 $ratio = $this->calculator->div($difference, (string) $previousCost->cost, 10);
                 $variationPercentage = $this->calculator->round($this->calculator->mul($ratio, '100', 10), 4);
+
+                // Con un costo anterior casi en cero (precios de relleno en la carga inicial) la variación no cabe ni en
+                // su columna. Se guarda el tope: el dato sigue diciendo «subió muchísimo» y el recálculo no se cae (ESQ-01).
+                $maxVariation = NumberType::ComputedPercentage->max();
+                if ($this->calculator->cmp($variationPercentage, $maxVariation, 4) > 0) {
+                    // Deja rastro: casi siempre es un precio de relleno que alguien debe corregir.
+                    Log::warning('Variación de costo fuera de rango: se guarda el tope.', [
+                        'product_id' => $productId,
+                        'previous_cost' => (string) $previousCost->cost,
+                        'new_cost' => $calculatedCost,
+                        'variation_percentage' => $variationPercentage,
+                    ]);
+                    $variationPercentage = $maxVariation;
+                }
             }
 
             $product = Product::query()

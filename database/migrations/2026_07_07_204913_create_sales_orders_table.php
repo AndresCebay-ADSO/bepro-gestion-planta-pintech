@@ -20,7 +20,7 @@ return new class extends Migration
             $table->date('required_date')->nullable();
             $table->date('estimated_delivery_date')->nullable();
             $table->text('notes')->nullable();
-            $table->text('shipping_address')->nullable();
+            $table->string('shipping_address')->nullable();
             $table->string('client_business_name')->nullable();
             $table->string('client_nit')->nullable();
             $table->string('client_contact_name')->nullable();

@@ -33,7 +33,7 @@ class FormulaController extends Controller
     {
         $formulas = (new FormulaFilter($request))
             ->apply(Formula::query())
-            ->with(['product:id,code,name', 'createdBy:id,name'])
+            ->with(['product:id,name', 'createdBy:id,name'])
             ->latest('id')
             ->paginate(15)
             ->onEachSide(1)
@@ -111,7 +111,7 @@ class FormulaController extends Controller
         $this->authorize('view', $formula);
 
         $formula->load([
-            'product:id,code,name,unit_of_measure_id',
+            'product:id,name,unit_of_measure_id',
             'product.unitOfMeasure:id,name,symbol',
             'details.rawMaterial:id,code',
             'details.unitOfMeasure:id,name,symbol',
@@ -142,7 +142,7 @@ class FormulaController extends Controller
         }
 
         $formula->load([
-            'product:id,code,name',
+            'product:id,name',
             'details:id,formula_id,raw_material_id,quantity,unit_of_measure_id,step_order',
         ]);
 
@@ -238,8 +238,8 @@ class FormulaController extends Controller
         return [
             'products' => Product::query()
                 ->where('is_active', true)
-                ->select('id', 'code', 'name')
-                ->orderBy('code')
+                ->select('id', 'name')
+                ->orderBy('name')
                 ->get(),
             // Solo tipo Químico, como exige StoreFormulaRequest.
             'rawMaterials' => RawMaterial::query()

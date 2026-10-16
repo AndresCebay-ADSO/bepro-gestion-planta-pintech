@@ -28,7 +28,7 @@ class UpdateClientRequest extends FormRequest
             'nit' => ['nullable', 'string', 'max:20', Rule::unique('clients', 'nit')->ignore($clientId)],
             'contact_name' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20'],
-            'shipping_address' => ['nullable', 'string', 'max:500'],
+            'shipping_address' => ['nullable', 'string', 'max:255'],
             // Solo con clients.deactivate (lo comprueba ClientController::update).
             'is_active' => ['sometimes', 'boolean'],
         ];

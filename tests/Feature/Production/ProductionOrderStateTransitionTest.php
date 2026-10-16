@@ -42,7 +42,6 @@ beforeEach(function () {
     $uom = UnitOfMeasure::create(['code' => 'L', 'name' => 'Litro', 'symbol' => 'L']);
 
     $product = Product::create([
-        'code' => 'P-ST',
         'name' => 'Producto State Test',
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,

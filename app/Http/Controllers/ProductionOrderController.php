@@ -71,7 +71,7 @@ class ProductionOrderController extends Controller
     {
         $orders = (new ProductionOrderFilter($request))
             ->apply(ProductionOrder::query())
-            ->with(['product:id,code,name', 'formula:id,version', 'warehouse:id,name'])
+            ->with(['product:id,name', 'formula:id,version', 'warehouse:id,name'])
             // `latest('id')` desempata: sin él la paginación puede repetir o saltarse registros.
             ->latest()
             ->latest('id')
@@ -87,7 +87,6 @@ class ProductionOrderController extends Controller
                 'product_display_name' => $order->productDisplayName(),
                 'product' => $order->product ? [
                     'id' => $order->product->id,
-                    'code' => $order->product->code,
                     'name' => $order->product->name,
                 ] : null,
                 'formula' => $order->formula ? [
@@ -249,7 +248,6 @@ class ProductionOrderController extends Controller
             ->get()
             ->map(fn ($p) => [
                 'id' => $p->id,
-                'code' => $p->code,
                 'name' => $p->name,
                 'formulas' => $p->formulas->map(fn ($f) => [
                     'id' => $f->id,

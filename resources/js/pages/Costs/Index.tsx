@@ -15,7 +15,6 @@ import type { PaginationLink } from '@/types/ui';
 
 type ProductRow = {
     id: number;
-    code: string | null;
     name: string;
     current_cost: number | null;
     cif_percentage: number | null;
@@ -538,11 +537,6 @@ export default function CostsIndex({
                                                     <div className="font-medium text-foreground">
                                                         {product.name}
                                                     </div>
-                                                    {product.code && (
-                                                        <div className="font-mono text-xs text-muted-foreground">
-                                                            {product.code}
-                                                        </div>
-                                                    )}
                                                 </td>
                                                 <td className="p-4 text-right">
                                                     <FormattedNumber

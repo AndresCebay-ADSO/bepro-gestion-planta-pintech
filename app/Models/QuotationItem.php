@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\WholeUnits;
 use App\Enums\QuotationItemType;
 use Database\Factories\QuotationItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -20,7 +21,7 @@ use Illuminate\Support\Carbon;
  * @property QuotationItemType|null $type
  * @property string|null $description
  * @property string|null $color
- * @property string $quantity
+ * @property int $quantity
  * @property string $list_unit_price
  * @property string $price_adjustment_pct
  * @property string $unit_price
@@ -54,9 +55,9 @@ class QuotationItem extends Model
     protected function casts(): array
     {
         return [
-            'quantity' => 'decimal:4',
+            'quantity' => WholeUnits::class,
             'list_unit_price' => 'decimal:4',
-            'price_adjustment_pct' => 'decimal:4',
+            'price_adjustment_pct' => 'decimal:2',
             'unit_price' => 'decimal:4',
             'subtotal' => 'decimal:4',
             'sort_order' => 'integer',

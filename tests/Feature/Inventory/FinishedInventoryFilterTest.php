@@ -38,9 +38,7 @@ beforeEach(function (): void {
     ]);
 
     $this->productA = Product::create([
-        'code' => 'PT-BARNIZ-101',
         'name' => 'Barniz Poliuretano Brillante',
-        'brand' => 'PINTECH',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
         'is_active' => true,
@@ -57,9 +55,7 @@ beforeEach(function (): void {
     ]);
 
     $this->productB = Product::create([
-        'code' => 'PT-ANTICORR-202',
         'name' => 'Anticorrosivo Alquídico Rojo',
-        'brand' => 'PINTECH',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->unit->id,
         'is_active' => true,
@@ -93,10 +89,10 @@ beforeEach(function (): void {
     ]);
 });
 
-it('filters by product name or code in search', function (): void {
+it('filters by product name in search', function (): void {
     actingAs($this->admin);
 
-    $response = get(route('finished-inventory.index', ['search' => 'BARNIZ-101']));
+    $response = get(route('finished-inventory.index', ['search' => 'Barniz Poliuretano']));
 
     $response->assertOk();
     $response->assertInertia(

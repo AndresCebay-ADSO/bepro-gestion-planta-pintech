@@ -22,7 +22,7 @@ return new class extends Migration
             // Todo lote de PT nace al completar una OP (no hay entradas manuales que creen lotes) y se identifica por el
             // número de lote de esa OP más la presentación (B55).
             $table->foreignId('production_order_id')->constrained('production_orders')->restrictOnDelete();
-            $table->decimal('initial_quantity', 12, 4);
+            $table->integer('initial_quantity');
             $table->date('entry_date');
 
             $table->index(['product_id', 'product_variant_id', 'entry_date']);

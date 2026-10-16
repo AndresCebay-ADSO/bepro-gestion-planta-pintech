@@ -32,7 +32,6 @@ beforeEach(function () {
     $pCat = ProductCategory::factory()->create(['name' => 'Prod Cat']);
 
     $product = Product::factory()->create([
-        'code' => 'P-COST',
         'name' => 'Pintura Cost Test',
         'category_id' => $pCat->id,
         'unit_of_measure_id' => $unit->id,

@@ -17,7 +17,6 @@ class PriceListFilter extends QueryFilter
         $this->builder->where(function (Builder $query) use ($value): void {
             $this->applySearchNested($query, [
                 'name',
-                'code',
                 'variants.name',
                 'variants.code',
                 'variants.presentation_label',

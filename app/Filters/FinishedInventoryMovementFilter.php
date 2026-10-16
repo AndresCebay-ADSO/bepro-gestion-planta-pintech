@@ -23,7 +23,6 @@ class FinishedInventoryMovementFilter extends QueryFilter
             // La OP y su lote se buscan a través del lote del movimiento: solo las entradas guardan la OP, y así una
             // búsqueda encuentra también las salidas y los traslados de ese lote (B55).
             $this->applySearchNested($query, [
-                'product.code',
                 'product.name',
                 'productVariant.code',
                 'productVariant.name',

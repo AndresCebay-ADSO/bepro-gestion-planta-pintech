@@ -49,7 +49,7 @@ class ProductionOrderDetail extends Model
         return [
             'step_order' => 'integer',
             'planned_quantity' => 'decimal:4',
-            'conversion_factor' => 'decimal:4',
+            'conversion_factor' => 'decimal:6',
             'actual_quantity' => 'decimal:4',
             'unit_cost' => 'decimal:4',
             'total_cost' => 'decimal:4',

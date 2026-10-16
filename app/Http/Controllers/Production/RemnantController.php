@@ -29,7 +29,7 @@ class RemnantController extends Controller
             ->apply(ProductionRemnant::query())
             ->with([
                 'sourceOrder:id,order_number,color',
-                'product:id,name,code',
+                'product:id,name',
                 'warehouse:id,name',
             ])
             // `latest('id')` desempata: sin él la paginación puede repetir o saltarse registros.
@@ -45,7 +45,6 @@ class RemnantController extends Controller
                 'product_id' => $remnant->product_id,
                 // Con el color de la orden de origen (3.4): el saldo de un RAL 3020 no es el del producto base.
                 'product_name' => ProductionOrder::nameWithColor($remnant->product->name, $remnant->sourceOrder->color),
-                'product_code' => $remnant->product->code,
                 'warehouse_id' => $remnant->warehouse_id,
                 'warehouse_name' => $remnant->warehouse->name,
                 'available_quantity_gallons' => (float) $remnant->available_quantity_gallons,

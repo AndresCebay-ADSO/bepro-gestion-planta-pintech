@@ -317,10 +317,9 @@ class QuotationService
             ])
             ->where(fn ($query) => $query->where('is_active', true)->orWhereIn('id', $keptProductIds))
             ->orderBy('name')
-            ->get(['id', 'code', 'name', 'description', 'sales_margin'])
+            ->get(['id', 'name', 'description', 'sales_margin'])
             ->map(fn (Product $product) => [
                 'id' => $product->id,
-                'code' => $product->code,
                 'name' => $product->name,
                 'description' => $product->description,
                 'variants' => $product->variants->map(function (ProductVariant $variant) {

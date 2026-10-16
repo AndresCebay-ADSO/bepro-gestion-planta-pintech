@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Catalogs;
 
+use App\Enums\NumberType;
 use App\Models\UnitOfMeasure;
 use App\Services\DecimalCalculator;
 use Illuminate\Validation\Rule;
@@ -87,7 +88,7 @@ class UpdateUnitOfMeasureRequest extends StoreUnitOfMeasureRequest
                 continue;
             }
 
-            if ($calculator->cmp((string) $current, (string) $incoming) !== 0) {
+            if ($calculator->cmp((string) $current, (string) $incoming, NumberType::Factor->scale()) !== 0) {
                 return true;
             }
         }

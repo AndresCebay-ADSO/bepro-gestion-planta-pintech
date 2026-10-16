@@ -39,7 +39,6 @@ beforeEach(function () {
     $uom = UnitOfMeasure::create(['code' => 'gal', 'name' => 'Galon', 'symbol' => 'gal']);
 
     $this->sourceProduct = Product::create([
-        'code' => 'P-SOURCE-'.uniqid(),
         'name' => 'Source Product',
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,
@@ -50,7 +49,6 @@ beforeEach(function () {
     ]);
 
     $this->targetProduct = Product::create([
-        'code' => 'P-TARGET-'.uniqid(),
         'name' => 'Target Product',
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,

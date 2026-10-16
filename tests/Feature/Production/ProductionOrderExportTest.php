@@ -50,7 +50,6 @@ function createExportTestDependencies(): array
     $user->assignRole(SystemRole::Production->value);
 
     $product = Product::create([
-        'code' => 'PNT-EXP-01',
         'name' => 'Pintura Export Test',
         'category_id' => $category->id,
         'unit_of_measure_id' => $uom->id,

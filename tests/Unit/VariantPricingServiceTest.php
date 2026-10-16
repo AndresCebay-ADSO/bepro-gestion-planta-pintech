@@ -17,7 +17,6 @@ test('it updates variant cost and refreshes price when threshold is met', functi
     $unit = UnitOfMeasure::create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
 
     $product = Product::create([
-        'code' => 'P-PRICING-01',
         'name' => 'Producto Pricing',
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
@@ -60,7 +59,6 @@ test('it updates variant cost without changing price when auto refresh is disabl
     $unit = UnitOfMeasure::create(['code' => 'QT', 'name' => 'Cuarto', 'symbol' => 'qt']);
 
     $product = Product::create([
-        'code' => 'P-PRICING-02',
         'name' => 'Producto Pricing 2',
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
@@ -103,7 +101,6 @@ test('it refreshes price when previous cost and current price are zero', functio
     $unit = UnitOfMeasure::create(['code' => 'GL0', 'name' => 'Galón cero', 'symbol' => 'gl']);
 
     $product = Product::create([
-        'code' => 'P-PRICING-ZERO-01',
         'name' => 'Producto Costo Cero',
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
@@ -145,7 +142,6 @@ test('it refreshes price when previous cost is zero and current price exists', f
     $unit = UnitOfMeasure::create(['code' => 'GL1', 'name' => 'Galón uno', 'symbol' => 'gl']);
 
     $product = Product::create([
-        'code' => 'P-PRICING-ZERO-02',
         'name' => 'Producto Sin Historial',
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
@@ -187,7 +183,6 @@ test('it refreshes price when current price is zero even below threshold', funct
     $unit = UnitOfMeasure::create(['code' => 'GL2', 'name' => 'Galón dos', 'symbol' => 'gl']);
 
     $product = Product::create([
-        'code' => 'P-PRICING-ZERO-03',
         'name' => 'Producto Precio Cero',
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,
@@ -229,7 +224,6 @@ test('it keeps valid price when cost variation is below threshold', function () 
     $unit = UnitOfMeasure::create(['code' => 'GL3', 'name' => 'Galón tres', 'symbol' => 'gl']);
 
     $product = Product::create([
-        'code' => 'P-PRICING-THRESHOLD-01',
         'name' => 'Producto Umbral',
         'category_id' => $category->id,
         'unit_of_measure_id' => $unit->id,

@@ -34,7 +34,7 @@ export type FinishedWarehouseOption = {
 
 export type FinishedBatchStock = {
     warehouse_id: number;
-    quantity: string | number;
+    quantity: number;
 };
 
 export type FinishedBatchOption = {
@@ -49,7 +49,7 @@ export type FinishedBatchOption = {
     /** Color que pidió el cliente en esa OP (3.4). */
     color: string | null;
     entry_date: string | null;
-    initial_quantity: string | number;
+    initial_quantity: number;
     stocks?: FinishedBatchStock[];
 };
 
@@ -62,7 +62,7 @@ export type FinishedInventoryMovement = {
     finished_product_batch_id: number | null;
     type: FinishedMovementType;
     reason: FinishedMovementReason;
-    quantity: string | number;
+    quantity: number;
     cost_price?: string | number | null;
     movement_date: string;
     notes?: string | null;
@@ -71,7 +71,7 @@ export type FinishedInventoryMovement = {
     batch?: {
         id: number;
         entry_date: string | null;
-        initial_quantity?: string | number;
+        initial_quantity?: number;
         production_order: {
             id: number;
             lot_number: number;

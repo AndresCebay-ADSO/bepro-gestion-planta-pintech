@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\SalesOrders;
 
+use App\Enums\NumberType;
 use App\Enums\SalesOrderPriority;
 use App\Models\ProductVariant;
 use App\Models\SalesOrder;
@@ -28,7 +29,7 @@ class StoreSalesOrderRequest extends FormRequest
             'priority' => ['required', Rule::enum(SalesOrderPriority::class)],
             'required_date' => ['bail', 'required', PlantDate::make()->notPast()],
             'notes' => ['nullable', 'string', 'max:2000'],
-            'shipping_address' => ['nullable', 'string', 'max:500'],
+            'shipping_address' => ['nullable', 'string', 'max:255'],
             'client_business_name' => ['nullable', 'string', 'max:255'],
             'client_nit' => ['nullable', 'string', 'max:20'],
             'client_contact_name' => ['nullable', 'string', 'max:255'],
@@ -62,7 +63,7 @@ class StoreSalesOrderRequest extends FormRequest
                     }
                 },
             ],
-            'items.*.quantity' => ['required', 'numeric', 'min:0.0001'],
+            'items.*.quantity' => ['required', ...NumberType::Units->rules(), 'min:1'],
             'items.*.color' => ['nullable', 'string', 'max:100'],
         ];
     }

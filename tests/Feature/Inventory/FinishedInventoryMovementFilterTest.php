@@ -49,7 +49,6 @@ beforeEach(function (): void {
     $this->uom = UnitOfMeasure::factory()->create(['symbol' => 'gl']);
 
     $this->productA = Product::factory()->create([
-        'code' => 'PT-VINIL-001',
         'name' => 'Vinilo Blanco Super',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
@@ -63,7 +62,6 @@ beforeEach(function (): void {
     ]);
 
     $this->productB = Product::factory()->create([
-        'code' => 'PT-ESMALTE-002',
         'name' => 'Esmalte Sintético Gris',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
@@ -99,10 +97,10 @@ beforeEach(function (): void {
     ]);
 });
 
-it('filters by product name or code', function (): void {
+it('filters by product name', function (): void {
     actingAs($this->admin);
 
-    $response = get(route('finished-inventory-movements.index', ['search' => 'VINIL-001']));
+    $response = get(route('finished-inventory-movements.index', ['search' => 'Vinilo Blanco Super']));
 
     $response->assertOk();
     $response->assertInertia(
@@ -228,7 +226,7 @@ it('ignores unknown filter keys and strips whitespace', function (): void {
     actingAs($this->admin);
 
     $response = get(route('finished-inventory-movements.index', [
-        'search' => '   VINIL-001   ',
+        'search' => '   Vinilo Blanco   ',
         'unknown_key' => 'hack',
     ]));
 

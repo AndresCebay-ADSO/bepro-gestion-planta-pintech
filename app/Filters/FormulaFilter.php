@@ -10,7 +10,7 @@ class FormulaFilter extends QueryFilter
 
     protected function search(string $value): void
     {
-        $this->applySearch(['product.code', 'product.name'], $value);
+        $this->applySearch(['product.name'], $value);
     }
 
     protected function status(string $value): void

@@ -19,8 +19,8 @@ return new class extends Migration
             $table->string('name', 100); // Kilogramo, Litro, Galón, Mililitro, Unidad
             $table->string('symbol', 10); // kg, L, gal, mL, u
             $table->text('description')->nullable();
-            $table->decimal('to_kg_conversion', 10, 4)->nullable(); // Para conversiones de peso
-            $table->decimal('to_liter_conversion', 10, 4)->nullable(); // Para conversiones de volumen
+            $table->decimal('to_kg_conversion', 14, 6)->nullable(); // Para conversiones de peso
+            $table->decimal('to_liter_conversion', 14, 6)->nullable(); // Para conversiones de volumen
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 

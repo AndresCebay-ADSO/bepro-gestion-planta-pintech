@@ -47,7 +47,7 @@ class FinishedInventoryMovementController extends Controller
         $movements = (new FinishedInventoryMovementFilter($request))
             ->apply(
                 FinishedInventoryMovement::query()->with([
-                    'product:id,code,name',
+                    'product:id,name',
                     'productVariant:id,code,name,presentation_label',
                     'batch:id,product_id,production_order_id,entry_date',
                     // El lote de PT se identifica con el número de lote de su OP, no con su id (B55).
@@ -70,7 +70,7 @@ class FinishedInventoryMovementController extends Controller
             // (auditoría 3.6, PT-01; ver InventoryMovementController).
             'batches' => Inertia::optional(fn () => FinishedProductBatch::query()
                 ->with([
-                    'product:id,code,name',
+                    'product:id,name',
                     'productVariant:id,code,name,presentation_label',
                     'productionOrder:id,lot_number,color',
                     'stocks',
@@ -80,7 +80,7 @@ class FinishedInventoryMovementController extends Controller
                 ->get()
                 ->map(fn (FinishedProductBatch $batch) => [
                     'id' => $batch->id,
-                    'product' => $batch->product ? ['id' => $batch->product->id, 'code' => $batch->product->code, 'name' => $batch->product->name] : null,
+                    'product' => $batch->product ? ['id' => $batch->product->id, 'name' => $batch->product->name] : null,
                     'variant' => $batch->productVariant ? ['id' => $batch->productVariant->id, 'code' => $batch->productVariant->code, 'name' => $batch->productVariant->name, 'presentation_label' => $batch->productVariant->presentation_label] : null,
                     // Número de lote de la OP: con la presentación identifica el lote, porque una OP no repite presentación (B55).
                     'lot_number' => $batch->productionOrder->lot_number,
@@ -159,7 +159,7 @@ class FinishedInventoryMovementController extends Controller
         $this->authorize('view', $finishedInventoryMovement);
 
         $finishedInventoryMovement->load([
-            'product:id,code,name',
+            'product:id,name',
             'productVariant:id,code,name,presentation_label',
             'batch:id,production_order_id,entry_date,initial_quantity',
             'batch.productionOrder:id,lot_number,color',

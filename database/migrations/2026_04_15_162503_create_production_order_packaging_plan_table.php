@@ -14,16 +14,16 @@ return new class extends Migration
             $table->id();
             $table->foreignId('production_order_id')->constrained('production_orders')->cascadeOnDelete();
             $table->foreignId('product_variant_id')->constrained('product_variants')->restrictOnDelete();
-            $table->decimal('planned_units', 12, 4); // Cuántas unidades de este SKU se espera envasar
-            $table->decimal('actual_units', 12, 4)->nullable(); // Cuántas se envasaron realmente
+            $table->integer('planned_units'); // Cuántas unidades de este SKU se espera envasar
+            $table->integer('actual_units')->nullable(); // Cuántas se envasaron realmente
             // Empaque (3.7). Vacío = tantos como unidades envasadas. Los envases reutilizados no se descuentan.
-            $table->decimal('new_containers_used', 12, 4)->nullable();
+            $table->integer('new_containers_used')->nullable();
             // Envase que se consumió, guardado al completar: el documento no cambia si después se cambia el de la
             // presentación. Mientras la OP está abierta vale el de la presentación.
             $table->foreignId('package_raw_material_id')->nullable()->constrained('raw_materials')->restrictOnDelete();
             // Etiqueta: se copia de la presentación al agregar el plan y se puede cambiar mientras la OP esté abierta.
             $table->foreignId('label_raw_material_id')->nullable()->constrained('raw_materials')->restrictOnDelete();
-            $table->decimal('labels_used', 12, 4)->nullable();
+            $table->integer('labels_used')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
 
