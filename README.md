@@ -149,7 +149,7 @@ reconstruir la imagen:
 XDEBUG_MODE=debug docker compose -f compose.dev.yaml up -d php-fpm   # Encender el depurador (paso a paso desde el editor)
 docker compose -f compose.dev.yaml up -d php-fpm                     # Volver a apagarlo
 docker compose -f compose.dev.yaml restart web                       # Después de cualquiera de los dos (si no, Nginx da 502)
-docker compose -f compose.dev.yaml exec -e XDEBUG_MODE=debug php-fpm php artisan <comando>  # Solo para un comando
+docker compose -f compose.dev.yaml exec -e XDEBUG_MODE=debug -e XDEBUG_TRIGGER=1 php-fpm php artisan <comando>  # Solo para un comando
 ```
 
 Aun encendido, solo actúa en las peticiones que lo piden (`start_with_request=trigger`): con la extensión «Xdebug
