@@ -118,7 +118,7 @@ docker compose -f compose.dev.yaml exec php-fpm php artisan db:seed
 **¿Qué pasa automáticamente?** Al levantar, el entrypoint de desarrollo:
 - Genera APP_KEY de estar vacia
 - Limpia caches y enlaza storage
-- Inicia PHP-FPM con Xdebug activado
+- Inicia PHP-FPM con Xdebug instalado pero apagado (ver [Xdebug](#xdebug))
 
 **Servicios disponibles:**
 | Servicio | URL | Puerto |
@@ -138,6 +138,23 @@ docker compose -f compose.dev.yaml up -d --build                        # Rebuil
 ```
 
 > **Nota:** Si tienes PostgreSQL local (Homebrew) corriendo en el puerto 5432, detenlo antes de usar Docker o cambia `DB_PORT` en tu `.env`.
+
+### Xdebug
+
+Viene instalado en los contenedores de desarrollo (nunca en producción) pero **apagado**: encendido en todos los modos,
+cada página tardaba de 6 a 11 veces más. El modo lo decide la variable `XDEBUG_MODE` al levantar el contenedor, sin
+reconstruir la imagen:
+
+```bash
+XDEBUG_MODE=debug docker compose -f compose.dev.yaml up -d php-fpm   # Encender el depurador (paso a paso desde el editor)
+docker compose -f compose.dev.yaml up -d php-fpm                     # Volver a apagarlo
+docker compose -f compose.dev.yaml restart web                       # Después de cualquiera de los dos (si no, Nginx da 502)
+docker compose -f compose.dev.yaml exec -e XDEBUG_MODE=debug -e XDEBUG_TRIGGER=1 php-fpm php artisan <comando>  # Solo para un comando
+```
+
+Aun encendido, solo actúa en las peticiones que lo piden (`start_with_request=trigger`): con la extensión «Xdebug
+helper» del navegador o agregando `?XDEBUG_TRIGGER=1` a la URL. Con `debug`, el editor debe escuchar en el puerto 9003.
+Con `profile`, cada petición pedida deja un archivo `cachegrind.out.*` en `/tmp` del contenedor; bórralos al terminar.
 
 ## Instalación sin Docker (manual)
 

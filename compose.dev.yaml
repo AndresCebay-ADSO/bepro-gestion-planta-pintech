@@ -27,7 +27,6 @@ services:
         UID: ${UID:-1000}
         GID: ${GID:-1000}
         XDEBUG_ENABLED: ${XDEBUG_ENABLED:-true}
-        XDEBUG_MODE: develop,coverage,debug,profile
         XDEBUG_HOST: ${XDEBUG_HOST:-host.docker.internal}
         XDEBUG_IDE_KEY: ${XDEBUG_IDE_KEY:-DOCKER}
         XDEBUG_LOG: /dev/stdout
@@ -35,6 +34,10 @@ services:
     env_file:
       # Load the environment variables from the Laravel application
       - .env
+    environment:
+      # Xdebug viene instalado pero apagado: con los modos develop,coverage,debug,profile siempre activos cada página
+      # tardaba de 6 a 11 veces más. Se enciende sin reconstruir la imagen (ver «Xdebug» en el README).
+      XDEBUG_MODE: ${XDEBUG_MODE:-off}
     user: "${UID:-1000}:${GID:-1000}"
     volumes:
       # Mount the application code for live updates
@@ -54,11 +57,13 @@ services:
         UID: ${UID:-1000}
         GID: ${GID:-1000}
         XDEBUG_ENABLED: ${XDEBUG_ENABLED:-true}
-        XDEBUG_MODE: develop,coverage,debug,profile
         XDEBUG_HOST: ${XDEBUG_HOST:-host.docker.internal}
         XDEBUG_IDE_KEY: ${XDEBUG_IDE_KEY:-DOCKER}
         XDEBUG_LOG: /dev/stdout
         XDEBUG_LOG_LEVEL: 0
+    environment:
+      # Igual que en php-fpm: apagado salvo que se pida.
+      XDEBUG_MODE: ${XDEBUG_MODE:-off}
     command: >
       bash -c "
         mkdir -p /home/www/.npm &&

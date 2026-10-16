@@ -146,7 +146,6 @@ RUN composer install --optimize-autoloader --no-interaction --no-progress --pref
 
 # Use ARG to define environment variables passed from the Docker build command or Docker Compose.
 ARG XDEBUG_ENABLED=true
-ARG XDEBUG_MODE=develop,coverage,debug,profile
 ARG XDEBUG_HOST=host.docker.internal
 ARG XDEBUG_IDE_KEY=DOCKER
 ARG XDEBUG_LOG=/dev/stdout
@@ -155,15 +154,17 @@ ARG XDEBUG_LOG_LEVEL=0
 USER root
 
 # Configure Xdebug if enabled
+# Queda apagado (mode=off): la variable de entorno XDEBUG_MODE, que manda sobre el ini, lo enciende al arrancar el
+# contenedor. Con start_with_request=trigger solo depura las peticiones que lo piden, no todas.
 RUN if [ "${XDEBUG_ENABLED}" = "true" ]; then \
     pecl install xdebug && \
     docker-php-ext-enable xdebug && \
-    echo "xdebug.mode=${XDEBUG_MODE}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
+    echo "xdebug.mode=off" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
     echo "xdebug.idekey=${XDEBUG_IDE_KEY}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
     echo "xdebug.log=${XDEBUG_LOG}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
     echo "xdebug.log_level=${XDEBUG_LOG_LEVEL}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
     echo "xdebug.client_host=${XDEBUG_HOST}" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && \
-    echo "xdebug.start_with_request=yes" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini ; \
+    echo "xdebug.start_with_request=trigger" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini ; \
 fi
 
 # Add ARGs for syncing permissions
