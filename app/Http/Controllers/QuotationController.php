@@ -13,6 +13,7 @@ use App\Enums\QuotationValidity;
 use App\Filters\QuotationFilter;
 use App\Http\Requests\Quotations\ConvertQuotationToOrderRequest;
 use App\Http\Requests\Quotations\IndexQuotationRequest;
+use App\Http\Requests\Quotations\PreviewQuotationPricingRequest;
 use App\Http\Requests\Quotations\StoreQuotationRequest;
 use App\Http\Requests\Quotations\UpdateQuotationRequest;
 use App\Http\Requests\Quotations\UpdateQuotationStatusRequest;
@@ -21,6 +22,7 @@ use App\Models\Quotation;
 use App\Models\User;
 use App\Services\QuotationService;
 use App\Support\EnumOptions;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -145,6 +147,21 @@ class QuotationController extends Controller
             'paymentMethodOptions' => $this->enumOptions(PaymentMethod::cases()),
             'itemTypeOptions' => $this->enumOptions(QuotationItemType::cases()),
         ]);
+    }
+
+    /**
+     * Precios y totales que se guardarían, para la vista previa del formulario. Sin quotation, al crear; con ella, al
+     * editar (acepta las presentaciones que ya tenía aunque estén inactivas).
+     */
+    public function previewPricing(PreviewQuotationPricingRequest $request, ?Quotation $quotation = null): JsonResponse
+    {
+        $validated = $request->validated();
+
+        return response()->json($this->quotationService->previewPricing(
+            $validated['items'],
+            (string) $validated['iva_percentage'],
+            $quotation?->keptRecords()['variant_ids'] ?? [],
+        ));
     }
 
     public function update(UpdateQuotationRequest $request, Quotation $quotation): RedirectResponse

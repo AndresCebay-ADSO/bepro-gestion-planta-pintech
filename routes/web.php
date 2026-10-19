@@ -219,6 +219,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('quotations', [QuotationController::class, 'store'])
         ->middleware('can:'.Permission::QuotationsCreate->value)
         ->name('quotations.store');
+    // Vista previa de precios del formulario: el front no calcula dinero (PR 4b de la auditoría 3.6).
+    Route::post('quotations/preview-pricing', [QuotationController::class, 'previewPricing'])
+        ->middleware(['throttle:quotation-preview-pricing', 'can:'.Permission::QuotationsCreate->value])
+        ->name('quotations.preview-pricing');
+    Route::post('quotations/{quotation}/preview-pricing', [QuotationController::class, 'previewPricing'])
+        ->middleware(['throttle:quotation-preview-pricing', 'can:'.Permission::QuotationsEdit->value, 'can:update,quotation'])
+        ->name('quotations.edit-preview-pricing');
     Route::get('quotations/{quotation}', [QuotationController::class, 'show'])
         ->middleware('can:view,quotation')
         ->name('quotations.show');

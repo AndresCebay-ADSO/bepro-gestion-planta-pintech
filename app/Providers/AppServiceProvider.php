@@ -148,6 +148,17 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        // La vista previa de la cotización se pide al dejar de escribir; una por línea editada cabe con holgura.
+        RateLimiter::for('quotation-preview-pricing', function (Request $request): Limit {
+            $user = $request->user();
+
+            return Limit::perMinute(120)->by(
+                $user?->id !== null
+                    ? 'user:'.$user->id
+                    : 'ip:'.$request->ip()
+            );
+        });
+
         RateLimiter::for('production-preview-costs', function (Request $request): Limit {
             $user = $request->user();
 

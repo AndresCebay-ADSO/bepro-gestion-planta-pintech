@@ -58,7 +58,7 @@ class StoreQuotationRequest extends FormRequest
             'delivery_time' => ['nullable', 'string', 'max:100'],
             'area' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:5000'],
-            'iva_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
+            'iva_percentage' => ['required', ...NumberType::Percentage->rules('100'), 'min:0'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => [
                 'required',
@@ -98,7 +98,8 @@ class StoreQuotationRequest extends FormRequest
             'items.*.color' => ['nullable', 'string', 'max:100'],
             'items.*.quantity' => ['required', ...NumberType::Units->rules(), 'min:1'],
             'items.*.price_adjustment_pct' => ['nullable', ...NumberType::Percentage->rules('99.99'), 'min:-100'],
-            'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
+            // En pesos enteros, como los ve el cliente (P4b-3), con el tope del tipo Dinero.
+            'items.*.unit_price' => ['nullable', 'integer', 'min:0', 'max:'.NumberType::Money->max()],
         ];
     }
 

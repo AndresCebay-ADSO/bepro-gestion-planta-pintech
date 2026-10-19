@@ -7,8 +7,20 @@ namespace App\Services;
 use App\Enums\NumberType;
 use App\Models\ProductVariant;
 
+/**
+ * Precios de la cotización (PR 4b de la auditoría 3.6). Lo que ve el cliente es lo que se guarda: el precio unitario va
+ * en pesos enteros, la línea es cantidad × precio, el IVA se calcula sobre el subtotal y se redondea al peso, y el total
+ * es subtotal + IVA. Se redondea una sola vez y antes de calcular, mitad hacia arriba, así que la cotización siempre
+ * cuadra con una calculadora. Es la única fuente: la vista previa del formulario se la pide al servidor.
+ */
 class QuotationPricingService
 {
+    /** La cotización trabaja en pesos enteros. */
+    private const PESOS_SCALE = 0;
+
+    /** Escala de los pasos intermedios, antes del único redondeo al peso. */
+    private const EXACT_SCALE = 10;
+
     public function __construct(
         private readonly DecimalCalculator $calculator,
         private readonly VariantSalesPriceService $salesPriceService
@@ -42,8 +54,25 @@ class QuotationPricingService
         ?string $adjustmentPct = null,
         ?string $manualUnitPrice = null
     ): array {
+        $givenAdjustment = $adjustmentPct !== null && $adjustmentPct !== ''
+            ? $this->calculator->round($adjustmentPct, NumberType::Percentage->scale())
+            : null;
+
         if ($manualUnitPrice !== null && $manualUnitPrice !== '') {
-            $unitPrice = $this->calculator->round($manualUnitPrice, 4);
+            // La regla del request ya exige pesos enteros; el redondeo solo normaliza «1200.0» a «1200».
+            $unitPrice = $this->calculator->round($manualUnitPrice, self::PESOS_SCALE);
+
+            // Si el ajuste digitado da exactamente este precio, se conserva tal cual (15 % y no 14,97 %): es el caso
+            // del formulario, que manda el ajuste y el precio que la vista previa calculó con él.
+            if ($givenAdjustment !== null
+                && $this->calculator->cmp($this->priceFromAdjustment($listUnitPrice, $givenAdjustment), $unitPrice, self::PESOS_SCALE) === 0) {
+                return [
+                    'list_unit_price' => $listUnitPrice,
+                    'price_adjustment_pct' => $givenAdjustment,
+                    'unit_price' => $unitPrice,
+                ];
+            }
+
             // El precio digitado es el que vale; el ajuste solo informa, con los 2 decimales de su columna.
             $adjustmentPct = $this->calculator->round(
                 $this->resolveAdjustmentFromPrices($listUnitPrice, $unitPrice),
@@ -64,24 +93,30 @@ class QuotationPricingService
             ];
         }
 
-        $adjustmentPct = $adjustmentPct !== null && $adjustmentPct !== ''
-            ? $this->calculator->round($adjustmentPct, NumberType::Percentage->scale())
-            : '0';
-
-        $adjustmentDecimal = $this->calculator->div($adjustmentPct, '100', 4);
-        $divisor = $this->calculator->sub('1', $adjustmentDecimal, 4);
-
-        if ($this->calculator->cmp($divisor, '0', 4) <= 0) {
-            $unitPrice = '0';
-        } else {
-            $unitPrice = $this->calculator->div($listUnitPrice, $divisor, 4);
-        }
+        $adjustmentPct = $givenAdjustment ?? '0';
 
         return [
             'list_unit_price' => $listUnitPrice,
             'price_adjustment_pct' => $adjustmentPct,
-            'unit_price' => $unitPrice,
+            'unit_price' => $this->priceFromAdjustment($listUnitPrice, $adjustmentPct),
         ];
+    }
+
+    /**
+     * Precio unitario en pesos enteros desde el precio de lista y el ajuste en espacio de margen, con un solo redondeo.
+     */
+    private function priceFromAdjustment(string $listUnitPrice, string $adjustmentPct): string
+    {
+        $divisor = $this->calculator->sub('1', $this->calculator->div($adjustmentPct, '100', 4), 4);
+
+        if ($this->calculator->cmp($divisor, '0', 4) <= 0) {
+            return '0';
+        }
+
+        return $this->calculator->round(
+            $this->calculator->div($listUnitPrice, $divisor, self::EXACT_SCALE),
+            self::PESOS_SCALE,
+        );
     }
 
     public function calculateLineSubtotal(string $quantity, string $unitPrice): string
@@ -101,10 +136,10 @@ class QuotationPricingService
             $subtotal = $this->calculator->add($subtotal, $item['subtotal'], 4);
         }
 
-        $ivaAmount = $this->calculator->mul(
-            $subtotal,
-            $this->calculator->div($ivaPercentage, '100', 4),
-            4
+        // Sobre el subtotal del documento (una sola línea de IVA en el PDF), redondeado al peso (P4b-2).
+        $ivaAmount = $this->calculator->round(
+            $this->calculator->div($this->calculator->mul($subtotal, $ivaPercentage, self::EXACT_SCALE), '100', self::EXACT_SCALE),
+            self::PESOS_SCALE,
         );
 
         $total = $this->calculator->add($subtotal, $ivaAmount, 4);

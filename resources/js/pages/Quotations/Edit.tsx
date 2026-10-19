@@ -8,7 +8,10 @@ import type {
     QuotationFormData,
 } from '@/components/quotations/QuotationForm';
 import type { ComboboxOptionType } from '@/components/ui/combobox';
-import { index as quotationsIndex } from '@/routes/quotations';
+import {
+    editPreviewPricing as quotationEditPreviewPricing,
+    index as quotationsIndex,
+} from '@/routes/quotations';
 
 type QuotationDetail = {
     id: number;
@@ -109,6 +112,7 @@ export default function QuotationsEdit({
                 itemTypeOptions={itemTypeOptions}
                 initialData={mapQuotationToForm(quotation)}
                 submitUrl={quotationUpdate(quotation.id).url}
+                previewUrl={quotationEditPreviewPricing(quotation.id).url}
                 method="put"
                 title="Editar Cotización"
                 backUrl={quotationsIndex().url}

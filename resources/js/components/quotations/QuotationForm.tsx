@@ -1,6 +1,6 @@
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 
 import { DecimalInput } from '@/components/decimal-input';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -11,13 +11,10 @@ import type { ComboboxOptionType } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useQuotationPricingPreview } from '@/hooks/use-quotation-pricing-preview';
 import { dateBoundKeepingSaved } from '@/lib/date-time-helpers';
 import { NUMBER_TYPES, UNITS_MAX_DIGITS } from '@/lib/number-types';
-import {
-    parseDecimal,
-    toDecimalPayload,
-    withDecimalPayloads,
-} from '@/lib/numeric-input';
+import { toDecimalPayload } from '@/lib/numeric-input';
 
 export type ClientOption = {
     id: number;
@@ -82,47 +79,13 @@ type Props = {
     itemTypeOptions: ComboboxOptionType[];
     initialData: QuotationFormData;
     submitUrl: string;
+    /** Ruta de la vista previa de precios: al crear o al editar esta cotización. */
+    previewUrl: string;
     method?: 'post' | 'put';
     title: string;
     backUrl: string;
     submitLabel: string;
 };
-
-/**
- * Business Rule — Margin-based adjustment:
- * The adjustment modifies the profit margin, not a simple discount/surcharge.
- * Positive values increase the margin (price goes up), negative values decrease
- * it (price goes down).
- *
- * Formula:  unit_price = list_price / (1 - adjustmentPct / 100)
- *
- * Examples:
- *   adjustment = +15%  →  divisor = 0.85   →  price = list / 0.85
- *   adjustment = -15%  →  divisor = 1.15   →  price = list / 1.15
- *   adjustment =   0%  →  divisor = 1.00   →  price = list
- *
- * This is intentionally asymmetric: a +15% and -15% adjustment do NOT cancel
- * each other out, because they operate on the margin space.
- */
-function applyAdjustment(
-    listPrice: number,
-    adjustmentPct: number,
-): number | null {
-    const divisor = 1 - adjustmentPct / 100;
-
-    if (divisor <= 0) {
-        return null;
-    }
-
-    return parseFloat((listPrice / divisor).toFixed(4));
-}
-
-function calculateLineSubtotal(quantity: string, unitPrice: string): number {
-    const qty = parseDecimal(quantity) ?? 0;
-    const price = parseDecimal(unitPrice) ?? 0;
-
-    return qty * price;
-}
 
 export function buildEmptyItem(): ItemRow {
     return {
@@ -146,6 +109,7 @@ export default function QuotationForm({
     itemTypeOptions,
     initialData,
     submitUrl,
+    previewUrl,
     method = 'post',
     title,
     backUrl,
@@ -165,21 +129,54 @@ export default function QuotationForm({
         label: product.name,
     }));
 
-    const totals = useMemo(() => {
-        const subtotal = data.items.reduce(
-            (sum, item) =>
-                sum + calculateLineSubtotal(item.quantity, item.unit_price),
-            0,
-        );
-        const ivaPercentage = parseDecimal(data.iva_percentage) ?? 0;
-        const ivaAmount = subtotal * (ivaPercentage / 100);
+    // El dinero lo calcula el servidor (PR 4b): el formulario muestra la vista previa y llena el precio o el ajuste
+    // que el usuario dejó vacío al cambiar el otro.
+    const { preview, previewLoading, previewStale } =
+        useQuotationPricingPreview(data.items, data.iva_percentage, previewUrl);
 
-        return {
-            subtotal,
-            ivaAmount,
-            total: subtotal + ivaAmount,
-        };
-    }, [data.items, data.iva_percentage]);
+    useEffect(() => {
+        if (preview === null) {
+            return;
+        }
+
+        let changed = false;
+        const filled = data.items.map((item, index) => {
+            const line = preview.lines[index];
+
+            if (line === undefined) {
+                return item;
+            }
+
+            const next = { ...item };
+
+            if (next.unit_price === '') {
+                next.unit_price = String(Number(line.unit_price));
+            }
+
+            if (next.price_adjustment_pct === '') {
+                next.price_adjustment_pct = String(
+                    Number(line.price_adjustment_pct),
+                );
+            }
+
+            if (next.list_unit_price !== line.list_unit_price) {
+                next.list_unit_price = line.list_unit_price;
+            }
+
+            changed ||=
+                next.unit_price !== item.unit_price ||
+                next.price_adjustment_pct !== item.price_adjustment_pct ||
+                next.list_unit_price !== item.list_unit_price;
+
+            return next;
+        });
+
+        if (changed) {
+            setData('items', filled);
+        }
+        // Solo cuando llega una vista previa nueva: las filas ya están en ella.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [preview]);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -187,12 +184,12 @@ export default function QuotationForm({
         transform((formData) => ({
             ...formData,
             iva_percentage: toDecimalPayload(formData.iva_percentage),
-            items: formData.items.map((item) =>
-                withDecimalPayloads(item, [
-                    'price_adjustment_pct',
-                    'unit_price',
-                ]),
-            ),
+            items: formData.items.map((item) => ({
+                ...item,
+                price_adjustment_pct:
+                    toDecimalPayload(item.price_adjustment_pct) || null,
+                unit_price: item.unit_price || null,
+            })),
         }));
 
         if (method === 'put') {
@@ -241,38 +238,24 @@ export default function QuotationForm({
                     (entry) => entry.id === Number(value),
                 );
 
-                if (variant?.sales_price != null) {
-                    next.list_unit_price = String(variant.sales_price);
-                    next.unit_price = String(variant.sales_price);
-                    next.price_adjustment_pct = '0';
-                }
-
+                // El precio lo calcula la vista previa del servidor con el ajuste (0 %).
+                next.list_unit_price =
+                    variant?.sales_price != null
+                        ? String(variant.sales_price)
+                        : '';
+                next.unit_price = '';
+                next.price_adjustment_pct = '0';
                 next.description = product?.description ?? product?.name ?? '';
             }
 
+            // Al cambiar uno, el otro se vacía y la vista previa lo calcula: el precio desde el ajuste o el ajuste
+            // desde el precio. Así nunca se pisa lo que el usuario escribió.
             if (field === 'price_adjustment_pct') {
-                const listPrice = parseDecimal(next.list_unit_price) ?? 0;
-                const adjustment = parseDecimal(value) ?? 0;
-                const adjustedPrice = applyAdjustment(listPrice, adjustment);
-
-                if (adjustedPrice !== null) {
-                    next.unit_price = String(adjustedPrice.toFixed(4));
-                }
+                next.unit_price = '';
             }
 
             if (field === 'unit_price') {
-                const listPrice = parseDecimal(next.list_unit_price) ?? 0;
-                const unitPrice = parseDecimal(value) ?? 0;
-
-                // Inverse of the margin formula:
-                //   adjustment = (1 - listPrice / unitPrice) * 100
-                if (listPrice > 0 && unitPrice > 0) {
-                    next.price_adjustment_pct = String(
-                        ((1 - listPrice / unitPrice) * 100).toFixed(2),
-                    );
-                } else {
-                    next.price_adjustment_pct = '0';
-                }
+                next.price_adjustment_pct = '';
             }
 
             return next;
@@ -530,10 +513,8 @@ export default function QuotationForm({
                                           }),
                                       )
                                     : [];
-                                const lineSubtotal = calculateLineSubtotal(
-                                    item.quantity,
-                                    item.unit_price,
-                                );
+                                const lineSubtotal =
+                                    preview?.lines[index]?.subtotal ?? null;
 
                                 return (
                                     <div
@@ -690,8 +671,11 @@ export default function QuotationForm({
                                                 <Label className="text-xs">
                                                     Precio unitario
                                                 </Label>
-                                                <DecimalInput
-                                                    maxIntegerDigits={12}
+                                                <IntegerInput
+                                                    maxDigits={
+                                                        NUMBER_TYPES.money
+                                                            .maxIntegerDigits
+                                                    }
                                                     value={item.unit_price}
                                                     onValueChange={(value) =>
                                                         updateItem(
@@ -721,10 +705,25 @@ export default function QuotationForm({
 
                 <div className="rounded-lg border border-border bg-card p-6">
                     <div className="ml-auto max-w-sm space-y-4 text-sm">
+                        {(previewLoading || previewStale !== null) && (
+                            <p
+                                className={
+                                    previewStale === null
+                                        ? 'text-xs text-muted-foreground'
+                                        : 'text-xs text-destructive'
+                                }
+                            >
+                                {previewStale === null
+                                    ? 'Calculando precios…'
+                                    : previewStale === 'invalid'
+                                      ? 'Revisa los datos marcados: los totales no están al día.'
+                                      : 'No se pudieron calcular los precios. Se recalculan al guardar.'}
+                            </p>
+                        )}
                         <div className="flex items-center justify-between">
                             <span>Subtotal</span>
                             <FormattedNumber
-                                value={totals.subtotal}
+                                value={preview?.totals.subtotal ?? 0}
                                 currency
                                 maxDecimals={0}
                             />
@@ -747,7 +746,7 @@ export default function QuotationForm({
                                 </div>
                             </div>
                             <FormattedNumber
-                                value={totals.ivaAmount}
+                                value={preview?.totals.iva_amount ?? 0}
                                 currency
                                 maxDecimals={0}
                             />
@@ -755,7 +754,7 @@ export default function QuotationForm({
                         <div className="flex items-center justify-between border-t border-border pt-2 text-base font-semibold">
                             <span>Total</span>
                             <FormattedNumber
-                                value={totals.total}
+                                value={preview?.totals.total ?? 0}
                                 currency
                                 maxDecimals={0}
                             />
