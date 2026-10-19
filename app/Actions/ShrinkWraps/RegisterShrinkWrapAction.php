@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\ShrinkWraps;
 
+use App\Enums\NumberType;
 use App\Jobs\RecalculateRawMaterialReferencePrice;
 use App\Models\ProductionOrder;
 use App\Models\ShrinkWrap;
@@ -29,12 +30,6 @@ use Illuminate\Validation\ValidationException;
  */
 class RegisterShrinkWrapAction
 {
-    /** Tope de las columnas de cantidad: decimal(12,4). */
-    private const MAX_QUANTITY = '99999999.9999';
-
-    /** Tope de las columnas de costo: decimal(14,4). */
-    private const MAX_COST = '9999999999.9999';
-
     public function __construct(
         private readonly FifoStockAllocatorService $fifoStockAllocator,
         private readonly DecimalCalculator $calculator,
@@ -86,13 +81,9 @@ class RegisterShrinkWrapAction
                 // Sin tope de negocio (no se compara con las unidades producidas), pero sí técnico: lo descontado debe caber
                 // en su columna. Se revisa aquí, con la receta ya bloqueada: en el request la receta podía cambiar antes
                 // de guardar. Sin control de inventario no hay stock que lo frene, y sería un 500 de la base.
-                if ($this->calculator->cmp($quantity, self::MAX_QUANTITY) > 0) {
-                    throw ValidationException::withMessages([
-                        'applications' => __('Son demasiadas aplicaciones: el consumo de :code no cabe en el registro.', [
-                            'code' => $item->rawMaterial->code,
-                        ]),
-                    ]);
-                }
+                NumberType::Quantity->ensureFits($quantity, 'applications', __('Son demasiadas aplicaciones: el consumo de :code no cabe en el registro.', [
+                    'code' => $item->rawMaterial->code,
+                ]));
 
                 $cost = $this->fifoStockAllocator->consumeFromWarehouse(
                     rawMaterialId: $item->raw_material_id,
@@ -109,13 +100,9 @@ class RegisterShrinkWrapAction
 
                 // Con stock no se llega aquí: la falta de stock lo frena antes. Sí con una materia prima sin control de
                 // inventario, que no tiene stock que la frene: un costo que no cabe sería un 500 de la base.
-                if ($this->calculator->cmp($cost, self::MAX_COST) > 0) {
-                    throw ValidationException::withMessages([
-                        'applications' => __('Son demasiadas aplicaciones: el costo de :code no cabe en el registro.', [
-                            'code' => $item->rawMaterial->code,
-                        ]),
-                    ]);
-                }
+                NumberType::Money->ensureFits($cost, 'applications', __('Son demasiadas aplicaciones: el costo de :code no cabe en el registro.', [
+                    'code' => $item->rawMaterial->code,
+                ]));
 
                 $shrinkWrap->items()->create([
                     'raw_material_id' => $item->raw_material_id,
@@ -127,11 +114,7 @@ class RegisterShrinkWrapAction
                 $totalCost = $this->calculator->add($totalCost, $cost, 4);
             }
 
-            if ($this->calculator->cmp($totalCost, self::MAX_COST) > 0) {
-                throw ValidationException::withMessages([
-                    'applications' => __('Son demasiadas aplicaciones: el costo total no cabe en el registro.'),
-                ]);
-            }
+            NumberType::Money->ensureFits($totalCost, 'applications', __('Son demasiadas aplicaciones: el costo total no cabe en el registro.'));
 
             $shrinkWrap->update(['total_cost' => $totalCost]);
 

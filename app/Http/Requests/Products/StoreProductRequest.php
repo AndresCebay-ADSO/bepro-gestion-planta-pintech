@@ -40,7 +40,7 @@ class StoreProductRequest extends FormRequest
             'unit_of_measure_id' => $this->activeOrCurrentRules('unit_of_measures', 'unit_of_measure_id', $this->route('product')?->unit_of_measure_id),
             // El CIF es un recargo sobre el costo (costo × (1 + CIF)): puede pasar de 100 %, hasta el tope de su columna.
             'cif_percentage' => ['bail', 'required', ...NumberType::Percentage->rules(), 'min:0'],
-            'price_threshold' => ['bail', 'required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
+            'price_threshold' => ['bail', 'required', ...NumberType::Percentage->rules('100'), 'min:0'],
             // Un decimal y el tope de cada medición, los mismos que al medir en la OP (PRD-01).
             'quality_viscosity_lower' => ['bail', 'nullable', ...QualityMeasurement::Viscosity->rules()],
             'quality_viscosity_upper' => ['bail', 'nullable', ...QualityMeasurement::Viscosity->rules()],

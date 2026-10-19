@@ -58,6 +58,12 @@ class ProductVariant extends Model
 
     protected string $auditLabel = 'Variante de producto';
 
+    /**
+     * Contenido máximo de una presentación, en su unidad (auditoría 3.6, PRD-02 · P5-2): cubre un IBC de 1.000 L y una
+     * caneca de 55 galones.
+     */
+    public const MAX_PRESENTATION_VALUE = '1000';
+
     protected string $auditIdentifierAttribute = 'name';
 
     protected bool $auditFeminine = true;

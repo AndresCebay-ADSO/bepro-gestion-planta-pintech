@@ -118,6 +118,9 @@ class ProductionOrder extends Model
 
     protected bool $auditFeminine = true;
 
+    /** Galones que puede producir una sola OP (auditoría 3.6, D-OP3 · P5-1): muy por encima de un tanque de planta. */
+    public const MAX_QUANTITY = '10000';
+
     protected static function booted(): void
     {
         static::saving(static function (ProductionOrder $order): void {

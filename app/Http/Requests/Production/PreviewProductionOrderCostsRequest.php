@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Production;
 
+use App\Enums\NumberType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -29,7 +30,7 @@ class PreviewProductionOrderCostsRequest extends FormRequest
         return array_merge(
             $this->consumptionRules(),
             [
-                'remnant_quantity_gallons' => ['bail', 'nullable', 'numeric', 'min:0', 'max:99999999.9999'],
+                'remnant_quantity_gallons' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
             ]
         );
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\RawMaterials;
 
 use App\Actions\RawMaterials\UpdateRawMaterialAction;
+use App\Enums\NumberType;
 use App\Enums\Permission;
 use App\Enums\RawMaterialType;
 use App\Http\Requests\Concerns\CatalogSelectionRules;
@@ -45,9 +46,9 @@ class UpdateRawMaterialRequest extends FormRequest
             ],
             'category_id' => $this->activeOrCurrentRules('raw_material_categories', 'category_id', $this->route('raw_material')?->category_id),
             'unit_of_measure_id' => $this->activeOrCurrentRules('unit_of_measures', 'unit_of_measure_id', $this->route('raw_material')?->unit_of_measure_id),
-            'minimum_stock' => ['bail', 'required', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999'],
-            'alert_days_before_expiry' => ['bail', 'required', 'integer', 'min:0'],
-            'price_variation_threshold' => ['bail', 'nullable', 'numeric', 'min:0.01', 'max:100', 'decimal:0,2'],
+            'minimum_stock' => ['bail', 'required', ...NumberType::Quantity->rules(), 'min:0'],
+            'alert_days_before_expiry' => ['bail', 'required', 'integer', 'min:0', 'max:'.RawMaterial::MAX_EXPIRY_ALERT_DAYS],
+            'price_variation_threshold' => ['bail', 'nullable', ...NumberType::Percentage->rules('100'), 'min:0.01'],
             'tracks_inventory' => ['sometimes', 'boolean'],
             'current_price' => $this->manualPriceRules(),
             'confirm_tracking_change' => ['sometimes', 'boolean'],

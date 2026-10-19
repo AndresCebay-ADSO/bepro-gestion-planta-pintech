@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Production;
 
+use App\Enums\NumberType;
 use App\Enums\ProductionOrderStatus;
 use App\Models\Formula;
 use App\Models\Product;
@@ -79,6 +80,16 @@ class CreateProductionOrderAction
                 $detailTotal = $this->calculator->mul($normalizedDetailQty, (string) $quantity, 10);
                 $detailTotal = $this->calculator->round($detailTotal, 4);
 
+                // La fórmula por galón × los galones de la OP: cada uno cabe en su regla, el producto puede no caber.
+                // Una MP sin control de inventario (agua) no tiene stock que lo frene antes.
+                NumberType::Quantity->ensureFits(
+                    $detailTotal,
+                    'quantity',
+                    __('La cantidad de :code para esta orden no cabe en el registro. Revisa la cantidad a producir.', [
+                        'code' => $detail->rawMaterial->code,
+                    ]),
+                );
+
                 $requirementsByMaterialId[$materialId] = isset($requirementsByMaterialId[$materialId])
                     ? $this->calculator->add($requirementsByMaterialId[$materialId], $detailTotal, 4)
                     : $detailTotal;
@@ -99,6 +110,15 @@ class CreateProductionOrderAction
                 $detail = $computed['detail'];
                 $plannedQuantityStr = $computed['planned_quantity'];
                 $estimatedUnitCost = (string) ($estimatedUnitCosts[(int) $detail->raw_material_id] ?? '0');
+                $totalCost = $this->calculator->mul($plannedQuantityStr, $estimatedUnitCost, 4);
+
+                NumberType::Money->ensureFits(
+                    $totalCost,
+                    'quantity',
+                    __('El costo de :code para esta orden no cabe en el registro. Revisa la cantidad a producir.', [
+                        'code' => $detail->rawMaterial->code,
+                    ]),
+                );
 
                 ProductionOrderDetail::create([
                     'production_order_id' => $order->id,
@@ -109,7 +129,7 @@ class CreateProductionOrderAction
                     // Se guarda la equivalencia usada: la OP no depende de que la unidad cambie en el catálogo.
                     'conversion_factor' => $computed['conversion_factor'],
                     'unit_cost' => $estimatedUnitCost,
-                    'total_cost' => $this->calculator->mul($plannedQuantityStr, $estimatedUnitCost, 4),
+                    'total_cost' => $totalCost,
                 ]);
             }
 

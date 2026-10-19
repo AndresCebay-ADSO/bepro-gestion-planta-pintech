@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\InventoryMovementType;
+use App\Enums\NumberType;
 use App\Jobs\RecalculateRawMaterialReferencePrice;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
@@ -131,6 +132,14 @@ class InventoryService
 
             $batch->initial_quantity = $this->calculator->add($batch->initial_quantity, $quantity);
             $batch->remaining_quantity = $this->calculator->add($batch->remaining_quantity, $quantity);
+
+            // La regla limita la cantidad, no lo que el lote ya tiene más ella (INV-01). El saldo nunca supera lo que
+            // entró, así que basta con revisar el total.
+            NumberType::Quantity->ensureFits(
+                $batch->initial_quantity,
+                'quantity',
+                __('Con esta entrada el lote supera la cantidad que se puede registrar. Registra la entrada en un lote nuevo.'),
+            );
 
             if ($this->shouldSyncBatchUnitPrice($type, $quantity, $costPrice)) {
                 // Regla: un lote mantiene un solo costo; si el costo cambia, debe crearse otro lote.

@@ -45,6 +45,12 @@ class Client extends Model
 
     protected string $auditIdentifierAttribute = 'business_name';
 
+    /**
+     * Largo de la dirección de envío, en el cliente y en el pedido que la copia: `varchar(255)` en las dos tablas
+     * (D-CLI2). Los requests de clientes, pedidos y convertir cotización leen este número.
+     */
+    public const SHIPPING_ADDRESS_MAX_LENGTH = 255;
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

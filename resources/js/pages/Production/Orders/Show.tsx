@@ -541,6 +541,7 @@ export default function ProductionOrderShow({
                                 </Label>
                                 <Textarea
                                     id="reject-reason"
+                                    maxLength={2000}
                                     className="mt-2"
                                     placeholder="Describe qué debe corregirse..."
                                     value={rejectData.reason}

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Pricing;
 
+use App\Enums\NumberType;
 use App\Models\Product;
 use App\Services\DecimalCalculator;
 use App\Services\VariantSalesPriceService;
@@ -32,8 +33,9 @@ class UpdateCostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'sales_margin' => ['nullable', 'numeric', 'min:0', 'max:99.99'],
-            'sales_price' => ['nullable', 'numeric', 'gt:0'],
+            // Margen menor que 100 % (el precio es costo ÷ (1 − margen)), con 2 decimales (CST-01).
+            'sales_margin' => ['bail', 'nullable', ...NumberType::Percentage->rules('99.99'), 'min:0'],
+            'sales_price' => ['bail', 'nullable', ...NumberType::Money->rules(), 'gt:0'],
         ];
     }
 

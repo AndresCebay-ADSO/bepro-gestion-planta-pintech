@@ -6,6 +6,7 @@ namespace App\Http\Requests\Production;
 
 use App\Enums\NumberType;
 use App\Enums\WarehouseType;
+use App\Http\Requests\Concerns\ReadsIdInput;
 use App\Models\ProductionOrder;
 use App\Rules\PlantDate;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -14,6 +15,8 @@ use Illuminate\Validation\Rule;
 
 class StoreProductionOrderRequest extends FormRequest
 {
+    use ReadsIdInput;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -40,7 +43,7 @@ class StoreProductionOrderRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('formulas', 'id')
-                    ->where('product_id', $this->input('product_id'))
+                    ->where('product_id', $this->idInput('product_id'))
                     ->where('is_active', true),
             ],
             'warehouse_id' => [
@@ -50,10 +53,11 @@ class StoreProductionOrderRequest extends FormRequest
                     ->where('type', WarehouseType::Factory->value)
                     ->where('is_active', true),
             ],
-            'quantity' => ['required', 'numeric', 'min:0.01'],
+            // Galones con 4 decimales (una muestra de ⅛), hasta el tope de una OP (D-OP3).
+            'quantity' => ['bail', 'required', ...NumberType::Quantity->rules(ProductionOrder::MAX_QUANTITY), 'min:0.01'],
             // No se registran OP con fecha planificada pasada (D-OP2).
             'planned_date' => ['bail', 'required', PlantDate::make()->notPast()],
-            'notes' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string', 'max:2000'],
             'color' => ['nullable', 'string', 'max:100'],
             'packaging' => ['nullable', 'array'],
             'packaging.*.product_variant_id' => [
@@ -62,7 +66,7 @@ class StoreProductionOrderRequest extends FormRequest
                 'distinct',
                 Rule::exists('product_variants', 'id')
                     ->where('is_active', true)
-                    ->when($this->input('product_id') !== null, fn ($query) => $query->where('product_id', $this->input('product_id'))),
+                    ->when($this->input('product_id') !== null, fn ($query) => $query->where('product_id', $this->idInput('product_id'))),
             ],
             // Unidades enteras desde 1 (D-OP1); la cantidad a producir sí lleva decimales (una muestra de ⅛ de galón).
             'packaging.*.planned_units' => ['required_with:packaging', ...NumberType::Units->rules(), 'min:1'],

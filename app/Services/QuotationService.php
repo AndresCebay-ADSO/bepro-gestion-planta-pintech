@@ -192,21 +192,20 @@ class QuotationService
     {
         $prepared = $this->prepareItems($items, $keptVariantIds);
         $totals = $this->pricingService->calculateQuotationTotals($prepared, $ivaPercentage);
-        $max = NumberType::Money->max();
 
         foreach ($prepared as $index => $item) {
-            if ($this->calculator->cmp($item['subtotal'], $max) > 0) {
-                throw ValidationException::withMessages([
-                    "items.{$index}.quantity" => __('El subtotal de esta línea es demasiado grande. Revisa la cantidad y el precio.'),
-                ]);
-            }
+            NumberType::Money->ensureFits(
+                $item['subtotal'],
+                "items.{$index}.quantity",
+                __('El subtotal de esta línea es demasiado grande. Revisa la cantidad y el precio.'),
+            );
         }
 
-        if ($this->calculator->cmp($totals['total'], $max) > 0) {
-            throw ValidationException::withMessages([
-                'items' => __('El total de la cotización es demasiado grande. Revisa las cantidades y los precios.'),
-            ]);
-        }
+        NumberType::Money->ensureFits(
+            $totals['total'],
+            'items',
+            __('El total de la cotización es demasiado grande. Revisa las cantidades y los precios.'),
+        );
 
         return ['items' => $prepared, 'totals' => $totals];
     }

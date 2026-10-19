@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 use App\Casts\WholeUnits;
 use App\Enums\NumberType;
+use App\Models\ProductionOrder;
+use App\Models\ProductVariant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 uses(TestCase::class);
@@ -56,6 +59,29 @@ test('el cast de unidades convierte el texto de bcmath y se detiene ante una fra
     expect(fn () => $cast->set($model, 'quantity', '2.5', []))->toThrow(DomainException::class);
 });
 
+test('el dinero se digita con 2 decimales aunque la columna guarde 4 (P5-4)', function (): void {
+    expect(NumberType::Money->inputScale())->toBe(2)
+        ->and(NumberType::Money->scale())->toBe(4)
+        ->and(NumberType::Money->rules())->toContain('decimal:0,2')
+        ->and(NumberType::Quantity->inputScale())->toBe(4)
+        ->and(numberTypePasses(NumberType::Money, '1500.5'))->toBeTrue()
+        ->and(numberTypePasses(NumberType::Money, '1500.505'))->toBeFalse();
+});
+
+test('ensureFits deja pasar el máximo de la columna y rechaza lo que lo pasa con un 422 en el campo', function (NumberType $type, string $fits, string $tooBig): void {
+    $type->ensureFits($fits, 'quantity', 'No cabe');
+
+    expect(fn () => $type->ensureFits($tooBig, 'quantity', 'No cabe'))
+        ->toThrow(fn (ValidationException $e) => expect($e->errors())->toBe(['quantity' => ['No cabe']]));
+})->with([
+    'cantidad' => [NumberType::Quantity, '99999999.9999', '100000000'],
+    // PostgreSQL redondea a la escala al guardar: .99994 queda en .9999 y cabe; .99995 sube a 100.000.000.
+    'cantidad que se redondea hacia abajo' => [NumberType::Quantity, '99999999.99994', '99999999.99995'],
+    'negativa' => [NumberType::Quantity, '-99999999.9999', '-100000000'],
+    'unidades' => [NumberType::Units, '2147483647', '2147483648'],
+    'dinero' => [NumberType::Money, '999999999999.9999', '1000000000000'],
+]);
+
 // El front copia los tamaños en resources/js/lib/number-types.ts para no dejar escribir lo que la columna no guarda.
 // Si cambia un tipo aquí y no allá, este test lo detiene.
 test('el espejo del front tiene los mismos tamaños que el enum', function (): void {
@@ -73,12 +99,18 @@ test('el espejo del front tiene los mismos tamaños que el enum', function (): v
         expect(preg_match("/^\s*{$key}: \{ maxDecimals: (\d+), maxIntegerDigits: (\d+) \}/m", $source, $match))
             ->toBe(1, "Falta «{$key}» en number-types.ts");
 
-        expect((int) $match[1])->toBe($type->scale(), "{$key}: decimales")
+        expect((int) $match[1])->toBe($type->inputScale(), "{$key}: decimales que se digitan")
             ->and((int) $match[2])->toBe($type->precision() - $type->scale(), "{$key}: dígitos enteros");
     }
 
     expect(preg_match('/UNITS_MAX_DIGITS = (\d+);/', $source, $match))->toBe(1)
         ->and((int) $match[1])->toBe(strlen(NumberType::Units->max()));
+
+    // Topes de negocio que el front traduce a dígitos enteros (PR 5).
+    foreach (['PRODUCTION_ORDER_QUANTITY_LIMITS' => ProductionOrder::MAX_QUANTITY, 'PRESENTATION_VALUE_LIMITS' => ProductVariant::MAX_PRESENTATION_VALUE] as $name => $max) {
+        expect(preg_match("/{$name}: DecimalLimits = \{[^}]*maxIntegerDigits: (\d+),/s", $source, $match))->toBe(1, "Falta {$name}")
+            ->and((int) $match[1])->toBe(strlen($max), "{$name}: dígitos enteros");
+    }
 });
 
 test('el cast de unidades entiende la notación científica y respeta el rango del entero', function (): void {

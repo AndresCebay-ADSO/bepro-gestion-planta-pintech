@@ -936,3 +936,27 @@ it('requires sales_orders.create to convert a quotation into an order', function
 
     expect(Gate::forUser($user->fresh())->allows('convertToOrder', $quotation->fresh()))->toBeTrue();
 });
+
+// Auditoría 3.6, PR 5: COT-05. Un ID que no es entero llegaba al `exists` contra un bigint: 500 en PostgreSQL.
+test('cliente y producto que no son enteros dan un error del campo, también en la vista previa', function (string $field, mixed $id): void {
+    $payload = quotationPayload($this->client->id, $this->product->id, $this->variant->id);
+    data_set($payload, $field, $id);
+
+    $this->actingAs($this->comercialUser)
+        ->post(route('quotations.store'), $payload)
+        ->assertSessionHasErrors($field);
+
+    if ($field !== 'client_id') {
+        $this->actingAs($this->comercialUser)
+            ->postJson(route('quotations.preview-pricing'), $payload)
+            ->assertJsonValidationErrors($field);
+    }
+})->with([
+    'cliente' => ['client_id'],
+    'producto' => ['items.0.product_id'],
+    'presentación' => ['items.0.product_variant_id'],
+])->with([
+    'texto' => ['abc'],
+    'mayor que un bigint' => ['9223372036854775808'],
+    'arreglo' => [[1]],
+]);

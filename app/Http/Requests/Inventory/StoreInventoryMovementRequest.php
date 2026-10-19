@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Inventory;
 
 use App\Enums\InventoryMovementType;
+use App\Enums\NumberType;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
 use App\Models\RawMaterial;
@@ -40,15 +41,14 @@ class StoreInventoryMovementRequest extends FormRequest
             'batch_id' => ['nullable', 'integer', Rule::exists('inventory_batches', 'id')],
             'production_order_id' => ['prohibited'],
             'type' => ['bail', 'required', Rule::in(['entry', 'exit'])],
-            'quantity' => ['bail', 'required', 'numeric', 'gt:0', 'decimal:0,4', 'max:99999999.9999'],
+            'quantity' => ['bail', 'required', ...NumberType::Quantity->rules(), 'gt:0'],
             'cost_price' => [
                 'bail',
                 Rule::requiredIf(fn () => $this->input('type') === 'entry'),
                 'nullable',
-                'numeric',
-                'min:0',
-                'decimal:0,4',
-                'max:99999999.9999',
+                // Con 2 decimales (P5-4) y mayor que 0: un lote a precio 0 abarata las OP que lo consumen (D3).
+                ...NumberType::Money->rules(),
+                'gt:0',
             ],
             // Día de planta, sin futuras (D1). En una entrada, tampoco más de un mes atrás (D1b): también es el
             // `entry_date` del lote nuevo, que ordena el FIFO.

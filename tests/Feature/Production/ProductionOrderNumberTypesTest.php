@@ -219,3 +219,158 @@ test('la cantidad a producir sigue aceptando decimales: una muestra de ⅛ de ga
     expect(bccomp((string) $order->quantity, '0.125', 4))->toBe(0)
         ->and($order->packagingPlans()->sole()->planned_units)->toBe(1);
 });
+
+/*
+ * Auditoría 3.6, PR 5 (topes): cada número con el tipo de su columna y su tope de negocio, cada ID entero antes de
+ * llegar a la base, y lo que la OP calcula (fórmula × cantidad) comparado con su columna antes de guardar. Casi todos
+ * eran un 500 solo en PostgreSQL: en SQLite estos tests ya pasaban con 302 o 422, el job de PostgreSQL es el que cuenta.
+ */
+
+/** Cuerpo válido para crear una OP del producto de prueba. */
+function numericCapsOrderBody(object $t, array $override = []): array
+{
+    return array_replace([
+        'product_id' => $t->product->id, 'formula_id' => $t->formula->id, 'warehouse_id' => $t->warehouse->id,
+        'quantity' => '10', 'planned_date' => plantToday(), 'packaging' => [],
+    ], $override);
+}
+
+test('la cantidad a producir tiene el tope de una OP y 4 decimales (OPC-02, OPC-07, D-OP3)', function (string $quantity, bool $valid): void {
+    $response = $this->actingAs($this->admin)
+        ->post(route('production-orders.store'), numericCapsOrderBody($this, ['quantity' => $quantity]));
+
+    $valid ? $response->assertSessionHasNoErrors() : $response->assertSessionHasErrors('quantity');
+    expect(ProductionOrder::query()->count())->toBe($valid ? 1 : 0);
+})->with([
+    'el tope de 10.000 galones' => ['10000', true],
+    'una diezmilésima por encima' => ['10000.0001', false],
+    '100 millones (antes, 500 en PostgreSQL)' => ['100000000', false],
+    '5 decimales' => ['1.12345', false],
+    'notación científica' => ['1e3', false],
+]);
+
+test('las notas de la OP y el motivo de rechazo tienen tope de 2.000 caracteres (OPC-08, OPL-09)', function (): void {
+    $this->actingAs($this->admin)
+        ->post(route('production-orders.store'), numericCapsOrderBody($this, ['notes' => str_repeat('N', 2001)]))
+        ->assertSessionHasErrors('notes');
+
+    foreach (['production-orders.complete', 'production-orders.submit-for-review'] as $routeName) {
+        $f = numberTypesOrder($this, ProductionOrderStatus::InProgress);
+
+        $this->actingAs($this->admin)
+            ->post(route($routeName, $f['order']), numberTypesCompleteBody($this, $f, ['notes' => str_repeat('N', 2001)]))
+            ->assertSessionHasErrors('notes');
+    }
+
+    $f = numberTypesOrder($this, ProductionOrderStatus::PendingReview);
+
+    $this->actingAs($this->admin)
+        ->post(route('production-orders.reject-review', $f['order']), ['reason' => str_repeat('M', 2001)])
+        ->assertSessionHasErrors('reason');
+    $this->actingAs($this->admin)
+        ->post(route('production-orders.reject-review', $f['order']), ['reason' => str_repeat('M', 2000)])
+        ->assertSessionHasNoErrors();
+});
+
+dataset('ids that are not integers', [
+    'texto' => ['abc'],
+    'decimal' => ['1.5'],
+    'mayor que un bigint' => ['9223372036854775808'],
+    'arreglo' => [[1]],
+]);
+
+test('un producto que no es entero da un error del campo al crear la OP, también en los filtros que lo usan (OPC-06)', function (mixed $id): void {
+    $this->actingAs($this->admin)
+        ->post(route('production-orders.store'), numericCapsOrderBody($this, [
+            'product_id' => $id,
+            'packaging' => [['product_variant_id' => $this->variantA->id, 'planned_units' => '1']],
+        ]))
+        ->assertSessionHasErrors('product_id');
+})->with('ids that are not integers');
+
+test('una presentación que no es entera da un error del campo al agregarla al plan (OPC-06, OPC-09)', function (mixed $id): void {
+    $f = numberTypesOrder($this, ProductionOrderStatus::InProgress);
+
+    $this->actingAs($this->admin)
+        ->post(route('production-orders.packaging-plans.store', $f['order']), ['product_variant_id' => $id, 'planned_units' => '1'])
+        ->assertSessionHasErrors(['product_variant_id' => __('validation.integer', ['attribute' => __('validation.attributes.product_variant_id')])]);
+})->with('ids that are not integers');
+
+test('los IDs de completar la OP son enteros antes de consultarlos (OPL-06)', function (string $field, mixed $id): void {
+    $f = numberTypesOrder($this, ProductionOrderStatus::InProgress);
+    $body = numberTypesCompleteBody($this, $f);
+    data_set($body, $field, $id);
+
+    $this->actingAs($this->admin)
+        ->post(route('production-orders.complete', $f['order']), $body)
+        ->assertSessionHasErrors($field);
+
+    expect($f['order']->fresh()->status)->toBe(ProductionOrderStatus::InProgress);
+})->with([
+    'ingrediente' => ['ingredients.0.id'],
+    'presentación' => ['packaging.0.id'],
+    'responsable de calidad' => ['quality_responsible_user_id'],
+])->with('ids that are not integers');
+
+test('el consumo real lleva 4 decimales y sin notación científica (OPL-08)', function (string $quantity, bool $valid): void {
+    $f = numberTypesOrder($this, ProductionOrderStatus::InProgress);
+
+    $response = $this->actingAs($this->admin)->post(route('production-orders.submit-for-review', $f['order']),
+        numberTypesCompleteBody($this, $f, [
+            'ingredients' => [['id' => $f['d1']->id, 'actual_quantity' => $quantity], ['id' => $f['d2']->id, 'actual_quantity' => '5']],
+        ]));
+
+    $valid ? $response->assertSessionHasNoErrors() : $response->assertSessionHasErrors('ingredients.0.actual_quantity');
+})->with([
+    '4 decimales' => ['9.1234', true],
+    '6 decimales (antes se redondeaba sin avisar)' => ['9.123456', false],
+    'notación científica' => ['1e1', false],
+]);
+
+test('el ajuste de línea tiene el tope de su columna y el material es un entero (OPX-01, OPX-05, OPX-06)', function (string $field, mixed $value): void {
+    $f = numberTypesOrder($this, ProductionOrderStatus::InProgress);
+    $chemical = RawMaterial::factory()->create(['unit_of_measure_id' => $this->kg->id]);
+
+    $this->actingAs($this->admin)
+        ->post(route('production-orders.line-adjustments.store', $f['order']), array_replace([
+            'raw_material_id' => $chemical->id, 'quantity' => '1', 'reason' => 'Corrección de color',
+        ], [$field => $value]))
+        ->assertSessionHasErrors($field);
+
+    expect($f['order']->lineAdjustments()->count())->toBe(0);
+})->with([
+    'cantidad de 100 millones (antes, 500)' => ['quantity', '100000000'],
+    'cantidad con 6 decimales' => ['quantity', '1.123456'],
+    'cantidad en notación científica' => ['quantity', '1e3'],
+    'material en texto' => ['raw_material_id', 'abc'],
+    'material mayor que un bigint' => ['raw_material_id', '9223372036854775808'],
+    'material como arreglo (pasaba el exists)' => ['raw_material_id', [1]],
+]);
+
+test('el saldo que se consume lleva 4 decimales (OPX-06)', function (string $gallons): void {
+    $f = numberTypesOrder($this, ProductionOrderStatus::InProgress);
+
+    $this->actingAs($this->admin)
+        ->post(route('production-orders.consume-remnant', $f['order']), ['remnant_id' => 1, 'quantity_gallons' => $gallons])
+        ->assertSessionHasErrors('quantity_gallons');
+})->with(['6 decimales' => ['1.123456'], 'notación científica' => ['1e-3'], 'más de lo que cabe' => ['100000000']]);
+
+test('una fórmula cuya cantidad × la de la OP no cabe en la columna da un error en la cantidad, no un 500', function (string $perGallon, string $price, string $quantity): void {
+    // Agua: sin control de inventario no hay stock que frene la OP antes.
+    $water = RawMaterial::factory()->withoutInventoryTracking()->create(['code' => 'AGUA-X',
+        'unit_of_measure_id' => $this->kg->id, 'current_price' => $price]);
+    FormulaDetail::create(['formula_id' => $this->formula->id, 'raw_material_id' => $water->id, 'quantity' => $perGallon,
+        'unit_of_measure_id' => $this->kg->id]);
+
+    $this->actingAs($this->admin)
+        ->post(route('production-orders.store'), numericCapsOrderBody($this, ['quantity' => $quantity]))
+        ->assertSessionHasErrors('quantity');
+
+    // El error viene del control del detalle, no de la regla de la cantidad (que sí la acepta).
+    expect(session('errors')->first('quantity'))->toContain('AGUA-X')
+        ->and(ProductionOrder::query()->count())->toBe(0)
+        ->and(ProductionOrderDetail::query()->count())->toBe(0);
+})->with([
+    'la cantidad del detalle (12,4)' => ['99999999', '1', '2'],
+    'el costo del detalle (16,4)' => ['99999999', '100000', '1'],
+]);

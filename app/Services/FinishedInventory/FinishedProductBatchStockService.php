@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\FinishedInventory;
 
+use App\Enums\NumberType;
 use App\Exceptions\InsufficientStockException;
 use App\Models\FinishedProductBatch;
 use App\Models\FinishedProductBatchStock;
@@ -39,7 +40,15 @@ class FinishedProductBatchStockService
                 ['quantity' => 0]
             );
 
-        $stock->quantity = $this->calculator->add((string) $stock->quantity, $quantity);
+        $newQuantity = $this->calculator->add((string) $stock->quantity, $quantity);
+        // La regla limita la cantidad que entra, no el saldo que queda (PT-06). Antes de asignar: el cast de unidades
+        // rechazaría el valor con una excepción sin mensaje para el usuario.
+        NumberType::Units->ensureFits(
+            $newQuantity,
+            'quantity',
+            __('Con esta entrada el lote supera las unidades que se pueden registrar en la bodega.'),
+        );
+        $stock->quantity = $newQuantity;
         $stock->save();
 
         return $stock;

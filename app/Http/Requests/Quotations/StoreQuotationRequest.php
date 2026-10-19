@@ -48,7 +48,9 @@ class StoreQuotationRequest extends FormRequest
 
         return [
             'client_id' => [
+                'bail',
                 'required',
+                'integer',
                 Rule::exists('clients', 'id')->where(fn ($query) => $query
                     ->where('is_active', true)
                     ->when($kept['client_id'] !== null, fn ($q) => $q->orWhere('id', $kept['client_id']))),
@@ -94,7 +96,9 @@ class StoreQuotationRequest extends FormRequest
         return [
             ...$document,
             'items.*.product_id' => [
+                'bail',
                 'required',
+                'integer',
                 Rule::exists('products', 'id')->where(fn ($query) => $query
                     ->where('is_active', true)
                     ->orWhereIn('id', $kept['product_ids'])),

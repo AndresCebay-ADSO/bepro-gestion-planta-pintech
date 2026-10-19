@@ -6,6 +6,7 @@ namespace App\Services\FinishedInventory;
 
 use App\Enums\FinishedInventoryMovementReason;
 use App\Enums\InventoryMovementType;
+use App\Enums\NumberType;
 use App\Exceptions\InsufficientStockException;
 use App\Models\FinishedInventory;
 use App\Models\FinishedInventoryMovement;
@@ -205,9 +206,17 @@ class FinishedInventoryMovementService
             );
 
         $currentQty = (string) ($inventory->quantity ?? '0');
-        $inventory->quantity = $isEntry
+        $newQuantity = $isEntry
             ? $this->calculator->add($currentQty, $quantity)
             : $this->calculator->sub($currentQty, $quantity);
+        // Suma todos los lotes de la presentación en la bodega: puede no caber aunque cada lote quepa (PT-06). Antes de
+        // asignar, como en FinishedProductBatchStockService.
+        NumberType::Units->ensureFits(
+            $newQuantity,
+            'quantity',
+            __('Con esta entrada el inventario de la presentación supera las unidades que se pueden registrar en la bodega.'),
+        );
+        $inventory->quantity = $newQuantity;
         $inventory->save();
     }
 

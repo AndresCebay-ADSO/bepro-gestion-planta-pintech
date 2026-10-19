@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Production;
 
+use App\Enums\NumberType;
 use App\Enums\RawMaterialType;
 use App\Rules\RawMaterialOfType;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -29,12 +30,15 @@ class StoreLineAdjustmentRequest extends FormRequest
     {
         return [
             'raw_material_id' => [
+                'bail',
                 'required',
+                // Antes del `exists`: un arreglo lo pasaba (lo toma como varios valores) y fallaba al guardar (OPX-05).
+                'integer',
                 Rule::exists('raw_materials', 'id')->where('is_active', true),
                 // Se suma al granel al completar: un envase o una etiqueta no son granel (3.7, decisión del 2026-09-30).
                 new RawMaterialOfType(RawMaterialType::Chemical),
             ],
-            'quantity' => 'required|numeric|min:0.0001',
+            'quantity' => ['bail', 'required', ...NumberType::Quantity->rules(), 'min:0.0001'],
             'reason' => 'required|string|max:500',
             'notes' => 'nullable|string|max:1000',
         ];

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\SalesOrders;
 
 use App\Enums\SalesOrderPriority;
+use App\Models\Client;
 use App\Models\SalesOrder;
 use App\Rules\PlantDate;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,7 +30,7 @@ class UpdateSalesOrderRequest extends FormRequest
             'priority' => ['sometimes', Rule::enum(SalesOrderPriority::class)],
             'estimated_delivery_date' => ['sometimes', 'bail', 'nullable', $this->estimatedDeliveryDateRule()],
             'notes' => ['sometimes', 'nullable', 'string', 'max:2000'],
-            'shipping_address' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'shipping_address' => ['sometimes', 'nullable', 'string', 'max:'.Client::SHIPPING_ADDRESS_MAX_LENGTH],
             'client_contact_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'client_phone' => ['sometimes', 'nullable', 'string', 'max:20'],
             'client_business_name' => ['sometimes', 'nullable', 'string', 'max:255'],

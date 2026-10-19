@@ -339,6 +339,7 @@ export function ControlCard({
                     <Label htmlFor="notes">Observaciones</Label>
                     <Textarea
                         id="notes"
+                        maxLength={2000}
                         placeholder="Notas sobre el lote..."
                         value={data.notes}
                         onChange={(event) =>

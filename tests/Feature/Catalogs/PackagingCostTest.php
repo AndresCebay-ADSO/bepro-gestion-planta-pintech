@@ -227,10 +227,21 @@ it('ofrece en la ficha del producto solo etiquetas activas, más la inactiva que
 });
 
 it('rechaza un precio manual que no cabe en la columna, en vez de un error del servidor', function () {
-    $this->put(route('raw-materials.update', $this->label), packagingMaterialPayload($this->label, ['current_price' => '123456789']))
+    // El tipo Dinero (16,4) llega a 999.999.999.999,9999.
+    $this->put(route('raw-materials.update', $this->label), packagingMaterialPayload($this->label, ['current_price' => '1000000000000']))
         ->assertSessionHasErrors('current_price');
 
     expect($this->label->fresh()->current_price)->toBe('300.0000');
+});
+
+it('acepta el precio manual con 2 decimales y rechaza el tercero, como todo dinero que se digita', function () {
+    $this->put(route('raw-materials.update', $this->label), packagingMaterialPayload($this->label, ['current_price' => '350.505']))
+        ->assertSessionHasErrors('current_price');
+
+    $this->put(route('raw-materials.update', $this->label), packagingMaterialPayload($this->label, ['current_price' => '350.5']))
+        ->assertSessionHasNoErrors();
+
+    expect($this->label->fresh()->current_price)->toBe('350.5000');
 });
 
 it('costea la presentación con su envase y su etiqueta al guardarla, sin tocar el historial del granel', function () {

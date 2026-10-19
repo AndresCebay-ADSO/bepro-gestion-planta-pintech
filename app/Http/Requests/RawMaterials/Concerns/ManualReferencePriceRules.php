@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\RawMaterials\Concerns;
 
+use App\Enums\NumberType;
 use App\Enums\Permission;
 use Illuminate\Validation\Validator;
 
@@ -22,8 +23,8 @@ trait ManualReferencePriceRules
      */
     protected function manualPriceRules(): array
     {
-        // La columna es decimal(12,4): sin tope, PostgreSQL rechaza el valor con un error del servidor.
-        return ['nullable', 'numeric', 'min:0', 'decimal:0,4', 'max:99999999.9999'];
+        // Dinero digitado: 2 decimales y el tope de su columna. 0 sí vale: se escribe a propósito (ver abajo).
+        return ['nullable', ...NumberType::Money->rules(), 'min:0'];
     }
 
     /**

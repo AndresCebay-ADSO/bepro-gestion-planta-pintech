@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Production;
 
+use App\Enums\NumberType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -26,7 +27,7 @@ class ConsumeRemnantRequest extends FormRequest
     {
         return [
             'remnant_id' => ['required', 'integer', 'exists:production_remnants,id'],
-            'quantity_gallons' => ['required', 'numeric', 'min:0.0001'],
+            'quantity_gallons' => ['bail', 'required', ...NumberType::Quantity->rules(), 'min:0.0001'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }

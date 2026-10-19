@@ -25,6 +25,16 @@ Toda la lógica de programación, variables y base de datos debe estar en inglé
 Seguiremos el estándar **PSR-12**, que es el utilizado por Laravel de forma nativa.
 * Uso estricto de tipos (`declare(strict_types=1);`) si se adopta, debe ser en **todos** los archivos del mismo tipo, no selectivamente.
 * Validaciones siempre en **Form Requests**, no en el Controlador.
+* **Números e IDs en los Form Requests** (auditoría 3.6, PR 5). `tests/Feature/Validation/NumericRequestRulesTest.php`
+  recorre todos los requests de escritura y falla si alguno no cumple:
+  * todo número que se digita usa la regla de su tipo, `NumberType::X->rules()`. Si tiene un tope de negocio, se pasa
+    como argumento (`rules(ProductionOrder::MAX_QUANTITY)`). Un `numeric` sin `decimal` y `max` deja pasar lo que la
+    columna no guarda, y PostgreSQL responde con un 500;
+  * todo entero que no es ID lleva `max`, y todo ID lleva `integer` **antes** del `exists`;
+  * un ID que se usa dentro de otra regla o de un `after()` se lee con `ReadsIdInput::idInput()`, nunca tal como llegó;
+  * un campo numérico nuevo se agrega al mapa del test con la columna donde se guarda.
+* **Valores calculados que se guardan** (saldo + cantidad, fórmula × cantidad de la OP, totales): antes de guardarlos
+  se pasan por `NumberType::X->ensureFits()`, que responde con un 422 en el campo que lo causó.
 * Lógica compleja en **Services**, los controladores deben ser delgados (*Skinny Controllers*).
 
 ---

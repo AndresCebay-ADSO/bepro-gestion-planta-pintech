@@ -15,6 +15,8 @@
  * cotización o una temperatura.
  */
 
+import { NUMBER_TYPES } from '@/lib/number-types';
+
 export type DecimalLimits = {
     /** Decimales que admite el campo: la escala de su columna (4 en `numeric(12,4)`). */
     maxDecimals?: number;
@@ -24,8 +26,10 @@ export type DecimalLimits = {
     allowNegative?: boolean;
 };
 
-export const DEFAULT_MAX_DECIMALS = 4;
-export const DEFAULT_MAX_INTEGER_DIGITS = 8;
+/** Sin límites propios, un campo admite lo de una Cantidad (`numeric(12,4)`), el número más común del sistema. */
+export const DEFAULT_MAX_DECIMALS = NUMBER_TYPES.quantity.maxDecimals;
+export const DEFAULT_MAX_INTEGER_DIGITS =
+    NUMBER_TYPES.quantity.maxIntegerDigits;
 
 type FormValue = string | number | null | undefined;
 
