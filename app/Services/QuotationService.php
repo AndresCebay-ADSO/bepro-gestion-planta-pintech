@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\NumberType;
 use App\Enums\QuotationStatus;
 use App\Enums\SalesOrderStatus;
 use App\Models\Product;
@@ -19,6 +20,7 @@ class QuotationService
     public function __construct(
         private readonly QuotationPricingService $pricingService,
         private readonly TimezoneService $timezone,
+        private readonly DecimalCalculator $calculator,
     ) {}
 
     /**
@@ -27,9 +29,8 @@ class QuotationService
     public function create(array $data, User $user): Quotation
     {
         return DB::transaction(function () use ($data, $user): Quotation {
-            $preparedItems = $this->prepareItems($data['items'] ?? []);
             $ivaPercentage = isset($data['iva_percentage']) ? (string) $data['iva_percentage'] : '19';
-            $totals = $this->pricingService->calculateQuotationTotals($preparedItems, $ivaPercentage);
+            ['items' => $preparedItems, 'totals' => $totals] = $this->price($data['items'] ?? [], $ivaPercentage);
 
             $quotation = Quotation::create([
                 'client_id' => $data['client_id'],
@@ -90,9 +91,12 @@ class QuotationService
                 ]);
             }
 
-            $preparedItems = $this->prepareItems($data['items'] ?? [], $lockedQuotation->keptRecords()['variant_ids']);
             $ivaPercentage = isset($data['iva_percentage']) ? (string) $data['iva_percentage'] : '19';
-            $totals = $this->pricingService->calculateQuotationTotals($preparedItems, $ivaPercentage);
+            ['items' => $preparedItems, 'totals' => $totals] = $this->price(
+                $data['items'] ?? [],
+                $ivaPercentage,
+                $lockedQuotation->keptRecords()['variant_ids'],
+            );
 
             $quotation->update([
                 'client_id' => $data['client_id'],
@@ -151,6 +155,60 @@ class QuotationService
         $quotation->update(['status' => $status]);
 
         return $quotation->fresh();
+    }
+
+    /**
+     * Vista previa del formulario: los mismos precios y totales que se guardarían, sin guardar nada. El front no calcula
+     * dinero; muestra lo que devuelve este método (PR 4b de la auditoría 3.6).
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     * @param  array<int, int>  $keptVariantIds
+     * @return array{items: array<int, array{list_unit_price: string, price_adjustment_pct: string, unit_price: string, subtotal: string}>, totals: array{subtotal: string, iva_amount: string, total: string}}
+     */
+    public function previewPricing(array $items, string $ivaPercentage, array $keptVariantIds = []): array
+    {
+        ['items' => $prepared, 'totals' => $totals] = $this->price($items, $ivaPercentage, $keptVariantIds);
+
+        return [
+            'items' => array_map(fn (array $item): array => [
+                'list_unit_price' => $item['list_unit_price'],
+                'price_adjustment_pct' => $item['price_adjustment_pct'],
+                'unit_price' => $item['unit_price'],
+                'subtotal' => $item['subtotal'],
+            ], $prepared),
+            'totals' => $totals,
+        ];
+    }
+
+    /**
+     * Precios de las líneas y totales del documento, comprobando que quepan en sus columnas (COT-02): una cantidad o un
+     * precio enormes dan un error de validación y no un 500 al guardar en PostgreSQL.
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     * @param  array<int, int>  $keptVariantIds
+     * @return array{items: array<int, array<string, mixed>>, totals: array{subtotal: string, iva_amount: string, total: string}}
+     */
+    private function price(array $items, string $ivaPercentage, array $keptVariantIds = []): array
+    {
+        $prepared = $this->prepareItems($items, $keptVariantIds);
+        $totals = $this->pricingService->calculateQuotationTotals($prepared, $ivaPercentage);
+        $max = NumberType::Money->max();
+
+        foreach ($prepared as $index => $item) {
+            if ($this->calculator->cmp($item['subtotal'], $max) > 0) {
+                throw ValidationException::withMessages([
+                    "items.{$index}.quantity" => __('El subtotal de esta línea es demasiado grande. Revisa la cantidad y el precio.'),
+                ]);
+            }
+        }
+
+        if ($this->calculator->cmp($totals['total'], $max) > 0) {
+            throw ValidationException::withMessages([
+                'items' => __('El total de la cotización es demasiado grande. Revisa las cantidades y los precios.'),
+            ]);
+        }
+
+        return ['items' => $prepared, 'totals' => $totals];
     }
 
     /**

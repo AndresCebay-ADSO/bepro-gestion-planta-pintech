@@ -77,15 +77,15 @@ test('la cantidad de una cotización es un número entero de unidades', function
     expect(QuotationItem::query()->sole()->quantity)->toBe(3);
 });
 
-test('con precio manual se guarda el precio digitado y el ajuste con 2 decimales', function (): void {
+test('con precio manual se guarda el precio digitado (pesos enteros) y el ajuste con 2 decimales', function (): void {
     $this->actingAs($this->admin)
-        ->post(route('quotations.store'), wholeUnitsQuotationPayload($this, ['unit_price' => '1234.56']))
+        ->post(route('quotations.store'), wholeUnitsQuotationPayload($this, ['unit_price' => '1235']))
         ->assertSessionHasNoErrors();
 
     $item = QuotationItem::query()->sole();
-    // Lista = 1.000 / (1 − 25 %) = 1.333,3333; ajuste = (1 − 1.333,3333 / 1.234,56) × 100 = −8,00.
-    expect(bccomp((string) $item->unit_price, '1234.56', 4))->toBe(0)
-        ->and((string) $item->price_adjustment_pct)->toBe('-8.00');
+    // Lista = 1.000 / (1 − 25 %) = 1.333,3333; ajuste = (1 − 1.333,3333 / 1.235) × 100 = −7,96.
+    expect(bccomp((string) $item->unit_price, '1235', 4))->toBe(0)
+        ->and((string) $item->price_adjustment_pct)->toBe('-7.96');
 });
 
 test('la cantidad de un pedido es un número entero de unidades', function (): void {

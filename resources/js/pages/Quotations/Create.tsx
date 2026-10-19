@@ -9,7 +9,10 @@ import type {
     ProductOption,
 } from '@/components/quotations/QuotationForm';
 import type { ComboboxOptionType } from '@/components/ui/combobox';
-import { index as quotationsIndex } from '@/routes/quotations';
+import {
+    index as quotationsIndex,
+    previewPricing as quotationPreviewPricing,
+} from '@/routes/quotations';
 
 type Props = {
     clients: ClientOption[];
@@ -57,6 +60,7 @@ export default function QuotationsCreate({
                     items: [buildEmptyItem()],
                 }}
                 submitUrl={quotationStore().url}
+                previewUrl={quotationPreviewPricing().url}
                 title="Nueva Cotización"
                 backUrl={quotationsIndex().url}
                 submitLabel="Guardar Cotización"

@@ -1,9 +1,10 @@
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 
 import { DecimalInput } from '@/components/decimal-input';
 import { FormattedNumber } from '@/components/formatted-number';
+import InputError from '@/components/input-error';
 import { IntegerInput } from '@/components/integer-input';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
@@ -11,13 +12,17 @@ import type { ComboboxOptionType } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useQuotationPricingPreview } from '@/hooks/use-quotation-pricing-preview';
 import { dateBoundKeepingSaved } from '@/lib/date-time-helpers';
+import { formatNumber } from '@/lib/formatters';
 import { NUMBER_TYPES, UNITS_MAX_DIGITS } from '@/lib/number-types';
+import { toDecimalPayload } from '@/lib/numeric-input';
 import {
-    parseDecimal,
-    toDecimalPayload,
-    withDecimalPayloads,
-} from '@/lib/numeric-input';
+    applyPricingLines,
+    newRowKey,
+    pricingFieldsFor,
+} from '@/lib/quotation-pricing-rows';
+import type { QuotationPricingRow } from '@/lib/quotation-pricing-rows';
 
 export type ClientOption = {
     id: number;
@@ -42,16 +47,10 @@ export type ProductOption = {
     variants: VariantOption[];
 };
 
-export type ItemRow = {
-    product_id: string;
-    product_variant_id: string;
+export type ItemRow = QuotationPricingRow & {
     type: string;
     description: string;
     color: string;
-    quantity: string;
-    list_unit_price: string;
-    price_adjustment_pct: string;
-    unit_price: string;
 };
 
 export type QuotationFormData = {
@@ -82,50 +81,18 @@ type Props = {
     itemTypeOptions: ComboboxOptionType[];
     initialData: QuotationFormData;
     submitUrl: string;
+    /** Ruta de la vista previa de precios: al crear o al editar esta cotización. */
+    previewUrl: string;
     method?: 'post' | 'put';
     title: string;
     backUrl: string;
     submitLabel: string;
 };
 
-/**
- * Business Rule — Margin-based adjustment:
- * The adjustment modifies the profit margin, not a simple discount/surcharge.
- * Positive values increase the margin (price goes up), negative values decrease
- * it (price goes down).
- *
- * Formula:  unit_price = list_price / (1 - adjustmentPct / 100)
- *
- * Examples:
- *   adjustment = +15%  →  divisor = 0.85   →  price = list / 0.85
- *   adjustment = -15%  →  divisor = 1.15   →  price = list / 1.15
- *   adjustment =   0%  →  divisor = 1.00   →  price = list
- *
- * This is intentionally asymmetric: a +15% and -15% adjustment do NOT cancel
- * each other out, because they operate on the margin space.
- */
-function applyAdjustment(
-    listPrice: number,
-    adjustmentPct: number,
-): number | null {
-    const divisor = 1 - adjustmentPct / 100;
-
-    if (divisor <= 0) {
-        return null;
-    }
-
-    return parseFloat((listPrice / divisor).toFixed(4));
-}
-
-function calculateLineSubtotal(quantity: string, unitPrice: string): number {
-    const qty = parseDecimal(quantity) ?? 0;
-    const price = parseDecimal(unitPrice) ?? 0;
-
-    return qty * price;
-}
-
 export function buildEmptyItem(): ItemRow {
     return {
+        row_key: newRowKey(),
+        pricing_source: 'adjustment',
         product_id: '',
         product_variant_id: '',
         type: '',
@@ -146,14 +113,25 @@ export default function QuotationForm({
     itemTypeOptions,
     initialData,
     submitUrl,
+    previewUrl,
     method = 'post',
     title,
     backUrl,
     submitLabel,
 }: Props) {
     const { plantToday } = usePage().props;
-    const { data, setData, post, put, processing, errors, transform } =
-        useForm(initialData);
+    const {
+        data,
+        setData,
+        post,
+        put,
+        processing,
+        errors,
+        clearErrors,
+        transform,
+    } = useForm(initialData);
+    // Los errores de las filas llegan como «items.0.quantity», que el tipo de useForm no enumera.
+    const fieldErrors = errors as Record<string, string | undefined>;
 
     const clientOptions = clients.map((client) => ({
         id: String(client.id),
@@ -165,21 +143,36 @@ export default function QuotationForm({
         label: product.name,
     }));
 
-    const totals = useMemo(() => {
-        const subtotal = data.items.reduce(
-            (sum, item) =>
-                sum + calculateLineSubtotal(item.quantity, item.unit_price),
-            0,
-        );
-        const ivaPercentage = parseDecimal(data.iva_percentage) ?? 0;
-        const ivaAmount = subtotal * (ivaPercentage / 100);
+    // El dinero lo calcula el servidor (PR 4b): el formulario muestra la vista previa y llena, de cada fila, el campo
+    // de precio que el usuario no escribió (`pricing_source`).
+    const {
+        preview,
+        lineFor,
+        previewErrors,
+        previewLoading,
+        previewStale,
+        previewIncompleteRows,
+    } = useQuotationPricingPreview(data.items, data.iva_percentage, previewUrl);
 
-        return {
-            subtotal,
-            ivaAmount,
-            total: subtotal + ivaAmount,
-        };
-    }, [data.items, data.iva_percentage]);
+    // Al llegar una vista previa y también al cambiar las filas: si una edición vuelve a la misma firma («15» → «15,»),
+    // no se pide otra vista previa y el campo que se vació se llena con la línea que ya está. Cada línea trae la firma
+    // de la fila para la que se calculó, y sin cambios no se escribe nada, así que no hay bucle.
+    useEffect(() => {
+        if (preview === null) {
+            return;
+        }
+
+        const filled = applyPricingLines(data.items, preview.lines);
+
+        if (filled !== null) {
+            setData('items', filled);
+        }
+    }, [preview, data.items, setData]);
+
+    // El error de la vista previa es el del cálculo actual; el del envío, el del último guardado.
+    const itemError = (item: ItemRow, index: number, field: keyof ItemRow) =>
+        previewErrors.byRow[item.row_key]?.[field] ??
+        fieldErrors[`items.${index}.${field}`];
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -187,12 +180,17 @@ export default function QuotationForm({
         transform((formData) => ({
             ...formData,
             iva_percentage: toDecimalPayload(formData.iva_percentage),
-            items: formData.items.map((item) =>
-                withDecimalPayloads(item, [
-                    'price_adjustment_pct',
-                    'unit_price',
-                ]),
-            ),
+            // Solo lo que valida el servidor, y del precio solo el campo que escribió el usuario: el otro (y el precio de
+            // lista) los calcula el servidor con la misma regla.
+            items: formData.items.map((item) => ({
+                product_id: item.product_id,
+                product_variant_id: item.product_variant_id,
+                type: item.type,
+                description: item.description,
+                color: item.color,
+                quantity: item.quantity,
+                ...pricingFieldsFor(item),
+            })),
         }));
 
         if (method === 'put') {
@@ -207,6 +205,12 @@ export default function QuotationForm({
     };
 
     const removeItem = (index: number) => {
+        // Los errores del último envío van por índice: al borrar una fila dejarían de corresponder.
+        clearErrors(
+            ...(Object.keys(fieldErrors).filter((field) =>
+                field.startsWith('items.'),
+            ) as Array<keyof typeof errors>),
+        );
         setData(
             'items',
             data.items.filter((_, itemIndex) => itemIndex !== index),
@@ -231,6 +235,7 @@ export default function QuotationForm({
                 next.list_unit_price = '';
                 next.unit_price = '';
                 next.price_adjustment_pct = '0';
+                next.pricing_source = 'adjustment';
             }
 
             if (field === 'product_variant_id') {
@@ -241,44 +246,44 @@ export default function QuotationForm({
                     (entry) => entry.id === Number(value),
                 );
 
-                if (variant?.sales_price != null) {
-                    next.list_unit_price = String(variant.sales_price);
-                    next.unit_price = String(variant.sales_price);
-                    next.price_adjustment_pct = '0';
-                }
-
+                // El precio lo calcula la vista previa del servidor con el ajuste (0 %).
+                next.list_unit_price =
+                    variant?.sales_price != null
+                        ? String(variant.sales_price)
+                        : '';
+                next.unit_price = '';
+                next.price_adjustment_pct = '0';
+                next.pricing_source = 'adjustment';
                 next.description = product?.description ?? product?.name ?? '';
             }
 
+            // El campo que escribe el usuario pasa a mandar; el otro se vacía y la vista previa lo calcula: el precio
+            // desde el ajuste o el ajuste desde el precio. Así nunca se pisa lo que el usuario escribió.
             if (field === 'price_adjustment_pct') {
-                const listPrice = parseDecimal(next.list_unit_price) ?? 0;
-                const adjustment = parseDecimal(value) ?? 0;
-                const adjustedPrice = applyAdjustment(listPrice, adjustment);
-
-                if (adjustedPrice !== null) {
-                    next.unit_price = String(adjustedPrice.toFixed(4));
-                }
+                next.pricing_source = 'adjustment';
+                next.unit_price = '';
             }
 
             if (field === 'unit_price') {
-                const listPrice = parseDecimal(next.list_unit_price) ?? 0;
-                const unitPrice = parseDecimal(value) ?? 0;
-
-                // Inverse of the margin formula:
-                //   adjustment = (1 - listPrice / unitPrice) * 100
-                if (listPrice > 0 && unitPrice > 0) {
-                    next.price_adjustment_pct = String(
-                        ((1 - listPrice / unitPrice) * 100).toFixed(2),
-                    );
-                } else {
-                    next.price_adjustment_pct = '0';
-                }
+                next.pricing_source = 'price';
+                next.price_adjustment_pct = '';
             }
 
             return next;
         });
 
         setData('items', updated);
+
+        const cleared: string[] = [`items.${index}.${field}`];
+
+        if (field === 'price_adjustment_pct' || field === 'unit_price') {
+            cleared.push(
+                `items.${index}.price_adjustment_pct`,
+                `items.${index}.unit_price`,
+            );
+        }
+
+        clearErrors(...(cleared as Array<keyof typeof errors>));
     };
 
     return (
@@ -505,11 +510,9 @@ export default function QuotationForm({
                         </Button>
                     </div>
 
-                    {errors.items && (
-                        <p className="text-sm text-destructive">
-                            {errors.items}
-                        </p>
-                    )}
+                    <InputError
+                        message={errors.items ?? previewErrors.general.items}
+                    />
 
                     {data.items.length === 0 ? (
                         <div className="rounded border border-dashed border-border py-8 text-center text-muted-foreground">
@@ -530,14 +533,21 @@ export default function QuotationForm({
                                           }),
                                       )
                                     : [];
-                                const lineSubtotal = calculateLineSubtotal(
-                                    item.quantity,
-                                    item.unit_price,
+                                const { line, isCurrent } = lineFor(
+                                    item.row_key,
                                 );
+                                // El campo que manda, si está vacío, muestra lo que se va a usar: sin precio se cotiza
+                                // al 0 % y sin ajuste también. No se escribe en el campo mientras el usuario lo edita.
+                                const appliedPrice =
+                                    item.pricing_source === 'price' &&
+                                    item.unit_price === '' &&
+                                    isCurrent
+                                        ? String(Number(line?.unit_price))
+                                        : undefined;
 
                                 return (
                                     <div
-                                        key={index}
+                                        key={item.row_key}
                                         className="space-y-3 rounded border border-border p-4"
                                     >
                                         <div className="grid gap-3 md:grid-cols-12">
@@ -556,6 +566,14 @@ export default function QuotationForm({
                                                         )
                                                     }
                                                     placeholder="Seleccionar..."
+                                                />
+                                                <InputError
+                                                    className="text-xs"
+                                                    message={itemError(
+                                                        item,
+                                                        index,
+                                                        'product_id',
+                                                    )}
                                                 />
                                             </div>
                                             <div className="md:col-span-3">
@@ -577,6 +595,14 @@ export default function QuotationForm({
                                                     placeholder="Seleccionar..."
                                                     disabled={!selectedProduct}
                                                 />
+                                                <InputError
+                                                    className="text-xs"
+                                                    message={itemError(
+                                                        item,
+                                                        index,
+                                                        'product_variant_id',
+                                                    )}
+                                                />
                                             </div>
                                             <div className="md:col-span-2">
                                                 <Label className="text-xs">
@@ -594,6 +620,14 @@ export default function QuotationForm({
                                                     }
                                                     placeholder="Seleccionar..."
                                                 />
+                                                <InputError
+                                                    className="text-xs"
+                                                    message={itemError(
+                                                        item,
+                                                        index,
+                                                        'type',
+                                                    )}
+                                                />
                                             </div>
                                             <div className="md:col-span-2">
                                                 <Label className="text-xs">
@@ -609,6 +643,14 @@ export default function QuotationForm({
                                                             value,
                                                         )
                                                     }
+                                                />
+                                                <InputError
+                                                    className="text-xs"
+                                                    message={itemError(
+                                                        item,
+                                                        index,
+                                                        'quantity',
+                                                    )}
                                                 />
                                             </div>
                                             <div className="flex items-end justify-end md:col-span-1">
@@ -640,6 +682,14 @@ export default function QuotationForm({
                                                         )
                                                     }
                                                 />
+                                                <InputError
+                                                    className="text-xs"
+                                                    message={itemError(
+                                                        item,
+                                                        index,
+                                                        'description',
+                                                    )}
+                                                />
                                             </div>
                                             <div className="md:col-span-2">
                                                 <Label className="text-xs">
@@ -655,13 +705,29 @@ export default function QuotationForm({
                                                         )
                                                     }
                                                 />
+                                                <InputError
+                                                    className="text-xs"
+                                                    message={itemError(
+                                                        item,
+                                                        index,
+                                                        'color',
+                                                    )}
+                                                />
                                             </div>
                                             <div className="md:col-span-2">
                                                 <Label className="text-xs">
                                                     Precio lista
                                                 </Label>
                                                 <Input
-                                                    value={item.list_unit_price}
+                                                    // Precio interno: 2 decimales, y vacío sin presentación.
+                                                    value={formatNumber(
+                                                        item.list_unit_price,
+                                                        {
+                                                            currency: '$',
+                                                            maxDecimals: 2,
+                                                            emptyValue: '',
+                                                        },
+                                                    )}
                                                     readOnly
                                                     className="bg-muted/50"
                                                 />
@@ -683,15 +749,31 @@ export default function QuotationForm({
                                                             value,
                                                         )
                                                     }
-                                                    placeholder="-10 o 5"
+                                                    placeholder={
+                                                        item.pricing_source ===
+                                                        'adjustment'
+                                                            ? '0'
+                                                            : '-10 o 5'
+                                                    }
+                                                />
+                                                <InputError
+                                                    className="text-xs"
+                                                    message={itemError(
+                                                        item,
+                                                        index,
+                                                        'price_adjustment_pct',
+                                                    )}
                                                 />
                                             </div>
                                             <div className="md:col-span-2">
                                                 <Label className="text-xs">
                                                     Precio unitario
                                                 </Label>
-                                                <DecimalInput
-                                                    maxIntegerDigits={12}
+                                                <IntegerInput
+                                                    maxDigits={
+                                                        NUMBER_TYPES.money
+                                                            .maxIntegerDigits
+                                                    }
                                                     value={item.unit_price}
                                                     onValueChange={(value) =>
                                                         updateItem(
@@ -700,16 +782,32 @@ export default function QuotationForm({
                                                             value,
                                                         )
                                                     }
+                                                    placeholder={appliedPrice}
+                                                />
+                                                <InputError
+                                                    className="text-xs"
+                                                    message={itemError(
+                                                        item,
+                                                        index,
+                                                        'unit_price',
+                                                    )}
                                                 />
                                             </div>
                                         </div>
 
                                         <div className="text-right text-sm text-muted-foreground">
                                             Subtotal línea:{' '}
+                                            {/* Atenuado si no corresponde a la fila tal como está: se está
+                                                recalculando o la vista previa fue rechazada. */}
                                             <FormattedNumber
-                                                value={lineSubtotal}
+                                                value={line?.subtotal ?? null}
                                                 currency
                                                 maxDecimals={0}
+                                                className={
+                                                    isCurrent
+                                                        ? undefined
+                                                        : 'opacity-50'
+                                                }
                                             />
                                         </div>
                                     </div>
@@ -721,10 +819,34 @@ export default function QuotationForm({
 
                 <div className="rounded-lg border border-border bg-card p-6">
                     <div className="ml-auto max-w-sm space-y-4 text-sm">
+                        {/* Informativo, no un error: es lo normal mientras se llena un producto nuevo. Al guardar, el
+                            servidor marca los campos que le faltan a la fila. */}
+                        {previewIncompleteRows > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                                {previewIncompleteRows === 1
+                                    ? '1 fila incompleta no suma en los totales.'
+                                    : `${previewIncompleteRows} filas incompletas no suman en los totales.`}
+                            </p>
+                        )}
+                        {(previewLoading || previewStale !== null) && (
+                            <p
+                                className={
+                                    previewStale === null
+                                        ? 'text-xs text-muted-foreground'
+                                        : 'text-xs text-destructive'
+                                }
+                            >
+                                {previewStale === null
+                                    ? 'Calculando precios…'
+                                    : previewStale === 'invalid'
+                                      ? 'Revisa los datos marcados: los totales no están al día.'
+                                      : 'No se pudieron calcular los precios. Se recalculan al guardar.'}
+                            </p>
+                        )}
                         <div className="flex items-center justify-between">
                             <span>Subtotal</span>
                             <FormattedNumber
-                                value={totals.subtotal}
+                                value={preview?.totals.subtotal ?? 0}
                                 currency
                                 maxDecimals={0}
                             />
@@ -733,21 +855,34 @@ export default function QuotationForm({
                         <div className="flex items-start justify-between leading-8">
                             <div className="flex items-start gap-2">
                                 <span>IVA</span>
-                                <div className="flex items-start gap-1">
-                                    <DecimalInput
-                                        maxDecimals={2}
-                                        maxIntegerDigits={3}
-                                        value={data.iva_percentage}
-                                        onValueChange={(value) =>
-                                            setData('iva_percentage', value)
+                                <div>
+                                    <div className="flex items-start gap-1">
+                                        <DecimalInput
+                                            maxDecimals={2}
+                                            maxIntegerDigits={3}
+                                            value={data.iva_percentage}
+                                            onValueChange={(value) => {
+                                                setData(
+                                                    'iva_percentage',
+                                                    value,
+                                                );
+                                                clearErrors('iva_percentage');
+                                            }}
+                                            className="h-8 w-20 text-right"
+                                        />
+                                        <span>%</span>
+                                    </div>
+                                    <InputError
+                                        className="text-xs leading-4"
+                                        message={
+                                            errors.iva_percentage ??
+                                            previewErrors.general.iva_percentage
                                         }
-                                        className="h-8 w-20 text-right"
                                     />
-                                    <span>%</span>
                                 </div>
                             </div>
                             <FormattedNumber
-                                value={totals.ivaAmount}
+                                value={preview?.totals.iva_amount ?? 0}
                                 currency
                                 maxDecimals={0}
                             />
@@ -755,7 +890,7 @@ export default function QuotationForm({
                         <div className="flex items-center justify-between border-t border-border pt-2 text-base font-semibold">
                             <span>Total</span>
                             <FormattedNumber
-                                value={totals.total}
+                                value={preview?.totals.total ?? 0}
                                 currency
                                 maxDecimals={0}
                             />

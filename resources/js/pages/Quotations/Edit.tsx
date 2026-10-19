@@ -8,7 +8,11 @@ import type {
     QuotationFormData,
 } from '@/components/quotations/QuotationForm';
 import type { ComboboxOptionType } from '@/components/ui/combobox';
-import { index as quotationsIndex } from '@/routes/quotations';
+import { newRowKey } from '@/lib/quotation-pricing-rows';
+import {
+    editPreviewPricing as quotationEditPreviewPricing,
+    index as quotationsIndex,
+} from '@/routes/quotations';
 
 type QuotationDetail = {
     id: number;
@@ -74,7 +78,11 @@ function mapQuotationToForm(quotation: QuotationDetail): QuotationFormData {
         area: quotation.area ?? '',
         notes: quotation.notes ?? '',
         iva_percentage: String(quotation.iva_percentage),
+        // Las filas guardadas mandan los dos campos de precio hasta que el usuario toque uno: el servidor conserva el
+        // precio y, si el precio de lista cambió, recalcula el ajuste, que la vista previa muestra.
         items: quotation.items.map((item) => ({
+            row_key: newRowKey(),
+            pricing_source: 'saved',
             product_id: String(item.product_id),
             product_variant_id: String(item.product_variant_id),
             type: item.type ?? '',
@@ -109,6 +117,7 @@ export default function QuotationsEdit({
                 itemTypeOptions={itemTypeOptions}
                 initialData={mapQuotationToForm(quotation)}
                 submitUrl={quotationUpdate(quotation.id).url}
+                previewUrl={quotationEditPreviewPricing(quotation.id).url}
                 method="put"
                 title="Editar Cotización"
                 backUrl={quotationsIndex().url}
