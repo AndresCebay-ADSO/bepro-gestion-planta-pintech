@@ -5,6 +5,7 @@ import {
     pricingFieldsFor,
     pricingRequestFor,
     pricingSignature,
+    splitPricedRows,
 } from '@/lib/quotation-pricing-rows';
 import type {
     PricingLine,
@@ -270,5 +271,37 @@ describe('applyPricingLines', () => {
         });
 
         expect(applyPricingLines([filled], line(filled))).toBeNull();
+    });
+});
+
+describe('splitPricedRows', () => {
+    it('separa las filas que se cotizan de las incompletas, que no suman en los totales', () => {
+        const complete = row({ row_key: 'row-a' });
+        const withoutVariant = row({
+            row_key: 'row-b',
+            product_variant_id: '',
+        });
+        const withoutQuantity = row({ row_key: 'row-c', quantity: '' });
+
+        const { priced, incomplete } = splitPricedRows([
+            complete,
+            withoutVariant,
+            withoutQuantity,
+        ]);
+
+        expect(priced.map(({ rowKey }) => rowKey)).toEqual(['row-a']);
+        expect(incomplete).toBe(2);
+    });
+
+    it('la firma de cada fila es la misma que pricingSignature', () => {
+        const current = row({ pricing_source: 'saved', unit_price: '1176' });
+
+        expect(splitPricedRows([current]).priced[0].signature).toBe(
+            pricingSignature(current),
+        );
+    });
+
+    it('sin filas incompletas no hay nada que avisar', () => {
+        expect(splitPricedRows([row()]).incomplete).toBe(0);
     });
 });

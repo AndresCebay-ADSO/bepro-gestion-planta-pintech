@@ -2,8 +2,9 @@ import { useMemo } from 'react';
 
 import { useServerPreview } from '@/hooks/use-server-preview';
 import { toDecimalPayload } from '@/lib/numeric-input';
-import { pricingRequestFor } from '@/lib/quotation-pricing-rows';
+import { splitPricedRows } from '@/lib/quotation-pricing-rows';
 import type {
+    PricedRow,
     PricingLine,
     QuotationPricingRow,
 } from '@/lib/quotation-pricing-rows';
@@ -13,7 +14,7 @@ const PREVIEW_DELAY_MS = 300;
 
 type PreviewRequestBody = {
     iva_percentage: string;
-    items: Array<NonNullable<ReturnType<typeof pricingRequestFor>>>;
+    items: Array<PricedRow['body']>;
 };
 
 type PreviewResponse = {
@@ -49,23 +50,11 @@ export function useQuotationPricingPreview(
     ivaPercentage: string,
     previewUrl: string,
 ) {
-    const { request, signatures } = useMemo(() => {
-        // La firma es el cuerpo de la fila serializado (la misma que `pricingSignature`): se arma una sola vez.
-        const priced = rows.flatMap((row) => {
-            const body = pricingRequestFor(row);
-
-            return body === null
-                ? []
-                : [
-                      {
-                          rowKey: row.row_key,
-                          body,
-                          signature: JSON.stringify(body),
-                      },
-                  ];
-        });
+    const { request, signatures, incomplete } = useMemo(() => {
+        const { priced, incomplete } = splitPricedRows(rows);
 
         return {
+            incomplete,
             request:
                 priced.length === 0
                     ? null
@@ -154,6 +143,8 @@ export function useQuotationPricingPreview(
         lineFor,
         previewErrors,
         previewLoading: hasRows && loading,
+        /** Filas incompletas que no suman en los totales, cuando hay otras que sí se cotizan. */
+        previewIncompleteRows: hasRows ? incomplete : 0,
         previewStale: hasRows ? stale : null,
     };
 }

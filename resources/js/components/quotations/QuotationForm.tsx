@@ -145,8 +145,14 @@ export default function QuotationForm({
 
     // El dinero lo calcula el servidor (PR 4b): el formulario muestra la vista previa y llena, de cada fila, el campo
     // de precio que el usuario no escribió (`pricing_source`).
-    const { preview, lineFor, previewErrors, previewLoading, previewStale } =
-        useQuotationPricingPreview(data.items, data.iva_percentage, previewUrl);
+    const {
+        preview,
+        lineFor,
+        previewErrors,
+        previewLoading,
+        previewStale,
+        previewIncompleteRows,
+    } = useQuotationPricingPreview(data.items, data.iva_percentage, previewUrl);
 
     // Al llegar una vista previa y también al cambiar las filas: si una edición vuelve a la misma firma («15» → «15,»),
     // no se pide otra vista previa y el campo que se vació se llena con la línea que ya está. Cada línea trae la firma
@@ -813,6 +819,15 @@ export default function QuotationForm({
 
                 <div className="rounded-lg border border-border bg-card p-6">
                     <div className="ml-auto max-w-sm space-y-4 text-sm">
+                        {/* Informativo, no un error: es lo normal mientras se llena un producto nuevo. Al guardar, el
+                            servidor marca los campos que le faltan a la fila. */}
+                        {previewIncompleteRows > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                                {previewIncompleteRows === 1
+                                    ? '1 fila incompleta no suma en los totales.'
+                                    : `${previewIncompleteRows} filas incompletas no suman en los totales.`}
+                            </p>
+                        )}
                         {(previewLoading || previewStale !== null) && (
                             <p
                                 className={

@@ -77,6 +77,32 @@ export function pricingRequestFor(row: QuotationPricingRow) {
     };
 }
 
+export type PricedRow = {
+    rowKey: string;
+    body: NonNullable<ReturnType<typeof pricingRequestFor>>;
+    /** El cuerpo serializado: la misma firma que `pricingSignature`, armada una sola vez. */
+    signature: string;
+};
+
+/**
+ * Las filas que se le piden al servidor y cuántas quedan fuera por incompletas (sin presentación o sin una cantidad
+ * entera mayor que cero): esas no suman en los totales de la vista previa, y al guardar el servidor las rechaza.
+ */
+export function splitPricedRows(rows: QuotationPricingRow[]): {
+    priced: PricedRow[];
+    incomplete: number;
+} {
+    const priced = rows.flatMap((row): PricedRow[] => {
+        const body = pricingRequestFor(row);
+
+        return body === null
+            ? []
+            : [{ rowKey: row.row_key, body, signature: JSON.stringify(body) }];
+    });
+
+    return { priced, incomplete: rows.length - priced.length };
+}
+
 /** Lo que identifica el cálculo de una fila: una respuesta solo se aplica a la fila tal como estaba al pedirla. */
 export function pricingSignature(row: QuotationPricingRow): string | null {
     const request = pricingRequestFor(row);
