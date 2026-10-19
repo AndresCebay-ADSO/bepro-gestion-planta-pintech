@@ -1,185 +1,159 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
+import { useServerPreview } from '@/hooks/use-server-preview';
 import { toDecimalPayload } from '@/lib/numeric-input';
+import { pricingRequestFor } from '@/lib/quotation-pricing-rows';
+import type {
+    PricingLine,
+    QuotationPricingRow,
+} from '@/lib/quotation-pricing-rows';
 
-export type QuotationPricingItem = {
-    product_id: string;
-    product_variant_id: string;
-    quantity: string;
-    price_adjustment_pct: string;
-    unit_price: string;
+/** Espera tras la última tecla antes de pedir los precios. */
+const PREVIEW_DELAY_MS = 300;
+
+type PreviewRequestBody = {
+    iva_percentage: string;
+    items: Array<NonNullable<ReturnType<typeof pricingRequestFor>>>;
 };
 
-type PreviewLine = {
-    list_unit_price: string;
-    price_adjustment_pct: string;
-    unit_price: string;
-    subtotal: string;
-};
-
-export type QuotationPricingPreview = {
-    /** Por índice de la fila del formulario: las filas incompletas no se envían y no aparecen. */
-    lines: Record<number, PreviewLine>;
+type PreviewResponse = {
+    items: PricingLine[];
     totals: { subtotal: string; iva_amount: string; total: string };
 };
 
-/** Una fila se cotiza cuando tiene presentación y una cantidad entera mayor que cero. */
-function isComplete(item: QuotationPricingItem): boolean {
-    return (
-        item.product_id !== '' &&
-        item.product_variant_id !== '' &&
-        /^\d+$/.test(item.quantity) &&
-        Number(item.quantity) > 0
-    );
-}
+/** Por cada fila enviada, en el orden del cuerpo: su `row_key` y su firma. */
+type RequestRows = Array<[string, string]>;
+
+export type QuotationPricingPreview = {
+    /** Por `row_key`, con la firma de la fila para la que se calculó: las filas que no se pueden cotizar no aparecen. */
+    lines: Record<string, PricingLine & { signature: string }>;
+    totals: PreviewResponse['totals'];
+};
+
+export type QuotationPreviewErrors = {
+    /** Por `row_key` y campo: el servidor responde por posición en la petición, no por índice del formulario. */
+    byRow: Record<string, Record<string, string>>;
+    /** Los que no son de una fila: el IVA o «items» (sin precio de venta, total demasiado grande). */
+    general: Record<string, string>;
+};
+
+const NO_ERRORS: QuotationPreviewErrors = { byRow: {}, general: {} };
 
 /**
- * Vista previa de precios de la cotización (PR 4b de la auditoría 3.6). El formulario no calcula dinero: espera a que
- * el usuario deje de escribir y le pide al servidor los mismos precios y totales que se guardarían, con la misma regla
- * (`QuotationPricingService`). Así lo que se ve antes de guardar es exactamente lo que queda guardado.
+ * Vista previa de precios de la cotización (PR 4b de la auditoría 3.6). El formulario no calcula dinero: le pide al
+ * servidor los mismos precios y totales que se guardarían, con la misma regla (`QuotationPricingService`). Así lo que se
+ * ve antes de guardar es exactamente lo que queda guardado.
  */
 export function useQuotationPricingPreview(
-    items: QuotationPricingItem[],
+    rows: QuotationPricingRow[],
     ivaPercentage: string,
     previewUrl: string,
 ) {
-    const [preview, setPreview] = useState<QuotationPricingPreview | null>(
-        null,
-    );
-    const [previewLoading, setPreviewLoading] = useState(false);
-    const [previewStale, setPreviewStale] = useState<
-        'invalid' | 'failed' | null
-    >(null);
+    const { request, signatures } = useMemo(() => {
+        // La firma es el cuerpo de la fila serializado (la misma que `pricingSignature`): se arma una sola vez.
+        const priced = rows.flatMap((row) => {
+            const body = pricingRequestFor(row);
 
-    // Solo cambia cuando cambia algo que afecta el precio: la descripción o el color no piden otra vista previa.
-    const signature = useMemo(
-        () =>
-            JSON.stringify({
-                iva: ivaPercentage,
-                rows: items.flatMap((item, index) =>
-                    isComplete(item)
-                        ? [
-                              [
-                                  index,
-                                  item.product_id,
-                                  item.product_variant_id,
-                                  item.quantity,
-                                  item.price_adjustment_pct,
-                                  item.unit_price,
+            return body === null
+                ? []
+                : [
+                      {
+                          rowKey: row.row_key,
+                          body,
+                          signature: JSON.stringify(body),
+                      },
+                  ];
+        });
+
+        return {
+            request:
+                priced.length === 0
+                    ? null
+                    : {
+                          url: previewUrl,
+                          body: {
+                              iva_percentage: toDecimalPayload(ivaPercentage),
+                              items: priced.map(({ body }) => body),
+                          },
+                          context: priced.map(
+                              ({ rowKey, signature }): RequestRows[number] => [
+                                  rowKey,
+                                  signature,
                               ],
-                          ]
-                        : [],
-                ),
-            }),
-        [items, ivaPercentage],
-    );
-
-    useEffect(() => {
-        const { iva, rows } = JSON.parse(signature) as {
-            iva: string;
-            rows: Array<[number, string, string, string, string, string]>;
+                          ),
+                      },
+            signatures: Object.fromEntries(
+                priced.map(({ rowKey, signature }) => [rowKey, signature]),
+            ) as Record<string, string>,
         };
+    }, [rows, ivaPercentage, previewUrl]);
 
-        if (rows.length === 0) {
-            return;
+    const { result, errors, loading, stale } = useServerPreview<
+        PreviewResponse,
+        PreviewRequestBody,
+        RequestRows
+    >(request, PREVIEW_DELAY_MS);
+
+    // Sin filas que cotizar no hay nada que mostrar: se deriva aquí en vez de limpiar el estado dentro del efecto.
+    const hasRows = request !== null;
+
+    const preview = useMemo((): QuotationPricingPreview | null => {
+        if (!hasRows || result === null) {
+            return null;
         }
 
-        // fetch no envía el XSRF-TOKEN por su cuenta, como sí hace Axios.
-        const match = document.cookie.match(/(^| )XSRF-TOKEN=([^;]+)/);
-        const xsrfToken = match ? decodeURIComponent(match[2]) : '';
-        const controller = new AbortController();
-        let loadingIndicatorId: number | null = null;
+        const lines: QuotationPricingPreview['lines'] = {};
 
-        const timeoutId = window.setTimeout(async () => {
-            loadingIndicatorId = window.setTimeout(
-                () => setPreviewLoading(true),
-                180,
-            );
+        result.context.forEach(([rowKey, signature], position) => {
+            lines[rowKey] = { ...result.value.items[position], signature };
+        });
 
-            try {
-                const response = await fetch(previewUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Accept: 'application/json',
-                        'X-XSRF-TOKEN': xsrfToken,
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    body: JSON.stringify({
-                        iva_percentage: toDecimalPayload(iva),
-                        items: rows.map(
-                            ([
-                                ,
-                                productId,
-                                variantId,
-                                quantity,
-                                adjustment,
-                                unitPrice,
-                            ]) => ({
-                                product_id: productId,
-                                product_variant_id: variantId,
-                                quantity,
-                                price_adjustment_pct:
-                                    toDecimalPayload(adjustment) || null,
-                                unit_price: unitPrice || null,
-                            }),
-                        ),
-                    }),
-                    signal: controller.signal,
-                });
+        return { lines, totals: result.value.totals };
+    }, [hasRows, result]);
 
-                if (!response.ok) {
-                    setPreviewStale(
-                        response.status === 422 ? 'invalid' : 'failed',
-                    );
+    const previewErrors = useMemo((): QuotationPreviewErrors => {
+        if (!hasRows || errors === null) {
+            return NO_ERRORS;
+        }
 
-                    return;
-                }
+        const byRow: QuotationPreviewErrors['byRow'] = {};
+        const general: QuotationPreviewErrors['general'] = {};
 
-                const payload = (await response.json()) as {
-                    items: PreviewLine[];
-                    totals: QuotationPricingPreview['totals'];
-                };
-                const lines: Record<number, PreviewLine> = {};
+        for (const [field, message] of Object.entries(errors.value)) {
+            const match = /^items\.(\d+)\.(.+)$/.exec(field);
+            const rowKey = match
+                ? errors.context[Number(match[1])]?.[0]
+                : undefined;
 
-                rows.forEach(([index], position) => {
-                    lines[index] = payload.items[position];
-                });
-
-                setPreview({ lines, totals: payload.totals });
-                setPreviewStale(null);
-            } catch (error) {
-                // Una petición cancelada (el usuario siguió escribiendo) no es un fallo: la reemplaza la siguiente.
-                if ((error as Error).name !== 'AbortError') {
-                    setPreviewStale('failed');
-                }
-            } finally {
-                if (loadingIndicatorId !== null) {
-                    window.clearTimeout(loadingIndicatorId);
-                }
-
-                setPreviewLoading(false);
+            if (match && rowKey !== undefined) {
+                byRow[rowKey] = { ...byRow[rowKey], [match[2]]: message };
+            } else {
+                general[field] = message;
             }
-        }, 300);
+        }
 
-        return () => {
-            controller.abort();
+        return { byRow, general };
+    }, [hasRows, errors]);
 
-            if (loadingIndicatorId !== null) {
-                window.clearTimeout(loadingIndicatorId);
-            }
+    /**
+     * La línea de la vista previa de una fila y si corresponde a la fila tal como está ahora. Una línea que no está al día
+     * (la fila cambió y la respuesta nueva no ha llegado, o fue rechazada) se puede mostrar, pero no como definitiva.
+     */
+    const lineFor = (rowKey: string) => {
+        const line = preview?.lines[rowKey];
 
-            window.clearTimeout(timeoutId);
-            setPreviewLoading(false);
+        return {
+            line,
+            isCurrent:
+                line !== undefined && line.signature === signatures[rowKey],
         };
-    }, [previewUrl, signature]);
-
-    // Sin filas completas no hay nada que mostrar: se deriva aquí en vez de limpiar el estado dentro del efecto.
-    const hasRows = signature.includes('[[');
+    };
 
     return {
-        preview: hasRows ? preview : null,
-        previewLoading: hasRows && previewLoading,
-        previewStale: hasRows ? previewStale : null,
+        preview,
+        lineFor,
+        previewErrors,
+        previewLoading: hasRows && loading,
+        previewStale: hasRows ? stale : null,
     };
 }

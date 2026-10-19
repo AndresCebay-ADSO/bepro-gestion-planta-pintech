@@ -138,35 +138,23 @@ class AppServiceProvider extends ServiceProvider
     {
         // Cada petición genera el PDF de la estampita y queda en la auditoría: una recarga repetida o un script no deben
         // llenar la auditoría.
-        RateLimiter::for('production-labels', function (Request $request): Limit {
-            $user = $request->user();
-
-            return Limit::perMinute(10)->by(
-                $user?->id !== null
-                    ? 'user:'.$user->id
-                    : 'ip:'.$request->ip()
-            );
-        });
+        RateLimiter::for('production-labels', fn (Request $request): Limit => $this->perUserOrIp($request, 10));
 
         // La vista previa de la cotización se pide al dejar de escribir; una por línea editada cabe con holgura.
-        RateLimiter::for('quotation-preview-pricing', function (Request $request): Limit {
-            $user = $request->user();
+        RateLimiter::for('quotation-preview-pricing', fn (Request $request): Limit => $this->perUserOrIp($request, 120));
 
-            return Limit::perMinute(120)->by(
-                $user?->id !== null
-                    ? 'user:'.$user->id
-                    : 'ip:'.$request->ip()
-            );
-        });
+        RateLimiter::for('production-preview-costs', fn (Request $request): Limit => $this->perUserOrIp($request, 30));
+    }
 
-        RateLimiter::for('production-preview-costs', function (Request $request): Limit {
-            $user = $request->user();
+    /** Límite por usuario con sesión, o por IP sin ella. */
+    private function perUserOrIp(Request $request, int $perMinute): Limit
+    {
+        $user = $request->user();
 
-            return Limit::perMinute(30)->by(
-                $user?->id !== null
-                    ? 'user:'.$user->id
-                    : 'ip:'.$request->ip()
-            );
-        });
+        return Limit::perMinute($perMinute)->by(
+            $user?->id !== null
+                ? 'user:'.$user->id
+                : 'ip:'.$request->ip()
+        );
     }
 }

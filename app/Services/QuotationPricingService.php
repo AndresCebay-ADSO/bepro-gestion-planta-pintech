@@ -161,12 +161,14 @@ class QuotationPricingService
             return '0';
         }
 
-        $ratio = $this->calculator->div($listUnitPrice, $unitPrice, 4);
+        // Con la escala exacta: el único redondeo, a los 2 decimales del ajuste, lo hace quien llama. Redondear antes
+        // el cociente a 4 decimales corría los empates (21,875 % salía 21,87).
+        $ratio = $this->calculator->div($listUnitPrice, $unitPrice, self::EXACT_SCALE);
 
         return $this->calculator->mul(
-            $this->calculator->sub('1', $ratio, 4),
+            $this->calculator->sub('1', $ratio, self::EXACT_SCALE),
             '100',
-            4
+            self::EXACT_SCALE
         );
     }
 }

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import type { PreviewStaleReason } from '@/hooks/use-production-cost-preview';
+import type { PreviewStaleReason } from '@/hooks/use-server-preview';
 import { HEGMAN_LIMITS, NUMBER_TYPES } from '@/lib/number-types';
 import type {
     LabelMaterialOption,

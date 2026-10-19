@@ -12,10 +12,20 @@ use App\Models\ProductVariant;
 use App\Models\Quotation;
 use App\Rules\PlantDate;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 class StoreQuotationRequest extends FormRequest
 {
+    /** Productos por cotización: el PDF lleva unos 8 por hoja y el promedio es de 4 a 6. */
+    public const MAX_ITEMS = 50;
+
+    /** @var array{client_id: int|null, product_ids: array<int, int>, variant_ids: array<int, int>}|null */
+    private ?array $kept = null;
+
+    /** @var Collection<int, ProductVariant>|null */
+    private ?Collection $variantsToValidate = null;
+
     public function authorize(): bool
     {
         return $this->user()?->can('create', Quotation::class) ?? false;
@@ -34,7 +44,7 @@ class StoreQuotationRequest extends FormRequest
      */
     protected function sharedRules(): array
     {
-        $kept = $this->keptRecords();
+        $kept = $this->kept();
 
         return [
             'client_id' => [
@@ -58,8 +68,31 @@ class StoreQuotationRequest extends FormRequest
             'delivery_time' => ['nullable', 'string', 'max:100'],
             'area' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:5000'],
+            ...$this->pricingRules(),
+        ];
+    }
+
+    /**
+     * Lo que decide el precio: el IVA y las líneas. Lo comparten guardar y la vista previa del formulario.
+     *
+     * @return array<string, mixed>
+     */
+    protected function pricingRules(): array
+    {
+        $kept = $this->kept();
+        $items = $this->input('items');
+        $document = [
             'iva_percentage' => ['required', ...NumberType::Percentage->rules('100'), 'min:0'],
-            'items' => ['required', 'array', 'min:1'],
+            'items' => ['required', 'array', 'min:1', 'max:'.self::MAX_ITEMS],
+        ];
+
+        // Con más filas del tope solo se informa el tope: validar fila por fila costaría una consulta por fila.
+        if (is_array($items) && count($items) > self::MAX_ITEMS) {
+            return $document;
+        }
+
+        return [
+            ...$document,
             'items.*.product_id' => [
                 'required',
                 Rule::exists('products', 'id')->where(fn ($query) => $query
@@ -78,15 +111,11 @@ class StoreQuotationRequest extends FormRequest
                         return;
                     }
 
-                    $productId = $this->input("items.{$index}.product_id");
+                    $variant = is_numeric($value) ? $this->variantsToValidate()->get((int) $value) : null;
 
-                    $exists = ProductVariant::query()
-                        ->where('id', $value)
-                        ->where('product_id', $productId)
-                        ->where(fn ($query) => $query
-                            ->where('is_active', true)
-                            ->orWhereIn('id', $kept['variant_ids']))
-                        ->exists();
+                    $exists = $variant !== null
+                        && (int) $variant->product_id === (int) $this->input("items.{$index}.product_id")
+                        && ((bool) $variant->is_active || in_array((int) $variant->id, $kept['variant_ids'], true));
 
                     if (! $exists) {
                         $fail('La presentación no pertenece al producto seleccionado.');
@@ -101,6 +130,48 @@ class StoreQuotationRequest extends FormRequest
             // En pesos enteros, como los ve el cliente (P4b-3), con el tope del tipo Dinero.
             'items.*.unit_price' => ['nullable', 'integer', 'min:0', 'max:'.NumberType::Money->max()],
         ];
+    }
+
+    /**
+     * Las presentaciones de todas las líneas, en una sola consulta: la vista previa valida con cada pausa al escribir.
+     *
+     * @return Collection<int, ProductVariant>
+     */
+    private function variantsToValidate(): Collection
+    {
+        if ($this->variantsToValidate === null) {
+            $ids = collect((array) $this->input('items', []))
+                ->map(fn (mixed $item): mixed => is_array($item) ? ($item['product_variant_id'] ?? null) : null)
+                ->filter(fn (mixed $id): bool => filter_var($id, FILTER_VALIDATE_INT) !== false)
+                ->map(fn (mixed $id): int => (int) $id)
+                ->unique()
+                ->values();
+
+            $this->variantsToValidate = ProductVariant::query()
+                ->whereIn('id', $ids)
+                ->get(['id', 'product_id', 'is_active'])
+                ->keyBy('id');
+        }
+
+        return $this->variantsToValidate;
+    }
+
+    /**
+     * Las presentaciones que la cotización ya tenía, para calcular sus precios sin volver a consultarlas.
+     *
+     * @return array<int, int>
+     */
+    public function keptVariantIds(): array
+    {
+        return $this->kept()['variant_ids'];
+    }
+
+    /**
+     * @return array{client_id: int|null, product_ids: array<int, int>, variant_ids: array<int, int>}
+     */
+    private function kept(): array
+    {
+        return $this->kept ??= $this->keptRecords();
     }
 
     /**
@@ -131,6 +202,7 @@ class StoreQuotationRequest extends FormRequest
         return [
             'items.required' => 'Debes agregar al menos un producto a la cotización.',
             'items.min' => 'Debes agregar al menos un producto a la cotización.',
+            'items.max' => 'Una cotización lleva como mucho '.self::MAX_ITEMS.' productos.',
             'items.*.product_id.required' => 'Debes seleccionar un producto.',
             'items.*.product_variant_id.required' => 'Debes seleccionar la presentación del producto.',
             'items.*.quantity.required' => 'La cantidad es obligatoria.',

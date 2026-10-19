@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\QuotationStatus;
 use App\Enums\SystemRole;
 use App\Models\Client;
 use App\Models\Product;
@@ -12,6 +13,7 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 /*
  * PR 4b de la auditoría 3.6: la cotización en pesos enteros. Se redondea una sola vez y antes de calcular, así que lo
@@ -157,4 +159,135 @@ test('si el ajuste y el precio llegan juntos y el ajuste da ese precio, se conse
 
     expect((string) $item->price_adjustment_pct)->toBe('15.00')
         ->and(bccomp((string) $item->unit_price, '1176', 4))->toBe(0);
+});
+
+test('el ajuste que se deduce del precio se redondea una sola vez', function (): void {
+    $this->variant->update(['current_price' => '1000']);
+
+    // (1 − 1000 / 1280) × 100 = 21,875 exacto → 21,88. Redondear antes el cociente a 4 decimales (0,7813) daba 21,87.
+    $this->actingAs($this->commercial)
+        ->post(route('quotations.store'), wholePesosPayload($this, ['price_adjustment_pct' => null, 'unit_price' => '1280']))
+        ->assertSessionHasNoErrors();
+
+    expect((string) storedQuotation()->items->sole()->price_adjustment_pct)->toBe('21.88');
+});
+
+test('una cotización lleva como mucho 50 productos, al guardar y en la vista previa', function (): void {
+    $payload = wholePesosPayload($this, []);
+    $payload['items'] = array_fill(0, 51, $payload['items'][0]);
+
+    $this->actingAs($this->commercial)
+        ->post(route('quotations.store'), $payload)
+        ->assertSessionHasErrors('items');
+
+    $this->actingAs($this->commercial)
+        ->postJson(route('quotations.preview-pricing'), $payload)
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('items');
+
+    $payload['items'] = array_slice($payload['items'], 0, 50);
+
+    $this->actingAs($this->commercial)
+        ->postJson(route('quotations.preview-pricing'), $payload)
+        ->assertOk();
+});
+
+test('la vista previa valida las presentaciones con una sola consulta, no una por fila', function (): void {
+    $payload = wholePesosPayload($this, []);
+    $payload['items'] = array_fill(0, 20, $payload['items'][0]);
+    $variantQueries = 0;
+
+    DB::listen(function ($query) use (&$variantQueries): void {
+        if (str_contains($query->sql, 'product_variants')) {
+            $variantQueries++;
+        }
+    });
+
+    $this->actingAs($this->commercial)
+        ->postJson(route('quotations.preview-pricing'), $payload)
+        ->assertOk();
+
+    // Una al validar y otra al calcular los precios (QuotationService::prepareItems).
+    expect($variantQueries)->toBe(2);
+});
+
+/**
+ * Una cotización en borrador guardada por la aplicación, con el ajuste dado.
+ */
+function savedWholePesosQuotation(object $t, string $adjustment): Quotation
+{
+    $t->actingAs($t->commercial)
+        ->post(route('quotations.store'), wholePesosPayload($t, ['price_adjustment_pct' => $adjustment]))
+        ->assertSessionHasNoErrors();
+
+    return storedQuotation();
+}
+
+test('al editar, la vista previa acepta la presentación inactiva que la cotización ya tenía y rechaza otra', function (): void {
+    $quotation = savedWholePesosQuotation($this, '0');
+    $this->variant->update(['is_active' => false]);
+
+    $this->actingAs($this->commercial)
+        ->postJson(route('quotations.edit-preview-pricing', $quotation), wholePesosPayload($this, []))
+        ->assertOk();
+
+    $otherVariant = ProductVariant::create(['product_id' => $this->product->id, 'code' => 'VAR-PESOS-2',
+        'name' => 'Cuarto', 'unit_of_measure_id' => $this->variant->unit_of_measure_id, 'presentation_value' => 0.25,
+        'current_price' => '300', 'is_active' => false]);
+
+    $this->actingAs($this->commercial)
+        ->postJson(route('quotations.edit-preview-pricing', $quotation), wholePesosPayload($this, ['product_variant_id' => $otherVariant->id]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('items.0.product_variant_id');
+});
+
+test('la vista previa al editar exige poder editar esa cotización', function (): void {
+    $quotation = savedWholePesosQuotation($this, '0');
+
+    $this->actingAs(userWithRole(SystemRole::Operator))
+        ->postJson(route('quotations.edit-preview-pricing', $quotation), wholePesosPayload($this, []))
+        ->assertForbidden();
+
+    $quotation->update(['status' => QuotationStatus::Sent]);
+
+    $this->actingAs($this->commercial)
+        ->postJson(route('quotations.edit-preview-pricing', $quotation), wholePesosPayload($this, []))
+        ->assertForbidden();
+});
+
+test('si el precio de lista cambió, una fila guardada conserva su precio y recalcula el ajuste', function (): void {
+    $this->variant->update(['current_price' => '1000']);
+    // 1000 / 0,85 = 1176,47 → 1176.
+    $quotation = savedWholePesosQuotation($this, '15');
+    $this->variant->update(['current_price' => '1100']);
+
+    // El formulario manda los dos campos de una fila guardada sin tocar. 15 % ya no da 1176: manda el precio.
+    $payload = wholePesosPayload($this, ['price_adjustment_pct' => '15', 'unit_price' => '1176']);
+
+    $preview = $this->actingAs($this->commercial)
+        ->postJson(route('quotations.edit-preview-pricing', $quotation), $payload)
+        ->assertOk()
+        ->json('items.0');
+
+    // (1 − 1100 / 1176) × 100 = 6,4625… → 6,46.
+    expect(bccomp($preview['unit_price'], '1176', 4))->toBe(0)
+        ->and($preview['price_adjustment_pct'])->toBe('6.46');
+
+    $this->actingAs($this->commercial)
+        ->put(route('quotations.update', $quotation), $payload)
+        ->assertSessionHasNoErrors();
+
+    $item = storedQuotation()->items->sole();
+
+    expect(bccomp((string) $item->unit_price, '1176', 4))->toBe(0)
+        ->and((string) $item->price_adjustment_pct)->toBe('6.46');
+});
+
+test('una cotización guardada con centavos antes de los pesos enteros pide corregir el precio al editarla (P4b-7)', function (): void {
+    $quotation = savedWholePesosQuotation($this, '0');
+    $quotation->items()->update(['unit_price' => '1176.4706']);
+
+    $this->actingAs($this->commercial)
+        ->put(route('quotations.update', $quotation), wholePesosPayload($this, ['price_adjustment_pct' => '15', 'unit_price' => '1176.4706']))
+        ->assertSessionHasErrors('items.0.unit_price');
 });

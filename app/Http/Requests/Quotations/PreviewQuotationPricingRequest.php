@@ -24,10 +24,6 @@ class PreviewQuotationPricingRequest extends UpdateQuotationRequest
      */
     public function rules(): array
     {
-        return array_filter(
-            $this->sharedRules(),
-            fn (string $field): bool => $field === 'iva_percentage' || str_starts_with($field, 'items'),
-            ARRAY_FILTER_USE_KEY,
-        );
+        return $this->pricingRules();
     }
 }

@@ -160,7 +160,7 @@ class QuotationController extends Controller
         return response()->json($this->quotationService->previewPricing(
             $validated['items'],
             (string) $validated['iva_percentage'],
-            $quotation?->keptRecords()['variant_ids'] ?? [],
+            $request->keptVariantIds(),
         ));
     }
 
