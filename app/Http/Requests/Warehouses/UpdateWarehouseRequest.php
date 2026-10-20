@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Warehouses;
 
+use App\Enums\TextFormat;
+use App\Http\Requests\Concerns\NormalizesText;
 use App\Models\Warehouse;
+use App\Rules\UniqueIgnoringCase;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateWarehouseRequest extends FormRequest
 {
+    use NormalizesText;
+
     public function authorize(): bool
     {
         $warehouse = $this->route('warehouse');
@@ -21,7 +25,6 @@ class UpdateWarehouseRequest extends FormRequest
     public function rules(): array
     {
         $warehouse = $this->route('warehouse');
-        $warehouseId = is_object($warehouse) ? $warehouse->id : $warehouse;
 
         return [
             'name' => [
@@ -29,7 +32,7 @@ class UpdateWarehouseRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
-                Rule::unique('warehouses', 'name')->ignore($warehouseId),
+                new UniqueIgnoringCase('warehouses', 'name', $warehouse instanceof Warehouse ? $warehouse->id : null),
             ],
             'city' => ['bail', 'required', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:255'],
@@ -40,6 +43,7 @@ class UpdateWarehouseRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            ...$this->normalizedText(['name' => TextFormat::Name]),
             'is_active' => $this->boolean('is_active', true),
         ]);
     }

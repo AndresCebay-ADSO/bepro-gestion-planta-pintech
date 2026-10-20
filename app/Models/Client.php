@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\TextFormat;
 use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\ClientFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -67,6 +68,7 @@ class Client extends Model
     protected function casts(): array
     {
         return [
+            'nit' => TextFormat::Name->cast(),
             'is_active' => 'boolean',
         ];
     }

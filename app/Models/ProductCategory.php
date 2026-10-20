@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\TextFormat;
 use App\Models\Concerns\HasAuditDescription;
 use App\Models\Concerns\SelectableWhenActive;
 use Database\Factories\ProductCategoryFactory;
@@ -55,6 +56,7 @@ class ProductCategory extends Model
     protected function casts(): array
     {
         return [
+            'name' => TextFormat::Name->cast(),
             'is_active' => 'boolean',
         ];
     }

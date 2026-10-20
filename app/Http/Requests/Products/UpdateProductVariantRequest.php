@@ -6,7 +6,9 @@ namespace App\Http\Requests\Products;
 
 use App\Enums\NumberType;
 use App\Enums\RawMaterialType;
+use App\Enums\TextFormat;
 use App\Http\Requests\Concerns\CatalogSelectionRules;
+use App\Http\Requests\Concerns\NormalizesText;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Rules\RawMaterialOfType;
@@ -16,6 +18,7 @@ use Illuminate\Validation\Rule;
 class UpdateProductVariantRequest extends FormRequest
 {
     use CatalogSelectionRules;
+    use NormalizesText;
 
     public function authorize(): bool
     {
@@ -31,7 +34,7 @@ class UpdateProductVariantRequest extends FormRequest
         $variantId = is_object($variant) ? $variant->id : $variant;
 
         return [
-            'code' => ['bail', 'required', 'string', 'max:80', Rule::unique('product_variants', 'code')->ignore($variantId)],
+            'code' => ['bail', 'required', 'string', 'max:80', ...TextFormat::Code->rules(), Rule::unique('product_variants', 'code')->ignore($variantId)],
             'name' => ['bail', 'required', 'string', 'max:100'],
             'unit_of_measure_id' => $this->activeOrCurrentRules('unit_of_measures', 'unit_of_measure_id', $this->route('variant')?->unit_of_measure_id),
             'presentation_value' => ['bail', 'nullable', ...NumberType::Quantity->rules(ProductVariant::MAX_PRESENTATION_VALUE), 'gt:0'],
@@ -62,6 +65,8 @@ class UpdateProductVariantRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $this->merge($this->normalizedText(['code' => TextFormat::Code]));
+
         foreach (['presentation_value', 'package_raw_material_id', 'label_raw_material_id'] as $key) {
             if ($this->has($key) && ($this->input($key) === '' || $this->input($key) === null)) {
                 $this->merge([$key => null]);

@@ -257,7 +257,7 @@ test('orders index sends only the product identity, never its costs', function (
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Production/Orders/Index')
             ->where('orders.data.0.order_number', 'OP-COST-001')
-            ->where('orders.data.0.product.name', 'Pintura Cost Test')
+            ->where('orders.data.0.product.name', 'PINTURA COST TEST')
             ->where('orders.data.0.formula.version', 1)
             ->where('orders.data.0.warehouse.name', 'Planta')
             ->where('orders.data.0.status', 'pending')

@@ -619,7 +619,7 @@ test('it shows production order detail with loaded data for the view', function 
         ->component('Production/Orders/Show')
     );
     $response->assertSee('OP-VIEW-0001');
-    $response->assertSee('Pintura Test');
+    $response->assertSee('PINTURA TEST');
     $response->assertSee('packaging_plans');
 });
 

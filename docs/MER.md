@@ -16,6 +16,10 @@ migración, actualiza este documento.
   un tipo de `App\Enums\NumberType` (auditoría 3.6, PR 4), que decide su tamaño: cantidad `12,4`, unidades `INTEGER`,
   dinero `16,4`, porcentaje `5,2`, porcentaje calculado `12,4`, factor `14,6`, densidad `10,4` y calidad `4,1`.
   `tests/Feature/Schema/NumberTypeColumnsTest.php` falla si una columna no coincide con su tipo o queda fuera.
+- Códigos y nombres que identifican un registro: se guardan en la forma de su `App\Enums\TextFormat` (auditoría 3.6,
+  PR 8), que aplican los requests y un cast del modelo (`NormalizedText`): tildes en una sola forma (NFC) y espacios
+  colapsados; los códigos y el nombre de producto, además, en mayúsculas. Donde el nombre conserva sus mayúsculas
+  (bodegas y catálogos), el índice único es sobre `LOWER(name)`.
 
 ## 2. Entidades de negocio
 
@@ -45,7 +49,7 @@ Categorías de productos (Configuración → Catálogos), auditadas (`categorias
 | Columna | Tipo | Nulo | Notas |
 | --- | --- | :-: | --- |
 | `id` | BIGINT |  | PK |
-| `name` | VARCHAR(100) |  | UNIQUE |
+| `name` | VARCHAR(100) |  | UNIQUE sobre `LOWER(name)` (`product_categories_name_lower_unique`) |
 | `description` | TEXT | sí |  |
 | `is_active` | BOOLEAN |  | default `true` |
 | `created_at` | TIMESTAMP | sí |  |
@@ -61,8 +65,8 @@ uso (envase de una presentación, línea de fórmula) a una categoría de otro t
 | Columna | Tipo | Nulo | Notas |
 | --- | --- | :-: | --- |
 | `id` | BIGINT |  | PK |
-| `code` | VARCHAR(50) |  | UNIQUE |
-| `name` | VARCHAR(100) |  |  |
+| `code` | VARCHAR(50) |  | UNIQUE. En mayúsculas (`TextFormat::Code`) |
+| `name` | VARCHAR(100) |  | UNIQUE sobre `LOWER(name)` (`raw_material_categories_name_lower_unique`) |
 | `description` | TEXT | sí |  |
 | `type` | VARCHAR(255) |  | `RawMaterialType`, default `chemical` |
 | `is_active` | BOOLEAN |  | default `true` |
@@ -78,7 +82,7 @@ empaque secundario que se gasta en cada aplicación («Galón» = 1 bolsa + 1 ba
 | Columna | Tipo | Nulo | Notas |
 | --- | --- | :-: | --- |
 | `id` | BIGINT |  | PK |
-| `name` | VARCHAR(100) |  | UNIQUE (además, único sin distinguir mayúsculas en la validación) |
+| `name` | VARCHAR(100) |  | UNIQUE sobre `LOWER(name)` (`shrink_wrap_types_name_lower_unique`) |
 | `is_active` | BOOLEAN |  | default `true` |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
@@ -109,7 +113,7 @@ Bodegas (fábrica y almacenamiento).
 | Columna | Tipo | Nulo | Notas |
 | --- | --- | :-: | --- |
 | `id` | BIGINT |  | PK |
-| `name` | VARCHAR(100) |  | UNIQUE |
+| `name` | VARCHAR(100) |  | UNIQUE sobre `LOWER(name)` (`warehouses_name_lower_unique`) |
 | `city` | VARCHAR(100) |  |  |
 | `address` | VARCHAR(255) | sí |  |
 | `type` | VARCHAR(255) |  | default `storage` |
@@ -141,7 +145,7 @@ Materias primas. **Sin columna `name`**: se identifican solo por `code` (privaci
 | Columna | Tipo | Nulo | Notas |
 | --- | --- | :-: | --- |
 | `id` | BIGINT |  | PK |
-| `code` | VARCHAR(50) |  | UNIQUE |
+| `code` | VARCHAR(50) |  | UNIQUE. En mayúsculas (`TextFormat::Code`) |
 | `unit_of_measure_id` | BIGINT |  | FK → `unit_of_measures` (RESTRICT) |
 | `current_price` | DECIMAL(16,4) | sí |  |
 | `previous_price` | DECIMAL(16,4) | sí |  |
@@ -207,7 +211,7 @@ Productos terminados.
 | Columna | Tipo | Nulo | Notas |
 | --- | --- | :-: | --- |
 | `id` | BIGINT |  | PK |
-| `name` | VARCHAR(150) |  |  |
+| `name` | VARCHAR(150) |  | UNIQUE. Único identificador del producto, en mayúsculas (`TextFormat::ProductName`) |
 | `description` | TEXT | sí |  |
 | `category_id` | BIGINT |  | FK → `product_categories` (RESTRICT) |
 | `unit_of_measure_id` | BIGINT |  | FK → `unit_of_measures` (RESTRICT) |
@@ -234,7 +238,7 @@ Presentaciones (SKU) de cada producto.
 | --- | --- | :-: | --- |
 | `id` | BIGINT |  | PK |
 | `product_id` | BIGINT |  | FK → `products` (RESTRICT) |
-| `code` | VARCHAR(80) |  | UNIQUE |
+| `code` | VARCHAR(80) |  | UNIQUE. En mayúsculas (`TextFormat::Code`) |
 | `name` | VARCHAR(100) |  |  |
 | `unit_of_measure_id` | BIGINT |  | FK → `unit_of_measures` (RESTRICT) |
 | `presentation_value` | DECIMAL(12,4) | sí |  |
@@ -618,7 +622,7 @@ Clientes.
 | --- | --- | :-: | --- |
 | `id` | BIGINT |  | PK |
 | `business_name` | VARCHAR(255) |  |  |
-| `nit` | VARCHAR(255) | sí |  |
+| `nit` | VARCHAR(255) | sí | UNIQUE (varios NULL no chocan). Texto con los espacios colapsados |
 | `contact_name` | VARCHAR(255) | sí |  |
 | `phone` | VARCHAR(255) | sí |  |
 | `shipping_address` | VARCHAR(255) | sí |  |

@@ -56,7 +56,7 @@ it('hides every cost attribute, including sales_margin and the internal price, f
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('can.viewCosts', false)
-            ->where('product.name', 'Producto Show')
+            ->where('product.name', 'PRODUCTO SHOW')
             ->where('product.variants.0.name', 'Galón')
             ->missing('product.current_cost')
             ->missing('product.current_price')
@@ -88,7 +88,7 @@ it('does not send the internal price in the product list to users without costs.
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Products/Index')
-            ->where('products.data.0.name', 'Producto Show')
+            ->where('products.data.0.name', 'PRODUCTO SHOW')
             ->missing('products.data.0.current_price'));
 })->with([SystemRole::Commercial, SystemRole::Production]);
 
@@ -115,7 +115,7 @@ it('hides cost amounts from the edit form for a product editor without costs.vie
             ->component('Products/Edit')
             ->where('can.managePrices', false)
             ->where('can.viewCosts', false)
-            ->where('product.name', 'Producto Show')
+            ->where('product.name', 'PRODUCTO SHOW')
             ->missing('product.cif_percentage')
             ->missing('product.price_threshold')
             ->missing('product.current_cost')

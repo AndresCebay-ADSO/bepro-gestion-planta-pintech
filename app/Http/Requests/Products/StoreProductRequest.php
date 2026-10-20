@@ -6,14 +6,18 @@ namespace App\Http\Requests\Products;
 
 use App\Enums\NumberType;
 use App\Enums\QualityMeasurement;
+use App\Enums\TextFormat;
 use App\Http\Requests\Concerns\CatalogSelectionRules;
+use App\Http\Requests\Concerns\NormalizesText;
 use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreProductRequest extends FormRequest
 {
     use CatalogSelectionRules;
+    use NormalizesText;
 
     public function authorize(): bool
     {
@@ -34,7 +38,9 @@ class StoreProductRequest extends FormRequest
     protected function baseRules(): array
     {
         return [
-            'name' => ['bail', 'required', 'string', 'min:3', 'max:150'],
+            // Desde que se borró `products.code` (PR 4), el nombre es lo único que identifica al producto: se guarda en
+            // mayúsculas y no se repite (PR 8).
+            'name' => ['bail', 'required', 'string', 'min:3', 'max:150', ...TextFormat::ProductName->rules(), Rule::unique('products', 'name')->ignore($this->route('product')?->id)],
             'description' => ['nullable', 'string', 'max:10000'],
             'category_id' => $this->activeOrCurrentRules('product_categories', 'category_id', $this->route('product')?->category_id),
             'unit_of_measure_id' => $this->activeOrCurrentRules('unit_of_measures', 'unit_of_measure_id', $this->route('product')?->unit_of_measure_id),
@@ -54,6 +60,7 @@ class StoreProductRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $this->merge($this->normalizedText(['name' => TextFormat::ProductName]));
         $this->normalizeEmptyInputs();
     }
 

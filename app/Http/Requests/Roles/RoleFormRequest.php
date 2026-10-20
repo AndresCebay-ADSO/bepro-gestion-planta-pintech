@@ -6,6 +6,8 @@ namespace App\Http\Requests\Roles;
 
 use App\Enums\Permission;
 use App\Enums\SystemRole;
+use App\Enums\TextFormat;
+use App\Http\Requests\Concerns\NormalizesText;
 use App\Services\PermissionCatalogService;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -18,6 +20,8 @@ use Spatie\Permission\Models\Role;
  */
 abstract class RoleFormRequest extends FormRequest
 {
+    use NormalizesText;
+
     /**
      * Rol que se edita, para excluirlo de la comprobación de nombre repetido.
      */
@@ -25,9 +29,7 @@ abstract class RoleFormRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if (is_string($this->input('name'))) {
-            $this->merge(['name' => preg_replace('/\s+/', ' ', trim($this->input('name')))]);
-        }
+        $this->merge($this->normalizedText(['name' => TextFormat::Name]));
     }
 
     /**

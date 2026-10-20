@@ -159,6 +159,8 @@ export default function ProductsEdit({
                                     onChange={(e) =>
                                         setData('name', e.target.value)
                                     }
+                                    maxLength={150}
+                                    className="uppercase"
                                 />
                                 {errors.name && (
                                     <p className="text-sm text-destructive">

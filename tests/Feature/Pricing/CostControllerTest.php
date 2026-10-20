@@ -55,7 +55,7 @@ describe('index', function () {
                 ->component('Costs/Index')
                 ->has('products.data', 1)
                 ->where('products.data.0.id', $this->product->id)
-                ->where('products.data.0.name', 'Producto Test')
+                ->where('products.data.0.name', 'PRODUCTO TEST')
                 ->where('products.data.0.current_cost', '80.0000')
                 ->where('products.data.0.cif_percentage', '15.00')
                 ->where('products.data.0.current_price', '92.0000')
@@ -93,7 +93,7 @@ describe('index', function () {
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->has('products.data', 1)
-                ->where('products.data.0.name', 'Producto Test')
+                ->where('products.data.0.name', 'PRODUCTO TEST')
             );
     });
 });

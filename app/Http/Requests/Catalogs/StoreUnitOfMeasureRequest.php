@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Requests\Catalogs;
 
 use App\Enums\NumberType;
+use App\Enums\TextFormat;
+use App\Http\Requests\Concerns\NormalizesText;
 use App\Models\UnitOfMeasure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -12,6 +14,8 @@ use Illuminate\Validation\Rule;
 
 class StoreUnitOfMeasureRequest extends FormRequest
 {
+    use NormalizesText;
+
     public function authorize(): bool
     {
         return $this->user()?->can('create', UnitOfMeasure::class) ?? false;
@@ -67,7 +71,10 @@ class StoreUnitOfMeasureRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $merge = ['is_active' => $this->boolean('is_active', $this->defaultIsActive())];
+        $merge = [
+            'is_active' => $this->boolean('is_active', $this->defaultIsActive()),
+            ...$this->normalizedText(['name' => TextFormat::Name]),
+        ];
 
         // El código es un identificador: sin espacios ni variantes de mayúsculas («KG» y «kg» serían dos unidades).
         if (is_string($this->input('code'))) {

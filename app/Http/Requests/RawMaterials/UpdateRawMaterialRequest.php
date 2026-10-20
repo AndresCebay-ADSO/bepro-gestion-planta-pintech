@@ -8,7 +8,9 @@ use App\Actions\RawMaterials\UpdateRawMaterialAction;
 use App\Enums\NumberType;
 use App\Enums\Permission;
 use App\Enums\RawMaterialType;
+use App\Enums\TextFormat;
 use App\Http\Requests\Concerns\CatalogSelectionRules;
+use App\Http\Requests\Concerns\NormalizesText;
 use App\Http\Requests\RawMaterials\Concerns\ManualReferencePriceRules;
 use App\Models\InventoryBatch;
 use App\Models\RawMaterial;
@@ -22,6 +24,7 @@ class UpdateRawMaterialRequest extends FormRequest
 {
     use CatalogSelectionRules;
     use ManualReferencePriceRules;
+    use NormalizesText;
 
     public function authorize(): bool
     {
@@ -42,6 +45,7 @@ class UpdateRawMaterialRequest extends FormRequest
                 'required',
                 'string',
                 'max:50',
+                ...TextFormat::Code->rules(),
                 Rule::unique('raw_materials', 'code')->ignore($rawMaterialId),
             ],
             'category_id' => $this->activeOrCurrentRules('raw_material_categories', 'category_id', $this->route('raw_material')?->category_id),
@@ -161,6 +165,7 @@ class UpdateRawMaterialRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $prepared = [
+            ...$this->normalizedText(['code' => TextFormat::Code]),
             'category_id' => $this->input('category_id'),
             'minimum_stock' => $this->input('minimum_stock', 0),
             'alert_days_before_expiry' => $this->input('alert_days_before_expiry', 30),

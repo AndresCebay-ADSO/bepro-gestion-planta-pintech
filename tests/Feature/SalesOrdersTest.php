@@ -423,7 +423,7 @@ it('does not expose product costs or creator contact data on the sales order scr
         ->get(route('sales-orders.show', $order))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->where('order.items.0.product.name', 'Test Product')
+            ->where('order.items.0.product.name', 'TEST PRODUCT')
             ->missing('order.items.0.product.current_cost')
             ->missing('order.items.0.product.cif_percentage')
             ->missing('order.items.0.product.price_threshold')

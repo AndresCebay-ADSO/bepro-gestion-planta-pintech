@@ -245,7 +245,7 @@ test('the order pdf and excel show the product name with the color', function ()
     $pdfHtml = view('pdf.production-order', ['order' => $payload, 'logoBase64' => null, 'generatedAt' => '-'])->render();
     $excelHtml = view('excel.production-order', ['order' => $payload])->render();
 
-    expect($payload['product_display_name'])->toBe('Pintura Export Test RAL 3020')
-        ->and($pdfHtml)->toContain('Pintura Export Test RAL 3020')
-        ->and($excelHtml)->toContain('Pintura Export Test RAL 3020');
+    expect($payload['product_display_name'])->toBe('PINTURA EXPORT TEST RAL 3020')
+        ->and($pdfHtml)->toContain('PINTURA EXPORT TEST RAL 3020')
+        ->and($excelHtml)->toContain('PINTURA EXPORT TEST RAL 3020');
 });

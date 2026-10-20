@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('clients', function (Blueprint $table) {
             $table->id();
             $table->string('business_name'); // razón social
-            $table->string('nit')->nullable(); // NIT, puede ser null si es persona natural
+            $table->string('nit')->nullable()->unique(); // NIT, puede ser null si es persona natural; varios null no chocan
             $table->string('contact_name')->nullable();
             $table->string('phone')->nullable();
             $table->string('shipping_address')->nullable();

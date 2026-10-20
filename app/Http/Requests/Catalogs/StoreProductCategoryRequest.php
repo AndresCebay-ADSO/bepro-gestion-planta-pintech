@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Catalogs;
 
+use App\Enums\TextFormat;
+use App\Http\Requests\Concerns\NormalizesText;
 use App\Models\ProductCategory;
 use App\Rules\UniqueIgnoringCase;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreProductCategoryRequest extends FormRequest
 {
+    use NormalizesText;
+
     public function authorize(): bool
     {
         return $this->user()?->can('create', ProductCategory::class) ?? false;
@@ -47,11 +51,10 @@ class StoreProductCategoryRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $merge = ['is_active' => $this->boolean('is_active', $this->defaultIsActive())];
-
-        if (is_string($this->input('name'))) {
-            $merge['name'] = trim($this->input('name'));
-        }
+        $merge = [
+            'is_active' => $this->boolean('is_active', $this->defaultIsActive()),
+            ...$this->normalizedText(['name' => TextFormat::Name]),
+        ];
 
         if (is_string($this->input('description')) && trim($this->input('description')) === '') {
             $merge['description'] = null;
