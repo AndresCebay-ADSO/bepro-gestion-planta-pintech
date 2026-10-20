@@ -14,7 +14,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { formatNumber } from '@/lib/formatters';
+import { formatForInput, formatNumber } from '@/lib/formatters';
 import type { InventoryOption } from '@/types';
 
 type Props = {
@@ -148,7 +148,10 @@ export function MovementFormBase({
                                             undefined &&
                                         selectedBatch?.unit_price !== null &&
                                         selectedBatch?.unit_price !== ''
-                                            ? String(selectedBatch.unit_price)
+                                            ? // Sin los ceros del decimal(16,4): el campo admite 2 decimales.
+                                              formatForInput(
+                                                  selectedBatch.unit_price,
+                                              )
                                             : prev.batch_id !== targetBatchId
                                               ? ''
                                               : prev.cost_price,

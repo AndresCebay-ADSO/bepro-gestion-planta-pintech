@@ -210,12 +210,14 @@ class FinishedInventoryMovementService
             ? $this->calculator->add($currentQty, $quantity)
             : $this->calculator->sub($currentQty, $quantity);
         // Suma todos los lotes de la presentación en la bodega: puede no caber aunque cada lote quepa (PT-06). Antes de
-        // asignar, como en FinishedProductBatchStockService.
-        NumberType::Units->ensureFits(
-            $newQuantity,
-            'quantity',
-            __('Con esta entrada el inventario de la presentación supera las unidades que se pueden registrar en la bodega.'),
-        );
+        // asignar, como en FinishedProductBatchStockService. Solo en entradas: una salida no puede pasar el máximo.
+        if ($isEntry) {
+            NumberType::Units->ensureFits(
+                $newQuantity,
+                'quantity',
+                __('Con esta entrada el inventario de la presentación supera las unidades que se pueden registrar en la bodega.'),
+            );
+        }
         $inventory->quantity = $newQuantity;
         $inventory->save();
     }

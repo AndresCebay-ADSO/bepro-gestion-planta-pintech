@@ -391,3 +391,34 @@ test('it requires an entry cost greater than zero with at most two decimals', fu
     'tres decimales' => ['1500.505', false],
     'dos decimales' => ['1500.5', true],
 ]);
+
+// Revisión del PR 5: la pantalla copia el costo del lote (decimal(16,4), «1500.5000») sin los ceros finales. Así cabe
+// en los 2 decimales del dinero y es el mismo costo del lote; con los ceros, el servidor rechazaba toda entrada a un
+// lote existente.
+test('it accepts an entry to an existing batch with the batch cost as the form sends it', function () {
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $this->rawMaterial->id,
+        'warehouse_id' => $this->warehouseA->id,
+        'initial_quantity' => 10,
+        'remaining_quantity' => 10,
+        'unit_price' => '1500.5',
+        'entry_date' => now()->toDateString(),
+    ]);
+    $entry = fn (string $cost) => $this->post(route('inventory-movements.store'), [
+        'raw_material_id' => $this->rawMaterial->id,
+        'warehouse_id' => $this->warehouseA->id,
+        'batch_id' => $batch->id,
+        'type' => 'entry',
+        'quantity' => '5',
+        'cost_price' => $cost,
+        'movement_date' => plantToday(),
+    ]);
+
+    expect($batch->fresh()->unit_price)->toBe('1500.5000');
+
+    $entry('1500.5000')->assertSessionHasErrors('cost_price');
+    $entry('1500.5')->assertSessionHasNoErrors();
+
+    expect($batch->fresh()->initial_quantity)->toBe('15.0000')
+        ->and(InventoryMovement::query()->sole()->cost_price)->toBe('1500.5000');
+});

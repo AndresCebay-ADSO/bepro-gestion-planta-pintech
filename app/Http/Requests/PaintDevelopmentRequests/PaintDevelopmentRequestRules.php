@@ -33,6 +33,21 @@ trait PaintDevelopmentRequestRules
     }
 
     /**
+     * El máximo de un par (temperatura, espesor) no puede quedar por debajo de su mínimo. Solo compara dos números: si el
+     * mínimo no lo es («abc»), ya tiene su propio error, y convertido a float valdría 0 y daría un error falso aquí.
+     */
+    private function notBelow(string $minField, string $message): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail) use ($minField, $message): void {
+            $min = $this->input($minField);
+
+            if (is_numeric($min) && is_numeric($value) && (float) $min > (float) $value) {
+                $fail($message);
+            }
+        };
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function sharedRules(): array
@@ -61,12 +76,10 @@ trait PaintDevelopmentRequestRules
             'context_payload.corrosividad' => ['nullable', 'string', 'max:255'],
             // De GNL y criogénicos (−196 °C) a siliconados y cerámicos de alta temperatura (650 a 1.000 °C).
             'context_payload.temp_min' => $this->technicalNumber('min:-200', '1000'),
-            'context_payload.temp_max' => [...$this->technicalNumber('min:-200', '1000'), function (string $attribute, mixed $value, \Closure $fail): void {
-                $min = $this->input('context_payload.temp_min');
-                if ($min !== null && $value !== null && (float) $min > (float) $value) {
-                    $fail(__('La temperatura mínima no puede ser mayor que la máxima.'));
-                }
-            }],
+            'context_payload.temp_max' => [
+                ...$this->technicalNumber('min:-200', '1000'),
+                $this->notBelow('context_payload.temp_min', __('La temperatura mínima no puede ser mayor que la máxima.')),
+            ],
             'context_payload.ciclos_termicos' => ['required', 'string', 'max:255'],
             'context_payload.quimicos' => ['nullable', 'string', 'max:5000'],
 
@@ -104,12 +117,10 @@ trait PaintDevelopmentRequestRules
             'application_payload.geometria' => ['required', 'string', 'max:255'],
             // Mils por mano: un intumescente epóxico llega a unos 790 mils (20 mm) en una sola mano.
             'application_payload.dft_min' => $this->technicalNumber('gt:0', '1200'),
-            'application_payload.dft_max' => [...$this->technicalNumber('gt:0', '1200'), function (string $attribute, mixed $value, \Closure $fail): void {
-                $min = $this->input('application_payload.dft_min');
-                if ($min !== null && $value !== null && (float) $min > (float) $value) {
-                    $fail(__('El espesor mínimo no puede ser mayor que el máximo.'));
-                }
-            }],
+            'application_payload.dft_max' => [
+                ...$this->technicalNumber('gt:0', '1200'),
+                $this->notBelow('application_payload.dft_min', __('El espesor mínimo no puede ser mayor que el máximo.')),
+            ],
             'application_payload.manos' => ['required', 'integer', 'min:1', 'max:20'],
             'application_payload.repinte' => ['required', 'string', 'max:255'],
             'application_payload.servicio' => ['required', 'string', 'max:255'],

@@ -7,6 +7,7 @@ use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
+use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductionCost;
@@ -373,4 +374,27 @@ test('una fórmula cuya cantidad × la de la OP no cabe en la columna da un erro
 })->with([
     'la cantidad del detalle (12,4)' => ['99999999', '1', '2'],
     'el costo del detalle (16,4)' => ['99999999', '100000', '1'],
+]);
+
+// Revisión del PR 5: completar la OP guarda el costo de cada línea y el total sin revisar que quepan. Con una MP sin
+// control de inventario el costo es cantidad real × precio escrito a mano, y no hay stock que lo frene antes.
+test('completar una OP cuyo costo no cabe da un error en los ingredientes, no un 500', function (string $first, string $second, string $expected): void {
+    $f = numberTypesOrder($this, ProductionOrderStatus::InProgress);
+    foreach ([$f['d1'], $f['d2']] as $detail) {
+        RawMaterial::query()->whereKey($detail->raw_material_id)->update(['tracks_inventory' => false, 'current_price' => '100000000']);
+    }
+
+    $this->actingAs($this->admin)->post(route('production-orders.complete', $f['order']), numberTypesCompleteBody($this, $f, [
+        'ingredients' => [['id' => $f['d1']->id, 'actual_quantity' => $first], ['id' => $f['d2']->id, 'actual_quantity' => $second]],
+    ]))->assertSessionHasErrors('ingredients');
+
+    expect(session('errors')->first('ingredients'))->toContain($expected)
+        ->and($f['order']->fresh()->status)->toBe(ProductionOrderStatus::InProgress)
+        ->and(InventoryMovement::query()->count())->toBe(0)
+        ->and(ProductionCost::query()->count())->toBe(0);
+})->with([
+    // 20.000 × $100 M = $2 billones: no cabe en una línea (16,4 llega a casi $1 billón).
+    'una línea' => ['20000', '1', 'El costo de'],
+    // 6.000 × $100 M = $600.000 M cada una: caben, pero el total son $1,2 billones.
+    'el total' => ['6000', '6000', 'El costo total de la orden'],
 ]);

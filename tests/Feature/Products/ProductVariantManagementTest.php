@@ -122,8 +122,8 @@ test('produccion can manage variants but comercial cannot', function () {
         ->assertForbidden();
 });
 
-// Auditoría 3.6, PR 5: PRD-02 · P5-2. Una presentación cabe hasta 1.000 en su unidad (un IBC de 1.000 L).
-test('the presentation size is capped at 1000 in its unit', function (string $value, bool $valid) {
+// Auditoría 3.6, PR 5: PRD-02 · P5-2. Una presentación cabe hasta 1.000 galones, la unidad del producto.
+test('the presentation size is capped at 1000 gallons', function (string $value, bool $valid) {
     [$user, $product, $uom] = setupVariantManagementDependencies();
     $existing = ProductVariant::factory()->create(['product_id' => $product->id, 'unit_of_measure_id' => $uom->id]);
     $payload = ['name' => 'Presentación grande', 'unit_of_measure_id' => $uom->id, 'presentation_value' => $value];

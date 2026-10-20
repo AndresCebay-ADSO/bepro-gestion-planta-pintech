@@ -36,7 +36,7 @@ export const PRODUCTION_ORDER_QUANTITY_LIMITS: DecimalLimits = {
     maxIntegerDigits: 5,
 };
 
-/** Contenido de una presentación: hasta 1.000 en su unidad (`ProductVariant::MAX_PRESENTATION_VALUE`, PRD-02). */
+/** Contenido de una presentación: hasta 1.000 galones, la unidad del producto (`ProductVariant::MAX_PRESENTATION_VALUE`, PRD-02). */
 export const PRESENTATION_VALUE_LIMITS: DecimalLimits = {
     ...NUMBER_TYPES.quantity,
     maxIntegerDigits: 4,

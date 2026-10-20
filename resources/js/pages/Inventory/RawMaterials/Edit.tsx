@@ -19,6 +19,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { formatForInput } from '@/lib/formatters';
 import {
     index as rawMaterialsIndex,
     show as rawMaterialsShow,
@@ -54,14 +55,6 @@ type Props = {
     openProductionOrdersCount: number;
 };
 
-const trimZeroes = (val: string | null | undefined): string => {
-    if (!val) {
-        return '';
-    }
-
-    return val.includes('.') ? val.replace(/0+$/, '').replace(/\.$/, '') : val;
-};
-
 export default function RawMaterialsEdit({
     rawMaterial,
     categories,
@@ -75,13 +68,13 @@ export default function RawMaterialsEdit({
             ? String(rawMaterial.category_id)
             : '',
         unit_of_measure_id: String(rawMaterial.unit_of_measure_id),
-        minimum_stock: trimZeroes(rawMaterial.minimum_stock),
+        minimum_stock: formatForInput(rawMaterial.minimum_stock),
         alert_days_before_expiry: String(rawMaterial.alert_days_before_expiry),
-        price_variation_threshold: trimZeroes(
+        price_variation_threshold: formatForInput(
             rawMaterial.price_variation_threshold,
         ),
         tracks_inventory: rawMaterial.tracks_inventory,
-        current_price: trimZeroes(rawMaterial.current_price),
+        current_price: formatForInput(rawMaterial.current_price),
         is_active: rawMaterial.is_active,
     });
 

@@ -326,3 +326,19 @@ it('validates the physical range of the technical numbers', function (string $fi
     '21 manos' => ['application_payload.manos', '21', false],
     'pot life de 25 horas' => ['application_payload.pot_life', '1500', false],
 ]);
+
+// Revisión del PR 5: un mínimo que no es un número ya tiene su error; antes valía 0 y agregaba un «mínima mayor que
+// máxima» falso en el máximo.
+it('reports a non numeric minimum only once', function (string $group, string $minField, string $maxField, string $max) {
+    $payload = paintDevPayload();
+    data_set($payload, "{$group}.{$minField}", 'abc');
+    data_set($payload, "{$group}.{$maxField}", $max);
+
+    $this->actingAs($this->comercialUser)
+        ->post(route('paint-development-requests.store'), $payload)
+        ->assertSessionHasErrors("{$group}.{$minField}")
+        ->assertSessionDoesntHaveErrors("{$group}.{$maxField}");
+})->with([
+    'temperatura' => ['context_payload', 'temp_min', 'temp_max', '-5'],
+    'espesor' => ['application_payload', 'dft_min', 'dft_max', '0.5'],
+]);

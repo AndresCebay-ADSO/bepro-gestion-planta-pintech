@@ -31,7 +31,9 @@ Seguiremos el estándar **PSR-12**, que es el utilizado por Laravel de forma nat
     como argumento (`rules(ProductionOrder::MAX_QUANTITY)`). Un `numeric` sin `decimal` y `max` deja pasar lo que la
     columna no guarda, y PostgreSQL responde con un 500;
   * todo entero que no es ID lleva `max`, y todo ID lleva `integer` **antes** del `exists`;
-  * un ID que se usa dentro de otra regla o de un `after()` se lee con `ReadsIdInput::idInput()`, nunca tal como llegó;
+  * un ID enviado que entra en una consulta o en un `exists` dentro de otra regla o de un `after()` se lee con
+    `ReadsIdInput::idInput()`, nunca tal como llegó: esas reglas corren aunque el ID ya tenga su error. Compararlo en
+    PHP con `(int)` sí es seguro;
   * un campo numérico nuevo se agrega al mapa del test con la columna donde se guarda.
 * **Valores calculados que se guardan** (saldo + cantidad, fórmula × cantidad de la OP, totales): antes de guardarlos
   se pasan por `NumberType::X->ensureFits()`, que responde con un 422 en el campo que lo causó.

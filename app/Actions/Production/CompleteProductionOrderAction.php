@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Production;
 
 use App\Enums\FinishedInventoryMovementReason;
+use App\Enums\NumberType;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\RemnantStatus;
 use App\Jobs\GenerateQualityInspectionCertificateJob;
@@ -79,7 +80,7 @@ class CompleteProductionOrderAction
 
             $lockedOrder->update($updateData);
 
-            $lockedOrder->loadMissing(['details', 'packagingPlans.productVariant', 'lineAdjustments', 'remnantConsumptions']);
+            $lockedOrder->loadMissing(['details.rawMaterial:id,code', 'packagingPlans.productVariant', 'lineAdjustments', 'remnantConsumptions']);
             $detailsById = $lockedOrder->details->keyBy('id');
             $totalBulkCost = '0';
             $consumedRawMaterialIds = [];
@@ -102,6 +103,16 @@ class CompleteProductionOrderAction
                     userId: $userId,
                     movementDate: $completionDate,
                 );
+                // Cantidad real × precio: cada uno cabe en su regla, el producto puede no caber. Una MP sin control de
+                // inventario no tiene stock que lo frene antes. `ingredients`: la clave que muestra la pantalla.
+                NumberType::Money->ensureFits(
+                    $consumedCost,
+                    'ingredients',
+                    __('El costo de :code no cabe en el registro. Revisa la cantidad real consumida.', [
+                        'code' => $detail->rawMaterial?->code,
+                    ]),
+                );
+
                 $realUnitCost = $this->calculator->cmp($actualQuantity, '0', 4) > 0
                     ? $this->calculator->div($consumedCost, $actualQuantity, 4)
                     : '0';
@@ -138,6 +149,14 @@ class CompleteProductionOrderAction
                     );
                 }
             }
+
+            // El total suma ingredientes, ajustes de línea y saldos consumidos: puede no caber aunque cada línea quepa. Se
+            // revisa antes de repartirlo entre las presentaciones, que guardan su parte en el PT.
+            NumberType::Money->ensureFits(
+                $totalBulkCost,
+                'ingredients',
+                __('El costo total de la orden no cabe en el registro. Revisa las cantidades reales consumidas.'),
+            );
 
             $remnantGallons = (string) ($data['remnant_quantity_gallons'] ?? '0');
 
