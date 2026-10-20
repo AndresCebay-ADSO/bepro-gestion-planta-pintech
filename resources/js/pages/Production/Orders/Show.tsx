@@ -135,6 +135,9 @@ export default function ProductionOrderShow({
         errors: rejectErrors,
         reset: resetRejectForm,
     } = useForm({ reason: '' });
+    // La orden cambió de estado mientras se escribía el motivo (RejectsStaleOrderWrites): el diálogo sigue abierto.
+    const rejectStaleError = (rejectErrors as Partial<Record<string, string>>)
+        .production_order;
 
     const [landingLinkCopied, setLandingLinkCopied] = useState(false);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -560,6 +563,11 @@ export default function ProductionOrderShow({
                                 {rejectErrors.reason && (
                                     <p className="mt-1 text-sm text-destructive">
                                         {rejectErrors.reason}
+                                    </p>
+                                )}
+                                {rejectStaleError && (
+                                    <p className="mt-1 text-sm text-destructive">
+                                        {rejectStaleError}
                                     </p>
                                 )}
                             </div>

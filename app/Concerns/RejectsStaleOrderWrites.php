@@ -7,8 +7,8 @@ namespace App\Concerns;
 use Illuminate\Http\RedirectResponse;
 
 /**
- * Respuesta de una escritura pequeña en la OP (presentación, ajuste, saldo) que perdió la carrera: la orden cambió de
- * estado mientras esperaba el bloqueo. Va como aviso, para que se vea, y también como error de validación: un
+ * Respuesta de una escritura en la OP desde un formulario pequeño o un diálogo (presentación, ajuste, saldo, color,
+ * devolver a planta) que perdió la carrera: la orden cambió de estado mientras esperaba el bloqueo. Va como aviso, para que se vea, y también como error de validación: un
  * redirect sin errores Inertia lo toma como éxito, y el formulario borraba lo que el usuario había escrito.
  */
 trait RejectsStaleOrderWrites

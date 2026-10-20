@@ -14,6 +14,7 @@ use App\Actions\Production\RejectProductionOrderReviewAction;
 use App\Actions\Production\StartProductionOrderAction;
 use App\Actions\Production\SubmitProductionOrderForReviewAction;
 use App\Actions\Production\UpdateProductionOrderColorAction;
+use App\Concerns\RejectsStaleOrderWrites;
 use App\Enums\Permission;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\RawMaterialType;
@@ -50,6 +51,8 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProductionOrderController extends Controller
 {
+    use RejectsStaleOrderWrites;
+
     public function __construct(
         private readonly CreateProductionOrderAction $createProductionOrder,
         private readonly CompleteProductionOrderAction $completeProductionOrder,
@@ -365,7 +368,8 @@ class ProductionOrderController extends Controller
                 user: $request->user(),
             );
         } catch (\DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            // Error de validación también: el diálogo no se cierra ni borra el motivo escrito.
+            return $this->staleOrderResponse($exception);
         }
 
         return redirect()->route('production-orders.show', $productionOrder)
@@ -398,7 +402,8 @@ class ProductionOrderController extends Controller
             return redirect()->route('production-orders.show', $productionOrder)
                 ->with('success', 'Color de la orden actualizado.');
         } catch (\DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            // Error de validación también: el diálogo no se cierra como si se hubiera guardado.
+            return $this->staleOrderResponse($exception);
         }
     }
 

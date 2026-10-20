@@ -75,7 +75,7 @@ class ProductionOrderCompletionLines
     public function hasRemnant(mixed $remnantGallons): bool
     {
         return $remnantGallons !== null && $remnantGallons !== ''
-            && $this->calculator->cmp((string) $remnantGallons, '0', 4) > 0;
+            && $this->calculator->isPositive((string) $remnantGallons);
     }
 
     /**

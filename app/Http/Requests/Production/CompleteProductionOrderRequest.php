@@ -96,7 +96,8 @@ class CompleteProductionOrderRequest extends FormRequest
                 $remnantGallons = $this->input('remnant_quantity_gallons');
                 $actualYield = $this->input('actual_yield_quantity');
 
-                $plans = ProductionOrderPackagingPlan::query()
+                // Sin presentaciones (todo quedó como saldo) no hay nada que consultar.
+                $plans = $packaging->isEmpty() ? collect() : ProductionOrderPackagingPlan::query()
                     ->whereIn('id', $packaging->pluck('id')->map(fn ($id) => (int) $id)->all())
                     ->with('productVariant:id,presentation_value')
                     ->get()

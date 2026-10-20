@@ -21,18 +21,18 @@ class CancelProductionOrderAction
     public function execute(ProductionOrder $order, User $user, ?string $reason = null): ProductionOrder
     {
         return DB::transaction(function () use ($order, $user, $reason): ProductionOrder {
-            $lockedOrder = $this->orderLock->lockFor($order, $user, 'cancel', "No se puede cancelar una orden en estado ':status'.");
+            $cannotCancel = "No se puede cancelar una orden en estado ':status'.";
+            $lockedOrder = $this->orderLock->lockFor($order, $user, 'cancel', $cannotCancel);
 
-            // La policy de cancelar no mira el estado, a propósito: así el usuario ve este aviso y no un 403.
+            // La policy de cancelar no mira el estado, a propósito: así el usuario ve este aviso y no un 403. Los estados
+            // pasan a la policy con el botón «Cancelar orden» (D-OPX2, PR 10).
             $allowedForCancellation = [
                 ProductionOrderStatus::Pending,
                 ProductionOrderStatus::InProgress,
             ];
 
             if (! in_array($lockedOrder->status, $allowedForCancellation, true)) {
-                throw new \DomainException(
-                    "No se puede cancelar una orden en estado '{$lockedOrder->status->label()}'."
-                );
+                throw new \DomainException(__($cannotCancel, ['status' => $lockedOrder->status->label()]));
             }
 
             $notes = $lockedOrder->notes;

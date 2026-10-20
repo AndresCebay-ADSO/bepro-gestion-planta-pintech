@@ -176,48 +176,22 @@ it('no consume un saldo si la orden se completó mientras esperaba', function ()
     expect((string) $remnant->fresh()->available_quantity_gallons)->toBe('10.0000');
 });
 
-/**
- * Niega la habilidad la segunda vez que se evalúa (con la fila bloqueada) sin cambiar el estado: es lo que ve una
- * petición a la que le quitaron el permiso mientras esperaba el bloqueo.
- */
-function denyAbilityAtLockTime(string $ability): void
-{
-    $evaluations = 0;
-
-    Gate::before(function (User $user, string $checked) use ($ability, &$evaluations): ?bool {
-        if ($checked !== $ability) {
-            return null;
-        }
-
-        return ++$evaluations > 1 ? false : null;
-    });
-}
-
-it('si lo que cambió es el permiso y no el estado, responde 403 y no culpa al estado', function (string $ability, string $method, string $route, array $body) {
-    denyAbilityAtLockTime($ability);
-
-    $this->call($method, route($route, $this->order), $body)
-        ->assertForbidden()
-        ->assertSessionMissing('error');
-
-    expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::InProgress)
-        ->and(ProductionOrderPackagingPlan::query()->where('production_order_id', $this->order->id)->count())->toBe(1);
-})->with([
-    'cancelar' => ['cancel', 'POST', 'production-orders.cancel', ['reason' => 'Cancelada por error']],
-    'agregar una presentación' => ['updateOperationalData', 'POST', 'production-orders.packaging-plans.store', fn () => ['product_variant_id' => $this->bucket->id, 'planned_units' => 2]],
-]);
-
-it('no inicia, no devuelve ni cambia el color si el estado cambió mientras esperaba', function (string $route, array $body, ProductionOrderStatus $from, string $message) {
+it('no inicia, no devuelve ni cambia el color si el estado cambió mientras esperaba', function (string $route, array $body, ProductionOrderStatus $from, string $message, bool $fromDialog) {
     $this->order->update(['status' => $from]);
     changeOrderStatusRightAfterAuthorization($this->order, ProductionOrderStatus::Cancelled);
 
-    $this->from(route('production-orders.show', $this->order))
+    $response = $this->from(route('production-orders.show', $this->order))
         ->call($route === 'production-orders.update-color' ? 'PATCH' : 'POST', route($route, $this->order), $body)
         ->assertSessionHas('error', $message);
 
+    // Desde un diálogo, también error de validación: no se cierra como si se hubiera guardado ni borra lo escrito.
+    $fromDialog
+        ? $response->assertSessionHasErrors(['production_order' => $message])
+        : $response->assertSessionHasNoErrors();
+
     expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::Cancelled);
 })->with([
-    'iniciar' => ['production-orders.start', [], ProductionOrderStatus::Pending, "No se puede iniciar producción de una orden en estado 'Cancelada'."],
-    'devolver a planta' => ['production-orders.reject-review', ['reason' => 'Falta la medición de viscosidad'], ProductionOrderStatus::PendingReview, "Solo se pueden devolver órdenes en estado 'Pendiente de revisión'."],
-    'color' => ['production-orders.update-color', ['color' => 'Rojo'], ProductionOrderStatus::InProgress, "No se puede cambiar el color de una orden en estado 'Cancelada'."],
+    'iniciar' => ['production-orders.start', [], ProductionOrderStatus::Pending, "No se puede iniciar producción de una orden en estado 'Cancelada'.", false],
+    'devolver a planta' => ['production-orders.reject-review', ['reason' => 'Falta la medición de viscosidad'], ProductionOrderStatus::PendingReview, "Solo se pueden devolver órdenes en estado 'Pendiente de revisión'.", true],
+    'color' => ['production-orders.update-color', ['color' => 'Rojo'], ProductionOrderStatus::InProgress, "No se puede cambiar el color de una orden en estado 'Cancelada'.", true],
 ]);

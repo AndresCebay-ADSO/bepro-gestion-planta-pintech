@@ -7,7 +7,6 @@ namespace App\Services\Production;
 use App\Models\ProductionOrder;
 use App\Models\User;
 use Closure;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -22,10 +21,10 @@ use Illuminate\Support\Facades\Gate;
 class ProductionOrderLock
 {
     /**
-     * Bloquea la OP dentro de la transacción de quien llama. `$order` es la orden que vio la policy de la petición. Si la
-     * habilidad ya no se cumple porque el estado cambió mientras esperaba, DomainException con el mensaje dado
-     * (`:status` se reemplaza por el estado actual), que el controlador muestra como aviso. Si el estado es el mismo, lo
-     * que cambió es el permiso: 403, como lo habría respondido la policy, y no un aviso que culpa al estado.
+     * Bloquea la OP dentro de la transacción de quien llama. Si la habilidad ya no se cumple, DomainException con el
+     * mensaje dado (`:status` se reemplaza por el estado actual), que el controlador muestra como aviso. Lo que cambia
+     * mientras se espera es el estado: los permisos del usuario se leen una vez por petición (Spatie carga sus roles con
+     * la primera consulta), así que la policy de la petición y esta ven los mismos.
      */
     public function lockFor(ProductionOrder $order, User $user, string $ability, string $deniedMessage): ProductionOrder
     {
@@ -38,15 +37,11 @@ class ProductionOrderLock
             ->lockForUpdate()
             ->findOrFail($order->id);
 
-        if (Gate::forUser($user)->allows($ability, $lockedOrder)) {
-            return $lockedOrder;
+        if (Gate::forUser($user)->denies($ability, $lockedOrder)) {
+            throw new \DomainException(__($deniedMessage, ['status' => $lockedOrder->status->label()]));
         }
 
-        if ($lockedOrder->status === $order->status) {
-            throw new AuthorizationException(__('No tienes permiso para realizar esta acción.'));
-        }
-
-        throw new \DomainException(__($deniedMessage, ['status' => $lockedOrder->status->label()]));
+        return $lockedOrder;
     }
 
     /**
