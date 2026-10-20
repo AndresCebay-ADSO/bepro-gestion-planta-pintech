@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace App\Actions\Production;
 
 use App\Enums\LabelFormat;
-use App\Enums\ProductionOrderStatus;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderPackagingPlan;
 use App\Models\QrCode;
+use App\Models\User;
 use App\Services\LabelTextFitterService;
+use App\Services\Production\ProductionOrderLock;
 use App\Services\ProductionOrderQrCodeService;
 use App\Services\QrImageService;
 use App\Services\TimezoneService;
 use Barryvdh\DomPDF\PDF;
 use Dompdf\FontMetrics;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Estampita de lote de una presentación del plan de envasado. Se imprime antes de completar la orden: el lote y las
@@ -30,6 +30,7 @@ class PrintProductionLabelsAction
         private readonly QrImageService $qrImageService,
         private readonly LabelTextFitterService $textFitter,
         private readonly TimezoneService $timezoneService,
+        private readonly ProductionOrderLock $orderLock,
     ) {}
 
     /**
@@ -41,19 +42,17 @@ class PrintProductionLabelsAction
         ProductionOrder $order,
         ProductionOrderPackagingPlan $plan,
         LabelFormat $format,
-        int $userId,
+        User $user,
     ): string {
         // Con la orden bloqueada, como al cancelarla: si las dos ocurren a la vez, una espera a la otra. Así no nace un
         // QR activo en una orden que se acaba de cancelar (la política revisó el estado antes, sin bloquear).
-        $qrCode = DB::transaction(function () use ($order, $userId) {
-            $lockedOrder = ProductionOrder::query()->lockForUpdate()->findOrFail($order->id);
-
-            if ($lockedOrder->status === ProductionOrderStatus::Cancelled) {
-                throw new \DomainException('Esta orden se canceló: sus estampitas ya no se imprimen.');
-            }
-
-            return $this->qrCodeService->ensureForLabels($lockedOrder, $userId);
-        }, attempts: 3);
+        $qrCode = $this->orderLock->write(
+            $order,
+            $user,
+            'printLabels',
+            'Esta orden se canceló: sus estampitas ya no se imprimen.',
+            fn (ProductionOrder $lockedOrder) => $this->qrCodeService->ensureForLabels($lockedOrder, (int) $user->id),
+        );
 
         // Una sola instancia de DomPDF: la que mide el texto es la que dibuja el PDF.
         /** @var PDF $pdf */

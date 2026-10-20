@@ -119,7 +119,7 @@ test('si el PDF falla no queda una impresión en la auditoría', function () {
     app()->instance('dompdf.wrapper', $wrapper);
 
     expect(fn () => app(PrintProductionLabelsAction::class)
-        ->execute($this->order, $this->plan, LabelFormat::Dymo57x32, $this->user->id))
+        ->execute($this->order, $this->plan, LabelFormat::Dymo57x32, $this->user))
         ->toThrow(RuntimeException::class);
 
     expect(Activity::query()->where('event', 'labels_printed')->count())->toBe(0);
@@ -131,11 +131,12 @@ test('la impresión tiene límite de peticiones', function () {
 });
 
 test('una orden cancelada justo antes de crear el QR no se imprime ni deja un QR activo', function () {
-    // La política revisó el estado antes; la Action lo vuelve a mirar con la orden bloqueada.
-    $this->order->update(['status' => ProductionOrderStatus::Cancelled]);
+    // La política revisó el estado antes; la Action lo vuelve a mirar con la orden bloqueada. Otra petición la canceló:
+    // la base cambia, la orden que vio la política no.
+    ProductionOrder::query()->whereKey($this->order->id)->update(['status' => ProductionOrderStatus::Cancelled]);
 
     expect(fn () => app(PrintProductionLabelsAction::class)
-        ->execute($this->order, $this->plan, LabelFormat::Dymo57x32, $this->user->id))
+        ->execute($this->order, $this->plan, LabelFormat::Dymo57x32, $this->user))
         ->toThrow(DomainException::class, 'Esta orden se canceló');
 
     expect(QrCode::query()->count())->toBe(0);
@@ -240,7 +241,7 @@ test('un código de presentación largo no pasa la estampita a una segunda pági
     $this->variant->update(['presentation_label' => 'Tambor 50G', 'code' => '7707477132250891']);
 
     $pdf = app(PrintProductionLabelsAction::class)
-        ->execute($this->order, $this->plan->refresh(), LabelFormat::Dymo57x32, $this->user->id);
+        ->execute($this->order, $this->plan->refresh(), LabelFormat::Dymo57x32, $this->user);
 
     expect(labelPdfPageCount($pdf))->toBe(1);
 });
@@ -252,7 +253,7 @@ test('con todos los textos al máximo que admiten los formularios, la estampita 
     $this->variant->update(['presentation_label' => str_repeat('P', 50), 'code' => str_repeat('7', 80)]);
 
     $pdf = app(PrintProductionLabelsAction::class)
-        ->execute($this->order->refresh(), $this->plan->refresh(), LabelFormat::Dymo57x32, $this->user->id);
+        ->execute($this->order->refresh(), $this->plan->refresh(), LabelFormat::Dymo57x32, $this->user);
 
     expect(labelPdfPageCount($pdf))->toBe(1);
 });

@@ -233,7 +233,7 @@ class CompleteProductionOrderAction
                 );
             }
 
-            $yieldRealQuantity = (string) ($data['actual_yield_quantity'] ?? $lockedOrder->quantity);
+            $yieldRealQuantity = (string) $data['actual_yield_quantity'];
             $yieldTheoreticalQuantity = (string) $lockedOrder->quantity;
             $yieldVarianceQuantity = $this->calculator->sub($yieldRealQuantity, $yieldTheoreticalQuantity, 4);
             $yieldPercentage = $this->calculator->cmp($yieldTheoreticalQuantity, '0', 4) > 0

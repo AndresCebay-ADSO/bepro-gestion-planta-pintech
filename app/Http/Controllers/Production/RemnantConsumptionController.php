@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Production;
 
 use App\Actions\Production\ConsumeRemnantAction;
+use App\Concerns\RejectsStaleOrderWrites;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Production\ConsumeRemnantRequest;
 use App\Models\ProductionOrder;
@@ -15,6 +16,8 @@ use Illuminate\Http\RedirectResponse;
 
 class RemnantConsumptionController extends Controller
 {
+    use RejectsStaleOrderWrites;
+
     public function __construct(
         private readonly AvailableRemnantsService $availableRemnants,
     ) {}
@@ -49,7 +52,7 @@ class RemnantConsumptionController extends Controller
                 notes: $request->validated('notes')
             );
         } catch (\DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            return $this->staleOrderResponse($exception);
         }
 
         return back()->with('success', __('Saldo de PT consumido exitosamente.'));

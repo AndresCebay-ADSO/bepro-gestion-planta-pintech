@@ -8,13 +8,15 @@ use App\Models\ProductionOrder;
 use App\Services\DecimalCalculator;
 use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\Pricing\ProductionCostCalculatorService;
+use App\Services\Production\ProductionOrderCompletionLines;
 
 class PreviewProductionOrderCostsAction
 {
     public function __construct(
         private readonly FifoStockAllocatorService $fifoStockAllocator,
         private readonly ProductionCostCalculatorService $productionCostCalculator,
-        private readonly DecimalCalculator $calculator
+        private readonly DecimalCalculator $calculator,
+        private readonly ProductionOrderCompletionLines $completionLines,
     ) {}
 
     /**
@@ -134,7 +136,8 @@ class PreviewProductionOrderCostsAction
 
         $remnantBulkCost = null;
 
-        if ($remnantGallons !== null && $this->calculator->cmp($remnantGallons, '0', 4) > 0 && $globalBulkCostPerUnit !== null) {
+        // La misma lectura de «hay saldo» que al completar: la vista previa no puede mostrar un costo y el cierre firmar otro.
+        if ($this->completionLines->hasRemnant($remnantGallons) && $globalBulkCostPerUnit !== null) {
             $costPerGallon = $globalBulkCostPerUnit;
 
             if ($cifPercentage !== null && $this->calculator->cmp($cifPercentage, '0', 4) > 0) {

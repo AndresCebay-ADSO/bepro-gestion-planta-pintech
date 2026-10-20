@@ -86,7 +86,9 @@ it('no agrega una presentación si la orden se completó mientras esperaba (OPL-
     $this->post(route('production-orders.packaging-plans.store', $this->order), [
         'product_variant_id' => $this->bucket->id,
         'planned_units' => 2,
-    ])->assertSessionHas('error', "No se puede agregar una presentación a una orden en estado 'Completada'.");
+    ])->assertSessionHas('error', "No se puede agregar una presentación a una orden en estado 'Completada'.")
+        // Como error de validación también: Inertia llama a onError y el formulario conserva lo escrito.
+        ->assertSessionHasErrors(['production_order' => "No se puede agregar una presentación a una orden en estado 'Completada'."]);
 
     expect(ProductionOrderPackagingPlan::query()->where('production_order_id', $this->order->id)->count())->toBe(1);
 });
@@ -95,7 +97,9 @@ it('no quita una presentación si la orden se completó mientras esperaba', func
     changeOrderStatusRightAfterAuthorization($this->order, ProductionOrderStatus::Completed);
 
     $this->delete(route('production-orders.packaging-plans.destroy', [$this->order, $this->gallonPlan]))
-        ->assertSessionHas('error', "No se puede quitar una presentación de una orden en estado 'Completada'.");
+        ->assertSessionHas('error', "No se puede quitar una presentación de una orden en estado 'Completada'.")
+        // Como error de validación también: Inertia llama a onError y el formulario conserva lo escrito.
+        ->assertSessionHasErrors(['production_order' => "No se puede quitar una presentación de una orden en estado 'Completada'."]);
 
     expect($this->gallonPlan->fresh())->not->toBeNull();
 });
@@ -107,7 +111,9 @@ it('no agrega un ajuste de línea si la orden se completó mientras esperaba (OP
         'raw_material_id' => $this->rawMaterial->id,
         'quantity' => '1.5',
         'reason' => 'Corrección de viscosidad',
-    ])->assertSessionHas('error', "No se puede agregar un ajuste de línea a una orden en estado 'Completada'.");
+    ])->assertSessionHas('error', "No se puede agregar un ajuste de línea a una orden en estado 'Completada'.")
+        // Como error de validación también: Inertia llama a onError y el formulario conserva lo escrito.
+        ->assertSessionHasErrors(['production_order' => "No se puede agregar un ajuste de línea a una orden en estado 'Completada'."]);
 
     expect(ProductionOrderLineAdjustment::query()->where('production_order_id', $this->order->id)->count())->toBe(1);
 });
@@ -116,7 +122,9 @@ it('no quita un ajuste de línea si la orden se completó mientras esperaba (OPX
     changeOrderStatusRightAfterAuthorization($this->order, ProductionOrderStatus::Completed);
 
     $this->delete(route('production-orders.line-adjustments.destroy', [$this->order, $this->adjustment]))
-        ->assertSessionHas('error', "No se puede quitar un ajuste de línea de una orden en estado 'Completada'.");
+        ->assertSessionHas('error', "No se puede quitar un ajuste de línea de una orden en estado 'Completada'.")
+        // Como error de validación también: Inertia llama a onError y el formulario conserva lo escrito.
+        ->assertSessionHasErrors(['production_order' => "No se puede quitar un ajuste de línea de una orden en estado 'Completada'."]);
 
     expect($this->adjustment->fresh())->not->toBeNull();
 });
@@ -130,7 +138,9 @@ it('un operario no agrega una presentación si la orden pasó a revisión mientr
     $this->post(route('production-orders.packaging-plans.store', $this->order), [
         'product_variant_id' => $this->bucket->id,
         'planned_units' => 2,
-    ])->assertSessionHas('error', "No se puede agregar una presentación a una orden en estado 'Pendiente de revisión'.");
+    ])->assertSessionHas('error', "No se puede agregar una presentación a una orden en estado 'Pendiente de revisión'.")
+        // Como error de validación también: Inertia llama a onError y el formulario conserva lo escrito.
+        ->assertSessionHasErrors(['production_order' => "No se puede agregar una presentación a una orden en estado 'Pendiente de revisión'."]);
 
     expect(ProductionOrderPackagingPlan::query()->where('production_order_id', $this->order->id)->count())->toBe(1);
 });
@@ -159,10 +169,43 @@ it('no consume un saldo si la orden se completó mientras esperaba', function ()
     $this->post(route('production-orders.consume-remnant', $this->order), [
         'remnant_id' => $remnant->id,
         'quantity_gallons' => '1',
-    ])->assertSessionHas('error', "No se puede consumir un saldo en una orden en estado 'Completada'.");
+    ])->assertSessionHas('error', "No se puede consumir un saldo en una orden en estado 'Completada'.")
+        // Como error de validación también: Inertia llama a onError y el formulario conserva lo escrito.
+        ->assertSessionHasErrors(['production_order' => "No se puede consumir un saldo en una orden en estado 'Completada'."]);
 
     expect((string) $remnant->fresh()->available_quantity_gallons)->toBe('10.0000');
 });
+
+/**
+ * Niega la habilidad la segunda vez que se evalúa (con la fila bloqueada) sin cambiar el estado: es lo que ve una
+ * petición a la que le quitaron el permiso mientras esperaba el bloqueo.
+ */
+function denyAbilityAtLockTime(string $ability): void
+{
+    $evaluations = 0;
+
+    Gate::before(function (User $user, string $checked) use ($ability, &$evaluations): ?bool {
+        if ($checked !== $ability) {
+            return null;
+        }
+
+        return ++$evaluations > 1 ? false : null;
+    });
+}
+
+it('si lo que cambió es el permiso y no el estado, responde 403 y no culpa al estado', function (string $ability, string $method, string $route, array $body) {
+    denyAbilityAtLockTime($ability);
+
+    $this->call($method, route($route, $this->order), $body)
+        ->assertForbidden()
+        ->assertSessionMissing('error');
+
+    expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::InProgress)
+        ->and(ProductionOrderPackagingPlan::query()->where('production_order_id', $this->order->id)->count())->toBe(1);
+})->with([
+    'cancelar' => ['cancel', 'POST', 'production-orders.cancel', ['reason' => 'Cancelada por error']],
+    'agregar una presentación' => ['updateOperationalData', 'POST', 'production-orders.packaging-plans.store', fn () => ['product_variant_id' => $this->bucket->id, 'planned_units' => 2]],
+]);
 
 it('no inicia, no devuelve ni cambia el color si el estado cambió mientras esperaba', function (string $route, array $body, ProductionOrderStatus $from, string $message) {
     $this->order->update(['status' => $from]);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Production;
 
+use App\Concerns\RejectsStaleOrderWrites;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Production\StoreLineAdjustmentRequest;
 use App\Models\ProductionOrder;
@@ -14,6 +15,8 @@ use Illuminate\Http\Request;
 
 class LineAdjustmentController extends Controller
 {
+    use RejectsStaleOrderWrites;
+
     public function __construct(
         private readonly ProductionOrderLock $orderLock,
     ) {}
@@ -42,7 +45,7 @@ class LineAdjustmentController extends Controller
                 ]),
             );
         } catch (\DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            return $this->staleOrderResponse($exception);
         }
 
         return redirect()->route('production-orders.show', $productionOrder)
@@ -70,7 +73,7 @@ class LineAdjustmentController extends Controller
                 fn () => $adjustment->delete(),
             );
         } catch (\DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            return $this->staleOrderResponse($exception);
         }
 
         return redirect()->route('production-orders.show', $productionOrder)

@@ -68,7 +68,9 @@ class ProductionOrderCompletionLines
     }
 
     /**
-     * Si quedó saldo sobrante. Una sola lectura para la regla de envasado, la de rendimiento y el registro del saldo.
+     * Si quedó saldo sobrante. Una sola lectura para la regla de envasado, la de rendimiento, el registro del saldo y la
+     * vista previa de costos. `ProductionCostCalculatorService` repite la comparación como defensa: no sabe quién lo
+     * llama.
      */
     public function hasRemnant(mixed $remnantGallons): bool
     {
