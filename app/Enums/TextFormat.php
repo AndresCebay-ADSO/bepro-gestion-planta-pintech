@@ -28,10 +28,14 @@ enum TextFormat: string
     /** Nombres que conservan las mayúsculas como se escriben (bodegas, catálogos, roles) y el NIT. */
     case Name = 'name';
 
+    /** Código de la unidad de medida: en minúsculas («KG» y «kg» serían dos unidades), como desde #189. */
+    case UnitCode = 'unit_code';
+
     /**
      * Tildes en una sola forma (una «É» copiada de un PDF puede llegar como «E» más un acento suelto), espacios de los
      * extremos fuera y los internos colapsados (también tabs y espacios duros) y, según el formato, mayúsculas
-     * (`mb_strtoupper`, así «ñ» pasa a «Ñ»). Lo que no es texto llega tal cual: lo rechaza la regla `string`.
+     * (`mb_strtoupper`, así «ñ» pasa a «Ñ») o minúsculas. Lo que no es texto llega tal cual: lo rechaza la regla
+     * `string`.
      */
     public function normalize(mixed $value): mixed
     {
@@ -41,7 +45,11 @@ enum TextFormat: string
 
         $text = Str::squish(Normalizer::normalize($value, Normalizer::FORM_C) ?: $value);
 
-        return $this === self::Name ? $text : mb_strtoupper($text);
+        return match ($this) {
+            self::Code, self::ProductName => mb_strtoupper($text),
+            self::UnitCode => mb_strtolower($text),
+            self::Name => $text,
+        };
     }
 
     /**
@@ -60,7 +68,7 @@ enum TextFormat: string
         return [
             function (string $attribute, mixed $value, Closure $fail) use ($pattern): void {
                 if (is_string($value) && preg_match($pattern, $value) !== 1) {
-                    $fail($this->invalidMessage());
+                    $fail($this->invalidMessage())->translate();
                 }
             },
         ];
@@ -77,7 +85,7 @@ enum TextFormat: string
         return match ($this) {
             self::Code => '/^[\p{Lu}0-9][\p{Lu}0-9 ._\/-]*$/u',
             self::ProductName => '/^[\p{Lu}0-9][\p{Lu}0-9 .,\/%+()&°-]*$/u',
-            self::Name => null,
+            self::Name, self::UnitCode => null,
         };
     }
 
@@ -86,7 +94,7 @@ enum TextFormat: string
         return match ($this) {
             self::Code => 'El campo :attribute solo admite letras, números, espacios y los signos . - _ /, y debe empezar por una letra o un número.',
             self::ProductName => 'El campo :attribute solo admite letras, números, espacios y los signos . , - / % + ( ) & °, y debe empezar por una letra o un número.',
-            self::Name => '',
+            self::Name, self::UnitCode => '',
         };
     }
 }

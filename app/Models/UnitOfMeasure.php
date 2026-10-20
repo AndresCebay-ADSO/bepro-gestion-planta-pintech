@@ -77,6 +77,7 @@ class UnitOfMeasure extends Model
     protected function casts(): array
     {
         return [
+            'code' => TextFormat::UnitCode->cast(),
             'name' => TextFormat::Name->cast(),
             'to_kg_conversion' => 'decimal:6',
             'to_liter_conversion' => 'decimal:6',

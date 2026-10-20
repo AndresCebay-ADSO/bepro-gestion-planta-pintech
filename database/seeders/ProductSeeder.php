@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\TextFormat;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\UnitOfMeasure;
@@ -256,15 +257,9 @@ class ProductSeeder extends Seeder
 
         $count = 0;
         foreach ($products as $item) {
-            if (is_string($item)) {
-                $name = trim($item);
-                $name = preg_replace('/\s+/', ' ', $name);
-                $extra = [];
-            } else {
-                $name = trim($item['name']);
-                $name = preg_replace('/\s+/', ' ', $name);
-                $extra = Arr::except($item, 'name');
-            }
+            // La búsqueda de firstOrCreate no pasa por el cast: se busca con el nombre ya normalizado.
+            $name = TextFormat::ProductName->normalize(is_string($item) ? $item : $item['name']);
+            $extra = is_string($item) ? [] : Arr::except($item, 'name');
 
             if (empty($name)) {
                 continue;

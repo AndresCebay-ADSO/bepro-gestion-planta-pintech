@@ -1024,7 +1024,7 @@ export default function ProductsShow({
                                                         )
                                                     }
                                                     maxLength={80}
-                                                    className="uppercase"
+                                                    className="uppercase placeholder:normal-case"
                                                     placeholder="Ej: 77709808"
                                                 />
                                                 {form.errors.code && (

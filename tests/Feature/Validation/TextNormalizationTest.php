@@ -71,6 +71,9 @@ function textNormalizationCreate(string $module, array $overrides = []): array
             'name' => 'Cuñete x2', 'items' => [['raw_material_id' => $test->bag->id, 'quantity' => '1']],
         ]],
         'client' => [route('clients.store'), ['business_name' => 'Cliente Nuevo', 'nit' => '900123456']],
+        'unit-of-measure' => [route('catalogs.units-of-measure.store'), [
+            'code' => 'cun', 'name' => 'Cuñete', 'symbol' => 'cun', 'to_liter_conversion' => '18.9271', 'is_active' => true,
+        ]],
     };
 
     return [$route, array_merge($payload, $overrides)];
@@ -118,6 +121,8 @@ test('guarda el valor normalizado', function (string $module, string $field, str
     'código de categoría de MP (P8-7)' => ['raw-material-category', 'code', 'env  metal', 'ENV METAL', RawMaterialCategory::class],
     'tipo de termoencogido' => ['shrink-wrap-type', 'name', 'Cuñete  x2', 'Cuñete x2', ShrinkWrapType::class],
     'NIT como texto (P8-8)' => ['client', 'nit', '901.674.872-1', '901.674.872-1', Client::class],
+    'código de unidad en minúsculas' => ['unit-of-measure', 'code', ' CUN ', 'cun', UnitOfMeasure::class],
+    'nombre de unidad' => ['unit-of-measure', 'name', 'Cuñete  5 gal', 'Cuñete 5 gal', UnitOfMeasure::class],
 ]);
 
 test('rechaza los caracteres que no admite el formato, con el mensaje en español', function (string $module, string $field, string $value): void {
@@ -202,7 +207,9 @@ test('la base rechaza un NIT repetido', function (): void {
 });
 
 test('varios clientes pueden quedar sin NIT', function (): void {
-    Client::factory()->count(2)->create(['nit' => null]);
+    // Por fuera del formulario puede llegar '' en vez de null: el cast lo guarda como null y no choca con el índice.
+    Client::factory()->create(['nit' => null]);
+    Client::factory()->create(['nit' => '']);
 
     expect(Client::query()->whereNull('nit')->count())->toBe(2);
 });

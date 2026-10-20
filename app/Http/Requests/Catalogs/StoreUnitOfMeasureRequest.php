@@ -9,7 +9,6 @@ use App\Enums\TextFormat;
 use App\Http\Requests\Concerns\NormalizesText;
 use App\Models\UnitOfMeasure;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class StoreUnitOfMeasureRequest extends FormRequest
@@ -73,13 +72,8 @@ class StoreUnitOfMeasureRequest extends FormRequest
     {
         $merge = [
             'is_active' => $this->boolean('is_active', $this->defaultIsActive()),
-            ...$this->normalizedText(['name' => TextFormat::Name]),
+            ...$this->normalizedText(['code' => TextFormat::UnitCode, 'name' => TextFormat::Name]),
         ];
-
-        // El código es un identificador: sin espacios ni variantes de mayúsculas («KG» y «kg» serían dos unidades).
-        if (is_string($this->input('code'))) {
-            $merge['code'] = Str::lower(trim($this->input('code')));
-        }
 
         foreach (['to_kg_conversion', 'to_liter_conversion', 'description'] as $key) {
             // Solo texto vacío pasa a null; cualquier otro tipo (p. ej. una lista) llega tal cual y lo rechaza la validación.

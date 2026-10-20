@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use App\Casts\NormalizedText;
 use App\Enums\TextFormat;
+use App\Models\Client;
 use App\Models\Product;
 use App\Models\RawMaterial;
+use App\Models\UnitOfMeasure;
 use App\Models\Warehouse;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
@@ -30,6 +32,7 @@ test('normaliza espacios, tildes y mayúsculas según el formato', function (Tex
     'nombre conserva las mayúsculas' => [TextFormat::Name, '  Planta   Cali ', 'Planta Cali'],
     'nombre con tilde partida' => [TextFormat::Name, "Epo\u{0301}xicos", 'Epóxicos'],
     'NIT como texto' => [TextFormat::Name, '901.674.872-1', '901.674.872-1'],
+    'código de unidad en minúsculas' => [TextFormat::UnitCode, ' KG ', 'kg'],
 ]);
 
 test('lo que no es texto llega tal cual, para que lo rechace la regla string', function (mixed $value): void {
@@ -73,9 +76,9 @@ test('los nombres de producto admiten los signos de D-PRD2', function (string $n
     'empieza por signo' => ['/ESMALTE', false],
 ]);
 
-test('el formato Name no tiene regla de caracteres', function (): void {
-    expect(TextFormat::Name->rules())->toBe([]);
-});
+test('los nombres y el código de unidad no tienen regla de caracteres', function (TextFormat $format): void {
+    expect($format->rules())->toBe([]);
+})->with([TextFormat::Name, TextFormat::UnitCode]);
 
 test('el cast del modelo normaliza lo que no pasa por un formulario', function (): void {
     $rawMaterial = new RawMaterial;
@@ -87,8 +90,19 @@ test('el cast del modelo normaliza lo que no pasa por un formulario', function (
     $warehouse = new Warehouse;
     $warehouse->name = 'Planta   Cali';
 
+    $unit = new UnitOfMeasure;
+    $unit->code = 'KG';
+
     expect($rawMaterial->code)->toBe('RM 100')
+        ->and($unit->code)->toBe('kg')
         ->and($product->name)->toBe('BP ESMALTE POLIMÉRICO')
         ->and($warehouse->name)->toBe('Planta Cali')
         ->and(TextFormat::Code->cast())->toBe(NormalizedText::class.':code');
 });
+
+test('el cast guarda como null un texto que queda vacío', function (string $value): void {
+    $client = new Client;
+    $client->nit = $value;
+
+    expect($client->nit)->toBeNull();
+})->with(['vacío' => [''], 'solo espacios' => ['   ']]);
