@@ -126,12 +126,15 @@ test('completing order generates qr code and quality certificate', function () {
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 98,
+        'remnant_quantity_gallons' => 98,
         'viscosity_ku' => 105,
         'grinding_hg' => 7,
         'quality_solids' => 52.5,
         'responsible_name' => 'Analista QC',
         'quality_responsible_user_id' => $this->user->id,
         'density_kg_per_gallon' => 5,
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -185,12 +188,15 @@ test('completing order saves quality solids alongside viscosity and grinding', f
 
     $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 100,
+        'remnant_quantity_gallons' => 100,
         'viscosity_ku' => 110,
         'grinding_hg' => 6.5,
         'quality_solids' => 48.3,
         'responsible_name' => 'Operario Test',
         'quality_responsible_user_id' => $this->user->id,
         'density_kg_per_gallon' => 5,
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -313,11 +319,14 @@ test('quality signer is required on complete', function () {
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 98,
+        'remnant_quantity_gallons' => 98,
         'viscosity_ku' => 105,
         'grinding_hg' => 7,
         'quality_solids' => 52.5,
         'responsible_name' => 'Analista QC',
         'density_kg_per_gallon' => 5,
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -368,12 +377,15 @@ test('quality signer must have job_title and signature', function () {
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 98,
+        'remnant_quantity_gallons' => 98,
         'viscosity_ku' => 105,
         'grinding_hg' => 7,
         'quality_solids' => 52.5,
         'responsible_name' => 'Analista QC',
         'quality_responsible_user_id' => $incompleteUser->id,
         'density_kg_per_gallon' => 5,
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -426,12 +438,15 @@ test('quality signer must have admin or produccion role', function () {
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 98,
+        'remnant_quantity_gallons' => 98,
         'viscosity_ku' => 105,
         'grinding_hg' => 7,
         'quality_solids' => 52.5,
         'responsible_name' => 'Analista QC',
         'quality_responsible_user_id' => $operatorUser->id,
         'density_kg_per_gallon' => 5,
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],
@@ -485,12 +500,15 @@ test('quality signer must be active', function () {
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 98,
+        'remnant_quantity_gallons' => 98,
         'viscosity_ku' => 105,
         'grinding_hg' => 7,
         'quality_solids' => 52.5,
         'responsible_name' => 'Analista QC',
         'quality_responsible_user_id' => $inactiveUser->id,
         'density_kg_per_gallon' => 5,
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],

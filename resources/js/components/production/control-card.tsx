@@ -1,5 +1,6 @@
 import { Clock, FlaskConical, User as UserIcon } from 'lucide-react';
 
+import AlertError from '@/components/alert-error';
 import { DecimalInput } from '@/components/decimal-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +16,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { toLocalDateTimeInput, toUtcIsoString } from '@/lib/date-time-helpers';
+import { formErrorMessages } from '@/lib/form-errors';
 import { parseDecimal } from '@/lib/numeric-input';
 import type {
     ProductionOrderErrors,
@@ -58,6 +60,9 @@ export function ControlCard({
         (s) => s.id === data.quality_responsible_user_id,
     );
     const remnantGallons = parseDecimal(data.remnant_quantity_gallons);
+    // Todos los errores del servidor junto al botón, también los que no tienen un campo visible (OPL-11): la falta de
+    // stock de un ajuste, una fila, o que la orden cambió mientras estaba abierta.
+    const serverErrors = formErrorMessages(errors);
     const density = parseDecimal(data.density_kg_per_gallon);
 
     return (
@@ -349,19 +354,11 @@ export function ControlCard({
                     />
                 </div>
 
-                {!isReadOnly && (
-                    <>
-                        {errors.packaging && (
-                            <p className="text-xs text-destructive">
-                                {errors.packaging}
-                            </p>
-                        )}
-                        {errors.ingredients && (
-                            <p className="text-xs text-destructive">
-                                {errors.ingredients}
-                            </p>
-                        )}
-                    </>
+                {!isReadOnly && serverErrors.length > 0 && (
+                    <AlertError
+                        title="Revisa estos datos y vuelve a confirmar"
+                        errors={serverErrors}
+                    />
                 )}
 
                 {showSubmit && (

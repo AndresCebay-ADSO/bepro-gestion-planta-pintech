@@ -283,7 +283,16 @@ export default function ProductionOrderShow({
                 ? productionOrderSubmitForReview({ production_order: order.id })
                 : productionOrderComplete({ production_order: order.id });
 
-        transform(normalizeProductionOrderFormData);
+        // Los ajustes y saldos que muestra la pantalla: el servidor rechaza si la orden cambió desde entonces (P6-2).
+        transform((formData) => ({
+            ...normalizeProductionOrderFormData(formData),
+            line_adjustment_ids: lineAdjustments.map(
+                (adjustment) => adjustment.id,
+            ),
+            remnant_consumption_ids: (order.remnant_consumptions ?? []).map(
+                (consumption) => consumption.id,
+            ),
+        }));
         post(action.url, {
             preserveScroll: true,
         });
@@ -410,12 +419,7 @@ export default function ProductionOrderShow({
                             orderId={order.id}
                             order={order}
                             showCosts={can.previewCosts}
-                            canConsume={
-                                can.updateOperationalData &&
-                                !isPending &&
-                                !isCompleted &&
-                                !isPendingReview
-                            }
+                            canConsume={can.consumeRemnant}
                         />
 
                         <ControlCard

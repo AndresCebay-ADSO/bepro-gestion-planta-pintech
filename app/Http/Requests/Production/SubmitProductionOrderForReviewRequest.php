@@ -7,6 +7,7 @@ namespace App\Http\Requests\Production;
 use App\Enums\NumberType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class SubmitProductionOrderForReviewRequest extends FormRequest
 {
@@ -29,6 +30,7 @@ class SubmitProductionOrderForReviewRequest extends FormRequest
     {
         return array_merge(
             $this->consumptionRules(),
+            $this->seenLinesRules(),
             $this->qualityAndResponsibleRules(),
             [
                 // Los mismos tipos que al completar (CompleteProductionOrderRequest).
@@ -44,6 +46,17 @@ class SubmitProductionOrderForReviewRequest extends FormRequest
                 'notes' => ['nullable', 'string', 'max:2000'],
             ]
         );
+    }
+
+    /**
+     * Enviar a revisión es entregar la producción para cerrarla: si no se envasó nada, que lo sepa la planta y no quien
+     * revisa (P6-1). El rendimiento se exige al completar.
+     *
+     * @return array<callable(Validator): void>
+     */
+    public function after(): array
+    {
+        return [$this->somethingPackedCheck()];
     }
 
     /**

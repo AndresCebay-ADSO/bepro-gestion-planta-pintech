@@ -16,6 +16,7 @@ use App\Models\ProductionOrderPackagingPlan;
 use App\Models\ProductionRemnant;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
+use App\Models\RemnantConsumption;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -267,6 +268,18 @@ it('validates target order must be in progress', function () {
     ])->assertForbidden();
 });
 
+it('no consume saldos en una orden en revisión, ni siquiera quien la revisa (D-OPX1)', function () {
+    $this->targetOrder->update(['status' => ProductionOrderStatus::PendingReview->value]);
+
+    $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
+        'remnant_id' => $this->remnant->id,
+        'quantity_gallons' => 1,
+    ])->assertForbidden();
+
+    $this->getJson(route('production-orders.available-remnants', $this->targetOrder))->assertForbidden();
+    expect(RemnantConsumption::query()->count())->toBe(0);
+});
+
 it('validates quantity must be greater than zero', function () {
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
@@ -459,6 +472,9 @@ it('completing order includes consumed remnant cost in production cost', functio
         'actual_yield_quantity' => 10, // 10 envasados, no se genera saldo
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $this->user->id,
+        'line_adjustment_ids' => [],
+        // El saldo consumido que muestra la pantalla (P6-2).
+        'remnant_consumption_ids' => RemnantConsumption::query()->where('target_order_id', $this->targetOrder->id)->pluck('id')->all(),
         'ingredients' => [
             ['id' => $targetDetail->id, 'actual_quantity' => 30],
         ],

@@ -15,7 +15,7 @@ class ConsumeRemnantRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('updateOperationalData', $this->route('production_order')) ?? false;
+        return $this->user()?->can('consumeRemnant', $this->route('production_order')) ?? false;
     }
 
     /**

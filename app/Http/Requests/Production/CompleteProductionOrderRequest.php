@@ -10,6 +10,7 @@ use App\Models\ProductionOrder;
 use App\Models\ProductionOrderPackagingPlan;
 use App\Models\User;
 use App\Services\DecimalCalculator;
+use App\Services\Production\ProductionOrderCompletionLines;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
@@ -33,17 +34,15 @@ class CompleteProductionOrderRequest extends FormRequest
      */
     public function rules(): array
     {
-        $packaging = $this->input('packaging');
-        $hasPackaging = is_array($packaging) && $packaging !== [];
-        $hasRemnant = (float) ($this->input('remnant_quantity_gallons') ?? 0) > 0;
-
         return array_merge(
             $this->consumptionRules(),
+            $this->seenLinesRules(),
             $this->qualityAndResponsibleRules(),
             [
                 // Cada cantidad con el tipo de su columna (Cantidad 12,4 y Densidad 10,4): sin tope, 1e65 o 1e20 pasan
-                // `numeric` y fallan en la calculadora o al guardar en PostgreSQL.
-                'actual_yield_quantity' => ['bail', $hasPackaging || $hasRemnant ? 'required' : 'nullable', ...NumberType::Quantity->rules(), 'min:0.0001'],
+                // `numeric` y fallan en la calculadora o al guardar en PostgreSQL. Siempre obligatorio: una orden solo se
+                // completa si algo se envasó o quedó como saldo (D-OPL1), y eso es lo que rinde.
+                'actual_yield_quantity' => ['bail', 'required', ...NumberType::Quantity->rules(), 'min:0.0001'],
                 'agitation_start_time' => ['nullable', 'date'],
                 'agitation_end_time' => ['nullable', 'date'],
                 'packaging_start_time' => ['nullable', 'date'],
@@ -84,6 +83,7 @@ class CompleteProductionOrderRequest extends FormRequest
                     $validator->errors()->add('actual_yield_quantity', __('El rendimiento real no puede superar 9,99 veces la cantidad proyectada de la orden. Revisa el valor.'));
                 }
             },
+            $this->somethingPackedCheck(),
             function (Validator $validator): void {
                 if ($validator->errors()->isNotEmpty()) {
                     return;
@@ -91,62 +91,33 @@ class CompleteProductionOrderRequest extends FormRequest
 
                 $calculator = app(DecimalCalculator::class);
 
-                $packaging = $this->input('packaging');
-                $hasPackaging = is_array($packaging) && $packaging !== [];
-                $remnantGallons = (string) ($this->input('remnant_quantity_gallons') ?? '0');
-                $hasRemnant = $calculator->cmp($remnantGallons, '0', 4) > 0;
-
-                if (! $hasPackaging && ! $hasRemnant) {
-                    return;
-                }
-
+                // Ya validados: algo se envasó o quedó como saldo (la regla anterior), y el rendimiento es obligatorio.
+                $packaging = collect($this->input('packaging') ?? []);
+                $remnantGallons = $this->input('remnant_quantity_gallons');
                 $actualYield = $this->input('actual_yield_quantity');
-                if ($actualYield === null) {
-                    return;
-                }
 
-                $packagingIds = [];
-                if ($hasPackaging) {
-                    $packagingIds = collect($packaging)
-                        ->pluck('id')
-                        ->filter()
-                        ->map(fn ($id) => (int) $id)
-                        ->values()
-                        ->all();
-                }
-
-                $plans = collect();
-                if ($packagingIds !== []) {
-                    $plans = ProductionOrderPackagingPlan::query()
-                        ->whereIn('id', $packagingIds)
-                        ->with('productVariant:id,presentation_value')
-                        ->get()
-                        ->keyBy('id');
-                }
+                $plans = ProductionOrderPackagingPlan::query()
+                    ->whereIn('id', $packaging->pluck('id')->map(fn ($id) => (int) $id)->all())
+                    ->with('productVariant:id,presentation_value')
+                    ->get()
+                    ->keyBy('id');
 
                 $expectedYield = '0';
 
-                if ($hasPackaging) {
-                    foreach ($packaging as $packagingData) {
-                        $planId = (int) ($packagingData['id'] ?? 0);
-                        $plan = $plans->get($planId);
-                        if ($plan === null) {
-                            continue;
-                        }
+                foreach ($packaging as $packagingData) {
+                    $plan = $plans->get((int) $packagingData['id']);
+                    $actualUnits = (string) $packagingData['actual_units'];
 
-                        $actualUnits = (string) ($packagingData['actual_units'] ?? '0');
-                        if ($calculator->cmp($actualUnits, '0', 4) <= 0) {
-                            continue;
-                        }
-
-                        $presentationValue = (string) ($plan->productVariant?->presentation_value ?? '1');
-                        $yieldAddition = $calculator->mul($actualUnits, $presentationValue, 4);
-                        $expectedYield = $calculator->add($expectedYield, $yieldAddition, 4);
+                    if ($plan === null || ! $calculator->isPositive($actualUnits)) {
+                        continue;
                     }
+
+                    $presentationValue = (string) ($plan->productVariant?->presentation_value ?? '1');
+                    $expectedYield = $calculator->add($expectedYield, $calculator->mul($actualUnits, $presentationValue, 4), 4);
                 }
 
-                if ($hasRemnant) {
-                    $expectedYield = $calculator->add($expectedYield, $remnantGallons, 4);
+                if (app(ProductionOrderCompletionLines::class)->hasRemnant($remnantGallons)) {
+                    $expectedYield = $calculator->add($expectedYield, (string) $remnantGallons, 4);
                 }
 
                 $actualYieldStr = (string) $actualYield;

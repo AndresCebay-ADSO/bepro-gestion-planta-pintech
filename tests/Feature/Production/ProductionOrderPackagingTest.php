@@ -122,6 +122,8 @@ function completePackagingPayload(ProductionOrderDetail $detail, array $packagin
         'responsible_name' => 'Operario',
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $signer->id,
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [['id' => $detail->id, 'actual_quantity' => 52]],
         'packaging' => [$packaging],
     ];
@@ -438,6 +440,8 @@ it('rechaza una cantidad de ingrediente imposible con un mensaje, sin llegar a l
     // tope llegaría a la calculadora y al libro de inventario. «1e999999999» ya lo frena `min:0`.
     $this->post(route('production-orders.complete', $this->order), [
         ...completePackagingPayload($this->detail, ['id' => $plan->id, 'actual_units' => 10], $this->admin),
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [['id' => $this->detail->id, 'actual_quantity' => '1e20']],
     ])->assertSessionHasErrors('ingredients.0.actual_quantity');
 
@@ -450,6 +454,8 @@ it('rechaza la notación científica en la cantidad de ingrediente con un error 
     // Antes se aceptaba y se guardaba como 0 sin avisar. `decimal:0,4` solo admite el número escrito.
     $this->post(route('production-orders.complete', $this->order), [
         ...completePackagingPayload($this->detail, ['id' => $plan->id, 'actual_units' => 10], $this->admin),
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [['id' => $this->detail->id, 'actual_quantity' => '1e-65']],
     ])->assertSessionHasErrors('ingredients.0.actual_quantity');
 

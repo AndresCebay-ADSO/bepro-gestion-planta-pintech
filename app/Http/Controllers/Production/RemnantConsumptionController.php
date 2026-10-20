@@ -25,7 +25,7 @@ class RemnantConsumptionController extends Controller
      */
     public function availableRemnants(ProductionOrder $productionOrder): JsonResponse
     {
-        $this->authorize('updateOperationalData', $productionOrder);
+        $this->authorize('consumeRemnant', $productionOrder);
 
         return response()->json($this->availableRemnants->forOrder($productionOrder));
     }
@@ -40,13 +40,17 @@ class RemnantConsumptionController extends Controller
     ): RedirectResponse {
         $remnant = ProductionRemnant::findOrFail($request->validated('remnant_id'));
 
-        $consumeRemnantAction->execute(
-            remnant: $remnant,
-            targetOrder: $productionOrder,
-            quantityGallons: (string) $request->validated('quantity_gallons'),
-            userId: $request->user()->id,
-            notes: $request->validated('notes')
-        );
+        try {
+            $consumeRemnantAction->execute(
+                remnant: $remnant,
+                targetOrder: $productionOrder,
+                quantityGallons: (string) $request->validated('quantity_gallons'),
+                user: $request->user(),
+                notes: $request->validated('notes')
+            );
+        } catch (\DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
 
         return back()->with('success', __('Saldo de PT consumido exitosamente.'));
     }

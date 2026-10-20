@@ -171,7 +171,7 @@ export type ProductionOrderCan = {
     complete: boolean;
     rejectReview: boolean;
     previewCosts: boolean;
-    updateOperationalData: boolean;
+    consumeRemnant: boolean;
     updateColor: boolean;
     printLabels: boolean;
 };

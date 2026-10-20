@@ -181,7 +181,7 @@ class ProductionOrderController extends Controller
                 'complete' => $user?->can('complete', $productionOrder) ?? false,
                 'rejectReview' => $user?->can('rejectReview', $productionOrder) ?? false,
                 'previewCosts' => $user?->can('previewCosts', $productionOrder) ?? false,
-                'updateOperationalData' => $user?->can('updateOperationalData', $productionOrder) ?? false,
+                'consumeRemnant' => $user?->can('consumeRemnant', $productionOrder) ?? false,
                 'updateColor' => $user?->can('updateColor', $productionOrder) ?? false,
                 'printLabels' => $user?->can('printLabels', $productionOrder) ?? false,
             ],
@@ -304,7 +304,7 @@ class ProductionOrderController extends Controller
             $this->completeProductionOrder->execute(
                 order: $productionOrder,
                 data: $validated,
-                userId: $this->authenticatedUserId()
+                user: $request->user(),
             );
         } catch (\DomainException $exception) {
             return back()->with('error', $exception->getMessage());
@@ -322,6 +322,7 @@ class ProductionOrderController extends Controller
         try {
             $this->startProductionOrder->execute(
                 order: $productionOrder,
+                user: $request->user(),
             );
         } catch (\DomainException $exception) {
             return back()->with('error', $exception->getMessage());
@@ -342,7 +343,7 @@ class ProductionOrderController extends Controller
             $this->submitProductionOrderForReview->execute(
                 order: $productionOrder,
                 data: $validated,
-                userId: $this->authenticatedUserId()
+                user: $request->user(),
             );
         } catch (\DomainException $exception) {
             return back()->with('error', $exception->getMessage());
@@ -361,6 +362,7 @@ class ProductionOrderController extends Controller
             $this->rejectProductionOrderReview->execute(
                 order: $productionOrder,
                 reason: $request->validated('reason'),
+                user: $request->user(),
             );
         } catch (\DomainException $exception) {
             return back()->with('error', $exception->getMessage());
@@ -376,7 +378,7 @@ class ProductionOrderController extends Controller
     public function cancel(CancelProductionOrderRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
         try {
-            $this->cancelProductionOrder->execute($productionOrder, $request->validated('reason'));
+            $this->cancelProductionOrder->execute($productionOrder, $request->user(), $request->validated('reason'));
 
             return redirect()->route('production-orders.show', $productionOrder)
                 ->with('success', 'Orden de producción cancelada con éxito.');
@@ -391,7 +393,7 @@ class ProductionOrderController extends Controller
     public function updateColor(UpdateProductionOrderColorRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
         try {
-            $this->updateProductionOrderColor->execute($productionOrder, $request->validated('color'));
+            $this->updateProductionOrderColor->execute($productionOrder, $request->validated('color'), $request->user());
 
             return redirect()->route('production-orders.show', $productionOrder)
                 ->with('success', 'Color de la orden actualizado.');

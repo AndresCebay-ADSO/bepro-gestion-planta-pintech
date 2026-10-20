@@ -91,7 +91,7 @@ test('al cancelar la orden su QR deja de abrir el lote', function () {
     $this->order->update(['status' => ProductionOrderStatus::Pending]);
     $this->get(labelsUrl($this->order, $this->plan))->assertOk();
 
-    app(CancelProductionOrderAction::class)->execute($this->order);
+    app(CancelProductionOrderAction::class)->execute($this->order, userWithRole(SystemRole::Admin));
 
     expect(QrCode::query()->sole()->is_active)->toBeFalse();
     $this->get(route('qr.public.show', QrCode::query()->sole()->token))->assertNotFound();

@@ -130,6 +130,10 @@ test('completing an order stores quality solids and generates current certificat
         'responsible_name' => 'Analista Calidad',
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $user->id,
+        'actual_yield_quantity' => 10,
+        'remnant_quantity_gallons' => 10,
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [
             [
                 'id' => $detail->id,
@@ -201,6 +205,8 @@ test('completing an order at night in the plant stores the plant date, not the U
         'responsible_name' => 'Analista Calidad',
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $user->id,
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [['id' => $detail->id, 'actual_quantity' => 10]],
         'packaging' => [['id' => $plan->id, 'actual_units' => 2]],
         'actual_yield_quantity' => 2,

@@ -89,7 +89,7 @@ it('refuses the change if the order was completed after the permission check', f
     $order = colorOrder(ProductionOrderStatus::InProgress);
     $order->newQuery()->whereKey($order->id)->update(['status' => ProductionOrderStatus::Completed->value]);
 
-    expect(fn () => app(UpdateProductionOrderColorAction::class)->execute($order, 'RAL 3000'))
+    expect(fn () => app(UpdateProductionOrderColorAction::class)->execute($order, 'RAL 3000', userWithRole(SystemRole::Admin)))
         ->toThrow(DomainException::class);
 
     expect($order->fresh()->color)->toBe('RAL 3020');

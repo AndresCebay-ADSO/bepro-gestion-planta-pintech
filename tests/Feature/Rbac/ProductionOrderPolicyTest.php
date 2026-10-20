@@ -45,6 +45,13 @@ it('permite operar en proceso a quien tiene operate y a nadie en estados cerrado
         ->and(orderAbility(SystemRole::Commercial, 'updateOperationalData', orderInStatus(ProductionOrderStatus::InProgress)))->toBeFalse();
 });
 
+it('consume saldos solo en una orden en proceso, ni siquiera quien revisa (D-OPX1)', function () {
+    expect(orderAbility(SystemRole::Operator, 'consumeRemnant', orderInStatus(ProductionOrderStatus::InProgress)))->toBeTrue()
+        ->and(orderAbility(SystemRole::Admin, 'consumeRemnant', orderInStatus(ProductionOrderStatus::PendingReview)))->toBeFalse()
+        ->and(orderAbility(SystemRole::Admin, 'consumeRemnant', orderInStatus(ProductionOrderStatus::Completed)))->toBeFalse()
+        ->and(orderAbility(SystemRole::Commercial, 'consumeRemnant', orderInStatus(ProductionOrderStatus::InProgress)))->toBeFalse();
+});
+
 it('completa desde en proceso o en revisión solo con el permiso', function () {
     expect(orderAbility(SystemRole::Production, 'complete', orderInStatus(ProductionOrderStatus::InProgress)))->toBeTrue()
         ->and(orderAbility(SystemRole::Production, 'complete', orderInStatus(ProductionOrderStatus::PendingReview)))->toBeTrue()

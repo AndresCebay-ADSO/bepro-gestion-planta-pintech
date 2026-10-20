@@ -6,39 +6,35 @@ namespace App\Actions\Production;
 
 use App\Enums\ProductionOrderStatus;
 use App\Models\ProductionOrder;
+use App\Models\User;
+use App\Services\Production\ProductionOrderCompletionLines;
+use App\Services\Production\ProductionOrderLock;
 use Illuminate\Support\Facades\DB;
 
 class SubmitProductionOrderForReviewAction
 {
     public function __construct(
         private readonly SaveProductionOrderOperationalDataAction $saveOperationalData,
+        private readonly ProductionOrderLock $orderLock,
+        private readonly ProductionOrderCompletionLines $completionLines,
     ) {}
 
     /**
      * @param  array<string, mixed>  $data
      */
-    public function execute(ProductionOrder $order, array $data, int $userId): ProductionOrder
+    public function execute(ProductionOrder $order, array $data, User $user): ProductionOrder
     {
-        return DB::transaction(function () use ($order, $data, $userId): ProductionOrder {
-            $lockedOrder = ProductionOrder::query()
-                ->lockForUpdate()
-                ->findOrFail($order->id);
+        return DB::transaction(function () use ($order, $data, $user): ProductionOrder {
+            $lockedOrder = $this->orderLock->lockFor($order, $user, 'submitForReview', "No se puede enviar a revisión una orden en estado ':status'.");
 
-            $allowedForSubmission = [
-                ProductionOrderStatus::InProgress,
-            ];
-
-            if (! in_array($lockedOrder->status, $allowedForSubmission, true)) {
-                throw new \DomainException(
-                    "No se puede enviar a revisión una orden en estado '{$lockedOrder->status->label()}'."
-                );
-            }
+            // La misma lista que al completar: la lista vieja de OPL-02 se vio justamente al enviar a revisión (P6-1).
+            $this->completionLines->ensureMatches($lockedOrder, $data);
 
             $this->saveOperationalData->execute($lockedOrder, $data);
 
             $lockedOrder->update([
                 'status' => ProductionOrderStatus::PendingReview,
-                'submitted_by' => $userId,
+                'submitted_by' => $user->id,
                 'submitted_at' => now(),
                 'reviewed_by' => null,
                 'reviewed_at' => null,
