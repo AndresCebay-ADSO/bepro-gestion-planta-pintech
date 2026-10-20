@@ -338,11 +338,14 @@ test('it previews and completes a production order with normalized quantities', 
 
     $completeResponse = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 10,
+        'remnant_quantity_gallons' => 10,
         'viscosity_ku' => 100,
         'grinding_hg' => 6,
         'responsible_name' => 'Operario UoM',
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $this->user->id,
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 3.0], // 3.0 kg reales gastados
         ],

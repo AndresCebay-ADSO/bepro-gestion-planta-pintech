@@ -41,7 +41,7 @@ class ProductionLabelController extends Controller
                 order: $productionOrder,
                 plan: $plan,
                 format: $format,
-                userId: (int) $request->user()->id,
+                user: $request->user(),
             );
         } catch (\DomainException $exception) {
             // La estampita se abre en otra pestaña: volver atrás ahí cargaría una segunda copia de la orden.

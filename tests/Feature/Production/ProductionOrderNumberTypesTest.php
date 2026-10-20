@@ -92,6 +92,8 @@ function numberTypesOrder(object $t, ProductionOrderStatus $status, string $unit
 function numberTypesCompleteBody(object $t, array $f, array $override = []): array
 {
     return array_replace([
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [['id' => $f['d1']->id, 'actual_quantity' => '10'], ['id' => $f['d2']->id, 'actual_quantity' => '5']],
         'packaging' => [['id' => $f['pA']->id, 'actual_units' => '5'], ['id' => $f['pB']->id, 'actual_units' => '2']],
         'actual_yield_quantity' => '15',
@@ -122,6 +124,8 @@ test('completa una OP cuyo costo pasa de $100 M (OPL-03)', function (string $fir
     $f = numberTypesOrder($this, ProductionOrderStatus::InProgress, '100000', '5000');
 
     $this->actingAs($this->admin)->post(route('production-orders.complete', $f['order']), numberTypesCompleteBody($this, $f, [
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [['id' => $f['d1']->id, 'actual_quantity' => $first], ['id' => $f['d2']->id, 'actual_quantity' => $second]],
     ]))->assertSessionHasNoErrors()->assertRedirect();
 
@@ -318,6 +322,8 @@ test('el consumo real lleva 4 decimales y sin notación científica (OPL-08)', f
 
     $response = $this->actingAs($this->admin)->post(route('production-orders.submit-for-review', $f['order']),
         numberTypesCompleteBody($this, $f, [
+            'line_adjustment_ids' => [],
+            'remnant_consumption_ids' => [],
             'ingredients' => [['id' => $f['d1']->id, 'actual_quantity' => $quantity], ['id' => $f['d2']->id, 'actual_quantity' => '5']],
         ]));
 
@@ -385,6 +391,8 @@ test('completar una OP cuyo costo no cabe da un error en los ingredientes, no un
     }
 
     $this->actingAs($this->admin)->post(route('production-orders.complete', $f['order']), numberTypesCompleteBody($this, $f, [
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [['id' => $f['d1']->id, 'actual_quantity' => $first], ['id' => $f['d2']->id, 'actual_quantity' => $second]],
     ]))->assertSessionHasErrors('ingredients');
 

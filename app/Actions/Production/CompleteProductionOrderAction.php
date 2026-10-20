@@ -15,14 +15,16 @@ use App\Models\Product;
 use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\ProductionRemnant;
+use App\Models\User;
 use App\Services\AlertService;
 use App\Services\DecimalCalculator;
 use App\Services\FinishedInventory\FinishedInventoryMovementService;
 use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\Pricing\ProductionCostCalculatorService;
+use App\Services\Production\ProductionOrderCompletionLines;
+use App\Services\Production\ProductionOrderLock;
 use App\Services\TimezoneService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class CompleteProductionOrderAction
 {
@@ -34,28 +36,22 @@ class CompleteProductionOrderAction
         private readonly SaveProductionOrderOperationalDataAction $saveOperationalData,
         private readonly FinishedInventoryMovementService $finishedInventoryMovementService,
         private readonly TimezoneService $timezone,
+        private readonly ProductionOrderLock $orderLock,
+        private readonly ProductionOrderCompletionLines $completionLines,
     ) {}
 
     /**
      * @param  array<string, mixed>  $data
      */
-    public function execute(ProductionOrder $order, array $data, int $userId): ProductionOrder
+    public function execute(ProductionOrder $order, array $data, User $user): ProductionOrder
     {
-        $completedOrder = DB::transaction(function () use ($order, $data, $userId): ProductionOrder {
-            $lockedOrder = ProductionOrder::query()
-                ->lockForUpdate()
-                ->findOrFail($order->id);
+        $userId = (int) $user->id;
 
-            $allowedForCompletion = [
-                ProductionOrderStatus::InProgress,
-                ProductionOrderStatus::PendingReview,
-            ];
+        $completedOrder = DB::transaction(function () use ($order, $data, $user, $userId): ProductionOrder {
+            $lockedOrder = $this->orderLock->lockFor($order, $user, 'complete', "No se puede completar una orden en estado ':status'.");
 
-            if (! in_array($lockedOrder->status, $allowedForCompletion, true)) {
-                throw new \DomainException(
-                    "No se puede completar una orden en estado '{$lockedOrder->status->label()}'."
-                );
-            }
+            // Con la fila bloqueada nadie agrega ni quita líneas: lo enviado debe ser exactamente lo de la orden.
+            $this->completionLines->ensureMatches($lockedOrder, $data);
 
             $wasPendingReview = $lockedOrder->status === ProductionOrderStatus::PendingReview;
 
@@ -81,19 +77,13 @@ class CompleteProductionOrderAction
             $lockedOrder->update($updateData);
 
             $lockedOrder->loadMissing(['details.rawMaterial:id,code', 'packagingPlans.productVariant', 'lineAdjustments', 'remnantConsumptions']);
-            $detailsById = $lockedOrder->details->keyBy('id');
+            // ensureMatches garantizó una cantidad real por cada línea: se recorren las de la orden, no las enviadas.
+            $actualQuantities = collect($data['ingredients'])->mapWithKeys(fn (array $row) => [(int) $row['id'] => (string) $row['actual_quantity']]);
             $totalBulkCost = '0';
             $consumedRawMaterialIds = [];
 
-            foreach ($data['ingredients'] as $ingredientData) {
-                $detail = $detailsById->get((int) $ingredientData['id']);
-                if ($detail === null) {
-                    throw ValidationException::withMessages([
-                        'ingredients' => __('Uno de los ingredientes no pertenece a la orden de producción seleccionada.'),
-                    ]);
-                }
-
-                $actualQuantity = (string) $ingredientData['actual_quantity'];
+            foreach ($lockedOrder->details as $detail) {
+                $actualQuantity = $actualQuantities[(int) $detail->id];
                 $consumedRawMaterialIds[] = (int) $detail->raw_material_id;
 
                 $consumedCost = $this->fifoStockAllocator->consumeProductionOrderDetail(
@@ -158,13 +148,15 @@ class CompleteProductionOrderAction
                 __('El costo total de la orden no cabe en el registro. Revisa las cantidades reales consumidas.'),
             );
 
-            $remnantGallons = (string) ($data['remnant_quantity_gallons'] ?? '0');
+            $remnantGallons = $this->completionLines->hasRemnant($data['remnant_quantity_gallons'] ?? null)
+                ? (string) $data['remnant_quantity_gallons']
+                : null;
 
             $costDistribution = $this->productionCostCalculator->calculateDistributedBulkCosts(
                 order: $lockedOrder,
                 packagingData: $data['packaging'] ?? [],
                 totalBulkCost: $totalBulkCost,
-                remnantGallons: $this->calculator->cmp($remnantGallons, '0', 4) > 0 ? $remnantGallons : null
+                remnantGallons: $remnantGallons
             );
             $distributedBulkCosts = $costDistribution['distributedCosts'];
             $bulkCostPerUnit = $costDistribution['bulkCostPerUnit'];
@@ -176,17 +168,10 @@ class CompleteProductionOrderAction
                 ? (string) $productForPricing->cif_percentage
                 : null;
 
-            $packagingPlansById = $lockedOrder->packagingPlans->keyBy('id');
+            $actualUnitsByPlan = collect($data['packaging'] ?? [])->mapWithKeys(fn (array $row) => [(int) $row['id'] => (string) $row['actual_units']]);
 
-            foreach (($data['packaging'] ?? []) as $packData) {
-                $plan = $packagingPlansById->get((int) $packData['id']);
-                if ($plan === null) {
-                    throw ValidationException::withMessages([
-                        'packaging' => __('Uno de los planes de envasado no pertenece a la orden de producción seleccionada.'),
-                    ]);
-                }
-
-                $actualUnits = (string) $packData['actual_units'];
+            foreach ($lockedOrder->packagingPlans as $plan) {
+                $actualUnits = $actualUnitsByPlan[(int) $plan->id];
 
                 if ($this->calculator->cmp($actualUnits, '0', 4) <= 0) {
                     // Sin unidades no se consume nada, y el plan cerrado lo dice: sin envases nuevos ni etiquetas usadas
@@ -248,7 +233,7 @@ class CompleteProductionOrderAction
                 );
             }
 
-            $yieldRealQuantity = (string) ($data['actual_yield_quantity'] ?? $lockedOrder->quantity);
+            $yieldRealQuantity = (string) $data['actual_yield_quantity'];
             $yieldTheoreticalQuantity = (string) $lockedOrder->quantity;
             $yieldVarianceQuantity = $this->calculator->sub($yieldRealQuantity, $yieldTheoreticalQuantity, 4);
             $yieldPercentage = $this->calculator->cmp($yieldTheoreticalQuantity, '0', 4) > 0
@@ -283,6 +268,7 @@ class CompleteProductionOrderAction
 
             $this->registerRemnantIfApplicable(
                 order: $lockedOrder,
+                remnantGallons: $remnantGallons,
                 data: $data,
                 bulkCostPerUnit: $bulkCostPerUnit,
                 cifPercentage: $productCifPercentage,
@@ -341,18 +327,18 @@ class CompleteProductionOrderAction
     /**
      * Si se reportaron galones sobrantes, crear un registro de saldo de PT.
      *
+     * @param  ?string  $remnantGallons  null si no quedó saldo
      * @param  array<string, mixed>  $data
      */
     private function registerRemnantIfApplicable(
         ProductionOrder $order,
+        ?string $remnantGallons,
         array $data,
         ?string $bulkCostPerUnit,
         ?string $cifPercentage,
         int $userId
     ): void {
-        $remnantGallons = (string) ($data['remnant_quantity_gallons'] ?? '0');
-
-        if ($this->calculator->cmp($remnantGallons, '0', 4) <= 0) {
+        if ($remnantGallons === null) {
             return;
         }
 

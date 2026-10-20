@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Production;
 
 use App\Actions\Production\ConsumeRemnantAction;
+use App\Concerns\RejectsStaleOrderWrites;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Production\ConsumeRemnantRequest;
 use App\Models\ProductionOrder;
@@ -15,6 +16,8 @@ use Illuminate\Http\RedirectResponse;
 
 class RemnantConsumptionController extends Controller
 {
+    use RejectsStaleOrderWrites;
+
     public function __construct(
         private readonly AvailableRemnantsService $availableRemnants,
     ) {}
@@ -25,7 +28,7 @@ class RemnantConsumptionController extends Controller
      */
     public function availableRemnants(ProductionOrder $productionOrder): JsonResponse
     {
-        $this->authorize('updateOperationalData', $productionOrder);
+        $this->authorize('consumeRemnant', $productionOrder);
 
         return response()->json($this->availableRemnants->forOrder($productionOrder));
     }
@@ -40,13 +43,17 @@ class RemnantConsumptionController extends Controller
     ): RedirectResponse {
         $remnant = ProductionRemnant::findOrFail($request->validated('remnant_id'));
 
-        $consumeRemnantAction->execute(
-            remnant: $remnant,
-            targetOrder: $productionOrder,
-            quantityGallons: (string) $request->validated('quantity_gallons'),
-            userId: $request->user()->id,
-            notes: $request->validated('notes')
-        );
+        try {
+            $consumeRemnantAction->execute(
+                remnant: $remnant,
+                targetOrder: $productionOrder,
+                quantityGallons: (string) $request->validated('quantity_gallons'),
+                user: $request->user(),
+                notes: $request->validated('notes')
+            );
+        } catch (\DomainException $exception) {
+            return $this->staleOrderResponse($exception);
+        }
 
         return back()->with('success', __('Saldo de PT consumido exitosamente.'));
     }

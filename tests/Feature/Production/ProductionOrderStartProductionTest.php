@@ -177,6 +177,9 @@ test('operator cannot submit for review while order is still pending', function 
     $this->actingAs($operator)
         ->post(route('production-orders.submit-for-review', $order), [
             'actual_yield_quantity' => 100,
+            'remnant_quantity_gallons' => 100,
+            'line_adjustment_ids' => [],
+            'remnant_consumption_ids' => [],
             'ingredients' => [
                 ['id' => $detail->id, 'actual_quantity' => 50],
             ],
@@ -223,6 +226,9 @@ test('full operator flow start then submit for review', function () {
 
     $payload = [
         'actual_yield_quantity' => 100,
+        'remnant_quantity_gallons' => 100,
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
         'ingredients' => [
             ['id' => $detail->id, 'actual_quantity' => 50],
         ],

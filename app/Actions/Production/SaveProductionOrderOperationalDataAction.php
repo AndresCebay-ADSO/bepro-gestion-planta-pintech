@@ -26,6 +26,9 @@ class SaveProductionOrderOperationalDataAction
             'packaging_end_time' => $this->parseOperationalTime($data['packaging_end_time'] ?? null),
             'responsible_name' => $data['responsible_name'] ?? null,
             'spillage_quantity' => $data['spillage_quantity'] ?? 0,
+            // Se guarda al enviar a revisión: sin esto, quien aprueba abría el saldo vacío y no podía cerrar la orden.
+            'remnant_quantity_gallons' => $data['remnant_quantity_gallons'] ?? null,
+            'remnant_notes' => $data['remnant_notes'] ?? null,
             'density_kg_per_gallon' => $data['density_kg_per_gallon'] ?? $order->density_kg_per_gallon,
             'notes' => $data['notes'] ?? $order->notes,
         ]);

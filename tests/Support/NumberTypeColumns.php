@@ -34,7 +34,7 @@ final class NumberTypeColumns
             'production_order_line_adjustments.quantity',
             'production_orders.quantity', 'production_orders.actual_quantity', 'production_orders.yield_real_quantity',
             'production_orders.yield_theoretical_quantity', 'production_orders.yield_variance_quantity',
-            'production_orders.spillage_quantity',
+            'production_orders.spillage_quantity', 'production_orders.remnant_quantity_gallons',
             'production_remnants.original_quantity_gallons', 'production_remnants.original_quantity_kg',
             'production_remnants.available_quantity_gallons', 'production_remnants.available_quantity_kg',
             'remnant_consumptions.quantity_gallons', 'remnant_consumptions.quantity_kg',

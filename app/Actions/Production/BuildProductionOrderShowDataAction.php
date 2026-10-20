@@ -111,6 +111,9 @@ class BuildProductionOrderShowDataAction
             'packaging_end_time' => optional($productionOrder->packaging_end_time)->toISOString(),
             'responsible_name' => $productionOrder->responsible_name,
             'spillage_quantity' => (float) $productionOrder->spillage_quantity,
+            // Texto, no float: el formulario lo vuelve a enviar y un float puede perder decimales.
+            'remnant_quantity_gallons' => $productionOrder->remnant_quantity_gallons,
+            'remnant_notes' => $productionOrder->remnant_notes,
             'density_kg_per_gallon' => $productionOrder->density_kg_per_gallon !== null ? (float) $productionOrder->density_kg_per_gallon : null,
             'notes' => $productionOrder->notes,
             'submitted_at' => $productionOrder->submitted_at?->toISOString(),

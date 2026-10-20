@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Production;
 
-use App\Enums\ProductionOrderStatus;
 use App\Models\ProductionOrder;
+use App\Models\User;
+use App\Services\Production\ProductionOrderLock;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -14,20 +15,16 @@ use Illuminate\Support\Facades\DB;
  */
 class UpdateProductionOrderColorAction
 {
-    public function execute(ProductionOrder $order, ?string $color): ProductionOrder
+    public function __construct(
+        private readonly ProductionOrderLock $orderLock,
+    ) {}
+
+    public function execute(ProductionOrder $order, ?string $color, User $user): ProductionOrder
     {
-        return DB::transaction(function () use ($order, $color): ProductionOrder {
+        return DB::transaction(function () use ($order, $color, $user): ProductionOrder {
             // Con la fila bloqueada: si otra petición completa o cancela la orden a la vez, una espera a la otra y esta
             // ve el estado final.
-            $lockedOrder = ProductionOrder::query()
-                ->lockForUpdate()
-                ->findOrFail($order->id);
-
-            if (! in_array($lockedOrder->status, ProductionOrderStatus::open(), true)) {
-                throw new \DomainException(
-                    "No se puede cambiar el color de una orden en estado '{$lockedOrder->status->label()}'."
-                );
-            }
+            $lockedOrder = $this->orderLock->lockFor($order, $user, 'updateColor', "No se puede cambiar el color de una orden en estado ':status'.");
 
             $lockedOrder->update(['color' => $color]);
 

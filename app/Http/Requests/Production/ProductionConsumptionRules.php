@@ -12,8 +12,10 @@ use App\Models\ProductionOrderPackagingPlan;
 use App\Models\RawMaterial;
 use App\Rules\RawMaterialOfType;
 use App\Services\DecimalCalculator;
+use App\Services\Production\ProductionOrderCompletionLines;
 use Closure;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 trait ProductionConsumptionRules
 {
@@ -76,6 +78,55 @@ trait ProductionConsumptionRules
                 $this->activeOrCurrentPlanLabel($scopedOrderId),
             ],
         ];
+    }
+
+    /**
+     * Los ajustes de línea y los saldos consumidos que mostraba la pantalla al confirmar. No se guardan: se comparan con
+     * los de la OP bloqueada, porque quien completa firma el costo que vio (P6-2, ProductionOrderCompletionLines).
+     *
+     * @return array<string, mixed>
+     */
+    protected function seenLinesRules(): array
+    {
+        $scopedOrderId = $this->resolveProductionOrderId() ?? 0;
+
+        return [
+            'line_adjustment_ids' => ['present', 'array'],
+            'line_adjustment_ids.*' => [
+                'bail',
+                'integer',
+                'distinct',
+                Rule::exists('production_order_line_adjustments', 'id')->where('production_order_id', $scopedOrderId),
+            ],
+            'remnant_consumption_ids' => ['present', 'array'],
+            'remnant_consumption_ids.*' => [
+                'bail',
+                'integer',
+                'distinct',
+                Rule::exists('remnant_consumptions', 'id')->where('target_order_id', $scopedOrderId),
+            ],
+        ];
+    }
+
+    /**
+     * D-OPL1: no se entrega una OP sin envasar nada ni dejar saldo. Va antes de la regla de rendimiento, que con todo en
+     * 0 daría un «esperado: 0» que no explica el problema. Corre solo con los datos ya válidos.
+     *
+     * @return callable(Validator): void
+     */
+    protected function somethingPackedCheck(): callable
+    {
+        return function (Validator $validator): void {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $packaging = $this->input('packaging');
+
+            if (! app(ProductionOrderCompletionLines::class)->packedSomething(is_array($packaging) ? $packaging : [], $this->input('remnant_quantity_gallons'))) {
+                $validator->errors()->add('packaging', __(ProductionOrderCompletionLines::NOTHING_PACKED_MESSAGE));
+            }
+        };
     }
 
     /**
@@ -162,6 +213,10 @@ trait ProductionConsumptionRules
             'ingredients.required' => 'Debes registrar el consumo de ingredientes de la orden.',
             'ingredients.*.id.distinct' => 'No puedes repetir el mismo ingrediente en la lista.',
             'packaging.*.id.distinct' => 'No puedes repetir la misma presentación de empaque en la lista.',
+            // Una línea que ya no está en la orden: otro usuario la quitó después de que se abrió la pantalla (C4).
+            'packaging.*.id.exists' => __(ProductionOrderCompletionLines::ORDER_CHANGED_MESSAGE),
+            'line_adjustment_ids.*.exists' => __(ProductionOrderCompletionLines::ORDER_CHANGED_MESSAGE),
+            'remnant_consumption_ids.*.exists' => __(ProductionOrderCompletionLines::ORDER_CHANGED_MESSAGE),
         ];
     }
 
@@ -180,6 +235,10 @@ trait ProductionConsumptionRules
             'packaging.*.new_containers_used' => 'envases nuevos usados',
             'packaging.*.labels_used' => 'etiquetas usadas',
             'packaging.*.label_raw_material_id' => 'etiqueta',
+            'line_adjustment_ids' => 'ajustes de línea',
+            'line_adjustment_ids.*' => 'ajuste de línea',
+            'remnant_consumption_ids' => 'saldos consumidos',
+            'remnant_consumption_ids.*' => 'saldo consumido',
         ];
     }
 }

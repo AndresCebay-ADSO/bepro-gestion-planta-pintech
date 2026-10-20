@@ -102,7 +102,7 @@ combinación, se crea un rol nuevo.
 | | `raw_materials.delete` | [x] | [ ] | [ ] | [ ] | [ ] | Borrado físico solo si no tiene lotes, movimientos, fórmulas ni órdenes. |
 | **Órdenes de producción** | `production_orders.view` | [x] | [x] | [x] | [x] | [ ] | 🔁 Comercial `[ ]` (§7.3). Sin costos salvo `costs.view`. |
 | | `production_orders.create` | [x] | [x] | [x] | [ ] | [ ] | También corrige el **color** de la orden mientras está abierta (pendiente, en curso o en revisión): quien lo escribe al crear puede corregirlo. Al completar se congela (3.4). |
-| | `production_orders.operate` | [x] | [x] | [x] | [x] | [ ] | Iniciar, ajustes de línea, plan de empaque y consumo de remanentes. |
+| | `production_orders.operate` | [x] | [x] | [x] | [x] | [ ] | Iniciar, ajustes de línea, plan de empaque y consumo de remanentes. Los remanentes solo se consumen con la orden en curso, también para quien revisa (D-OPX1, auditoría 3.6). |
 | | `production_orders.submit_for_review` | [x] | [x] | [x] | [x] | [ ] | ⚠️ hoy solo Operador puede enviar a revisión. |
 | | `production_orders.reject_review` | [x] | [x] | [x] | [ ] | [ ] | |
 | | `production_orders.complete` | [x] | [x] | [x] | [ ] | [ ] | Descuenta inventario FIFO. |
@@ -175,6 +175,8 @@ Viven en las policies/Actions junto al permiso, nunca en la matriz. Se listan aq
 | Registros con dueño: sin `view_all` solo se actúa sobre los propios | `scopeVisibleTo` en `Quotation`, `SalesOrder`, `PaintDevelopmentRequest` |
 | Orden: `operate` solo en `in_progress`/`pending_review`; `complete` solo en `in_progress`/`pending_review`; `reject_review` solo en `pending_review` | `ProductionOrderPolicy` |
 | Orden en `pending_review`: **solo quien puede revisar** (`complete`) sigue operando | Hoy: `hasRole('operador')` → se reescribe sin rol |
+| Orden: consumir un remanente solo en `in_progress` (en revisión, ni siquiera quien revisa: se devuelve la orden a planta) | `ProductionOrderPolicy::consumeRemnant` |
+| Orden: toda escritura en una orden abierta bloquea la fila y vuelve a evaluar la habilidad con el estado bloqueado (el estado pudo cambiar mientras esperaba) | `ProductionOrderLock` |
 | Pedido: `edit` solo en `pending`; las transiciones de estado siguen `SalesOrderStatus::nextTransitions()` | `UpdateSalesOrderRequest` |
 | Movimiento MP generado por una orden (`production_order_id`) no se toca | `InventoryMovementPolicy` |
 | Desactivar materia prima: se niega si hay lotes con stock | `RawMaterialController::destroy` |

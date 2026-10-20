@@ -53,6 +53,9 @@ return new class extends Migration
             $table->dateTime('packaging_start_time')->nullable();
             $table->dateTime('packaging_end_time')->nullable();
             $table->decimal('spillage_quantity', 12, 4)->default(0)->comment('Cantidad de derrame detectado');
+            // Lo que la planta informa al enviar a revisión: quien aprueba lo ve y lo confirma (el saldo de PT nace al completar).
+            $table->decimal('remnant_quantity_gallons', 12, 4)->nullable()->comment('Saldo sobrante informado (galones)');
+            $table->text('remnant_notes')->nullable()->comment('Observaciones del saldo sobrante');
             $table->decimal('density_kg_per_gallon', 10, 4)->nullable()->comment('Densidad en kg/galón');
 
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();

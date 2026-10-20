@@ -6,22 +6,20 @@ namespace App\Actions\Production;
 
 use App\Enums\ProductionOrderStatus;
 use App\Models\ProductionOrder;
+use App\Models\User;
+use App\Services\Production\ProductionOrderLock;
 use Illuminate\Support\Facades\DB;
 
 class StartProductionOrderAction
 {
-    public function execute(ProductionOrder $order): ProductionOrder
-    {
-        return DB::transaction(function () use ($order): ProductionOrder {
-            $lockedOrder = ProductionOrder::query()
-                ->lockForUpdate()
-                ->findOrFail($order->id);
+    public function __construct(
+        private readonly ProductionOrderLock $orderLock,
+    ) {}
 
-            if ($lockedOrder->status !== ProductionOrderStatus::Pending) {
-                throw new \DomainException(
-                    "No se puede iniciar producción de una orden en estado '{$lockedOrder->status->label()}'."
-                );
-            }
+    public function execute(ProductionOrder $order, User $user): ProductionOrder
+    {
+        return DB::transaction(function () use ($order, $user): ProductionOrder {
+            $lockedOrder = $this->orderLock->lockFor($order, $user, 'startProduction', "No se puede iniciar producción de una orden en estado ':status'.");
 
             $lockedOrder->update([
                 'status' => ProductionOrderStatus::InProgress,

@@ -4,19 +4,21 @@ declare(strict_types=1);
 
 namespace App\Actions\Production;
 
-use App\Enums\ProductionOrderStatus;
 use App\Enums\RemnantStatus;
 use App\Models\ProductionOrder;
 use App\Models\ProductionRemnant;
 use App\Models\RemnantConsumption;
+use App\Models\User;
 use App\Services\DecimalCalculator;
+use App\Services\Production\ProductionOrderLock;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ConsumeRemnantAction
 {
     public function __construct(
-        private readonly DecimalCalculator $calculator
+        private readonly DecimalCalculator $calculator,
+        private readonly ProductionOrderLock $orderLock,
     ) {}
 
     /**
@@ -26,17 +28,21 @@ class ConsumeRemnantAction
         ProductionRemnant $remnant,
         ProductionOrder $targetOrder,
         string $quantityGallons,
-        int $userId,
+        User $user,
         ?string $notes = null
     ): RemnantConsumption {
-        return DB::transaction(function () use ($remnant, $targetOrder, $quantityGallons, $userId, $notes): RemnantConsumption {
+        return DB::transaction(function () use ($remnant, $targetOrder, $quantityGallons, $user, $notes): RemnantConsumption {
             $lockedRemnant = ProductionRemnant::query()
                 ->lockForUpdate()
                 ->findOrFail($remnant->id);
 
-            $lockedOrder = ProductionOrder::query()
-                ->lockForUpdate()
-                ->findOrFail($targetOrder->id);
+            // Siempre saldo y después OP: nadie bloquea en el orden contrario, así que no hay abrazo mortal.
+            $lockedOrder = $this->orderLock->lockFor(
+                $targetOrder,
+                $user,
+                'consumeRemnant',
+                "No se puede consumir un saldo en una orden en estado ':status'.",
+            );
 
             $this->validate($lockedRemnant, $lockedOrder, $quantityGallons);
 
@@ -78,7 +84,7 @@ class ConsumeRemnantAction
                 'quantity_gallons' => $quantityGallons,
                 'quantity_kg' => $quantityKg,
                 'consumed_cost' => $consumedCost,
-                'consumed_by' => $userId,
+                'consumed_by' => $user->id,
                 'consumed_at' => now(),
                 'notes' => $notes,
             ]);
@@ -90,12 +96,6 @@ class ConsumeRemnantAction
         if (! in_array($remnant->status, [RemnantStatus::Available, RemnantStatus::PartiallyConsumed], true)) {
             throw ValidationException::withMessages([
                 'remnant_id' => __('Este saldo ya fue consumido completamente.'),
-            ]);
-        }
-
-        if ($targetOrder->status !== ProductionOrderStatus::InProgress) {
-            throw ValidationException::withMessages([
-                'target_order_id' => __('Solo se puede consumir saldo en órdenes en progreso.'),
             ]);
         }
 

@@ -14,6 +14,7 @@ use App\Actions\Production\RejectProductionOrderReviewAction;
 use App\Actions\Production\StartProductionOrderAction;
 use App\Actions\Production\SubmitProductionOrderForReviewAction;
 use App\Actions\Production\UpdateProductionOrderColorAction;
+use App\Concerns\RejectsStaleOrderWrites;
 use App\Enums\Permission;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\RawMaterialType;
@@ -50,6 +51,8 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProductionOrderController extends Controller
 {
+    use RejectsStaleOrderWrites;
+
     public function __construct(
         private readonly CreateProductionOrderAction $createProductionOrder,
         private readonly CompleteProductionOrderAction $completeProductionOrder,
@@ -181,7 +184,7 @@ class ProductionOrderController extends Controller
                 'complete' => $user?->can('complete', $productionOrder) ?? false,
                 'rejectReview' => $user?->can('rejectReview', $productionOrder) ?? false,
                 'previewCosts' => $user?->can('previewCosts', $productionOrder) ?? false,
-                'updateOperationalData' => $user?->can('updateOperationalData', $productionOrder) ?? false,
+                'consumeRemnant' => $user?->can('consumeRemnant', $productionOrder) ?? false,
                 'updateColor' => $user?->can('updateColor', $productionOrder) ?? false,
                 'printLabels' => $user?->can('printLabels', $productionOrder) ?? false,
             ],
@@ -304,7 +307,7 @@ class ProductionOrderController extends Controller
             $this->completeProductionOrder->execute(
                 order: $productionOrder,
                 data: $validated,
-                userId: $this->authenticatedUserId()
+                user: $request->user(),
             );
         } catch (\DomainException $exception) {
             return back()->with('error', $exception->getMessage());
@@ -322,6 +325,7 @@ class ProductionOrderController extends Controller
         try {
             $this->startProductionOrder->execute(
                 order: $productionOrder,
+                user: $request->user(),
             );
         } catch (\DomainException $exception) {
             return back()->with('error', $exception->getMessage());
@@ -342,7 +346,7 @@ class ProductionOrderController extends Controller
             $this->submitProductionOrderForReview->execute(
                 order: $productionOrder,
                 data: $validated,
-                userId: $this->authenticatedUserId()
+                user: $request->user(),
             );
         } catch (\DomainException $exception) {
             return back()->with('error', $exception->getMessage());
@@ -361,9 +365,11 @@ class ProductionOrderController extends Controller
             $this->rejectProductionOrderReview->execute(
                 order: $productionOrder,
                 reason: $request->validated('reason'),
+                user: $request->user(),
             );
         } catch (\DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            // Error de validación también: el diálogo no se cierra ni borra el motivo escrito.
+            return $this->staleOrderResponse($exception);
         }
 
         return redirect()->route('production-orders.show', $productionOrder)
@@ -376,7 +382,7 @@ class ProductionOrderController extends Controller
     public function cancel(CancelProductionOrderRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
         try {
-            $this->cancelProductionOrder->execute($productionOrder, $request->validated('reason'));
+            $this->cancelProductionOrder->execute($productionOrder, $request->user(), $request->validated('reason'));
 
             return redirect()->route('production-orders.show', $productionOrder)
                 ->with('success', 'Orden de producción cancelada con éxito.');
@@ -391,12 +397,13 @@ class ProductionOrderController extends Controller
     public function updateColor(UpdateProductionOrderColorRequest $request, ProductionOrder $productionOrder): RedirectResponse
     {
         try {
-            $this->updateProductionOrderColor->execute($productionOrder, $request->validated('color'));
+            $this->updateProductionOrderColor->execute($productionOrder, $request->validated('color'), $request->user());
 
             return redirect()->route('production-orders.show', $productionOrder)
                 ->with('success', 'Color de la orden actualizado.');
         } catch (\DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            // Error de validación también: el diálogo no se cierra como si se hubiera guardado.
+            return $this->staleOrderResponse($exception);
         }
     }
 

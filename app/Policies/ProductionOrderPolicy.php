@@ -30,7 +30,7 @@ class ProductionOrderPolicy
     }
 
     /**
-     * Ajustes de línea, plan de empaque y consumo de remanentes.
+     * Ajustes de línea y plan de empaque.
      */
     public function updateOperationalData(User $user, ProductionOrder $productionOrder): bool
     {
@@ -44,6 +44,16 @@ class ProductionOrderPolicy
             ProductionOrderStatus::PendingReview => $user->can(Permission::ProductionOrdersComplete->value),
             default => false,
         };
+    }
+
+    /**
+     * Consumir un saldo es una acción de planta: cambia lo que entra a la mezcla. Solo en curso; en revisión los datos de
+     * planta ya se entregaron, y si hace falta un saldo la orden se devuelve a planta (D-OPX1).
+     */
+    public function consumeRemnant(User $user, ProductionOrder $productionOrder): bool
+    {
+        return $productionOrder->status === ProductionOrderStatus::InProgress
+            && $user->can(Permission::ProductionOrdersOperate->value);
     }
 
     public function startProduction(User $user, ProductionOrder $productionOrder): bool

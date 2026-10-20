@@ -91,6 +91,13 @@ export function OrderColorDialog({ orderId, color }: OrderColorDialogProps) {
                                 }
                             />
                             <InputError message={errors.color} />
+                            {/* La orden cambió de estado mientras se editaba (RejectsStaleOrderWrites). */}
+                            <InputError
+                                message={
+                                    (errors as Partial<Record<string, string>>)
+                                        .production_order
+                                }
+                            />
                         </div>
                         <DialogFooter>
                             <Button

@@ -34,6 +34,7 @@ import {
     usePackagingSync,
 } from '@/hooks/use-packaging-sync';
 import { useProductionCostPreview } from '@/hooks/use-production-cost-preview';
+import { formatForInput } from '@/lib/formatters';
 import { toDecimalPayload } from '@/lib/numeric-input';
 import {
     ingredientQuantityForInput,
@@ -114,8 +115,11 @@ export default function ProductionOrderShow({
                 order.quality_responsible_user_id ?? null,
             spillage_quantity: order.spillage_quantity ?? 0,
             density_kg_per_gallon: order.density_kg_per_gallon ?? '',
-            remnant_quantity_gallons: '',
-            remnant_notes: '',
+            // Lo que la planta informó al enviar a revisión: quien aprueba lo ve y lo confirma.
+            remnant_quantity_gallons: formatForInput(
+                order.remnant_quantity_gallons,
+            ),
+            remnant_notes: order.remnant_notes ?? '',
             notes: order.notes ?? '',
             ingredients: orderDetails.map(mapDetailToIngredientFormRow),
             packaging: orderPackagingPlans.map((pack) =>
@@ -131,6 +135,9 @@ export default function ProductionOrderShow({
         errors: rejectErrors,
         reset: resetRejectForm,
     } = useForm({ reason: '' });
+    // La orden cambió de estado mientras se escribía el motivo (RejectsStaleOrderWrites): el diálogo sigue abierto.
+    const rejectStaleError = (rejectErrors as Partial<Record<string, string>>)
+        .production_order;
 
     const [landingLinkCopied, setLandingLinkCopied] = useState(false);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -283,7 +290,16 @@ export default function ProductionOrderShow({
                 ? productionOrderSubmitForReview({ production_order: order.id })
                 : productionOrderComplete({ production_order: order.id });
 
-        transform(normalizeProductionOrderFormData);
+        // Los ajustes y saldos que muestra la pantalla: el servidor rechaza si la orden cambió desde entonces (P6-2).
+        transform((formData) => ({
+            ...normalizeProductionOrderFormData(formData),
+            line_adjustment_ids: lineAdjustments.map(
+                (adjustment) => adjustment.id,
+            ),
+            remnant_consumption_ids: (order.remnant_consumptions ?? []).map(
+                (consumption) => consumption.id,
+            ),
+        }));
         post(action.url, {
             preserveScroll: true,
         });
@@ -410,12 +426,7 @@ export default function ProductionOrderShow({
                             orderId={order.id}
                             order={order}
                             showCosts={can.previewCosts}
-                            canConsume={
-                                can.updateOperationalData &&
-                                !isPending &&
-                                !isCompleted &&
-                                !isPendingReview
-                            }
+                            canConsume={can.consumeRemnant}
                         />
 
                         <ControlCard
@@ -552,6 +563,11 @@ export default function ProductionOrderShow({
                                 {rejectErrors.reason && (
                                     <p className="mt-1 text-sm text-destructive">
                                         {rejectErrors.reason}
+                                    </p>
+                                )}
+                                {rejectStaleError && (
+                                    <p className="mt-1 text-sm text-destructive">
+                                        {rejectStaleError}
                                     </p>
                                 )}
                             </div>
