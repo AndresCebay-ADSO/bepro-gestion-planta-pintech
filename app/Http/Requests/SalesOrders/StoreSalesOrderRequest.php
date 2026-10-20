@@ -6,6 +6,8 @@ namespace App\Http\Requests\SalesOrders;
 
 use App\Enums\NumberType;
 use App\Enums\SalesOrderPriority;
+use App\Http\Requests\Concerns\ReadsIdInput;
+use App\Models\Client;
 use App\Models\ProductVariant;
 use App\Models\SalesOrder;
 use App\Rules\PlantDate;
@@ -14,6 +16,8 @@ use Illuminate\Validation\Rule;
 
 class StoreSalesOrderRequest extends FormRequest
 {
+    use ReadsIdInput;
+
     public function authorize(): bool
     {
         return $this->user()?->can('create', SalesOrder::class) ?? false;
@@ -25,19 +29,21 @@ class StoreSalesOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'client_id' => ['required', Rule::exists('clients', 'id')->where('is_active', true)],
+            'client_id' => ['bail', 'required', 'integer', Rule::exists('clients', 'id')->where('is_active', true)],
             'priority' => ['required', Rule::enum(SalesOrderPriority::class)],
             'required_date' => ['bail', 'required', PlantDate::make()->notPast()],
             'notes' => ['nullable', 'string', 'max:2000'],
-            'shipping_address' => ['nullable', 'string', 'max:255'],
+            'shipping_address' => ['nullable', 'string', 'max:'.Client::SHIPPING_ADDRESS_MAX_LENGTH],
             'client_business_name' => ['nullable', 'string', 'max:255'],
             'client_nit' => ['nullable', 'string', 'max:20'],
             'client_contact_name' => ['nullable', 'string', 'max:255'],
             'client_phone' => ['nullable', 'string', 'max:20'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('is_active', true)],
+            'items.*.product_id' => ['bail', 'required', 'integer', Rule::exists('products', 'id')->where('is_active', true)],
             'items.*.product_variant_id' => [
+                'bail',
                 'nullable',
+                'integer',
                 function (string $attribute, mixed $value, \Closure $fail): void {
                     if ($value === null) {
                         return;
@@ -51,9 +57,10 @@ class StoreSalesOrderRequest extends FormRequest
                         return;
                     }
 
-                    $productId = $this->input("items.{$index}.product_id");
+                    $productId = $this->idInput("items.{$index}.product_id");
 
-                    $exists = ProductVariant::where('id', $value)
+                    $exists = ProductVariant::query()
+                        ->whereKey((int) $value)
                         ->where('is_active', true)
                         ->where('product_id', $productId)
                         ->exists();

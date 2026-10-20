@@ -16,6 +16,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { NUMBER_TYPES } from '@/lib/number-types';
 import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
 import { RAW_MATERIAL_TYPE_HINTS } from '@/lib/raw-material-types';
 import type { RawMaterialType } from '@/types';
@@ -371,6 +372,7 @@ export function RawMaterialForm({
                                 </Label>
                                 <DecimalInput
                                     id="current_price"
+                                    {...NUMBER_TYPES.money}
                                     value={form.data.current_price}
                                     onValueChange={(value) =>
                                         form.setData('current_price', value)

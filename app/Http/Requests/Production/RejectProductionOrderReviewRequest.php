@@ -25,7 +25,7 @@ class RejectProductionOrderReviewRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'reason' => 'required|string|min:10',
+            'reason' => 'required|string|min:10|max:2000',
         ];
     }
 }

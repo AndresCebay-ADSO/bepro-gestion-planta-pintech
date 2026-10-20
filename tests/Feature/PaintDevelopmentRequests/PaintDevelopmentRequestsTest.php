@@ -293,3 +293,52 @@ it('prevents produccion from accessing paint development requests', function () 
         ->post(route('paint-development-requests.store'), paintDevPayload())
         ->assertForbidden();
 });
+
+// Auditoría 3.6, PR 5: PDR-02. Rangos físicos revisados contra productos reales (plan del PR 5, §4.2): aceptan
+// cualquier recubrimiento que exista y rechazan el error de digitación que saldría tal cual en el PDF de I+D.
+it('validates the physical range of the technical numbers', function (string $field, string $value, bool $valid) {
+    $payload = paintDevPayload();
+    data_set($payload, $field, $value);
+
+    $response = $this->actingAs($this->comercialUser)
+        ->post(route('paint-development-requests.store'), $payload);
+
+    $valid ? $response->assertSessionHasNoErrors() : $response->assertSessionHasErrors($field);
+})->with([
+    'servicio criogénico (−196 °C)' => ['context_payload.temp_min', '-196', true],
+    'servicio bajo −200 °C' => ['context_payload.temp_min', '-201', false],
+    'siliconado de alta temperatura (650 °C)' => ['context_payload.temp_max', '650', true],
+    'servicio de mil millones de grados' => ['context_payload.temp_max', '1000000000', false],
+    'temperatura con 3 decimales' => ['context_payload.temp_max', '25.125', false],
+    'aplicación sobre superficie caliente (250 °C)' => ['application_payload.temp_aplicacion', '250', true],
+    'aplicación a 300 °C' => ['application_payload.temp_aplicacion', '300', false],
+    'humedad de 101 %' => ['application_payload.humedad_aplicacion', '101', false],
+    'intumescente de 790 mils por mano' => ['application_payload.dft_max', '790', true],
+    'espesor de 0' => ['application_payload.dft_min', '0', false],
+    'adherencia de 3.000 psi' => ['performance_payload.adherencia_obj', '3000', true],
+    'adherencia de 10.001 psi' => ['performance_payload.adherencia_obj', '10001', false],
+    'cámara salina de 5.000 h' => ['performance_payload.camara_obj', '5000', true],
+    'Delta E negativo' => ['performance_payload.delta_e', '-5', false],
+    'Delta E de 0' => ['performance_payload.delta_e', '0', false],
+    'Delta E de 1,5' => ['performance_payload.delta_e', '1.5', true],
+    'sin VOC' => ['application_payload.voc', '0', true],
+    'VOC de 1.001 g/L' => ['application_payload.voc', '1001', false],
+    '21 manos' => ['application_payload.manos', '21', false],
+    'pot life de 25 horas' => ['application_payload.pot_life', '1500', false],
+]);
+
+// Revisión del PR 5: un mínimo que no es un número ya tiene su error; antes valía 0 y agregaba un «mínima mayor que
+// máxima» falso en el máximo.
+it('reports a non numeric minimum only once', function (string $group, string $minField, string $maxField, string $max) {
+    $payload = paintDevPayload();
+    data_set($payload, "{$group}.{$minField}", 'abc');
+    data_set($payload, "{$group}.{$maxField}", $max);
+
+    $this->actingAs($this->comercialUser)
+        ->post(route('paint-development-requests.store'), $payload)
+        ->assertSessionHasErrors("{$group}.{$minField}")
+        ->assertSessionDoesntHaveErrors("{$group}.{$maxField}");
+})->with([
+    'temperatura' => ['context_payload', 'temp_min', 'temp_max', '-5'],
+    'espesor' => ['application_payload', 'dft_min', 'dft_max', '0.5'],
+]);

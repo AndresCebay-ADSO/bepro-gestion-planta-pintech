@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Enums;
 
 use App\Casts\WholeUnits;
+use App\Services\DecimalCalculator;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Catálogo de tipos de número del esquema (auditoría 3.6, PR 4). Cada columna numérica pertenece a un tipo, y el tipo
@@ -66,6 +68,15 @@ enum NumberType
         };
     }
 
+    /**
+     * Decimales que se aceptan al digitar. Es la escala de la columna, salvo el dinero: se guarda con 4 (sale de
+     * promedios y conversiones) y se digita con 2, porque nadie escribe un precio en fracciones de centavo (PR 5, P5-4).
+     */
+    public function inputScale(): int
+    {
+        return $this === self::Money ? 2 : $this->scale();
+    }
+
     /** El mayor valor que cabe en la columna, como texto para no pasar por un float. */
     public function max(): string
     {
@@ -96,7 +107,26 @@ enum NumberType
             return ['integer', 'max:'.$max];
         }
 
-        return ['numeric', 'decimal:0,'.$this->scale(), 'max:'.$max];
+        return ['numeric', 'decimal:0,'.$this->inputScale(), 'max:'.$max];
+    }
+
+    /**
+     * Para los valores que calcula el sistema y se guardan (saldo + cantidad, fórmula × cantidad de la OP): si no caben
+     * en la columna, un 422 en el campo que lo causó en vez del 500 de PostgreSQL. SQLite no lo detectaría nunca: no
+     * respeta la precisión.
+     *
+     * Se compara redondeado a la escala de la columna, como lo guarda PostgreSQL: 99.999.999,99995 no cabe en 12,4
+     * aunque sea menor que 100.000.000.
+     *
+     * @throws ValidationException
+     */
+    public function ensureFits(string $value, string $errorKey, string $message): void
+    {
+        $calculator = app(DecimalCalculator::class);
+
+        if ($calculator->cmp($calculator->abs($calculator->round($value, $this->scale()), $this->scale()), $this->max(), $this->scale()) > 0) {
+            throw ValidationException::withMessages([$errorKey => $message]);
+        }
     }
 
     /** Cast de Eloquent para las columnas de este tipo. */

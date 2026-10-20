@@ -43,17 +43,21 @@ trait ProductionConsumptionRules
         return [
             'ingredients' => ['required', 'array'],
             'ingredients.*.id' => [
+                'bail',
                 'required',
+                'integer',
                 'distinct',
                 Rule::exists('production_order_details', 'id')
                     ->where('production_order_id', $scopedOrderId),
             ],
-            // Sin `decimal`: el navegador la multiplica por el factor de conversión y puede mandar ruido de floats. El tope
-            // es el de la columna decimal(12,4): frena valores como «1e20», que pasan `numeric` y `min:0`.
-            'ingredients.*.actual_quantity' => ['bail', 'required', 'numeric', 'min:0', 'max:99999999.9999'],
+            // El navegador convierte la unidad con floats (B51), pero redondea a 4 decimales antes de enviar
+            // (production-ingredient-quantity.ts): `decimal` no rechaza nada legítimo y sí `1.123456` y `1e3` (OPL-08).
+            'ingredients.*.actual_quantity' => ['bail', 'required', ...NumberType::Quantity->rules(), 'min:0'],
             'packaging' => ['array'],
             'packaging.*.id' => [
+                'bail',
                 'required',
+                'integer',
                 'distinct',
                 Rule::exists('production_order_packaging_plan', 'id')
                     ->where('production_order_id', $scopedOrderId),

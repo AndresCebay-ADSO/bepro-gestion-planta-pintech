@@ -7,6 +7,7 @@ namespace App\Http\Requests\FinishedInventory;
 use App\Enums\FinishedInventoryMovementReason;
 use App\Enums\InventoryMovementType;
 use App\Enums\NumberType;
+use App\Http\Requests\Concerns\ReadsIdInput;
 use App\Models\FinishedInventoryMovement;
 use App\Models\FinishedProductBatch;
 use App\Rules\PlantDate;
@@ -16,6 +17,8 @@ use Illuminate\Validation\Rule;
 
 class StoreFinishedInventoryMovementRequest extends FormRequest
 {
+    use ReadsIdInput;
+
     public function authorize(): bool
     {
         return $this->user()?->can('create', FinishedInventoryMovement::class) ?? false;
@@ -116,7 +119,7 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
         }
 
         $batch = FinishedProductBatch::query()
-            ->with(['stocks' => fn ($q) => $q->where('warehouse_id', $this->input('warehouse_id'))->available()])
+            ->with(['stocks' => fn ($q) => $q->where('warehouse_id', $this->idInput('warehouse_id'))->available()])
             ->find((int) $batchId);
 
         if ($batch === null) {

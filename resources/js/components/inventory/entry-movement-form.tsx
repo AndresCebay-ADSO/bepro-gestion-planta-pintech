@@ -4,6 +4,7 @@ import { DecimalInput } from '@/components/decimal-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NUMBER_TYPES } from '@/lib/number-types';
 import { toDecimalPayload } from '@/lib/numeric-input';
 import { store as inventoryMovementsStore } from '@/routes/inventory-movements';
 import type { InventoryOption } from '@/types';
@@ -113,6 +114,7 @@ export function EntryMovementForm({
                     <Label htmlFor="cost_price">Precio de Costo (u)</Label>
                     <DecimalInput
                         id="cost_price"
+                        {...NUMBER_TYPES.money}
                         value={form.data.cost_price}
                         onValueChange={(value) => {
                             if (!isCostReadOnly) {

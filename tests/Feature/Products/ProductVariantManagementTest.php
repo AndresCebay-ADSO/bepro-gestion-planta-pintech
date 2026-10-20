@@ -121,3 +121,21 @@ test('produccion can manage variants but comercial cannot', function () {
         ->post(route('products.variants.store', $product), [])
         ->assertForbidden();
 });
+
+// Auditoría 3.6, PR 5: PRD-02 · P5-2. Una presentación cabe hasta 1.000 galones, la unidad del producto.
+test('the presentation size is capped at 1000 gallons', function (string $value, bool $valid) {
+    [$user, $product, $uom] = setupVariantManagementDependencies();
+    $existing = ProductVariant::factory()->create(['product_id' => $product->id, 'unit_of_measure_id' => $uom->id]);
+    $payload = ['name' => 'Presentación grande', 'unit_of_measure_id' => $uom->id, 'presentation_value' => $value];
+
+    $created = actingAs($user)->post(route('products.variants.store', $product), ['code' => 'GRANDE-1', ...$payload]);
+    $updated = actingAs($user)->put(route('products.variants.update', [$product, $existing]), ['code' => $existing->code, ...$payload]);
+
+    foreach ([$created, $updated] as $response) {
+        $valid ? $response->assertSessionHasNoErrors() : $response->assertSessionHasErrors('presentation_value');
+    }
+})->with([
+    'el tope' => ['1000', true],
+    'por encima del tope' => ['1000.0001', false],
+    '100 millones (antes, 500 en PostgreSQL)' => ['100000000', false],
+]);

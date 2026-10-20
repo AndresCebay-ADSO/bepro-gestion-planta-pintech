@@ -152,6 +152,20 @@ describe('update', function () {
             ->assertSessionHasErrors('sales_margin');
     });
 
+    // Auditoría 3.6, PR 5: CST-01. El margen se guardaba redondeado a 2 decimales sin avisar.
+    it('validates sales_margin has at most two decimals', function () {
+        $this->actingAs($this->adminUser)
+            ->patch(route('admin.costs.update', $this->product), ['sales_margin' => '12.345'])
+            ->assertSessionHasErrors('sales_margin');
+    });
+
+    // P5-4: el precio que se digita es dinero, con 2 decimales y el tope de su tipo.
+    it('validates sales_price as money', function (string $price) {
+        $this->actingAs($this->adminUser)
+            ->patch(route('admin.costs.update', $this->product), ['sales_price' => $price])
+            ->assertSessionHasErrors('sales_price');
+    })->with(['tres decimales' => ['115.005'], 'mayor que el tipo Dinero' => ['1000000000000'], 'notación científica' => ['1e20']]);
+
     it('allows admin to update via sales_price', function () {
         $this->actingAs($this->adminUser)
             ->patch(route('admin.costs.update', $this->product), [

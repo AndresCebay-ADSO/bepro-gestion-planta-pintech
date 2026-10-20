@@ -58,6 +58,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { withReturnTo } from '@/lib/navigation';
+import { PRESENTATION_VALUE_LIMITS } from '@/lib/number-types';
 import { toDecimalPayload } from '@/lib/numeric-input';
 import { index as finishedInventoryIndex } from '@/routes/finished-inventory';
 import {
@@ -1085,6 +1086,7 @@ export default function ProductsShow({
                                                 </Label>
                                                 <DecimalInput
                                                     id="presentation_value"
+                                                    {...PRESENTATION_VALUE_LIMITS}
                                                     value={
                                                         form.data
                                                             .presentation_value

@@ -6,6 +6,7 @@ import { DecimalInput } from '@/components/decimal-input';
 import { FormattedNumber } from '@/components/formatted-number';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
+import { NUMBER_TYPES } from '@/lib/number-types';
 import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
 import {
     index as adminCostsIndex,
@@ -575,12 +576,7 @@ export default function CostsIndex({
                                                         <div className="flex flex-col items-end gap-1">
                                                             <div className="flex items-start justify-end gap-2">
                                                                 <DecimalInput
-                                                                    maxDecimals={
-                                                                        2
-                                                                    }
-                                                                    maxIntegerDigits={
-                                                                        3
-                                                                    }
+                                                                    {...NUMBER_TYPES.percentage}
                                                                     value={
                                                                         state.margin
                                                                     }
@@ -640,10 +636,7 @@ export default function CostsIndex({
                                                     hasCurrentPrice(product) ? (
                                                         <div className="flex items-start justify-end gap-2">
                                                             <DecimalInput
-                                                                maxDecimals={2}
-                                                                maxIntegerDigits={
-                                                                    12
-                                                                }
+                                                                {...NUMBER_TYPES.money}
                                                                 value={
                                                                     state.price
                                                                 }

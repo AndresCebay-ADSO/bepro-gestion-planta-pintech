@@ -186,7 +186,10 @@ export function formatPercent(
 }
 
 /**
- * Formato para inputs (React / forms)
+ * Valor guardado listo para un campo de formulario: el decimal de la base (`"1500.5000"`) sin los ceros finales
+ * (`"1500.5"`). Trabaja sobre el texto, sin pasar por un float, así que no pierde dígitos: el dinero llega a 16 cifras
+ * (`numeric(16,4)`). Sin esto, un campo de 2 decimales recibía `1500.0000`, lo marcaba en error y el servidor lo
+ * rechazaba (revisión del PR 5 de la auditoría 3.6: entrada a un lote existente).
  */
 export function formatForInput(
     value: number | string | null | undefined,
@@ -195,7 +198,19 @@ export function formatForInput(
         return '';
     }
 
-    const numValue = parseToNumber(value);
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? String(value) : '';
+    }
 
-    return numValue !== null ? numValue.toString() : '';
+    const match = /^([-+]?)(\d*)(?:\.(\d*))?$/.exec(value.trim());
+
+    if (match === null || !/\d/.test(`${match[2]}${match[3] ?? ''}`)) {
+        return '';
+    }
+
+    const integerPart = match[2].replace(/^0+(?=\d)/, '') || '0';
+    const fraction = (match[3] ?? '').replace(/0+$/, '');
+    const text = fraction === '' ? integerPart : `${integerPart}.${fraction}`;
+
+    return match[1] === '-' && text !== '0' ? `-${text}` : text;
 }

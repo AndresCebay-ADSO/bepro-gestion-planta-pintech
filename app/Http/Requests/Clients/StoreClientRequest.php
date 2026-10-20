@@ -21,7 +21,7 @@ class StoreClientRequest extends FormRequest
             'nit' => ['nullable', 'string', 'max:20', 'unique:clients,nit'],
             'contact_name' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20'],
-            'shipping_address' => ['nullable', 'string', 'max:255'],
+            'shipping_address' => ['nullable', 'string', 'max:'.Client::SHIPPING_ADDRESS_MAX_LENGTH],
         ];
     }
 }

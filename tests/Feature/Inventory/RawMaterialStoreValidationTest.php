@@ -107,4 +107,16 @@ describe('Raw Material Store Validation', function (): void {
 
         $response->assertSessionHasErrors('category_id');
     });
+
+    // Auditoría 3.6, PR 5: RM-02 · P5-3. Hasta 10 años de aviso; 2.147.483.648 daba 500 en PostgreSQL.
+    it('caps the expiry alert days at 3650', function (int|string $days, bool $valid): void {
+        $response = $this->actingAs($this->admin)
+            ->post(route('raw-materials.store'), [...$this->validData, 'alert_days_before_expiry' => $days]);
+
+        $valid ? $response->assertSessionHasNoErrors() : $response->assertSessionHasErrors('alert_days_before_expiry');
+    })->with([
+        'diez años' => [3650, true],
+        'un día más' => [3651, false],
+        'mayor que un entero de la base' => ['2147483648', false],
+    ]);
 });

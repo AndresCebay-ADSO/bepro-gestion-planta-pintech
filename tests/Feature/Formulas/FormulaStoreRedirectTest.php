@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\RawMaterial;
@@ -164,4 +165,27 @@ test('create page receives return_to from query string', function () {
             ->component('Formulas/Create')
             ->where('selectedProductId', (string) $this->product->id)
             ->where('returnTo', '/products/'.$this->product->id));
+});
+
+// Auditoría 3.6, PR 5: la cantidad por galón con el tipo de su columna (FOR-03, FOR-05), y un arreglo en lugar de la
+// cantidad ya no llega a convertirse a texto (FOR-04).
+test('rejects an ingredient quantity that does not fit its column with a field error', function (mixed $quantity) {
+    $payload = validFormulaPayload($this->product->id, $this->rawMaterial->id, $this->unit->id);
+    $payload['details'][0]['quantity'] = $quantity;
+
+    $this->post(route('formulas.store'), $payload)->assertSessionHasErrors('details.0.quantity');
+
+    expect(Formula::query()->count())->toBe(0);
+})->with([
+    '100 millones (antes, 500 en PostgreSQL)' => ['100000000'],
+    '6 decimales (antes se redondeaba sin avisar)' => ['1.123456'],
+    'notación científica' => ['1e3'],
+    'arreglo (antes, 500)' => [['5']],
+]);
+
+test('still accepts a comma as the decimal separator in the ingredient quantity', function () {
+    $payload = validFormulaPayload($this->product->id, $this->rawMaterial->id, $this->unit->id);
+    $payload['details'][0]['quantity'] = '99999999,9999';
+
+    $this->post(route('formulas.store'), $payload)->assertSessionHasNoErrors();
 });

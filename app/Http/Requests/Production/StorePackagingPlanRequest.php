@@ -33,7 +33,9 @@ class StorePackagingPlanRequest extends FormRequest
 
         return [
             'product_variant_id' => [
+                'bail',
                 'required',
+                'integer',
                 Rule::exists('product_variants', 'id')
                     ->where('is_active', true)
                     ->when($productId !== null, fn ($query) => $query->where('product_id', $productId)),

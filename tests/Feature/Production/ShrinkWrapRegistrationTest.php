@@ -168,8 +168,8 @@ it('revisa la cantidad con la receta bloqueada, aunque cambie después de valida
 
 it('rechaza un costo que no cabe en el registro sin llegar a la base', function () {
     actingAsRole(SystemRole::Operator);
-    // Sin control de inventario no hay stock que lo frene: 99.999.999 × 200 = 2×10¹⁰, más que decimal(14,4).
-    $untracked = RawMaterial::factory()->secondaryPackaging()->withoutInventoryTracking()->create(['code' => 'BOLSA-X', 'current_price' => 200]);
+    // Sin control de inventario no hay stock que lo frene: 99.999.999 × 20.000 = 2×10¹², más que el tipo Dinero (16,4).
+    $untracked = RawMaterial::factory()->secondaryPackaging()->withoutInventoryTracking()->create(['code' => 'BOLSA-X', 'current_price' => 20000]);
     $type = ShrinkWrapType::factory()->create();
     ShrinkWrapTypeItem::factory()->create(['shrink_wrap_type_id' => $type->id, 'raw_material_id' => $untracked->id, 'quantity' => '1']);
 

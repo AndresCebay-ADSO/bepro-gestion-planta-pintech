@@ -443,3 +443,33 @@ it('does not expose product costs or creator contact data on the sales order scr
             ->missing('orders.data.0.creator.email')
             ->missing('orders.data.0.client.nit'));
 });
+
+// Auditoría 3.6, PR 5: PV-04. Los IDs llegaban crudos al `exists` y a la consulta de la presentación: 500 en PostgreSQL.
+it('rejects client, product and presentation ids that are not integers with a field error', function (string $field, mixed $id) {
+    $user = User::factory()->create();
+    $user->assignRole(SystemRole::Commercial->value);
+    $client = Client::factory()->create();
+    [$product, $variant] = createTestProduct();
+
+    $payload = [
+        'client_id' => $client->id,
+        'priority' => 'high',
+        'required_date' => plantToday(),
+        'items' => [['product_id' => $product->id, 'product_variant_id' => $variant->id, 'quantity' => 2]],
+    ];
+    data_set($payload, $field, $id);
+
+    $this->actingAs($user)
+        ->post(route('sales-orders.store'), $payload)
+        ->assertSessionHasErrors($field);
+
+    expect(SalesOrder::query()->count())->toBe(0);
+})->with([
+    'cliente' => ['client_id'],
+    'producto' => ['items.0.product_id'],
+    'presentación' => ['items.0.product_variant_id'],
+])->with([
+    'texto' => ['abc'],
+    'decimal' => ['1.5'],
+    'mayor que un bigint' => ['9223372036854775808'],
+]);

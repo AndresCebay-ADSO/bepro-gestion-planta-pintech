@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Catalogs;
 
+use App\Enums\NumberType;
 use App\Enums\RawMaterialType;
 use App\Models\RawMaterial;
 use App\Models\ShrinkWrapType;
@@ -41,8 +42,8 @@ class StoreShrinkWrapTypeRequest extends FormRequest
                 new RawMaterialOfType(RawMaterialType::SecondaryPackaging),
                 $this->activeOrAlreadyInRecipe(),
             ],
-            // Tope de la columna decimal(12,4): `numeric` deja pasar «1e20», que no cabe en ella (#192).
-            'items.*.quantity' => ['bail', 'required', 'numeric', 'gt:0', 'decimal:0,4', 'max:99999999.9999'],
+            // El tipo de su columna: `numeric` solo deja pasar «1e20», que no cabe en ella (#192).
+            'items.*.quantity' => ['bail', 'required', ...NumberType::Quantity->rules(), 'gt:0'],
         ];
     }
 

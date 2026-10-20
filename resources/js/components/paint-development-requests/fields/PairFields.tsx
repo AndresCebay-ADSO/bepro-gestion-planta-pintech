@@ -1,5 +1,6 @@
 import { DecimalInput } from '@/components/decimal-input';
 import { Label } from '@/components/ui/label';
+import { TECHNICAL_NUMBER_LIMITS } from '@/lib/number-types';
 
 type FieldDef = {
     name: string;
@@ -23,6 +24,7 @@ function PairInput({ field }: { field: FieldDef }) {
     return (
         <div className="relative">
             <DecimalInput
+                {...TECHNICAL_NUMBER_LIMITS}
                 allowNegative={field.allowNegative}
                 value={field.value}
                 onValueChange={field.onChange}

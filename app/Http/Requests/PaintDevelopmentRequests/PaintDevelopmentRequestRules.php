@@ -20,6 +20,34 @@ trait PaintDevelopmentRequestRules
     }
 
     /**
+     * Un número técnico de la solicitud, con 2 decimales y su rango físico (auditoría 3.6, PDR-02). Los rangos aceptan
+     * cualquier producto real, aunque Pintech no lo fabrique hoy, y rechazan lo absurdo: un error de digitación sale tal
+     * cual en el PDF que recibe I+D. Revisados contra fichas técnicas el 2026-10-19 (nota del plan del PR 5, §4.2).
+     *
+     * @param  string  $minRule  `min:N` (el valor N vale) o `gt:N` (debe ser mayor, como un espesor).
+     * @return list<string>
+     */
+    private function technicalNumber(string $minRule, string $max): array
+    {
+        return ['nullable', 'numeric', 'decimal:0,2', $minRule, 'max:'.$max];
+    }
+
+    /**
+     * El máximo de un par (temperatura, espesor) no puede quedar por debajo de su mínimo. Solo compara dos números: si el
+     * mínimo no lo es («abc»), ya tiene su propio error, y convertido a float valdría 0 y daría un error falso aquí.
+     */
+    private function notBelow(string $minField, string $message): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail) use ($minField, $message): void {
+            $min = $this->input($minField);
+
+            if (is_numeric($min) && is_numeric($value) && (float) $min > (float) $value) {
+                $fail($message);
+            }
+        };
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function sharedRules(): array
@@ -46,13 +74,12 @@ trait PaintDevelopmentRequestRules
             'context_payload.exposicion.*' => ['string', 'max:255'],
             'context_payload.agua_humedad' => ['required', 'string', 'max:255'],
             'context_payload.corrosividad' => ['nullable', 'string', 'max:255'],
-            'context_payload.temp_min' => ['nullable', 'numeric'],
-            'context_payload.temp_max' => ['nullable', 'numeric', function (string $attribute, mixed $value, \Closure $fail): void {
-                $min = $this->input('context_payload.temp_min');
-                if ($min !== null && $value !== null && (float) $min > (float) $value) {
-                    $fail(__('La temperatura mínima no puede ser mayor que la máxima.'));
-                }
-            }],
+            // De GNL y criogénicos (−196 °C) a siliconados y cerámicos de alta temperatura (650 a 1.000 °C).
+            'context_payload.temp_min' => $this->technicalNumber('min:-200', '1000'),
+            'context_payload.temp_max' => [
+                ...$this->technicalNumber('min:-200', '1000'),
+                $this->notBelow('context_payload.temp_min', __('La temperatura mínima no puede ser mayor que la máxima.')),
+            ],
             'context_payload.ciclos_termicos' => ['required', 'string', 'max:255'],
             'context_payload.quimicos' => ['nullable', 'string', 'max:5000'],
 
@@ -64,8 +91,10 @@ trait PaintDevelopmentRequestRules
             'performance_payload.prioridad' => ['required', 'string', 'max:255'],
             'performance_payload.pruebas' => ['nullable', 'array'],
             'performance_payload.pruebas.*' => ['string', 'max:255'],
-            'performance_payload.adherencia_obj' => ['nullable', 'numeric'],
-            'performance_payload.camara_obj' => ['nullable', 'numeric'],
+            // Pull-off en psi (ASTM D4541): los equipos llegan a unos 3.500 psi con el dado de 20 mm.
+            'performance_payload.adherencia_obj' => $this->technicalNumber('gt:0', '10000'),
+            // Horas de cámara salina (ASTM B117 no fija duración; lo usual va de 24 a 5.000 h).
+            'performance_payload.camara_obj' => $this->technicalNumber('gt:0', '20000'),
             'performance_payload.criterios_tecnicos' => ['nullable', 'string', 'max:5000'],
             'performance_payload.indispensable' => ['required', 'string', 'max:5000'],
             'performance_payload.negociable' => ['nullable', 'string', 'max:5000'],
@@ -73,7 +102,8 @@ trait PaintDevelopmentRequestRules
             'performance_payload.brillo' => ['required', 'string', 'max:255'],
             'performance_payload.textura' => ['required', 'string', 'max:255'],
             'performance_payload.cubricion' => ['required', 'string', 'max:255'],
-            'performance_payload.delta_e' => ['nullable', 'numeric'],
+            // Tolerancia de color: de negro a blanco hay ΔE = 100. 0 no es una tolerancia que se pueda medir.
+            'performance_payload.delta_e' => $this->technicalNumber('gt:0', '100'),
             'performance_payload.retencion' => ['required', 'string', 'max:255'],
             'performance_payload.acabado_ref' => ['nullable', 'string', 'max:5000'],
 
@@ -81,17 +111,17 @@ trait PaintDevelopmentRequestRules
             'application_payload' => ['required', 'array'],
             'application_payload.metodo' => ['required', 'array'],
             'application_payload.metodo.*' => ['string', 'max:255'],
-            'application_payload.temp_aplicacion' => ['nullable', 'numeric'],
-            'application_payload.humedad_aplicacion' => ['nullable', 'numeric'],
+            // Hay productos que se aplican sobre superficies calientes, hasta 200 a 250 °C.
+            'application_payload.temp_aplicacion' => $this->technicalNumber('min:-30', '250'),
+            'application_payload.humedad_aplicacion' => $this->technicalNumber('min:0', '100'),
             'application_payload.geometria' => ['required', 'string', 'max:255'],
-            'application_payload.dft_min' => ['nullable', 'numeric'],
-            'application_payload.dft_max' => ['nullable', 'numeric', function (string $attribute, mixed $value, \Closure $fail): void {
-                $min = $this->input('application_payload.dft_min');
-                if ($min !== null && $value !== null && (float) $min > (float) $value) {
-                    $fail(__('El espesor mínimo no puede ser mayor que el máximo.'));
-                }
-            }],
-            'application_payload.manos' => ['required', 'integer', 'min:1'],
+            // Mils por mano: un intumescente epóxico llega a unos 790 mils (20 mm) en una sola mano.
+            'application_payload.dft_min' => $this->technicalNumber('gt:0', '1200'),
+            'application_payload.dft_max' => [
+                ...$this->technicalNumber('gt:0', '1200'),
+                $this->notBelow('application_payload.dft_min', __('El espesor mínimo no puede ser mayor que el máximo.')),
+            ],
+            'application_payload.manos' => ['required', 'integer', 'min:1', 'max:20'],
             'application_payload.repinte' => ['required', 'string', 'max:255'],
             'application_payload.servicio' => ['required', 'string', 'max:255'],
             'application_payload.antidescuelgue' => ['required', 'string', 'max:255'],
@@ -101,10 +131,12 @@ trait PaintDevelopmentRequestRules
             'application_payload.otra_tecnologia' => ['nullable', 'string', 'max:255', 'required_if:application_payload.tecnologia,Otra'],
             'application_payload.componentes' => ['required', 'string', 'max:255'],
             'application_payload.relacion_mezcla' => ['nullable', 'string', 'max:255'],
-            'application_payload.pot_life' => ['nullable', 'integer', 'min:1'],
-            'application_payload.solidos_vol' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            // Minutos: el de un bicomponente va de minutos a unas 8 horas. Un monocomponente lo deja vacío.
+            'application_payload.pot_life' => ['nullable', 'integer', 'min:1', 'max:1440'],
+            'application_payload.solidos_vol' => $this->technicalNumber('min:0', '100'),
             'application_payload.ajustador' => ['required', 'string', 'max:255'],
-            'application_payload.voc' => ['nullable', 'numeric', 'min:0'],
+            // g/L: 0 es un producto sin VOC; un solvente puro ronda 880.
+            'application_payload.voc' => $this->technicalNumber('min:0', '1000'),
             'application_payload.restricciones' => ['nullable', 'array'],
             'application_payload.restricciones.*' => ['string', 'max:255'],
             'application_payload.sistema_capas' => ['required', 'string', 'max:5000'],

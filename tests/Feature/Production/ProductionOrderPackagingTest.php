@@ -377,12 +377,18 @@ it('rechaza cantidades en notación científica con un mensaje, no con un error 
     expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::InProgress);
 });
 
-it('la vista previa acepta una cantidad de ingrediente con muchos decimales', function () {
+it('la vista previa valida los decimales como al completar, con un error y no con un 500', function () {
     $plan = packagingPlanFor($this->order, $this->variant);
 
-    // La vista previa la pasa a float y luego a texto: «1.0E-5» llegaba a bcmath.
+    // El front redondea a 4 decimales antes de enviar (production-ingredient-quantity.ts) y manda números JSON. Con 5,
+    // PHP lo escribe «1.0E-5»: antes llegaba a bcmath; ahora la regla del tipo Cantidad lo rechaza (OPL-08).
     $this->postJson(route('production-orders.preview-costs', $this->order), [
         'ingredients' => [['id' => $this->detail->id, 'actual_quantity' => 0.00001]],
+        'packaging' => [['id' => $plan->id, 'actual_units' => 10]],
+    ])->assertUnprocessable()->assertJsonValidationErrors('ingredients.0.actual_quantity');
+
+    $this->postJson(route('production-orders.preview-costs', $this->order), [
+        'ingredients' => [['id' => $this->detail->id, 'actual_quantity' => 0.0001]],
         'packaging' => [['id' => $plan->id, 'actual_units' => 10]],
     ])->assertOk();
 });
@@ -438,15 +444,16 @@ it('rechaza una cantidad de ingrediente imposible con un mensaje, sin llegar a l
     expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::InProgress);
 });
 
-it('acepta una cantidad de ingrediente con un exponente negativo enorme como cero, sin error del servidor', function () {
+it('rechaza la notación científica en la cantidad de ingrediente con un error del campo (OPL-08)', function () {
     $plan = packagingPlanFor($this->order, $this->variant);
 
+    // Antes se aceptaba y se guardaba como 0 sin avisar. `decimal:0,4` solo admite el número escrito.
     $this->post(route('production-orders.complete', $this->order), [
         ...completePackagingPayload($this->detail, ['id' => $plan->id, 'actual_units' => 10], $this->admin),
         'ingredients' => [['id' => $this->detail->id, 'actual_quantity' => '1e-65']],
-    ])->assertSessionHasNoErrors();
+    ])->assertSessionHasErrors('ingredients.0.actual_quantity');
 
-    expect($this->detail->fresh()->actual_quantity)->toBe('0.0000');
+    expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::InProgress);
 });
 
 it('unas unidades enviadas como número JSON enorme dan error de validación, no del servidor', function () {

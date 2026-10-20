@@ -233,3 +233,41 @@ it('rejects entries into a batch whose variant is inactive', function () {
         ])
         ->assertSessionHasErrors('finished_product_batch_id');
 });
+
+// Auditoría 3.6, PR 5: PT-06. La regla limita la cantidad que entra; el saldo del lote más ella también debe caber.
+it('rejects an entry that would overflow the batch stock with a field error instead of a server error', function () {
+    [$admin, , $batch] = createFinishedMovementFixture('PROD-OVERFLOW');
+    $warehouse = Warehouse::factory()->create();
+    registerFinishedMovement($admin, $batch, $warehouse, 'entry', 'adjustment', '2147483647');
+
+    actingAs($admin)
+        ->post(route('finished-inventory-movements.store'), [
+            'finished_product_batch_id' => $batch->id,
+            'warehouse_id' => $warehouse->id,
+            'type' => 'entry',
+            'reason' => 'adjustment',
+            'quantity' => '1',
+            'movement_date' => plantToday(),
+        ])
+        ->assertInvalid(['quantity']);
+
+    expect(FinishedInventoryMovement::query()->count())->toBe(1);
+});
+
+// §2.11 del plan del PR 5: el `after()` filtraba los saldos con la bodega cruda; «abc» llegaba a la consulta.
+it('rejects a warehouse that is not an integer on an exit without reaching the database', function (mixed $warehouseId) {
+    [$admin, , $batch] = createFinishedMovementFixture('PROD-WH-ID');
+    $warehouse = Warehouse::factory()->create();
+    registerFinishedMovement($admin, $batch, $warehouse, 'entry', 'adjustment', '10');
+
+    actingAs($admin)
+        ->post(route('finished-inventory-movements.store'), [
+            'finished_product_batch_id' => $batch->id,
+            'warehouse_id' => $warehouseId,
+            'type' => 'exit',
+            'reason' => 'sale',
+            'quantity' => '1',
+            'movement_date' => plantToday(),
+        ])
+        ->assertInvalid(['warehouse_id']);
+})->with(['texto' => ['abc'], 'mayor que un bigint' => ['9223372036854775808']]);

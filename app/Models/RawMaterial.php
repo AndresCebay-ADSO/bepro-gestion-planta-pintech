@@ -62,6 +62,9 @@ class RawMaterial extends Model
 
     protected string $auditLabel = 'Materia prima';
 
+    /** Hasta cuántos días antes del vencimiento se puede pedir el aviso: 10 años (auditoría 3.6, RM-02). */
+    public const MAX_EXPIRY_ALERT_DAYS = 3650;
+
     protected string $auditIdentifierAttribute = 'code';
 
     protected bool $auditFeminine = true;

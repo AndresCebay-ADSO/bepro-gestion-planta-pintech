@@ -17,6 +17,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { PRODUCTION_ORDER_QUANTITY_LIMITS } from '@/lib/number-types';
 import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
 import { index as productionOrderIndex } from '@/routes/production-orders';
 import type { VariantOption } from '@/types/production-orders';
@@ -257,6 +258,7 @@ export default function ProductionOrdersCreate({
                                 </Label>
                                 <DecimalInput
                                     id="quantity"
+                                    {...PRODUCTION_ORDER_QUANTITY_LIMITS}
                                     value={data.quantity}
                                     onValueChange={(value) =>
                                         setData('quantity', value)
@@ -333,6 +335,7 @@ export default function ProductionOrdersCreate({
                             <Label htmlFor="notes">Notas / Observaciones</Label>
                             <Textarea
                                 id="notes"
+                                maxLength={2000}
                                 value={data.notes}
                                 onChange={(e) =>
                                     setData('notes', e.target.value)
