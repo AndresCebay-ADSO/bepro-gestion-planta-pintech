@@ -24,6 +24,7 @@ use App\Models\Warehouse;
 use App\Services\Production\ProductionOrderCompletionLines;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Support\Facades\Queue;
+use Inertia\Testing\AssertableInertia;
 
 // Auditoría 3.6, PR 6: completar (y enviar a revisión) no confía en la lista que trae la petición. Con la OP bloqueada,
 // los ingredientes y las presentaciones son exactamente los de la OP, los ajustes y los saldos son los que vio la
@@ -322,4 +323,32 @@ it('envía a revisión con todas las líneas', function () {
         ->assertSessionHasNoErrors();
 
     expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::PendingReview);
+});
+
+it('el saldo que informa la planta al enviar a revisión llega a quien aprueba, y la orden se puede cerrar', function () {
+    $body = completionLinesBody($this, [
+        'packaging' => [
+            ['id' => $this->gallonPlan->id, 'actual_units' => '0'],
+            ['id' => $this->bucketPlan->id, 'actual_units' => '0'],
+        ],
+        'remnant_quantity_gallons' => '15',
+        'remnant_notes' => 'Tanque 2, tapa azul',
+    ]);
+
+    $this->post(route('production-orders.submit-for-review', $this->order), $body)->assertSessionHasNoErrors();
+
+    $order = $this->order->fresh();
+    expect($order->status)->toBe(ProductionOrderStatus::PendingReview)
+        ->and($order->remnant_quantity_gallons)->toBe('15.0000')
+        ->and($order->remnant_notes)->toBe('Tanque 2, tapa azul');
+
+    // La pantalla de quien revisa trae el saldo: antes llegaba vacío y aprobar daba «algo se tiene que envasar».
+    $this->get(route('production-orders.show', $this->order))->assertInertia(fn (AssertableInertia $page) => $page
+        ->where('order.remnant_quantity_gallons', '15.0000')
+        ->where('order.remnant_notes', 'Tanque 2, tapa azul'));
+
+    $this->post(route('production-orders.complete', $this->order), $body)->assertSessionHasNoErrors();
+
+    expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::Completed)
+        ->and(ProductionRemnant::query()->where('source_order_id', $this->order->id)->value('notes'))->toBe('Tanque 2, tapa azul');
 });

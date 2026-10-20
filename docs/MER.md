@@ -330,6 +330,8 @@ Ingredientes de cada fórmula.
 | `packaging_start_time` | TIMESTAMP | sí |  |
 | `packaging_end_time` | TIMESTAMP | sí |  |
 | `spillage_quantity` | DECIMAL(12,4) |  | default `0` |
+| `remnant_quantity_gallons` | DECIMAL(12,4) | sí | Saldo sobrante informado al enviar a revisión o al completar; el saldo de PT (`production_remnants`) nace al completar |
+| `remnant_notes` | TEXT | sí | Observaciones del saldo sobrante |
 | `density_kg_per_gallon` | DECIMAL(10,4) | sí |  |
 | `created_by` | BIGINT |  | FK → `users` (RESTRICT) |
 | `submitted_by` | BIGINT | sí | FK → `users` (RESTRICT) |

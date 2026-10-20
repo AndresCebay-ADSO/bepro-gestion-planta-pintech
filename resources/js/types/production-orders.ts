@@ -126,6 +126,8 @@ export type ProductionOrder = {
     packaging_end_time?: string | null;
     responsible_name?: string | null;
     spillage_quantity?: FormNumberValue | null;
+    remnant_quantity_gallons?: string | null;
+    remnant_notes?: string | null;
     notes?: string | null;
     completion_date?: string | null;
     total_bulk_cost?: FormNumberValue | null;

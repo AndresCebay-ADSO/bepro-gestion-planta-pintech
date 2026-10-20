@@ -34,6 +34,7 @@ import {
     usePackagingSync,
 } from '@/hooks/use-packaging-sync';
 import { useProductionCostPreview } from '@/hooks/use-production-cost-preview';
+import { formatForInput } from '@/lib/formatters';
 import { toDecimalPayload } from '@/lib/numeric-input';
 import {
     ingredientQuantityForInput,
@@ -114,8 +115,11 @@ export default function ProductionOrderShow({
                 order.quality_responsible_user_id ?? null,
             spillage_quantity: order.spillage_quantity ?? 0,
             density_kg_per_gallon: order.density_kg_per_gallon ?? '',
-            remnant_quantity_gallons: '',
-            remnant_notes: '',
+            // Lo que la planta informó al enviar a revisión: quien aprueba lo ve y lo confirma.
+            remnant_quantity_gallons: formatForInput(
+                order.remnant_quantity_gallons,
+            ),
+            remnant_notes: order.remnant_notes ?? '',
             notes: order.notes ?? '',
             ingredients: orderDetails.map(mapDetailToIngredientFormRow),
             packaging: orderPackagingPlans.map((pack) =>
