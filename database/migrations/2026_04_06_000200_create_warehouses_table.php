@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -15,7 +16,7 @@ return new class extends Migration
     {
         Schema::create('warehouses', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 100)->unique();
+            $table->string('name', 100);
             $table->string('city', 100);
             $table->string('address', 255)->nullable();
             $table->enum('type', ['factory', 'storage'])->default('storage');
@@ -24,6 +25,10 @@ return new class extends Migration
 
             $table->index('is_active');
         });
+
+        // Único sin distinguir mayúsculas: el nombre se guarda como se escribe, y «planta cali» no puede convivir con
+        // «Planta Cali» (auditoría 3.6, PR 8). PostgreSQL y SQLite aceptan índices sobre una expresión.
+        DB::statement('CREATE UNIQUE INDEX warehouses_name_lower_unique ON warehouses (LOWER(name))');
     }
 
     /**

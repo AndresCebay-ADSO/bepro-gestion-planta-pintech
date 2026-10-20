@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 150);
+            $table->string('name', 150)->unique(); // único identificador del producto, en mayúsculas (PR 8)
             $table->text('description')->nullable();
             $table->foreignId('category_id')->constrained('product_categories')->restrictOnDelete();
             $table->foreignId('unit_of_measure_id')->constrained('unit_of_measures')->restrictOnDelete();

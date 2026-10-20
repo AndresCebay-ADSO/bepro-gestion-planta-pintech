@@ -144,7 +144,7 @@ it('muestra la casilla de estado del producto solo a quien puede desactivarlo', 
 
     $this->put(route('products.update', $product), [...productUpdatePayload($product, true), 'name' => 'Nombre nuevo'])
         ->assertRedirect(route('products.index'));
-    expect($product->fresh()->name)->toBe('Nombre nuevo');
+    expect($product->fresh()->name)->toBe('NOMBRE NUEVO');
 });
 
 it('elimina una presentación sin historial y rechaza una ya cotizada', function () {

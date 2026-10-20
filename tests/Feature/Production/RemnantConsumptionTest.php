@@ -525,7 +525,7 @@ it('names each available remnant with its product, color and lot', function () {
         ->json()[0];
 
     expect($remnant['id'])->toBe($this->remnant->id)
-        ->and($remnant['product_name'])->toBe('Source Product RAL 3020')
+        ->and($remnant['product_name'])->toBe('SOURCE PRODUCT RAL 3020')
         ->and($remnant['source_lot_number'])->toBe($this->sourceOrder->lot_number)
         ->and($remnant['source_order_number'])->toBe($this->sourceOrder->order_number);
 });
@@ -551,5 +551,5 @@ it('shows which product was mixed in each consumed remnant', function () {
     $this->get(route('production-orders.show', $this->targetOrder))
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('order.remnant_consumptions.0.source_product_name', 'Source Product RAL 3020'));
+            ->where('order.remnant_consumptions.0.source_product_name', 'SOURCE PRODUCT RAL 3020'));
 });

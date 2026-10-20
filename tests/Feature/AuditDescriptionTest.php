@@ -45,7 +45,7 @@ test('product audit description uses Spanish with identifier on create', functio
         ->first();
 
     expect($log)->not->toBeNull()
-        ->and($log->description)->toBe('Producto "Pintura Blanca" creado')
+        ->and($log->description)->toBe('Producto "PINTURA BLANCA" creado')
         ->and($log->log_name)->toBe('productos');
 });
 
@@ -228,7 +228,7 @@ test('product audit description uses Spanish on delete', function () {
         ->first();
 
     expect($log)->not->toBeNull()
-        ->and($log->description)->toBe('Producto "Producto Test" eliminado');
+        ->and($log->description)->toBe('Producto "PRODUCTO TEST" eliminado');
 });
 
 test('warehouse audit description uses feminine Spanish on delete', function () {
@@ -296,7 +296,7 @@ test('unknown event names pass through untranslated', function () {
         'price_threshold' => 0,
     ]);
 
-    expect($product->getAuditDescription('restored'))->toBe('Producto "Test" restored');
+    expect($product->getAuditDescription('restored'))->toBe('Producto "TEST" restored');
 });
 
 // --- Failed login listener ---

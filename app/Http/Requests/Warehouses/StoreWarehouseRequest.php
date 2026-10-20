@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Warehouses;
 
+use App\Enums\TextFormat;
+use App\Http\Requests\Concerns\NormalizesText;
+use App\Models\Warehouse;
+use App\Rules\UniqueIgnoringCase;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreWarehouseRequest extends FormRequest
 {
+    use NormalizesText;
+
     public function authorize(): bool
     {
         return $this->user()?->can('create', Warehouse::class) ?? false;
@@ -17,7 +22,7 @@ class StoreWarehouseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['bail', 'required', 'string', 'max:100', Rule::unique('warehouses', 'name')],
+            'name' => ['bail', 'required', 'string', 'max:100', new UniqueIgnoringCase('warehouses', 'name')],
             'city' => ['bail', 'required', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:255'],
             'type' => ['required', 'string', 'in:factory,storage'],
@@ -28,6 +33,7 @@ class StoreWarehouseRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            ...$this->normalizedText(['name' => TextFormat::Name]),
             'is_active' => $this->boolean('is_active', true),
         ]);
     }

@@ -107,6 +107,8 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                                     onChange={(e) =>
                                         setData('name', e.target.value)
                                     }
+                                    maxLength={150}
+                                    className="uppercase placeholder:normal-case"
                                     placeholder="Nombre descriptivo del producto"
                                 />
                                 {errors.name && (

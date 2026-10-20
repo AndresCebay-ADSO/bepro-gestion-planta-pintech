@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\TextFormat;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\UnitOfMeasure;
@@ -99,8 +100,8 @@ class ProductSeeder extends Seeder
             'BP ESMALTE INDUSTRIAL TINTEABLE',
             'BP ESMALTE INDUSTRIAL VERDE',
             'BP ESMALTE PARA AGREGAR PASTA AZUL RAL 5017 BRILLANTE',
-            'BP ESMALTE POLIMÉRICO HD BLANCO',
-            'BP ESMALTE POLIMÉRICO HD GRIS',
+            'BP ESMALTE POLIMÉRICO HD BLANCO',
+            'BP ESMALTE POLIMÉRICO HD GRIS',
             'BP ESMALTE SINTETICO OCRE',
             'BP ESMALTE TRAFICO AMARILLO',
             'BP ESMALTE POLIURETANO AZUL',
@@ -148,7 +149,7 @@ class ProductSeeder extends Seeder
             'BP CATALIZADOR AUTONIVELANTE EPOXICO TRANS. COMP. B',
             'BP CATALIZADOR EPOXI NOVOLAC',
             'BP CATALIZADOR ESMALTE EPOXICO HS',
-            'BP CATALIZADOR POLIMÉRICO',
+            'BP CATALIZADOR POLIMÉRICO',
             'BP CATALIZADOR POLIURETANO',
             'BP CATALIZADOR PU UNIVERSAL',
             'BP CATALIZADOR PRIMER EPOXI POLIAMIDA',
@@ -203,8 +204,8 @@ class ProductSeeder extends Seeder
             'BP POLIURETANO ROJO ORGANICO',
             'BP POLIURETANO VERDE FTALO',
             'BP PRIMER EPOXI POLIAMIDA HS 2K CREMA',
-            'BP PRIMER EPÓXICO ESTRUCTURAL GRIS',
-            'BP PRIMER EPÓXICO ESTRUCTURAL 60% SÓLIDOS GRIS CLARO',
+            'BP PRIMER EPÓXICO ESTRUCTURAL GRIS',
+            'BP PRIMER EPÓXICO ESTRUCTURAL 60% SÓLIDOS GRIS CLARO',
             ['name' => 'BP PRIMER EPOXICO HS 2K BASE GRIS', 'quality_viscosity_lower' => 85, 'quality_viscosity_upper' => 95, 'quality_fineness_lower' => 4, 'quality_fineness_upper' => 6, 'quality_solids_lower' => 70, 'quality_solids_upper' => 80],
             'BP PRIMER EPOXICO HS 2K BASE BLANCA',
             'BP PRIMER EPOXICO HS 2K GRIS CLARO',
@@ -216,7 +217,7 @@ class ProductSeeder extends Seeder
             'BP PRIMER EPOXICO HS 2K BASE VERDE',
             'BP PRIMER EPOXICO HS 2K NEGRO',
             'BP PRIMER EPOXICO HS 2K ROJO',
-            'BP PRIMER EPÓXICO HS 2K ROJO ÓXIDO',
+            'BP PRIMER EPÓXICO HS 2K ROJO ÓXIDO',
             'BP PRIMER EPOXICO HS 2K TINTEABLE',
             'BP PRIMER EPOXICO HS 2K BASE NEGRO RAL 9005',
             'BP PRIMER EPOXICO HS 2K BASE RAL',
@@ -226,10 +227,10 @@ class ProductSeeder extends Seeder
             'BP PRIMER POLIURETANO 2K GRIS',
             'BP SOLVENTE SECADO LENTO',
             'BP UNIPRIMER ALQUIDICO FENOLICO GRIS',
-            'BP UNIPRIMER ALQUÍDICO FENÓLICO ROJO',
+            'BP UNIPRIMER ALQUÍDICO FENÓLICO ROJO',
             'BP VINILBEPRO + EXPERTOS TIPO 1 BLANCO',
             'BP VINILBEPRO + EXPERTOS TIPO 2 BLANCO',
-            'BP VINILBEPRO + TIEMPO 5 AÑOS BLANCO',
+            'BP VINILBEPRO + TIEMPO 5 AÑOS BLANCO',
             'BP VINILBEPRO ALTA ASEPSIA BLANCO',
             'BP VINILBEPRO ELASTOMERICO BLANCO',
             'BP VINILBEPRO TIPO 1 OBRA BLANCO',
@@ -256,15 +257,9 @@ class ProductSeeder extends Seeder
 
         $count = 0;
         foreach ($products as $item) {
-            if (is_string($item)) {
-                $name = trim($item);
-                $name = preg_replace('/\s+/', ' ', $name);
-                $extra = [];
-            } else {
-                $name = trim($item['name']);
-                $name = preg_replace('/\s+/', ' ', $name);
-                $extra = Arr::except($item, 'name');
-            }
+            // La búsqueda de firstOrCreate no pasa por el cast: se busca con el nombre ya normalizado.
+            $name = TextFormat::ProductName->normalize(is_string($item) ? $item : $item['name']);
+            $extra = is_string($item) ? [] : Arr::except($item, 'name');
 
             if (empty($name)) {
                 continue;

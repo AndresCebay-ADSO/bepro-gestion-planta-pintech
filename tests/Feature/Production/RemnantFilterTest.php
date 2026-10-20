@@ -192,7 +192,7 @@ it('filters remnants by search matching product name', function (): void {
         fn ($page) => $page
             ->component('Production/Remnants/Index')
             ->has('remnants.data', 2)
-            ->where('remnants.data.0.product_name', 'Esmalte Sintético Brillante')
+            ->where('remnants.data.0.product_name', 'ESMALTE SINTÉTICO BRILLANTE')
     );
 });
 
@@ -389,7 +389,7 @@ it('names the remnant with the color of its source order', function (): void {
     get(route('production.remnants.index', ['search' => $this->orderA->order_number]))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->where('remnants.data.0.product_name', 'Esmalte Sintético Brillante RAL 3020'));
+            ->where('remnants.data.0.product_name', 'ESMALTE SINTÉTICO BRILLANTE RAL 3020'));
 });
 
 it('filters remnants by the color of their source order', function (): void {

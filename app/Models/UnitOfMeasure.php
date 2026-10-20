@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\TextFormat;
 use App\Models\Concerns\HasAuditDescription;
 use App\Models\Concerns\SelectableWhenActive;
 use Database\Factories\UnitOfMeasureFactory;
@@ -76,6 +77,8 @@ class UnitOfMeasure extends Model
     protected function casts(): array
     {
         return [
+            'code' => TextFormat::UnitCode->cast(),
+            'name' => TextFormat::Name->cast(),
             'to_kg_conversion' => 'decimal:6',
             'to_liter_conversion' => 'decimal:6',
             'is_active' => 'boolean',

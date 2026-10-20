@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Clients;
 
+use App\Enums\TextFormat;
+use App\Http\Requests\Concerns\NormalizesText;
 use App\Models\Client;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateClientRequest extends FormRequest
 {
+    use NormalizesText;
+
     public function authorize(): bool
     {
         $client = $this->route('client');
@@ -32,5 +36,11 @@ class UpdateClientRequest extends FormRequest
             // Solo con clients.deactivate (lo comprueba ClientController::update).
             'is_active' => ['sometimes', 'boolean'],
         ];
+    }
+
+    /** Como al crear: el NIT solo con los espacios colapsados (P8-8). */
+    protected function prepareForValidation(): void
+    {
+        $this->merge($this->normalizedText(['nit' => TextFormat::Name]));
     }
 }

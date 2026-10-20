@@ -6,6 +6,8 @@ namespace App\Http\Requests\Catalogs;
 
 use App\Enums\NumberType;
 use App\Enums\RawMaterialType;
+use App\Enums\TextFormat;
+use App\Http\Requests\Concerns\NormalizesText;
 use App\Models\RawMaterial;
 use App\Models\ShrinkWrapType;
 use App\Rules\RawMaterialOfType;
@@ -19,6 +21,8 @@ use Illuminate\Validation\Rule;
  */
 class StoreShrinkWrapTypeRequest extends FormRequest
 {
+    use NormalizesText;
+
     public function authorize(): bool
     {
         return $this->user()?->can('create', ShrinkWrapType::class) ?? false;
@@ -84,7 +88,10 @@ class StoreShrinkWrapTypeRequest extends FormRequest
     {
         // Sin la clave `is_active`: al crear, activo; al editar, el que ya tenía. Un valor que no es booleano cuenta como
         // falso, como en los demás catálogos (el formulario siempre envía uno).
-        $merge = ['is_active' => $this->boolean('is_active', $this->currentType()?->is_active ?? true)];
+        $merge = [
+            'is_active' => $this->boolean('is_active', $this->currentType()?->is_active ?? true),
+            ...$this->normalizedText(['name' => TextFormat::Name]),
+        ];
 
         // En planta se escribe «1,5»: la coma decimal se acepta, como en las fórmulas.
         if (is_array($this->input('items'))) {

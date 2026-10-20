@@ -86,7 +86,7 @@ test('product update ignores manual current_cost and current_price sent in reque
         ->assertRedirect(route('products.index'));
 
     $this->product->refresh();
-    expect($this->product->name)->toBe('Nombre Actualizado');
+    expect($this->product->name)->toBe('NOMBRE ACTUALIZADO');
     expect((float) $this->product->current_cost)->toBe(10.0);
     expect((float) $this->product->current_price)->toBe(12.5);
 });
@@ -200,7 +200,7 @@ test('a product editor without costs.update can update product when cif_percenta
         ->assertRedirect(route('products.index'));
 
     $this->product->refresh();
-    expect($this->product->name)->toBe('Nombre Actualizado por Producción');
+    expect($this->product->name)->toBe('NOMBRE ACTUALIZADO POR PRODUCCIÓN');
 });
 
 test('a product editor without costs.view can save without sending cif_percentage or price_threshold', function (): void {
@@ -215,7 +215,7 @@ test('a product editor without costs.view can save without sending cif_percentag
         ->assertRedirect(route('products.index'));
 
     $this->product->refresh();
-    expect($this->product->name)->toBe('Nombre sin costos')
+    expect($this->product->name)->toBe('NOMBRE SIN COSTOS')
         ->and((float) $this->product->cif_percentage)->toBe(25.0)
         ->and((float) $this->product->price_threshold)->toBe(3.0);
 });

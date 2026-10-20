@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -16,7 +17,7 @@ return new class extends Migration
         Schema::create('raw_material_categories', function (Blueprint $table) {
             $table->id();
             $table->string('code', 50)->unique();
-            $table->string('name', 100)->unique();
+            $table->string('name', 100);
             $table->text('description')->nullable();
             // Tipo de insumo (App\Enums\RawMaterialType): decide dónde se ofrece cada materia prima.
             $table->enum('type', ['chemical', 'container', 'label', 'secondary_packaging'])->default('chemical');
@@ -26,6 +27,10 @@ return new class extends Migration
             $table->index('is_active');
             $table->index('type');
         });
+
+        // Único sin distinguir mayúsculas: el nombre se guarda como se escribe, y «planta cali» no puede convivir con
+        // «Planta Cali» (auditoría 3.6, PR 8). PostgreSQL y SQLite aceptan índices sobre una expresión.
+        DB::statement('CREATE UNIQUE INDEX raw_material_categories_name_lower_unique ON raw_material_categories (LOWER(name))');
     }
 
     /**

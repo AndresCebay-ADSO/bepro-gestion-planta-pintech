@@ -118,7 +118,7 @@ test('public QR landing does not require authentication and shows available docu
         ->assertSuccessful()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Public/QrLanding/Show')
-            ->where('product.name', 'Pintura Pública')
+            ->where('product.name', 'PINTURA PÚBLICA')
             // El cliente ve el número de lote (el del certificado y la estampita), no el de la OP (B55).
             ->where('lot.number', 4321)
             ->has('documents', 2)
@@ -225,5 +225,5 @@ test('public QR landing shows the product name with the order color', function (
 
     $this->get(route('qr.public.show', $qrCode->token))
         ->assertSuccessful()
-        ->assertInertia(fn (AssertableInertia $page) => $page->where('product.name', 'Pintura Pública RAL 3020'));
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('product.name', 'PINTURA PÚBLICA RAL 3020'));
 });

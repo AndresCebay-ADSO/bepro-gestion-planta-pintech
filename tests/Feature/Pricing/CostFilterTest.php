@@ -22,7 +22,7 @@ beforeEach(function (): void {
     $this->uom = UnitOfMeasure::factory()->create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
 
     $this->productA = Product::factory()->create([
-        'name' => 'Pintura Epóxica',
+        'name' => 'Pintura Epoxica',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
         'is_active' => true,
@@ -45,18 +45,18 @@ beforeEach(function (): void {
 
 test('filters costs by product name search', function (): void {
     $response = $this->actingAs($this->admin)
-        ->get(route('admin.costs.index', ['search' => 'Epóxica']));
+        ->get(route('admin.costs.index', ['search' => 'Epoxica']));
 
     $response->assertInertia(fn ($page) => $page
         ->has('products.data', 1)
         ->where('products.data.0.id', $this->productA->id)
-        ->where('filters.search', 'Epóxica')
+        ->where('filters.search', 'Epoxica')
     );
 });
 
 test('search is case insensitive', function (): void {
     $response = $this->actingAs($this->admin)
-        ->get(route('admin.costs.index', ['search' => 'epóxica']));
+        ->get(route('admin.costs.index', ['search' => 'epoxica']));
 
     $response->assertInertia(fn ($page) => $page
         ->has('products.data', 1)
@@ -66,7 +66,7 @@ test('search is case insensitive', function (): void {
 
 test('whitespace in search is normalized', function (): void {
     $response = $this->actingAs($this->admin)
-        ->get(route('admin.costs.index', ['search' => '  Pintura   Epóxica  ']));
+        ->get(route('admin.costs.index', ['search' => '  Pintura   Epoxica  ']));
 
     $response->assertInertia(fn ($page) => $page
         ->has('products.data', 1)
@@ -76,11 +76,11 @@ test('whitespace in search is normalized', function (): void {
 
 test('invalid filter keys are ignored', function (): void {
     $response = $this->actingAs($this->admin)
-        ->get(route('admin.costs.index', ['search' => 'Epóxica', 'invalid_key' => 'value']));
+        ->get(route('admin.costs.index', ['search' => 'Epoxica', 'invalid_key' => 'value']));
 
     $response->assertInertia(fn ($page) => $page
         ->has('products.data', 1)
-        ->where('filters.search', 'Epóxica')
+        ->where('filters.search', 'Epoxica')
         ->missing('filters.invalid_key')
     );
 });

@@ -18,7 +18,7 @@ class ClientFactory extends Factory
     {
         return [
             'business_name' => $this->faker->company(),
-            'nit' => $this->faker->numerify('###########'),
+            'nit' => $this->faker->unique()->numerify('###########'),
             'contact_name' => $this->faker->name(),
             'phone' => $this->faker->phoneNumber(),
         ];

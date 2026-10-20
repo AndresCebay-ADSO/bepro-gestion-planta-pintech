@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\RawMaterialType;
+use App\Enums\TextFormat;
 use App\Models\Concerns\HasAuditDescription;
 use App\Models\Concerns\SelectableWhenActive;
 use Database\Factories\RawMaterialFactory;
@@ -82,6 +83,7 @@ class RawMaterial extends Model
     protected function casts(): array
     {
         return [
+            'code' => TextFormat::Code->cast(),
             'current_price' => 'decimal:4',
             'previous_price' => 'decimal:4',
             'minimum_stock' => 'decimal:4',

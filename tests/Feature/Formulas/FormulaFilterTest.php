@@ -23,7 +23,7 @@ beforeEach(function (): void {
     $this->uom = UnitOfMeasure::factory()->create();
 
     $this->productA = Product::factory()->create([
-        'name' => 'Pintura Epóxica',
+        'name' => 'Pintura Epoxica',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
     ]);
@@ -52,7 +52,7 @@ beforeEach(function (): void {
 it('filters by product name', function (): void {
     actingAs($this->admin);
 
-    $response = get(route('formulas.index', ['search' => 'Epóxica']));
+    $response = get(route('formulas.index', ['search' => 'Epoxica']));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -112,7 +112,7 @@ it('shows all formulas when status is all or absent', function (): void {
 it('normalizes whitespace in search', function (): void {
     actingAs($this->admin);
 
-    $response = get(route('formulas.index', ['search' => '   Epóxica  ']));
+    $response = get(route('formulas.index', ['search' => '   Epoxica  ']));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page

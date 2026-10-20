@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\RawMaterialType;
+use App\Enums\TextFormat;
 use App\Models\Concerns\HasAuditDescription;
 use App\Models\Concerns\SelectableWhenActive;
 use Database\Factories\RawMaterialCategoryFactory;
@@ -60,6 +61,8 @@ class RawMaterialCategory extends Model
     protected function casts(): array
     {
         return [
+            'code' => TextFormat::Code->cast(),
+            'name' => TextFormat::Name->cast(),
             'type' => RawMaterialType::class,
             'is_active' => 'boolean',
         ];

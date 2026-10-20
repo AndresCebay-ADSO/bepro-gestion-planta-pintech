@@ -164,7 +164,7 @@ export function RawMaterialForm({
                             value={form.data.code}
                             onChange={handleChange('code')}
                             maxLength={50}
-                            className="w-full min-w-0 font-mono"
+                            className="w-full min-w-0 font-mono uppercase placeholder:normal-case"
                             placeholder="Ej. R01, T05"
                         />
                         <InputError message={form.errors.code} />

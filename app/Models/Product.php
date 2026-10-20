@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\TextFormat;
 use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -90,6 +91,7 @@ class Product extends Model
     protected function casts(): array
     {
         return [
+            'name' => TextFormat::ProductName->cast(),
             'current_cost' => 'decimal:4',
             'cif_percentage' => 'decimal:2',
             'sales_margin' => 'decimal:2',

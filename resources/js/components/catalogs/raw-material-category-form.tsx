@@ -40,6 +40,7 @@ export function RawMaterialCategoryFields({
                             form.setData('code', event.target.value)
                         }
                         maxLength={50}
+                        className="uppercase"
                         placeholder="RESINAS"
                         autoComplete="off"
                     />

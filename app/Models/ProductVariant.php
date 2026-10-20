@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\TextFormat;
 use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\ProductVariantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -93,6 +94,7 @@ class ProductVariant extends Model
     protected function casts(): array
     {
         return [
+            'code' => TextFormat::Code->cast(),
             'presentation_value' => 'decimal:4',
             'current_cost' => 'decimal:4',
             'current_price' => 'decimal:4',

@@ -8,6 +8,7 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -21,7 +22,7 @@ beforeEach(function (): void {
     $this->uom = UnitOfMeasure::factory()->create(['code' => 'GAL', 'name' => 'Galón', 'symbol' => 'gal']);
 
     $this->productA = Product::factory()->create([
-        'name' => 'Pintura Epóxica',
+        'name' => 'Pintura Epoxica',
         'category_id' => $this->category->id,
         'unit_of_measure_id' => $this->uom->id,
     ]);
@@ -41,18 +42,18 @@ beforeEach(function (): void {
 
 test('filters products by name search', function (): void {
     $response = $this->actingAs($this->admin)
-        ->get(route('products.index', ['search' => 'Epóxica']));
+        ->get(route('products.index', ['search' => 'Epoxica']));
 
     $response->assertInertia(fn ($page) => $page
         ->has('products.data', 1)
         ->where('products.data.0.id', $this->productA->id)
-        ->where('filters.search', 'Epóxica')
+        ->where('filters.search', 'Epoxica')
     );
 });
 
 test('search is case insensitive', function (): void {
     $response = $this->actingAs($this->admin)
-        ->get(route('products.index', ['search' => 'epóxica']));
+        ->get(route('products.index', ['search' => 'epoxica']));
 
     $response->assertInertia(fn ($page) => $page
         ->has('products.data', 1)
@@ -60,9 +61,22 @@ test('search is case insensitive', function (): void {
     );
 });
 
+// Los nombres se guardan en mayúsculas (PR 8): «epóxica» tiene que encontrar «PINTURA EPÓXICA». El `LOWER()` de
+// PostgreSQL cambia las letras con tilde; el de SQLite no, por eso este caso solo corre en PostgreSQL.
+test('search with accents finds uppercase names', function (): void {
+    Product::factory()->create(['name' => 'Laca Poliuretánica', 'category_id' => $this->category->id, 'unit_of_measure_id' => $this->uom->id]);
+
+    $this->actingAs($this->admin)
+        ->get(route('products.index', ['search' => 'poliuretánica']))
+        ->assertInertia(fn ($page) => $page
+            ->has('products.data', 1)
+            ->where('products.data.0.name', 'LACA POLIURETÁNICA')
+        );
+})->skip(fn () => DB::connection()->getDriverName() !== 'pgsql', 'El LOWER() de SQLite no cambia las letras con tilde.');
+
 test('whitespace in search is normalized', function (): void {
     $response = $this->actingAs($this->admin)
-        ->get(route('products.index', ['search' => '  Pintura   Epóxica  ']));
+        ->get(route('products.index', ['search' => '  Pintura   Epoxica  ']));
 
     $response->assertInertia(fn ($page) => $page
         ->has('products.data', 1)
