@@ -50,7 +50,7 @@ class ProductVariantSeeder extends Seeder
                         'presentation_label' => $presentation['label'],
                     ],
                     [
-                        'code' => $faker->unique()->numerify('########'),
+                        'code' => $faker->unique()->numerify('################'),
                         'name' => "{$product->name} - {$presentation['label']}",
                         'unit_of_measure_id' => $unitGl?->id ?? 1,
                         'presentation_value' => $presentation['value'],
