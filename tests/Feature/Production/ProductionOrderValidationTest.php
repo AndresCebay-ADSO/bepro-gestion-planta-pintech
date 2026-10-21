@@ -141,7 +141,7 @@ test('rejects formula_id that belongs to another product', function () {
 test('rejects an inactive formula_id', function () {
     test()->seed(RolePermissionSeeder::class);
 
-    [$product, $user, $formula] = createDependencies();
+    [$product, $user] = createDependencies();
     $user->forceFill(['email_verified_at' => now()])->save();
     $user->assignRole(SystemRole::Admin->value);
 
@@ -152,13 +152,14 @@ test('rejects an inactive formula_id', function () {
         'is_active' => true,
     ]);
 
-    $formula->update(['is_active' => false]);
+    // La fórmula de createDependencies() es la de referencia y no se desactiva: una segunda versión, inactiva.
+    $inactiveFormula = Formula::factory()->for($product)->inactive()->create(['created_by' => $user->id]);
 
     $response = $this->actingAs($user)
         ->from(route('production-orders.create'))
         ->post(route('production-orders.store'), [
             'product_id' => $product->id,
-            'formula_id' => $formula->id,
+            'formula_id' => $inactiveFormula->id,
             'warehouse_id' => $warehouse->id,
             'quantity' => 100,
             'planned_date' => now()->addDay()->toDateString(),

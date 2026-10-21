@@ -131,7 +131,7 @@ test('formula audit description uses feminine Spanish on update', function () {
 
     Activity::query()->delete();
 
-    $formula->update(['is_active' => false]);
+    $formula->update(['notes' => 'Ajuste de dispersante']);
 
     $log = Activity::where('subject_type', Formula::class)
         ->where('subject_id', $formula->id)

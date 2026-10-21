@@ -308,7 +308,7 @@ it('validates warehouse mismatch', function () {
         'product_id' => $this->targetProduct->id,
         'formula_id' => Formula::create([
             'product_id' => $this->targetProduct->id,
-            'version' => 1,
+            'version' => 2,
             'is_active' => true,
             'created_by' => $this->user->id,
         ])->id,
