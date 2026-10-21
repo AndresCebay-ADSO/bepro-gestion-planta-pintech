@@ -201,7 +201,7 @@ class ProductController extends Controller
                 'quality_solids_upper' => $product->quality_solids_upper,
                 'is_active' => $product->is_active,
             ],
-            'hasActiveFormula' => $product->activeFormula()->exists(),
+            'hasPriceReferenceFormula' => $product->priceReferenceFormula()->exists(),
             'categories' => ProductCategory::query()->selectable([$product->category_id])->select('id', 'name')->orderBy('name')->get(),
             'units' => UnitOfMeasure::query()->selectable([$product->unit_of_measure_id])->select('id', 'name', 'symbol')->orderBy('name')->get(),
             'can' => [

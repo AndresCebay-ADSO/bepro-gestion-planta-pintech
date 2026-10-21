@@ -72,12 +72,15 @@ class Formula extends Model
     }
 
     /**
-     * Dos reglas que valen venga de donde venga la fórmula (pantalla, seeders, carga de datos, factories):
+     * Dos reglas para toda fórmula que se guarda con eventos de modelo (pantalla, factories, tinker):
      * - sin versión, toma la siguiente de su producto;
      * - la primera fórmula activa de un producto queda de referencia de precio, y también la que se reactiva en un
      *   producto que se quedó sin referencia (D-FOR1).
      * Quien crea o reactiva desde la pantalla bloquea antes el producto (acciones de fórmulas), así que dos peticiones a la
      * vez no sacan la misma versión ni reclaman las dos la referencia. Fuera de ellas, los índices únicos frenan la segunda.
+     *
+     * Ojo: sin eventos (`WithoutModelEvents` en DatabaseSeeder, `saveQuietly`) estas reglas no actúan. Quien cargue
+     * fórmulas así marca la versión y la referencia a mano (FormulaSeeder), o el producto queda sin costear.
      */
     protected static function booted(): void
     {

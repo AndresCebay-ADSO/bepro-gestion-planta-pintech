@@ -91,11 +91,10 @@ class FormulaController extends Controller
             return $formula;
         });
 
-        $this->productionCostRecalculationService->recalculateForProduct(
-            (int) $formula->product_id,
-            false,
-            (int) $formula->id,
-        );
+        // Solo la de referencia costea: crear otra versión no cambia el precio del producto (D-FOR1).
+        if ($formula->is_price_reference) {
+            $this->productionCostRecalculationService->recalculateForProduct((int) $formula->product_id);
+        }
 
         return $this->redirectWithContext(
             $request,
@@ -183,12 +182,8 @@ class FormulaController extends Controller
             }
         });
 
-        if ($formula->is_active) {
-            $this->productionCostRecalculationService->recalculateForProduct(
-                (int) $formula->product_id,
-                false,
-                (int) $formula->id
-            );
+        if ($formula->is_price_reference) {
+            $this->productionCostRecalculationService->recalculateForProduct((int) $formula->product_id);
         }
 
         return redirect()

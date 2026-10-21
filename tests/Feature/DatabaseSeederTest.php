@@ -8,6 +8,7 @@ use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductionCost;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
@@ -53,6 +54,21 @@ test('la siembra completa de la base termina y llena cada catálogo', function (
 
     foreach (seededModels() as $model) {
         expect($model::query()->exists())->toBeTrue("{$model} quedó vacío tras la siembra");
+    }
+});
+
+// La siembra corre sin eventos de modelo (WithoutModelEvents), así que la regla de Formula que deja de referencia la
+// primera fórmula activa no actúa: FormulaSeeder la marca a mano. Sin referencia el producto no se costea y no avisa.
+test('la siembra deja cada producto con fórmula con una sola de referencia, ya costeada', function () {
+    $this->seed(DatabaseSeeder::class);
+
+    $productIds = Formula::query()->distinct()->pluck('product_id');
+
+    foreach ($productIds as $productId) {
+        expect(Formula::query()->where('product_id', $productId)->priceReference()->count())
+            ->toBe(1, "El producto {$productId} quedó sin fórmula de referencia")
+            ->and(ProductionCost::query()->where('product_id', $productId)->whereNull('production_order_id')->exists())
+            ->toBeTrue("El producto {$productId} no se costeó");
     }
 });
 

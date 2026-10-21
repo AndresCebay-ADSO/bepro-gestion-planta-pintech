@@ -37,18 +37,18 @@ beforeEach(function (): void {
     ]);
 });
 
-test('product edit page provides hasActiveFormula as false when no active formula exists', function (): void {
+test('product edit page provides hasPriceReferenceFormula as false when the product has no formula', function (): void {
     actingAs($this->admin)
         ->get(route('products.edit', $this->product))
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Products/Edit')
-            ->has('hasActiveFormula')
-            ->where('hasActiveFormula', false)
+            ->has('hasPriceReferenceFormula')
+            ->where('hasPriceReferenceFormula', false)
         );
 });
 
-test('product edit page provides hasActiveFormula as true when an active formula exists', function (): void {
+test('product edit page provides hasPriceReferenceFormula as true when the product has a price reference formula', function (): void {
     Formula::factory()->create([
         'product_id' => $this->product->id,
         'version' => 1,
@@ -61,8 +61,8 @@ test('product edit page provides hasActiveFormula as true when an active formula
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Products/Edit')
-            ->has('hasActiveFormula')
-            ->where('hasActiveFormula', true)
+            ->has('hasPriceReferenceFormula')
+            ->where('hasPriceReferenceFormula', true)
         );
 });
 
