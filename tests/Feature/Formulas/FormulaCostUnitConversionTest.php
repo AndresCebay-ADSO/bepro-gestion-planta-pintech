@@ -10,6 +10,7 @@ use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Services\ProductionCostRecalculationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 
 uses(RefreshDatabase::class);
 
@@ -123,4 +124,25 @@ it('al corregir la equivalencia de una unidad recalcula solo los productos cuya 
     expect(app(ProductionCostRecalculationService::class)->recalculateForUnit((int) $this->gram->id))->toBe(1)
         ->and($this->product->fresh()->current_cost)->toBe('10000.0000')
         ->and($other->fresh()->current_cost)->toBeNull();
+});
+
+// Un producto que no se puede costear (línea cargada sin validar, P-5) no frena el recorrido de los demás: queda en el
+// log (CodeRabbit y revisión final del PR 9; CL-07).
+it('un producto que no se puede costear no frena el recálculo de los demás y queda en el log', function () {
+    Log::spy();
+    ($this->formulaWith)([[$this->resin, '1', $this->kg]]);
+
+    $broken = Product::factory()->create(['current_cost' => null]);
+    $brokenFormula = Formula::factory()->for($broken)->create();
+    // kg de un solvente que se compra por litro: la aplicación ya no deja guardarlo, solo llega por una carga directa.
+    FormulaDetail::create(['formula_id' => $brokenFormula->id, 'raw_material_id' => $this->resin->id, 'quantity' => 1, 'unit_of_measure_id' => $this->kg->id, 'step_order' => 1]);
+    FormulaDetail::create(['formula_id' => $brokenFormula->id, 'raw_material_id' => $this->solvent->id, 'quantity' => 1, 'unit_of_measure_id' => $this->kg->id, 'step_order' => 2]);
+
+    expect(app(ProductionCostRecalculationService::class)->recalculateForRawMaterial((int) $this->resin->id))->toBe(1)
+        ->and($this->product->fresh()->current_cost)->toBe('10000.0000')
+        ->and($broken->fresh()->current_cost)->toBeNull();
+
+    Log::shouldHaveReceived('warning')
+        ->withArgs(fn (string $message, array $context): bool => $context['product_id'] === $broken->id && $context['raw_material_id'] === $this->resin->id)
+        ->once();
 });

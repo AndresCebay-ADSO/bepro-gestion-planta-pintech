@@ -29,6 +29,8 @@ class CreateFormulaAction
      *   notes?:string|null,
      *   details:array<int, array{raw_material_id:int, quantity:string|int|float, unit_of_measure_id:int}>
      * }  $data
+     *
+     * @throws ValidationException si el producto se desactivó o la unidad de una línea dejó de convertirse.
      */
     public function execute(array $data, int $userId): Formula
     {
@@ -38,6 +40,8 @@ class CreateFormulaAction
             if (! $this->lockProduct((int) $data['product_id'])) {
                 throw ValidationException::withMessages(['product_id' => __('El producto se desactivó mientras se creaba la fórmula.')]);
             }
+
+            $this->lockLineMaterialsAndCheckUnits($data['details']);
 
             $formula = Formula::create([
                 'product_id' => $data['product_id'],
@@ -53,7 +57,8 @@ class CreateFormulaAction
         });
 
         if ($formula->is_price_reference) {
-            $this->costRecalculation->recalculateForProduct((int) $formula->product_id);
+            // El cambio ya quedó guardado: si el producto no se puede costear, queda en el log y no se reporta como fallo.
+            $this->costRecalculation->recalculateForProductOrLog((int) $formula->product_id, ['formula_id' => (int) $formula->id]);
         }
 
         return $formula;

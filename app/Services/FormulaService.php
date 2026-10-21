@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\NumberType;
 use App\Models\FormulaDetail;
+use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 
 class FormulaService
@@ -75,6 +76,47 @@ class FormulaService
     public function getConversionFactor(UnitOfMeasure $fromUnit, UnitOfMeasure $toUnit): string
     {
         return $this->convertQuantity('1', $fromUnit, $toUnit, NumberType::Factor->scale());
+    }
+
+    /**
+     * Las líneas de una fórmula cuya unidad no se convierte a la de su materia prima (FOR-02), como `índice => mensaje`.
+     * Una sola regla para el aviso del request y para la revisión de las acciones: con `$lockMaterials`, dentro de su
+     * transacción, las materias primas se leen con bloqueo compartido, y un cambio de unidad simultáneo
+     * (UpdateRawMaterialAction las bloquea para escribir) espera o ya se ve. Las líneas sin materia prima o unidad
+     * existentes se saltan: eso lo rechazan sus propias reglas.
+     *
+     * @param  array<int|string, mixed>  $details
+     * @return array<int|string, string>
+     */
+    public function unconvertibleLines(array $details, bool $lockMaterials = false): array
+    {
+        $lines = collect($details)->filter(fn ($detail): bool => is_array($detail)
+            && is_numeric($detail['raw_material_id'] ?? null)
+            && is_numeric($detail['unit_of_measure_id'] ?? null));
+
+        if ($lines->isEmpty()) {
+            return [];
+        }
+
+        $materials = RawMaterial::query()
+            ->with('unitOfMeasure')
+            ->whereKey($lines->pluck('raw_material_id')->map(fn ($id): int => (int) $id)->all())
+            ->when($lockMaterials, fn ($query) => $query->sharedLock())
+            ->get()
+            ->keyBy('id');
+        $units = UnitOfMeasure::query()->findMany($lines->pluck('unit_of_measure_id')->map(fn ($id): int => (int) $id)->all())->keyBy('id');
+
+        $errors = [];
+        foreach ($lines as $index => $detail) {
+            $materialUnit = $materials->get((int) $detail['raw_material_id'])?->unitOfMeasure;
+            $lineUnit = $units->get((int) $detail['unit_of_measure_id']);
+
+            if ($materialUnit !== null && $lineUnit !== null && ! $this->canConvert($lineUnit, $materialUnit)) {
+                $errors[$index] = __('Esta unidad no se puede convertir a la de la materia prima (:unit).', ['unit' => $materialUnit->symbol]);
+            }
+        }
+
+        return $errors;
     }
 
     public function canConvert(UnitOfMeasure $fromUnit, UnitOfMeasure $toUnit): bool

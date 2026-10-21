@@ -11,6 +11,7 @@ use App\Models\ProductionCost;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Services\Pricing\ProductionCostCalculatorService;
+use DomainException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -127,6 +128,29 @@ class ProductionCostRecalculationService
         });
     }
 
+    /**
+     * Como recalculateForProduct(), pero un producto que no se puede costear no tumba a quien llama: queda en el log
+     * (`Log::warning`) y devuelve null. Hoy solo pasa con una línea cuya unidad no se convierte a la de su materia prima,
+     * que la aplicación ya no deja guardar: datos cargados sin validar (P-5, CL-07). Para los recorridos, donde un dato malo
+     * no debe frenar a los demás productos, y para después de guardar, cuando el cambio ya quedó hecho.
+     *
+     * @param  array<string, int>  $context  Lo que disparó el recálculo (materia prima, unidad, fórmula), para el log.
+     */
+    public function recalculateForProductOrLog(int $productId, array $context = []): ?ProductionCost
+    {
+        try {
+            return $this->recalculateForProduct($productId);
+        } catch (DomainException $exception) {
+            Log::warning('No se pudo recalcular el costo del producto: se deja como estaba.', [
+                'product_id' => $productId,
+                ...$context,
+                'reason' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
     public function recalculateForRawMaterial(int $rawMaterialId): int
     {
         $productIds = Formula::query()
@@ -139,7 +163,7 @@ class ProductionCostRecalculationService
 
         $recalculated = 0;
         foreach ($productIds as $productId) {
-            if ($this->recalculateForProduct((int) $productId) !== null) {
+            if ($this->recalculateForProductOrLog((int) $productId, ['raw_material_id' => $rawMaterialId]) !== null) {
                 $recalculated++;
             }
         }
@@ -169,7 +193,7 @@ class ProductionCostRecalculationService
 
         $recalculated = 0;
         foreach ($productIds as $productId) {
-            if ($this->recalculateForProduct((int) $productId) !== null) {
+            if ($this->recalculateForProductOrLog((int) $productId, ['unit_of_measure_id' => $unitOfMeasureId]) !== null) {
                 $recalculated++;
             }
         }

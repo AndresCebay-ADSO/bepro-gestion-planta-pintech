@@ -9,8 +9,6 @@ use App\Enums\RawMaterialType;
 use App\Enums\TextFormat;
 use App\Http\Requests\Concerns\NormalizesText;
 use App\Models\Formula;
-use App\Models\RawMaterial;
-use App\Models\UnitOfMeasure;
 use App\Rules\RawMaterialOfType;
 use App\Services\FormulaService;
 use Illuminate\Foundation\Http\FormRequest;
@@ -112,29 +110,13 @@ class StoreFormulaRequest extends FormRequest
                     return;
                 }
 
-                // Solo las líneas cuya materia prima y unidad ya pasaron sus reglas (existen, activas y enteras).
-                $lines = collect($details)->filter(fn ($detail, $index): bool => is_array($detail)
-                    && ! $validator->errors()->has("details.{$index}.raw_material_id")
-                    && ! $validator->errors()->has("details.{$index}.unit_of_measure_id"));
+                // Solo las líneas cuya materia prima y unidad ya pasaron sus reglas (existen, activas y enteras). Aviso
+                // temprano: las acciones de crear y editar lo vuelven a revisar con las materias primas bloqueadas.
+                $lines = array_filter($details, fn ($detail, $index): bool => ! $validator->errors()->has("details.{$index}.raw_material_id")
+                    && ! $validator->errors()->has("details.{$index}.unit_of_measure_id"), ARRAY_FILTER_USE_BOTH);
 
-                if ($lines->isEmpty()) {
-                    return;
-                }
-
-                $materials = RawMaterial::query()->with('unitOfMeasure')->findMany($lines->pluck('raw_material_id'))->keyBy('id');
-                $units = UnitOfMeasure::query()->findMany($lines->pluck('unit_of_measure_id'))->keyBy('id');
-                $formulaService = app(FormulaService::class);
-
-                foreach ($lines as $index => $detail) {
-                    $materialUnit = $materials->get((int) $detail['raw_material_id'])?->unitOfMeasure;
-                    $lineUnit = $units->get((int) $detail['unit_of_measure_id']);
-
-                    if ($materialUnit !== null && $lineUnit !== null && ! $formulaService->canConvert($lineUnit, $materialUnit)) {
-                        $validator->errors()->add(
-                            "details.{$index}.unit_of_measure_id",
-                            __('Esta unidad no se puede convertir a la de la materia prima (:unit).', ['unit' => $materialUnit->symbol])
-                        );
-                    }
+                foreach (app(FormulaService::class)->unconvertibleLines($lines) as $index => $message) {
+                    $validator->errors()->add("details.{$index}.unit_of_measure_id", $message);
                 }
             },
         ];

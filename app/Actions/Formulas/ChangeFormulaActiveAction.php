@@ -51,7 +51,8 @@ class ChangeFormulaActiveAction
         });
 
         if ($becameReference) {
-            $this->costRecalculation->recalculateForProduct((int) $locked->product_id);
+            // El cambio ya quedó guardado: si el producto no se puede costear, queda en el log y no se reporta como fallo.
+            $this->costRecalculation->recalculateForProductOrLog((int) $locked->product_id, ['formula_id' => (int) $locked->id]);
         }
 
         return $locked;

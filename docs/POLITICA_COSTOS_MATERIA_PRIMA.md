@@ -73,6 +73,10 @@ Se recalcula también:
 - al corregir la equivalencia de una unidad en uso (`RecalculateUnitDependentCosts`, en cola): los productos cuya
   referencia la usa en una línea o como unidad de la materia prima. Una unidad en uso no cambia de base (volumen ↔ peso).
 
+Un producto que no se puede costear (una línea cuya unidad no se convierte, que la aplicación ya no deja guardar: solo
+llega por una carga directa) no frena los recorridos ni hace fallar un cambio de fórmula ya guardado: queda en el log con
+`Log::warning` y su costo se deja como estaba (`recalculateForProductOrLog`).
+
 El plan de la OP no usa esta cuenta: calcula con el factor de 6 decimales que guarda en cada línea
 (`FormulaService::orderLineRequirement()`), el mismo con que la pantalla convierte el consumo real. Con L↔galón difiere
 un 0,0002 % del costo de lista. Lo resuelve B51, antes de producción.

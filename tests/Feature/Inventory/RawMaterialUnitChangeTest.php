@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Actions\RawMaterials\UpdateRawMaterialAction;
 use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia;
 
 uses(RefreshDatabase::class);
@@ -81,4 +83,21 @@ it('avisa en la pantalla de edición si la unidad está bloqueada', function () 
 
     $this->get(route('raw-materials.edit', $this->material))
         ->assertInertia(fn (AssertableInertia $page) => $page->where('unitLocked', true));
+});
+
+// Carrera: el request vio la materia prima sin actividad y, antes de guardar, alguien creó su primera línea de fórmula. La
+// acción lo vuelve a revisar con la fila bloqueada (CodeRabbit, PR 9).
+it('no cambia la unidad si la actividad apareció después de validar', function () {
+    FormulaDetail::create([
+        'formula_id' => Formula::factory()->create()->id,
+        'raw_material_id' => $this->material->id,
+        'quantity' => 1,
+        'unit_of_measure_id' => $this->kg->id,
+        'step_order' => 1,
+    ]);
+
+    expect(fn () => app(UpdateRawMaterialAction::class)->execute($this->material, ['unit_of_measure_id' => $this->liter->id]))
+        ->toThrow(ValidationException::class, 'No se puede cambiar la unidad: la materia prima ya tiene lotes, movimientos o fórmulas en la unidad actual.');
+
+    expect($this->material->fresh()->unit_of_measure_id)->toBe($this->kg->id);
 });

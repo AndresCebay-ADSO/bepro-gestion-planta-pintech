@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Actions\Formulas\CreateFormulaAction;
+use App\Actions\Formulas\UpdateFormulaAction;
 use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -67,4 +70,21 @@ it('no compara la unidad de una línea cuya materia prima ya tiene otro error', 
     $this->post(route('formulas.store'), ($this->payload)([[$inactive, $this->kg]]))
         ->assertSessionHasErrors(['details.0.raw_material_id'])
         ->assertSessionDoesntHaveErrors(['details.0.unit_of_measure_id']);
+});
+
+// Carrera: el request validó la línea con la materia prima en kg y, antes de guardar, alguien le cambió la unidad (aún
+// sin uso) a litros. Las acciones vuelven a validar con las materias primas bloqueadas (revisión del PR 9).
+it('no guarda una fórmula si la unidad de la materia prima cambió después de validar', function () {
+    $freshMaterial = RawMaterial::factory()->create(['unit_of_measure_id' => $this->liter->id]);
+    $line = ['raw_material_id' => $freshMaterial->id, 'quantity' => '1', 'unit_of_measure_id' => $this->kg->id];
+
+    expect(fn () => app(CreateFormulaAction::class)->execute(['product_id' => $this->product->id, 'details' => [$line]], (int) auth()->id()))
+        ->toThrow(ValidationException::class, 'Esta unidad no se puede convertir a la de la materia prima (L).');
+    expect(Formula::query()->exists())->toBeFalse();
+
+    $formula = Formula::factory()->for($this->product)->create();
+
+    expect(fn () => app(UpdateFormulaAction::class)->execute($formula, ['details' => [$line]]))
+        ->toThrow(ValidationException::class);
+    expect($formula->details()->count())->toBe(0);
 });

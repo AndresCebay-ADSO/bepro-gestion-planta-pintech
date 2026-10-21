@@ -9,6 +9,7 @@ use App\Models\Formula;
 use App\Services\ProductionCostRecalculationService;
 use DomainException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Cambia el nombre, las notas y las líneas de una fórmula que ninguna OP usó. Activarla o desactivarla va por
@@ -30,6 +31,7 @@ class UpdateFormulaAction
      * }  $data
      *
      * @throws DomainException si una OP ya la usó o su producto está inactivo.
+     * @throws ValidationException si la unidad de una línea dejó de convertirse a la de su materia prima.
      */
     public function execute(Formula $formula, array $data): void
     {
@@ -44,6 +46,8 @@ class UpdateFormulaAction
                 throw new DomainException($blocker);
             }
 
+            $this->lockLineMaterialsAndCheckUnits($data['details']);
+
             $locked->update([
                 'name' => $data['name'] ?? null,
                 'notes' => $data['notes'] ?? null,
@@ -54,7 +58,8 @@ class UpdateFormulaAction
         });
 
         if ($isReference) {
-            $this->costRecalculation->recalculateForProduct((int) $formula->product_id);
+            // El cambio ya quedó guardado: si el producto no se puede costear, queda en el log y no se reporta como fallo.
+            $this->costRecalculation->recalculateForProductOrLog((int) $formula->product_id, ['formula_id' => (int) $formula->id]);
         }
     }
 

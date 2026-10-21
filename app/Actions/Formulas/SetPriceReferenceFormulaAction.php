@@ -55,7 +55,8 @@ class SetPriceReferenceFormulaAction
 
         // Recálculo normal, con el umbral de precio, como cualquier cambio de costo (P9-4).
         if ($changed) {
-            $this->costRecalculation->recalculateForProduct((int) $formula->product_id);
+            // El cambio ya quedó guardado: si el producto no se puede costear, queda en el log y no se reporta como fallo.
+            $this->costRecalculation->recalculateForProductOrLog((int) $formula->product_id, ['formula_id' => (int) $formula->id]);
         }
 
         return $changed;

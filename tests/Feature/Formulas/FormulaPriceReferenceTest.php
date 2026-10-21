@@ -6,6 +6,7 @@ use App\Actions\Formulas\CreateFormulaAction;
 use App\Actions\Formulas\UpdateFormulaAction;
 use App\Enums\SystemRole;
 use App\Models\Formula;
+use App\Models\FormulaDetail;
 use App\Models\Product;
 use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
@@ -15,6 +16,7 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia;
 
@@ -325,6 +327,22 @@ describe('pantalla', function () {
 
         expect($withHistory->fresh())->not->toBeNull()
             ->and($unused->fresh())->toBeNull();
+    });
+
+    it('si el producto no se puede costear, el cambio de referencia queda hecho y el fallo va al log', function () {
+        Log::spy();
+        Formula::factory()->for($this->product)->create();
+        $broken = Formula::factory()->for($this->product)->create();
+        $liter = UnitOfMeasure::factory()->create(['to_liter_conversion' => 1]);
+        $solvent = RawMaterial::factory()->create(['unit_of_measure_id' => $liter->id]);
+        // Línea cargada sin validar (P-5): kg de una materia prima que se compra por litro.
+        FormulaDetail::create(['formula_id' => $broken->id, 'raw_material_id' => $solvent->id, 'quantity' => 1, 'unit_of_measure_id' => $this->kg->id, 'step_order' => 1]);
+
+        $this->post(route('formulas.price-reference', $broken))
+            ->assertSessionHas('success', 'El precio del producto ahora sale de la fórmula v2.');
+
+        expect($broken->fresh()->is_price_reference)->toBeTrue();
+        Log::shouldHaveReceived('warning')->withArgs(fn (string $message, array $context): bool => $context['formula_id'] === $broken->id)->once();
     });
 
     it('la edición cambia nombre y líneas, pero no el estado', function () {
