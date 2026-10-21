@@ -32,8 +32,8 @@ return new class extends Migration
             $table->index('version');
         });
 
-        // Una sola fórmula de referencia por producto. PostgreSQL y SQLite aceptan índices parciales. Ninguna migración
-        // posterior debe alterar esta tabla: en SQLite, alterarla la recrea y perdería el índice.
+        // Una sola fórmula de referencia por producto. PostgreSQL y SQLite aceptan índices parciales. Una migración
+        // posterior que altere esta tabla debe comprobar que el índice sigue ahí: en SQLite, alterar una tabla la recrea.
         DB::statement('CREATE UNIQUE INDEX formulas_one_price_reference ON formulas (product_id) WHERE is_price_reference');
 
         // La de referencia está activa: no se costea con una fórmula con la que planta no puede producir. SQLite no

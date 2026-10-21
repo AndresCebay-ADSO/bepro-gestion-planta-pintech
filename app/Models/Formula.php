@@ -72,15 +72,25 @@ class Formula extends Model
     }
 
     /**
-     * La primera fórmula activa de un producto queda de referencia de precio, venga de donde venga (pantalla, seeders,
-     * carga de datos), y también la que se reactiva en un producto que se quedó sin referencia (D-FOR1). Las acciones de
-     * fórmulas bloquean el producto antes de guardar, así que dos peticiones a la vez no la reclaman las dos; fuera de
-     * ellas, el índice único parcial frena la segunda.
+     * Dos reglas que valen venga de donde venga la fórmula (pantalla, seeders, carga de datos, factories):
+     * - sin versión, toma la siguiente de su producto;
+     * - la primera fórmula activa de un producto queda de referencia de precio, y también la que se reactiva en un
+     *   producto que se quedó sin referencia (D-FOR1).
+     * Quien crea o reactiva desde la pantalla bloquea antes el producto (acciones de fórmulas), así que dos peticiones a la
+     * vez no sacan la misma versión ni reclaman las dos la referencia. Fuera de ellas, los índices únicos frenan la segunda.
      */
     protected static function booted(): void
     {
+        static::creating(function (Formula $formula): void {
+            $formula->version ??= (int) static::query()->where('product_id', $formula->product_id)->max('version') + 1;
+        });
+
         static::saving(function (Formula $formula): void {
-            if ($formula->is_active && ! $formula->is_price_reference && ! $formula->productHasOtherPriceReference()) {
+            // Solo una fórmula nueva o una que cambia de estado puede reclamar la referencia: editar las notas de una
+            // activa no consulta nada.
+            $mayClaim = ! $formula->exists || $formula->isDirty('is_active');
+
+            if ($mayClaim && $formula->is_active && ! $formula->is_price_reference && ! $formula->productHasOtherPriceReference()) {
                 $formula->is_price_reference = true;
             }
         });

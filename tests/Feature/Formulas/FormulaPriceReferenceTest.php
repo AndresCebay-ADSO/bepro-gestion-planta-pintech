@@ -27,6 +27,15 @@ describe('regla del modelo', function () {
             ->and($second->version)->toBe(2);
     });
 
+    it('numera las versiones de un producto aunque se creen varias a la vez con la factory', function () {
+        $product = Product::factory()->create();
+
+        Formula::factory()->for($product)->count(3)->create();
+
+        expect(Formula::query()->where('product_id', $product->id)->orderBy('version')->pluck('version')->all())
+            ->toBe([1, 2, 3]);
+    });
+
     it('también cuando el create omite is_active (default de la base)', function () {
         $formula = Formula::create([
             'product_id' => Product::factory()->create()->id,

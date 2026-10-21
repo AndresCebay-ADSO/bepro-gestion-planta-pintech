@@ -20,8 +20,7 @@ class FormulaFactory extends Factory
     {
         return [
             'product_id' => Product::factory(),
-            // La siguiente del producto: (product_id, version) es único.
-            'version' => fn (array $attributes): int => (int) Formula::query()->where('product_id', $attributes['product_id'])->max('version') + 1,
+            // Sin versión: el modelo toma la siguiente del producto al guardar, también con count(n).
             'is_active' => true,
             'notes' => null,
             'created_by' => User::factory(),
