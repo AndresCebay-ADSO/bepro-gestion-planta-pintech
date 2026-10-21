@@ -36,8 +36,8 @@ Catálogo de unidades de medida (Configuración → Catálogos), auditado (`unid
 | `name` | VARCHAR(100) |  |  |
 | `symbol` | VARCHAR(10) |  |  |
 | `description` | TEXT | sí |  |
-| `to_kg_conversion` | DECIMAL(14,6) | sí | Excluyente con `to_liter_conversion`: una unidad se convierte por peso o por volumen, o no se convierte |
-| `to_liter_conversion` | DECIMAL(14,6) | sí | `FormulaService::getConversionFactor()` convierte con estos factores |
+| `to_kg_conversion` | DECIMAL(14,6) | sí | Excluyente con `to_liter_conversion`: una unidad se convierte por peso o por volumen, o no se convierte. Si la usan fórmulas o materias primas, no cambia de base ni queda sin equivalencia; corregir el valor exige confirmación y recalcula los costos que dependen de ella (`RecalculateUnitDependentCosts`) |
+| `to_liter_conversion` | DECIMAL(14,6) | sí | `FormulaService::convertQuantity()` convierte con estas equivalencias (costo de lista, sin redondeo intermedio); `getConversionFactor()` da el factor de 6 decimales que guarda la línea de la OP |
 | `is_active` | BOOLEAN |  | default `true` |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
@@ -146,7 +146,7 @@ Materias primas. **Sin columna `name`**: se identifican solo por `code` (privaci
 | --- | --- | :-: | --- |
 | `id` | BIGINT |  | PK |
 | `code` | VARCHAR(50) |  | UNIQUE. En mayúsculas (`TextFormat::Code`) |
-| `unit_of_measure_id` | BIGINT |  | FK → `unit_of_measures` (RESTRICT) |
+| `unit_of_measure_id` | BIGINT |  | FK → `unit_of_measures` (RESTRICT). No cambia si la materia prima tiene lotes, movimientos, fórmulas u otro uso (RM-04) |
 | `current_price` | DECIMAL(16,4) | sí |  |
 | `previous_price` | DECIMAL(16,4) | sí |  |
 | `minimum_stock` | DECIMAL(12,4) |  | default `0` |
@@ -272,18 +272,31 @@ Fichas técnicas y hojas de seguridad por producto.
 
 ### 2.4.4 `formulas`
 
-Versiones de fórmula por producto (una activa).
+Versiones de fórmula por producto. Varias pueden estar activas (se produce con cualquiera; un mismo gris en distintos RAL),
+pero **una sola es la referencia de precio**: la que costea el producto (D-FOR1, auditoría 3.6, PR 9).
 
 | Columna | Tipo | Nulo | Notas |
 | --- | --- | :-: | --- |
 | `id` | BIGINT |  | PK |
 | `product_id` | BIGINT |  | FK → `products` (RESTRICT) |
-| `version` | INTEGER |  | default `1` |
+| `version` | INTEGER |  | default `1`. Única por producto `(product_id, version)`; la siguiente la pone el modelo al crear |
+| `name` | VARCHAR(60) | sí | Nombre corto para distinguir las activas en el selector de la OP («RAL 7035»). Espacios normalizados (`TextFormat::Name`); no es único |
 | `is_active` | BOOLEAN |  | default `true` |
+| `is_price_reference` | BOOLEAN |  | default `false`. Índice único parcial `formulas_one_price_reference` (`product_id` WHERE `is_price_reference`, PostgreSQL y SQLite). En PostgreSQL, CHECK `formulas_price_reference_is_active` (la de referencia está activa) |
 | `notes` | TEXT | sí |  |
 | `created_by` | BIGINT |  | FK → `users` (RESTRICT) |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
+
+Reglas:
+- La primera fórmula activa de un producto queda de referencia, y también la que se reactiva en un producto sin
+  referencia (evento `saving` del modelo). Sin eventos (`WithoutModelEvents` en `DatabaseSeeder`, `saveQuietly`) la regla
+  no actúa: quien cargue así marca la referencia a mano, como `FormulaSeeder`.
+- Cambiar la referencia es una acción explícita («Usar para el precio», `SetPriceReferenceFormulaAction`). La de
+  referencia no se desactiva ni se elimina.
+- Con el producto inactivo, sus fórmulas solo se desactivan o se eliminan (D-FOR3, P9-13).
+- Toda escritura bloquea primero la fila del producto (`LocksFormulaProduct`); crear una OP la toma compartida.
+- Cada línea (`formula_details.unit_of_measure_id`) debe convertirse a la unidad de su materia prima (FOR-02).
 
 ### 2.4.5 `formula_details`
 

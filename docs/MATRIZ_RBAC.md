@@ -92,7 +92,7 @@ combinación, se crea un rol nuevo.
 | **Fórmulas** | `formulas.view` | [x] | [x] | [ ] | [ ] | [ ] | ⚠️ hoy Producción ve, crea y edita fórmulas. Cambio intencional (§0). |
 | | `formulas.create` | [x] | [x] | [ ] | [ ] | [ ] | ⚠️ |
 | | `formulas.edit` | [x] | [x] | [ ] | [ ] | [ ] | ⚠️ |
-| | `formulas.activate` | [x] | [x] | [ ] | [ ] | [ ] | Activar una versión desactiva la anterior. |
+| | `formulas.activate` | [x] | [x] | [ ] | [ ] | [ ] | Activar y desactivar cada versión (varias activas por producto) y elegir la de referencia de precio («Usar para el precio»). |
 | | `formulas.delete` | [x] | [ ] | [ ] | [ ] | [ ] | Solo si ninguna orden la usó. ⚠️ hoy Admin puede. |
 | **Materias primas** | `raw_materials.view` | [x] | [x] | [x] | [ ] | [ ] | Sin costos salvo `costs.view`. |
 | | `raw_materials.create` | [x] | [x] | [ ] | [ ] | [ ] | Crearla **sin control de inventario** exige además `costs.update`: su precio se escribe a mano y entra en los costos. |

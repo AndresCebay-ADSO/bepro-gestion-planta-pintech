@@ -53,13 +53,29 @@ Ahora se sincroniza automaticamente en:
 ## Impacto en costos de produccion
 Cuando cambia `raw_materials.current_price` por esta politica, se dispara
 `ProductionCostRecalculationService::recalculateForRawMaterial`:
-- los productos cuya fórmula activa usa la materia prima se recalculan completos (granel y presentaciones);
+- los productos cuya **fórmula de referencia de precio** usa la materia prima se recalculan completos (granel y
+  presentaciones). Las demás fórmulas activas sirven para producir, pero no costean (D-FOR1);
 - las presentaciones que la usan como **envase o etiqueta** se recalculan solas, con el costo de granel que ya tiene su
   producto (`repriceVariantsUsingPackagingMaterial`). No se recalcula el granel, que no cambió, ni se deja un registro
-  sin variación en su historial. Cubre también los productos sin fórmula activa, pero **no** los que no tienen costo de
+  sin variación en su historial. Cubre también los productos sin fórmula de referencia, pero **no** los que no tienen costo de
   granel (`products.current_cost` vacío): sus presentaciones quedarían en envase + etiqueta, así que no se tocan.
 
 Guardar una presentación la recalcula de la misma forma (`repriceVariantsOfProduct`), con la misma excepción.
+
+## Costo de granel de la fórmula
+`ProductionCostRecalculationService::recalculateForProduct` costea con la fórmula de referencia: por cada línea, la
+cantidad se pasa a la unidad de su materia prima con `FormulaService::convertQuantity()` (cantidad × equivalencia de
+origen ÷ de destino, 10 decimales) y se multiplica por su precio de referencia. Antes del PR 9 de 3.6 no se convertía:
+500 g de una MP que se compra por kg se costeaban como 500 kg (FOR-06).
+
+Se recalcula también:
+- al cambiar la fórmula de referencia, o las líneas de la que lo es;
+- al corregir la equivalencia de una unidad en uso (`RecalculateUnitDependentCosts`, en cola): los productos cuya
+  referencia la usa en una línea o como unidad de la materia prima. Una unidad en uso no cambia de base (volumen ↔ peso).
+
+El plan de la OP no usa esta cuenta: calcula con el factor de 6 decimales que guarda en cada línea
+(`FormulaService::orderLineRequirement()`), el mismo con que la pantalla convierte el consumo real. Con L↔galón difiere
+un 0,0002 % del costo de lista. Lo resuelve B51, antes de producción.
 
 Costo teórico de una presentación: `(granel × presentación + envase + etiqueta) × (1 + CIF)` (`VariantPricingService`).
 El precio solo cambia si el costo varía más que el umbral del producto.
