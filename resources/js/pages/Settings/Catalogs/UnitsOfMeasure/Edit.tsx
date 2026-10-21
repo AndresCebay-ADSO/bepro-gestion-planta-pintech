@@ -147,8 +147,10 @@ export default function UnitsOfMeasureEdit({ unit }: Props) {
                                 <p>
                                     Las órdenes de producción que se creen desde
                                     ahora calcularán sus cantidades con la
-                                    equivalencia nueva. Las ya creadas no
-                                    cambian. El cambio queda en la auditoría.
+                                    equivalencia nueva, y el costo de los
+                                    productos que la usan se recalculará. Las
+                                    órdenes ya creadas no cambian. El cambio
+                                    queda en la auditoría.
                                 </p>
                             </div>
                         </AlertDialogDescription>

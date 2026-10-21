@@ -3,9 +3,11 @@
 declare(strict_types=1);
 
 use App\Actions\Formulas\CreateFormulaAction;
+use App\Actions\Formulas\UpdateFormulaAction;
 use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\Product;
+use App\Models\ProductionOrder;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
@@ -251,6 +253,59 @@ describe('pantalla', function () {
             ->assertSessionHas('error', 'Esta fórmula define el precio del producto: marca otra como referencia de precio antes de eliminarla.');
 
         expect($reference->fresh())->not->toBeNull();
+    });
+
+    // P9-13: con el producto inactivo, sus fórmulas solo se desactivan o se eliminan.
+    it('con el producto inactivo no activa, no edita ni cambia la referencia de sus fórmulas', function () {
+        $reference = Formula::factory()->for($this->product)->create();
+        $inactive = Formula::factory()->for($this->product)->inactive()->create();
+        $this->product->update(['is_active' => false]);
+        $message = 'El producto está inactivo: sus fórmulas solo se pueden desactivar o eliminar. Reactiva el producto para cambiarlas.';
+
+        $this->post(route('formulas.activate', $inactive))->assertSessionHas('error', $message);
+        $this->post(route('formulas.price-reference', $inactive))->assertSessionHas('error', $message);
+        $this->get(route('formulas.edit', $reference))->assertRedirect(route('formulas.show', $reference))->assertSessionHas('error', $message);
+        $this->put(route('formulas.update', $reference), [
+            'details' => [['raw_material_id' => $this->resin->id, 'quantity' => '9', 'unit_of_measure_id' => $this->kg->id]],
+        ])->assertSessionHas('error', $message);
+
+        expect($inactive->fresh()->is_active)->toBeFalse()
+            ->and($reference->fresh()->is_price_reference)->toBeTrue()
+            ->and($reference->details()->count())->toBe(0);
+    });
+
+    it('con el producto inactivo sí desactiva una fórmula que no es la de referencia', function () {
+        Formula::factory()->for($this->product)->create();
+        $other = Formula::factory()->for($this->product)->create();
+        $this->product->update(['is_active' => false]);
+
+        $this->post(route('formulas.deactivate', $other))->assertSessionHas('success');
+
+        expect($other->fresh()->is_active)->toBeFalse();
+    });
+
+    // Carrera: la petición leyó la fórmula sin referencia y sin OP, y otra la cambió mientras esperaba el bloqueo.
+    it('al editar decide con la fórmula ya guardada: recalcula si mientras tanto quedó de referencia', function () {
+        Formula::factory()->for($this->product)->create();
+        $stale = Formula::factory()->for($this->product)->create();
+        // Otra petición la marcó de referencia después de que esta la leyó.
+        DB::table('formulas')->where('product_id', $this->product->id)->update(['is_price_reference' => false]);
+        DB::table('formulas')->where('id', $stale->id)->update(['is_price_reference' => true]);
+
+        app(UpdateFormulaAction::class)->execute($stale, [
+            'details' => [['raw_material_id' => $this->resin->id, 'quantity' => '7', 'unit_of_measure_id' => $this->kg->id]],
+        ]);
+
+        expect($this->product->fresh()->current_cost)->toBe('7000.0000');
+    });
+
+    it('al editar no toca una fórmula que una OP empezó a usar mientras tanto', function () {
+        $stale = Formula::factory()->for($this->product)->create();
+        ProductionOrder::factory()->create(['product_id' => $this->product->id, 'formula_id' => $stale->id]);
+
+        expect(fn () => app(UpdateFormulaAction::class)->execute($stale, [
+            'details' => [['raw_material_id' => $this->resin->id, 'quantity' => '7', 'unit_of_measure_id' => $this->kg->id]],
+        ]))->toThrow(DomainException::class, 'Esta fórmula ya fue usada en órdenes de producción y no se puede editar.');
     });
 
     it('la edición cambia nombre y líneas, pero no el estado', function () {

@@ -4,31 +4,39 @@ declare(strict_types=1);
 
 namespace App\Actions\Formulas;
 
+use App\Actions\Formulas\Concerns\LocksFormulaProduct;
 use App\Models\Formula;
-use App\Models\Product;
 use App\Services\ProductionCostRecalculationService;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Activa o desactiva una sola fórmula: varias pueden estar activas a la vez (D-FOR1). La de referencia de precio no se
- * desactiva (P9-2). Activar una en un producto sin referencia la deja de referencia (regla del modelo) y lo costea.
+ * desactiva (P9-2), y con el producto inactivo no se activa (P9-13). Activar una en un producto sin referencia la deja de
+ * referencia (regla del modelo) y lo costea.
  */
 class ChangeFormulaActiveAction
 {
+    use LocksFormulaProduct;
+
     public function __construct(
         private readonly ProductionCostRecalculationService $costRecalculation,
     ) {}
 
     /**
-     * @throws DomainException si se intenta desactivar la de referencia.
+     * @throws DomainException si se intenta desactivar la de referencia, o activar una de un producto inactivo.
      */
     public function execute(Formula $formula, bool $active): Formula
     {
         $becameReference = false;
 
         $locked = DB::transaction(function () use ($formula, $active, &$becameReference): Formula {
-            Product::query()->whereKey($formula->product_id)->lockForUpdate()->first(['id']);
+            // Desactivar se permite siempre; activar, solo con el producto activo (P9-13).
+            if ($active) {
+                $this->lockActiveProduct((int) $formula->product_id);
+            } else {
+                $this->lockProduct((int) $formula->product_id);
+            }
             $locked = Formula::query()->lockForUpdate()->findOrFail($formula->id);
 
             if (! $active && $locked->is_price_reference) {

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Formulas;
 
+use App\Actions\Formulas\Concerns\LocksFormulaProduct;
 use App\Models\Formula;
-use App\Models\Product;
 use App\Services\ProductionCostRecalculationService;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\DB;
  */
 class SetPriceReferenceFormulaAction
 {
+    use LocksFormulaProduct;
+
     public function __construct(
         private readonly ProductionCostRecalculationService $costRecalculation,
     ) {}
@@ -22,12 +24,12 @@ class SetPriceReferenceFormulaAction
     /**
      * @return bool `false` si ya era la de referencia (no cambia nada).
      *
-     * @throws DomainException si la fórmula está inactiva.
+     * @throws DomainException si la fórmula o su producto están inactivos.
      */
     public function execute(Formula $formula): bool
     {
         $changed = DB::transaction(function () use ($formula): bool {
-            Product::query()->whereKey($formula->product_id)->lockForUpdate()->first(['id']);
+            $this->lockActiveProduct((int) $formula->product_id);
             $locked = Formula::query()->lockForUpdate()->findOrFail($formula->id);
 
             if ($locked->is_price_reference) {

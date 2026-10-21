@@ -100,9 +100,8 @@ class FifoStockAllocatorService
         $requirements = [];
         foreach ($formula->details as $detail) {
             $materialId = (int) $detail->raw_material_id;
-            $normalizedDetailQty = $this->formulaService->convertQuantity((string) $detail->quantity, $detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
-            $product = $this->calculator->mul($normalizedDetailQty, $qty, 10);
-            $product = $this->calculator->round($product, 4);
+            // La misma cuenta que el plan de la OP: lo que se valida es lo que la OP va a pedir.
+            $product = $this->formulaService->orderLineRequirement($detail, $qty)['planned_quantity'];
 
             $current = (string) ($requirements[$materialId] ?? '0');
             $requirements[$materialId] = $this->calculator->add($current, $product, 4);

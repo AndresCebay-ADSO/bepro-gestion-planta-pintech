@@ -7,21 +7,19 @@ namespace App\Http\Controllers;
 use App\Actions\Formulas\ChangeFormulaActiveAction;
 use App\Actions\Formulas\CreateFormulaAction;
 use App\Actions\Formulas\SetPriceReferenceFormulaAction;
+use App\Actions\Formulas\UpdateFormulaAction;
 use App\Actions\Shared\DeleteUnusedRecordAction;
 use App\Filters\FormulaFilter;
 use App\Http\Requests\Formulas\IndexFormulaRequest;
 use App\Http\Requests\Formulas\StoreFormulaRequest;
 use App\Http\Requests\Formulas\UpdateFormulaRequest;
 use App\Models\Formula;
-use App\Models\FormulaDetail;
 use App\Models\Product;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
-use App\Services\ProductionCostRecalculationService;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,11 +27,11 @@ use Inertia\Response;
 class FormulaController extends Controller
 {
     public function __construct(
-        private readonly ProductionCostRecalculationService $productionCostRecalculationService,
         private readonly DeleteUnusedRecordAction $deleteUnused,
         private readonly CreateFormulaAction $createFormula,
         private readonly SetPriceReferenceFormulaAction $setPriceReference,
         private readonly ChangeFormulaActiveAction $changeActive,
+        private readonly UpdateFormulaAction $updateFormula,
     ) {}
 
     public function index(IndexFormulaRequest $request): Response
@@ -118,6 +116,13 @@ class FormulaController extends Controller
                 ->with('error', 'Esta fórmula ya fue usada en órdenes de producción y no se puede editar.');
         }
 
+        // Con el producto inactivo sus fórmulas no se editan (P9-13). La acción lo vuelve a revisar al guardar.
+        if (! $formula->product()->value('is_active')) {
+            return redirect()
+                ->route('formulas.show', $formula)
+                ->with('error', __('El producto está inactivo: sus fórmulas solo se pueden desactivar o eliminar. Reactiva el producto para cambiarlas.'));
+        }
+
         $formula->load([
             'product:id,name',
             'details:id,formula_id,raw_material_id,quantity,unit_of_measure_id,step_order',
@@ -133,36 +138,10 @@ class FormulaController extends Controller
     {
         $this->authorize('update', $formula);
 
-        if ($formula->productionOrders()->exists()) {
-            return redirect()
-                ->route('formulas.show', $formula)
-                ->with('error', 'Esta fórmula ya fue usada en órdenes de producción y no se puede editar.');
-        }
-
-        $validated = $request->validated();
-
-        DB::transaction(function () use ($formula, $validated): void {
-            // Activar o desactivar va por sus propias acciones, con sus reglas (P9-3).
-            $formula->update([
-                'name' => $validated['name'] ?? null,
-                'notes' => $validated['notes'] ?? null,
-            ]);
-
-            $formula->details()->delete();
-
-            foreach ($validated['details'] as $index => $detail) {
-                FormulaDetail::create([
-                    'formula_id' => $formula->id,
-                    'raw_material_id' => $detail['raw_material_id'],
-                    'quantity' => $detail['quantity'],
-                    'unit_of_measure_id' => $detail['unit_of_measure_id'],
-                    'step_order' => $index + 1,
-                ]);
-            }
-        });
-
-        if ($formula->is_price_reference) {
-            $this->productionCostRecalculationService->recalculateForProduct((int) $formula->product_id);
+        try {
+            $this->updateFormula->execute($formula, $request->validated());
+        } catch (DomainException $exception) {
+            return redirect()->route('formulas.show', $formula)->with('error', $exception->getMessage());
         }
 
         return redirect()
@@ -201,7 +180,11 @@ class FormulaController extends Controller
     {
         $this->authorize('activate', $formula);
 
-        $formula = $this->changeActive->execute($formula, true);
+        try {
+            $formula = $this->changeActive->execute($formula, true);
+        } catch (DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
 
         return redirect()->route('formulas.show', $formula)
             ->with('success', $formula->is_price_reference

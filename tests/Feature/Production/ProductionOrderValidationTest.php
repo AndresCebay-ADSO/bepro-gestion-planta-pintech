@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\Production\CreateProductionOrderAction;
 use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\Product;
@@ -15,6 +16,7 @@ use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -167,6 +169,25 @@ test('rejects an inactive formula_id', function () {
 
     $response->assertRedirect(route('production-orders.create'));
     $response->assertSessionHasErrors(['formula_id']);
+});
+
+// Carrera: la fórmula pasó la validación y alguien la desactivó antes de que la orden tomara el bloqueo del producto.
+// La orden vuelve a leerla con el bloqueo tomado (PR 9 de 3.6).
+test('no crea la orden si su fórmula se desactivó después de validar', function () {
+    [$product, $user] = createDependencies();
+    Formula::factory()->for($product)->create(['created_by' => $user->id]);
+    $deactivated = Formula::factory()->for($product)->inactive()->create(['created_by' => $user->id]);
+    $warehouse = Warehouse::create(['name' => 'Fábrica Yumbo', 'city' => 'Yumbo', 'type' => 'factory', 'is_active' => true]);
+
+    expect(fn () => app(CreateProductionOrderAction::class)->execute([
+        'product_id' => $product->id,
+        'formula_id' => $deactivated->id,
+        'warehouse_id' => $warehouse->id,
+        'quantity' => '10',
+        'planned_date' => now()->addDay()->toDateString(),
+    ], $user->id))->toThrow(ValidationException::class, 'La fórmula se desactivó mientras se creaba la orden.');
+
+    expect(ProductionOrder::query()->exists())->toBeFalse();
 });
 
 // B55: una presentación va una sola vez por orden. El error viaja por fila (`packaging.N.product_variant_id`): la

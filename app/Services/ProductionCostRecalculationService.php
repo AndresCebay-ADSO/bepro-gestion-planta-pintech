@@ -152,6 +152,32 @@ class ProductionCostRecalculationService
     }
 
     /**
+     * Recalcula los productos cuya fórmula de referencia convierte con esta unidad: una línea escrita en ella o una materia
+     * prima que se mide en ella. Se llama al corregir su equivalencia (RecalculateUnitDependentCosts).
+     */
+    public function recalculateForUnit(int $unitOfMeasureId): int
+    {
+        $productIds = Formula::query()
+            ->priceReference()
+            ->whereHas('details', fn ($query) => $query
+                ->where('unit_of_measure_id', $unitOfMeasureId)
+                ->orWhereHas('rawMaterial', fn ($material) => $material->where('unit_of_measure_id', $unitOfMeasureId)))
+            ->pluck('product_id')
+            ->unique()
+            ->values()
+            ->all();
+
+        $recalculated = 0;
+        foreach ($productIds as $productId) {
+            if ($this->recalculateForProduct((int) $productId) !== null) {
+                $recalculated++;
+            }
+        }
+
+        return $recalculated;
+    }
+
+    /**
      * Recalcula solo las presentaciones que usan la materia prima como envase o etiqueta, con el costo de granel que ya
      * tiene su producto. No pasa por `recalculateForProduct`: el granel no cambió, y recalcularlo dejaría en el historial
      * de costos un registro sin variación por cada producto que usa ese envase. Cubre también los productos sin fórmula

@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\NumberType;
-use App\Models\ProductionOrder;
+use App\Models\FormulaDetail;
 use App\Models\UnitOfMeasure;
-use Illuminate\Support\Collection;
 
 class FormulaService
 {
@@ -16,39 +15,35 @@ class FormulaService
     ) {}
 
     /**
-     * Calcula las cantidades planificadas de materia prima para una orden de producción.
+     * Lo que pide una línea de fórmula para una OP: la cantidad de materia prima, en la unidad de la materia prima, y el
+     * factor con que se calcula, que la OP guarda en su línea. Es la única cuenta del plan de la OP: la usan crear la OP y
+     * la validación de stock.
      *
-     * @return Collection Colección de arrays con [raw_material_id => planned_quantity]
+     * La OP calcula con su factor guardado (6 decimales), no con convertQuantity(): la pantalla convierte el consumo real
+     * con ese mismo factor, y así plan y consumo cuadran, y editar una unidad no cambia las OP ya creadas. Con L↔galón la
+     * diferencia con el costo de lista (exacto) es de un 0,0002 %. Lo resuelve B51, antes de producción: el servidor
+     * convierte el consumo y la OP guarda su equivalencia con más precisión.
+     *
+     * @return array{planned_quantity: string, conversion_factor: string}
+     *
+     * @throws \DomainException si la unidad de la línea no se convierte a la de la materia prima.
      */
-    public function calculatePlannedMaterials(ProductionOrder $order): Collection
+    public function orderLineRequirement(FormulaDetail $detail, string|int|float $orderQuantity): array
     {
-        $order->loadMissing(['formula.details.unitOfMeasure', 'formula.details.rawMaterial.unitOfMeasure']);
-        $formula = $order->formula;
-        $baseQuantity = (string) $order->quantity; // Cantidad total a producir en la unidad base del producto
+        $factor = $this->getConversionFactor($detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
+        $perUnit = $this->calculator->mul((string) $detail->quantity, $factor, 10);
 
-        $materials = collect();
-
-        foreach ($formula->details as $detail) {
-            // La línea va en su propia unidad: se pasa a la de la materia prima y se multiplica por la cantidad a
-            // producir, con 10 decimales; solo el resultado se redondea a los 4 de la base.
-            $quantityPerUnit = $this->convertQuantity((string) $detail->quantity, $detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
-            $plannedQuantity = $this->calculator->round($this->calculator->mul($quantityPerUnit, $baseQuantity, 10), 4);
-
-            $materials->push([
-                'raw_material_id' => $detail->raw_material_id,
-                'planned_quantity' => (float) $plannedQuantity,
-                'unit_of_measure_id' => $detail->rawMaterial?->unit_of_measure_id, // Mantenemos la unidad base de la materia prima
-            ]);
-        }
-
-        return $materials;
+        return [
+            'planned_quantity' => $this->calculator->round($this->calculator->mul($perUnit, $orderQuantity, 10), 4),
+            'conversion_factor' => $factor,
+        ];
     }
 
     /**
      * Pasa una cantidad de una unidad a otra por su equivalencia a litros o a kilos: cantidad × equivalencia de origen ÷
      * equivalencia de destino, con `$scale` decimales y sin pasar por un factor intermedio redondeado (con 6 decimales,
-     * mL → galón perdía un 0,065 %). Es la única conversión de cantidades del sistema: la usan el costeo de la fórmula, el
-     * plan de la OP y la validación de stock.
+     * mL → galón perdía un 0,065 %). La usan el costeo de la fórmula y la validación de unidades (FOR-02); el plan de la
+     * OP calcula con el factor que guarda (orderLineRequirement()).
      *
      * @throws \DomainException si no hay equivalencia común (peso con volumen, o una unidad sin equivalencia).
      */
@@ -73,7 +68,7 @@ class FormulaService
     /**
      * El factor entre dos unidades, con los 6 decimales de su columna. Solo para guardarlo en la línea de la OP
      * (`production_order_details.conversion_factor`), que la pantalla usa para pasar el consumo real a la unidad de la
-     * materia prima (B51). Las cantidades no se calculan con él, sino con convertQuantity(), que no lo redondea.
+     * materia prima (B51), y con el que la OP calcula su plan (orderLineRequirement()). El costo de lista no lo usa.
      *
      * @throws \DomainException si no hay equivalencia común.
      */

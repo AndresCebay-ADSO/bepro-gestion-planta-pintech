@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Formulas;
 
+use App\Actions\Formulas\Concerns\LocksFormulaProduct;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
-use App\Models\Product;
 use App\Services\ProductionCostRecalculationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +17,8 @@ use Illuminate\Validation\ValidationException;
  */
 class CreateFormulaAction
 {
+    use LocksFormulaProduct;
+
     public function __construct(
         private readonly ProductionCostRecalculationService $costRecalculation,
     ) {}
@@ -34,9 +36,7 @@ class CreateFormulaAction
         $formula = DB::transaction(function () use ($data, $userId): Formula {
             // Con el producto bloqueado, dos fórmulas creadas a la vez no sacan la misma versión ni reclaman las dos la
             // referencia, y una desactivación simultánea del producto espera y se ve aquí (D-FOR3).
-            $productActive = Product::query()->whereKey($data['product_id'])->where('is_active', true)->lockForUpdate()->first(['id']) !== null;
-
-            if (! $productActive) {
+            if (! $this->lockProduct((int) $data['product_id'])) {
                 throw ValidationException::withMessages(['product_id' => __('El producto se desactivó mientras se creaba la fórmula.')]);
             }
 

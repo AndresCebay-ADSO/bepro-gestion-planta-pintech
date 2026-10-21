@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalogs\IndexUnitOfMeasureRequest;
 use App\Http\Requests\Catalogs\StoreUnitOfMeasureRequest;
 use App\Http\Requests\Catalogs\UpdateUnitOfMeasureRequest;
+use App\Jobs\RecalculateUnitDependentCosts;
 use App\Models\UnitOfMeasure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -88,6 +89,11 @@ class UnitOfMeasureController extends Controller
         $this->authorize('update', $unitOfMeasure);
 
         $unitOfMeasure->update($request->safe()->except('confirm_factor_change'));
+
+        // El costo de lista convierte con esta equivalencia (FOR-06): los productos que la usan se recalculan.
+        if ($unitOfMeasure->wasChanged(['to_kg_conversion', 'to_liter_conversion'])) {
+            RecalculateUnitDependentCosts::dispatch((int) $unitOfMeasure->id);
+        }
 
         return redirect()
             ->route('catalogs.units-of-measure.index')

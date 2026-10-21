@@ -42,17 +42,17 @@ class CreateProductionOrderAction
      */
     public function execute(array $data, int $userId): ProductionOrder
     {
-        $formula = Formula::query()
-            ->with(['details.unitOfMeasure', 'details.rawMaterial.unitOfMeasure'])
-            ->findOrFail($data['formula_id']);
-
-        return DB::transaction(function () use ($data, $formula, $userId): ProductionOrder {
+        return DB::transaction(function () use ($data, $userId): ProductionOrder {
             $quantity = (string) $data['quantity'];
             $warehouseId = (int) $data['warehouse_id'];
 
             // Bloqueo compartido: si alguien desactiva el producto o la bodega a la vez (lockForUpdate sobre la misma
             // fila), una de las dos operaciones espera a la otra y ve su resultado (docs/POLITICA_ELIMINACION.md §3.1).
             $this->ensureStillActive((int) $data['product_id'], $warehouseId);
+
+            // La fórmula y sus líneas se leen después del bloqueo del producto: desactivarla o editar sus líneas también
+            // lo bloquean (acciones de fórmulas), así que la orden ve lo ya guardado y no una versión vieja.
+            $formula = $this->stillActiveFormula((int) $data['formula_id'], (int) $data['product_id']);
 
             $this->fifoStockAllocator->validateStockForOrder($formula, $quantity, $warehouseId);
 
@@ -75,9 +75,7 @@ class CreateProductionOrderAction
 
             foreach ($formula->details as $detail) {
                 $materialId = (int) $detail->raw_material_id;
-                $normalizedDetailQty = $this->formulaService->convertQuantity((string) $detail->quantity, $detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
-                $detailTotal = $this->calculator->mul($normalizedDetailQty, (string) $quantity, 10);
-                $detailTotal = $this->calculator->round($detailTotal, 4);
+                ['planned_quantity' => $detailTotal, 'conversion_factor' => $factor] = $this->formulaService->orderLineRequirement($detail, $quantity);
 
                 // La fórmula por galón × los galones de la OP: cada uno cabe en su regla, el producto puede no caber.
                 // Una MP sin control de inventario (agua) no tiene stock que lo frene antes.
@@ -96,7 +94,7 @@ class CreateProductionOrderAction
                 $computedDetails[] = [
                     'detail' => $detail,
                     'planned_quantity' => $detailTotal,
-                    'conversion_factor' => $this->formulaService->getConversionFactor($detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure),
+                    'conversion_factor' => $factor,
                 ];
             }
 
@@ -173,6 +171,22 @@ class CreateProductionOrderAction
         }
 
         return max((int) $maxLot + 1, $startLot);
+    }
+
+    private function stillActiveFormula(int $formulaId, int $productId): Formula
+    {
+        $formula = Formula::query()
+            ->whereKey($formulaId)
+            ->where('product_id', $productId)
+            ->where('is_active', true)
+            ->with(['details.unitOfMeasure', 'details.rawMaterial.unitOfMeasure'])
+            ->first();
+
+        if ($formula === null) {
+            throw ValidationException::withMessages(['formula_id' => __('La fórmula se desactivó mientras se creaba la orden.')]);
+        }
+
+        return $formula;
     }
 
     private function ensureStillActive(int $productId, int $warehouseId): void

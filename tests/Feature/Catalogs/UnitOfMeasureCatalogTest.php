@@ -3,9 +3,11 @@
 declare(strict_types=1);
 
 use App\Enums\SystemRole;
+use App\Jobs\RecalculateUnitDependentCosts;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
+use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia;
 use Spatie\Activitylog\Models\Activity;
 
@@ -201,16 +203,58 @@ it('exige confirmar el cambio de equivalencia de una unidad en uso y lo audita c
         ->and($log->properties['attributes']['to_liter_conversion'])->toBe('3.800000');
 });
 
-it('exige confirmación también al pasar de volumen a peso o a no convertirse', function (array $factors) {
+// Una unidad en uso no cambia de base ni con confirmación: las líneas de fórmula que ya la usan con otra unidad dejarían
+// de convertir y no se podrían costear ni producir (auditoría 3.6, PR 9). Otra base es otra unidad.
+it('no deja pasar de volumen a peso ni dejar sin conversión una unidad en uso, ni confirmando', function (array $factors, bool $confirmed) {
     actingAsRole(SystemRole::SuperAdmin);
     $unit = unitInUse();
 
-    $this->put(route('catalogs.units-of-measure.update', $unit), uomPayload(['code' => 'gl', ...$factors]))
-        ->assertSessionHasErrors('confirm_factor_change');
+    $this->put(route('catalogs.units-of-measure.update', $unit), uomPayload(['code' => 'gl', ...$factors, 'confirm_factor_change' => $confirmed]))
+        ->assertSessionHasErrors('to_liter_conversion')
+        ->assertSessionDoesntHaveErrors('confirm_factor_change');
+
+    expect($unit->fresh()->to_liter_conversion)->toBe('3.785400');
 })->with([
     'a peso' => [['to_kg_conversion' => '3.7854', 'to_liter_conversion' => null]],
     'sin conversión' => [['to_kg_conversion' => null, 'to_liter_conversion' => null]],
+])->with([
+    'sin confirmar' => false,
+    'confirmando' => true,
 ]);
+
+it('deja cambiar de base una unidad que nadie usa en conversiones', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+    $unit = UnitOfMeasure::factory()->create(['code' => 'gl', 'to_liter_conversion' => '3.7854']);
+
+    $this->put(route('catalogs.units-of-measure.update', $unit), uomPayload(['code' => 'gl', 'to_kg_conversion' => '3.7854', 'to_liter_conversion' => null]))
+        ->assertSessionHasNoErrors();
+
+    expect($unit->fresh()->to_kg_conversion)->toBe('3.785400');
+});
+
+// El costo de lista convierte con la equivalencia (FOR-06): corregirla recalcula, fuera de la petición, los productos
+// que la usan.
+it('al corregir la equivalencia de una unidad recalcula el costo de los productos que la usan', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+    Queue::fake();
+    $unit = unitInUse();
+
+    $this->put(route('catalogs.units-of-measure.update', $unit), uomPayload(['code' => 'gl', 'to_liter_conversion' => '3.8', 'confirm_factor_change' => true]))
+        ->assertSessionHasNoErrors();
+
+    Queue::assertPushed(RecalculateUnitDependentCosts::class, fn (RecalculateUnitDependentCosts $job) => $job->unitOfMeasureId === $unit->id);
+});
+
+it('no recalcula costos si la equivalencia no cambia', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+    Queue::fake();
+    $unit = unitInUse();
+
+    $this->put(route('catalogs.units-of-measure.update', $unit), uomPayload(['code' => 'gl', 'name' => 'Galón US', 'to_liter_conversion' => '3.7854']))
+        ->assertSessionHasNoErrors();
+
+    Queue::assertNotPushed(RecalculateUnitDependentCosts::class);
+});
 
 it('no pide confirmación si la unidad solo la usan productos o presentaciones', function () {
     actingAsRole(SystemRole::SuperAdmin);

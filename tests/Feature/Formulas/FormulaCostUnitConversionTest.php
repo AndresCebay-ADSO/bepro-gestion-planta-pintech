@@ -108,3 +108,19 @@ it('al cambiar el precio de una materia prima recalcula solo los productos cuya 
         ->and(ProductionCost::query()->where('product_id', $this->product->id)->count())->toBe(0)
         ->and($service->recalculateForRawMaterial((int) $this->resin->id))->toBe(1);
 });
+
+it('al corregir la equivalencia de una unidad recalcula solo los productos cuya referencia la usa', function () {
+    // 500 g a $10.000/kg = $5.000. Si el gramo pasara a valer 0,002 kg (corrección), el costo sería $10.000.
+    ($this->formulaWith)([[$this->resin, '500', $this->gram]]);
+    ($this->recalculate)();
+
+    $other = Product::factory()->create(['current_cost' => null]);
+    $otherFormula = Formula::factory()->for($other)->create();
+    FormulaDetail::create(['formula_id' => $otherFormula->id, 'raw_material_id' => $this->solvent->id, 'quantity' => 1, 'unit_of_measure_id' => $this->liter->id, 'step_order' => 1]);
+
+    $this->gram->update(['to_kg_conversion' => 0.002]);
+
+    expect(app(ProductionCostRecalculationService::class)->recalculateForUnit((int) $this->gram->id))->toBe(1)
+        ->and($this->product->fresh()->current_cost)->toBe('10000.0000')
+        ->and($other->fresh()->current_cost)->toBeNull();
+});

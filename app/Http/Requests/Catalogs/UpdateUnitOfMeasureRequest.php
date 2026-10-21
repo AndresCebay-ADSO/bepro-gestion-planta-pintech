@@ -43,13 +43,31 @@ class UpdateUnitOfMeasureRequest extends StoreUnitOfMeasureRequest
 
     /**
      * Cambiar la equivalencia de una unidad en uso cambia lo que pedirán las OP que se creen después (las ya creadas
-     * guardan sus cantidades). La pantalla lo avisa, pero la confirmación la exige el servidor.
+     * guardan sus cantidades) y el costo de los productos cuya fórmula de referencia la usa (se recalcula al guardar). La
+     * pantalla lo avisa, pero la confirmación la exige el servidor.
      *
      * @return list<callable>
      */
     public function after(): array
     {
         return [
+            // Ni con confirmación: una unidad en uso que pasa de volumen a peso, o se queda sin equivalencia, deja sin
+            // conversión las líneas de fórmula que ya la usan con otra unidad (no se podrían costear ni producir). Corregir
+            // el valor sí se puede; otra base es otra unidad.
+            function (Validator $validator): void {
+                $unit = $this->route('unit_of_measure');
+
+                if (! $unit instanceof UnitOfMeasure || $validator->errors()->isNotEmpty()) {
+                    return;
+                }
+
+                if ($this->incomingBasis($unit) !== $this->basis($unit->to_kg_conversion, $unit->to_liter_conversion) && $unit->affectsConversions()) {
+                    $validator->errors()->add(
+                        $unit->to_liter_conversion !== null ? 'to_liter_conversion' : 'to_kg_conversion',
+                        __('Esta unidad está en uso: puedes corregir su equivalencia, pero no pasarla de volumen a peso (ni al revés) ni dejarla sin equivalencia. Para otra base, crea otra unidad.'),
+                    );
+                }
+            },
             function (Validator $validator): void {
                 $unit = $this->route('unit_of_measure');
 
@@ -60,11 +78,32 @@ class UpdateUnitOfMeasureRequest extends StoreUnitOfMeasureRequest
                 if ($this->factorsChanged($unit) && $unit->affectsConversions()) {
                     $validator->errors()->add(
                         'confirm_factor_change',
-                        __('Esta unidad está en uso: confirma el cambio de equivalencia. Las OP que se creen después calcularán con el valor nuevo; las ya creadas no cambian.'),
+                        __('Esta unidad está en uso: confirma el cambio de equivalencia. Las OP que se creen después y el costo de los productos que la usan se calcularán con el valor nuevo; las OP ya creadas no cambian.'),
                     );
                 }
             },
         ];
+    }
+
+    /**
+     * Por qué se convierte la unidad: a litros, a kilos o por ninguna (una unidad tiene a lo sumo una equivalencia).
+     */
+    private function basis(mixed $toKg, mixed $toLiter): ?string
+    {
+        return match (true) {
+            $toLiter !== null && $toLiter !== '' => 'liter',
+            $toKg !== null && $toKg !== '' => 'kg',
+            default => null,
+        };
+    }
+
+    /** La base con lo que trae la petición; una equivalencia que no viene no se actualiza. */
+    private function incomingBasis(UnitOfMeasure $unit): ?string
+    {
+        return $this->basis(
+            $this->has('to_kg_conversion') ? $this->input('to_kg_conversion') : $unit->to_kg_conversion,
+            $this->has('to_liter_conversion') ? $this->input('to_liter_conversion') : $unit->to_liter_conversion,
+        );
     }
 
     private function factorsChanged(UnitOfMeasure $unit): bool
