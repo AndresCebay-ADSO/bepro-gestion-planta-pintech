@@ -22,8 +22,8 @@ type Props = {
     formula: {
         id: number;
         version: number;
+        name: string | null;
         notes: string | null;
-        is_active: boolean;
         product: {
             id: number;
             name: string;
@@ -47,8 +47,8 @@ export default function FormulasEdit({
 }: Props) {
     const { data, setData, processing, errors } = useForm<FormulaFormData>({
         product_id: String(formula.product.id),
+        name: formula.name ?? '',
         notes: formula.notes ?? '',
-        is_active: formula.is_active,
         details: formula.details.map((detail) => ({
             raw_material_id: String(detail.raw_material_id),
             quantity: formatForInput(detail.quantity),
@@ -112,7 +112,6 @@ export default function FormulasEdit({
                     onSubmit={handleSubmit}
                     setData={setData}
                     lockProduct
-                    showActiveToggle
                 />
 
                 <div className="flex gap-3">

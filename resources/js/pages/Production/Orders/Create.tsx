@@ -22,7 +22,12 @@ import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
 import { index as productionOrderIndex } from '@/routes/production-orders';
 import type { VariantOption } from '@/types/production-orders';
 
-type FormulaOption = { id: number; version: number; is_active: boolean };
+type FormulaOption = {
+    id: number;
+    version: number;
+    name: string | null;
+    is_price_reference: boolean;
+};
 type WarehouseOption = { id: number; name: string };
 type ProductOption = {
     id: number;
@@ -240,8 +245,10 @@ export default function ProductionOrdersCreate({
                                                     key={f.id}
                                                     value={String(f.id)}
                                                 >
-                                                    Versión {f.version}
-                                                    {f.is_active && ' (Activa)'}
+                                                    v{f.version}
+                                                    {f.name && ` · ${f.name}`}
+                                                    {f.is_price_reference &&
+                                                        ' (referencia de precio)'}
                                                 </SelectItem>
                                             ),
                                         )}

@@ -244,7 +244,8 @@ class ProductionOrderController extends Controller
 
         $products = Product::query()
             ->with([
-                'formulas' => fn ($q) => $q->where('is_active', true),
+                // Todas las activas: planta produce con la que elija (D-FOR1). La de referencia de precio va primero.
+                'formulas' => fn ($q) => $q->where('is_active', true)->orderByDesc('is_price_reference')->orderBy('version'),
                 'variants' => fn ($q) => $q->where('is_active', true),
             ])
             ->where('is_active', true)
@@ -255,7 +256,8 @@ class ProductionOrderController extends Controller
                 'formulas' => $p->formulas->map(fn ($f) => [
                     'id' => $f->id,
                     'version' => $f->version,
-                    'is_active' => $f->is_active,
+                    'name' => $f->name,
+                    'is_price_reference' => $f->is_price_reference,
                 ]),
                 'variants' => $p->variants->map(fn ($v) => [
                     'id' => $v->id,

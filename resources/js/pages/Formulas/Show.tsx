@@ -1,9 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { BadgeDollarSign } from 'lucide-react';
 
 import {
     activate as formulasActivate,
+    deactivate as formulasDeactivate,
     destroy as formulasDestroy,
     edit as formulasEdit,
+    priceReference as formulasPriceReference,
 } from '@/actions/App/Http/Controllers/FormulaController';
 import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedDate } from '@/components/formatted-date';
@@ -27,7 +30,9 @@ type Props = {
     formula: {
         id: number;
         version: number;
+        name: string | null;
         is_active: boolean;
+        is_price_reference: boolean;
         notes: string | null;
         created_at: string;
         product?: {
@@ -39,7 +44,7 @@ type Props = {
         created_by?: { name: string } | null;
         has_production_orders: boolean;
     };
-    can: { update: boolean; delete: boolean };
+    can: { update: boolean; activate: boolean; delete: boolean };
 };
 
 export default function FormulasShow({ returnTo, formula, can }: Props) {
@@ -65,11 +70,21 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
         router.post(formulasActivate(formula.id));
     };
 
+    const handleDeactivate = () => {
+        router.post(formulasDeactivate(formula.id));
+    };
+
+    const handleUseForPrice = () => {
+        router.post(formulasPriceReference(formula.id));
+    };
+
+    const title = formula.name
+        ? `Fórmula v${formula.version} · ${formula.name}`
+        : `Fórmula v${formula.version}`;
+
     return (
         <>
-            <Head
-                title={`Fórmula v${formula.version} — ${formula.product?.name}`}
-            />
+            <Head title={`${title} — ${formula.product?.name}`} />
             <div className="space-y-6 p-6">
                 <DetailPageHeader
                     breadcrumbs={[
@@ -89,7 +104,7 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                             : []),
                         { title: `v${formula.version}`, href: '#' },
                     ]}
-                    title={`Fórmula v${formula.version}`}
+                    title={title}
                     subtitle={
                         <>
                             Producto:{' '}
@@ -99,13 +114,21 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                         </>
                     }
                     badge={
-                        <Badge
-                            variant={
-                                formula.is_active ? 'default' : 'secondary'
-                            }
-                        >
-                            {formula.is_active ? 'Versión activa' : 'Inactiva'}
-                        </Badge>
+                        <div className="flex flex-wrap gap-2">
+                            <Badge
+                                variant={
+                                    formula.is_active ? 'default' : 'secondary'
+                                }
+                            >
+                                {formula.is_active ? 'Activa' : 'Inactiva'}
+                            </Badge>
+                            {formula.is_price_reference && (
+                                <Badge variant="outline">
+                                    <BadgeDollarSign aria-hidden="true" />
+                                    Referencia de precio
+                                </Badge>
+                            )}
+                        </div>
                     }
                     returnTo={returnTo}
                     defaultReturnHref={formulasListHref}
@@ -119,15 +142,35 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                                     </Link>
                                 </Button>
                             )}
-                            {!formula.is_active && can.update && (
+                            {can.activate &&
+                                formula.is_active &&
+                                !formula.is_price_reference && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleUseForPrice}
+                                    >
+                                        Usar para el precio
+                                    </Button>
+                                )}
+                            {can.activate && !formula.is_active && (
                                 <Button
                                     variant="outline"
                                     onClick={handleActivate}
                                 >
-                                    Activar esta versión
+                                    Activar
                                 </Button>
                             )}
-                            {can.delete && (
+                            {can.activate &&
+                                formula.is_active &&
+                                !formula.is_price_reference && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleDeactivate}
+                                    >
+                                        Desactivar
+                                    </Button>
+                                )}
+                            {can.delete && !formula.is_price_reference && (
                                 <Button
                                     variant="destructive"
                                     onClick={handleDelete}
@@ -169,6 +212,15 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                         </p>
                     </div>
                 </div>
+
+                {formula.is_price_reference && (
+                    <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                        El costo y el precio de lista del producto salen de esta
+                        fórmula. Para desactivarla o eliminarla, marca antes
+                        otra fórmula activa como referencia de precio con «Usar
+                        para el precio».
+                    </div>
+                )}
 
                 {formula.has_production_orders && (
                     <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900">
@@ -227,7 +279,7 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                                     <td className="p-4 text-right text-foreground tabular-nums">
                                         <FormattedNumber
                                             value={detail.quantity}
-                                            maxDecimals={2}
+                                            maxDecimals={4}
                                         />
                                     </td>
                                     <td className="p-4 text-muted-foreground">

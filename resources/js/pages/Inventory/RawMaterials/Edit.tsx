@@ -53,6 +53,8 @@ type Props = {
     can: { updateCosts: boolean };
     /** OP abiertas que la usan: activar el control de inventario las dejaría sin saldo para completarse. */
     openProductionOrdersCount: number;
+    /** Con historial o en uso, la unidad no cambia (RM-04). */
+    unitLocked: boolean;
 };
 
 export default function RawMaterialsEdit({
@@ -61,6 +63,7 @@ export default function RawMaterialsEdit({
     units,
     can,
     openProductionOrdersCount,
+    unitLocked,
 }: Props) {
     const form = useForm<RawMaterialFormData>({
         code: rawMaterial.code,
@@ -150,6 +153,7 @@ export default function RawMaterialsEdit({
                     onSubmit={submit}
                     submitLabel="Guardar cambios"
                     canEditPrice={can.updateCosts}
+                    unitLocked={unitLocked}
                 />
 
                 <div className="flex justify-end gap-2 pt-2 pr-2">

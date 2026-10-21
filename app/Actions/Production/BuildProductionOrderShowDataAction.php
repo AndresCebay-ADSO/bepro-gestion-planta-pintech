@@ -151,6 +151,7 @@ class BuildProductionOrderShowDataAction
             'formula' => $productionOrder->formula ? [
                 'id' => $productionOrder->formula->id,
                 'version' => $productionOrder->formula->version,
+                'name' => $productionOrder->formula->name,
             ] : null,
             'warehouse' => $productionOrder->warehouse ? [
                 'id' => $productionOrder->warehouse->id,

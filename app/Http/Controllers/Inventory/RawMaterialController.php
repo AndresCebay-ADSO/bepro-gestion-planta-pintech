@@ -242,6 +242,8 @@ class RawMaterialController extends Controller
             'can' => ['updateCosts' => $canUpdateCosts],
             // Activar el control de inventario las dejaría sin poder completarse hasta registrar compras: se confirma.
             'openProductionOrdersCount' => $canUpdateCosts && ! $rawMaterial->tracks_inventory ? $this->usage->openProductionOrdersCount($rawMaterial) : 0,
+            // Con historial o en uso, la unidad no cambia (RM-04): UpdateRawMaterialRequest lo niega y la pantalla lo avisa.
+            'unitLocked' => $this->usage->hasActivity($rawMaterial),
             'categories' => $this->categoryOptions(RawMaterialCategory::query()->selectable([$rawMaterial->category_id])),
             'units' => UnitOfMeasure::query()
                 ->selectable([$rawMaterial->unit_of_measure_id])

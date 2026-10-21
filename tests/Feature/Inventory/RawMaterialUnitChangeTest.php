@@ -8,6 +8,7 @@ use App\Models\FormulaDetail;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia;
 
 uses(RefreshDatabase::class);
 
@@ -64,4 +65,20 @@ it('deja guardar una materia prima en uso si no cambia la unidad', function () {
     ]);
 
     ($this->update)($this->kg->id)->assertSessionHasNoErrors();
+});
+
+it('avisa en la pantalla de edición si la unidad está bloqueada', function () {
+    $this->get(route('raw-materials.edit', $this->material))
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('unitLocked', false));
+
+    FormulaDetail::create([
+        'formula_id' => Formula::factory()->create()->id,
+        'raw_material_id' => $this->material->id,
+        'quantity' => 1,
+        'unit_of_measure_id' => $this->kg->id,
+        'step_order' => 1,
+    ]);
+
+    $this->get(route('raw-materials.edit', $this->material))
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('unitLocked', true));
 });

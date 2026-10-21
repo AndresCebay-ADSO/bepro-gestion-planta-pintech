@@ -15,6 +15,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Inertia\Testing\AssertableInertia;
 
 uses(RefreshDatabase::class);
 
@@ -321,5 +322,26 @@ describe('pantalla', function () {
         expect($formula->fresh()->name)->toBe('Base')
             ->and($formula->fresh()->is_active)->toBeTrue()
             ->and($this->product->fresh()->current_cost)->toBe('4000.0000');
+    });
+
+    it('envía a las pantallas cuál es la de referencia y su nombre', function () {
+        $reference = Formula::factory()->for($this->product)->create(['name' => 'Base']);
+        $other = Formula::factory()->for($this->product)->create(['name' => 'RAL 7035']);
+
+        $this->get(route('formulas.show', $reference))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('formula.is_price_reference', true)
+                ->where('formula.name', 'Base')
+                ->where('can.activate', true));
+
+        $this->get(route('products.show', $this->product))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('product.formulas', fn ($formulas) => collect($formulas)->firstWhere('id', $reference->id)['is_price_reference'] === true
+                    && collect($formulas)->firstWhere('id', $other->id)['name'] === 'RAL 7035'));
+
+        // En el selector de la OP, todas las activas, la de referencia primero.
+        $this->get(route('production-orders.create'))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('products', fn ($products) => collect(collect($products)->firstWhere('id', $this->product->id)['formulas'])->pluck('id')->all() === [$reference->id, $other->id]));
     });
 });

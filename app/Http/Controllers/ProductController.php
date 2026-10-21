@@ -343,7 +343,9 @@ class ProductController extends Controller
                 'formulas' => $product->formulas->map(fn (Formula $formula): array => [
                     'id' => $formula->id,
                     'version' => $formula->version,
+                    'name' => $formula->name,
                     'is_active' => $formula->is_active,
+                    'is_price_reference' => $formula->is_price_reference,
                     'notes' => $formula->notes,
                     'created_at' => $formula->created_at,
                     'created_by' => $formula->createdBy ? ['name' => $formula->createdBy->name] : null,

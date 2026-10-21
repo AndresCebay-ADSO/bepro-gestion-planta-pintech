@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { BadgeDollarSign } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
@@ -19,7 +20,9 @@ import type { PaginationLink } from '@/types/ui';
 type FormulaItem = {
     id: number;
     version: number;
+    name: string | null;
     is_active: boolean;
+    is_price_reference: boolean;
     notes: string | null;
     created_at: string;
     product?: { id: number; name: string } | null;
@@ -56,7 +59,7 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
             type: 'text',
             name: 'search',
             label: 'Buscar',
-            placeholder: 'Buscar por código o nombre de producto…',
+            placeholder: 'Buscar por producto o nombre de la fórmula…',
         },
         {
             type: 'select',
@@ -76,8 +79,9 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                             Fórmulas
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Registro de fórmulas por producto. Cada versión
-                            activa define los ingredientes usados en producción.
+                            Un producto puede tener varias fórmulas activas para
+                            producir; la de referencia de precio define su
+                            costo.
                         </p>
                     </div>
                     {can.create && (
@@ -132,21 +136,36 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                                             {formula.product?.name ?? '-'}
                                         </div>
                                     </td>
-                                    <td className="p-4 font-mono">
-                                        v{formula.version}
+                                    <td className="p-4">
+                                        <div className="font-mono">
+                                            v{formula.version}
+                                        </div>
+                                        {formula.name && (
+                                            <div className="text-xs text-muted-foreground">
+                                                {formula.name}
+                                            </div>
+                                        )}
                                     </td>
                                     <td className="p-4">
-                                        <Badge
-                                            variant={
-                                                formula.is_active
-                                                    ? 'default'
-                                                    : 'secondary'
-                                            }
-                                        >
-                                            {formula.is_active
-                                                ? 'Activa'
-                                                : 'Inactiva'}
-                                        </Badge>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            <Badge
+                                                variant={
+                                                    formula.is_active
+                                                        ? 'default'
+                                                        : 'secondary'
+                                                }
+                                            >
+                                                {formula.is_active
+                                                    ? 'Activa'
+                                                    : 'Inactiva'}
+                                            </Badge>
+                                            {formula.is_price_reference && (
+                                                <Badge variant="outline">
+                                                    <BadgeDollarSign aria-hidden="true" />
+                                                    Referencia de precio
+                                                </Badge>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="max-w-xs truncate p-4 text-muted-foreground">
                                         {formula.notes ?? '-'}
@@ -162,7 +181,8 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                                             actions={{
                                                 view: true,
                                                 edit: false,
-                                                delete: true,
+                                                // La de referencia no se elimina (se elige otra antes).
+                                                delete: !formula.is_price_reference,
                                             }}
                                             onView={() =>
                                                 router.get(

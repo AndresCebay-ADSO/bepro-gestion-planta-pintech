@@ -39,8 +39,8 @@ export default function FormulasCreate({
     const { data, setData, processing, errors } =
         useForm<FormulaCreateFormData>({
             product_id: selectedProductId ?? '',
+            name: '',
             notes: '',
-            is_active: true,
             details: [createEmptyFormulaDetail()],
             return_to: returnTo ?? '',
         });

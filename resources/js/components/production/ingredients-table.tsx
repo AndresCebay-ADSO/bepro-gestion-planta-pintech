@@ -27,6 +27,7 @@ export function IngredientsTable({
                 <table className="w-full text-sm">
                     <thead className="border-b bg-muted/50">
                         <tr>
+                            <th className="w-14 p-3 text-center">Paso</th>
                             <th className="p-3 text-left">Materia Prima</th>
                             <th className="p-3 text-right">Planeado</th>
                             <th className="w-40 p-3 text-right">
@@ -50,6 +51,9 @@ export function IngredientsTable({
                                 key={ingredient.id}
                                 className="border-b last:border-0"
                             >
+                                <td className="p-3 text-center text-muted-foreground tabular-nums">
+                                    {ingredient.step_order ?? '—'}
+                                </td>
                                 <td className="p-3 font-medium">
                                     {ingredient.raw_material_name}
                                 </td>
@@ -120,7 +124,7 @@ export function IngredientsTable({
                             <tr>
                                 <td
                                     className="p-3 text-muted-foreground"
-                                    colSpan={showCosts ? 5 : 3}
+                                    colSpan={showCosts ? 6 : 4}
                                 >
                                     Esta orden no tiene insumos planificados.
                                 </td>

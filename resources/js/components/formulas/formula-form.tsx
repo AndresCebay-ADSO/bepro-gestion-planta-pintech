@@ -3,8 +3,8 @@ import type { FormEvent } from 'react';
 
 import { DecimalInput } from '@/components/decimal-input';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -28,8 +28,8 @@ export type DetailRow = {
 
 export type FormulaFormData = {
     product_id: string;
+    name: string;
     notes: string;
-    is_active: boolean;
     details: DetailRow[];
 };
 
@@ -59,7 +59,6 @@ type FormulaFormProps = {
         value: FormulaFormData[K],
     ) => void;
     lockProduct?: boolean;
-    showActiveToggle?: boolean;
 };
 
 const emptyDetail = (): DetailRow => ({
@@ -85,7 +84,6 @@ export function FormulaForm({
     onSubmit,
     setData,
     lockProduct = false,
-    showActiveToggle = false,
 }: FormulaFormProps) {
     const productOptions = products.map((product) => ({
         id: String(product.id),
@@ -151,6 +149,28 @@ export function FormulaForm({
                 </div>
 
                 <div className="space-y-2">
+                    <Label htmlFor="name">Nombre</Label>
+                    <Input
+                        id="name"
+                        value={data.name}
+                        onChange={(event) =>
+                            setData('name', event.target.value)
+                        }
+                        maxLength={60}
+                        placeholder="Ej: RAL 7035"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                        Opcional. Distingue las fórmulas activas de un mismo
+                        producto al crear una orden de producción.
+                    </p>
+                    {errors.name && (
+                        <p className="text-sm text-destructive">
+                            {errors.name}
+                        </p>
+                    )}
+                </div>
+
+                <div className="space-y-2">
                     <Label htmlFor="notes">Notas / Observaciones</Label>
                     <Textarea
                         id="notes"
@@ -167,21 +187,6 @@ export function FormulaForm({
                         </p>
                     )}
                 </div>
-
-                {showActiveToggle && (
-                    <div className="flex items-center gap-3">
-                        <Checkbox
-                            id="is_active"
-                            checked={data.is_active}
-                            onCheckedChange={(checked) =>
-                                setData('is_active', checked === true)
-                            }
-                        />
-                        <Label htmlFor="is_active" className="cursor-pointer">
-                            Fórmula activa
-                        </Label>
-                    </div>
-                )}
             </div>
 
             <div className="rounded-lg border border-border bg-card">
