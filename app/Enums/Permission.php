@@ -177,7 +177,7 @@ enum Permission: string
             self::FormulasView => __('Ver fórmulas'),
             self::FormulasCreate => __('Crear fórmulas'),
             self::FormulasEdit => __('Editar fórmulas'),
-            self::FormulasActivate => __('Activar versiones de fórmula'),
+            self::FormulasActivate => __('Activar y desactivar fórmulas, y elegir la de referencia de precio'),
             self::FormulasDelete => __('Eliminar fórmulas'),
             self::RawMaterialsView => __('Ver materias primas'),
             self::RawMaterialsCreate => __('Crear materias primas'),

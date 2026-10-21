@@ -94,7 +94,9 @@ it('no desactiva una bodega con saldos de producción disponibles, pero sí con 
 
 it('elimina una fórmula sin historial con sus ingredientes y rechaza una usada en una orden', function () {
     actingAsRole(SystemRole::SuperAdmin);
-    $unused = Formula::factory()->create();
+    // Una segunda versión: la primera del producto es la de referencia de precio, que no se borra (PR 9, P9-2).
+    $reference = Formula::factory()->create();
+    $unused = Formula::factory()->for($reference->product)->create();
     $used = ProductionOrder::factory()->create()->formula;
 
     $this->delete(route('formulas.destroy', $unused))->assertRedirect(route('formulas.index'));

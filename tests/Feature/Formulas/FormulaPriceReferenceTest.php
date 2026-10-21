@@ -2,12 +2,17 @@
 
 declare(strict_types=1);
 
+use App\Actions\Formulas\CreateFormulaAction;
+use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\Product;
+use App\Models\RawMaterial;
+use App\Models\UnitOfMeasure;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -106,4 +111,160 @@ describe('base de datos', function () {
         expect(fn () => DB::table('formulas')->where('id', $formula->id)->update(['is_active' => false]))
             ->toThrow(QueryException::class);
     })->skip(fn () => DB::connection()->getDriverName() !== 'pgsql', 'SQLite no admite agregar un CHECK a una tabla creada.');
+});
+
+describe('pantalla', function () {
+    beforeEach(function () {
+        actingAsRole(SystemRole::Admin);
+
+        $this->kg = UnitOfMeasure::factory()->create(['to_kg_conversion' => 1]);
+        $this->resin = RawMaterial::factory()->create(['unit_of_measure_id' => $this->kg->id, 'current_price' => 1000]);
+        $this->product = Product::factory()->create(['current_cost' => null]);
+
+        // Crea una fórmula desde la pantalla con una línea de resina; el costo de granel es cantidad × $1.000.
+        $this->storeFormula = fn (string $quantity, array $extra = []) => $this->post(route('formulas.store'), [
+            'product_id' => $this->product->id,
+            'details' => [['raw_material_id' => $this->resin->id, 'quantity' => $quantity, 'unit_of_measure_id' => $this->kg->id]],
+            ...$extra,
+        ]);
+        $this->latestFormula = fn (): Formula => Formula::query()->where('product_id', $this->product->id)->latest('id')->firstOrFail();
+    });
+
+    it('deja de referencia y costea la primera fórmula; la segunda no cambia el costo', function () {
+        ($this->storeFormula)('2')->assertSessionHas('success', 'Fórmula v1 creada. Es la referencia de precio del producto.');
+        $first = ($this->latestFormula)();
+
+        ($this->storeFormula)('5')->assertSessionHas('success', 'Fórmula v2 creada y activa. El precio del producto sigue saliendo de la v1.');
+        $second = ($this->latestFormula)();
+
+        expect($first->is_price_reference)->toBeTrue()
+            ->and($second->is_price_reference)->toBeFalse()
+            ->and($second->is_active)->toBeTrue()
+            ->and($this->product->fresh()->current_cost)->toBe('2000.0000');
+    });
+
+    it('guarda el nombre normalizado y rechaza uno de más de 60 caracteres', function () {
+        ($this->storeFormula)('1', ['name' => '  RAL   7035  '])->assertSessionHasNoErrors();
+        expect(($this->latestFormula)()->name)->toBe('RAL 7035');
+
+        ($this->storeFormula)('1', ['name' => str_repeat('A', 61)])->assertSessionHasErrors('name');
+    });
+
+    it('no crea fórmulas de un producto inactivo (D-FOR3)', function () {
+        $this->product->update(['is_active' => false]);
+
+        ($this->storeFormula)('1')->assertSessionHasErrors(['product_id' => 'Selecciona un producto activo.']);
+        expect(Formula::query()->exists())->toBeFalse();
+    });
+
+    it('no crea la fórmula si el producto se desactivó después de validar', function () {
+        $this->product->update(['is_active' => false]);
+
+        expect(fn () => app(CreateFormulaAction::class)->execute([
+            'product_id' => $this->product->id,
+            'details' => [['raw_material_id' => $this->resin->id, 'quantity' => '1', 'unit_of_measure_id' => $this->kg->id]],
+        ], (int) auth()->id()))->toThrow(ValidationException::class);
+    });
+
+    // El camino que rompía el CHECK en PostgreSQL: activar otra versión apagaba también la de referencia.
+    it('activa una segunda versión sin tocar la de referencia', function () {
+        $reference = Formula::factory()->for($this->product)->create();
+        $other = Formula::factory()->for($this->product)->inactive()->create();
+
+        $this->post(route('formulas.activate', $other))->assertRedirect(route('formulas.show', $other))->assertSessionHas('success');
+
+        expect($other->fresh()->is_active)->toBeTrue()
+            ->and($other->fresh()->is_price_reference)->toBeFalse()
+            ->and($reference->fresh()->is_active)->toBeTrue()
+            ->and($reference->fresh()->is_price_reference)->toBeTrue();
+    });
+
+    it('al activar una fórmula de un producto sin referencia la deja de referencia y lo costea', function () {
+        ($this->storeFormula)('3');
+        $formula = ($this->latestFormula)();
+        // Un producto sin referencia (carga directa sin eventos): la fórmula inactiva y sin la marca.
+        DB::table('formulas')->where('id', $formula->id)->update(['is_active' => false, 'is_price_reference' => false]);
+        $this->product->update(['current_cost' => null]);
+
+        $this->post(route('formulas.activate', $formula))
+            ->assertSessionHas('success', 'Fórmula v1 activada. Es la referencia de precio del producto.');
+
+        expect($formula->fresh()->is_price_reference)->toBeTrue()
+            ->and($this->product->fresh()->current_cost)->toBe('3000.0000');
+    });
+
+    it('no desactiva la fórmula de referencia', function () {
+        $reference = Formula::factory()->for($this->product)->create();
+
+        $this->post(route('formulas.deactivate', $reference))
+            ->assertSessionHas('error', 'Esta fórmula define el precio del producto: marca otra como referencia de precio antes de desactivarla.');
+
+        expect($reference->fresh()->is_active)->toBeTrue();
+    });
+
+    it('desactiva una fórmula que no es la de referencia', function () {
+        Formula::factory()->for($this->product)->create();
+        $other = Formula::factory()->for($this->product)->create();
+
+        $this->post(route('formulas.deactivate', $other))->assertSessionHas('success', 'Fórmula v2 desactivada.');
+
+        expect($other->fresh()->is_active)->toBeFalse();
+    });
+
+    it('cambia la referencia de precio y costea con la nueva', function () {
+        ($this->storeFormula)('2');
+        $first = ($this->latestFormula)();
+        ($this->storeFormula)('5');
+        $second = ($this->latestFormula)();
+
+        $this->post(route('formulas.price-reference', $second))
+            ->assertSessionHas('success', 'El precio del producto ahora sale de la fórmula v2.');
+
+        expect($first->fresh()->is_price_reference)->toBeFalse()
+            ->and($second->fresh()->is_price_reference)->toBeTrue()
+            ->and(Formula::query()->where('product_id', $this->product->id)->priceReference()->count())->toBe(1)
+            ->and($this->product->fresh()->current_cost)->toBe('5000.0000');
+    });
+
+    it('no usa para el precio una fórmula inactiva', function () {
+        $reference = Formula::factory()->for($this->product)->create();
+        $inactive = Formula::factory()->for($this->product)->inactive()->create();
+
+        $this->post(route('formulas.price-reference', $inactive))
+            ->assertSessionHas('error', 'Activa la fórmula antes de usarla para el precio.');
+
+        expect($reference->fresh()->is_price_reference)->toBeTrue();
+    });
+
+    it('avisa si la fórmula ya era la de referencia', function () {
+        $reference = Formula::factory()->for($this->product)->create();
+
+        $this->post(route('formulas.price-reference', $reference))
+            ->assertSessionHas('success', 'La fórmula v1 ya era la referencia de precio.');
+    });
+
+    it('no elimina la fórmula de referencia', function () {
+        actingAsRole(SystemRole::SuperAdmin); // formulas.delete
+        $reference = Formula::factory()->for($this->product)->create();
+
+        $this->delete(route('formulas.destroy', $reference))
+            ->assertSessionHas('error', 'Esta fórmula define el precio del producto: marca otra como referencia de precio antes de eliminarla.');
+
+        expect($reference->fresh())->not->toBeNull();
+    });
+
+    it('la edición cambia nombre y líneas, pero no el estado', function () {
+        ($this->storeFormula)('2');
+        $formula = ($this->latestFormula)();
+
+        $this->put(route('formulas.update', $formula), [
+            'name' => 'Base',
+            'is_active' => false,
+            'details' => [['raw_material_id' => $this->resin->id, 'quantity' => '4', 'unit_of_measure_id' => $this->kg->id]],
+        ])->assertSessionHasNoErrors();
+
+        expect($formula->fresh()->name)->toBe('Base')
+            ->and($formula->fresh()->is_active)->toBeTrue()
+            ->and($this->product->fresh()->current_cost)->toBe('4000.0000');
+    });
 });

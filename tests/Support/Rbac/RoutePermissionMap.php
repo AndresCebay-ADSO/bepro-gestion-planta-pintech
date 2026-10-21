@@ -105,6 +105,8 @@ final class RoutePermissionMap
             'formulas.edit' => Permission::FormulasEdit,
             'formulas.update' => Permission::FormulasEdit,
             'formulas.activate' => Permission::FormulasActivate,
+            'formulas.deactivate' => Permission::FormulasActivate,
+            'formulas.price-reference' => Permission::FormulasActivate,
             'formulas.destroy' => Permission::FormulasDelete,
 
             // Materias primas

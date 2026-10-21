@@ -110,6 +110,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('formulas/{formula}/activate', [FormulaController::class, 'activate'])
         ->middleware('can:'.Permission::FormulasActivate->value)
         ->name('formulas.activate');
+    Route::post('formulas/{formula}/deactivate', [FormulaController::class, 'deactivate'])
+        ->middleware('can:'.Permission::FormulasActivate->value)
+        ->name('formulas.deactivate');
+    Route::post('formulas/{formula}/price-reference', [FormulaController::class, 'priceReference'])
+        ->middleware('can:'.Permission::FormulasActivate->value)
+        ->name('formulas.price-reference');
 
     // Bodegas
     Route::get('warehouses/{warehouse}/assign-users', [WarehouseController::class, 'assignUsersPage'])
