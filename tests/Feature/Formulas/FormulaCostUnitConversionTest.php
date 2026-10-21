@@ -64,6 +64,16 @@ it('costea una línea en galones de una materia prima que se compra por litro', 
     expect(($this->recalculate)()->cost)->toBe('3785.4000');
 });
 
+it('costea mililitros de una materia prima que se compra por galón sin perder decimales', function () {
+    $milliliter = UnitOfMeasure::factory()->create(['code' => 'ml', 'symbol' => 'mL', 'to_liter_conversion' => 0.001]);
+    $tinter = RawMaterial::factory()->create(['unit_of_measure_id' => $this->gallon->id, 'current_price' => 100000]);
+
+    // 500 mL = 0,1320864373 gal a $100.000. Con el factor cortado a 6 decimales daba $13.200,0000.
+    ($this->formulaWith)([[$tinter, '500', $milliliter]]);
+
+    expect(($this->recalculate)()->cost)->toBe('13208.6437');
+});
+
 it('no cambia el costo cuando la línea ya está en la unidad de la materia prima', function () {
     ($this->formulaWith)([[$this->resin, '0.3142', $this->kg], [$this->solvent, '0.5', $this->liter]]);
 

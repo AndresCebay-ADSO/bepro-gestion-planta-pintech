@@ -100,8 +100,7 @@ class FifoStockAllocatorService
         $requirements = [];
         foreach ($formula->details as $detail) {
             $materialId = (int) $detail->raw_material_id;
-            $factor = $this->formulaService->getConversionFactor($detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
-            $normalizedDetailQty = $this->calculator->mul((string) $detail->quantity, $factor, 10);
+            $normalizedDetailQty = $this->formulaService->convertQuantity((string) $detail->quantity, $detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
             $product = $this->calculator->mul($normalizedDetailQty, $qty, 10);
             $product = $this->calculator->round($product, 4);
 

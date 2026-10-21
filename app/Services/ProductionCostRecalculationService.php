@@ -48,8 +48,7 @@ class ProductionCostRecalculationService
             foreach ($referenceFormula->details as $detail) {
                 // La línea va en su propia unidad (g, kg, gal…) y el precio es por la unidad de la materia prima: se
                 // convierte igual que al crear la OP (FOR-06).
-                $factor = $this->formulaService->getConversionFactor($detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
-                $quantityInMaterialUnit = $this->calculator->mul((string) $detail->quantity, $factor, 10);
+                $quantityInMaterialUnit = $this->formulaService->convertQuantity((string) $detail->quantity, $detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
                 $price = (string) ($detail->rawMaterial->current_price ?? 0);
                 $itemCost = $this->calculator->round($this->calculator->mul($quantityInMaterialUnit, $price, 10), 4);
                 $calculatedCost = $this->calculator->add($calculatedCost, $itemCost, 4);

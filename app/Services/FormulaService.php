@@ -29,18 +29,10 @@ class FormulaService
         $materials = collect();
 
         foreach ($formula->details as $detail) {
-            // La cantidad en la fórmula está expresada en la unidad del detalle
-            // Necesitamos convertir a la unidad base de la materia prima si son diferentes
-            $factor = $this->getConversionFactor($detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
-
-            $detailQty = (string) $detail->quantity;
-
-            // Calculamos con 10 decimales para evitar errores de truncamiento intermedio
-            $innerCalc = $this->calculator->mul($detailQty, $baseQuantity, 10);
-            $fullPrecisionResult = $this->calculator->mul($innerCalc, $factor, 10);
-
-            // Solo al final redondeamos el resultado a los 4 decimales de la base de datos
-            $plannedQuantity = $this->calculator->round($fullPrecisionResult, 4);
+            // La línea va en su propia unidad: se pasa a la de la materia prima y se multiplica por la cantidad a
+            // producir, con 10 decimales; solo el resultado se redondea a los 4 de la base.
+            $quantityPerUnit = $this->convertQuantity((string) $detail->quantity, $detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
+            $plannedQuantity = $this->calculator->round($this->calculator->mul($quantityPerUnit, $baseQuantity, 10), 4);
 
             $materials->push([
                 'raw_material_id' => $detail->raw_material_id,
@@ -53,37 +45,64 @@ class FormulaService
     }
 
     /**
-     * Obtiene el factor de conversión entre dos unidades de medida.
-     * Utiliza las equivalencias a KG o Litros definidas en la base de datos.
+     * Pasa una cantidad de una unidad a otra por su equivalencia a litros o a kilos: cantidad × equivalencia de origen ÷
+     * equivalencia de destino, con `$scale` decimales y sin pasar por un factor intermedio redondeado (con 6 decimales,
+     * mL → galón perdía un 0,065 %). Es la única conversión de cantidades del sistema: la usan el costeo de la fórmula, el
+     * plan de la OP y la validación de stock.
+     *
+     * @throws \DomainException si no hay equivalencia común (peso con volumen, o una unidad sin equivalencia).
      */
-    public function getConversionFactor(UnitOfMeasure $fromUnit, UnitOfMeasure $toUnit): string
+    public function convertQuantity(string|int|float $quantity, UnitOfMeasure $fromUnit, UnitOfMeasure $toUnit, int $scale = 10): string
     {
         if ($fromUnit->id === $toUnit->id) {
-            return '1.000000';
+            return $this->calculator->mul($quantity, '1', $scale);
         }
 
-        // Conversión basada en Volumen (Litros)
-        if ($fromUnit->to_liter_conversion !== null && $toUnit->to_liter_conversion !== null) {
-            return $this->calculator->div(
-                (string) $fromUnit->to_liter_conversion,
-                (string) $toUnit->to_liter_conversion,
-                NumberType::Factor->scale()
-            );
-        }
-
-        // Conversión basada en Peso (KG)
-        if ($fromUnit->to_kg_conversion !== null && $toUnit->to_kg_conversion !== null) {
-            return $this->calculator->div(
-                (string) $fromUnit->to_kg_conversion,
-                (string) $toUnit->to_kg_conversion,
-                NumberType::Factor->scale()
-            );
-        }
-
-        // No hay factores de conversión compatibles entre las unidades
-        throw new \DomainException(
+        [$fromEquivalence, $toEquivalence] = $this->commonEquivalence($fromUnit, $toUnit) ?? throw new \DomainException(
             "No se puede convertir entre '{$fromUnit->symbol}' y '{$toUnit->symbol}': "
             .'no hay factores de conversión compatibles (ni por peso ni por volumen).'
         );
+
+        return $this->calculator->div(
+            $this->calculator->mul($quantity, $fromEquivalence, $scale + NumberType::Factor->scale()),
+            $toEquivalence,
+            $scale
+        );
+    }
+
+    /**
+     * El factor entre dos unidades, con los 6 decimales de su columna. Solo para guardarlo en la línea de la OP
+     * (`production_order_details.conversion_factor`), que la pantalla usa para pasar el consumo real a la unidad de la
+     * materia prima (B51). Las cantidades no se calculan con él, sino con convertQuantity(), que no lo redondea.
+     *
+     * @throws \DomainException si no hay equivalencia común.
+     */
+    public function getConversionFactor(UnitOfMeasure $fromUnit, UnitOfMeasure $toUnit): string
+    {
+        return $this->convertQuantity('1', $fromUnit, $toUnit, NumberType::Factor->scale());
+    }
+
+    public function canConvert(UnitOfMeasure $fromUnit, UnitOfMeasure $toUnit): bool
+    {
+        return $fromUnit->id === $toUnit->id || $this->commonEquivalence($fromUnit, $toUnit) !== null;
+    }
+
+    /**
+     * Las equivalencias que comparten las dos unidades: a litros si ambas la tienen; si no, a kilos. Una unidad tiene
+     * solo una de las dos (StoreUnitOfMeasureRequest).
+     *
+     * @return array{0: string, 1: string}|null
+     */
+    private function commonEquivalence(UnitOfMeasure $fromUnit, UnitOfMeasure $toUnit): ?array
+    {
+        if ($fromUnit->to_liter_conversion !== null && $toUnit->to_liter_conversion !== null) {
+            return [(string) $fromUnit->to_liter_conversion, (string) $toUnit->to_liter_conversion];
+        }
+
+        if ($fromUnit->to_kg_conversion !== null && $toUnit->to_kg_conversion !== null) {
+            return [(string) $fromUnit->to_kg_conversion, (string) $toUnit->to_kg_conversion];
+        }
+
+        return null;
     }
 }

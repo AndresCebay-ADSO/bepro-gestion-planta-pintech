@@ -46,7 +46,7 @@ class StoreUnitOfMeasureRequest extends FormRequest
      */
     protected function sharedRules(): array
     {
-        // Un solo factor: getConversionFactor() prefiere el de volumen, así que con los dos el de peso se ignoraría.
+        // Un solo factor: FormulaService::convertQuantity() prefiere el de volumen, así que con los dos el de peso se ignoraría.
         // Seis decimales y el tope de su columna (NumberType::Factor): un mililitro son 0,001 L.
         $factor = ['nullable', ...NumberType::Factor->rules(), 'gt:0'];
 

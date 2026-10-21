@@ -75,8 +75,7 @@ class CreateProductionOrderAction
 
             foreach ($formula->details as $detail) {
                 $materialId = (int) $detail->raw_material_id;
-                $factor = $this->formulaService->getConversionFactor($detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
-                $normalizedDetailQty = $this->calculator->mul((string) $detail->quantity, $factor, 10);
+                $normalizedDetailQty = $this->formulaService->convertQuantity((string) $detail->quantity, $detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
                 $detailTotal = $this->calculator->mul($normalizedDetailQty, (string) $quantity, 10);
                 $detailTotal = $this->calculator->round($detailTotal, 4);
 
@@ -97,7 +96,7 @@ class CreateProductionOrderAction
                 $computedDetails[] = [
                     'detail' => $detail,
                     'planned_quantity' => $detailTotal,
-                    'conversion_factor' => $factor,
+                    'conversion_factor' => $this->formulaService->getConversionFactor($detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure),
                 ];
             }
 

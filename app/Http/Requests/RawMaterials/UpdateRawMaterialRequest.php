@@ -70,6 +70,25 @@ class UpdateRawMaterialRequest extends FormRequest
     public function after(): array
     {
         return [
+            // Con historial o en uso, la unidad no cambia: los saldos de sus lotes, sus movimientos y las líneas de las
+            // fórmulas están en esa unidad. De kg a L las fórmulas ya no se pueden costear ni producir, y aun entre
+            // unidades compatibles (kg a g) 100 kg en lote pasarían a leerse como 100 g (auditoría 3.6, RM-04).
+            function (Validator $validator): void {
+                $material = $this->route('raw_material');
+
+                if (! $material instanceof RawMaterial
+                    || $validator->errors()->has('unit_of_measure_id')
+                    || (int) $this->input('unit_of_measure_id') === (int) $material->unit_of_measure_id) {
+                    return;
+                }
+
+                if (app(RawMaterialUsageService::class)->hasActivity($material)) {
+                    $validator->errors()->add(
+                        'unit_of_measure_id',
+                        __('No se puede cambiar la unidad: la materia prima ya tiene lotes, movimientos o fórmulas en la unidad actual.')
+                    );
+                }
+            },
             function (Validator $validator): void {
                 $material = $this->route('raw_material');
 
