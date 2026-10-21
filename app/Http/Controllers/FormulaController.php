@@ -6,9 +6,9 @@ namespace App\Http\Controllers;
 
 use App\Actions\Formulas\ChangeFormulaActiveAction;
 use App\Actions\Formulas\CreateFormulaAction;
+use App\Actions\Formulas\DeleteFormulaAction;
 use App\Actions\Formulas\SetPriceReferenceFormulaAction;
 use App\Actions\Formulas\UpdateFormulaAction;
-use App\Actions\Shared\DeleteUnusedRecordAction;
 use App\Filters\FormulaFilter;
 use App\Http\Requests\Formulas\IndexFormulaRequest;
 use App\Http\Requests\Formulas\StoreFormulaRequest;
@@ -27,7 +27,7 @@ use Inertia\Response;
 class FormulaController extends Controller
 {
     public function __construct(
-        private readonly DeleteUnusedRecordAction $deleteUnused,
+        private readonly DeleteFormulaAction $deleteFormula,
         private readonly CreateFormulaAction $createFormula,
         private readonly SetPriceReferenceFormulaAction $setPriceReference,
         private readonly ChangeFormulaActiveAction $changeActive,
@@ -110,17 +110,9 @@ class FormulaController extends Controller
     {
         $this->authorize('update', $formula);
 
-        if ($formula->productionOrders()->exists()) {
-            return redirect()
-                ->route('formulas.show', $formula)
-                ->with('error', 'Esta fórmula ya fue usada en órdenes de producción y no se puede editar.');
-        }
-
-        // Con el producto inactivo sus fórmulas no se editan (P9-13). La acción lo vuelve a revisar al guardar.
-        if (! $formula->product()->value('is_active')) {
-            return redirect()
-                ->route('formulas.show', $formula)
-                ->with('error', __('El producto está inactivo: sus fórmulas solo se pueden desactivar o eliminar. Reactiva el producto para cambiarlas.'));
+        // Mismas reglas y mensajes que al guardar (UpdateFormulaAction): usada en una OP, o producto inactivo (P9-13).
+        if (($blocker = $this->updateFormula->blocker($formula)) !== null) {
+            return redirect()->route('formulas.show', $formula)->with('error', $blocker);
         }
 
         $formula->load([
@@ -154,13 +146,7 @@ class FormulaController extends Controller
         $this->authorize('delete', $formula);
 
         try {
-            // Solo si ninguna orden ni ningún costo la usó; sus ingredientes se van con ella (docs/POLITICA_ELIMINACION.md).
-            // La de referencia de precio no se borra (P9-2): se revisa con la fila bloqueada.
-            $deleted = $this->deleteUnused->execute($formula, function (Formula $locked): void {
-                if ($locked->is_price_reference) {
-                    throw new DomainException(__('Esta fórmula define el precio del producto: marca otra como referencia de precio antes de eliminarla.'));
-                }
-            });
+            $deleted = $this->deleteFormula->execute($formula);
         } catch (DomainException $exception) {
             return back()->with('error', $exception->getMessage());
         }

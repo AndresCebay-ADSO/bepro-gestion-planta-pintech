@@ -6,7 +6,6 @@ namespace App\Actions\Formulas;
 
 use App\Actions\Formulas\Concerns\LocksFormulaProduct;
 use App\Models\Formula;
-use App\Models\FormulaDetail;
 use App\Services\ProductionCostRecalculationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -48,15 +47,7 @@ class CreateFormulaAction
                 'created_by' => $userId,
             ]);
 
-            foreach ($data['details'] as $index => $detail) {
-                FormulaDetail::create([
-                    'formula_id' => $formula->id,
-                    'raw_material_id' => $detail['raw_material_id'],
-                    'quantity' => $detail['quantity'],
-                    'unit_of_measure_id' => $detail['unit_of_measure_id'],
-                    'step_order' => $index + 1,
-                ]);
-            }
+            $formula->replaceDetails($data['details']);
 
             return $formula;
         });

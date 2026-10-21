@@ -125,6 +125,27 @@ class Formula extends Model
         $query->where('is_price_reference', true);
     }
 
+    /**
+     * Reemplaza las líneas de la fórmula, en el orden recibido: el paso es la posición (1, 2, 3…). La misma materia prima
+     * puede ir en varios pasos (D-FOR2). Quien llama abre la transacción.
+     *
+     * @param  array<int, array{raw_material_id:int, quantity:string|int|float, unit_of_measure_id:int}>  $details
+     */
+    public function replaceDetails(array $details): void
+    {
+        $this->details()->delete();
+
+        foreach (array_values($details) as $index => $detail) {
+            FormulaDetail::create([
+                'formula_id' => $this->id,
+                'raw_material_id' => $detail['raw_material_id'],
+                'quantity' => $detail['quantity'],
+                'unit_of_measure_id' => $detail['unit_of_measure_id'],
+                'step_order' => $index + 1,
+            ]);
+        }
+    }
+
     private function productHasOtherPriceReference(): bool
     {
         return static::query()

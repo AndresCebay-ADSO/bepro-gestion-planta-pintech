@@ -6,7 +6,6 @@ namespace App\Actions\Formulas;
 
 use App\Actions\Formulas\Concerns\LocksFormulaProduct;
 use App\Models\Formula;
-use App\Models\FormulaDetail;
 use App\Services\ProductionCostRecalculationService;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -38,29 +37,18 @@ class UpdateFormulaAction
             // Con el producto bloqueado, todo se decide con lo ya guardado: una OP que se crea a la vez (bloqueo
             // compartido del producto) o un cambio de referencia esperan, y no se edita una fórmula recién usada ni se
             // costea con las líneas viejas.
-            $this->lockActiveProduct((int) $formula->product_id);
+            $this->lockProduct((int) $formula->product_id);
             $locked = Formula::query()->lockForUpdate()->findOrFail($formula->id);
 
-            if ($locked->productionOrders()->exists()) {
-                throw new DomainException(__('Esta fórmula ya fue usada en órdenes de producción y no se puede editar.'));
+            if (($blocker = $this->blocker($locked)) !== null) {
+                throw new DomainException($blocker);
             }
 
             $locked->update([
                 'name' => $data['name'] ?? null,
                 'notes' => $data['notes'] ?? null,
             ]);
-
-            $locked->details()->delete();
-
-            foreach ($data['details'] as $index => $detail) {
-                FormulaDetail::create([
-                    'formula_id' => $locked->id,
-                    'raw_material_id' => $detail['raw_material_id'],
-                    'quantity' => $detail['quantity'],
-                    'unit_of_measure_id' => $detail['unit_of_measure_id'],
-                    'step_order' => $index + 1,
-                ]);
-            }
+            $locked->replaceDetails($data['details']);
 
             return $locked->is_price_reference;
         });
@@ -68,5 +56,22 @@ class UpdateFormulaAction
         if ($isReference) {
             $this->costRecalculation->recalculateForProduct((int) $formula->product_id);
         }
+    }
+
+    /**
+     * Por qué no se puede editar la fórmula, o null. La pantalla de edición lo usa para avisar antes, y execute() lo
+     * vuelve a revisar con el producto bloqueado: una sola fuente para las reglas y sus mensajes.
+     */
+    public function blocker(Formula $formula): ?string
+    {
+        if ($formula->productionOrders()->exists()) {
+            return __('Esta fórmula ya fue usada en órdenes de producción y no se puede editar.');
+        }
+
+        if (! $formula->product()->value('is_active')) {
+            return $this->inactiveProductMessage();
+        }
+
+        return null;
     }
 }

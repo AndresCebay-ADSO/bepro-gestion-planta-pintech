@@ -53,7 +53,8 @@ class UpdateUnitOfMeasureRequest extends StoreUnitOfMeasureRequest
         return [
             // Ni con confirmación: una unidad en uso que pasa de volumen a peso, o se queda sin equivalencia, deja sin
             // conversión las líneas de fórmula que ya la usan con otra unidad (no se podrían costear ni producir). Corregir
-            // el valor sí se puede; otra base es otra unidad.
+            // el valor sí se puede, y también darle su primera equivalencia (la «u» de envases): no rompe ninguna línea.
+            // Otra base es otra unidad.
             function (Validator $validator): void {
                 $unit = $this->route('unit_of_measure');
 
@@ -61,7 +62,9 @@ class UpdateUnitOfMeasureRequest extends StoreUnitOfMeasureRequest
                     return;
                 }
 
-                if ($this->incomingBasis($unit) !== $this->basis($unit->to_kg_conversion, $unit->to_liter_conversion) && $unit->affectsConversions()) {
+                $currentBasis = $this->basis($unit->to_kg_conversion, $unit->to_liter_conversion);
+
+                if ($currentBasis !== null && $this->incomingBasis($unit) !== $currentBasis && $unit->affectsConversions()) {
                     $validator->errors()->add(
                         $unit->to_liter_conversion !== null ? 'to_liter_conversion' : 'to_kg_conversion',
                         __('Esta unidad está en uso: puedes corregir su equivalencia, pero no pasarla de volumen a peso (ni al revés) ni dejarla sin equivalencia. Para otra base, crea otra unidad.'),

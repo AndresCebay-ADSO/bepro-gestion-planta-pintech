@@ -222,6 +222,18 @@ it('no deja pasar de volumen a peso ni dejar sin conversión una unidad en uso, 
     'confirmando' => true,
 ]);
 
+// La «u» de envases y etiquetas está en uso sin equivalencia: darle la primera no rompe ninguna conversión.
+it('deja dar su primera equivalencia a una unidad en uso que no tenía', function () {
+    actingAsRole(SystemRole::SuperAdmin);
+    $unit = UnitOfMeasure::factory()->create(['code' => 'u', 'to_kg_conversion' => null, 'to_liter_conversion' => null]);
+    RawMaterial::factory()->create(['unit_of_measure_id' => $unit->id]);
+
+    $this->put(route('catalogs.units-of-measure.update', $unit), uomPayload(['code' => 'u', 'to_kg_conversion' => '0.5', 'to_liter_conversion' => null, 'confirm_factor_change' => true]))
+        ->assertSessionHasNoErrors();
+
+    expect($unit->fresh()->to_kg_conversion)->toBe('0.500000');
+});
+
 it('deja cambiar de base una unidad que nadie usa en conversiones', function () {
     actingAsRole(SystemRole::SuperAdmin);
     $unit = UnitOfMeasure::factory()->create(['code' => 'gl', 'to_liter_conversion' => '3.7854']);

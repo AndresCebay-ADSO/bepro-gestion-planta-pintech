@@ -31,7 +31,12 @@ trait LocksFormulaProduct
     private function lockActiveProduct(int $productId): void
     {
         if (! $this->lockProduct($productId)) {
-            throw new DomainException(__('El producto está inactivo: sus fórmulas solo se pueden desactivar o eliminar. Reactiva el producto para cambiarlas.'));
+            throw new DomainException($this->inactiveProductMessage());
         }
+    }
+
+    private function inactiveProductMessage(): string
+    {
+        return __('El producto está inactivo: sus fórmulas solo se pueden desactivar o eliminar. Reactiva el producto para cambiarlas.');
     }
 }

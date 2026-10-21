@@ -7,6 +7,7 @@ use App\Actions\Formulas\UpdateFormulaAction;
 use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\Product;
+use App\Models\ProductionCost;
 use App\Models\ProductionOrder;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
@@ -307,6 +308,23 @@ describe('pantalla', function () {
         expect(fn () => app(UpdateFormulaAction::class)->execute($stale, [
             'details' => [['raw_material_id' => $this->resin->id, 'quantity' => '7', 'unit_of_measure_id' => $this->kg->id]],
         ]))->toThrow(DomainException::class, 'Esta fórmula ya fue usada en órdenes de producción y no se puede editar.');
+    });
+
+    // Borrar bloquea antes el producto, y la clave foránea decide dentro de esa transacción: en PostgreSQL el choque se
+    // revierte hasta su punto de guardado y la respuesta es el aviso, no un error.
+    it('no elimina una fórmula con historial, y elimina una sin uso', function () {
+        actingAsRole(SystemRole::SuperAdmin); // formulas.delete
+        Formula::factory()->for($this->product)->create();
+        $withHistory = Formula::factory()->for($this->product)->create();
+        ProductionCost::factory()->create(['product_id' => $this->product->id, 'formula_id' => $withHistory->id]);
+        $unused = Formula::factory()->for($this->product)->create();
+
+        $this->delete(route('formulas.destroy', $withHistory))
+            ->assertSessionHas('error', 'La fórmula tiene historial (órdenes de producción o costos calculados). Desactívala en su lugar.');
+        $this->delete(route('formulas.destroy', $unused))->assertRedirect(route('formulas.index'));
+
+        expect($withHistory->fresh())->not->toBeNull()
+            ->and($unused->fresh())->toBeNull();
     });
 
     it('la edición cambia nombre y líneas, pero no el estado', function () {
