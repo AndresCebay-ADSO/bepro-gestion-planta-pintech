@@ -13,6 +13,7 @@ use App\Models\RawMaterial;
 use App\Rules\RawMaterialOfType;
 use App\Services\DecimalCalculator;
 use App\Services\Production\ProductionOrderCompletionLines;
+use App\Support\OperationalTimes;
 use Closure;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -125,6 +126,42 @@ trait ProductionConsumptionRules
 
             if (! app(ProductionOrderCompletionLines::class)->packedSomething(is_array($packaging) ? $packaging : [], $this->input('remnant_quantity_gallons'))) {
                 $validator->errors()->add('packaging', __(ProductionOrderCompletionLines::NOTHING_PACKED_MESSAGE));
+            }
+        };
+    }
+
+    /**
+     * Las cuatro horas de agitación y envasado, iguales al enviar a revisión y al completar. Texto libre de hasta 40
+     * caracteres: el formato, el orden, que no sean futuras y la duración los revisa `operationalTimesCheck()`.
+     *
+     * @return array<string, list<string>>
+     */
+    protected function operationalTimesRules(): array
+    {
+        return [
+            'agitation_start_time' => ['nullable', 'string', 'max:40'],
+            'agitation_end_time' => ['nullable', 'string', 'max:40'],
+            'packaging_start_time' => ['nullable', 'string', 'max:40'],
+            'packaging_end_time' => ['nullable', 'string', 'max:40'],
+        ];
+    }
+
+    /**
+     * OPL-07: formato completo, fin no anterior al inicio, ninguna hora futura y una fase de 48 horas como máximo
+     * (`OperationalTimes`). No exige que la hora sea posterior a la creación de la OP: en planta se registra la orden
+     * después de empezar a mezclar. Los campos que ya fallaron por otra regla (un arreglo, un texto largo) no se vuelven
+     * a revisar.
+     *
+     * @return callable(Validator): void
+     */
+    protected function operationalTimesCheck(): callable
+    {
+        return function (Validator $validator): void {
+            $fields = ['agitation_start_time', 'agitation_end_time', 'packaging_start_time', 'packaging_end_time'];
+            $failed = array_values(array_filter($fields, fn (string $field): bool => $validator->errors()->has($field)));
+
+            foreach (OperationalTimes::problems($this->only($fields), $failed) as $field => $message) {
+                $validator->errors()->add($field, $message);
             }
         };
     }

@@ -352,3 +352,67 @@ it('el saldo que informa la planta al enviar a revisión llega a quien aprueba, 
     expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::Completed)
         ->and(ProductionRemnant::query()->where('source_order_id', $this->order->id)->value('notes'))->toBe('Tanque 2, tapa azul');
 });
+
+// Auditoría 3.6, PR 10 (OPL-07): las horas de agitación y envasado se aceptaban con el fin antes del inicio y con el año
+// 9999. Se comparan como instantes: una fase que cruza la medianoche es válida.
+
+it('rechaza un fin de agitación anterior al inicio, al completar y al enviar a revisión (OPL-07)', function (string $route) {
+    $this->post(route($route, $this->order), completionLinesBody($this, [
+        'agitation_start_time' => '2026-10-13T15:00:00Z',
+        'agitation_end_time' => '2026-10-13T13:00:00Z',
+    ]))->assertSessionHasErrors(['agitation_end_time' => 'La hora de fin de agitación no puede ser anterior a la de inicio.']);
+
+    expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::InProgress);
+})->with(['production-orders.complete', 'production-orders.submit-for-review']);
+
+it('rechaza un envasado con el fin antes del inicio', function () {
+    $this->post(route('production-orders.complete', $this->order), completionLinesBody($this, [
+        'packaging_start_time' => '2026-10-13T15:00:00Z',
+        'packaging_end_time' => '2026-10-13T14:59:00Z',
+    ]))->assertSessionHasErrors('packaging_end_time');
+});
+
+it('rechaza una hora en el futuro, como el año 9999 (OPL-07)', function (string $field) {
+    $this->post(route('production-orders.complete', $this->order), completionLinesBody($this, [
+        $field => '9999-12-31T08:00:00Z',
+    ]))->assertSessionHasErrors($field);
+
+    expectOrderUntouched($this->order);
+})->with(['agitation_start_time', 'agitation_end_time', 'packaging_start_time', 'packaging_end_time']);
+
+it('rechaza una fase de más de 48 horas', function () {
+    $this->post(route('production-orders.complete', $this->order), completionLinesBody($this, [
+        'agitation_start_time' => '2026-10-01T08:00:00Z',
+        'agitation_end_time' => '2026-10-03T08:01:00Z',
+    ]))->assertSessionHasErrors(['agitation_end_time' => 'La agitación no puede durar más de 48 horas.']);
+});
+
+it('rechaza un texto que no es una fecha y hora completas', function (string $value) {
+    $this->post(route('production-orders.complete', $this->order), completionLinesBody($this, [
+        'agitation_start_time' => $value,
+    ]))->assertSessionHasErrors(['agitation_start_time' => 'Elige una fecha y hora válidas.']);
+})->with(['mañana', '2026-02-30T08:00', '2026-10-13', '13/10/2026 08:00', '2026-10-13T25:00']);
+
+it('acepta una fase que cruza la medianoche y horas sin zona como hora de planta', function () {
+    $this->post(route('production-orders.complete', $this->order), completionLinesBody($this, [
+        // 22:00 a 02:00 en Bogotá (UTC-5) = 03:00 a 07:00 UTC del día siguiente.
+        'agitation_start_time' => '2026-10-13T22:00',
+        'agitation_end_time' => '2026-10-14T02:00',
+        'packaging_start_time' => '2026-10-14T08:00:00.000Z',
+        'packaging_end_time' => '2026-10-14T10:30:00-05:00',
+    ]))->assertSessionHasNoErrors();
+
+    $order = $this->order->fresh();
+
+    expect($order->status)->toBe(ProductionOrderStatus::Completed)
+        ->and($order->agitation_start_time->utc()->format('Y-m-d H:i'))->toBe('2026-10-14 03:00')
+        ->and($order->agitation_end_time->utc()->format('Y-m-d H:i'))->toBe('2026-10-14 07:00')
+        ->and($order->packaging_end_time->utc()->format('Y-m-d H:i'))->toBe('2026-10-14 15:30');
+});
+
+it('las horas son opcionales', function () {
+    $this->post(route('production-orders.complete', $this->order), completionLinesBody($this, [
+        'agitation_start_time' => '',
+        'agitation_end_time' => null,
+    ]))->assertSessionHasNoErrors();
+});
