@@ -39,6 +39,7 @@ use App\Policies\WarehousePolicy;
 use App\Services\DecimalCalculator;
 use App\Services\FormulaService;
 use App\Services\TimezoneService;
+use App\Support\ModelRouteParameters;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -82,6 +83,9 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureRateLimiting();
+
+        // Antes de que se carguen las rutas: el patrón se copia a cada ruta al registrarla (T-01).
+        ModelRouteParameters::register();
 
         Event::listen(Failed::class, LogFailedLoginAttempt::class);
 
