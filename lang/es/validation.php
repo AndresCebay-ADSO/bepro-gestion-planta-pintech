@@ -154,6 +154,14 @@ return [
         'email' => [
             'required' => 'Debes ingresar tu correo electrónico.',
             'email' => 'Ingresa un correo electrónico válido.',
+            'regex' => 'El correo electrónico debe incluir un dominio completo, por ejemplo empresa.com.',
+        ],
+        // El teléfono del cliente, de la cotización, del pedido y del usuario (Client::PHONE_PATTERN).
+        'phone' => [
+            'regex' => 'El teléfono solo puede tener números, espacios y los signos + ( ) - . / #, de 7 a 20 caracteres.',
+        ],
+        'client_phone' => [
+            'regex' => 'El teléfono solo puede tener números, espacios y los signos + ( ) - . / #, de 7 a 20 caracteres.',
         ],
         'password' => [
             'required' => 'Debes ingresar tu contraseña.',

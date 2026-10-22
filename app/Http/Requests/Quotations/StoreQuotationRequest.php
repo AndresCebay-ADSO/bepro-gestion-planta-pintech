@@ -8,6 +8,7 @@ use App\Enums\NumberType;
 use App\Enums\PaymentMethod;
 use App\Enums\QuotationItemType;
 use App\Enums\QuotationValidity;
+use App\Http\Requests\Concerns\ClientContactRules;
 use App\Models\ProductVariant;
 use App\Models\Quotation;
 use App\Rules\PlantDate;
@@ -17,6 +18,8 @@ use Illuminate\Validation\Rule;
 
 class StoreQuotationRequest extends FormRequest
 {
+    use ClientContactRules;
+
     /** Productos por cotización: el PDF lleva unos 8 por hoja y el promedio es de 4 a 6. */
     public const MAX_ITEMS = 50;
 
@@ -56,9 +59,9 @@ class StoreQuotationRequest extends FormRequest
                     ->when($kept['client_id'] !== null, fn ($q) => $q->orWhere('id', $kept['client_id']))),
             ],
             'client_business_name' => ['nullable', 'string', 'max:255'],
-            'client_nit' => ['nullable', 'string', 'max:30'],
+            'client_nit' => $this->nitRules(),
             'client_contact_name' => ['nullable', 'string', 'max:255'],
-            'client_phone' => ['nullable', 'string', 'max:30'],
+            'client_phone' => $this->phoneRules(),
             'technology' => ['nullable', 'string', 'max:100'],
             'line' => ['nullable', 'string', 'max:100'],
             'thickness_mils' => ['nullable', 'string', 'max:50'],

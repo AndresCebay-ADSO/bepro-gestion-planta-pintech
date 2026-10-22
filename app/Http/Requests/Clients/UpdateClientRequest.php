@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Clients;
 
 use App\Enums\TextFormat;
+use App\Http\Requests\Concerns\ClientContactRules;
 use App\Http\Requests\Concerns\NormalizesText;
 use App\Models\Client;
 use Illuminate\Foundation\Http\FormRequest;
@@ -12,6 +13,7 @@ use Illuminate\Validation\Rule;
 
 class UpdateClientRequest extends FormRequest
 {
+    use ClientContactRules;
     use NormalizesText;
 
     public function authorize(): bool
@@ -29,9 +31,9 @@ class UpdateClientRequest extends FormRequest
 
         return [
             'business_name' => ['required', 'string', 'max:255'],
-            'nit' => ['nullable', 'string', 'max:20', Rule::unique('clients', 'nit')->ignore($clientId)],
+            'nit' => [...$this->nitRules(), Rule::unique('clients', 'nit')->ignore($clientId)],
             'contact_name' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'phone' => $this->phoneRules(),
             'shipping_address' => ['nullable', 'string', 'max:'.Client::SHIPPING_ADDRESS_MAX_LENGTH],
             // Solo con clients.deactivate (lo comprueba ClientController::update).
             'is_active' => ['sometimes', 'boolean'],

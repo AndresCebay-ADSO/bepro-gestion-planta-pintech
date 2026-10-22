@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Concerns;
 
+use App\Http\Requests\Concerns\ClientContactRules;
 use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 trait ProfileValidationRules
 {
+    use ClientContactRules;
+
     /**
      * Prepare the data for validation when used within a FormRequest.
      */
@@ -32,7 +35,7 @@ trait ProfileValidationRules
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
-            'phone' => ['nullable', 'string', 'max:15'],
+            'phone' => $this->phoneRules(),
             'job_title' => ['nullable', 'string', 'max:255'],
             // `bail`: un archivo que no es una imagen recibe un solo mensaje, no tres.
             'signature' => ['nullable', 'bail', 'image', 'mimes:png,jpg,jpeg', 'max:1024', 'dimensions:max_width=4000,max_height=4000'],
@@ -76,6 +79,8 @@ trait ProfileValidationRules
             'string',
             'lowercase',
             'email',
+            // `email` acepta `nuevo@pintech`: sirve para entrar, pero el correo de recuperación nunca llegaría (USR-03).
+            'regex:/@[^@\s]+\.[^@\s]+$/',
             'max:255',
             $userId === null
                 ? Rule::unique(User::class)

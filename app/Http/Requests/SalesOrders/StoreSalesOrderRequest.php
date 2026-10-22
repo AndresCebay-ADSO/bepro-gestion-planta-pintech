@@ -6,6 +6,7 @@ namespace App\Http\Requests\SalesOrders;
 
 use App\Enums\NumberType;
 use App\Enums\SalesOrderPriority;
+use App\Http\Requests\Concerns\ClientContactRules;
 use App\Http\Requests\Concerns\ReadsIdInput;
 use App\Models\Client;
 use App\Models\ProductVariant;
@@ -16,6 +17,7 @@ use Illuminate\Validation\Rule;
 
 class StoreSalesOrderRequest extends FormRequest
 {
+    use ClientContactRules;
     use ReadsIdInput;
 
     public function authorize(): bool
@@ -35,9 +37,9 @@ class StoreSalesOrderRequest extends FormRequest
             'notes' => ['nullable', 'string', 'max:2000'],
             'shipping_address' => ['nullable', 'string', 'max:'.Client::SHIPPING_ADDRESS_MAX_LENGTH],
             'client_business_name' => ['nullable', 'string', 'max:255'],
-            'client_nit' => ['nullable', 'string', 'max:20'],
+            'client_nit' => $this->nitRules(),
             'client_contact_name' => ['nullable', 'string', 'max:255'],
-            'client_phone' => ['nullable', 'string', 'max:20'],
+            'client_phone' => $this->phoneRules(),
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['bail', 'required', 'integer', Rule::exists('products', 'id')->where('is_active', true)],
             'items.*.product_variant_id' => [
