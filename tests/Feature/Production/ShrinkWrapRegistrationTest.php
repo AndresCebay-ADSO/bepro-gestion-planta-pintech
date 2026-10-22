@@ -385,3 +385,12 @@ it('busca por el color de la OP', function () {
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('shrinkWraps.data', fn ($rows) => collect($rows)->pluck('order.order_number')->all() === ['OP-2026-0042']));
 });
+
+it('lee las líneas de la receta en un orden fijo, no en el que devuelva la base', function () {
+    // PostgreSQL devuelve las filas sin ORDER BY según el plan: con un barrido secuencial, la fila actualizada pasa al
+    // final. Si la receta se recorre sin orden, qué línea falla primero depende del motor.
+    ShrinkWrapTypeItem::query()->where('raw_material_id', $this->bag->id)->update(['quantity' => '2']);
+
+    expect($this->type->items()->toSql())->toContain('order by "id"')
+        ->and($this->type->items()->pluck('raw_material_id')->all())->toBe([$this->bag->id, $this->tray->id]);
+});
