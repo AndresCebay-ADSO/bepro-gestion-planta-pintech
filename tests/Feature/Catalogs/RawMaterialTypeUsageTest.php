@@ -80,7 +80,8 @@ it('rechaza un envase o una etiqueta como ingrediente de una fórmula', function
 it('acepta un químico como ingrediente de una fórmula', function () {
     $product = Product::factory()->create();
 
-    $this->post(route('formulas.store'), typeUsageFormulaPayload($product, $this->chemical, $this->unit))
+    // En la unidad de la materia prima: una unidad que no se convierte a la suya se rechaza (FOR-02).
+    $this->post(route('formulas.store'), typeUsageFormulaPayload($product, $this->chemical, $this->chemical->unitOfMeasure))
         ->assertSessionHasNoErrors();
 });
 

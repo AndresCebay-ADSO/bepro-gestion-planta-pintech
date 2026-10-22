@@ -20,7 +20,7 @@ class FormulaFactory extends Factory
     {
         return [
             'product_id' => Product::factory(),
-            'version' => 1,
+            // Sin versión: el modelo toma la siguiente del producto al guardar, también con count(n).
             'is_active' => true,
             'notes' => null,
             'created_by' => User::factory(),

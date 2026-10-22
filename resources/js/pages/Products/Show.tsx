@@ -1,5 +1,6 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
+    BadgeDollarSign,
     Download,
     FileStack,
     FileText,
@@ -92,7 +93,9 @@ type FinishedInventoryRow = {
 type FormulaItem = {
     id: number;
     version: number;
+    name: string | null;
     is_active: boolean;
+    is_price_reference: boolean;
     notes: string | null;
     created_at: string;
     created_by?: { name: string } | null;
@@ -367,7 +370,10 @@ export default function ProductsShow({
         });
     };
 
-    const activeFormula = product.formulas?.find((f) => f.is_active);
+    // La fórmula con que se costea el producto (puede haber otras activas para producir).
+    const priceReferenceFormula = product.formulas?.find(
+        (f) => f.is_price_reference,
+    );
     const documents = product.product_documents ?? [];
 
     return (
@@ -1155,8 +1161,8 @@ export default function ProductsShow({
                                                         placeholder="0.00"
                                                     />
                                                     <p className="text-xs text-muted-foreground">
-                                                        {activeFormula
-                                                            ? 'Calculado por la fórmula activa, el envase y la etiqueta.'
+                                                        {priceReferenceFormula
+                                                            ? 'Calculado por la fórmula de referencia de precio, el envase y la etiqueta.'
                                                             : 'Se calculará al registrar la fórmula de producción.'}
                                                     </p>
                                                 </div>
@@ -1181,7 +1187,7 @@ export default function ProductsShow({
                                                         placeholder="0.00"
                                                     />
                                                     <p className="text-xs text-muted-foreground">
-                                                        {activeFormula
+                                                        {priceReferenceFormula
                                                             ? 'Calculado con el factor CIF al guardar.'
                                                             : 'Se calculará al registrar la fórmula de producción.'}
                                                     </p>
@@ -1481,9 +1487,9 @@ export default function ProductsShow({
                                     Fórmulas
                                 </h2>
                                 <p className="mt-0.5 text-xs text-muted-foreground">
-                                    {activeFormula
-                                        ? `Versión activa: v${activeFormula.version}`
-                                        : 'Sin fórmula activa'}
+                                    {priceReferenceFormula
+                                        ? `Referencia de precio: v${priceReferenceFormula.version}${priceReferenceFormula.name ? ` · ${priceReferenceFormula.name}` : ''}`
+                                        : 'Sin fórmula de referencia de precio'}
                                 </p>
                             </div>
                             <Button size="sm" asChild>
@@ -1536,21 +1542,36 @@ export default function ProductsShow({
                                         key={formula.id}
                                         className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30"
                                     >
-                                        <td className="p-4 font-mono font-medium">
-                                            v{formula.version}
+                                        <td className="p-4">
+                                            <div className="font-mono font-medium">
+                                                v{formula.version}
+                                            </div>
+                                            {formula.name && (
+                                                <div className="text-xs text-muted-foreground">
+                                                    {formula.name}
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="p-4">
-                                            <Badge
-                                                variant={
-                                                    formula.is_active
-                                                        ? 'default'
-                                                        : 'secondary'
-                                                }
-                                            >
-                                                {formula.is_active
-                                                    ? 'Activa'
-                                                    : 'Inactiva'}
-                                            </Badge>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                <Badge
+                                                    variant={
+                                                        formula.is_active
+                                                            ? 'default'
+                                                            : 'secondary'
+                                                    }
+                                                >
+                                                    {formula.is_active
+                                                        ? 'Activa'
+                                                        : 'Inactiva'}
+                                                </Badge>
+                                                {formula.is_price_reference && (
+                                                    <Badge variant="outline">
+                                                        <BadgeDollarSign aria-hidden="true" />
+                                                        Referencia de precio
+                                                    </Badge>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="p-4 text-muted-foreground">
                                             {formula.notes ?? '-'}

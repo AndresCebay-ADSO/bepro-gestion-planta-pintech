@@ -145,10 +145,13 @@ class Product extends Model
         return $this->hasMany(Formula::class, 'product_id');
     }
 
-    public function activeFormula(): HasOne
+    /**
+     * La fórmula con la que se costea el producto (D-FOR1). Puede tener otras activas para producir.
+     */
+    public function priceReferenceFormula(): HasOne
     {
         return $this->hasOne(Formula::class, 'product_id')
-            ->where('is_active', true);
+            ->where('is_price_reference', true);
     }
 
     public function productionOrders(): HasMany

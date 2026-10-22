@@ -54,7 +54,7 @@ y es lo correcto, porque el historial lo referencia.
 | --- | --- | --- | --- |
 | Producto | `products.deactivate` (Admin) | `products.delete` (SuperAdmin). Se lleva sus variantes y documentos si tampoco tienen historial | tiene órdenes de producción en curso, o stock de producto terminado en alguna presentación |
 | Variante (presentación) | `products.manage_variants` (Admin, Producción) | `products.manage_variants` | tiene stock de producto terminado, o una orden en curso la va a envasar |
-| Fórmula | `formulas.activate`: activar una versión desactiva la anterior (una activa por producto) | `formulas.delete` (SuperAdmin). En la práctica, solo una versión sin costos calculados ni órdenes | nunca: una orden en curso conserva sus propios detalles y no necesita que su fórmula siga activa |
+| Fórmula | `formulas.activate`: activa o desactiva cada versión; varias pueden estar activas (D-FOR1). Con el producto inactivo solo se desactivan | `formulas.delete` (SuperAdmin). Solo una versión sin costos calculados ni órdenes, y nunca la de referencia de precio | es la **referencia de precio** del producto: antes se marca otra con «Usar para el precio». Una orden en curso conserva sus propios detalles y no necesita que su fórmula siga activa |
 | Materia prima | `raw_materials.deactivate` (Admin) — ya implementado | `raw_materials.delete` (SuperAdmin) — ya implementado | tiene lotes con stock — ya implementado |
 | Bodega | `warehouses.edit` (Admin) | `warehouses.delete` (SuperAdmin) | tiene stock de materia prima o de producto terminado, saldos de producción disponibles u órdenes en curso |
 | Cliente | 🆕 `clients.deactivate` (Admin); 🆕 columna `is_active` | `clients.delete` (Admin) | nunca: sus cotizaciones y pedidos abiertos siguen su curso |

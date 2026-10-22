@@ -48,7 +48,7 @@ type Props = {
     categories: Option[];
     units: Option[];
     can: { managePrices: boolean; viewCosts: boolean; deactivate: boolean };
-    hasActiveFormula?: boolean;
+    hasPriceReferenceFormula?: boolean;
 };
 
 type ProductForm = {
@@ -72,7 +72,7 @@ export default function ProductsEdit({
     categories,
     units,
     can,
-    hasActiveFormula,
+    hasPriceReferenceFormula,
 }: Props) {
     const toInput = (value: number | string | null | undefined): string =>
         value !== null && value !== undefined && value !== ''
@@ -456,8 +456,8 @@ export default function ProductsEdit({
                                         className="cursor-not-allowed bg-muted/50"
                                     />
                                     <p className="text-xs text-muted-foreground">
-                                        {hasActiveFormula
-                                            ? 'Calculado automáticamente por la fórmula activa.'
+                                        {hasPriceReferenceFormula
+                                            ? 'Calculado automáticamente por la fórmula de referencia de precio.'
                                             : 'Se calculará automáticamente cuando se registre la fórmula de producción.'}
                                     </p>
                                 </div>

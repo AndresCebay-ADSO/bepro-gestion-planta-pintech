@@ -11,6 +11,7 @@ use App\Models\ProductionCost;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Services\Pricing\ProductionCostCalculatorService;
+use DomainException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -23,32 +24,44 @@ class ProductionCostRecalculationService
     public function __construct(
         private readonly VariantPricingService $variantPricingService,
         private readonly ProductionCostCalculatorService $productionCostCalculator,
-        private readonly DecimalCalculator $calculator
+        private readonly DecimalCalculator $calculator,
+        private readonly FormulaService $formulaService,
     ) {}
 
-    public function recalculateForProduct(int $productId, bool $forcePriceRefresh = false, ?int $formulaId = null): ?ProductionCost
+    /**
+     * Costo de granel del producto con su fórmula de referencia de precio (D-FOR1): las demás activas sirven para
+     * producir, pero no definen el precio de lista. Sin fórmula de referencia devuelve null y no toca nada.
+     */
+    public function recalculateForProduct(int $productId, bool $forcePriceRefresh = false): ?ProductionCost
     {
-        $query = Formula::query()
-            ->where('product_id', $productId)
-            ->where('is_active', true)
-            ->with(['details.rawMaterial:id,current_price']);
+        return DB::transaction(function () use ($productId, $forcePriceRefresh): ?ProductionCost {
+            $product = Product::query()
+                ->select('id', 'current_price', 'cif_percentage', 'price_threshold')
+                ->whereKey($productId)
+                ->lockForUpdate()
+                ->first();
 
-        if ($formulaId !== null) {
-            $query->where('id', $formulaId);
-        }
+            if ($product === null) {
+                return null;
+            }
 
-        $activeFormula = $query->first();
+            $referenceFormula = Formula::query()
+                ->where('product_id', $productId)
+                ->priceReference()
+                ->with(['details.unitOfMeasure', 'details.rawMaterial:id,unit_of_measure_id,current_price', 'details.rawMaterial.unitOfMeasure'])
+                ->first();
 
-        if ($activeFormula === null) {
-            return null;
-        }
+            if ($referenceFormula === null) {
+                return null;
+            }
 
-        return DB::transaction(function () use ($activeFormula, $productId, $forcePriceRefresh): ProductionCost {
             $calculatedCost = '0';
-            foreach ($activeFormula->details as $detail) {
-                $qty = (string) $detail->quantity;
+            foreach ($referenceFormula->details as $detail) {
+                // La línea va en su propia unidad (g, kg, gal…) y el precio es por la unidad de la materia prima: se
+                // convierte igual que al crear la OP (FOR-06).
+                $quantityInMaterialUnit = $this->formulaService->convertQuantity((string) $detail->quantity, $detail->unitOfMeasure, $detail->rawMaterial->unitOfMeasure);
                 $price = (string) ($detail->rawMaterial->current_price ?? 0);
-                $itemCost = $this->calculator->mul($qty, $price, 4);
+                $itemCost = $this->calculator->round($this->calculator->mul($quantityInMaterialUnit, $price, 10), 4);
                 $calculatedCost = $this->calculator->add($calculatedCost, $itemCost, 4);
             }
 
@@ -80,30 +93,25 @@ class ProductionCostRecalculationService
                 }
             }
 
-            $product = Product::query()
-                ->select('id', 'current_price', 'cif_percentage', 'price_threshold')
-                ->find($productId);
-            $productCifPercentage = $product?->cif_percentage !== null ? (string) $product->cif_percentage : null;
-            $priceThreshold = (string) ($product?->price_threshold ?? '0');
+            $productCifPercentage = $product->cif_percentage !== null ? (string) $product->cif_percentage : null;
+            $priceThreshold = (string) ($product->price_threshold ?? '0');
 
-            if ($product !== null) {
-                $productUpdates = ['current_cost' => $calculatedCost];
+            $productUpdates = ['current_cost' => $calculatedCost];
 
-                $shouldUpdatePrice = $forcePriceRefresh
-                    || $product->current_price === null
-                    || $this->calculator->cmp((string) $product->current_price, '0', 4) <= 0
-                    || ($variationPercentage !== null && $this->calculator->cmp(
-                        $this->calculator->abs($variationPercentage, 4),
-                        $priceThreshold,
-                        4
-                    ) >= 0);
+            $shouldUpdatePrice = $forcePriceRefresh
+                || $product->current_price === null
+                || $this->calculator->cmp((string) $product->current_price, '0', 4) <= 0
+                || ($variationPercentage !== null && $this->calculator->cmp(
+                    $this->calculator->abs($variationPercentage, 4),
+                    $priceThreshold,
+                    4
+                ) >= 0);
 
-                if ($shouldUpdatePrice && $product->cif_percentage !== null) {
-                    $productUpdates['current_price'] = $this->productionCostCalculator->applyCifToCost($calculatedCost, (string) $product->cif_percentage);
-                }
-
-                $product->update($productUpdates);
+            if ($shouldUpdatePrice && $product->cif_percentage !== null) {
+                $productUpdates['current_price'] = $this->productionCostCalculator->applyCifToCost($calculatedCost, (string) $product->cif_percentage);
             }
+
+            $product->update($productUpdates);
 
             $this->repriceVariants(
                 variants: ProductVariant::query()->where('product_id', $productId)->get(self::VARIANT_COLUMNS),
@@ -115,7 +123,7 @@ class ProductionCostRecalculationService
 
             return ProductionCost::create([
                 'product_id' => $productId,
-                'formula_id' => (int) $activeFormula->id,
+                'formula_id' => (int) $referenceFormula->id,
                 'production_order_id' => null,
                 'cost' => $calculatedCost,
                 'unit_cost' => $calculatedCost,
@@ -125,10 +133,33 @@ class ProductionCostRecalculationService
         });
     }
 
+    /**
+     * Como recalculateForProduct(), pero un producto que no se puede costear no tumba a quien llama: queda en el log
+     * (`Log::warning`) y devuelve null. Hoy solo pasa con una línea cuya unidad no se convierte a la de su materia prima,
+     * que la aplicación ya no deja guardar: datos cargados sin validar (P-5, CL-07). Para los recorridos, donde un dato malo
+     * no debe frenar a los demás productos, y para después de guardar, cuando el cambio ya quedó hecho.
+     *
+     * @param  array<string, int>  $context  Lo que disparó el recálculo (materia prima, unidad, fórmula), para el log.
+     */
+    public function recalculateForProductOrLog(int $productId, array $context = []): ?ProductionCost
+    {
+        try {
+            return $this->recalculateForProduct($productId);
+        } catch (DomainException $exception) {
+            Log::warning('No se pudo recalcular el costo del producto: se deja como estaba.', [
+                'product_id' => $productId,
+                ...$context,
+                'reason' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
     public function recalculateForRawMaterial(int $rawMaterialId): int
     {
         $productIds = Formula::query()
-            ->where('is_active', true)
+            ->priceReference()
             ->whereHas('details', fn ($query) => $query->where('raw_material_id', $rawMaterialId))
             ->pluck('product_id')
             ->unique()
@@ -137,7 +168,7 @@ class ProductionCostRecalculationService
 
         $recalculated = 0;
         foreach ($productIds as $productId) {
-            if ($this->recalculateForProduct((int) $productId) !== null) {
+            if ($this->recalculateForProductOrLog((int) $productId, ['raw_material_id' => $rawMaterialId]) !== null) {
                 $recalculated++;
             }
         }
@@ -150,10 +181,36 @@ class ProductionCostRecalculationService
     }
 
     /**
+     * Recalcula los productos cuya fórmula de referencia convierte con esta unidad: una línea escrita en ella o una materia
+     * prima que se mide en ella. Se llama al corregir su equivalencia (RecalculateUnitDependentCosts).
+     */
+    public function recalculateForUnit(int $unitOfMeasureId): int
+    {
+        $productIds = Formula::query()
+            ->priceReference()
+            ->whereHas('details', fn ($query) => $query
+                ->where('unit_of_measure_id', $unitOfMeasureId)
+                ->orWhereHas('rawMaterial', fn ($material) => $material->where('unit_of_measure_id', $unitOfMeasureId)))
+            ->pluck('product_id')
+            ->unique()
+            ->values()
+            ->all();
+
+        $recalculated = 0;
+        foreach ($productIds as $productId) {
+            if ($this->recalculateForProductOrLog((int) $productId, ['unit_of_measure_id' => $unitOfMeasureId]) !== null) {
+                $recalculated++;
+            }
+        }
+
+        return $recalculated;
+    }
+
+    /**
      * Recalcula solo las presentaciones que usan la materia prima como envase o etiqueta, con el costo de granel que ya
      * tiene su producto. No pasa por `recalculateForProduct`: el granel no cambió, y recalcularlo dejaría en el historial
      * de costos un registro sin variación por cada producto que usa ese envase. Cubre también los productos sin fórmula
-     * activa, que `recalculateForProduct` salta.
+     * de referencia, que `recalculateForProduct` salta.
      *
      * @param  list<int>  $exceptProductIds
      */
@@ -196,7 +253,7 @@ class ProductionCostRecalculationService
     }
 
     /**
-     * Precio de un producto sin fórmula activa y de sus presentaciones, con el costo de granel que ya tiene (al cambiar su
+     * Precio de un producto sin fórmula de referencia y de sus presentaciones, con el costo de granel que ya tiene (al cambiar su
      * CIF o su umbral). Misma regla que con fórmula: sin costo de granel no se toca nada (el precio quedaría en 0), y sin
      * CIF no se calcula precio, ni en el producto ni en sus presentaciones (VariantPricingService).
      */

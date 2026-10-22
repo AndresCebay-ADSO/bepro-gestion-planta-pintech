@@ -6,15 +6,23 @@ namespace App\Http\Requests\Formulas;
 
 use App\Enums\NumberType;
 use App\Enums\RawMaterialType;
+use App\Enums\TextFormat;
+use App\Http\Requests\Concerns\NormalizesText;
 use App\Models\Formula;
 use App\Rules\RawMaterialOfType;
+use App\Services\FormulaService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreFormulaRequest extends FormRequest
 {
+    use NormalizesText;
+
     protected function prepareForValidation(): void
     {
+        $this->merge($this->normalizedText(['name' => TextFormat::Name]));
+
         $details = $this->input('details', []);
 
         if (is_array($details)) {
@@ -45,12 +53,12 @@ class StoreFormulaRequest extends FormRequest
     {
         return array_merge(
             [
+                // Solo productos activos (D-FOR3). CreateFormulaAction lo vuelve a revisar con el producto bloqueado.
                 'product_id' => [
                     'required',
                     'integer',
-                    Rule::exists('products', 'id'),
+                    Rule::exists('products', 'id')->where('is_active', true),
                 ],
-                'is_active' => ['boolean'],
                 'return_to' => ['nullable', 'string', 'max:2048'],
             ],
             $this->commonRules()
@@ -63,6 +71,8 @@ class StoreFormulaRequest extends FormRequest
     protected function commonRules(): array
     {
         return [
+            // Para distinguir las activas de un producto en el selector de la OP («RAL 7035»). Columna varchar(60).
+            'name' => ['nullable', 'string', 'max:60'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'details' => ['required', 'array', 'min:1'],
             'details.*.raw_material_id' => [
@@ -86,11 +96,39 @@ class StoreFormulaRequest extends FormRequest
     }
 
     /**
+     * @return list<callable>
+     */
+    public function after(): array
+    {
+        return [
+            // Una línea en una unidad que no se convierte a la de su materia prima (kg de un solvente que se compra por
+            // litro) no se puede costear ni producir: hoy lo descubría la planta al crear la OP (FOR-02).
+            function (Validator $validator): void {
+                $details = $this->input('details');
+
+                if (! is_array($details) || $validator->errors()->has('details')) {
+                    return;
+                }
+
+                // Solo las líneas cuya materia prima y unidad ya pasaron sus reglas (existen, activas y enteras). Aviso
+                // temprano: las acciones de crear y editar lo vuelven a revisar con las materias primas bloqueadas.
+                $lines = array_filter($details, fn ($detail, $index): bool => ! $validator->errors()->has("details.{$index}.raw_material_id")
+                    && ! $validator->errors()->has("details.{$index}.unit_of_measure_id"), ARRAY_FILTER_USE_BOTH);
+
+                foreach (app(FormulaService::class)->unconvertibleLines($lines) as $index => $message) {
+                    $validator->errors()->add("details.{$index}.unit_of_measure_id", $message);
+                }
+            },
+        ];
+    }
+
+    /**
      * @return array<string, string>
      */
     public function messages(): array
     {
         return [
+            'product_id.exists' => 'Selecciona un producto activo.',
             'details.required' => 'La fórmula debe tener al menos un ingrediente.',
             'details.min' => 'La fórmula debe tener al menos un ingrediente.',
             'details.*.raw_material_id.required' => 'Selecciona la materia prima del ingrediente.',
@@ -106,6 +144,7 @@ class StoreFormulaRequest extends FormRequest
     public function attributes(): array
     {
         return [
+            'name' => 'nombre',
             'details' => 'ingredientes',
             'details.*.raw_material_id' => 'materia prima',
             'details.*.quantity' => 'cantidad',

@@ -8,7 +8,6 @@ use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\Product;
 use App\Models\RawMaterial;
-use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Services\ProductionCostRecalculationService;
 use Illuminate\Database\Seeder;
@@ -20,7 +19,6 @@ class FormulaSeeder extends Seeder
      */
     public function run(ProductionCostRecalculationService $recalculationService): void
     {
-        $kgUnit = UnitOfMeasure::where('symbol', 'kg')->orWhere('name', 'Kilogramo')->first();
         $admin = User::first();
 
         // Estructura de prueba para fórmulas de productos específicos
@@ -202,10 +200,13 @@ class FormulaSeeder extends Seeder
                 continue;
             }
 
+            // La siembra corre sin eventos de modelo (WithoutModelEvents en DatabaseSeeder), así que la regla de Formula que
+            // deja de referencia la primera activa no actúa aquí: la v1 se marca a mano. Sin referencia no se costea.
             $formula = Formula::firstOrCreate(
                 ['product_id' => $product->id, 'version' => 1],
                 [
                     'is_active' => true,
+                    'is_price_reference' => true,
                     'created_by' => $admin?->id,
                     'notes' => 'Fórmula base importada para pruebas y desarrollo.',
                 ]
@@ -245,7 +246,9 @@ class FormulaSeeder extends Seeder
                     'formula_id' => $formula->id,
                     'raw_material_id' => $rm->id,
                     'quantity' => $quantity,
-                    'unit_of_measure_id' => $kgUnit?->id ?? $rm->unit_of_measure_id,
+                    // En la unidad de la materia prima (kg, o L para el agua): una línea en kg de una MP en litros no se
+                    // puede convertir, ni para costear ni para crear la OP (FOR-02).
+                    'unit_of_measure_id' => $rm->unit_of_measure_id,
                     'step_order' => $step,
                 ]);
 

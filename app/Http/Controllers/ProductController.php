@@ -201,7 +201,7 @@ class ProductController extends Controller
                 'quality_solids_upper' => $product->quality_solids_upper,
                 'is_active' => $product->is_active,
             ],
-            'hasActiveFormula' => $product->activeFormula()->exists(),
+            'hasPriceReferenceFormula' => $product->priceReferenceFormula()->exists(),
             'categories' => ProductCategory::query()->selectable([$product->category_id])->select('id', 'name')->orderBy('name')->get(),
             'units' => UnitOfMeasure::query()->selectable([$product->unit_of_measure_id])->select('id', 'name', 'symbol')->orderBy('name')->get(),
             'can' => [
@@ -255,7 +255,7 @@ class ProductController extends Controller
                     forcePriceRefresh: true
                 );
 
-                // Sin fórmula activa: el precio del producto y el de sus presentaciones con el costo que ya tiene.
+                // Sin fórmula de referencia: el precio del producto y el de sus presentaciones con el costo que ya tiene.
                 if ($costRecord === null) {
                     $this->productionCostRecalculationService->repriceProductWithoutFormula($product);
                 }
@@ -343,7 +343,9 @@ class ProductController extends Controller
                 'formulas' => $product->formulas->map(fn (Formula $formula): array => [
                     'id' => $formula->id,
                     'version' => $formula->version,
+                    'name' => $formula->name,
                     'is_active' => $formula->is_active,
+                    'is_price_reference' => $formula->is_price_reference,
                     'notes' => $formula->notes,
                     'created_at' => $formula->created_at,
                     'created_by' => $formula->createdBy ? ['name' => $formula->createdBy->name] : null,

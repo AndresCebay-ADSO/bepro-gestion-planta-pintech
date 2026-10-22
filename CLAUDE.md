@@ -30,8 +30,9 @@ php artisan roles:audit        # Custom roles with reserved permissions or broke
 ./vendor/bin/pest --filter="creates a production order"    # Filter by name
 php artisan test --compact
 
-# Testing against PostgreSQL. CI runs the suite on both engines: SQLite has no CHECK constraints,
-# no advisory locks and no partial indexes, so those paths are only exercised here.
+# Testing against PostgreSQL. CI runs the suite on both engines: SQLite only enforces CHECK constraints declared in
+# CREATE TABLE (the project adds them with ALTER TABLE, PostgreSQL only) and has no advisory locks, so those paths are
+# only exercised here. Partial and expression indexes created with DB::statement work in both.
 docker compose -f compose.dev.yaml up -d postgres
 docker compose -f compose.dev.yaml exec -T postgres psql -U postgres -c "CREATE DATABASE pintech_erp_test"
 DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_DATABASE=pintech_erp_test DB_USERNAME=postgres \

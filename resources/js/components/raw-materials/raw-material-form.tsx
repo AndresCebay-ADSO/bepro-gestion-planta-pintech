@@ -79,6 +79,8 @@ type Props = {
     submitLabel: string;
     /** Puede fijar el precio de una materia prima sin control de inventario (`costs.update`). */
     canEditPrice: boolean;
+    /** Con historial o en uso (lotes, movimientos, fórmulas, envase o etiqueta) la unidad no cambia (RM-04): el servidor lo niega. */
+    unitLocked?: boolean;
 };
 
 // Stock mínimo y precio: decimal(12,4), los límites por defecto de DecimalInput. Umbral: hasta 100 con 2 decimales.
@@ -121,6 +123,7 @@ export function RawMaterialForm({
     onSubmit,
     submitLabel,
     canEditPrice,
+    unitLocked = false,
 }: Props) {
     /**
      * Clean submit handler
@@ -181,6 +184,7 @@ export function RawMaterialForm({
                             onValueChange={(value) =>
                                 form.setData('unit_of_measure_id', value)
                             }
+                            disabled={unitLocked}
                         >
                             <SelectTrigger id="unit" className="w-full min-w-0">
                                 <SelectValue placeholder="Seleccionar unidad" />
@@ -196,6 +200,12 @@ export function RawMaterialForm({
                                 ))}
                             </SelectContent>
                         </Select>
+                        {unitLocked && (
+                            <p className="text-xs text-muted-foreground">
+                                No se puede cambiar: la materia prima ya tiene
+                                historial o está en uso.
+                            </p>
+                        )}
                         <InputError message={form.errors.unit_of_measure_id} />
                     </div>
                     {/* Category */}

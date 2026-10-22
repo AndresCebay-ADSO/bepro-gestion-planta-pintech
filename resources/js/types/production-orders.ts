@@ -32,6 +32,7 @@ export type ProductionOrderRawMaterial = {
 
 export type ProductionOrderDetail = {
     id: number;
+    step_order?: number | null;
     raw_material?: ProductionOrderRawMaterial | null;
     planned_quantity: FormNumberValue;
     display_quantity?: FormNumberValue | null;
@@ -153,6 +154,7 @@ export type ProductionOrder = {
     } | null;
     formula?: {
         version?: FormNumberValue | null;
+        name?: string | null;
     } | null;
     warehouse?: {
         name?: string | null;
@@ -190,6 +192,8 @@ export type ProductionOrderShowProps = {
 
 export type ProductionOrderIngredientFormRow = {
     id: number;
+    /** Paso de la fórmula: la misma materia prima puede ir en varios pasos (D-FOR2). */
+    step_order?: number | null;
     raw_material_name?: string | null;
     raw_material_unit?: string | null;
     planned_quantity: FormNumberValue;

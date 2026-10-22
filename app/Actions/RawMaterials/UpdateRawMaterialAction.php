@@ -10,6 +10,7 @@ use App\Models\InventoryBatch;
 use App\Models\RawMaterial;
 use App\Services\AlertService;
 use App\Services\DecimalCalculator;
+use App\Services\RawMaterialUsageService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -22,9 +23,12 @@ class UpdateRawMaterialAction
 {
     public const STOCK_BLOCKS_UNTRACKING_MESSAGE = 'No se puede quitar el control de inventario: la materia prima tiene saldo en bodega. Consúmelo o ajústalo primero.';
 
+    public const ACTIVITY_LOCKS_UNIT_MESSAGE = 'No se puede cambiar la unidad: la materia prima ya tiene historial o está en uso.';
+
     public function __construct(
         private readonly DecimalCalculator $calculator,
         private readonly AlertService $alertService,
+        private readonly RawMaterialUsageService $usage,
     ) {}
 
     /**
@@ -45,6 +49,17 @@ class UpdateRawMaterialAction
             if ($stopsTracking && InventoryBatch::query()->where('raw_material_id', $locked->id)->where('remaining_quantity', '>', 0)->exists()) {
                 throw ValidationException::withMessages([
                     'tracks_inventory' => __(self::STOCK_BLOCKS_UNTRACKING_MESSAGE),
+                ]);
+            }
+
+            // RM-04, con la fila bloqueada: el request lo revisó antes. Una línea de fórmula, un lote o un movimiento que se
+            // crean a la vez apuntan a esta fila (clave foránea) y esperan este bloqueo, así que lo que llegó antes se ve aquí.
+            $changesUnit = array_key_exists('unit_of_measure_id', $validated)
+                && (int) $validated['unit_of_measure_id'] !== (int) $locked->unit_of_measure_id;
+
+            if ($changesUnit && $this->usage->hasActivity($locked)) {
+                throw ValidationException::withMessages([
+                    'unit_of_measure_id' => __(self::ACTIVITY_LOCKS_UNIT_MESSAGE),
                 ]);
             }
 

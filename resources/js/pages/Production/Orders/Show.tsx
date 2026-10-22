@@ -595,6 +595,7 @@ export default function ProductionOrderShow({
 function mapDetailToIngredientFormRow(detail: ProductionOrderDetail) {
     return {
         id: detail.id,
+        step_order: detail.step_order ?? null,
         raw_material_name: detail.raw_material?.code,
         raw_material_unit: detail.raw_material?.unit_symbol,
         planned_quantity: detail.planned_quantity,

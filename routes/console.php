@@ -36,7 +36,7 @@ Artisan::command(
             $result = $service->recalculateForProduct((int) $product->id);
 
             if ($result === null) {
-                $this->warn("Producto {$product->name}: sin fórmula activa, no se recalculó.");
+                $this->warn("Producto {$product->name}: sin fórmula de referencia de precio, no se recalculó.");
 
                 return Command::SUCCESS;
             }
@@ -52,7 +52,7 @@ Artisan::command(
 
         Product::query()
             ->select('id')
-            ->whereHas('activeFormula')
+            ->whereHas('priceReferenceFormula')
             ->orderBy('id')
             ->chunkById($chunkSize, function ($products) use ($service, &$total, &$recalculated): void {
                 foreach ($products as $product) {
@@ -63,7 +63,7 @@ Artisan::command(
                 }
             });
 
-        $this->info("Productos con fórmula activa procesados: {$total}");
+        $this->info("Productos con fórmula de referencia procesados: {$total}");
         $this->info("Productos recalculados: {$recalculated}");
 
         return Command::SUCCESS;

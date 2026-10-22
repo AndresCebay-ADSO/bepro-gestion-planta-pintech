@@ -54,6 +54,7 @@ export function OrderInfoCard({
                     <span className="text-muted-foreground">Fórmula:</span>
                     <span className="font-medium">
                         v{order.formula?.version}
+                        {order.formula?.name && ` · ${order.formula.name}`}
                     </span>
                 </div>
                 <div className="flex justify-between">

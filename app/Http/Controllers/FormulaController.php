@@ -4,20 +4,22 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\Shared\DeleteUnusedRecordAction;
+use App\Actions\Formulas\ChangeFormulaActiveAction;
+use App\Actions\Formulas\CreateFormulaAction;
+use App\Actions\Formulas\DeleteFormulaAction;
+use App\Actions\Formulas\SetPriceReferenceFormulaAction;
+use App\Actions\Formulas\UpdateFormulaAction;
 use App\Filters\FormulaFilter;
 use App\Http\Requests\Formulas\IndexFormulaRequest;
 use App\Http\Requests\Formulas\StoreFormulaRequest;
 use App\Http\Requests\Formulas\UpdateFormulaRequest;
 use App\Models\Formula;
-use App\Models\FormulaDetail;
 use App\Models\Product;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
-use App\Services\ProductionCostRecalculationService;
+use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,8 +27,11 @@ use Inertia\Response;
 class FormulaController extends Controller
 {
     public function __construct(
-        private readonly ProductionCostRecalculationService $productionCostRecalculationService,
-        private readonly DeleteUnusedRecordAction $deleteUnused,
+        private readonly DeleteFormulaAction $deleteFormula,
+        private readonly CreateFormulaAction $createFormula,
+        private readonly SetPriceReferenceFormulaAction $setPriceReference,
+        private readonly ChangeFormulaActiveAction $changeActive,
+        private readonly UpdateFormulaAction $updateFormula,
     ) {}
 
     public function index(IndexFormulaRequest $request): Response
@@ -63,47 +68,16 @@ class FormulaController extends Controller
     {
         $this->authorize('create', Formula::class);
 
-        $validated = $request->validated();
+        $formula = $this->createFormula->execute($request->validated(), (int) $request->user()->id);
 
-        $formula = DB::transaction(function () use ($validated, $request): Formula {
-            // Auto-increment version for this product
-            $nextVersion = Formula::where('product_id', $validated['product_id'])
-                ->max('version') + 1;
-
-            $formula = Formula::create([
-                'product_id' => $validated['product_id'],
-                'version' => $nextVersion,
-                'is_active' => true,
-                'notes' => $validated['notes'] ?? null,
-                'created_by' => $request->user()->id,
+        $message = $formula->is_price_reference
+            ? __('Fórmula v:version creada. Es la referencia de precio del producto.', ['version' => $formula->version])
+            : __('Fórmula v:version creada y activa. El precio del producto sigue saliendo de la v:reference.', [
+                'version' => $formula->version,
+                'reference' => Formula::query()->where('product_id', $formula->product_id)->priceReference()->value('version'),
             ]);
 
-            foreach ($validated['details'] as $index => $detail) {
-                FormulaDetail::create([
-                    'formula_id' => $formula->id,
-                    'raw_material_id' => $detail['raw_material_id'],
-                    'quantity' => $detail['quantity'],
-                    'unit_of_measure_id' => $detail['unit_of_measure_id'],
-                    'step_order' => $index + 1,
-                ]);
-            }
-
-            return $formula;
-        });
-
-        $this->productionCostRecalculationService->recalculateForProduct(
-            (int) $formula->product_id,
-            false,
-            (int) $formula->id,
-        );
-
-        return $this->redirectWithContext(
-            $request,
-            'formulas.index',
-            [],
-            'success',
-            'Fórmula creada exitosamente y marcada como versión activa.',
-        );
+        return $this->redirectWithContext($request, 'formulas.index', [], 'success', $message);
     }
 
     public function show(Request $request, Formula $formula): Response
@@ -126,6 +100,7 @@ class FormulaController extends Controller
             'returnTo' => $this->resolveReturnTo($request),
             'can' => [
                 'update' => Gate::allows('update', $formula),
+                'activate' => Gate::allows('activate', $formula),
                 'delete' => Gate::allows('delete', $formula),
             ],
         ]);
@@ -135,10 +110,9 @@ class FormulaController extends Controller
     {
         $this->authorize('update', $formula);
 
-        if ($formula->productionOrders()->exists()) {
-            return redirect()
-                ->route('formulas.show', $formula)
-                ->with('error', 'Esta fórmula ya fue usada en órdenes de producción y no se puede editar.');
+        // Mismas reglas y mensajes que al guardar (UpdateFormulaAction): usada en una OP, o producto inactivo (P9-13).
+        if (($blocker = $this->updateFormula->blocker($formula)) !== null) {
+            return redirect()->route('formulas.show', $formula)->with('error', $blocker);
         }
 
         $formula->load([
@@ -156,39 +130,10 @@ class FormulaController extends Controller
     {
         $this->authorize('update', $formula);
 
-        if ($formula->productionOrders()->exists()) {
-            return redirect()
-                ->route('formulas.show', $formula)
-                ->with('error', 'Esta fórmula ya fue usada en órdenes de producción y no se puede editar.');
-        }
-
-        $validated = $request->validated();
-
-        DB::transaction(function () use ($formula, $validated): void {
-            $formula->update([
-                'notes' => $validated['notes'] ?? null,
-                'is_active' => $validated['is_active'],
-            ]);
-
-            $formula->details()->delete();
-
-            foreach ($validated['details'] as $index => $detail) {
-                FormulaDetail::create([
-                    'formula_id' => $formula->id,
-                    'raw_material_id' => $detail['raw_material_id'],
-                    'quantity' => $detail['quantity'],
-                    'unit_of_measure_id' => $detail['unit_of_measure_id'],
-                    'step_order' => $index + 1,
-                ]);
-            }
-        });
-
-        if ($formula->is_active) {
-            $this->productionCostRecalculationService->recalculateForProduct(
-                (int) $formula->product_id,
-                false,
-                (int) $formula->id
-            );
+        try {
+            $this->updateFormula->execute($formula, $request->validated());
+        } catch (DomainException $exception) {
+            return redirect()->route('formulas.show', $formula)->with('error', $exception->getMessage());
         }
 
         return redirect()
@@ -200,9 +145,14 @@ class FormulaController extends Controller
     {
         $this->authorize('delete', $formula);
 
-        // Solo si ninguna orden ni ningún costo la usó; sus ingredientes se van con ella (docs/POLITICA_ELIMINACION.md).
-        if (! $this->deleteUnused->execute($formula)) {
-            return back()->with('error', __('La fórmula tiene historial (órdenes de producción o costos calculados). Activa otra versión en su lugar.'));
+        try {
+            $deleted = $this->deleteFormula->execute($formula);
+        } catch (DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        if (! $deleted) {
+            return back()->with('error', __('La fórmula tiene historial (órdenes de producción o costos calculados). Desactívala en su lugar.'));
         }
 
         return redirect()->route('formulas.index')
@@ -210,24 +160,55 @@ class FormulaController extends Controller
     }
 
     /**
-     * Activates this formula version and deactivates all others for the same product.
+     * Activa esta fórmula sin tocar las demás: un producto puede tener varias activas (D-FOR1).
      */
     public function activate(Formula $formula): RedirectResponse
     {
         $this->authorize('activate', $formula);
 
-        DB::transaction(function () use ($formula) {
-            Formula::where('product_id', $formula->product_id)
-                ->where('is_active', true)
-                ->update(['is_active' => false]);
-
-            $formula->update(['is_active' => true]);
-        });
-
-        $this->productionCostRecalculationService->recalculateForProduct((int) $formula->product_id);
+        try {
+            $formula = $this->changeActive->execute($formula, true);
+        } catch (DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
 
         return redirect()->route('formulas.show', $formula)
-            ->with('success', 'Fórmula v'.$formula->version.' activada correctamente.');
+            ->with('success', $formula->is_price_reference
+                ? __('Fórmula v:version activada. Es la referencia de precio del producto.', ['version' => $formula->version])
+                : __('Fórmula v:version activada.', ['version' => $formula->version]));
+    }
+
+    public function deactivate(Formula $formula): RedirectResponse
+    {
+        $this->authorize('activate', $formula);
+
+        try {
+            $this->changeActive->execute($formula, false);
+        } catch (DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return redirect()->route('formulas.show', $formula)
+            ->with('success', __('Fórmula v:version desactivada.', ['version' => $formula->version]));
+    }
+
+    /**
+     * «Usar para el precio»: el producto pasa a costearse con esta fórmula.
+     */
+    public function priceReference(Formula $formula): RedirectResponse
+    {
+        $this->authorize('activate', $formula);
+
+        try {
+            $changed = $this->setPriceReference->execute($formula);
+        } catch (DomainException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return redirect()->route('formulas.show', $formula)
+            ->with('success', $changed
+                ? __('El precio del producto ahora sale de la fórmula v:version.', ['version' => $formula->version])
+                : __('La fórmula v:version ya era la referencia de precio.', ['version' => $formula->version]));
     }
 
     /**

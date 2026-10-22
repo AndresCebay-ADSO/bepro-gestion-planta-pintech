@@ -62,6 +62,20 @@ it('filters by product name', function (): void {
     );
 });
 
+it('filters by formula name', function (): void {
+    actingAs($this->admin);
+    $named = Formula::factory()->for($this->productA)->create(['name' => 'RAL 7035', 'created_by' => $this->admin->id]);
+
+    get(route('formulas.index', ['search' => 'ral 7035']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Formulas/Index')
+            ->has('formulas.data', 1)
+            ->where('formulas.data.0.id', $named->id)
+            ->where('formulas.data.0.name', 'RAL 7035')
+        );
+});
+
 it('filters by status active', function (): void {
     actingAs($this->admin);
 
