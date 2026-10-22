@@ -78,11 +78,13 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
         $type = is_string($this->input('type')) ? InventoryMovementType::tryFrom($this->input('type')) : null;
         $reason = is_string($this->input('reason')) ? FinishedInventoryMovementReason::tryFrom($this->input('reason')) : null;
 
-        if ($type === null || $reason === null) {
+        // Un traslado no tiene tipo propio: el formulario lo envía como salida y el controlador lo trata como traslado
+        // sea cual sea el tipo. Su destino y su stock los revisan `validateTransferFields` y el servicio.
+        if ($type === null || $reason === null || $reason === FinishedInventoryMovementReason::Transfer) {
             return;
         }
 
-        $validReasons = FinishedInventoryMovementReason::forType($type);
+        $validReasons = FinishedInventoryMovementReason::manualReasonsFor($type);
 
         if (! in_array($reason, $validReasons, true)) {
             $validator->errors()->add('reason', __('La razón seleccionada no es válida para este tipo de movimiento.'));
