@@ -34,8 +34,23 @@ trait ProfileValidationRules
             'email' => $this->emailRules($userId),
             'phone' => ['nullable', 'string', 'max:15'],
             'job_title' => ['nullable', 'string', 'max:255'],
-            'signature' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:1024', 'dimensions:max_width=4000,max_height=4000'],
+            // `bail`: un archivo que no es una imagen recibe un solo mensaje, no tres.
+            'signature' => ['nullable', 'bail', 'image', 'mimes:png,jpg,jpeg', 'max:1024', 'dimensions:max_width=4000,max_height=4000'],
             'remove_signature' => ['nullable', 'boolean'],
+        ];
+    }
+
+    /**
+     * Mensajes de la firma, iguales en el perfil y en Usuarios: dicen qué archivo se espera, no solo «dimensiones no válidas».
+     *
+     * @return array<string, string>
+     */
+    protected function signatureMessages(): array
+    {
+        return [
+            'signature.image' => 'La firma debe ser una imagen PNG o JPG.',
+            'signature.mimes' => 'La firma debe ser una imagen PNG o JPG.',
+            'signature.dimensions' => 'La firma debe medir como máximo 4000 × 4000 píxeles.',
         ];
     }
 

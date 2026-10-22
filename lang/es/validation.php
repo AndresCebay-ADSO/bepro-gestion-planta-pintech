@@ -308,5 +308,19 @@ return [
         'users' => 'usuarios',
         'token' => 'token',
         'is_default' => 'predeterminado',
+
+        // Otros campos que un formulario o un filtro puede devolver con error (auditoría 3.6, USR-01 e INV-12)
+        'created_by' => 'usuario que registra',
+        'signature' => 'firma',
+        'remove_signature' => 'quitar firma',
+        'log_name' => 'registro',
+        'event' => 'evento',
+        'severity' => 'severidad',
+        'completed_from' => 'completada desde',
+        'completed_to' => 'completada hasta',
+        'shrink_wrap_type_id' => 'tipo de termoencogido',
+        'label_raw_material_id' => 'etiqueta',
+        'confirm_tracking_change' => 'confirmación del cambio de control de inventario',
+        'permissions.*' => 'permiso',
     ],
 ];
