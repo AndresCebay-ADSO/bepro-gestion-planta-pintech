@@ -255,7 +255,7 @@ class ProductController extends Controller
                     forcePriceRefresh: true
                 );
 
-                // Sin fórmula activa: el precio del producto y el de sus presentaciones con el costo que ya tiene.
+                // Sin fórmula de referencia: el precio del producto y el de sus presentaciones con el costo que ya tiene.
                 if ($costRecord === null) {
                     $this->productionCostRecalculationService->repriceProductWithoutFormula($product);
                 }

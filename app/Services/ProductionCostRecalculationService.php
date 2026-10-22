@@ -34,17 +34,27 @@ class ProductionCostRecalculationService
      */
     public function recalculateForProduct(int $productId, bool $forcePriceRefresh = false): ?ProductionCost
     {
-        $referenceFormula = Formula::query()
-            ->where('product_id', $productId)
-            ->priceReference()
-            ->with(['details.unitOfMeasure', 'details.rawMaterial:id,unit_of_measure_id,current_price', 'details.rawMaterial.unitOfMeasure'])
-            ->first();
+        return DB::transaction(function () use ($productId, $forcePriceRefresh): ?ProductionCost {
+            $product = Product::query()
+                ->select('id', 'current_price', 'cif_percentage', 'price_threshold')
+                ->whereKey($productId)
+                ->lockForUpdate()
+                ->first();
 
-        if ($referenceFormula === null) {
-            return null;
-        }
+            if ($product === null) {
+                return null;
+            }
 
-        return DB::transaction(function () use ($referenceFormula, $productId, $forcePriceRefresh): ProductionCost {
+            $referenceFormula = Formula::query()
+                ->where('product_id', $productId)
+                ->priceReference()
+                ->with(['details.unitOfMeasure', 'details.rawMaterial:id,unit_of_measure_id,current_price', 'details.rawMaterial.unitOfMeasure'])
+                ->first();
+
+            if ($referenceFormula === null) {
+                return null;
+            }
+
             $calculatedCost = '0';
             foreach ($referenceFormula->details as $detail) {
                 // La línea va en su propia unidad (g, kg, gal…) y el precio es por la unidad de la materia prima: se
@@ -83,30 +93,25 @@ class ProductionCostRecalculationService
                 }
             }
 
-            $product = Product::query()
-                ->select('id', 'current_price', 'cif_percentage', 'price_threshold')
-                ->find($productId);
-            $productCifPercentage = $product?->cif_percentage !== null ? (string) $product->cif_percentage : null;
-            $priceThreshold = (string) ($product?->price_threshold ?? '0');
+            $productCifPercentage = $product->cif_percentage !== null ? (string) $product->cif_percentage : null;
+            $priceThreshold = (string) ($product->price_threshold ?? '0');
 
-            if ($product !== null) {
-                $productUpdates = ['current_cost' => $calculatedCost];
+            $productUpdates = ['current_cost' => $calculatedCost];
 
-                $shouldUpdatePrice = $forcePriceRefresh
-                    || $product->current_price === null
-                    || $this->calculator->cmp((string) $product->current_price, '0', 4) <= 0
-                    || ($variationPercentage !== null && $this->calculator->cmp(
-                        $this->calculator->abs($variationPercentage, 4),
-                        $priceThreshold,
-                        4
-                    ) >= 0);
+            $shouldUpdatePrice = $forcePriceRefresh
+                || $product->current_price === null
+                || $this->calculator->cmp((string) $product->current_price, '0', 4) <= 0
+                || ($variationPercentage !== null && $this->calculator->cmp(
+                    $this->calculator->abs($variationPercentage, 4),
+                    $priceThreshold,
+                    4
+                ) >= 0);
 
-                if ($shouldUpdatePrice && $product->cif_percentage !== null) {
-                    $productUpdates['current_price'] = $this->productionCostCalculator->applyCifToCost($calculatedCost, (string) $product->cif_percentage);
-                }
-
-                $product->update($productUpdates);
+            if ($shouldUpdatePrice && $product->cif_percentage !== null) {
+                $productUpdates['current_price'] = $this->productionCostCalculator->applyCifToCost($calculatedCost, (string) $product->cif_percentage);
             }
+
+            $product->update($productUpdates);
 
             $this->repriceVariants(
                 variants: ProductVariant::query()->where('product_id', $productId)->get(self::VARIANT_COLUMNS),

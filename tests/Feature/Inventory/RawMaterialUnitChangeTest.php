@@ -6,6 +6,7 @@ use App\Actions\RawMaterials\UpdateRawMaterialAction;
 use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
+use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -46,7 +47,7 @@ it('no deja cambiar la unidad de una materia prima que ya está en una fórmula'
     ]);
 
     ($this->update)($this->liter->id)
-        ->assertSessionHasErrors(['unit_of_measure_id' => 'No se puede cambiar la unidad: la materia prima ya tiene lotes, movimientos o fórmulas en la unidad actual.']);
+        ->assertSessionHasErrors(['unit_of_measure_id' => UpdateRawMaterialAction::ACTIVITY_LOCKS_UNIT_MESSAGE]);
 
     expect($this->material->fresh()->unit_of_measure_id)->toBe($this->kg->id);
 });
@@ -97,7 +98,19 @@ it('no cambia la unidad si la actividad apareció después de validar', function
     ]);
 
     expect(fn () => app(UpdateRawMaterialAction::class)->execute($this->material, ['unit_of_measure_id' => $this->liter->id]))
-        ->toThrow(ValidationException::class, 'No se puede cambiar la unidad: la materia prima ya tiene lotes, movimientos o fórmulas en la unidad actual.');
+        ->toThrow(ValidationException::class, UpdateRawMaterialAction::ACTIVITY_LOCKS_UNIT_MESSAGE);
+
+    expect($this->material->fresh()->unit_of_measure_id)->toBe($this->kg->id);
+});
+
+// Cuando la materia prima no tiene lotes ni fórmulas, pero se usa como envase de una presentación, también bloquea el cambio (CodeRabbit PR 9).
+it('no deja cambiar la unidad si la materia prima se usa como envase de una presentación', function () {
+    ProductVariant::factory()->create([
+        'package_raw_material_id' => $this->material->id,
+    ]);
+
+    ($this->update)($this->liter->id)
+        ->assertSessionHasErrors(['unit_of_measure_id' => UpdateRawMaterialAction::ACTIVITY_LOCKS_UNIT_MESSAGE]);
 
     expect($this->material->fresh()->unit_of_measure_id)->toBe($this->kg->id);
 });

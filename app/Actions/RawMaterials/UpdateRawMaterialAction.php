@@ -23,7 +23,7 @@ class UpdateRawMaterialAction
 {
     public const STOCK_BLOCKS_UNTRACKING_MESSAGE = 'No se puede quitar el control de inventario: la materia prima tiene saldo en bodega. Consúmelo o ajústalo primero.';
 
-    public const ACTIVITY_LOCKS_UNIT_MESSAGE = 'No se puede cambiar la unidad: la materia prima ya tiene lotes, movimientos o fórmulas en la unidad actual.';
+    public const ACTIVITY_LOCKS_UNIT_MESSAGE = 'No se puede cambiar la unidad: la materia prima ya tiene historial o está en uso.';
 
     public function __construct(
         private readonly DecimalCalculator $calculator,

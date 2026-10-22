@@ -79,7 +79,7 @@ type Props = {
     submitLabel: string;
     /** Puede fijar el precio de una materia prima sin control de inventario (`costs.update`). */
     canEditPrice: boolean;
-    /** Con lotes, movimientos o fórmulas la unidad no cambia (RM-04): el servidor lo niega. */
+    /** Con historial o en uso (lotes, movimientos, fórmulas, envase o etiqueta) la unidad no cambia (RM-04): el servidor lo niega. */
     unitLocked?: boolean;
 };
 
@@ -202,8 +202,8 @@ export function RawMaterialForm({
                         </Select>
                         {unitLocked && (
                             <p className="text-xs text-muted-foreground">
-                                No se puede cambiar: ya tiene lotes, movimientos
-                                o fórmulas en esta unidad.
+                                No se puede cambiar: la materia prima ya tiene
+                                historial o está en uso.
                             </p>
                         )}
                         <InputError message={form.errors.unit_of_measure_id} />
