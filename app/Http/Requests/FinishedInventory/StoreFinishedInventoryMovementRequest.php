@@ -74,8 +74,9 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
 
     private function validateReasonForType(Validator $validator): void
     {
-        $type = InventoryMovementType::tryFrom((string) $this->input('type'));
-        $reason = FinishedInventoryMovementReason::tryFrom((string) $this->input('reason'));
+        // Un arreglo ya lo rechazan `in` y `required`; aquí solo se compara lo que sí es texto.
+        $type = is_string($this->input('type')) ? InventoryMovementType::tryFrom($this->input('type')) : null;
+        $reason = is_string($this->input('reason')) ? FinishedInventoryMovementReason::tryFrom($this->input('reason')) : null;
 
         if ($type === null || $reason === null) {
             return;

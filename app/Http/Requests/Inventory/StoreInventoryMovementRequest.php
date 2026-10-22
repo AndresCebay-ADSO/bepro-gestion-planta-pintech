@@ -79,7 +79,10 @@ class StoreInventoryMovementRequest extends FormRequest
                     if ($this->input('type') === 'entry') {
                         $lotNumber = $this->input('lot_number');
 
-                        if ($lotNumber === null || trim((string) $lotNumber) === '') {
+                        // Un arreglo o un número ya los rechaza la regla `string`: aquí solo se revisa que haya texto.
+                        $missing = $lotNumber === null || (is_string($lotNumber) && trim($lotNumber) === '');
+
+                        if ($missing) {
                             $validator->errors()->add('lot_number', __('Debes indicar el número de lote para crear un lote nuevo.'));
                         }
                     }
