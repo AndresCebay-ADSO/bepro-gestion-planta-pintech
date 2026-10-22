@@ -30,7 +30,8 @@ class ConvertQuotationToOrderRequest extends FormRequest
             'priority' => ['required', Rule::enum(SalesOrderPriority::class)],
             'required_date' => ['bail', 'required', PlantDate::make()->notPast()],
             'notes' => ['nullable', 'string', 'max:2000'],
-            'shipping_address' => ['nullable', 'string', 'max:'.Client::SHIPPING_ADDRESS_MAX_LENGTH],
+            // La dirección de entrega se confirma al convertir (D-CLI3): llena con la del cliente, pero no puede quedar vacía.
+            'shipping_address' => ['required', 'string', 'max:'.Client::SHIPPING_ADDRESS_MAX_LENGTH],
         ];
     }
 }

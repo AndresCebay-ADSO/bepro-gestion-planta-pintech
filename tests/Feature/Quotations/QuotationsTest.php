@@ -667,6 +667,7 @@ it('carries the color of each quotation item to the order', function () {
     $this->actingAs($this->comercialUser)
         ->post(route('quotations.convert-to-order', $quotation), [
             'priority' => 'high',
+            'shipping_address' => 'Calle 1 # 2-3, Cali',
             'required_date' => now()->addDays(5)->format('Y-m-d'),
         ])
         ->assertRedirect();
@@ -684,6 +685,7 @@ it('prevents converting non-accepted quotation', function () {
     $this->actingAs($this->comercialUser)
         ->post(route('quotations.convert-to-order', $quotation), [
             'priority' => 'medium',
+            'shipping_address' => 'Calle 1 # 2-3, Cali',
             'required_date' => now()->addDays(5)->format('Y-m-d'),
         ])
         ->assertForbidden();
@@ -773,6 +775,7 @@ it('prevents converting quotation without items', function () {
         ->post(route('quotations.convert-to-order', $quotation), [
             'priority' => 'medium',
             'required_date' => now()->addDays(5)->format('Y-m-d'),
+            'shipping_address' => 'Calle 1 # 2-3, Cali',
         ])
         ->assertSessionHasErrors(['status']);
 });
@@ -873,7 +876,7 @@ it('rejects invalid priority when converting quotation', function () {
         ->assertInvalid(['priority']);
 });
 
-it('allows converting quotation without shipping_address', function () {
+it('requires the shipping_address to convert a quotation (D-CLI3)', function () {
     $quotation = Quotation::factory()->create([
         'client_id' => $this->client->id,
         'created_by' => $this->comercialUser->id,
@@ -898,12 +901,9 @@ it('allows converting quotation without shipping_address', function () {
             'priority' => 'medium',
             'required_date' => now()->addDays(5)->format('Y-m-d'),
         ])
-        ->assertRedirect();
+        ->assertSessionHasErrors('shipping_address');
 
-    $order = SalesOrder::latest()->first();
-
-    expect($order)->not->toBeNull();
-    expect($order->shipping_address)->toBeNull();
+    expect(SalesOrder::query()->count())->toBe(0);
 });
 
 it('requires sales_orders.create to convert a quotation into an order', function () {

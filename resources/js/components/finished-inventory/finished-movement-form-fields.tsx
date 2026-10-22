@@ -267,6 +267,7 @@ export function FinishedMovementFormFields({
             <div className="space-y-2">
                 <Label htmlFor="finished_product_key">Producto</Label>
                 <Combobox
+                    id="finished_product_key"
                     options={productOptions}
                     value={activeProductKey}
                     onChange={(value) => {
@@ -324,6 +325,7 @@ export function FinishedMovementFormFields({
             <div className="space-y-2">
                 <Label htmlFor="finished_product_batch_id">Lote PT</Label>
                 <Combobox
+                    id="finished_product_batch_id"
                     options={filteredBatches.map((batch) => ({
                         id: String(batch.id),
                         label: batchLabel(batch),

@@ -23,6 +23,17 @@ enum ProductionOrderStatus: string
         return [self::Pending, self::InProgress, self::PendingReview];
     }
 
+    /**
+     * Estados desde los que se puede cancelar una orden: aún no se entregó a revisión ni se completó. Los usa la acción
+     * y el botón «Cancelar orden» del detalle (D-OPX2). Una orden en revisión se devuelve a planta antes.
+     *
+     * @return array<int, self>
+     */
+    public static function cancellable(): array
+    {
+        return [self::Pending, self::InProgress];
+    }
+
     public function label(): string
     {
         return match ($this) {

@@ -106,7 +106,7 @@ combinación, se crea un rol nuevo.
 | | `production_orders.submit_for_review` | [x] | [x] | [x] | [x] | [ ] | ⚠️ hoy solo Operador puede enviar a revisión. |
 | | `production_orders.reject_review` | [x] | [x] | [x] | [ ] | [ ] | |
 | | `production_orders.complete` | [x] | [x] | [x] | [ ] | [ ] | Descuenta inventario FIFO. |
-| | `production_orders.cancel` | [x] | [x] | [ ] | [ ] | [ ] | Coincide con hoy: el código usa `can('delete')` para cancelar. **Una orden no se elimina** (principio 4). |
+| | `production_orders.cancel` | [x] | [x] | [ ] | [ ] | [ ] | Botón «Cancelar orden» del detalle (D-OPX2): solo con la orden pendiente o en curso (`ProductionOrderStatus::cancellable()`), con motivo obligatorio de 10 a 1.000 caracteres. Los saldos que la orden ya consumió **no vuelven** al inventario hasta que se haga B66; quedan en la nota de cancelación. **Una orden no se elimina** (principio 4). |
 | | `production_orders.export` | [x] | [x] | [x] | [x] | [ ] | PDF + Excel juntos. Los costos del archivo dependen de `costs.view`. |
 | | `production_orders.print_labels` | [x] | [x] | [x] | [ ] | [ ] | Estampita de lote (DYMO) de una presentación del plan de envasado, en cualquier estado menos cancelada; las copias se eligen al imprimir. La primera impresión crea el QR de la orden; no reactiva un QR desactivado. |
 | **Remanentes** | `production_remnants.view` | [x] | [x] | [x] | [x] | [ ] | El costo por galón solo con `costs.view`. ⚠️ hoy se envía a todos (`RemnantController:47`). |

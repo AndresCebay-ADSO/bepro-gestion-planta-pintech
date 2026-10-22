@@ -26,6 +26,8 @@ interface ComboboxProps {
     emptyText?: string;
     className?: string;
     disabled?: boolean;
+    /** El `id` del campo de texto: la etiqueta lo señala y el foco va a él cuando el servidor rechaza el valor. */
+    id?: string;
 }
 
 export function Combobox({
@@ -35,7 +37,8 @@ export function Combobox({
     placeholder = "Seleccionar...",
     emptyText = "Sin resultados.",
     className,
-    disabled = false
+    disabled = false,
+    id
 }: ComboboxProps) {
     const [query, setQuery] = useState('');
     const [isOpen, setIsOpen] = useState(false);
@@ -70,6 +73,7 @@ export function Combobox({
                         disabled && "cursor-not-allowed opacity-50"
                     )}>
                         <ComboboxInput
+                            id={id}
                             className="w-full border-none bg-transparent p-0 text-sm text-foreground outline-hidden placeholder:text-muted-foreground focus:ring-0"
                             displayValue={() => selectedOption?.label || ''}
                             onChange={(event) => setQuery(event.target.value)}

@@ -266,16 +266,18 @@ class WarehouseController extends Controller
         $validated = $request->validated();
 
         $user = $request->user();
-        $warehouse = Warehouse::query()->findOrFail($validated['warehouse_id']);
 
-        $this->authorize('view', $warehouse);
+        // Cambiar de bodega es para todo usuario autenticado, pero solo entre las que tiene disponibles: las asignadas, o
+        // todas con `warehouses.view_all` (MATRIZ_RBAC §5). No pide `warehouses.view`, que el operario no tiene (BOD-01).
+        // Una bodega inactiva o ajena no está entre las disponibles: se rechaza en vez de activar otra en silencio (BOD-03).
+        $warehouseId = (int) $validated['warehouse_id'];
+        $isAvailable = $this->warehouseContextService->availableWarehouses($user)->contains('id', $warehouseId);
 
-        $currentWarehouse = $this->warehouseContextService->resolveCurrentWarehouse($user, (int) $warehouse->id);
-        if (! $currentWarehouse) {
+        if (! $isAvailable) {
             return back()->with('error', __('No tienes acceso a la bodega seleccionada.'));
         }
 
-        $request->session()->put('current_warehouse_id', $currentWarehouse->id);
+        $request->session()->put('current_warehouse_id', $warehouseId);
 
         return back()->with('success', __('Bodega activa actualizada.'));
     }

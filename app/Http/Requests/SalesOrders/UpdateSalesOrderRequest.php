@@ -33,7 +33,8 @@ class UpdateSalesOrderRequest extends FormRequest
             'priority' => ['sometimes', Rule::enum(SalesOrderPriority::class)],
             'estimated_delivery_date' => ['sometimes', 'bail', 'nullable', $this->estimatedDeliveryDateRule()],
             'notes' => ['sometimes', 'nullable', 'string', 'max:2000'],
-            'shipping_address' => ['sometimes', 'nullable', 'string', 'max:'.Client::SHIPPING_ADDRESS_MAX_LENGTH],
+            // Si llega, no puede quedar vacía (D-CLI3); una edición que no la toca la deja como estaba.
+            'shipping_address' => ['sometimes', 'required', 'string', 'max:'.Client::SHIPPING_ADDRESS_MAX_LENGTH],
             'client_contact_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'client_phone' => ['sometimes', ...$this->phoneRules()],
             'client_business_name' => ['sometimes', 'nullable', 'string', 'max:255'],

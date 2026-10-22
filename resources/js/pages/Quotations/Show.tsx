@@ -329,7 +329,7 @@ export default function QuotationsShow({
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="shipping_address">
-                                                Dirección de envío
+                                                Dirección de envío *
                                             </Label>
                                             <Textarea
                                                 id="shipping_address"
@@ -346,6 +346,12 @@ export default function QuotationsShow({
                                                     )
                                                 }
                                             />
+                                            <p className="text-xs text-muted-foreground">
+                                                {quotation.client
+                                                    .shipping_address
+                                                    ? 'Dirección registrada del cliente. Cámbiala si este pedido va a otro lugar.'
+                                                    : 'Este cliente no tiene dirección registrada: escribe a dónde va este pedido.'}
+                                            </p>
                                             {convertForm.errors
                                                 .shipping_address && (
                                                 <p className="text-sm text-destructive">

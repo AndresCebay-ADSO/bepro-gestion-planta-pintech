@@ -91,6 +91,7 @@ test('con precio manual se guarda el precio digitado (pesos enteros) y el ajuste
 test('la cantidad de un pedido es un número entero de unidades', function (): void {
     $payload = fn (string $quantity): array => [
         'client_id' => $this->client->id, 'priority' => 'high', 'required_date' => plantToday(),
+        'shipping_address' => 'Calle 1 # 2-3, Cali',
         'items' => [['product_id' => $this->product->id, 'product_variant_id' => $this->variant->id, 'quantity' => $quantity]],
     ];
 

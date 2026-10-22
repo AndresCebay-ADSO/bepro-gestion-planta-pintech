@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\SystemRole;
 use App\Models\Client;
 use App\Models\SalesOrder;
+use App\Models\User;
 
 /*
  * Auditoría 3.6, PR 10 (PV-02, D-PV2, CLI-03, USR-04, USR-03): NIT y teléfono de contacto con una sola regla en el
@@ -75,9 +76,18 @@ it('applies the same phone rule to sales orders and to the user profile', functi
         ->assertSessionHasNoErrors();
 });
 
-it('rejects an email without a full domain', function (): void {
-    $user = actingAsRole(SystemRole::Admin, ['email_verified_at' => now()]);
+it('rejects an email without a full domain when an administrator creates or edits a user', function (): void {
+    actingAsRole(SystemRole::Admin, ['email_verified_at' => now()]);
+    $target = User::factory()->create();
+    $target->assignRole(SystemRole::Operator->value);
+    $message = 'El correo electrónico debe incluir un dominio completo, por ejemplo empresa.com.';
 
-    $this->patch(route('profile.update'), ['name' => $user->name, 'email' => 'nuevo@pintech'])
-        ->assertSessionHasErrors(['email' => 'El correo electrónico debe incluir un dominio completo, por ejemplo empresa.com.']);
+    $this->post(route('users.store'), [
+        'name' => 'Usuario sin dominio', 'email' => 'nuevo@pintech', 'password' => 'password',
+        'password_confirmation' => 'password', 'role' => SystemRole::Operator->value, 'is_active' => true,
+    ])->assertSessionHasErrors(['email' => $message]);
+
+    $this->put(route('users.update', $target), [
+        'name' => $target->name, 'email' => 'nuevo@pintech', 'role' => SystemRole::Operator->value, 'is_active' => true,
+    ])->assertSessionHasErrors(['email' => $message]);
 });

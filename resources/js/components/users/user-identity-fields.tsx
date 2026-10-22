@@ -26,6 +26,8 @@ export interface UserIdentityFieldsProps<
     disabled?: boolean;
     className?: string;
     showSignature?: boolean;
+    /** El correo no se cambia aquí (el perfil, D-USR1): un administrador lo cambia desde Usuarios. */
+    emailReadOnly?: boolean;
 }
 
 export const UserIdentityFields = <
@@ -38,6 +40,7 @@ export const UserIdentityFields = <
     disabled = false,
     className = 'space-y-6',
     showSignature = true,
+    emailReadOnly = false,
 }: UserIdentityFieldsProps<T>) => {
     return (
         <div className={className}>
@@ -54,6 +57,7 @@ export const UserIdentityFields = <
                         setData('name', e.target.value as T['name'])
                     }
                     required
+                    maxLength={255}
                     autoComplete="name"
                     placeholder="Ej: Juan Pérez"
                     disabled={disabled}
@@ -79,10 +83,20 @@ export const UserIdentityFields = <
                         )
                     }
                     required
+                    maxLength={255}
+                    readOnly={emailReadOnly}
+                    className={
+                        emailReadOnly ? 'cursor-not-allowed bg-muted/50' : ''
+                    }
                     autoComplete="username"
                     placeholder="juan@pintech.com"
                     disabled={disabled}
                 />
+                {emailReadOnly && (
+                    <p className="text-xs text-muted-foreground">
+                        Para cambiar tu correo, pídelo a un administrador.
+                    </p>
+                )}
                 <InputError message={errors.email} />
             </div>
 
@@ -96,6 +110,7 @@ export const UserIdentityFields = <
                     onChange={(e) =>
                         setData('job_title', e.target.value as T['job_title'])
                     }
+                    maxLength={255}
                     placeholder="Ej: Gerente de Producción"
                     disabled={disabled}
                 />
@@ -113,6 +128,7 @@ export const UserIdentityFields = <
                     onChange={(e) =>
                         setData('phone', e.target.value as T['phone'])
                     }
+                    maxLength={20}
                     placeholder="Ej: 3001234567"
                     disabled={disabled}
                 />

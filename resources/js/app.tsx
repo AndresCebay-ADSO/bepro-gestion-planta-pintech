@@ -1,9 +1,10 @@
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/Settings/layout';
+import { focusFirstError } from '@/lib/focus-first-error';
 
 let appName = import.meta.env.VITE_APP_NAME || 'Pintech Colombia S.A.S';
 
@@ -55,3 +56,9 @@ createInertiaApp({
 
 // This will set light / dark mode on load...
 initializeTheme();
+
+// Tras un envío con errores del servidor, el foco va al primer campo con error en todos los formularios (INV-11). Se
+// espera a que React pinte los mensajes y los atributos del campo antes de buscarlo.
+router.on('error', (event) => {
+    window.setTimeout(() => focusFirstError(event.detail.errors), 50);
+});

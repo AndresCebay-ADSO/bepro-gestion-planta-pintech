@@ -54,12 +54,9 @@ class ProfileController extends Controller
 
         try {
             DB::transaction(function () use ($user, $validated) {
+                // El correo no cambia desde el perfil (D-USR1): solo llega el mismo, a lo sumo con otras mayúsculas, y no
+                // hay nada que volver a verificar.
                 $user->fill($validated);
-
-                if ($user->isDirty('email')) {
-                    $user->email_verified_at = null;
-                }
-
                 $user->save();
             });
         } catch (\Throwable $e) {

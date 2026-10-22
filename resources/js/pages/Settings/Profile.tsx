@@ -82,6 +82,7 @@ export default function Profile({
                         errors={errors}
                         currentSignatureUrl={currentSignatureUrl}
                         disabled={processing}
+                        emailReadOnly
                     />
 
                     {mustVerifyEmail && user.email_verified_at === null && (

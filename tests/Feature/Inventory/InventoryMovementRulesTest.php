@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\SystemRole;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
 use App\Models\RawMaterial;
@@ -87,4 +88,51 @@ it('does not run the lot date check when the date itself is invalid', function (
     $this->post(route('inventory-movements.store'), movementBody($this, ['movement_date' => 'abc']))
         ->assertSessionHasErrors(['movement_date'])
         ->assertSessionDoesntHaveErrors(['batch_id']);
+});
+
+// Auditoría 3.6, PR 10 (INV-06, D6): solo la fábrica recibe materia prima. Los almacenes reciben producto terminado.
+
+it('rejects a raw material movement in a warehouse that is not a factory (D6)', function (string $type): void {
+    $storage = Warehouse::factory()->storage()->create();
+
+    $this->post(route('inventory-movements.store'), movementBody($this, [
+        'type' => $type,
+        'batch_id' => null,
+        'warehouse_id' => $storage->id,
+        'cost_price' => '10',
+        'lot_number' => 'LOTE-ALMACEN',
+    ]))->assertSessionHasErrors(['warehouse_id' => 'La materia prima solo se registra en la fábrica. Los almacenes reciben producto terminado.']);
+
+    expect(InventoryMovement::query()->count())->toBe(0);
+})->with(['entry', 'exit']);
+
+it('still accepts a movement in an active factory', function (): void {
+    $this->post(route('inventory-movements.store'), movementBody($this))
+        ->assertSessionDoesntHaveErrors(['warehouse_id']);
+});
+
+it('offers only the factories in the movement form and lists the lots from the oldest entry first (INV-04)', function (): void {
+    $storage = Warehouse::factory()->storage()->create(['name' => 'Almacén Norte']);
+    // Entradas en orden inverso al de creación: el id más alto es el lote más antiguo.
+    $newest = InventoryBatch::factory()->create([
+        'raw_material_id' => $this->rawMaterial->id, 'warehouse_id' => $this->warehouse->id, 'remaining_quantity' => '5',
+        'entry_date' => '2026-10-15', 'lot_number' => 'NUEVO',
+    ]);
+    $oldest = InventoryBatch::factory()->create([
+        'raw_material_id' => $this->rawMaterial->id, 'warehouse_id' => $this->warehouse->id, 'remaining_quantity' => '5',
+        'entry_date' => '2026-09-01', 'lot_number' => 'VIEJO',
+    ]);
+
+    $response = $this->withHeaders([
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => (string) app(HandleInertiaRequests::class)->version(request()),
+        'X-Inertia-Partial-Component' => 'Inventory/Movements/Index',
+        'X-Inertia-Partial-Data' => 'warehouses,batches',
+    ])->get(route('inventory-movements.index'));
+
+    $response->assertOk();
+    expect(collect($response->json('props.warehouses'))->pluck('id')->all())->toBe([$this->warehouse->id])
+        ->and(collect($response->json('props.warehouses'))->pluck('id')->all())->not->toContain($storage->id)
+        ->and(collect($response->json('props.batches'))->pluck('lot_number')->all())->toBe(['VIEJO', $this->batch->lot_number, 'NUEVO'])
+        ->and($response->json('props.batches.0'))->toHaveKeys(['entry_date', 'expiry_date']);
 });

@@ -6,9 +6,11 @@ namespace App\Http\Requests\Inventory;
 
 use App\Enums\InventoryMovementType;
 use App\Enums\NumberType;
+use App\Enums\WarehouseType;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
 use App\Models\RawMaterial;
+use App\Models\Warehouse;
 use App\Rules\PlantDate;
 use App\Services\InventoryService;
 use App\Services\TimezoneService;
@@ -39,7 +41,18 @@ class StoreInventoryMovementRequest extends FormRequest
                     }
                 },
             ],
-            'warehouse_id' => ['bail', 'required', 'integer', Rule::exists('warehouses', 'id')->where('is_active', true)],
+            // Solo la fábrica recibe materia prima (D6, INV-06): los almacenes reciben producto terminado por Movimientos de PT.
+            'warehouse_id' => [
+                'bail',
+                'required',
+                'integer',
+                Rule::exists('warehouses', 'id')->where('is_active', true),
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if (Warehouse::query()->whereKey((int) $value)->where('type', '!=', WarehouseType::Factory->value)->exists()) {
+                        $fail(__('La materia prima solo se registra en la fábrica. Los almacenes reciben producto terminado.'));
+                    }
+                },
+            ],
             'batch_id' => ['nullable', 'integer', Rule::exists('inventory_batches', 'id')],
             'production_order_id' => ['prohibited'],
             'type' => ['bail', 'required', Rule::in(['entry', 'exit'])],

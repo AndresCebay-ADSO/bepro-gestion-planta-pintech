@@ -7,6 +7,7 @@ import {
 import { FormattedDate } from '@/components/formatted-date';
 
 import { FormattedNumber } from '@/components/formatted-number';
+import { CancelOrderDialog } from '@/components/production/cancel-order-dialog';
 import { OrderColorDialog } from '@/components/production/order-color-dialog';
 import { Badge } from '@/components/ui/badge';
 import type {
@@ -18,6 +19,8 @@ type OrderHeaderProps = {
     order: ProductionOrder;
     /** Corregir el color: quien puede crear órdenes, con la orden abierta (`can.updateColor`). */
     canUpdateColor?: boolean;
+    /** Cancelar la orden: permiso y estado pendiente o en curso (`can.cancel`, D-OPX2). */
+    canCancel?: boolean;
 };
 
 function statusLabel(status: ProductionOrderStatus): string {
@@ -53,7 +56,14 @@ function statusVariant(
 export function OrderHeader({
     order,
     canUpdateColor = false,
+    canCancel = false,
 }: OrderHeaderProps) {
+    // Galones de saldo ya consumidos por la orden: no vuelven al inventario si se cancela (B66).
+    const consumedRemnantGallons = (order.remnant_consumptions ?? []).reduce(
+        (total, consumption) => total + Number(consumption.quantity_gallons),
+        0,
+    );
+
     return (
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
@@ -105,7 +115,14 @@ export function OrderHeader({
                     </p>
                 )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+                {canCancel && (
+                    <CancelOrderDialog
+                        orderId={order.id}
+                        orderNumber={order.order_number}
+                        consumedRemnantGallons={consumedRemnantGallons}
+                    />
+                )}
                 {order.status === 'completed' && order.completion_date && (
                     <div className="mr-4 flex items-center gap-2 font-medium text-green-600">
                         <CheckCircle2 className="h-5 w-5" />
