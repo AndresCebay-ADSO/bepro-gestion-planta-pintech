@@ -92,6 +92,17 @@ class ProductionOrderPolicy
     }
 
     /**
+     * El botón «Cancelar orden» (D-OPX2): el permiso de cancelar y una orden pendiente o en curso. Es aparte de `cancel`
+     * a propósito: `cancel` autoriza la petición antes de bloquear la fila, y con el estado dentro una página vieja que
+     * cancela una orden ya completada recibiría un 403 en vez del aviso de la acción.
+     */
+    public function cancelable(User $user, ProductionOrder $productionOrder): bool
+    {
+        return $this->cancel($user, $productionOrder)
+            && in_array($productionOrder->status, ProductionOrderStatus::cancellable(), true);
+    }
+
+    /**
      * Corregir el color que pidió el cliente (3.4): quien puede crear la orden, mientras siga abierta (pendiente, en
      * curso o en revisión). Al completarla se congela: el certificado ya se guardó con el nombre de ese momento.
      */

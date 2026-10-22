@@ -194,3 +194,28 @@ it('keeps consumed remnants consumed and writes them in the cancellation note (p
 it('has the cancellable statuses in one place', function () {
     expect(ProductionOrderStatus::cancellable())->toBe([ProductionOrderStatus::Pending, ProductionOrderStatus::InProgress]);
 });
+
+it('lists the consumed remnants in the cancellation note in the order they were consumed', function () {
+    $order = makeOrderForCancellationTest($this, ProductionOrderStatus::InProgress);
+    $remnant = function (object $context) {
+        $source = makeOrderForCancellationTest($context, ProductionOrderStatus::Completed);
+
+        return [$source, ProductionRemnant::create([
+            'source_order_id' => $source->id, 'product_id' => $context->formula->product_id,
+            'warehouse_id' => $context->warehouse->id, 'original_quantity_gallons' => 10, 'original_quantity_kg' => 50,
+            'available_quantity_gallons' => 10, 'available_quantity_kg' => 50, 'density_kg_per_gallon' => 5,
+            'cost_per_gallon' => 5.5, 'status' => RemnantStatus::Available, 'created_by' => $context->user->id,
+        ])];
+    };
+    [$firstSource, $first] = $remnant($this);
+    [$secondSource, $second] = $remnant($this);
+    $consume = app(ConsumeRemnantAction::class);
+    $firstConsumption = $consume->execute($first, $order, '1', $this->user);
+    $consume->execute($second, $order, '2', $this->user);
+    // Un UPDATE mueve la fila: sin ORDER BY, PostgreSQL la devuelve al final en un barrido secuencial.
+    $firstConsumption->update(['notes' => 'reubicada']);
+
+    $this->post(route('production-orders.cancel', $order), ['reason' => 'Ya no se va a producir'])->assertSessionHasNoErrors();
+
+    expect($order->fresh()->notes)->toContain("{$firstSource->order_number} 1 gal; {$secondSource->order_number} 2 gal");
+});

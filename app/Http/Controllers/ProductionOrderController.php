@@ -187,8 +187,8 @@ class ProductionOrderController extends Controller
                 'consumeRemnant' => $user?->can('consumeRemnant', $productionOrder) ?? false,
                 'updateColor' => $user?->can('updateColor', $productionOrder) ?? false,
                 'printLabels' => $user?->can('printLabels', $productionOrder) ?? false,
-                // El botón «Cancelar orden» (D-OPX2): permiso y estado cancelable. La acción vuelve a revisar el estado con la fila bloqueada.
-                'cancel' => ($user?->can('cancel', $productionOrder) ?? false) && in_array($productionOrder->status, ProductionOrderStatus::cancellable(), true),
+                // El botón «Cancelar orden» (D-OPX2). La acción vuelve a revisar el estado con la fila bloqueada.
+                'cancel' => $user?->can('cancelable', $productionOrder) ?? false,
             ],
         ]);
     }

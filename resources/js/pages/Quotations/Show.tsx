@@ -347,9 +347,10 @@ export default function QuotationsShow({
                                                 }
                                             />
                                             <p className="text-xs text-muted-foreground">
-                                                Dirección registrada del
-                                                cliente. Cámbiala si este pedido
-                                                va a otro lugar.
+                                                {quotation.client
+                                                    .shipping_address
+                                                    ? 'Dirección registrada del cliente. Cámbiala si este pedido va a otro lugar.'
+                                                    : 'Este cliente no tiene dirección registrada: escribe a dónde va este pedido.'}
                                             </p>
                                             {convertForm.errors
                                                 .shipping_address && (

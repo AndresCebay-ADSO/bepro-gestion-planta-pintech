@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { errorSelectorsFor, orderedErrorKeys } from '@/lib/focus-first-error';
+import {
+    errorSelectorsFor,
+    FALLBACK_SELECTORS,
+    orderedErrorKeys,
+} from '@/lib/focus-first-error';
 
 /*
  * Auditoría 3.6, INV-11: después de un 422 el foco no se movía al primer campo con error; en un cajón, un error arriba
@@ -46,6 +50,17 @@ describe('errorSelectorsFor: dónde buscar el campo de un error', () => {
         expect(errorSelectorsFor('a"b')).toEqual([
             '[id="a\\"b"]',
             '[name="a\\"b"]',
+        ]);
+    });
+});
+
+describe('FALLBACK_SELECTORS: qué mensaje se busca cuando ningún campo coincide', () => {
+    it('busca primero el error de un campo y después un aviso de la página', () => {
+        // Un `Alert` de la página (el aviso de una carrera perdida) suele estar arriba de todo: si fuera primero, el
+        // foco se iría allí y no al diálogo o al campo que hay que corregir.
+        expect(FALLBACK_SELECTORS).toEqual([
+            'p.text-destructive',
+            '[role="alert"]',
         ]);
     });
 });

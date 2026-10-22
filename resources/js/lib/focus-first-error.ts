@@ -34,16 +34,27 @@ export function errorSelectorsFor(key: string): string[] {
     return selectors;
 }
 
-/** Mensajes de error visibles que ningún campo reclamó (el resumen de errores, un aviso del diálogo). */
-const FALLBACK_SELECTOR = '[role="alert"], p.text-destructive';
+/**
+ * Dónde buscar un mensaje cuando ningún campo coincide con la llave del error, en este orden: primero el error de un
+ * campo (`InputError` y los párrafos de error de los formularios), y solo después un aviso de la página (`Alert`), que
+ * suele estar arriba de todo y no es el campo que hay que corregir.
+ */
+export const FALLBACK_SELECTORS = ['p.text-destructive', '[role="alert"]'];
+
+/** Un diálogo abierto (Radix): sus campos y sus errores van antes que los de la página que queda detrás. */
+const OPEN_DIALOG_SELECTOR =
+    '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]';
 
 export function focusFirstError(
     errors: ErrorBag,
     root: Document = document,
 ): boolean {
+    const scope: ParentNode =
+        root.querySelector<HTMLElement>(OPEN_DIALOG_SELECTOR) ?? root;
+
     for (const key of orderedErrorKeys(errors)) {
         for (const selector of errorSelectorsFor(key)) {
-            const element = root.querySelector<HTMLElement>(selector);
+            const element = scope.querySelector<HTMLElement>(selector);
 
             if (element === null || element.hasAttribute('disabled')) {
                 continue;
@@ -56,9 +67,11 @@ export function focusFirstError(
         }
     }
 
-    const message = root.querySelector<HTMLElement>(FALLBACK_SELECTOR);
+    const message = FALLBACK_SELECTORS.map((selector) =>
+        scope.querySelector<HTMLElement>(selector),
+    ).find((element) => element !== null);
 
-    if (message === null) {
+    if (!message) {
         return false;
     }
 

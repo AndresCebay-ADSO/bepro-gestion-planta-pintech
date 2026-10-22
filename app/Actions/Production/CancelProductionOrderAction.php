@@ -19,7 +19,7 @@ class CancelProductionOrderAction
         private readonly ProductionOrderLock $orderLock,
     ) {}
 
-    public function execute(ProductionOrder $order, User $user, ?string $reason = null): ProductionOrder
+    public function execute(ProductionOrder $order, User $user, string $reason): ProductionOrder
     {
         return DB::transaction(function () use ($order, $user, $reason): ProductionOrder {
             $cannotCancel = "No se puede cancelar una orden en estado ':status'.";
@@ -32,7 +32,7 @@ class CancelProductionOrderAction
 
             $parts = array_filter([
                 $lockedOrder->notes,
-                $reason !== null && $reason !== '' ? "Cancelación: {$reason}" : null,
+                "Cancelación: {$reason}",
                 $this->consumedRemnantsNote($lockedOrder),
             ]);
             $notes = $parts === [] ? null : trim(implode("\n\n", $parts));
@@ -55,7 +55,8 @@ class CancelProductionOrderAction
      */
     private function consumedRemnantsNote(ProductionOrder $order): ?string
     {
-        $consumptions = $order->remnantConsumptions()->with('remnant.sourceOrder:id,order_number')->get();
+        // En el orden en que se consumieron: sin `orderBy`, PostgreSQL las devuelve en el orden en que las encuentra.
+        $consumptions = $order->remnantConsumptions()->with('remnant.sourceOrder:id,order_number')->orderBy('id')->get();
 
         if ($consumptions->isEmpty()) {
             return null;

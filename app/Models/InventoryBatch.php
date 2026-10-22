@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\InventoryBatchFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -99,5 +100,22 @@ class InventoryBatch extends Model
     public function alerts(): HasMany
     {
         return $this->hasMany(Alert::class, 'batch_id');
+    }
+
+    /**
+     * Lotes con saldo.
+     */
+    public function scopeAvailable(Builder $query): void
+    {
+        $query->where('remaining_quantity', '>', 0);
+    }
+
+    /**
+     * Orden FIFO: el lote que primero entró va primero, y el id desempata los del mismo día. Lo usan el consumo de la
+     * OP (`InventoryBatchService`) y el cajón de movimientos, donde la salida manual la elige el usuario (INV-04).
+     */
+    public function scopeFifoOrder(Builder $query): void
+    {
+        $query->orderBy('entry_date')->orderBy('id');
     }
 }

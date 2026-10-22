@@ -66,3 +66,21 @@ it('reserva costos y cancelación a Admin', function (string $ability) {
         ->and(orderAbility(SystemRole::Production, $ability, $order))->toBeFalse()
         ->and(orderAbility(SystemRole::Operator, $ability, $order))->toBeFalse();
 })->with(['previewCosts', 'cancel']);
+
+// Auditoría 3.6, PR 10 (D-OPX2): el botón «Cancelar orden» se muestra con `cancelable` (permiso y estado cancelable). La
+// habilidad `cancel` sigue mirando solo el permiso, a propósito: una página vieja que cancela una orden ya completada
+// recibe el aviso de la acción, no un 403.
+it('ofrece cancelar solo con el permiso y la orden pendiente o en proceso', function (ProductionOrderStatus $status, bool $expected) {
+    expect(orderAbility(SystemRole::Admin, 'cancelable', orderInStatus($status)))->toBe($expected)
+        ->and(orderAbility(SystemRole::Admin, 'cancel', orderInStatus($status)))->toBeTrue();
+})->with([
+    'pendiente' => [ProductionOrderStatus::Pending, true],
+    'en proceso' => [ProductionOrderStatus::InProgress, true],
+    'en revisión' => [ProductionOrderStatus::PendingReview, false],
+    'completada' => [ProductionOrderStatus::Completed, false],
+    'cancelada' => [ProductionOrderStatus::Cancelled, false],
+]);
+
+it('no ofrece cancelar a quien no tiene el permiso', function () {
+    expect(orderAbility(SystemRole::Production, 'cancelable', orderInStatus(ProductionOrderStatus::Pending)))->toBeFalse();
+});

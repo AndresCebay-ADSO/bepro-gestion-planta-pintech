@@ -67,6 +67,9 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
         items: [] as ItemRow[],
     });
 
+    // El cliente elegido: la nota de la dirección cambia si tiene una registrada o no (D-CLI3).
+    const selectedClient = clients.find((c) => String(c.id) === data.client_id);
+
     const clientOptions = clients.map((c) => ({
         id: String(c.id),
         label: `${c.business_name}${c.contact_name ? ` — ${c.contact_name}` : ''}`,
@@ -315,11 +318,13 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                 }
                                 placeholder="Calle, número, colonia, ciudad, etc."
                             />
-                            <p className="text-xs text-muted-foreground">
-                                Se llena con la dirección registrada del
-                                cliente. Cámbiala si este pedido va a otro
-                                lugar; la del cliente no se modifica.
-                            </p>
+                            {selectedClient && (
+                                <p className="text-xs text-muted-foreground">
+                                    {selectedClient.shipping_address
+                                        ? 'Dirección registrada del cliente. Cámbiala si este pedido va a otro lugar; la del cliente no se modifica.'
+                                        : 'Este cliente no tiene dirección registrada: escribe a dónde va este pedido.'}
+                                </p>
+                            )}
                             {errors.shipping_address && (
                                 <p className="text-sm text-destructive">
                                     {errors.shipping_address}

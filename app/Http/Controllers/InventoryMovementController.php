@@ -75,11 +75,10 @@ class InventoryMovementController extends Controller
                     fn ($query) => $query->where('warehouse_id', $movementWarehouse->id),
                     fn ($query) => $query->whereRaw('1 = 0')
                 )
-                ->where('remaining_quantity', '>', 0)
+                ->available()
                 ->select('id', 'raw_material_id', 'warehouse_id', 'lot_number', 'remaining_quantity', 'unit_price', 'entry_date', 'expiry_date')
                 // FIFO: el lote que primero entró va primero, porque la salida manual la elige el usuario (INV-04).
-                ->orderBy('entry_date')
-                ->orderBy('id')
+                ->fifoOrder()
                 ->get())
                 ->once(as: 'inventory-movements:batches'),
             // Formulario de alta: solo las fábricas activas, que son las únicas que reciben materia prima (D6, INV-06).

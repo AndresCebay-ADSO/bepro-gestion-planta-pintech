@@ -22,9 +22,8 @@ class InventoryBatchService
         $query = InventoryBatch::query()
             ->where('raw_material_id', $rawMaterialId)
             ->where('warehouse_id', $warehouseId)
-            ->where('remaining_quantity', '>', 0)
-            ->orderBy('entry_date')
-            ->orderBy('id');
+            ->available()
+            ->fifoOrder();
 
         if ($lockForUpdate) {
             $query->lockForUpdate();
@@ -47,9 +46,8 @@ class InventoryBatchService
         return InventoryBatch::query()
             ->where('warehouse_id', $warehouseId)
             ->whereIn('raw_material_id', $rawMaterialIds)
-            ->where('remaining_quantity', '>', 0)
-            ->orderBy('entry_date')
-            ->orderBy('id')
+            ->available()
+            ->fifoOrder()
             ->get($columns);
     }
 

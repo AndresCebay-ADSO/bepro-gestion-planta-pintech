@@ -68,7 +68,8 @@ class WarehouseContextService
             return $currentWarehouse;
         }
 
-        $factoryWarehouse = Warehouse::query()->where('type', WarehouseType::Factory->value)->where('is_active', true)->first();
+        // Con más de una fábrica, siempre la misma: sin `orderBy`, PostgreSQL devuelve la que encuentre primero.
+        $factoryWarehouse = Warehouse::query()->where('type', WarehouseType::Factory->value)->where('is_active', true)->orderBy('id')->first();
 
         return $factoryWarehouse ?? $currentWarehouse;
     }
