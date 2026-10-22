@@ -304,7 +304,7 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
 
                         <div className="space-y-2">
                             <Label htmlFor="shipping_address">
-                                Dirección de entrega
+                                Dirección de entrega *
                             </Label>
                             <Textarea
                                 id="shipping_address"
@@ -315,6 +315,11 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                 }
                                 placeholder="Calle, número, colonia, ciudad, etc."
                             />
+                            <p className="text-xs text-muted-foreground">
+                                Se llena con la dirección registrada del
+                                cliente. Cámbiala si este pedido va a otro
+                                lugar; la del cliente no se modifica.
+                            </p>
                             {errors.shipping_address && (
                                 <p className="text-sm text-destructive">
                                     {errors.shipping_address}

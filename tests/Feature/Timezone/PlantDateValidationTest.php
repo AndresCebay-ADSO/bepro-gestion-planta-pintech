@@ -64,6 +64,7 @@ describe('pedidos de venta: fecha requerida al crear (PV-01)', function (): void
             'client_id' => $this->client->id,
             'priority' => 'medium',
             'required_date' => $date,
+            'shipping_address' => 'Calle 1 # 2-3, Cali',
             'items' => [['product_id' => $this->product->id, 'product_variant_id' => $this->variant->id, 'quantity' => '3']],
         ]);
     });
@@ -140,7 +141,7 @@ describe('cotizaciones: fecha requerida al convertir en pedido (COT-01)', functi
             'unit_price' => 1000, 'subtotal' => 3000, 'sort_order' => 1,
         ]);
         $this->send = fn (string $date) => $this->actingAs($this->admin)
-            ->post(route('quotations.convert-to-order', $this->quotation), ['priority' => 'medium', 'required_date' => $date]);
+            ->post(route('quotations.convert-to-order', $this->quotation), ['priority' => 'medium', 'required_date' => $date, 'shipping_address' => 'Calle 1 # 2-3, Cali']);
     });
 
     it('accepts today in the plant after 7 p. m.', function (): void {

@@ -55,6 +55,7 @@ it('allows comercial to create a sales order', function () {
         ->post(route('sales-orders.store'), [
             'client_id' => $client->id,
             'priority' => 'high',
+            'shipping_address' => 'Calle 1 # 2-3, Cali',
             'required_date' => now()->addDays(5)->format('Y-m-d'),
             'estimated_delivery_date' => now()->addDays(10)->format('Y-m-d'),
             'notes' => 'Pedido urgente',
@@ -86,6 +87,7 @@ it('stores the color of each line of a direct order, empty as null', function ()
         ->post(route('sales-orders.store'), [
             'client_id' => $client->id,
             'priority' => 'medium',
+            'shipping_address' => 'Calle 1 # 2-3, Cali',
             'required_date' => now()->addDays(5)->format('Y-m-d'),
             'items' => [
                 ['product_id' => $product->id, 'product_variant_id' => $variant->id, 'quantity' => 4, 'color' => 'RAL 3020'],
@@ -365,6 +367,7 @@ it('saves client snapshot data on order creation', function () {
         ->post(route('sales-orders.store'), [
             'client_id' => $client->id,
             'priority' => 'low',
+            'shipping_address' => 'Calle 1 # 2-3, Cali',
             'client_business_name' => $client->business_name,
             'client_nit' => $client->nit,
             'client_contact_name' => 'Pedido Contact',

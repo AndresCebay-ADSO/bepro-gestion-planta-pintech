@@ -35,7 +35,8 @@ class StoreSalesOrderRequest extends FormRequest
             'priority' => ['required', Rule::enum(SalesOrderPriority::class)],
             'required_date' => ['bail', 'required', PlantDate::make()->notPast()],
             'notes' => ['nullable', 'string', 'max:2000'],
-            'shipping_address' => ['nullable', 'string', 'max:'.Client::SHIPPING_ADDRESS_MAX_LENGTH],
+            // Obligatoria (D-CLI3): el formulario la llena con la del cliente y se puede cambiar para este pedido.
+            'shipping_address' => ['required', 'string', 'max:'.Client::SHIPPING_ADDRESS_MAX_LENGTH],
             'client_business_name' => ['nullable', 'string', 'max:255'],
             'client_nit' => $this->nitRules(),
             'client_contact_name' => ['nullable', 'string', 'max:255'],
