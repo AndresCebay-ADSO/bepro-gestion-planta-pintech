@@ -878,3 +878,27 @@ test('a super-admin without activity can be deleted by another super-admin', fun
 
     $this->assertDatabaseMissing('users', ['id' => $otherSuperAdmin->id]);
 });
+
+// Auditoría 3.6, PR 10 (D-USR1): el correo de un usuario solo lo cambia un administrador, desde Usuarios, y sigue
+// verificado (el administrador responde por el correo nuevo).
+test('admin can change the email of another user and it stays verified', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $target = User::factory()->create();
+    $target->assignRole(SystemRole::Operator->value);
+
+    $this->actingAs($admin)
+        ->put(route('users.update', $target), [
+            'name' => $target->name,
+            'email' => 'correo-nuevo@test.com',
+            'role' => SystemRole::Operator->value,
+            'is_active' => true,
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('users.index'));
+
+    $target->refresh();
+    expect($target->email)->toBe('correo-nuevo@test.com')
+        ->and($target->email_verified_at)->not->toBeNull();
+});

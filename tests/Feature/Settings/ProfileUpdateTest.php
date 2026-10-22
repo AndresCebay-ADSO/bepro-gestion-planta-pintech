@@ -26,7 +26,7 @@ test('profile information can be updated', function () {
         ->actingAs($user)
         ->patch(route('profile.update'), [
             'name' => 'Test User',
-            'email' => 'test@example.com',
+            'email' => $user->email,
         ]);
 
     $response
@@ -36,8 +36,41 @@ test('profile information can be updated', function () {
     $user->refresh();
 
     expect($user->name)->toBe('Test User');
-    expect($user->email)->toBe('test@example.com');
-    expect($user->email_verified_at)->toBeNull();
+    expect($user->email_verified_at)->not->toBeNull();
+});
+
+// Auditoría 3.6, PR 10 (D-USR1): el correo solo lo cambia un administrador desde Usuarios. Cambiarlo desde el perfil dejaba
+// al usuario sin verificar y fuera del sistema (las rutas exigen `verified`) hasta abrir el enlace del correo nuevo.
+test('a user cannot change their own email from the profile', function () {
+    $user = User::factory()->create();
+    $original = $user->email;
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => 'Otro Nombre',
+            'email' => 'nuevo-correo@example.com',
+        ]);
+
+    $response->assertSessionHasErrors(['email' => 'Para cambiar tu correo, pídelo a un administrador.']);
+
+    $user->refresh();
+    expect($user->email)->toBe($original)
+        ->and($user->name)->not->toBe('Otro Nombre')
+        ->and($user->email_verified_at)->not->toBeNull();
+});
+
+test('the profile accepts the same email in other letter case and keeps it verified', function () {
+    $user = User::factory()->create();
+    $user->forceFill(['email' => 'Mixto@Example.com'])->save();
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), ['name' => 'Nuevo', 'email' => 'MIXTO@EXAMPLE.COM'])
+        ->assertSessionHasNoErrors();
+
+    $user->refresh();
+    expect($user->email)->toBe('mixto@example.com')
+        ->and($user->email_verified_at)->not->toBeNull();
 });
 
 test('job_title can be updated in profile', function () {
@@ -252,23 +285,6 @@ test('profile update fails gracefully when signature optimizer throws validation
     $user->refresh();
     expect($user->signature_path)->toBe('signatures/keep_me.png');
     Storage::disk('local')->assertExists('signatures/keep_me.png');
-});
-
-test('profile update normalizes uppercase email to lowercase', function () {
-    $user = User::factory()->create();
-
-    $response = $this
-        ->actingAs($user)
-        ->patch(route('profile.update'), [
-            'name' => $user->name,
-            'email' => 'UPPERCASE@EXAMPLE.COM',
-        ]);
-
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect(route('profile.edit'));
-
-    expect($user->fresh()->email)->toBe('uppercase@example.com');
 });
 
 test('user with pre-existing uppercase email can update profile without email error', function () {
