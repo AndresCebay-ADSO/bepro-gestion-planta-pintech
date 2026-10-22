@@ -126,3 +126,34 @@ test('produccion cannot upload product documents', function () {
         ->post(route('products.documents.store', $product), [])
         ->assertForbidden();
 });
+
+// Auditoría 3.6, PR 10 (PRD-04): el nombre guardado era `slug(nombre)-vN-ULID.pdf` y con un nombre largo pasaba de los 255
+// bytes que admite el sistema de archivos: «Failed to store document file to disk» (500).
+
+test('a document with a long name is stored with a bounded file name', function () {
+    Storage::fake('local');
+    [$user, $product] = createProductDocumentFixture();
+
+    $this->actingAs($user)->post(route('products.documents.store', $product), [
+        'document_type' => QrDocumentType::TechnicalDataSheet->value,
+        'document' => UploadedFile::fake()->createWithContent(str_repeat('ficha-tecnica-', 17).'.pdf', "%PDF-1.4\nlong"),
+    ])->assertSessionHasNoErrors()->assertRedirect();
+
+    $document = ProductDocument::query()->where('product_id', $product->id)->firstOrFail();
+
+    expect(strlen(basename($document->file_path)))->toBeLessThan(150)
+        ->and(Storage::disk('local')->exists($document->file_path))->toBeTrue()
+        ->and(strlen($document->file_name))->toBeGreaterThan(200);
+});
+
+test('a document whose original name does not fit the file name column is rejected with 422', function () {
+    Storage::fake('local');
+    [$user, $product] = createProductDocumentFixture();
+
+    $this->actingAs($user)->post(route('products.documents.store', $product), [
+        'document_type' => QrDocumentType::TechnicalDataSheet->value,
+        'document' => UploadedFile::fake()->createWithContent(str_repeat('a', 300).'.pdf', "%PDF-1.4\nlong"),
+    ])->assertSessionHasErrors(['document' => 'El nombre del archivo no puede pasar de 255 caracteres.']);
+
+    expect(ProductDocument::query()->count())->toBe(0);
+});

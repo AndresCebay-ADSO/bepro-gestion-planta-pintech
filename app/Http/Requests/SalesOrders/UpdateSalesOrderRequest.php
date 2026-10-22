@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\SalesOrders;
 
 use App\Enums\SalesOrderPriority;
+use App\Http\Requests\Concerns\ClientContactRules;
 use App\Models\Client;
 use App\Models\SalesOrder;
 use App\Rules\PlantDate;
@@ -13,6 +14,8 @@ use Illuminate\Validation\Rule;
 
 class UpdateSalesOrderRequest extends FormRequest
 {
+    use ClientContactRules;
+
     public function authorize(): bool
     {
         /** @var SalesOrder $salesOrder */
@@ -32,9 +35,9 @@ class UpdateSalesOrderRequest extends FormRequest
             'notes' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'shipping_address' => ['sometimes', 'nullable', 'string', 'max:'.Client::SHIPPING_ADDRESS_MAX_LENGTH],
             'client_contact_name' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'client_phone' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'client_phone' => ['sometimes', ...$this->phoneRules()],
             'client_business_name' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'client_nit' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'client_nit' => ['sometimes', ...$this->nitRules()],
         ];
     }
 

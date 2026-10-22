@@ -42,4 +42,12 @@ class StoreUserRequest extends FormRequest
 
         return $actor instanceof User ? app(AssignableRoleService::class)->namesFor($actor) : [];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return $this->signatureMessages();
+    }
 }

@@ -3,19 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\NumberType;
-use App\Models\Client;
 use App\Models\Product;
-use App\Models\ProductCategory;
-use App\Models\ProductionOrder;
-use App\Models\ProductVariant;
-use App\Models\Quotation;
-use App\Models\RawMaterial;
-use App\Models\RawMaterialCategory;
-use App\Models\SalesOrder;
-use App\Models\ShrinkWrapType;
-use App\Models\UnitOfMeasure;
-use App\Models\User;
-use App\Models\Warehouse;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route;
@@ -23,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Rules\Exists;
 use Illuminate\Validation\Rules\In;
-use Spatie\Permission\Models\Role;
+use Tests\Support\FormRequestFixtures;
 use Tests\Support\NumberTypeColumns;
 
 /*
@@ -161,26 +149,7 @@ function numericRequestFields(): array
  */
 function numericWriteFormRequests(): array
 {
-    $classes = [];
-    $directory = app_path('Http/Requests');
-    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
-
-    foreach ($files as $file) {
-        if (! $file->isFile() || $file->getExtension() !== 'php' || str_starts_with($file->getBasename(), 'Index')) {
-            continue;
-        }
-
-        $relative = substr($file->getPathname(), strlen($directory) + 1, -4);
-        $class = 'App\\Http\\Requests\\'.str_replace('/', '\\', $relative);
-
-        if (class_exists($class) && is_subclass_of($class, FormRequest::class) && ! (new ReflectionClass($class))->isAbstract()) {
-            $classes[] = $class;
-        }
-    }
-
-    sort($classes);
-
-    return $classes;
+    return FormRequestFixtures::classes();
 }
 
 /**
@@ -192,18 +161,7 @@ function numericWriteFormRequests(): array
  */
 function numericRequestRules(string $class, array $parameters): array
 {
-    $request = $class::create('/', 'POST');
-    $request->setContainer(app())->setRedirector(app('redirect'));
-    $request->setUserResolver(fn () => $parameters['user']);
-
-    $route = new Route('POST', '/', []);
-    $route->bind($request);
-
-    foreach ($parameters as $name => $model) {
-        $route->setParameter($name, $model);
-    }
-
-    $request->setRouteResolver(fn () => $route);
+    $request = FormRequestFixtures::make($class, $parameters);
 
     $rules = app()->call([$request, 'rules']);
     $normalized = [];
@@ -292,24 +250,7 @@ function numericColumnLimits(string|NumberType $target): array
 }
 
 beforeEach(function (): void {
-    $user = User::factory()->create();
-
-    $this->parameters = [
-        'user' => $user,
-        'client' => Client::factory()->create(),
-        'product' => Product::factory()->create(),
-        'product_category' => ProductCategory::factory()->create(),
-        'production_order' => ProductionOrder::factory()->create(),
-        'quotation' => Quotation::factory()->create(),
-        'raw_material' => RawMaterial::factory()->create(),
-        'raw_material_category' => RawMaterialCategory::factory()->create(),
-        'role' => Role::create(['name' => 'Rol de prueba', 'guard_name' => 'web']),
-        'sales_order' => SalesOrder::factory()->create(),
-        'shrink_wrap_type' => ShrinkWrapType::factory()->create(),
-        'unit_of_measure' => UnitOfMeasure::factory()->create(),
-        'variant' => ProductVariant::factory()->create(),
-        'warehouse' => Warehouse::factory()->create(),
-    ];
+    $this->parameters = FormRequestFixtures::parameters();
 });
 
 test('los números tienen decimales y tope, y los IDs son enteros antes del exists', function (): void {

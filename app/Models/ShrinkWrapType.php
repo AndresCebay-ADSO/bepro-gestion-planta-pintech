@@ -62,9 +62,14 @@ class ShrinkWrapType extends Model
         ];
     }
 
+    /**
+     * Las líneas de la receta, en un orden fijo. Sin `orderBy`, PostgreSQL las devuelve en el orden en que las encuentra
+     * (cambia tras un `UPDATE` y según el plan), y al registrar un termoencogido la primera línea que falla decide qué
+     * error ve el operario.
+     */
     public function items(): HasMany
     {
-        return $this->hasMany(ShrinkWrapTypeItem::class, 'shrink_wrap_type_id');
+        return $this->hasMany(ShrinkWrapTypeItem::class, 'shrink_wrap_type_id')->orderBy('id');
     }
 
     /**

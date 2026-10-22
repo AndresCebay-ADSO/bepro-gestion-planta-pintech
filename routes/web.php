@@ -85,7 +85,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('production')->name('production.')->group(function () {
         Route::resource('shrink-wraps', ShrinkWrapController::class)
             ->only(['index', 'create', 'store', 'show'])
-            ->where(['shrink_wrap' => '[0-9]+'])
             ->middlewareFor(['index', 'show'], 'can:'.Permission::ShrinkWrapsView->value)
             ->middlewareFor(['create', 'store'], 'can:'.Permission::ShrinkWrapsCreate->value);
     });
@@ -175,7 +174,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Movimientos de materia prima (inmutables: sin editar ni borrar)
     Route::resource('inventory-movements', InventoryMovementController::class)
         ->only(['index', 'store', 'show'])
-        ->where(['inventory_movement' => '[0-9]+'])
         ->middlewareFor(['index', 'show'], 'can:'.Permission::InventoryMovementsView->value)
         ->middlewareFor('store', 'can:'.Permission::InventoryMovementsCreate->value);
 
@@ -312,8 +310,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('production-orders.store');
     Route::get('production-orders/{production_order}', [ProductionOrderController::class, 'show'])
         ->middleware('can:'.Permission::ProductionOrdersView->value)
-        ->name('production-orders.show')
-        ->whereNumber('production_order');
+        ->name('production-orders.show');
     Route::get('production-orders/{production_order}/export-pdf', [ProductionOrderController::class, 'exportPdf'])
         ->middleware('can:'.Permission::ProductionOrdersExport->value)
         ->name('production-orders.export-pdf');
@@ -322,8 +319,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('production-orders.export-excel');
     Route::post('production-orders/{production_order}/start', [ProductionOrderController::class, 'startProduction'])
         ->middleware('can:'.Permission::ProductionOrdersOperate->value)
-        ->name('production-orders.start')
-        ->whereNumber('production_order');
+        ->name('production-orders.start');
     Route::post('production-orders/{production_order}/submit-for-review', [ProductionOrderController::class, 'submitForReview'])
         ->middleware('can:'.Permission::ProductionOrdersSubmitForReview->value)
         ->name('production-orders.submit-for-review');
@@ -360,7 +356,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('finished-inventory.index');
     Route::resource('finished-inventory-movements', FinishedInventoryMovementController::class)
         ->only(['index', 'store', 'show'])
-        ->where(['finished_inventory_movement' => '[0-9]+'])
         ->middlewareFor(['index', 'show'], 'can:'.Permission::FinishedInventoryMovementsView->value)
         ->middlewareFor('store', 'can:'.Permission::FinishedInventoryMovementsCreate->value);
 });

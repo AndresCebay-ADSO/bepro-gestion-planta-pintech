@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Requests\Clients;
 
 use App\Enums\TextFormat;
+use App\Http\Requests\Concerns\ClientContactRules;
 use App\Http\Requests\Concerns\NormalizesText;
 use App\Models\Client;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreClientRequest extends FormRequest
 {
+    use ClientContactRules;
     use NormalizesText;
 
     public function authorize(): bool
@@ -22,9 +24,9 @@ class StoreClientRequest extends FormRequest
     {
         return [
             'business_name' => ['required', 'string', 'max:255'],
-            'nit' => ['nullable', 'string', 'max:20', 'unique:clients,nit'],
+            'nit' => [...$this->nitRules(), 'unique:clients,nit'],
             'contact_name' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'phone' => $this->phoneRules(),
             'shipping_address' => ['nullable', 'string', 'max:'.Client::SHIPPING_ADDRESS_MAX_LENGTH],
         ];
     }

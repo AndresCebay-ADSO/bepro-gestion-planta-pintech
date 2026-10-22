@@ -20,12 +20,14 @@ class AuditLogFilter extends QueryFilter
     protected function search(string $value): void
     {
         $this->builder->where(function (Builder $query) use ($value): void {
-            $query->whereRaw('LOWER(description) LIKE LOWER(?)', ['%'.$value.'%'])
-                ->orWhereRaw('LOWER(event) LIKE LOWER(?)', ['%'.$value.'%'])
-                ->orWhereRaw('LOWER(log_name) LIKE LOWER(?)', ['%'.$value.'%'])
-                ->orWhereHasMorph('causer', [User::class], function (Builder $uq) use ($value): void {
-                    $uq->whereRaw('LOWER(name) LIKE LOWER(?)', ['%'.$value.'%'])
-                        ->orWhereRaw('LOWER(email) LIKE LOWER(?)', ['%'.$value.'%']);
+            $like = self::likeContains($value);
+
+            $query->whereRaw(self::likeCondition('description'), [$like])
+                ->orWhereRaw(self::likeCondition('event'), [$like])
+                ->orWhereRaw(self::likeCondition('log_name'), [$like])
+                ->orWhereHasMorph('causer', [User::class], function (Builder $uq) use ($like): void {
+                    $uq->whereRaw(self::likeCondition('name'), [$like])
+                        ->orWhereRaw(self::likeCondition('email'), [$like]);
                 });
         });
     }

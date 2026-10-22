@@ -31,7 +31,7 @@ class SalesOrderFactory extends Factory
             'client_business_name' => $this->faker->company(),
             'client_nit' => $this->faker->numerify('###########'),
             'client_contact_name' => $this->faker->name(),
-            'client_phone' => $this->faker->phoneNumber(),
+            'client_phone' => $this->faker->numerify('3#########'),
             'created_by' => User::factory(),
         ];
     }

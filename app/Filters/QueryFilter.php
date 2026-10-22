@@ -54,6 +54,24 @@ abstract class QueryFilter
     }
 
     /**
+     * `LOWER(col) LIKE LOWER(?)` con `!` como carácter de escape, igual en PostgreSQL y SQLite (SQLite no tiene escape
+     * por defecto). Va con `likeContains()`, que escapa lo que el usuario escribió. Auditoría 3.6, LST-01.
+     *
+     * No es la barra invertida a propósito: el lector de parámetros de PDO para PostgreSQL toma `'\'` como una comilla
+     * escapada, deja la cadena abierta y los `?` que siguen dejan de ser parámetros («parameter was not defined»).
+     */
+    public static function likeCondition(string $column): string
+    {
+        return 'LOWER('.$column.") LIKE LOWER(?) ESCAPE '!'";
+    }
+
+    /** El texto buscado como «contiene», con `%` y `_` (y el propio `!`) literales y no como comodines. */
+    public static function likeContains(string $value): string
+    {
+        return '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $value).'%';
+    }
+
+    /**
      * @param  list<string>  $columns
      * @param  list<string>  $exactIntegerColumns
      */
@@ -97,7 +115,7 @@ abstract class QueryFilter
             foreach ($conditions as [$column, $exact]) {
                 $exact
                     ? $builder->orWhere($column, $integer)
-                    : $builder->orWhereRaw('LOWER('.$column.') LIKE LOWER(?)', ['%'.$value.'%']);
+                    : $builder->orWhereRaw(self::likeCondition($column), [self::likeContains($value)]);
             }
         };
 

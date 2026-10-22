@@ -6,8 +6,10 @@ namespace App\Http\Requests\Products;
 
 use App\Enums\QrDocumentType;
 use App\Models\Product;
+use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class StoreProductDocumentRequest extends FormRequest
@@ -44,6 +46,12 @@ class StoreProductDocumentRequest extends FormRequest
                 'mimes:pdf',
                 'extensions:pdf',
                 'max:10240',
+                // `product_documents.file_name` es `varchar(255)` y guarda el nombre original (PRD-04).
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if ($value instanceof UploadedFile && mb_strlen($value->getClientOriginalName()) > 255) {
+                        $fail(__('El nombre del archivo no puede pasar de 255 caracteres.'));
+                    }
+                },
             ],
         ];
     }

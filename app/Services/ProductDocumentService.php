@@ -15,6 +15,9 @@ use Throwable;
 
 class ProductDocumentService
 {
+    /** Largo del nombre del producto en el archivo guardado: deja margen bajo los 255 bytes de la ruta. */
+    private const STORED_SLUG_LENGTH = 80;
+
     /**
      * Stores a product document safely, preventing concurrent version race conditions
      * and ensuring no orphan files are left on disk on transaction failures.
@@ -41,7 +44,9 @@ class ProductDocumentService
 
                 // 3. Generate a safe and unique filename
                 $fileName = $file->getClientOriginalName();
-                $storedName = Str::slug(pathinfo($fileName, PATHINFO_FILENAME))
+                // El slug se recorta: con el nombre completo, el archivo pasaba de los 255 bytes que admite el sistema de
+                // archivos y fallaba al guardar (PRD-04). El nombre original queda en `file_name`.
+                $storedName = Str::limit(Str::slug(pathinfo($fileName, PATHINFO_FILENAME)), self::STORED_SLUG_LENGTH, '')
                     ."-v{$version}-"
                     .Str::ulid()
                     .'.'.$file->getClientOriginalExtension();

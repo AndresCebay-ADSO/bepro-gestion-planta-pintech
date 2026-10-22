@@ -37,6 +37,21 @@ Seguiremos el estándar **PSR-12**, que es el utilizado por Laravel de forma nat
   * un campo numérico nuevo se agrega al mapa del test con la columna donde se guarda.
 * **Valores calculados que se guardan** (saldo + cantidad, fórmula × cantidad de la OP, totales): antes de guardarlos
   se pasan por `NumberType::X->ensureFits()`, que responde con un 422 en el campo que lo causó.
+* **Parámetros de ruta con modelo** (`/products/{product}`): su nombre está en `ModelRouteParameters::NAMES`, que les da el
+  patrón `[0-9]{1,18}`. Una URL como `/products/abc` responde 404, no el 500 de PostgreSQL. Una ruta nueva con un modelo y
+  un nombre nuevo falla `ModelRouteParametersTest` hasta que se agregue. Nunca `->where()` ni `->whereNumber()` en la
+  ruta: pisan el patrón y dejan pasar cualquier cantidad de dígitos.
+* **Texto que escribe el usuario:** el middleware `StripControlCharacters` quita los caracteres de control (NUL y
+  similares) de todo lo que entra, salvo contraseñas y archivos. No hace falta una regla por campo.
+* **Búsquedas con `LIKE`:** siempre `QueryFilter::likeCondition()` y `likeContains()`, que escapan `%` y `_` con `!` como
+  carácter de escape. Nunca la barra invertida: el lector de parámetros de PDO para PostgreSQL toma `'\'` como una comilla
+  escapada y los `?` que siguen dejan de ser parámetros.
+* **Los hooks `after()`** corren aunque las reglas ya hayan fallado: no convierten con `(string)` ni `trim()` un valor que
+  pudo llegar como arreglo (`is_string()` primero).
+* **NIT y teléfono de contacto** (cliente, cotización, pedido, usuario): el trait `ClientContactRules` y las constantes de
+  `Client`. **Horas de la OP:** `OperationalTimes` (lectura y reglas, sin atarse al formato del campo).
+* **Cada campo de un FormRequest tiene su nombre en español** en `attributes()` o en `lang/es/validation.php`
+  (`ValidationAttributesTest`).
 * Lógica compleja en **Services**, los controladores deben ser delgados (*Skinny Controllers*).
 
 ---
@@ -141,7 +156,9 @@ Para garantizar consistencia y persistencia en los filtros, todas las listas deb
 
 ### Backend (Controller)
 1. Capturar el filtro: `$search = $request->input('search');`
-2. Aplicar filtro con SQL portable: `->when($search, fn($q, $s) => $q->whereRaw('LOWER(name) LIKE ?', ["%{$s}%"]))`
+2. Aplicar filtro con SQL portable y los comodines escapados: en un `QueryFilter`, `$this->applySearch(['name'], $value)`; fuera de uno,
+   `->when($search, fn ($q, $s) => $q->whereRaw(QueryFilter::likeCondition('name'), [QueryFilter::likeContains($s)]))`.
+   Nunca `LOWER(name) LIKE ?` con `"%{$s}%"`: `%` y `_` de lo que escribe el usuario quedarían como comodines.
 3. Paginación con persistencia y límite de botones: `->paginate(15)->onEachSide(1)->withQueryString()`
    - `onEachSide(1)` limita la paginación a máximo 7 botones (primero, último, actual, y 1 a cada lado)
    - Evita paginaciones extensas que rompen el layout en listados grandes

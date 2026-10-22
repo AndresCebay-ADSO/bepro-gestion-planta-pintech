@@ -20,7 +20,7 @@ class ClientFactory extends Factory
             'business_name' => $this->faker->company(),
             'nit' => $this->faker->unique()->numerify('###########'),
             'contact_name' => $this->faker->name(),
-            'phone' => $this->faker->phoneNumber(),
+            'phone' => $this->faker->numerify('3#########'),
         ];
     }
 }

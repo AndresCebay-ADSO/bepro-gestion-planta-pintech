@@ -29,7 +29,7 @@ class QuotationFactory extends Factory
             'client_business_name' => $this->faker->company(),
             'client_nit' => $this->faker->numerify('##########'),
             'client_contact_name' => $this->faker->name(),
-            'client_phone' => $this->faker->phoneNumber(),
+            'client_phone' => $this->faker->numerify('3#########'),
             'quotation_number' => $this->faker->unique()->numberBetween(1, 99999),
             'technology' => $this->faker->randomElement(['Alquídico', 'Epóxico', 'Poliuretano']),
             'line' => $this->faker->randomElement(['Core Series', 'Industrial Series']),

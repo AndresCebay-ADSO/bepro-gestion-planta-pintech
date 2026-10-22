@@ -32,13 +32,10 @@ class SubmitProductionOrderForReviewRequest extends FormRequest
             $this->consumptionRules(),
             $this->seenLinesRules(),
             $this->qualityAndResponsibleRules(),
+            $this->operationalTimesRules(),
             [
                 // Los mismos tipos que al completar (CompleteProductionOrderRequest).
                 'actual_yield_quantity' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
-                'agitation_start_time' => ['nullable', 'date'],
-                'agitation_end_time' => ['nullable', 'date'],
-                'packaging_start_time' => ['nullable', 'date'],
-                'packaging_end_time' => ['nullable', 'date'],
                 'spillage_quantity' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
                 'density_kg_per_gallon' => ['bail', 'nullable', ...NumberType::Density->rules(), 'min:0.0001'],
                 'remnant_quantity_gallons' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
@@ -56,7 +53,7 @@ class SubmitProductionOrderForReviewRequest extends FormRequest
      */
     public function after(): array
     {
-        return [$this->somethingPackedCheck()];
+        return [$this->somethingPackedCheck(), $this->operationalTimesCheck()];
     }
 
     /**

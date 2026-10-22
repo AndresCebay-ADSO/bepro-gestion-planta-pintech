@@ -154,6 +154,14 @@ return [
         'email' => [
             'required' => 'Debes ingresar tu correo electrónico.',
             'email' => 'Ingresa un correo electrónico válido.',
+            'regex' => 'El correo electrónico debe incluir un dominio completo, por ejemplo empresa.com.',
+        ],
+        // El teléfono del cliente, de la cotización, del pedido y del usuario (Client::PHONE_PATTERN).
+        'phone' => [
+            'regex' => 'El teléfono solo puede tener números, espacios y los signos + ( ) - . / #, con al menos 7 dígitos y hasta 20 caracteres.',
+        ],
+        'client_phone' => [
+            'regex' => 'El teléfono solo puede tener números, espacios y los signos + ( ) - . / #, con al menos 7 dígitos y hasta 20 caracteres.',
         ],
         'password' => [
             'required' => 'Debes ingresar tu contraseña.',
@@ -308,5 +316,19 @@ return [
         'users' => 'usuarios',
         'token' => 'token',
         'is_default' => 'predeterminado',
+
+        // Otros campos que un formulario o un filtro puede devolver con error (auditoría 3.6, USR-01 e INV-12)
+        'created_by' => 'usuario que registra',
+        'signature' => 'firma',
+        'remove_signature' => 'quitar firma',
+        'log_name' => 'registro',
+        'event' => 'evento',
+        'severity' => 'severidad',
+        'completed_from' => 'completada desde',
+        'completed_to' => 'completada hasta',
+        'shrink_wrap_type_id' => 'tipo de termoencogido',
+        'label_raw_material_id' => 'etiqueta',
+        'confirm_tracking_change' => 'confirmación del cambio de control de inventario',
+        'permissions.*' => 'permiso',
     ],
 ];

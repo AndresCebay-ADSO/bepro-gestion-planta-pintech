@@ -38,15 +38,12 @@ class CompleteProductionOrderRequest extends FormRequest
             $this->consumptionRules(),
             $this->seenLinesRules(),
             $this->qualityAndResponsibleRules(),
+            $this->operationalTimesRules(),
             [
                 // Cada cantidad con el tipo de su columna (Cantidad 12,4 y Densidad 10,4): sin tope, 1e65 o 1e20 pasan
                 // `numeric` y fallan en la calculadora o al guardar en PostgreSQL. Siempre obligatorio: una orden solo se
                 // completa si algo se envasó o quedó como saldo (D-OPL1), y eso es lo que rinde.
                 'actual_yield_quantity' => ['bail', 'required', ...NumberType::Quantity->rules(), 'min:0.0001'],
-                'agitation_start_time' => ['nullable', 'date'],
-                'agitation_end_time' => ['nullable', 'date'],
-                'packaging_start_time' => ['nullable', 'date'],
-                'packaging_end_time' => ['nullable', 'date'],
                 'quality_responsible_user_id' => ['bail', 'required', 'integer', 'exists:users,id'],
                 'spillage_quantity' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
                 'density_kg_per_gallon' => ['bail', 'required', ...NumberType::Density->rules(), 'min:0.0001'],
@@ -84,6 +81,7 @@ class CompleteProductionOrderRequest extends FormRequest
                 }
             },
             $this->somethingPackedCheck(),
+            $this->operationalTimesCheck(),
             function (Validator $validator): void {
                 if ($validator->errors()->isNotEmpty()) {
                     return;

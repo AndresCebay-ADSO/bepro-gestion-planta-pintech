@@ -52,6 +52,15 @@ class Client extends Model
      */
     public const SHIPPING_ADDRESS_MAX_LENGTH = 255;
 
+    /**
+     * NIT y teléfono del cliente, y los que copian la cotización y el pedido (D-PV2): 20 en todos, para que un pedido
+     * convertido nunca quede con un dato que su propio formulario rechace (PV-02). El NIT es texto sin regla de
+     * caracteres (P8-8). El teléfono admite dígitos, espacios y `+ ( ) - . / #`, de 7 a 20 caracteres.
+     */
+    public const NIT_MAX_LENGTH = 20;
+
+    public const PHONE_PATTERN = '/^(?=(?:\D*\d){7})[0-9 +().\/#-]{7,20}$/';
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
