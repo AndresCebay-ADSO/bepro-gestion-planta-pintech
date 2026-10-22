@@ -242,8 +242,8 @@ class RawMaterialSeeder extends Seeder
             ['code' => 'O-1', 'unit' => 'kg'],
             ['code' => 'O-2', 'unit' => 'kg'],
             ['code' => 'O-3', 'unit' => 'kg'],
-            ['code' => 'AGUA DESTILADA', 'unit' => 'l'],
-            ['code' => 'AGUA DE SERVICIO', 'unit' => 'l', 'tracks_inventory' => false, 'current_price' => 0, 'minimum_stock' => 0, 'alert_days_before_expiry' => 0],
+            ['code' => 'AGUA DESTILADA', 'unit' => 'kg'],
+            ['code' => 'AGUA DE SERVICIO', 'unit' => 'kg', 'tracks_inventory' => false, 'current_price' => 0, 'minimum_stock' => 0, 'alert_days_before_expiry' => 0],
 
             // Serie AP y Químicos Finales
             ['code' => 'AP-423', 'unit' => 'kg'],
@@ -256,11 +256,11 @@ class RawMaterialSeeder extends Seeder
             ['code' => 'AP-DORADA', 'unit' => 'kg'],
             ['code' => 'AP-419', 'unit' => 'kg'],
             ['code' => 'AP-421', 'unit' => 'kg'],
-            ['code' => 'BENZ. S', 'unit' => 'l'],
-            ['code' => 'BS', 'unit' => 'l'],
-            ['code' => 'ETILE', 'unit' => 'l'],
-            ['code' => 'FOSF. S', 'unit' => 'l'],
-            ['code' => 'TEA', 'unit' => 'l'],
+            ['code' => 'BENZ. S', 'unit' => 'kg'],
+            ['code' => 'BS', 'unit' => 'kg'],
+            ['code' => 'ETILE', 'unit' => 'kg'],
+            ['code' => 'FOSF. S', 'unit' => 'kg'],
+            ['code' => 'TEA', 'unit' => 'kg'],
         ];
 
         foreach ($quimicos as $item) {

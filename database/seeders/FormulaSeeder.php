@@ -246,8 +246,8 @@ class FormulaSeeder extends Seeder
                     'formula_id' => $formula->id,
                     'raw_material_id' => $rm->id,
                     'quantity' => $quantity,
-                    // En la unidad de la materia prima (kg, o L para el agua): una línea en kg de una MP en litros no se
-                    // puede convertir, ni para costear ni para crear la OP (FOR-02).
+                    // En la unidad de la materia prima (todas las químicas se siembran en kg): una línea en otra unidad de
+                    // otra base no se puede convertir, ni para costear ni para crear la OP (FOR-02).
                     'unit_of_measure_id' => $rm->unit_of_measure_id,
                     'step_order' => $step,
                 ]);
