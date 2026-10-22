@@ -156,7 +156,9 @@ Para garantizar consistencia y persistencia en los filtros, todas las listas deb
 
 ### Backend (Controller)
 1. Capturar el filtro: `$search = $request->input('search');`
-2. Aplicar filtro con SQL portable: `->when($search, fn($q, $s) => $q->whereRaw('LOWER(name) LIKE ?', ["%{$s}%"]))`
+2. Aplicar filtro con SQL portable y los comodines escapados: en un `QueryFilter`, `$this->applySearch(['name'], $value)`; fuera de uno,
+   `->when($search, fn ($q, $s) => $q->whereRaw(QueryFilter::likeCondition('name'), [QueryFilter::likeContains($s)]))`.
+   Nunca `LOWER(name) LIKE ?` con `"%{$s}%"`: `%` y `_` de lo que escribe el usuario quedarían como comodines.
 3. Paginación con persistencia y límite de botones: `->paginate(15)->onEachSide(1)->withQueryString()`
    - `onEachSide(1)` limita la paginación a máximo 7 botones (primero, último, actual, y 1 a cada lado)
    - Evita paginaciones extensas que rompen el layout en listados grandes
