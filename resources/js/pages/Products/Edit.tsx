@@ -491,6 +491,11 @@ export default function ProductsEdit({
                                             setData('cif_percentage', value)
                                         }
                                     />
+                                    {errors.cif_percentage && (
+                                        <p className="text-sm text-destructive">
+                                            {errors.cif_percentage}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">
@@ -505,6 +510,11 @@ export default function ProductsEdit({
                                             setData('price_threshold', value)
                                         }
                                     />
+                                    {errors.price_threshold && (
+                                        <p className="text-sm text-destructive">
+                                            {errors.price_threshold}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
