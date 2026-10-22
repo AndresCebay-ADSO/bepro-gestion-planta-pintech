@@ -178,6 +178,8 @@ export type ProductionOrderCan = {
     consumeRemnant: boolean;
     updateColor: boolean;
     printLabels: boolean;
+    /** Botón «Cancelar orden» (D-OPX2): permiso y estado pendiente o en curso. */
+    cancel: boolean;
 };
 
 export type ProductionOrderShowProps = {

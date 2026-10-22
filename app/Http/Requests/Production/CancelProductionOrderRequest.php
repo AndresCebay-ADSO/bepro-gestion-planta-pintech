@@ -25,7 +25,8 @@ class CancelProductionOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'reason' => ['nullable', 'string', 'max:1000'],
+            // El motivo queda en las notas de la orden: una orden cancelada sin explicación no dice por qué no se hizo.
+            'reason' => ['required', 'string', 'min:10', 'max:1000'],
         ];
     }
 }

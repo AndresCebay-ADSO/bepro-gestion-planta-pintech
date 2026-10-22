@@ -6,6 +6,7 @@ namespace App\Actions\Production;
 
 use App\Enums\ProductionOrderStatus;
 use App\Models\ProductionOrder;
+use App\Models\RemnantConsumption;
 use App\Models\User;
 use App\Services\Production\ProductionOrderLock;
 use App\Services\ProductionOrderQrCodeService;
@@ -24,24 +25,17 @@ class CancelProductionOrderAction
             $cannotCancel = "No se puede cancelar una orden en estado ':status'.";
             $lockedOrder = $this->orderLock->lockFor($order, $user, 'cancel', $cannotCancel);
 
-            // La policy de cancelar no mira el estado, a propósito: así el usuario ve este aviso y no un 403. Los estados
-            // pasan a la policy con el botón «Cancelar orden» (D-OPX2, PR 10).
-            $allowedForCancellation = [
-                ProductionOrderStatus::Pending,
-                ProductionOrderStatus::InProgress,
-            ];
-
-            if (! in_array($lockedOrder->status, $allowedForCancellation, true)) {
+            // La policy de cancelar no mira el estado, a propósito: así el usuario ve este aviso y no un 403.
+            if (! in_array($lockedOrder->status, ProductionOrderStatus::cancellable(), true)) {
                 throw new \DomainException(__($cannotCancel, ['status' => $lockedOrder->status->label()]));
             }
 
-            $notes = $lockedOrder->notes;
-            if ($reason !== null && $reason !== '') {
-                $notes = trim(implode("\n\n", array_filter([
-                    $lockedOrder->notes,
-                    "Cancelación: {$reason}",
-                ])));
-            }
+            $parts = array_filter([
+                $lockedOrder->notes,
+                $reason !== null && $reason !== '' ? "Cancelación: {$reason}" : null,
+                $this->consumedRemnantsNote($lockedOrder),
+            ]);
+            $notes = $parts === [] ? null : trim(implode("\n\n", $parts));
 
             $lockedOrder->update([
                 'status' => ProductionOrderStatus::Cancelled,
@@ -53,5 +47,26 @@ class CancelProductionOrderAction
 
             return $lockedOrder->refresh();
         }, attempts: 3);
+    }
+
+    /**
+     * Los saldos que esta orden ya había consumido no vuelven al inventario (comportamiento provisional hasta que los
+     * saldos se apliquen al completar, B66): se dejan escritos en la nota para que no se pierdan de vista.
+     */
+    private function consumedRemnantsNote(ProductionOrder $order): ?string
+    {
+        $consumptions = $order->remnantConsumptions()->with('remnant.sourceOrder:id,order_number')->get();
+
+        if ($consumptions->isEmpty()) {
+            return null;
+        }
+
+        $lines = $consumptions->map(function (RemnantConsumption $consumption): string {
+            $gallons = rtrim(rtrim((string) $consumption->quantity_gallons, '0'), '.');
+
+            return "{$consumption->remnant?->sourceOrder?->order_number} {$gallons} gal";
+        });
+
+        return 'Saldos consumidos que no vuelven al inventario: '.$lines->implode('; ').'.';
     }
 }
