@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NUMBER_TYPES } from '@/lib/number-types';
-import { toDecimalPayload } from '@/lib/numeric-input';
+import { idPayload, toDecimalPayload } from '@/lib/numeric-input';
 import { store as inventoryMovementsStore } from '@/routes/inventory-movements';
 import type { InventoryOption } from '@/types';
 import { MovementFormBase } from './movement-form-base';
@@ -60,9 +60,9 @@ export function EntryMovementForm({
 
         form.transform((data) => ({
             ...data,
-            raw_material_id: Number(data.raw_material_id),
-            warehouse_id: Number(data.warehouse_id),
-            batch_id: data.batch_id === '' ? null : Number(data.batch_id),
+            raw_material_id: idPayload(data.raw_material_id),
+            warehouse_id: idPayload(data.warehouse_id),
+            batch_id: idPayload(data.batch_id),
             quantity: toDecimalPayload(data.quantity),
             cost_price:
                 data.cost_price === ''
@@ -147,6 +147,7 @@ export function EntryMovementForm({
                             <Label htmlFor="lot_number">Número de lote</Label>
                             <Input
                                 id="lot_number"
+                                maxLength={50}
                                 value={form.data.lot_number}
                                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                                     form.setData('lot_number', e.target.value)
@@ -164,6 +165,7 @@ export function EntryMovementForm({
                             <Label htmlFor="supplier">Proveedor</Label>
                             <Input
                                 id="supplier"
+                                maxLength={150}
                                 value={form.data.supplier}
                                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                                     form.setData('supplier', e.target.value)

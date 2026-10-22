@@ -8,6 +8,7 @@ import type {
     RawMaterialFormData,
 } from '@/components/raw-materials/raw-material-form';
 import { Button } from '@/components/ui/button';
+import { idPayload } from '@/lib/numeric-input';
 import {
     index as rawMaterialsIndex,
     store as rawMaterialsStore,
@@ -41,7 +42,7 @@ export default function RawMaterialsCreate({ categories, units, can }: Props) {
     const submit = () => {
         form.transform((data) => ({
             ...rawMaterialPayload(data, can.updateCosts),
-            category_id: Number(data.category_id),
+            category_id: idPayload(data.category_id),
         }));
 
         form.post(rawMaterialsStore().url);

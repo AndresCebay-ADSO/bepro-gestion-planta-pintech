@@ -1,7 +1,7 @@
 import { useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
-import { toDecimalPayload } from '@/lib/numeric-input';
+import { idPayload, toDecimalPayload } from '@/lib/numeric-input';
 import { store as inventoryMovementsStore } from '@/routes/inventory-movements';
 import type { InventoryOption } from '@/types';
 import { MovementFormBase } from './movement-form-base';
@@ -45,9 +45,9 @@ export function ExitMovementForm({
 
         form.transform((data) => ({
             ...data,
-            raw_material_id: Number(data.raw_material_id),
-            warehouse_id: Number(data.warehouse_id),
-            batch_id: data.batch_id === '' ? null : Number(data.batch_id),
+            raw_material_id: idPayload(data.raw_material_id),
+            warehouse_id: idPayload(data.warehouse_id),
+            batch_id: idPayload(data.batch_id),
             quantity: toDecimalPayload(data.quantity),
             // cost_price is deliberately omitted for exits. The backend ignores it.
         }));

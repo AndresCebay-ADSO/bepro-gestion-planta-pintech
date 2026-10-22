@@ -224,3 +224,26 @@ export function decimalAmbiguityHint(value: FormValue): string | null {
 
     return `Se registrará ${registered}. Si es un número sin decimales, escríbelo sin ${separatorName}: ${sign}${integerPart}${fractionPart}.`;
 }
+
+/**
+ * El ID de un campo de selección tal como viaja al servidor: un número cuando es un entero seguro, `null` cuando no se
+ * eligió nada, y el texto tal cual si no es un entero (para que el servidor lo rechace). Nunca `Number('')`, que es 0 y
+ * hacía responder «seleccionado no es válido» en vez de «es obligatorio» (auditoría 3.6, INV-09).
+ */
+export function idPayload(
+    value: string | number | null | undefined,
+): number | string | null {
+    if (value === null || value === undefined) {
+        return null;
+    }
+
+    const text = String(value).trim();
+
+    if (text === '') {
+        return null;
+    }
+
+    return /^\d+$/.test(text) && Number.isSafeInteger(Number(text))
+        ? Number(text)
+        : text;
+}

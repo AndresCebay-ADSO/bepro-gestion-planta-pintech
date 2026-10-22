@@ -2,6 +2,7 @@ import { useForm, usePage } from '@inertiajs/react';
 import type { SubmitEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { idPayload } from '@/lib/numeric-input';
 import { store as storeFinishedMovement } from '@/routes/finished-inventory-movements';
 import type {
     FinishedBatchOption,
@@ -41,9 +42,11 @@ export function FinishedTransferMovementForm({
 
         form.transform((data) => ({
             ...data,
-            finished_product_batch_id: Number(data.finished_product_batch_id),
-            warehouse_id: Number(data.warehouse_id),
-            destination_warehouse_id: Number(data.destination_warehouse_id),
+            finished_product_batch_id: idPayload(
+                data.finished_product_batch_id,
+            ),
+            warehouse_id: idPayload(data.warehouse_id),
+            destination_warehouse_id: idPayload(data.destination_warehouse_id),
         }));
 
         form.post(storeFinishedMovement.url(), {

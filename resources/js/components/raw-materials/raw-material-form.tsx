@@ -17,7 +17,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { NUMBER_TYPES } from '@/lib/number-types';
-import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
+import { idPayload, parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
 import { RAW_MATERIAL_TYPE_HINTS } from '@/lib/raw-material-types';
 import type { RawMaterialType } from '@/types';
 
@@ -96,7 +96,7 @@ export function rawMaterialPayload<T extends RawMaterialFormData>(
 ) {
     return {
         ...data,
-        unit_of_measure_id: Number(data.unit_of_measure_id),
+        unit_of_measure_id: idPayload(data.unit_of_measure_id),
         minimum_stock: toDecimalPayload(data.minimum_stock),
         price_variation_threshold:
             data.price_variation_threshold === ''

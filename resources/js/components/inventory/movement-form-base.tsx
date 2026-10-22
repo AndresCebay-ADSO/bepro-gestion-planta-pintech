@@ -3,6 +3,7 @@ import type { useForm } from '@inertiajs/react';
 import type { ChangeEvent, ReactNode } from 'react';
 import { useMemo } from 'react';
 import { DecimalInput } from '@/components/decimal-input';
+import { formatSafeDate } from '@/components/formatted-date';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -90,6 +91,7 @@ export function MovementFormBase({
             <div className="space-y-2">
                 <Label htmlFor="raw_material_id">Materia Prima</Label>
                 <Combobox
+                    id="raw_material_id"
                     options={rawMaterials.map((rm) => ({
                         id: String(rm.id),
                         label: rm.code ?? `MP #${rm.id}`,
@@ -183,9 +185,17 @@ export function MovementFormBase({
                             {filteredBatches.map((b) => (
                                 <SelectItem key={b.id} value={String(b.id)}>
                                     {b.lot_number ?? `Auto #${b.id}`} (Disp:{' '}
+                                    {/* Con la misma precisión que valida el servidor: 9,9999 no se redondea a 10 (INV-05). */}
                                     {formatNumber(b.remaining_quantity, {
-                                        maxDecimals: 2,
+                                        maxDecimals: 4,
+                                        trimTrailingZeros: true,
                                     })}
+                                    {b.entry_date
+                                        ? ` · entró ${formatSafeDate(b.entry_date, 'date')}`
+                                        : ''}
+                                    {b.expiry_date
+                                        ? ` · vence ${formatSafeDate(b.expiry_date, 'date')}`
+                                        : ''}
                                     )
                                 </SelectItem>
                             ))}
@@ -249,6 +259,7 @@ export function MovementFormBase({
                 <Label htmlFor="notes">Notas / Observaciones</Label>
                 <Textarea
                     id="notes"
+                    maxLength={2000}
                     value={form.data.notes}
                     onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                         form.setData('notes', e.target.value)

@@ -6,6 +6,7 @@ import {
     checkIntegerText,
     decimalAmbiguityHint,
     decimalLimitsMessage,
+    idPayload,
     integerLimitsMessage,
     isValidDecimalText,
     isValidIntegerText,
@@ -350,6 +351,35 @@ describe('decimalAmbiguityHint: aviso cuando se escribe como miles', () => {
         'no avisa en %j',
         (text) => {
             expect(decimalAmbiguityHint(text)).toBeNull();
+        },
+    );
+});
+
+/*
+ * Auditoría 3.6, INV-09: `Number('')` es 0, y el servidor respondía «seleccionado no es válido» en vez de «es
+ * obligatorio». Un ID sin elegir se envía vacío (null) para que el servidor diga qué falta.
+ */
+describe('idPayload: el ID que se envía al servidor', () => {
+    it.each([
+        ['12', 12],
+        [12, 12],
+        [' 7 ', 7],
+        ['0', 0],
+    ])('un ID elegido (%j) viaja como número', (value, expected) => {
+        expect(idPayload(value)).toBe(expected);
+    });
+
+    it.each(['', '   ', null, undefined])(
+        'un ID sin elegir (%j) viaja como null, nunca como 0',
+        (value) => {
+            expect(idPayload(value)).toBeNull();
+        },
+    );
+
+    it.each(['abc', '1.5', '-3', '9223372036854775808'])(
+        'un valor que no es un entero seguro (%j) viaja tal cual, para que el servidor lo rechace',
+        (value) => {
+            expect(idPayload(value)).toBe(value);
         },
     );
 });

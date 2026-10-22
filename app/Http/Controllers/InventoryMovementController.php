@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\InventoryMovementType;
 use App\Enums\Permission;
+use App\Enums\WarehouseType;
 use App\Filters\InventoryMovementFilter;
 use App\Http\Requests\Inventory\IndexInventoryMovementRequest;
 use App\Http\Requests\Inventory\StoreInventoryMovementRequest;
@@ -75,12 +76,15 @@ class InventoryMovementController extends Controller
                     fn ($query) => $query->whereRaw('1 = 0')
                 )
                 ->where('remaining_quantity', '>', 0)
-                ->select('id', 'raw_material_id', 'warehouse_id', 'lot_number', 'remaining_quantity', 'unit_price')
-                ->orderByDesc('id')
+                ->select('id', 'raw_material_id', 'warehouse_id', 'lot_number', 'remaining_quantity', 'unit_price', 'entry_date', 'expiry_date')
+                // FIFO: el lote que primero entró va primero, porque la salida manual la elige el usuario (INV-04).
+                ->orderBy('entry_date')
+                ->orderBy('id')
                 ->get())
                 ->once(as: 'inventory-movements:batches'),
-            // Formulario de alta: solo bodegas activas. `warehouseOptions` es el filtro del historial y muestra todas.
-            'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->where('is_active', true)->get())
+            // Formulario de alta: solo las fábricas activas, que son las únicas que reciben materia prima (D6, INV-06).
+            // `warehouseOptions` es el filtro del historial y muestra todas.
+            'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->where('is_active', true)->where('type', WarehouseType::Factory->value)->orderBy('name')->get())
                 ->once(as: 'inventory-movements:warehouses'),
             // Fecha más vieja que admite una entrada (D1b): sin `once`, para que cambie con el día.
             'oldestEntryDate' => Inertia::optional(fn (): string => InventoryMovement::oldestEntryDate()),
