@@ -55,6 +55,10 @@ it('accepts real phone numbers and rejects text in the phone of every contact fo
     'texto' => ['llamar luego', false],
     'muy corto' => ['12345', false],
     'más de 20' => ['3001234567 3001234567 1', false],
+    'solo signos' => ['+++++++', false],
+    'signos y espacios' => ['()-./# +', false],
+    'menos de 7 dígitos' => ['12-34-5 #1', false],
+    'siete dígitos con formato' => ['123 45 67', true],
 ]);
 
 it('applies the same phone rule to sales orders and to the user profile', function (): void {
@@ -62,7 +66,7 @@ it('applies the same phone rule to sales orders and to the user profile', functi
     $order = SalesOrder::factory()->pending()->create();
 
     $this->patch(route('sales-orders.update', $order), ['client_phone' => 'llamar luego'])
-        ->assertSessionHasErrors(['client_phone' => 'El teléfono solo puede tener números, espacios y los signos + ( ) - . / #, de 7 a 20 caracteres.']);
+        ->assertSessionHasErrors(['client_phone' => 'El teléfono solo puede tener números, espacios y los signos + ( ) - . / #, con al menos 7 dígitos y hasta 20 caracteres.']);
 
     $this->patch(route('profile.update'), ['name' => $user->name, 'email' => $user->email, 'phone' => 'llamar luego'])
         ->assertSessionHasErrors('phone');

@@ -30,7 +30,8 @@ final class OperationalTimes
 
     /**
      * El instante en UTC, o `null` si el texto está vacío o no es una fecha y hora completas. Acepta `2026-10-13T08:00`,
-     * con segundos y fracciones, con `T` o espacio, y con `Z` o desfase.
+     * con segundos y fracciones, con `T` o espacio, y con `Z` o desfase. La hora va de 00 a 23, y minutos y segundos de 00
+     * a 59: PHP corrige `24:30` o `23:59:60` al día siguiente, y eso guardaría un instante que nadie escribió.
      */
     public static function parse(mixed $value): ?CarbonImmutable
     {
@@ -46,7 +47,7 @@ final class OperationalTimes
 
         $value = trim($value);
 
-        if (preg_match('/\A\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d{1,6})?)?(Z|[+-]\d{2}:?\d{2})?\z/i', $value) !== 1) {
+        if (preg_match('/\A\d{4}-\d{2}-\d{2}[T ]([01]\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d{1,6})?)?(Z|[+-]\d{2}:?\d{2})?\z/i', $value) !== 1) {
             return null;
         }
 

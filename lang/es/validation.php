@@ -158,10 +158,10 @@ return [
         ],
         // El teléfono del cliente, de la cotización, del pedido y del usuario (Client::PHONE_PATTERN).
         'phone' => [
-            'regex' => 'El teléfono solo puede tener números, espacios y los signos + ( ) - . / #, de 7 a 20 caracteres.',
+            'regex' => 'El teléfono solo puede tener números, espacios y los signos + ( ) - . / #, con al menos 7 dígitos y hasta 20 caracteres.',
         ],
         'client_phone' => [
-            'regex' => 'El teléfono solo puede tener números, espacios y los signos + ( ) - . / #, de 7 a 20 caracteres.',
+            'regex' => 'El teléfono solo puede tener números, espacios y los signos + ( ) - . / #, con al menos 7 dígitos y hasta 20 caracteres.',
         ],
         'password' => [
             'required' => 'Debes ingresar tu contraseña.',

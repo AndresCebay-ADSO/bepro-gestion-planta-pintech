@@ -59,7 +59,7 @@ class Client extends Model
      */
     public const NIT_MAX_LENGTH = 20;
 
-    public const PHONE_PATTERN = '/^[0-9 +().\/#-]{7,20}$/';
+    public const PHONE_PATTERN = '/^(?=(?:\D*\d){7})[0-9 +().\/#-]{7,20}$/';
 
     public function getActivitylogOptions(): LogOptions
     {

@@ -26,4 +26,9 @@ it('keeps an instant that already arrives as a date object instead of dropping i
 
 it('returns null for an empty value and for text that is not a full date and time', function (mixed $value): void {
     expect(OperationalTimes::parse($value))->toBeNull();
-})->with([null, '', '   ', 'mañana', '2026-10-13', '2026-02-30T08:00', '2026-10-13T25:00', 'array' => [['2026-10-13T08:00']], 12]);
+})->with([null, '', '   ', 'mañana', '2026-10-13', '2026-02-30T08:00', '2026-10-13T25:00', '2026-10-13T24:00', '2026-10-13T24:30:00Z', '2026-10-13T23:60', '2026-10-13T23:59:60', 'array' => [['2026-10-13T08:00']], 12]);
+
+it('keeps the last valid second of the day', function (): void {
+    expect(OperationalTimes::parse('2026-10-13T23:59:59Z')?->format('Y-m-d H:i:s'))->toBe('2026-10-13 23:59:59')
+        ->and(OperationalTimes::parse('2026-10-13T00:00Z')?->format('Y-m-d H:i'))->toBe('2026-10-13 00:00');
+});
