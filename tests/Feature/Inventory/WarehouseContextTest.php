@@ -43,3 +43,48 @@ test('guests get no warehouse context', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('warehouseContext', null));
 });
+
+// Auditoría 3.6, PR 10 (BOD-01, BOD-03): cambiar de bodega es para todo usuario autenticado, pero solo entre las que tiene
+// disponibles (las asignadas, o todas con `warehouses.view_all`; docs/MATRIZ_RBAC.md §5).
+
+test('an operator can switch to a warehouse assigned to them', function () {
+    $operator = userWithRole(SystemRole::Operator);
+    $first = Warehouse::factory()->create(['name' => 'Bodega A']);
+    $second = Warehouse::factory()->create(['name' => 'Bodega B']);
+    $operator->warehouses()->attach($first->id, ['is_default' => true]);
+    $operator->warehouses()->attach($second->id);
+
+    $this->actingAs($operator)
+        ->post(route('warehouses.set-current'), ['warehouse_id' => $second->id])
+        ->assertRedirect()
+        ->assertSessionHas('success', 'Bodega activa actualizada.')
+        ->assertSessionHas('current_warehouse_id', $second->id);
+});
+
+test('an operator cannot switch to a warehouse that is not assigned to them', function () {
+    $operator = userWithRole(SystemRole::Operator);
+    $mine = Warehouse::factory()->create(['name' => 'Bodega A']);
+    $other = Warehouse::factory()->create(['name' => 'Bodega B']);
+    $operator->warehouses()->attach($mine->id, ['is_default' => true]);
+
+    $this->actingAs($operator)
+        ->post(route('warehouses.set-current'), ['warehouse_id' => $other->id])
+        ->assertRedirect()
+        ->assertSessionHas('error', 'No tienes acceso a la bodega seleccionada.')
+        ->assertSessionMissing('success');
+
+    expect(session('current_warehouse_id'))->not->toBe($other->id);
+});
+
+test('an inactive warehouse is refused instead of answering that it was updated', function () {
+    $admin = userWithRole(SystemRole::Admin);
+    $active = Warehouse::factory()->create(['name' => 'Bodega A']);
+    $inactive = Warehouse::factory()->create(['name' => 'Bodega B', 'is_active' => false]);
+    $admin->warehouses()->attach($active->id, ['is_default' => true]);
+
+    $this->actingAs($admin)
+        ->post(route('warehouses.set-current'), ['warehouse_id' => $inactive->id])
+        ->assertRedirect()
+        ->assertSessionHas('error', 'No tienes acceso a la bodega seleccionada.')
+        ->assertSessionMissing('success');
+});
