@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum PaintDevelopmentRequestStatus: string
+use App\Enums\Contracts\HasTone;
+
+enum PaintDevelopmentRequestStatus: string implements HasTone
 {
     case Draft = 'draft';
     case Submitted = 'submitted';
@@ -20,6 +22,17 @@ enum PaintDevelopmentRequestStatus: string
             self::InReview => __('En revisión'),
             self::Approved => __('Aprobada'),
             self::Rejected => __('Rechazada'),
+        };
+    }
+
+    public function tone(): Tone
+    {
+        return match ($this) {
+            self::Draft => Tone::Neutral,
+            self::Submitted => Tone::Info,
+            self::InReview => Tone::Warning,
+            self::Approved => Tone::Success,
+            self::Rejected => Tone::Danger,
         };
     }
 

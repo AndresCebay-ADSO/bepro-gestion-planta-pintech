@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum SalesOrderPriority: string
+use App\Enums\Contracts\HasTone;
+
+enum SalesOrderPriority: string implements HasTone
 {
     case Low = 'low';
     case Medium = 'medium';
@@ -16,6 +18,19 @@ enum SalesOrderPriority: string
             self::Low => __('Baja'),
             self::Medium => __('Media'),
             self::High => __('Alta'),
+        };
+    }
+
+    /**
+     * Tono de la pastilla (DESIGN.md §4). Solo la prioridad alta lleva color; baja y media se distinguen por las barras
+     * del icono (`<PriorityBadge>`).
+     */
+    public function tone(): Tone
+    {
+        return match ($this) {
+            self::Low => Tone::Neutral,
+            self::Medium => Tone::Neutral,
+            self::High => Tone::Danger,
         };
     }
 

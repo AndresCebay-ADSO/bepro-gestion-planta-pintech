@@ -1,4 +1,5 @@
 import type { Auth } from '@/types/auth';
+import type { SharedEnums } from '@/types/enums';
 import type { NewAlert, RecentAlert, WarehouseContext } from '@/types/shared';
 
 /** Props que HandleInertiaRequests::share() envía a todas las páginas. */
@@ -14,6 +15,8 @@ declare module '@inertiajs/core' {
             warehouseContext: WarehouseContext | null;
             unresolvedAlertsCount: number;
             recentAlerts: RecentAlert[];
+            /** Etiqueta y tono de los enums con color (`ToneEnums`). Llega una vez por sesión; sin sesión no existe. */
+            enums?: SharedEnums;
             flash: {
                 success?: string | null;
                 error?: string | null;

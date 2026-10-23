@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Users } from 'lucide-react';
 
+import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
@@ -152,17 +153,9 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
                                                 {client.shipping_address ?? '-'}
                                             </td>
                                             <td className="p-3">
-                                                <span
-                                                    className={
-                                                        client.is_active
-                                                            ? 'rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-300'
-                                                            : 'rounded-full bg-slate-500/15 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300'
-                                                    }
-                                                >
-                                                    {client.is_active
-                                                        ? 'Activo'
-                                                        : 'Inactivo'}
-                                                </span>
+                                                <ActiveBadge
+                                                    isActive={client.is_active}
+                                                />
                                             </td>
                                             {(can.edit || can.delete) && (
                                                 <td className="p-3">

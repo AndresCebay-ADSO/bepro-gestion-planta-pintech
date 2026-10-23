@@ -9,11 +9,8 @@ import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { CancelOrderDialog } from '@/components/production/cancel-order-dialog';
 import { OrderColorDialog } from '@/components/production/order-color-dialog';
-import { Badge } from '@/components/ui/badge';
-import type {
-    ProductionOrder,
-    ProductionOrderStatus,
-} from '@/types/production-orders';
+import { StatusBadge } from '@/components/status-badge';
+import type { ProductionOrder } from '@/types/production-orders';
 
 type OrderHeaderProps = {
     order: ProductionOrder;
@@ -22,36 +19,6 @@ type OrderHeaderProps = {
     /** Cancelar la orden: permiso y estado pendiente o en curso (`can.cancel`, D-OPX2). */
     canCancel?: boolean;
 };
-
-function statusLabel(status: ProductionOrderStatus): string {
-    switch (status) {
-        case 'pending':
-            return 'Pendiente';
-        case 'in_progress':
-            return 'En Proceso';
-        case 'pending_review':
-            return 'Pendiente de Revisión';
-        case 'completed':
-            return 'Completada';
-        case 'cancelled':
-            return 'Cancelada';
-    }
-}
-
-function statusVariant(
-    status: ProductionOrderStatus,
-): 'default' | 'secondary' | 'outline' | 'destructive' {
-    switch (status) {
-        case 'completed':
-            return 'default';
-        case 'pending_review':
-            return 'outline';
-        case 'cancelled':
-            return 'destructive';
-        default:
-            return 'secondary';
-    }
-}
 
 export function OrderHeader({
     order,
@@ -71,9 +38,10 @@ export function OrderHeader({
                     <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                         Orden {order.order_number} (Lote {order.lot_number})
                     </h1>
-                    <Badge variant={statusVariant(order.status)}>
-                        {statusLabel(order.status)}
-                    </Badge>
+                    <StatusBadge
+                        enum="ProductionOrderStatus"
+                        value={order.status}
+                    />
                 </div>
                 <p className="mt-1 flex flex-wrap items-center gap-x-1 text-muted-foreground">
                     <span>
@@ -95,7 +63,7 @@ export function OrderHeader({
                     </span>
                 </p>
                 {order.status === 'pending_review' && order.submitted_by && (
-                    <p className="mt-2 flex items-center gap-1 text-sm text-blue-700 dark:text-blue-300">
+                    <p className="mt-2 flex items-center gap-1 text-sm text-info-text">
                         <Send className="h-4 w-4" />
                         Enviada por {order.submitted_by.name}
                         {order.submitted_at && (
@@ -110,7 +78,7 @@ export function OrderHeader({
                     </p>
                 )}
                 {order.rejection_reason && (
-                    <p className="mt-2 text-sm text-amber-700 dark:text-amber-300">
+                    <p className="mt-2 text-sm text-warning-text">
                         Devuelta a planta: {order.rejection_reason}
                     </p>
                 )}
@@ -124,7 +92,7 @@ export function OrderHeader({
                     />
                 )}
                 {order.status === 'completed' && order.completion_date && (
-                    <div className="mr-4 flex items-center gap-2 font-medium text-green-600">
+                    <div className="mr-4 flex items-center gap-2 font-medium text-success-text">
                         <CheckCircle2 className="h-5 w-5" />
                         Finalizada el{' '}
                         <FormattedDate

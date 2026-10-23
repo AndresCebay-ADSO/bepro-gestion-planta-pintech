@@ -4,8 +4,8 @@ import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
+import { StatusBadge } from '@/components/status-badge';
 import { TableActions } from '@/components/table-actions';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
@@ -100,26 +100,6 @@ export default function ProductionOrdersIndex({
         },
     ];
 
-    const getStatusVariant = (status: ProductionOrderItem['status']) => {
-        switch (status) {
-            case 'pending':
-                return 'secondary';
-            case 'in_progress':
-                return 'default';
-            case 'pending_review':
-                return 'outline';
-            case 'completed':
-                return 'default';
-            case 'cancelled':
-                return 'destructive';
-            default:
-                return 'secondary';
-        }
-    };
-
-    const getStatusLabel = (status: string) =>
-        statusOptions.find((o) => o.value === status)?.label ?? status;
-
     return (
         <>
             <Head title="Órdenes de Producción" />
@@ -206,13 +186,10 @@ export default function ProductionOrdersIndex({
                                         {order.quantity} gal
                                     </td>
                                     <td className="p-4">
-                                        <Badge
-                                            variant={getStatusVariant(
-                                                order.status,
-                                            )}
-                                        >
-                                            {getStatusLabel(order.status)}
-                                        </Badge>
+                                        <StatusBadge
+                                            enum="ProductionOrderStatus"
+                                            value={order.status}
+                                        />
                                     </td>
                                     <td className="p-4 text-xs">
                                         <div className="text-muted-foreground">
