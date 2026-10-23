@@ -49,7 +49,7 @@ export function QrCard({
                     </div>
                 )}
                 <div className="rounded-md border border-border bg-background/80 px-3 py-2">
-                    <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                         URL pública
                     </p>
                     <p

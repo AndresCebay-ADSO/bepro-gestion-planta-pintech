@@ -9,7 +9,7 @@ const alertVariants = cva(
     variants: {
       variant: {
         default: "bg-background text-foreground",
-        // Regla 4 de docs/SISTEMA_TEMAS_UI.md. `destructive-foreground` es el texto sobre un fondo rojo: sin ese fondo,
+        // DESIGN.md §2 y §3 (tokens de color). `destructive-foreground` es el texto sobre un fondo rojo: sin ese fondo,
         // en el tema claro quedaba blanco sobre blanco (auditoría 3.6, PR 6).
         destructive:
           "border-destructive/25 bg-destructive/10 text-destructive [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90",

@@ -38,7 +38,7 @@ const RolesShow: FC<Props> = ({ role, modules, can }) => {
                     <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                         <div>
                             <div className="flex items-center gap-3">
-                                <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                                <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                                     {role.label}
                                 </h1>
                                 <Badge

@@ -68,7 +68,7 @@ export function OrderHeader({
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
                 <div className="flex items-center gap-2">
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                    <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                         Orden {order.order_number} (Lote {order.lot_number})
                     </h1>
                     <Badge variant={statusVariant(order.status)}>

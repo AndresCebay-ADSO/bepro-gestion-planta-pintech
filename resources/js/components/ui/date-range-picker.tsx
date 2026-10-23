@@ -319,7 +319,7 @@ export function DateRangePicker({
                 <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-border">
                     {showPresets && (
                         <div className="flex flex-col p-3 gap-1 min-w-[150px] bg-muted/20">
-                            <span className="px-2 pb-1.5 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wider">
+                            <span className="px-2 pb-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                 Atajos rápidos
                             </span>
                             {PRESETS.map((preset) => {

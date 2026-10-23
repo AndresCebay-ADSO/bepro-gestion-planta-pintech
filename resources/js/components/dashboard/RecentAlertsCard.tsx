@@ -50,19 +50,19 @@ export function RecentAlertsCard({
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-3 gap-2 text-center text-xs">
                     <div className="rounded-lg bg-white/5 p-2">
-                        <p className="text-2xl font-bold">
+                        <p className="text-2xl font-semibold">
                             {alert_breakdown.stock_bajo}
                         </p>
                         <p className="text-slate-400">Stock</p>
                     </div>
                     <div className="rounded-lg bg-white/5 p-2">
-                        <p className="text-2xl font-bold">
+                        <p className="text-2xl font-semibold">
                             {alert_breakdown.vencimiento_proximo}
                         </p>
                         <p className="text-slate-400">Vence</p>
                     </div>
                     <div className="rounded-lg bg-white/5 p-2">
-                        <p className="text-2xl font-bold">
+                        <p className="text-2xl font-semibold">
                             {alert_breakdown.variacion_precio}
                         </p>
                         <p className="text-slate-400">Precio</p>

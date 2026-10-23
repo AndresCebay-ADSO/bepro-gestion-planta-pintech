@@ -75,7 +75,7 @@ const RolesCreate: FC<Props> = ({ modules, templates, defaultPermissions }) => {
                     >
                         ← Volver a Roles
                     </Link>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                    <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                         Nuevo rol
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">

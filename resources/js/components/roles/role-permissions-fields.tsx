@@ -139,7 +139,7 @@ export default function RolePermissionsFields({
                                             {permission.required && (
                                                 <Badge
                                                     variant="outline"
-                                                    className="px-1.5 py-0 text-[10px] font-normal text-muted-foreground"
+                                                    className="px-1.5 py-0 text-xs font-normal text-muted-foreground"
                                                 >
                                                     Obligatorio
                                                 </Badge>

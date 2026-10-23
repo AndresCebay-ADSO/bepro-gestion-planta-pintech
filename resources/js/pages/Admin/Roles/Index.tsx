@@ -59,7 +59,7 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
             <div className="mx-auto max-w-7xl space-y-8">
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                             Roles y permisos
                         </h1>
                         <p className="mt-1 text-muted-foreground">
@@ -97,19 +97,19 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
                         <table className="w-full">
                             <thead className="border-b border-border bg-muted/50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-bold text-muted-foreground uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
                                         Rol
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-bold text-muted-foreground uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
                                         Tipo
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-bold text-muted-foreground uppercase">
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase">
                                         Permisos
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-bold text-muted-foreground uppercase">
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase">
                                         Usuarios
                                     </th>
-                                    <th className="px-4 py-3 text-right text-xs font-bold text-muted-foreground uppercase">
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase">
                                         Acciones
                                     </th>
                                 </tr>
@@ -121,7 +121,7 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
                                             key={role.id}
                                             className="transition-colors hover:bg-muted/30"
                                         >
-                                            <td className="px-4 py-3 text-sm font-bold text-foreground">
+                                            <td className="px-4 py-3 text-sm font-semibold text-foreground">
                                                 {role.label}
                                             </td>
                                             <td className="px-4 py-3 whitespace-nowrap">
