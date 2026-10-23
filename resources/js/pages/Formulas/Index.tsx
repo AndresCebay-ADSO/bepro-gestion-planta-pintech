@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { BadgeDollarSign } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
+import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { TableActions } from '@/components/table-actions';
@@ -148,17 +149,10 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                                     </td>
                                     <td className="p-4">
                                         <div className="flex flex-wrap gap-1.5">
-                                            <Badge
-                                                variant={
-                                                    formula.is_active
-                                                        ? 'default'
-                                                        : 'secondary'
-                                                }
-                                            >
-                                                {formula.is_active
-                                                    ? 'Activa'
-                                                    : 'Inactiva'}
-                                            </Badge>
+                                            <ActiveBadge
+                                                isActive={formula.is_active}
+                                                feminine
+                                            />
                                             {formula.is_price_reference && (
                                                 <Badge variant="outline">
                                                     <BadgeDollarSign aria-hidden="true" />

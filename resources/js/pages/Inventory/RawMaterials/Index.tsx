@@ -3,6 +3,7 @@ import { BellRing } from 'lucide-react';
 import type { ComponentProps } from 'react';
 import { useState } from 'react';
 
+import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { TableActions } from '@/components/table-actions';
@@ -161,7 +162,7 @@ export default function RawMaterialsIndex({
 
                 {/* Alertas */}
                 {flash?.success && (
-                    <div className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+                    <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">
                         {flash.success}
                     </div>
                 )}
@@ -274,8 +275,8 @@ export default function RawMaterialsIndex({
                                                 href={`${alertsIndex().url}?status=active`}
                                                 className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
                                                     item.has_critical_alert
-                                                        ? 'bg-red-500/15 text-red-700 dark:text-red-300'
-                                                        : 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
+                                                        ? 'bg-destructive/15 text-destructive-text'
+                                                        : 'bg-warning/15 text-warning-text'
                                                 }`}
                                                 title="Ver alertas activas"
                                             >
@@ -290,17 +291,10 @@ export default function RawMaterialsIndex({
                                     </td>
 
                                     <td className="p-3 text-center">
-                                        <span
-                                            className={
-                                                item.is_active
-                                                    ? 'rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-300'
-                                                    : 'rounded-full bg-slate-500/15 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300'
-                                            }
-                                        >
-                                            {item.is_active
-                                                ? 'Activo'
-                                                : 'Inactivo'}
-                                        </span>
+                                        <ActiveBadge
+                                            isActive={item.is_active}
+                                            feminine
+                                        />
                                     </td>
 
                                     <td className="p-3 text-right">

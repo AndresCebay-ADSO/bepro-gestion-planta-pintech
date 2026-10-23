@@ -11,7 +11,7 @@ import {
 import { useState } from 'react';
 
 import { FormattedDate } from '@/components/formatted-date';
-import StatusBadge from '@/components/paint-development-requests/StatusBadge';
+import { StatusBadge } from '@/components/status-badge';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -146,11 +146,11 @@ export default function PaintDevelopmentRequestShow({
 
     const statusIcon =
         request.status === 'approved' ? (
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
+            <CheckCircle2 className="h-5 w-5 text-success-text" />
         ) : request.status === 'rejected' ? (
-            <XCircle className="h-5 w-5 text-red-500" />
+            <XCircle className="h-5 w-5 text-destructive-text" />
         ) : (
-            <Clock className="h-5 w-5 text-blue-500" />
+            <Clock className="h-5 w-5 text-info-text" />
         );
 
     return (
@@ -172,8 +172,8 @@ export default function PaintDevelopmentRequestShow({
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 {statusIcon}
                                 <StatusBadge
-                                    status={request.status}
-                                    label={request.status_label}
+                                    enum="PaintDevelopmentRequestStatus"
+                                    value={request.status}
                                 />
                             </div>
                         </div>

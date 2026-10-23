@@ -21,6 +21,7 @@ import {
     store,
     update,
 } from '@/actions/App/Http/Controllers/ProductVariantController';
+import { ActiveBadge } from '@/components/active-badge';
 import { DecimalInput } from '@/components/decimal-input';
 import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedDate } from '@/components/formatted-date';
@@ -389,15 +390,7 @@ export default function ProductsShow({
                         { title: product.name, href: '#' },
                     ]}
                     title={product.name}
-                    badge={
-                        <Badge
-                            variant={
-                                product.is_active ? 'default' : 'secondary'
-                            }
-                        >
-                            {product.is_active ? 'Activo' : 'Inactivo'}
-                        </Badge>
-                    }
+                    badge={<ActiveBadge isActive={product.is_active} />}
                     returnTo={returnTo}
                     defaultReturnHref={productsIndex().url}
                     defaultReturnLabel="Productos"
@@ -1419,17 +1412,10 @@ export default function ProductsShow({
                                         </td>
                                     )}
                                     <td className="p-4">
-                                        <Badge
-                                            variant={
-                                                variant.is_active
-                                                    ? 'default'
-                                                    : 'secondary'
-                                            }
-                                        >
-                                            {variant.is_active
-                                                ? 'Activa'
-                                                : 'Inactiva'}
-                                        </Badge>
+                                        <ActiveBadge
+                                            isActive={variant.is_active}
+                                            feminine
+                                        />
                                     </td>
                                     {can.manageVariants && (
                                         <td className="p-4 text-right">
@@ -1554,17 +1540,10 @@ export default function ProductsShow({
                                         </td>
                                         <td className="p-4">
                                             <div className="flex flex-wrap gap-1.5">
-                                                <Badge
-                                                    variant={
-                                                        formula.is_active
-                                                            ? 'default'
-                                                            : 'secondary'
-                                                    }
-                                                >
-                                                    {formula.is_active
-                                                        ? 'Activa'
-                                                        : 'Inactiva'}
-                                                </Badge>
+                                                <ActiveBadge
+                                                    isActive={formula.is_active}
+                                                    feminine
+                                                />
                                                 {formula.is_price_reference && (
                                                     <Badge variant="outline">
                                                         <BadgeDollarSign aria-hidden="true" />

@@ -1,8 +1,9 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Users } from 'lucide-react';
+import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
+import { StatusBadge } from '@/components/status-badge';
 import { TableActions } from '@/components/table-actions';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import {
@@ -100,7 +101,7 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                 </div>
 
                 {flash?.success && (
-                    <div className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+                    <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">
                         {flash.success}
                     </div>
                 )}
@@ -178,30 +179,16 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                                         {warehouse.address ?? '-'}
                                     </td>
                                     <td className="p-3">
-                                        <Badge
-                                            variant={
-                                                warehouse.type === 'factory'
-                                                    ? 'default'
-                                                    : 'secondary'
-                                            }
-                                        >
-                                            {warehouse.type === 'factory'
-                                                ? 'Fábrica'
-                                                : 'Bodega'}
-                                        </Badge>
+                                        <StatusBadge
+                                            enum="WarehouseType"
+                                            value={warehouse.type}
+                                        />
                                     </td>
                                     <td className="p-3">
-                                        <span
-                                            className={
-                                                warehouse.is_active
-                                                    ? 'rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-300'
-                                                    : 'rounded-full bg-slate-500/15 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300'
-                                            }
-                                        >
-                                            {warehouse.is_active
-                                                ? 'Activa'
-                                                : 'Inactiva'}
-                                        </span>
+                                        <ActiveBadge
+                                            isActive={warehouse.is_active}
+                                            feminine
+                                        />
                                     </td>
                                     <td className="p-3 text-muted-foreground">
                                         {warehouse.users_count}

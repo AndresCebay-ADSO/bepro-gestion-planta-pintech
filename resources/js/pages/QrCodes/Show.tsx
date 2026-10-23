@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { ActiveBadge } from '@/components/active-badge';
 import { FormattedDate } from '@/components/formatted-date';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -104,7 +105,7 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                 </div>
 
                 {flash?.success && (
-                    <div className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+                    <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">
                         {flash.success}
                     </div>
                 )}
@@ -120,11 +121,7 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Badge
-                            variant={qrCode.is_active ? 'default' : 'secondary'}
-                        >
-                            {qrCode.is_active ? 'Activo' : 'Inactivo'}
-                        </Badge>
+                        <ActiveBadge isActive={qrCode.is_active} />
                         {can.update && (
                             <Button
                                 variant="outline"
@@ -327,7 +324,7 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                     <CardContent>
                         {qrCode.documents.length === 0 ? (
                             <div className="rounded-xl border border-dashed border-border p-10 text-center">
-                                <FileText className="mx-auto mb-3 h-8 w-8 text-slate-300" />
+                                <FileText className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
                                 <p className="text-sm font-semibold text-foreground">
                                     Sin documentos
                                 </p>

@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 
+import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
@@ -116,13 +117,9 @@ export default function ProductsIndex({
                                         {product.category?.name ?? '-'}
                                     </td>
                                     <td className="p-3">
-                                        <span
-                                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${product.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}
-                                        >
-                                            {product.is_active
-                                                ? 'Activo'
-                                                : 'Inactivo'}
-                                        </span>
+                                        <ActiveBadge
+                                            isActive={product.is_active}
+                                        />
                                     </td>
                                     <td className="space-x-2 p-3 text-right">
                                         <Button

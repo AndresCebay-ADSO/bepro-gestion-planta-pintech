@@ -4,6 +4,7 @@ import { es } from 'date-fns/locale';
 import { Activity, UserPlus } from 'lucide-react';
 import type { FC } from 'react';
 
+import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
@@ -97,10 +98,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                         </p>
                     </div>
                     {can?.create !== false && (
-                        <Button
-                            asChild
-                            className="shrink-0 bg-blue-600 hover:bg-blue-700"
-                        >
+                        <Button asChild className="shrink-0">
                             <Link href={usersCreate().url}>
                                 <UserPlus className="mr-2 h-4 w-4" />
                                 Nuevo Usuario
@@ -127,48 +125,48 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
                     {/* TABLE */}
                     <div className="lg:col-span-9">
-                        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-card">
+                        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                             <table className="w-full">
-                                <thead className="border-b border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-muted/50">
+                                <thead className="border-b border-border bg-muted/30">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
                                             Usuario
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
                                             Rol
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
                                             Último Acceso
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
                                             Estado
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase">
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase">
                                             Acciones
                                         </th>
                                     </tr>
                                 </thead>
 
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                <tbody className="divide-y divide-border">
                                     {users.data.length > 0 ? (
                                         users.data.map((user) => (
                                             <tr
                                                 key={user.id}
-                                                className="transition-colors hover:bg-slate-50/50 dark:hover:bg-muted/30"
+                                                className="transition-colors hover:bg-muted/30"
                                             >
                                                 {/* USER */}
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 font-semibold text-primary">
                                                             {getInitials(
                                                                 user.name,
                                                             )}
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                            <p className="truncate text-sm font-semibold text-foreground">
                                                                 {user.name}
                                                             </p>
-                                                            <p className="truncate text-xs text-slate-500">
+                                                            <p className="truncate text-xs text-muted-foreground">
                                                                 {user.email}
                                                             </p>
                                                         </div>
@@ -186,7 +184,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                                                 </td>
 
                                                 {/* LAST LOGIN */}
-                                                <td className="px-4 py-3 text-sm whitespace-nowrap text-slate-600 dark:text-slate-400">
+                                                <td className="px-4 py-3 text-sm whitespace-nowrap text-muted-foreground">
                                                     {user.last_login_at
                                                         ? formatDistanceToNow(
                                                               new Date(
@@ -202,13 +200,11 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
 
                                                 {/* STATUS */}
                                                 <td className="px-4 py-3">
-                                                    <span
-                                                        className={`text-xs font-semibold ${user.is_active ? 'text-emerald-600' : 'text-slate-400'}`}
-                                                    >
-                                                        {user.is_active
-                                                            ? 'Activo'
-                                                            : 'Inactivo'}
-                                                    </span>
+                                                    <ActiveBadge
+                                                        isActive={
+                                                            user.is_active
+                                                        }
+                                                    />
                                                 </td>
 
                                                 {/* ACTIONS */}
@@ -249,7 +245,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                                         <tr>
                                             <td
                                                 colSpan={5}
-                                                className="py-12 text-center text-slate-400"
+                                                className="py-12 text-center text-muted-foreground"
                                             >
                                                 No se encontraron usuarios.
                                             </td>
@@ -259,9 +255,9 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                             </table>
 
                             {/* PAGINATION */}
-                            <div className="border-t border-slate-100 px-4 py-4 dark:border-slate-800">
+                            <div className="border-t border-border px-4 py-4">
                                 <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-                                    <span className="text-xs font-medium text-slate-500">
+                                    <span className="text-xs font-medium text-muted-foreground">
                                         Mostrando {users.data.length} de{' '}
                                         {users.total} usuarios
                                     </span>
@@ -274,17 +270,17 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                     {/* ACTIVITY */}
                     {can?.viewActivity && (
                         <div className="lg:col-span-3">
-                            <Card className="bg-[#0a1a32] text-white">
+                            <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
-                                        <Activity className="h-5 w-5 text-blue-400" />
+                                        <Activity className="h-5 w-5 text-primary" />
                                         Registro de Actividad
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     {recentActivities.map((activity) => (
                                         <div key={activity.id} className="mb-4">
-                                            <p className="text-xs text-blue-400">
+                                            <p className="text-xs text-muted-foreground">
                                                 {formatDistanceToNow(
                                                     new Date(
                                                         activity.created_at,

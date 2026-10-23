@@ -16,10 +16,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useEnumCase } from '@/hooks/use-enum-case';
 import { finishedLotLabel } from '@/lib/finished-lot';
 import { formatNumber } from '@/lib/formatters';
 import { UNITS_MAX_DIGITS } from '@/lib/number-types';
-import { finishedMovementReasonLabels } from '@/types/finished-inventory';
 import type {
     FinishedBatchOption,
     FinishedMovementReason,
@@ -139,6 +139,10 @@ export function FinishedMovementFormFields({
     showDestinationWarehouse = false,
 }: Props) {
     const { plantToday } = usePage().props;
+    const transferReason = useEnumCase(
+        'FinishedInventoryMovementReason',
+        'transfer',
+    );
     const selectedOriginWarehouseId = Number(form.data.warehouse_id);
     const selectedOriginWarehouse =
         Number.isFinite(selectedOriginWarehouseId) &&
@@ -428,7 +432,7 @@ export function FinishedMovementFormFields({
                     <Label htmlFor="reason">Razón</Label>
                     <Input
                         id="reason"
-                        value={finishedMovementReasonLabels.transfer}
+                        value={transferReason?.label ?? ''}
                         disabled
                         className="bg-muted text-muted-foreground"
                     />

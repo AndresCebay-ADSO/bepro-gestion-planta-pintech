@@ -10,6 +10,7 @@ import { useState } from 'react';
 
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
+import { StatusBadge } from '@/components/status-badge';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -120,13 +121,6 @@ type Props = {
     statusOptions: StatusOption[];
 };
 
-const statusColors: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-800',
-    sent: 'bg-blue-100 text-blue-800',
-    accepted: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
-};
-
 export default function QuotationsShow({
     quotation,
     can,
@@ -186,11 +180,11 @@ export default function QuotationsShow({
                                     ? `Cotización No.${quotation.quotation_number}`
                                     : 'Cotización'}
                             </h1>
-                            <span
-                                className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[quotation.status] ?? ''}`}
-                            >
-                                {quotation.status_label}
-                            </span>
+                            <StatusBadge
+                                enum="QuotationStatus"
+                                value={quotation.status}
+                                className="mt-1"
+                            />
                         </div>
                     </div>
 

@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import Heading from '@/components/heading';
@@ -138,7 +139,7 @@ export default function ShrinkWrapTypesIndex({ types, filters, can }: Props) {
                                                         {item.code}
                                                     </span>
                                                     {!item.is_active && (
-                                                        <span className="ml-1 text-xs text-amber-600 dark:text-amber-400">
+                                                        <span className="ml-1 text-xs text-warning-text">
                                                             (inactiva)
                                                         </span>
                                                     )}
@@ -147,17 +148,9 @@ export default function ShrinkWrapTypesIndex({ types, filters, can }: Props) {
                                         </ul>
                                     </td>
                                     <td className="p-3">
-                                        <span
-                                            className={
-                                                type.is_active
-                                                    ? 'rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-300'
-                                                    : 'rounded-full bg-slate-500/15 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300'
-                                            }
-                                        >
-                                            {type.is_active
-                                                ? 'Activo'
-                                                : 'Inactivo'}
-                                        </span>
+                                        <ActiveBadge
+                                            isActive={type.is_active}
+                                        />
                                     </td>
                                     <td className="p-3 text-right">
                                         <TableActions

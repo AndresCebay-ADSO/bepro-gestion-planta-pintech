@@ -1,12 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 
-import {
-    FinishedMovementReasonBadge,
-    FinishedMovementTypeBadge,
-} from '@/components/finished-inventory/finished-movement-badges';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
+import { MovementDirectionBadge } from '@/components/movement-direction-badge';
+import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { finishedLotLabel } from '@/lib/finished-lot';
 import { index as finishedMovementsIndex } from '@/routes/finished-inventory-movements';
@@ -52,11 +50,10 @@ export default function FinishedMovementsShow({ movement }: Props) {
                                 Movimiento PT #{movement.id}
                             </h1>
                             <div className="mt-2 flex flex-wrap items-center gap-2">
-                                <FinishedMovementTypeBadge
-                                    type={movement.type}
-                                />
-                                <FinishedMovementReasonBadge
-                                    reason={movement.reason}
+                                <MovementDirectionBadge type={movement.type} />
+                                <StatusBadge
+                                    enum="FinishedInventoryMovementReason"
+                                    value={movement.reason}
                                 />
                             </div>
                         </div>

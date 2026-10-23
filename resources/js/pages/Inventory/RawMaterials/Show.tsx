@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
 
+import { ActiveBadge } from '@/components/active-badge';
 import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -149,7 +150,7 @@ export default function RawMaterialsShow({
                 />
 
                 {flash?.success && (
-                    <div className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+                    <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">
                         {flash.success}
                     </div>
                 )}
@@ -195,15 +196,10 @@ export default function RawMaterialsShow({
                     <InfoItem
                         label="Estado"
                         value={
-                            <span
-                                className={
-                                    rawMaterial.is_active
-                                        ? 'rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-300'
-                                        : 'rounded-full bg-slate-500/15 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300'
-                                }
-                            >
-                                {rawMaterial.is_active ? 'Activa' : 'Inactiva'}
-                            </span>
+                            <ActiveBadge
+                                isActive={rawMaterial.is_active}
+                                feminine
+                            />
                         }
                     />
 

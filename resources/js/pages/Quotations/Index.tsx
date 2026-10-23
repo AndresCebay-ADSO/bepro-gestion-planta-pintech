@@ -5,6 +5,7 @@ import type { ComponentProps } from 'react';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
+import { StatusBadge } from '@/components/status-badge';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
@@ -42,14 +43,6 @@ type Props = {
     };
     creatorOptions: { id: number; name: string }[];
     statusOptions: { value: string; label: string }[];
-};
-
-const statusColors: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
-    sent: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-    accepted:
-        'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    rejected: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
 };
 
 export default function QuotationsIndex({
@@ -185,11 +178,10 @@ export default function QuotationsIndex({
                                             {quotation.client.business_name}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span
-                                                className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[quotation.status] ?? ''}`}
-                                            >
-                                                {quotation.status_label}
-                                            </span>
+                                            <StatusBadge
+                                                enum="QuotationStatus"
+                                                value={quotation.status}
+                                            />
                                         </td>
                                         <td className="px-4 py-3">
                                             <FormattedDate

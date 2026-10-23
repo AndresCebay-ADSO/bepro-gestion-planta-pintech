@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
-import StatusBadge from '@/components/paint-development-requests/StatusBadge';
+import { StatusBadge } from '@/components/status-badge';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
@@ -163,8 +163,8 @@ export default function PaintDevelopmentRequestsIndex({
                                         </td>
                                         <td className="px-4 py-3">
                                             <StatusBadge
-                                                status={req.status}
-                                                label={req.status_label}
+                                                enum="PaintDevelopmentRequestStatus"
+                                                value={req.status}
                                             />
                                         </td>
                                         <td className="px-4 py-3">

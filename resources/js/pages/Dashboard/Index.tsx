@@ -37,6 +37,7 @@ import type {
     RecentSalesOrder,
 } from '@/components/dashboard/types';
 import { formatBackendDate } from '@/components/dashboard/utils';
+import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { index as alertsIndex } from '@/routes/alerts';
@@ -70,38 +71,6 @@ interface DashboardProps {
     alert_breakdown?: AlertBreakdown;
     recent_quotes?: RecentQuote[];
     recent_sales_orders?: RecentSalesOrder[];
-}
-
-function quoteStatusClass(status: string): string {
-    switch (status) {
-        case 'draft':
-            return 'bg-slate-500/15 text-slate-700 dark:text-slate-300';
-        case 'sent':
-            return 'bg-blue-500/15 text-blue-700 dark:text-blue-300';
-        case 'accepted':
-            return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
-        case 'rejected':
-            return 'bg-red-500/15 text-red-700 dark:text-red-300';
-        default:
-            return 'bg-slate-500/15 text-slate-700 dark:text-slate-300';
-    }
-}
-
-function salesOrderStatusClass(status: string): string {
-    switch (status) {
-        case 'pending':
-            return 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-300';
-        case 'in_progress':
-            return 'bg-blue-500/15 text-blue-700 dark:text-blue-300';
-        case 'ready':
-            return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
-        case 'delivered':
-            return 'bg-purple-500/15 text-purple-700 dark:text-purple-300';
-        case 'cancelled':
-            return 'bg-red-500/15 text-red-700 dark:text-red-300';
-        default:
-            return 'bg-slate-500/15 text-slate-700 dark:text-slate-300';
-    }
 }
 
 export default function Dashboard({
@@ -522,11 +491,10 @@ export default function Dashboard({
                                                                 : ''}
                                                         </p>
                                                     </div>
-                                                    <span
-                                                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${quoteStatusClass(quote.status)}`}
-                                                    >
-                                                        {quote.status_label}
-                                                    </span>
+                                                    <StatusBadge
+                                                        enum="QuotationStatus"
+                                                        value={quote.status}
+                                                    />
                                                 </Link>
                                             ))
                                         )}
@@ -575,11 +543,10 @@ export default function Dashboard({
                                                                 : ''}
                                                         </p>
                                                     </div>
-                                                    <span
-                                                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${salesOrderStatusClass(order.status)}`}
-                                                    >
-                                                        {order.status_label}
-                                                    </span>
+                                                    <StatusBadge
+                                                        enum="SalesOrderStatus"
+                                                        value={order.status}
+                                                    />
                                                 </Link>
                                             ))
                                         )}

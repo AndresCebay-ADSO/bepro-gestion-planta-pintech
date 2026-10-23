@@ -1,12 +1,15 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Clock, FlaskConical, PackageX, TrendingUp } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
+import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
+import { pillClasses, toneClasses } from '@/lib/tones';
 import { index as alertsIndex, resolve as alertResolve } from '@/routes/alerts';
 import { show as rawMaterialShow } from '@/routes/raw-materials';
 import type { PaginationLink } from '@/types/ui';
@@ -56,27 +59,16 @@ type Props = {
     };
 };
 
-function severityClass(severity: string): string {
-    switch (severity) {
-        case 'alta':
-            return 'bg-red-500/15 text-red-700 dark:text-red-300';
-        case 'media':
-            return 'bg-amber-500/15 text-amber-700 dark:text-amber-300';
-        default:
-            return 'bg-slate-500/15 text-slate-700 dark:text-slate-300';
-    }
-}
-
-function typeClass(type: string): string {
+function renderTypeIcon(type: string) {
     switch (type) {
         case 'stock_bajo':
-            return 'bg-orange-500/15 text-orange-700 dark:text-orange-300';
+            return <PackageX className="size-3.5" aria-hidden="true" />;
         case 'vencimiento_proximo':
-            return 'bg-purple-500/15 text-purple-700 dark:text-purple-300';
+            return <Clock className="size-3.5" aria-hidden="true" />;
         case 'variacion_precio':
-            return 'bg-blue-500/15 text-blue-700 dark:text-blue-300';
+            return <TrendingUp className="size-3.5" aria-hidden="true" />;
         default:
-            return 'bg-slate-500/15 text-slate-700 dark:text-slate-300';
+            return <FlaskConical className="size-3.5" aria-hidden="true" />;
     }
 }
 
@@ -163,7 +155,7 @@ export default function AlertsIndex({
                 </div>
 
                 {flash?.success && (
-                    <div className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+                    <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">
                         {flash.success}
                     </div>
                 )}
@@ -214,8 +206,9 @@ export default function AlertsIndex({
                                     <tr key={alert.id}>
                                         <td className="px-4 py-3 align-top">
                                             <span
-                                                className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${typeClass(alert.type)}`}
+                                                className={`${pillClasses} ${toneClasses.neutral}`}
                                             >
+                                                {renderTypeIcon(alert.type)}
                                                 {alert.type_label}
                                             </span>
                                         </td>
@@ -242,11 +235,10 @@ export default function AlertsIndex({
                                                 )}
                                         </td>
                                         <td className="px-4 py-3 align-top">
-                                            <span
-                                                className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${severityClass(alert.severity)}`}
-                                            >
-                                                {alert.severity_label}
-                                            </span>
+                                            <StatusBadge
+                                                enum="AlertSeverity"
+                                                value={alert.severity}
+                                            />
                                         </td>
                                         <td className="px-4 py-3 align-top text-muted-foreground">
                                             {alert.created_at
