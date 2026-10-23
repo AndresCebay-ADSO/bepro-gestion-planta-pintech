@@ -11,13 +11,11 @@ import type { ComponentProps } from 'react';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FinishedEntryMovementForm } from '@/components/finished-inventory/finished-entry-movement-form';
 import { FinishedExitMovementForm } from '@/components/finished-inventory/finished-exit-movement-form';
-import {
-    FinishedMovementReasonBadge,
-    FinishedMovementTypeBadge,
-} from '@/components/finished-inventory/finished-movement-badges';
 import { FinishedTransferMovementForm } from '@/components/finished-inventory/finished-transfer-movement-form';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
+import { MovementDirectionBadge } from '@/components/movement-direction-badge';
+import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import {
@@ -31,6 +29,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useDrawerFormProps } from '@/hooks/use-drawer-form-props';
 import { useFilters } from '@/hooks/use-filters';
 import { finishedLotLabel } from '@/lib/finished-lot';
+import { cn } from '@/lib/utils';
 import {
     index as finishedMovementsIndex,
     show as showFinishedMovement,
@@ -55,24 +54,21 @@ const drawerCopy: Record<
         description:
             'Aumenta stock disponible para un lote de producto terminado.',
         icon: ArrowDownToLine,
-        iconClassName:
-            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+        iconClassName: 'bg-success/15 text-success-text',
     },
     exit: {
         title: 'Registrar salida PT',
         description:
             'Retira unidades de un lote y valida disponibilidad antes de guardar.',
         icon: ArrowUpFromLine,
-        iconClassName:
-            'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+        iconClassName: 'bg-warning/15 text-warning-text',
     },
     transfer: {
         title: 'Registrar traslado PT',
         description:
             'Mueve stock de un lote entre bodegas manteniendo su trazabilidad.',
         icon: ArrowLeftRight,
-        iconClassName:
-            'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
+        iconClassName: 'bg-info/15 text-info-text',
     },
 };
 
@@ -209,15 +205,14 @@ export default function FinishedMovementsIndex({
                             <Button
                                 type="button"
                                 onClick={() => openDrawer('entry')}
-                                className="bg-emerald-600 text-white hover:bg-emerald-700"
                             >
                                 <ArrowDownToLine className="mr-2 h-4 w-4" />
                                 Entrada
                             </Button>
                             <Button
                                 type="button"
+                                variant="outline"
                                 onClick={() => openDrawer('exit')}
-                                className="bg-amber-600 text-white hover:bg-amber-700"
                             >
                                 <ArrowUpFromLine className="mr-2 h-4 w-4" />
                                 Salida
@@ -243,7 +238,7 @@ export default function FinishedMovementsIndex({
                 />
 
                 {flash?.success && (
-                    <div className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+                    <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">
                         {flash.success}
                     </div>
                 )}
@@ -306,13 +301,14 @@ export default function FinishedMovementsIndex({
                                             />
                                         </td>
                                         <td className="p-3">
-                                            <FinishedMovementTypeBadge
+                                            <MovementDirectionBadge
                                                 type={movement.type}
                                             />
                                         </td>
                                         <td className="p-3">
-                                            <FinishedMovementReasonBadge
-                                                reason={movement.reason}
+                                            <StatusBadge
+                                                enum="FinishedInventoryMovementReason"
+                                                value={movement.reason}
                                             />
                                         </td>
                                         <td className="p-3">
@@ -350,7 +346,17 @@ export default function FinishedMovementsIndex({
                                                     '-'}
                                             </div>
                                         </td>
-                                        <td className="p-3 text-right font-medium text-foreground">
+                                        <td
+                                            className={cn(
+                                                'p-3 text-right font-medium tabular-nums',
+                                                movement.type === 'entry'
+                                                    ? 'text-success-text'
+                                                    : 'text-warning-text',
+                                            )}
+                                        >
+                                            {movement.type === 'entry'
+                                                ? '+'
+                                                : '−'}
                                             <FormattedNumber
                                                 value={movement.quantity}
                                                 maxDecimals={2}

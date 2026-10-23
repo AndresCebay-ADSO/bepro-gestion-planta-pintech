@@ -1,5 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { ActiveBadge } from '@/components/active-badge';
 import { FormattedNumber } from '@/components/formatted-number';
+import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import {
     destroy as warehousesDestroy,
@@ -117,19 +119,23 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                         <p className="text-xs tracking-wide text-muted-foreground uppercase">
                             Estado
                         </p>
-                        <p className="text-sm text-foreground">
-                            {warehouse.is_active ? 'Activa' : 'Inactiva'}
-                        </p>
+                        <div className="mt-1">
+                            <ActiveBadge
+                                isActive={warehouse.is_active}
+                                feminine
+                            />
+                        </div>
                     </div>
                     <div>
                         <p className="text-xs tracking-wide text-muted-foreground uppercase">
                             Tipo
                         </p>
-                        <p className="font-medium">
-                            {warehouse.type === 'factory'
-                                ? 'Fábrica (Producción)'
-                                : 'Bodega (Almacenamiento / Venta)'}
-                        </p>
+                        <div className="mt-1">
+                            <StatusBadge
+                                enum="WarehouseType"
+                                value={warehouse.type}
+                            />
+                        </div>
                     </div>
                     <div className="md:col-span-2">
                         <p className="text-xs tracking-wide text-muted-foreground uppercase">

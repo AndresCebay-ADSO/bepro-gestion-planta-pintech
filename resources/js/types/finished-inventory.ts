@@ -113,20 +113,6 @@ export type FinishedMovementsPage = {
     };
 };
 
-export const finishedMovementReasonLabels: Record<
-    FinishedMovementReason,
-    string
-> = {
-    production: 'Producción',
-    return: 'Devolución',
-    adjustment: 'Ajuste',
-    sale: 'Venta',
-    sample: 'Muestra',
-    transfer: 'Traslado',
-    transformation: 'Transformación',
-    deterioration: 'Deterioro',
-};
-
 export const entryReasons: Array<{
     value: FinishedMovementReason;
     label: string;

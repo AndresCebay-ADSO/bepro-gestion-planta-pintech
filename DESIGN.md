@@ -125,8 +125,9 @@ How it works:
 | `FinishedInventoryMovementReason` | transfer info · the rest neutral |
 | Active flag (`is_active`) | active success · inactive neutral |
 
-- **Movements:** always icon **and** sign, never color alone: entry `ArrowDown` + «+», exit `ArrowUp` + «−», transfer
-  `ArrowLeftRight`. The tone goes on the pill, the icon and the quantity; **never on the row background**.
+- **Movements:** never color alone. The pill (`<MovementDirectionBadge>`) shows icon + label: entry `ArrowDown`, exit
+  `ArrowUp`, transfer `ArrowLeftRight`. The quantity carries the sign (`+25`, `−25`), once per row. The tone goes on the
+  pill and the quantity; **never on the row background**.
 - **Priority:** only `high` has color (`danger`), with a bars icon (3 bars high, 2 medium, 1 low; medium and low grey).
 
 ## 5. Typography

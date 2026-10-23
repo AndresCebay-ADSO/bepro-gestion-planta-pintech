@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
 import Heading from '@/components/heading';
 import { TableActions } from '@/components/table-actions';
@@ -160,17 +161,10 @@ export default function RawMaterialCategoriesIndex({
                                             {category.raw_materials_count}
                                         </td>
                                         <td className="p-3">
-                                            <span
-                                                className={
-                                                    category.is_active
-                                                        ? 'rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-300'
-                                                        : 'rounded-full bg-slate-500/15 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300'
-                                                }
-                                            >
-                                                {category.is_active
-                                                    ? 'Activa'
-                                                    : 'Inactiva'}
-                                            </span>
+                                            <ActiveBadge
+                                                isActive={category.is_active}
+                                                feminine
+                                            />
                                         </td>
                                         <td className="p-3 text-right">
                                             <TableActions

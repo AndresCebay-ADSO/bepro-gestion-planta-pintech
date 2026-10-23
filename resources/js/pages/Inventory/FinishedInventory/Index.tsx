@@ -3,6 +3,7 @@ import { Package } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
+import { EnumLabel } from '@/components/enum-label';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
@@ -48,10 +49,6 @@ type Props = {
         product_name?: string | null;
     };
 };
-
-function warehouseTypeLabel(type: 'factory' | 'storage'): string {
-    return type === 'factory' ? 'Fábrica' : 'Almacenamiento';
-}
 
 export default function FinishedInventoryIndex({
     inventory,
@@ -216,9 +213,13 @@ export default function FinishedInventoryIndex({
                                                     </div>
                                                     <div className="text-xs">
                                                         {row.warehouse.city} ·{' '}
-                                                        {warehouseTypeLabel(
-                                                            row.warehouse.type,
-                                                        )}
+                                                        <EnumLabel
+                                                            enum="WarehouseType"
+                                                            value={
+                                                                row.warehouse
+                                                                    .type
+                                                            }
+                                                        />
                                                     </div>
                                                 </>
                                             ) : (

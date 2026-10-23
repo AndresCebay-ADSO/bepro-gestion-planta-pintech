@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { ActiveBadge } from '@/components/active-badge';
 import {
     UnitEquivalence,
     describeUnitUsage,
@@ -165,17 +166,10 @@ export default function UnitsOfMeasureIndex({ units, filters, can }: Props) {
                                         {describeUnitUsage(unit.usage)}
                                     </td>
                                     <td className="p-3">
-                                        <span
-                                            className={
-                                                unit.is_active
-                                                    ? 'rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-300'
-                                                    : 'rounded-full bg-slate-500/15 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300'
-                                            }
-                                        >
-                                            {unit.is_active
-                                                ? 'Activa'
-                                                : 'Inactiva'}
-                                        </span>
+                                        <ActiveBadge
+                                            isActive={unit.is_active}
+                                            feminine
+                                        />
                                     </td>
                                     <td className="p-3 text-right">
                                         <TableActions

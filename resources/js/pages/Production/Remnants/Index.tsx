@@ -3,7 +3,7 @@ import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/status-badge';
 import {
     Card,
     CardContent,
@@ -94,21 +94,6 @@ export default function RemnantsIndex({
             options: warehouseOptions,
         },
     ];
-
-    const getStatusVariant = (
-        status: string,
-    ): 'default' | 'secondary' | 'outline' | 'destructive' => {
-        switch (status) {
-            case 'available':
-                return 'default';
-            case 'partially_consumed':
-                return 'secondary';
-            case 'consumed':
-                return 'outline';
-            default:
-                return 'secondary';
-        }
-    };
 
     return (
         <>
@@ -268,15 +253,12 @@ export default function RemnantsIndex({
                                                         />
                                                     </td>
                                                     <td className="p-4">
-                                                        <Badge
-                                                            variant={getStatusVariant(
-                                                                remnant.status,
-                                                            )}
-                                                        >
-                                                            {
-                                                                remnant.status_label
+                                                        <StatusBadge
+                                                            enum="RemnantStatus"
+                                                            value={
+                                                                remnant.status
                                                             }
-                                                        </Badge>
+                                                        />
                                                     </td>
                                                 </tr>
                                             ))

@@ -2,10 +2,10 @@ import { Head, Link, router } from '@inertiajs/react';
 import { QrCode } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
+import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { TableActions } from '@/components/table-actions';
-import { Badge } from '@/components/ui/badge';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { show as productionOrderShow } from '@/routes/production-orders';
@@ -200,17 +200,9 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
                                             )}
                                         </td>
                                         <td className="px-4 py-3 align-top">
-                                            <Badge
-                                                variant={
-                                                    row.is_active
-                                                        ? 'default'
-                                                        : 'secondary'
-                                                }
-                                            >
-                                                {row.is_active
-                                                    ? 'Activo'
-                                                    : 'Inactivo'}
-                                            </Badge>
+                                            <ActiveBadge
+                                                isActive={row.is_active}
+                                            />
                                         </td>
                                         <td className="px-4 py-3 align-top text-muted-foreground">
                                             {row.documents_count}

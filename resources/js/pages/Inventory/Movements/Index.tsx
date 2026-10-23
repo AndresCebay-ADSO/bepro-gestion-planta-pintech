@@ -8,6 +8,7 @@ import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { EntryMovementForm } from '@/components/inventory/entry-movement-form';
 import { ExitMovementForm } from '@/components/inventory/exit-movement-form';
+import { MovementDirectionBadge } from '@/components/movement-direction-badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import {
@@ -20,6 +21,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDrawerFormProps } from '@/hooks/use-drawer-form-props';
 import { useFilters } from '@/hooks/use-filters';
+import { cn } from '@/lib/utils';
 
 import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
 import type { InventoryOption, PaginationLink } from '@/types';
@@ -176,16 +178,13 @@ export default function InventoryMovementsIndex({
                     </div>
                     {can.create && (
                         <div className="flex items-center gap-2">
-                            <Button
-                                onClick={() => openDrawer('entry')}
-                                className="bg-emerald-600 text-white hover:bg-emerald-700"
-                            >
+                            <Button onClick={() => openDrawer('entry')}>
                                 <ArrowDownToLine className="mr-2 h-4 w-4" />
                                 Entrada
                             </Button>
                             <Button
+                                variant="outline"
                                 onClick={() => openDrawer('exit')}
-                                className="bg-amber-600 text-white hover:bg-amber-700"
                             >
                                 <ArrowUpFromLine className="mr-2 h-4 w-4" />
                                 Salida
@@ -203,7 +202,7 @@ export default function InventoryMovementsIndex({
                 />
 
                 {flash?.success && (
-                    <div className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+                    <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">
                         {flash.success}
                     </div>
                 )}
@@ -246,17 +245,9 @@ export default function InventoryMovementsIndex({
                                         />
                                     </td>
                                     <td className="p-4">
-                                        <span
-                                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                                                movement.type === 'entry'
-                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                            }`}
-                                        >
-                                            {movement.type === 'entry'
-                                                ? 'ENTRADA'
-                                                : 'SALIDA'}
-                                        </span>
+                                        <MovementDirectionBadge
+                                            type={movement.type}
+                                        />
                                     </td>
                                     <td className="p-4">
                                         <div className="font-medium text-foreground">
@@ -269,7 +260,15 @@ export default function InventoryMovementsIndex({
                                     <td className="p-4 font-mono">
                                         {movement.raw_material?.code ?? '-'}
                                     </td>
-                                    <td className="p-4 text-right font-medium">
+                                    <td
+                                        className={cn(
+                                            'p-4 text-right font-medium tabular-nums',
+                                            movement.type === 'entry'
+                                                ? 'text-success-text'
+                                                : 'text-warning-text',
+                                        )}
+                                    >
+                                        {movement.type === 'entry' ? '+' : '−'}
                                         <FormattedNumber
                                             value={movement.quantity}
                                             maxDecimals={2}
@@ -312,14 +311,14 @@ export default function InventoryMovementsIndex({
                         <SheetTitle className="flex items-center gap-2">
                             {drawerState.mode === 'entry' ? (
                                 <>
-                                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-success/15 text-success-text">
                                         <ArrowDownToLine className="h-4 w-4" />
                                     </span>
                                     Registrar Entrada
                                 </>
                             ) : (
                                 <>
-                                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-warning/15 text-warning-text">
                                         <ArrowUpFromLine className="h-4 w-4" />
                                     </span>
                                     Registrar Salida

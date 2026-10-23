@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
 
+import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { RecentOrder } from './types';
@@ -12,21 +13,6 @@ interface RecentOrdersListProps {
     emptyMessage?: string;
     viewAllHref?: string;
     showHref?: (id: number) => string;
-}
-
-function orderStatusClass(status: string): string {
-    switch (status) {
-        case 'pending':
-            return 'bg-slate-500/15 text-slate-700 dark:text-slate-300';
-        case 'in_progress':
-            return 'bg-orange-500/15 text-orange-700 dark:text-orange-300';
-        case 'pending_review':
-            return 'bg-blue-500/15 text-blue-700 dark:text-blue-300';
-        case 'completed':
-            return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
-        default:
-            return 'bg-slate-500/15 text-slate-700 dark:text-slate-300';
-    }
 }
 
 export function RecentOrdersList({
@@ -72,11 +58,10 @@ export function RecentOrdersList({
                                         : ''}
                                 </p>
                             </div>
-                            <span
-                                className={`rounded-full px-2.5 py-1 text-xs font-medium ${orderStatusClass(order.status)}`}
-                            >
-                                {order.status_label}
-                            </span>
+                            <StatusBadge
+                                enum="ProductionOrderStatus"
+                                value={order.status}
+                            />
                         </Link>
                     ))
                 )}
@@ -128,11 +113,10 @@ export function RecentOrdersCompact({
                                         : '—'}
                                 </p>
                             </div>
-                            <span
-                                className={`rounded-full px-2.5 py-1 text-xs font-medium ${orderStatusClass(order.status)}`}
-                            >
-                                {order.status_label}
-                            </span>
+                            <StatusBadge
+                                enum="ProductionOrderStatus"
+                                value={order.status}
+                            />
                         </Link>
                     ))
                 )}
