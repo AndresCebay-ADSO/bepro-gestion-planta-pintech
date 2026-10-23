@@ -75,6 +75,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'browser' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/browser.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 7,
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

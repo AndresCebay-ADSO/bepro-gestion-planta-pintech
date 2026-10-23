@@ -18,24 +18,44 @@
         </include>
     </source>
     <php>
-        <!-- force="true": dentro del contenedor php-fpm, que carga .env, estas variables ganaban (APP_ENV=local,
-             MAIL_MAILER=smtp…). Solo DB_CONNECTION y DB_DATABASE quedan abiertas, para que el CI y el comando local
-             prueben en PostgreSQL; tests/Support/TestDatabaseGuard.php rechaza cualquier base que no sea de pruebas. -->
+        <ini name="memory_limit" value="512M"/>
+        <!-- force="true" en <env> solo escribe $_ENV y putenv; dentro de contenedores que cargan .env
+             como variables del sistema (compose.dev.yaml env_file), las variables pasan a $_SERVER, que Laravel
+             lee antes que $_ENV. Las entradas <server> aseguran que $_SERVER tenga los valores de prueba (B60, B64).
+             Solo DB_CONNECTION y DB_DATABASE quedan abiertas (sin force ni server), para que el CI y comandos
+             locales puedan probar en PostgreSQL; tests/Support/TestDatabaseGuard.php rechaza cualquier base que no
+             sea de pruebas. -->
         <env name="APP_ENV" value="testing" force="true"/>
+        <server name="APP_ENV" value="testing"/>
         <env name="APP_LOCALE" value="es" force="true"/>
+        <server name="APP_LOCALE" value="es"/>
         <env name="APP_FALLBACK_LOCALE" value="es" force="true"/>
+        <server name="APP_FALLBACK_LOCALE" value="es"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file" force="true"/>
+        <server name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4" force="true"/>
+        <server name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null" force="true"/>
+        <server name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array" force="true"/>
+        <server name="CACHE_STORE" value="array"/>
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="DB_URL" value="" force="true"/>
+        <server name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array" force="true"/>
+        <server name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>
+        <server name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array" force="true"/>
+        <server name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false" force="true"/>
+        <server name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false" force="true"/>
+        <server name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false" force="true"/>
+        <server name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="LOG_CHANNEL" value="null" force="true"/>
+        <server name="LOG_CHANNEL" value="null"/>
     </php>
 </phpunit>
