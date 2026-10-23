@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum SalesOrderStatus: string
+use App\Enums\Contracts\HasTone;
+
+enum SalesOrderStatus: string implements HasTone
 {
     case Pending = 'pending';
     case InProgress = 'in_progress';
@@ -23,6 +25,17 @@ enum SalesOrderStatus: string
         };
     }
 
+    public function tone(): Tone
+    {
+        return match ($this) {
+            self::Pending => Tone::Warning,
+            self::InProgress => Tone::Info,
+            self::Ready => Tone::Success,
+            self::Delivered => Tone::Success,
+            self::Cancelled => Tone::Danger,
+        };
+    }
+
     /**
      * Devuelve los estados a los que se puede transicionar desde el estado actual.
      *
@@ -36,17 +49,6 @@ enum SalesOrderStatus: string
             self::Ready => [self::Delivered, self::Cancelled],
             self::Delivered => [],
             self::Cancelled => [],
-        };
-    }
-
-    public function color(): string
-    {
-        return match ($this) {
-            self::Pending => 'yellow',
-            self::InProgress => 'blue',
-            self::Ready => 'green',
-            self::Delivered => 'purple',
-            self::Cancelled => 'gray',
         };
     }
 }

@@ -2,7 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Enums\SalesOrderStatus;
 use App\Support\EnumOptions;
+use Tests\TestCase;
+
+// `label()` traduce con `__()`: hace falta la aplicación.
+uses(TestCase::class);
 
 enum TestEnumStatus: string
 {
@@ -46,4 +51,15 @@ it('returns empty array for empty input', function () {
     $result = EnumOptions::for([]);
 
     expect($result)->toBe([]);
+});
+
+it('adds the tone of enums that implement HasTone', function () {
+    $result = EnumOptions::for(SalesOrderStatus::cases());
+
+    expect($result[0])->toBe(['value' => 'pending', 'label' => 'Pendiente', 'tone' => 'warning'])
+        ->and(array_column($result, 'tone'))->toHaveCount(count(SalesOrderStatus::cases()));
+});
+
+it('leaves out the tone of enums without HasTone', function () {
+    expect(EnumOptions::for(TestEnumStatus::cases())[0])->not->toHaveKey('tone');
 });

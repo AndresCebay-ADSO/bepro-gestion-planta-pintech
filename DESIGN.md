@@ -87,8 +87,29 @@ Five tones, no others (no purple, no primary):
 - Pill shape, one only: `rounded-full px-2 py-0.5 text-xs font-medium` + the tone classes.
   Example: `<span className="rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success-text">Activo</span>`.
 - The tone comes from the enum (`tone()` in PHP) and is rendered by `<StatusBadge>`, `<ActiveBadge>` and
-  `<PriorityBadge>`. **No color maps in pages** (`statusColors`, `priorityColors`…). _(pending; until then, use the
-  table below when you touch an existing map)_
+  `<PriorityBadge>`. **No color maps in pages** (`statusColors`, `priorityColors`…). Screens not migrated yet still
+  have their own map: replace it with the component when you touch it.
+
+How it works:
+
+- PHP is the only source. Each enum that is shown as a pill implements `App\Enums\Contracts\HasTone`
+  (`label()` + `tone(): App\Enums\Tone`, a `match` with no `default`) and is listed in `App\Support\ToneEnums::ALL`.
+  `ToneEnumsTest` fails if an enum with `tone()` is missing from that list or a case has no tone.
+- `HandleInertiaRequests` shares `enums` (`{ SalesOrderStatus: { pending: { label, tone } } }`) with
+  `Inertia::once`: it travels on the first visit only, and only for signed-in users. `EnumOptions::for()` also adds
+  `tone` to the options of those enums.
+- `resources/js/lib/tones.ts` is the only tone → classes map (and the pill shape). Pages never import it directly;
+  they use a component:
+
+| Component | Use |
+| :-- | :-- |
+| `<StatusBadge enum="SalesOrderStatus" value={order.status} />` | Any enum of `ToneEnums::ALL`; label and tone from the enum |
+| `<ActiveBadge isActive={client.is_active} />` | Active flag: «Activo» success / «Inactivo» neutral |
+| `<PriorityBadge value={order.priority} />` | Sales order priority: bars icon + label |
+| `useEnumCase('SalesOrderStatus', value)` | The label (and tone) without a pill: plain text, selects |
+
+- A new enum with color: implement `HasTone`, add it to `ToneEnums::ALL` and its short name to `ToneEnumName` in
+  `resources/js/types/enums.ts`.
 
 | Enum | Case → tone |
 | :-- | :-- |

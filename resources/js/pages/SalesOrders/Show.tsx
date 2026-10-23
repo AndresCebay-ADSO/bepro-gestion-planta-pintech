@@ -1,7 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, FileText, ShoppingCart } from 'lucide-react';
 
+import { PriorityBadge } from '@/components/priority-badge';
 import AdminOrderSidebar from '@/components/sales-orders/AdminOrderSidebar';
+import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { show as quotationsShow } from '@/routes/quotations';
 import { index as salesOrdersIndex } from '@/routes/sales-orders';
@@ -57,23 +59,6 @@ type Props = {
     };
 };
 
-const statusColors: Record<string, string> = {
-    pending:
-        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    in_progress:
-        'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-    ready: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    delivered:
-        'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-    cancelled: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
-};
-
-const priorityColors: Record<string, string> = {
-    low: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    high: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-};
-
 export default function SalesOrdersShow({
     order,
     statusTransitions,
@@ -94,16 +79,8 @@ export default function SalesOrdersShow({
                     <h1 className="text-2xl font-semibold">
                         Pedido #{order.id}
                     </h1>
-                    <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${priorityColors[order.priority] ?? 'bg-gray-100 text-gray-800'}`}
-                    >
-                        {order.priority_label}
-                    </span>
-                    <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${statusColors[order.status] ?? 'bg-gray-100 text-gray-800'}`}
-                    >
-                        {order.status_label}
-                    </span>
+                    <PriorityBadge value={order.priority} />
+                    <StatusBadge enum="SalesOrderStatus" value={order.status} />
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-3">

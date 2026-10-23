@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\AlertService;
 use App\Services\TimezoneService;
 use App\Services\WarehouseContextService;
+use App\Support\ToneEnums;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Middleware;
@@ -87,6 +88,10 @@ class HandleInertiaRequests extends Middleware
             'recentAlerts' => fn (): array => $user?->can(Permission::AlertsView->value)
                 ? $this->alertService->recentUnresolved($user, 5)
                 : [],
+            // Etiqueta y tono de cada caso de los enums con color, para `<StatusBadge>` (ToneEnums). `once`: el cliente
+            // la guarda y no se vuelve a enviar al navegar. Solo con sesión: si el login la recibiera vacía, el cliente
+            // la daría por cargada y no la pediría tras entrar.
+            ...($user ? ['enums' => Inertia::once(fn (): array => ToneEnums::shared())] : []),
         ];
     }
 

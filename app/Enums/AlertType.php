@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum AlertType: string
+use App\Enums\Contracts\HasTone;
+
+enum AlertType: string implements HasTone
 {
     case StockBajo = 'stock_bajo';
     case VencimientoProximo = 'vencimiento_proximo';
@@ -18,6 +20,19 @@ enum AlertType: string
             self::VencimientoProximo => __('Vencimiento próximo'),
             self::VariacionPrecio => __('Variación de precio'),
             self::PaintDevelopmentRequest => __('Solicitud de desarrollo de pintura'),
+        };
+    }
+
+    /**
+     * Tono de la pastilla (DESIGN.md §4). Son tipos, no estados: todos neutros; se distinguen por icono y etiqueta.
+     */
+    public function tone(): Tone
+    {
+        return match ($this) {
+            self::StockBajo,
+            self::VencimientoProximo,
+            self::VariacionPrecio,
+            self::PaintDevelopmentRequest => Tone::Neutral,
         };
     }
 

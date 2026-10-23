@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum QuotationStatus: string
+use App\Enums\Contracts\HasTone;
+
+enum QuotationStatus: string implements HasTone
 {
     case Draft = 'draft';
     case Sent = 'sent';
@@ -18,6 +20,16 @@ enum QuotationStatus: string
             self::Sent => __('Enviado'),
             self::Accepted => __('Aceptado'),
             self::Rejected => __('Rechazado'),
+        };
+    }
+
+    public function tone(): Tone
+    {
+        return match ($this) {
+            self::Draft => Tone::Neutral,
+            self::Sent => Tone::Info,
+            self::Accepted => Tone::Success,
+            self::Rejected => Tone::Danger,
         };
     }
 }

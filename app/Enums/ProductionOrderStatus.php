@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum ProductionOrderStatus: string
+use App\Enums\Contracts\HasTone;
+
+enum ProductionOrderStatus: string implements HasTone
 {
     case Pending = 'pending';
     case InProgress = 'in_progress';
@@ -42,6 +44,17 @@ enum ProductionOrderStatus: string
             self::PendingReview => __('Pendiente de revisión'),
             self::Completed => __('Completada'),
             self::Cancelled => __('Cancelada'),
+        };
+    }
+
+    public function tone(): Tone
+    {
+        return match ($this) {
+            self::Pending => Tone::Warning,
+            self::InProgress => Tone::Info,
+            self::PendingReview => Tone::Warning,
+            self::Completed => Tone::Success,
+            self::Cancelled => Tone::Danger,
         };
     }
 }

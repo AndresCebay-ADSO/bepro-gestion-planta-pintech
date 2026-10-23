@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum FinishedInventoryMovementReason: string
+use App\Enums\Contracts\HasTone;
+
+enum FinishedInventoryMovementReason: string implements HasTone
 {
     case Production = 'production';
     case Return = 'return';
@@ -26,6 +28,24 @@ enum FinishedInventoryMovementReason: string
             self::Transfer => __('Traslado'),
             self::Transformation => __('Transformación'),
             self::Deterioration => __('Deterioro'),
+        };
+    }
+
+    /**
+     * Tono de la pastilla (DESIGN.md §4). Solo el traslado lleva color; la dirección (entrada o salida) la pinta la
+     * pastilla de tipo.
+     */
+    public function tone(): Tone
+    {
+        return match ($this) {
+            self::Transfer => Tone::Info,
+            self::Production,
+            self::Return,
+            self::Adjustment,
+            self::Sale,
+            self::Sample,
+            self::Transformation,
+            self::Deterioration => Tone::Neutral,
         };
     }
 
