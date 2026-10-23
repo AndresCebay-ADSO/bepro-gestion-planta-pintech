@@ -90,6 +90,7 @@ Route (routes/web.php, role: middleware)
 - **UI Table Actions (MANDATORY)**:
   - Use `<TableActions />` component for all table row actions: icons only (lucide-react), tooltips & `sr-only` text mandatory.
   - Colors: View (outline), Edit (warning/amber), Delete (destructive/red). Order: View → Edit → Delete.
+- **UI**: follow `DESIGN.md` (UX contract): tokens, tones, typography, icons, forms and listings.
 
 ## Critical Business Invariants (DO NOT VIOLATE)
 
@@ -156,7 +157,8 @@ Obsidian vault (see below), so nothing here goes stale on its own.
 - `POLITICA_COSTOS_MATERIA_PRIMA.md` — FIFO costing rules, reference pricing, and valuation formulas.
 - `POLITICA_ELIMINACION.md` — Deletion policy: deactivate vs delete per entity, FK delete rules (no soft deletes).
 - `MATRIZ_RBAC.md` — Role and permission matrix. §8 holds the implementation decisions the code cites.
-- `COMPONENTES_UI.md` & `SISTEMA_TEMAS_UI.md` — Design system, themes (dark/light), and reusable UI components.
+- `COMPONENTES_UI.md` — Reusable UI components. The UX contract (themes, colors, tones, typography) is `DESIGN.md`,
+  in the repository root.
 - `SISTEMA_AUDITORIA.md` — Spatie activity log integration, audit trails, and security events.
 - `LOGOS.md` & `production-exports.md` — Brand identity rules, PDF & Excel export technical specifications.
 

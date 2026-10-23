@@ -30,7 +30,7 @@ export function StatCard({
                     <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         {label}
                     </p>
-                    <p className="text-3xl font-bold">{value}</p>
+                    <p className="text-3xl font-semibold">{value}</p>
                 </div>
             </CardContent>
         </Card>

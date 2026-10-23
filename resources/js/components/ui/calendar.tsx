@@ -110,7 +110,7 @@ function Calendar({
                 month_grid: 'w-full border-collapse space-y-1',
                 weekdays: 'flex justify-between mb-1',
                 weekday:
-                    'text-muted-foreground w-9 text-center font-medium text-[0.75rem] uppercase tracking-wider',
+                    'text-muted-foreground w-9 text-center font-medium text-xs uppercase tracking-wider',
                 weeks: 'space-y-1',
                 week: 'flex w-full mt-1 justify-between',
                 day: 'relative p-0 text-center text-sm focus-within:relative focus-within:z-20 h-9 w-9 flex items-center justify-center first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md',
@@ -122,7 +122,7 @@ function Calendar({
                     'rounded-r-md bg-primary/15 [&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:font-semibold [&>button]:shadow-xs hover:[&>button]:bg-primary/90 hover:[&>button]:text-primary-foreground',
                 selected:
                     '[&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:font-semibold [&>button]:shadow-xs',
-                today: '[&>button]:border [&>button]:border-primary/60 [&>button]:text-primary [&>button]:font-bold',
+                today: '[&>button]:border [&>button]:border-primary/60 [&>button]:text-primary [&>button]:font-semibold',
                 outside:
                     'text-muted-foreground/40 opacity-40 aria-selected:opacity-70 aria-selected:text-muted-foreground',
                 disabled: 'text-muted-foreground/30 opacity-30 pointer-events-none',

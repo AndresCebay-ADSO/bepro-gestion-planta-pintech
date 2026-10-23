@@ -219,7 +219,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                             aria-label="Notificaciones"
                         >
                             <Bell className="!size-5 opacity-80" />
-                            <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-primary-foreground">
+                            <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-xs font-semibold text-primary-foreground">
                                 3
                             </span>
                         </Button>

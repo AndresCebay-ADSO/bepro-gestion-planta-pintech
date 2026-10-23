@@ -88,7 +88,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                 {/* HEADER */}
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                             Gestión de Usuarios
                         </h1>
                         <p className="mt-1 text-muted-foreground">
@@ -131,19 +131,19 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                             <table className="w-full">
                                 <thead className="border-b border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-muted/50">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">
                                             Usuario
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">
                                             Rol
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">
                                             Último Acceso
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">
                                             Estado
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase">
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase">
                                             Acciones
                                         </th>
                                     </tr>
@@ -159,13 +159,13 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                                                 {/* USER */}
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                                                             {getInitials(
                                                                 user.name,
                                                             )}
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <p className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">
+                                                            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                                                                 {user.name}
                                                             </p>
                                                             <p className="truncate text-xs text-slate-500">
@@ -179,7 +179,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                                                 <td className="px-4 py-3 whitespace-nowrap">
                                                     <Badge
                                                         variant="secondary"
-                                                        className="font-bold uppercase"
+                                                        className="font-semibold uppercase"
                                                     >
                                                         {user.role_label}
                                                     </Badge>
@@ -203,7 +203,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                                                 {/* STATUS */}
                                                 <td className="px-4 py-3">
                                                     <span
-                                                        className={`text-xs font-bold ${user.is_active ? 'text-emerald-600' : 'text-slate-400'}`}
+                                                        className={`text-xs font-semibold ${user.is_active ? 'text-emerald-600' : 'text-slate-400'}`}
                                                     >
                                                         {user.is_active
                                                             ? 'Activo'
@@ -295,7 +295,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                                                     },
                                                 )}
                                             </p>
-                                            <p className="text-sm font-bold">
+                                            <p className="text-sm font-semibold">
                                                 {activity.description}
                                             </p>
                                         </div>

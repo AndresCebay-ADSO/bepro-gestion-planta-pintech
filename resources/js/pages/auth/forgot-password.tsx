@@ -33,7 +33,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                         </div>
 
                         <div className="relative z-10 space-y-4">
-                            <h1 className="text-3xl leading-snug font-bold text-primary-foreground">
+                            <h1 className="text-3xl leading-snug font-semibold text-primary-foreground">
                                 Recupera el acceso
                                 <br />a tu cuenta.
                             </h1>
@@ -46,7 +46,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                         <div className="relative z-10 flex gap-8">
                             <div>
-                                <p className="text-2xl font-bold text-emerald-400">
+                                <p className="text-2xl font-semibold text-emerald-400">
                                     Seguro
                                 </p>
                                 <p className="text-xs tracking-widest text-primary-foreground/60 uppercase">
@@ -72,7 +72,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                     }}
                                 />
                                 <div className="grid leading-tight">
-                                    <span className="text-[11px] tracking-[0.22em] text-muted-foreground uppercase">
+                                    <span className="text-xs tracking-[0.22em] text-muted-foreground uppercase">
                                         Pintech OS
                                     </span>
                                     <span className="text-sm font-semibold text-foreground">

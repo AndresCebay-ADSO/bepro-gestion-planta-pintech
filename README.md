@@ -329,7 +329,7 @@ Carpeta `docs/`:
 - `POLITICA_COSTOS_MATERIA_PRIMA.md` - Costeo FIFO y precios de referencia.
 - `MATRIZ_RBAC.md` - Matriz de roles y permisos del sistema; §8, las decisiones de implementación que cita el código.
 - `COMPONENTES_UI.md` - Componentes reutilizables (FormattedNumber, FormattedDate, TableActions).
-- `SISTEMA_TEMAS_UI.md` - Guía del sistema de temas visuales (claro/oscuro).
+- `DESIGN.md` (raíz del repositorio) - Contrato de UX: tema claro/oscuro, colores, tonos, tipografía y componentes.
 - `SISTEMA_AUDITORIA.md` - Guía del registro de actividad y auditoría.
 - `LOGOS.md` - Guía de assets y branding corporativo.
 - `production-exports.md` - Módulo de exportación de órdenes a PDF y Excel.

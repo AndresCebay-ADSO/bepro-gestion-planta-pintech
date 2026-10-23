@@ -240,7 +240,7 @@ export function OrderInfoCard({
                                     <span className="text-muted-foreground">
                                         Valor total potencial orden:
                                     </span>
-                                    <span className="font-bold text-primary">
+                                    <span className="font-semibold text-primary">
                                         <FormattedNumber
                                             value={
                                                 estimatedTotalCost +

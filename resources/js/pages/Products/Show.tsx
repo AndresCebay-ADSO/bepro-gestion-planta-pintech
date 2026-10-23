@@ -756,7 +756,7 @@ export default function ProductsShow({
                                                         </p>
                                                         <Badge
                                                             variant="outline"
-                                                            className="shrink-0 text-[10px] tracking-wide uppercase"
+                                                            className="shrink-0 text-xs tracking-wide uppercase"
                                                         >
                                                             {typeLabel}
                                                         </Badge>

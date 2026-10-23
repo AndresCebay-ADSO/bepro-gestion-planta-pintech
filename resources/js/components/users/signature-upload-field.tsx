@@ -78,7 +78,7 @@ export const SignatureUploadField: FC<SignatureUploadFieldProps> = ({
                         <button
                             type="button"
                             onClick={handleRemove}
-                            className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground shadow-xs transition hover:bg-destructive/90 focus:outline-hidden"
+                            className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-destructive text-xs font-semibold text-destructive-foreground shadow-xs transition hover:bg-destructive/90 focus:outline-hidden"
                             title="Eliminar firma"
                             aria-label="Eliminar firma"
                         >

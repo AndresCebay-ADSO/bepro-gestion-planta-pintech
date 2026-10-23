@@ -46,7 +46,7 @@ export default function Login({ status, canResetPassword }: Props) {
 
                         {/* Frase central */}
                         <div className="relative z-10 space-y-4">
-                            <h1 className="text-3xl leading-snug font-bold text-primary-foreground">
+                            <h1 className="text-3xl leading-snug font-semibold text-primary-foreground">
                                 Precisión en cada gota.
                                 <br />
                                 Control en cada lote.
@@ -61,7 +61,7 @@ export default function Login({ status, canResetPassword }: Props) {
                         {/* Stats inferiores */}
                         <div className="relative z-10 flex gap-8">
                             <div>
-                                <p className="text-2xl font-bold text-emerald-400">
+                                <p className="text-2xl font-semibold text-emerald-400">
                                     99.9%
                                 </p>
                                 <p className="text-xs tracking-widest text-primary-foreground/60 uppercase">
@@ -88,7 +88,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     }}
                                 />
                                 <div className="grid leading-tight">
-                                    <span className="text-[11px] tracking-[0.22em] text-muted-foreground uppercase">
+                                    <span className="text-xs tracking-[0.22em] text-muted-foreground uppercase">
                                         Pintech OS
                                     </span>
                                     <span className="text-sm font-semibold text-foreground">
