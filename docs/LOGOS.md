@@ -73,7 +73,6 @@ import AppLogoIcon from '@/components/app-logo-icon';
 | Auth Simple Layout | `resources/js/layouts/auth/auth-simple-layout.tsx`  | Logo en layouts de auth        |
 | Auth Card Layout   | `resources/js/layouts/auth/auth-card-layout.tsx`    | Logo en layouts de auth        |
 | Email Header       | `resources/views/vendor/mail/html/header.blade.php` | Logo en emails                 |
-| App Header         | `resources/js/components/app-header.tsx`            | Logo en header de app          |
 | User Menu          | `resources/js/components/user-menu-content.tsx`     | Logo en menú de usuario        |
 
 ## 📋 Especificaciones Técnicas

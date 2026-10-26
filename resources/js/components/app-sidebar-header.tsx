@@ -1,14 +1,13 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
-    Bell,
     ChevronDown,
-    ChevronLeft,
-    ChevronRight,
     Menu,
     MoreHorizontal,
-    Search,
+    PanelLeftClose,
+    PanelLeftOpen,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
+import { AlertsBell } from '@/components/alerts-bell';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import ThemeToggleButton from '@/components/theme-toggle-button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,10 +15,6 @@ import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -35,7 +30,6 @@ export function AppSidebarHeader({
     breadcrumbs?: BreadcrumbItemType[];
 }) {
     const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
-    const searchInputRef = useRef<HTMLInputElement>(null);
     const { auth } = usePage().props;
     const getInitials = useInitials();
     const { toggleSidebar, state, isMobile } = useSidebar();
@@ -43,24 +37,6 @@ export function AppSidebarHeader({
     const toggleApplicationMenu = () => {
         setApplicationMenuOpen((prev) => !prev);
     };
-
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (
-                (event.metaKey || event.ctrlKey) &&
-                event.key.toLowerCase() === 'k'
-            ) {
-                event.preventDefault();
-                searchInputRef.current?.focus();
-            }
-        };
-
-        document.addEventListener('keydown', handleKeyDown);
-
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, []);
 
     return (
         <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
@@ -70,54 +46,41 @@ export function AppSidebarHeader({
                         <Button
                             variant="outline"
                             size="icon"
-                            className="h-10 w-10 border-border text-muted-foreground hover:text-foreground lg:h-11 lg:w-11"
+                            className="size-10 text-muted-foreground hover:text-foreground"
                             onClick={toggleSidebar}
-                            aria-label="Toggle sidebar"
+                            aria-label="Mostrar u ocultar menú"
                         >
                             {isMobile ? (
-                                <Menu className="h-4 w-4" />
+                                <Menu className="size-4" />
                             ) : state === 'collapsed' ? (
-                                <ChevronRight className="h-4 w-4" />
+                                <PanelLeftOpen className="size-4" />
                             ) : (
-                                <ChevronLeft className="h-4 w-4" />
+                                <PanelLeftClose className="size-4" />
                             )}
                         </Button>
 
                         <Link href={dashboard()} className="lg:hidden">
                             <img
                                 src="/images/logo-pintech.png"
-                                alt="Pintech logo"
+                                alt="Logo de Pintech"
                                 className="h-8 w-auto object-contain"
                             />
                         </Link>
                     </div>
 
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={toggleApplicationMenu}
-                        className="h-10 w-10 text-muted-foreground hover:text-foreground lg:hidden"
-                        aria-label="Open application menu"
-                    >
-                        <MoreHorizontal className="h-5 w-5" />
-                    </Button>
-
-                    <div className="relative hidden lg:block">
-                        <Search className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <input
-                            ref={searchInputRef}
-                            type="text"
-                            placeholder="Buscar o escribir comando..."
-                            className="h-11 w-[430px] rounded-lg border border-input bg-background py-2.5 pr-14 pl-11 text-sm text-foreground shadow-xs transition-[border-color,box-shadow] outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/20"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => searchInputRef.current?.focus()}
-                            className="absolute top-1/2 right-2.5 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-md border border-input bg-muted/60 px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                    {/* En el celular la campana queda a la vista: las alertas no se esconden dentro de «…». */}
+                    <div className="flex items-center gap-2 lg:hidden">
+                        <AlertsBell />
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={toggleApplicationMenu}
+                            className="size-10 text-muted-foreground hover:text-foreground"
+                            aria-label="Más opciones"
+                            aria-expanded={isApplicationMenuOpen}
                         >
-                            <span>⌘</span>
-                            <span>K</span>
-                        </button>
+                            <MoreHorizontal className="size-4" />
+                        </Button>
                     </div>
                 </div>
 
@@ -127,38 +90,9 @@ export function AppSidebarHeader({
                     <div className="flex items-center gap-2">
                         <WarehouseSelector />
                         <ThemeToggleButton />
-
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="relative h-10 w-10 text-muted-foreground hover:text-foreground"
-                                    aria-label="Notificaciones"
-                                >
-                                    <Bell className="h-5 w-5" />
-                                    <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-80">
-                                <DropdownMenuLabel>
-                                    Notificaciones
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuGroup>
-                                    <DropdownMenuItem>
-                                        Stock crítico en Materia Prima A
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem>
-                                        Orden OP-2026-014 pendiente de
-                                        aprobación
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem>
-                                        Nuevo ingreso en inventario final
-                                    </DropdownMenuItem>
-                                </DropdownMenuGroup>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="hidden lg:block">
+                            <AlertsBell />
+                        </div>
                     </div>
 
                     {auth.user && (

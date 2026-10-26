@@ -1,23 +1,27 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeftRight,
-    BellRing,
     Boxes,
     Calculator,
     ClipboardList,
+    Droplets,
     FileText,
-    Factory,
     FlaskConical,
-    KeyRound,
-    LayoutGrid,
+    Handshake,
+    LayoutDashboard,
     Package,
     PackageCheck,
+    PaintBucket,
     QrCode,
+    ScrollText,
     Settings,
     ShieldCheck,
     ShoppingCart,
-    Users,
-    WalletCards,
+    Tags,
+    TestTubes,
+    TriangleAlert,
+    Truck,
+    UsersRound,
     Warehouse,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -30,6 +34,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { formatBadgeCount } from '@/lib/formatters';
 import { filterNavItemsByPermissions } from '@/lib/navigation';
 import { dashboard } from '@/routes';
 import { index as adminCostsIndex } from '@/routes/admin/costs';
@@ -57,24 +62,30 @@ import { index as warehousesIndex } from '@/routes/warehouses';
 import type { NavGroup } from '@/types/navigation';
 import type { Permission } from '@/types/permissions';
 
+// Grupos y orden del menú. El grupo sin título (Dashboard) no pinta cabecera (`nav-main.tsx`).
 const navigationGroups: NavGroup[] = [
     {
-        label: 'OPERACIÓN',
+        label: '',
         items: [
             {
                 title: 'Dashboard',
                 allowedPermissions: ['dashboard.view'],
                 href: dashboard().url,
-                icon: LayoutGrid,
+                icon: LayoutDashboard,
             },
+        ],
+    },
+    {
+        label: 'INVENTARIO',
+        items: [
             {
-                title: 'Materias Primas',
+                title: 'Materias primas',
                 allowedPermissions: ['raw_materials.view'],
                 href: rawMaterialsIndex().url,
                 icon: Boxes,
             },
             {
-                title: 'Movimientos',
+                title: 'Movimientos de MP',
                 allowedPermissions: ['inventory_movements.view'],
                 href: inventoryMovementsIndex().url,
                 icon: ArrowLeftRight,
@@ -83,14 +94,13 @@ const navigationGroups: NavGroup[] = [
                 title: 'Inventario PT',
                 allowedPermissions: ['finished_inventory.view'],
                 href: finishedInventoryIndex().url,
-                icon: Package,
+                icon: PackageCheck,
             },
             {
-                title: 'Movimientos PT',
+                title: 'Movimientos de PT',
                 allowedPermissions: ['finished_inventory_movements.view'],
                 href: finishedInventoryMovementsIndex().url,
-                icon: ArrowLeftRight,
-                unauthorizedBehavior: 'hide',
+                icon: Truck,
             },
             {
                 title: 'Bodegas',
@@ -98,60 +108,45 @@ const navigationGroups: NavGroup[] = [
                 href: warehousesIndex().url,
                 icon: Warehouse,
             },
+        ],
+    },
+    {
+        label: 'PRODUCCIÓN',
+        items: [
             {
-                title: 'Portafolio de Productos',
-                allowedPermissions: ['products.view'],
-                href: productsIndex().url,
-                icon: Factory,
+                title: 'Órdenes de producción',
+                allowedPermissions: ['production_orders.view'],
+                href: productionOrdersIndex().url,
+                icon: ClipboardList,
+            },
+            {
+                title: 'Saldos de producción',
+                allowedPermissions: ['production_remnants.view'],
+                href: remnantsIndex().url,
+                icon: Droplets,
+            },
+            {
+                title: 'Termoencogido',
+                allowedPermissions: ['shrink_wraps.view'],
+                href: shrinkWrapsIndex().url,
+                icon: Package,
             },
             {
                 title: 'Fórmulas',
                 allowedPermissions: ['formulas.view'],
                 href: formulasIndex().url,
                 icon: FlaskConical,
-                unauthorizedBehavior: 'hide',
-            },
-            {
-                title: 'Órdenes de Producción',
-                allowedPermissions: ['production_orders.view'],
-                href: productionOrdersIndex().url,
-                icon: ClipboardList,
-            },
-            {
-                title: 'Saldos de Producción',
-                allowedPermissions: ['production_remnants.view'],
-                href: remnantsIndex().url,
-                icon: FlaskConical,
-            },
-            {
-                title: 'Termoencogido',
-                allowedPermissions: ['shrink_wraps.view'],
-                href: shrinkWrapsIndex().url,
-                icon: PackageCheck,
             },
         ],
     },
     {
-        label: 'FINANZAS',
+        label: 'COMERCIAL',
         items: [
-            {
-                title: 'Costos',
-                allowedPermissions: ['costs.view'],
-                href: adminCostsIndex().url,
-                icon: Calculator,
-                unauthorizedBehavior: 'hide',
-            },
-            {
-                title: 'Lista de Precios',
-                allowedPermissions: ['price_lists.view'],
-                href: pricesIndex().url,
-                icon: WalletCards,
-            },
             {
                 title: 'Clientes',
                 allowedPermissions: ['clients.view'],
                 href: clientsIndex().url,
-                icon: Users,
+                icon: Handshake,
             },
             {
                 title: 'Cotizaciones',
@@ -163,15 +158,6 @@ const navigationGroups: NavGroup[] = [
                 icon: FileText,
             },
             {
-                title: 'Desarrollo de pinturas',
-                allowedPermissions: [
-                    'paint_development_requests.view_own',
-                    'paint_development_requests.view_all',
-                ],
-                href: paintDevIndex().url,
-                icon: FlaskConical,
-            },
-            {
                 title: 'Pedidos',
                 allowedPermissions: [
                     'sales_orders.view_own',
@@ -180,33 +166,54 @@ const navigationGroups: NavGroup[] = [
                 href: salesOrdersIndex().url,
                 icon: ShoppingCart,
             },
+            {
+                title: 'Desarrollo de pinturas',
+                allowedPermissions: [
+                    'paint_development_requests.view_own',
+                    'paint_development_requests.view_all',
+                ],
+                href: paintDevIndex().url,
+                icon: TestTubes,
+            },
         ],
     },
     {
-        label: 'CONTROLES',
+        label: 'PRODUCTOS Y PRECIOS',
+        items: [
+            {
+                title: 'Portafolio de productos',
+                allowedPermissions: ['products.view'],
+                href: productsIndex().url,
+                icon: PaintBucket,
+            },
+            {
+                title: 'Costos',
+                allowedPermissions: ['costs.view'],
+                href: adminCostsIndex().url,
+                icon: Calculator,
+            },
+            {
+                title: 'Lista de precios',
+                allowedPermissions: ['price_lists.view'],
+                href: pricesIndex().url,
+                icon: Tags,
+            },
+        ],
+    },
+    {
+        label: 'CONTROL',
         items: [
             {
                 title: 'Alertas',
                 allowedPermissions: ['alerts.view'],
                 href: alertsIndex().url,
-                icon: BellRing,
-                unauthorizedBehavior: 'hide',
+                icon: TriangleAlert,
             },
             {
                 title: 'Códigos QR',
                 allowedPermissions: ['qr_codes.view'],
                 href: qrCodesIndex().url,
                 icon: QrCode,
-                unauthorizedBehavior: 'hide',
-            },
-            {
-                title: 'Reportes',
-                href: '/reports',
-                icon: LayoutGrid,
-                allowedPermissions: ['production_orders.create'],
-                unauthorizedBehavior: 'hide',
-                disabled: true,
-                disabledLabel: 'Módulo en desarrollo',
             },
         ],
     },
@@ -217,28 +224,24 @@ const navigationGroups: NavGroup[] = [
                 title: 'Usuarios',
                 allowedPermissions: ['users.view'],
                 href: usersIndex().url,
-                icon: Users,
-                unauthorizedBehavior: 'hide',
+                icon: UsersRound,
             },
             {
                 title: 'Roles',
                 allowedPermissions: ['roles.view'],
                 href: rolesIndex().url,
-                icon: KeyRound,
-                unauthorizedBehavior: 'hide',
+                icon: ShieldCheck,
             },
             {
                 title: 'Auditoría',
                 allowedPermissions: ['audit_logs.view'],
                 href: auditLogsIndex().url,
-                icon: ShieldCheck,
-                unauthorizedBehavior: 'hide',
+                icon: ScrollText,
             },
             {
                 title: 'Configuración',
                 href: editProfile().url,
                 icon: Settings,
-                unauthorizedBehavior: 'hide',
             },
         ],
     },
@@ -271,7 +274,7 @@ export function AppSidebar() {
                       ...item,
                       badge:
                           unresolvedAlertsCount > 0
-                              ? unresolvedAlertsCount
+                              ? formatBadgeCount(unresolvedAlertsCount)
                               : undefined,
                   }
                 : item,

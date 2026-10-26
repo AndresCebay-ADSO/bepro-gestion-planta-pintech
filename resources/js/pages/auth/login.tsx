@@ -78,7 +78,7 @@ export default function Login({ status, canResetPassword }: Props) {
                             <div className="mb-6 flex items-center gap-3">
                                 <img
                                     src="/images/logo-pintech.png"
-                                    alt="Pintech logo"
+                                    alt="Logo de Pintech"
                                     className="h-9 w-auto shrink-0 object-contain"
                                     draggable={false}
                                     onError={(e) => {

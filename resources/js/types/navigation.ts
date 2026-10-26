@@ -15,9 +15,6 @@ export type NavItem = {
     badge?: number | string;
     /** Permisos que dan acceso (basta con uno). Sin permisos, el ítem es visible para todo usuario con sesión. */
     allowedPermissions?: Permission[];
-    unauthorizedBehavior?: 'hide' | 'disable';
-    disabled?: boolean;
-    disabledLabel?: string;
 };
 
 export type NavGroup = {

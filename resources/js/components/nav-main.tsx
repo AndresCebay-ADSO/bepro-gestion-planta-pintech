@@ -1,5 +1,4 @@
 import { Link } from '@inertiajs/react';
-import { Lock } from 'lucide-react';
 import {
     SidebarGroup,
     SidebarGroupContent,
@@ -10,7 +9,6 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
-import { cn } from '@/lib/utils';
 import type { NavGroup } from '@/types';
 
 export function NavMain({ groups = [] }: { groups: NavGroup[] }) {
@@ -18,46 +16,33 @@ export function NavMain({ groups = [] }: { groups: NavGroup[] }) {
 
     return (
         <>
-            {groups.map((group) => (
-                <SidebarGroup key={group.label} className="px-2 py-0">
-                    <SidebarGroupLabel className="px-2 text-xs tracking-[0.22em] text-sidebar-foreground/45 uppercase">
-                        {group.label}
-                    </SidebarGroupLabel>
+            {groups.map((group, index) => (
+                <SidebarGroup
+                    key={group.label || `group-${index}`}
+                    className="px-2 py-0"
+                >
+                    {/* Un grupo sin título (Dashboard) no pinta cabecera ni deja su espacio. */}
+                    {group.label && (
+                        <SidebarGroupLabel className="px-2 text-xs tracking-[0.22em] text-sidebar-foreground/45 uppercase">
+                            {group.label}
+                        </SidebarGroupLabel>
+                    )}
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {group.items.map((item) => {
                                 const itemIsActive = isCurrentUrl(item.href);
-                                const isDisabled = Boolean(item.disabled);
 
                                 return (
                                     <SidebarMenuItem key={item.title}>
                                         <SidebarMenuButton
-                                            asChild={!isDisabled}
-                                            isActive={
-                                                !isDisabled && itemIsActive
-                                            }
-                                            tooltip={{
-                                                children:
-                                                    item.disabledLabel ??
-                                                    item.title,
-                                            }}
-                                            className={cn(
-                                                isDisabled &&
-                                                    'cursor-not-allowed text-sidebar-foreground/50 hover:bg-transparent hover:text-sidebar-foreground/50',
-                                            )}
+                                            asChild
+                                            isActive={itemIsActive}
+                                            tooltip={{ children: item.title }}
                                         >
-                                            {isDisabled ? (
-                                                <div className="flex items-center gap-2">
-                                                    {item.icon && <item.icon />}
-                                                    <span>{item.title}</span>
-                                                    <Lock className="ml-auto size-3.5 opacity-60" />
-                                                </div>
-                                            ) : (
-                                                <Link href={item.href} prefetch>
-                                                    {item.icon && <item.icon />}
-                                                    <span>{item.title}</span>
-                                                </Link>
-                                            )}
+                                            <Link href={item.href} prefetch>
+                                                {item.icon && <item.icon />}
+                                                <span>{item.title}</span>
+                                            </Link>
                                         </SidebarMenuButton>
                                         {item.badge !== undefined && (
                                             <SidebarMenuBadge className="rounded-md bg-sidebar-primary/20 px-1.5 text-xs font-semibold text-sidebar-primary">

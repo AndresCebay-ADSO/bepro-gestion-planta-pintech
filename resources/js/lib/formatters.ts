@@ -214,3 +214,11 @@ export function formatForInput(
 
     return match[1] === '-' && text !== '0' ? `-${text}` : text;
 }
+
+/**
+ * Contador de una insignia (campana, menú lateral): hasta 9 se muestra el número; desde 10, «9+». Un solo formato para
+ * que la campana y el menú no digan cosas distintas en la misma pantalla.
+ */
+export function formatBadgeCount(count: number): string {
+    return count > 9 ? '9+' : String(count);
+}

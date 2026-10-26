@@ -23,7 +23,7 @@ export default function AuthSimpleLayout({
                         >
                             <img
                                 src="/images/logo-pintech.svg?v=1.1"
-                                alt="Pintech logo"
+                                alt="Logo de Pintech"
                                 className="h-24 w-auto object-contain"
                             />
                         </Link>
