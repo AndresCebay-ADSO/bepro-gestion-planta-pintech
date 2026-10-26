@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { DetailPageNav } from '@/components/detail-page-nav';
+import { PageHeader } from '@/components/page-header';
 import type { BreadcrumbItem } from '@/types/navigation';
 
 type DetailPageHeaderProps = {
@@ -34,19 +35,7 @@ export function DetailPageHeader({
                 actions={actions}
             />
 
-            <div className="space-y-1">
-                <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-semibold text-foreground">
-                        {title}
-                    </h1>
-                    {badge}
-                </div>
-                {subtitle && (
-                    <div className="text-sm text-muted-foreground">
-                        {subtitle}
-                    </div>
-                )}
-            </div>
+            <PageHeader title={title} description={subtitle} badge={badge} />
         </div>
     );
 }

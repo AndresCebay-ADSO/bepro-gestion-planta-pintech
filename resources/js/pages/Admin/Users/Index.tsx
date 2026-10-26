@@ -1,4 +1,4 @@
-import { Link, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Activity, UserPlus } from 'lucide-react';
@@ -6,6 +6,7 @@ import type { FC } from 'react';
 
 import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
+import { PageHeader } from '@/components/page-header';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -85,27 +86,22 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
 
     return (
         <div className="min-h-screen bg-background p-6">
+            <Head title="Usuarios" />
             <div className="mx-auto max-w-7xl space-y-8">
-                {/* HEADER */}
-                <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-                    <div>
-                        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                            Gestión de Usuarios
-                        </h1>
-                        <p className="mt-1 text-muted-foreground">
-                            Gestiona el acceso, permisos y roles del personal de
-                            planta.
-                        </p>
-                    </div>
-                    {can?.create !== false && (
-                        <Button asChild className="shrink-0">
-                            <Link href={usersCreate().url}>
-                                <UserPlus className="mr-2 h-4 w-4" />
-                                Nuevo Usuario
-                            </Link>
-                        </Button>
-                    )}
-                </div>
+                <PageHeader
+                    title="Usuarios"
+                    description="Gestiona el acceso, permisos y roles del personal de planta."
+                    actions={
+                        can?.create !== false && (
+                            <Button asChild>
+                                <Link href={usersCreate().url}>
+                                    <UserPlus className="mr-2 h-4 w-4" />
+                                    Nuevo usuario
+                                </Link>
+                            </Button>
+                        )
+                    }
+                />
 
                 <DataTableFilters
                     fields={[

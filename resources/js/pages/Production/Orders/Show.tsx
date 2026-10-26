@@ -350,14 +350,14 @@ export default function ProductionOrderShow({
                 <DetailPageNav
                     breadcrumbs={[
                         {
-                            title: 'Órdenes de Producción',
+                            title: 'Órdenes de producción',
                             href: returnTo ?? productionOrdersIndex().url,
                         },
                         { title: order.order_number, href: '#' },
                     ]}
                     returnTo={returnTo}
                     defaultReturnHref={productionOrdersIndex().url}
-                    defaultReturnLabel="Órdenes de Producción"
+                    defaultReturnLabel="Órdenes de producción"
                 />
                 <OrderHeader
                     order={order}
