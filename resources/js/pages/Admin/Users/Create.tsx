@@ -54,7 +54,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                         href={UserController.index.url()}
                         className="mb-4 inline-block text-sm text-primary hover:text-primary/80"
                     >
-                        ← Volver a Gestión de Usuarios
+                        ← Volver a usuarios
                     </Link>
                     <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                         Crear Nuevo Usuario

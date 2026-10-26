@@ -18,6 +18,9 @@ to use raw Tailwind palette or arbitrary values. `resources/js/design-contract.t
   is removed until it works.
 - Code in English. Everything the user can see or hear is in Spanish, as it appears on screen: visible text,
   `sr-only`, `aria-label`, `placeholder` and `title`.
+- UI text uses sentence case: capital only on the first word and proper nouns; keep acronyms (PT, MP, OP, QR, NIT).
+  «Materias primas», «Nuevo usuario», «Órdenes de producción». The page title, the browser tab (`<Head title>`), the
+  breadcrumbs and the sidebar say the same thing.
 
 ## 2. Light and dark theme
 
@@ -152,7 +155,25 @@ How it works:
 | Label-value label, table header | `text-xs font-medium uppercase tracking-wide text-muted-foreground` |
 | KPI figure | `text-2xl font-semibold tabular-nums` |
 
-Shared `PageHeader` with this scale _(pending)_.
+The page title is always `<PageHeader>` (`components/page-header.tsx`), the only `h1` of a screen. No icon next to
+it (the sidebar already shows it) and no outer margin: the page container sets the spacing.
+
+```tsx
+<PageHeader
+    title="Materias primas"
+    description="Inventario base de materias primas de planta." // optional
+    badge={<ActiveBadge isActive={rawMaterial.is_active} />} // optional, next to the title
+    actions={<Button>Nueva materia prima</Button>} // optional, right on desktop, below the title on the phone
+>
+    {/* optional: extra lines under the description */}
+</PageHeader>
+```
+
+- Details use `<DetailPageHeader>`, which renders the breadcrumbs bar and a `<PageHeader>`.
+- `components/heading.tsx` is a **section** title, always `h2` (`variant="small"` only makes it smaller), never the page
+  title. Headings never skip a level (`h1` → `h3`).
+- **Settings screens:** the layout's `<PageHeader>` is the `h1` («Configuración», as in the sidebar); each screen's own
+  name («Perfil», «Unidades de medida») is its first `h2` and its browser tab.
 
 ## 6. Icons
 

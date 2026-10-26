@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
-import Heading from '@/components/heading';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
@@ -84,7 +84,7 @@ export default function SettingsLayout({
 
     return (
         <div className="px-4 py-6 md:px-6">
-            <Heading
+            <PageHeader
                 title="Configuración"
                 description={
                     showsCatalogs
@@ -93,7 +93,7 @@ export default function SettingsLayout({
                 }
             />
 
-            <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+            <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:gap-8">
                 <aside className="w-full max-w-xl lg:w-56">
                     <nav
                         className="flex flex-col space-y-1 rounded-xl border border-border bg-card p-2 shadow-sm"

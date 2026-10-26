@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
+import { PageHeader } from '@/components/page-header';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -137,28 +138,22 @@ export default function RawMaterialsIndex({
 
     return (
         <>
-            <Head title="Materias Primas" />
+            <Head title="Materias primas" />
 
             <div className="space-y-6 p-6">
-                {/* Header */}
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            Materias Primas
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Inventario base de materias primas de planta.
-                        </p>
-                    </div>
-
-                    {can.create && (
-                        <Button asChild>
-                            <Link href={rawMaterialsCreate().url}>
-                                Nueva Materia Prima
-                            </Link>
-                        </Button>
-                    )}
-                </div>
+                <PageHeader
+                    title="Materias primas"
+                    description="Inventario base de materias primas de planta."
+                    actions={
+                        can.create && (
+                            <Button asChild>
+                                <Link href={rawMaterialsCreate().url}>
+                                    Nueva materia prima
+                                </Link>
+                            </Button>
+                        )
+                    }
+                />
 
                 {/* Alertas */}
                 {flash?.success && (

@@ -7,9 +7,11 @@ import {
 import { FormattedDate } from '@/components/formatted-date';
 
 import { FormattedNumber } from '@/components/formatted-number';
+import { PageHeader } from '@/components/page-header';
 import { CancelOrderDialog } from '@/components/production/cancel-order-dialog';
 import { OrderColorDialog } from '@/components/production/order-color-dialog';
 import { StatusBadge } from '@/components/status-badge';
+import { Button } from '@/components/ui/button';
 import type { ProductionOrder } from '@/types/production-orders';
 
 type OrderHeaderProps = {
@@ -32,18 +34,16 @@ export function OrderHeader({
     );
 
     return (
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-            <div>
-                <div className="flex items-center gap-2">
-                    <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                        Orden {order.order_number} (Lote {order.lot_number})
-                    </h1>
-                    <StatusBadge
-                        enum="ProductionOrderStatus"
-                        value={order.status}
-                    />
-                </div>
-                <p className="mt-1 flex flex-wrap items-center gap-x-1 text-muted-foreground">
+        <PageHeader
+            title={`Orden ${order.order_number} (Lote ${order.lot_number})`}
+            badge={
+                <StatusBadge
+                    enum="ProductionOrderStatus"
+                    value={order.status}
+                />
+            }
+            description={
+                <span className="flex flex-wrap items-center gap-x-1">
                     <span>
                         {order.product_display_name ?? order.product?.name}
                     </span>
@@ -54,70 +54,73 @@ export function OrderHeader({
                         />
                     )}
                     <span>
-                        • Planta Cali •{' '}
+                        • {order.warehouse?.name ?? 'Sin bodega'} •{' '}
                         <FormattedNumber
                             value={order.quantity}
                             maxDecimals={2}
                         />{' '}
-                        gal Proyectados
+                        gal proyectados
                     </span>
-                </p>
-                {order.status === 'pending_review' && order.submitted_by && (
-                    <p className="mt-2 flex items-center gap-1 text-sm text-info-text">
-                        <Send className="h-4 w-4" />
-                        Enviada por {order.submitted_by.name}
-                        {order.submitted_at && (
-                            <>
-                                {' el '}
-                                <FormattedDate
-                                    value={order.submitted_at}
-                                    format="datetime"
-                                />
-                            </>
-                        )}
-                    </p>
-                )}
-                {order.rejection_reason && (
-                    <p className="mt-2 text-sm text-warning-text">
-                        Devuelta a planta: {order.rejection_reason}
-                    </p>
-                )}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-                {canCancel && (
-                    <CancelOrderDialog
-                        orderId={order.id}
-                        orderNumber={order.order_number}
-                        consumedRemnantGallons={consumedRemnantGallons}
-                    />
-                )}
-                {order.status === 'completed' && order.completion_date && (
-                    <div className="mr-4 flex items-center gap-2 font-medium text-success-text">
-                        <CheckCircle2 className="h-5 w-5" />
-                        Finalizada el{' '}
-                        <FormattedDate
-                            value={order.completion_date}
-                            format="short"
+                </span>
+            }
+            actions={
+                <>
+                    {canCancel && (
+                        <CancelOrderDialog
+                            orderId={order.id}
+                            orderNumber={order.order_number}
+                            consumedRemnantGallons={consumedRemnantGallons}
                         />
-                    </div>
-                )}
-                <a
-                    href={productionOrderExportPdf.url(order.id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                    <FileText className="h-4 w-4" />
-                    PDF
-                </a>
-                <a
-                    href={productionOrderExportExcel.url(order.id)}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                    <FileSpreadsheet className="h-4 w-4" />
-                    Excel
-                </a>
-            </div>
-        </div>
+                    )}
+                    <Button variant="outline" asChild>
+                        <a
+                            href={productionOrderExportPdf.url(order.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <FileText className="size-4" />
+                            PDF
+                        </a>
+                    </Button>
+                    <Button variant="outline" asChild>
+                        <a href={productionOrderExportExcel.url(order.id)}>
+                            <FileSpreadsheet className="size-4" />
+                            Excel
+                        </a>
+                    </Button>
+                </>
+            }
+        >
+            {order.status === 'completed' && order.completion_date && (
+                <p className="mt-2 flex items-center gap-1 text-sm font-medium text-success-text">
+                    <CheckCircle2 className="size-4" />
+                    Finalizada el{' '}
+                    <FormattedDate
+                        value={order.completion_date}
+                        format="short"
+                    />
+                </p>
+            )}
+            {order.status === 'pending_review' && order.submitted_by && (
+                <p className="mt-2 flex items-center gap-1 text-sm text-info-text">
+                    <Send className="h-4 w-4" />
+                    Enviada por {order.submitted_by.name}
+                    {order.submitted_at && (
+                        <>
+                            {' el '}
+                            <FormattedDate
+                                value={order.submitted_at}
+                                format="datetime"
+                            />
+                        </>
+                    )}
+                </p>
+            )}
+            {order.rejection_reason && (
+                <p className="mt-2 text-sm text-warning-text">
+                    Devuelta a planta: {order.rejection_reason}
+                </p>
+            )}
+        </PageHeader>
     );
 }
