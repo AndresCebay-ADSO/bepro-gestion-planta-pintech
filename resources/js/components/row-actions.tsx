@@ -64,14 +64,20 @@ export function RowActions({ actions, itemLabel, className }: RowActionsProps) {
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" className="min-w-44">
-                {regular.map((action) => (
-                    <RowActionItem key={action.label} action={action} />
+                {regular.map((action, index) => (
+                    <RowActionItem
+                        key={`${index}-${action.label}`}
+                        action={action}
+                    />
                 ))}
                 {regular.length > 0 && destructive.length > 0 && (
                     <DropdownMenuSeparator />
                 )}
-                {destructive.map((action) => (
-                    <RowActionItem key={action.label} action={action} />
+                {destructive.map((action, index) => (
+                    <RowActionItem
+                        key={`${index}-${action.label}`}
+                        action={action}
+                    />
                 ))}
             </DropdownMenuContent>
         </DropdownMenu>

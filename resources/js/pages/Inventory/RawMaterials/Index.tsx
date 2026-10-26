@@ -46,7 +46,7 @@ type RawMaterialRow = {
         update: boolean;
         delete: boolean;
         reactivate: boolean;
-        forceDelete: boolean;
+        deletePermanently: boolean;
     };
 };
 
@@ -305,9 +305,8 @@ export default function RawMaterialsIndex({
                             onSelect: () => handleReactivate(item.id),
                             hidden: !item.can.reactivate,
                         },
-                        // Se elimina solo sin historial y con permiso de borrado físico; si no, el servidor desactiva.
-                        // Con stock en bodega no se puede ninguna.
-                        item.can.forceDelete && !item.has_activity
+                        // El servidor decide si se elimina o se desactiva. Con stock en bodega no se puede ninguna.
+                        item.can.deletePermanently
                             ? {
                                   label: 'Eliminar',
                                   icon: Trash2,
@@ -343,7 +342,9 @@ export default function RawMaterialsIndex({
                 }}
                 rawMaterial={deleteTarget}
                 hasActivity={deleteTarget?.has_activity ?? false}
-                canDeletePermanently={deleteTarget?.can.forceDelete ?? false}
+                deletesPermanently={
+                    deleteTarget?.can.deletePermanently ?? false
+                }
                 processing={deleteProcessing}
                 onConfirm={handleDeleteConfirm}
             />

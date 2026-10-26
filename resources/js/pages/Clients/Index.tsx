@@ -83,9 +83,18 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
         {
             key: 'shipping_address',
             header: 'Dirección',
-            cell: (client) => client.shipping_address ?? '-',
+            // `max-w-xs` no limita un <td>: se corta en un bloque, y solo desde md (la tabla).
+            // La tarjeta del celular la muestra entera.
+            cell: (client) => (
+                <span
+                    className="block md:max-w-xs md:truncate"
+                    title={client.shipping_address ?? undefined}
+                >
+                    {client.shipping_address ?? '-'}
+                </span>
+            ),
             mobile: 'meta',
-            className: 'max-w-xs truncate text-muted-foreground',
+            className: 'text-muted-foreground',
         },
         {
             key: 'status',

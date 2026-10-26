@@ -17,8 +17,8 @@ export type DeleteRawMaterialDialogProps = {
     onOpenChange: (open: boolean) => void;
     rawMaterial: { id: number; code: string } | null;
     hasActivity: boolean;
-    /** Permiso de borrado físico; sin él, una MP sin historial también se desactiva. */
-    canDeletePermanently: boolean;
+    /** Lo decide el servidor (`can.deletePermanently`): si es falso, la acción desactiva. */
+    deletesPermanently: boolean;
     processing: boolean;
     onConfirm: () => void;
 };
@@ -31,7 +31,7 @@ export function DeleteRawMaterialDialog({
     onOpenChange,
     rawMaterial,
     hasActivity,
-    canDeletePermanently,
+    deletesPermanently,
     processing,
     onConfirm,
 }: DeleteRawMaterialDialogProps) {
@@ -39,7 +39,7 @@ export function DeleteRawMaterialDialog({
         return null;
     }
 
-    const deactivates = hasActivity || !canDeletePermanently;
+    const deactivates = !deletesPermanently;
 
     return (
         <AlertDialog

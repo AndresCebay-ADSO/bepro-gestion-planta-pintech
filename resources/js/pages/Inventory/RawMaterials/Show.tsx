@@ -47,7 +47,7 @@ type Props = {
         update: boolean;
         delete: boolean;
         reactivate: boolean;
-        forceDelete: boolean;
+        deletePermanently: boolean;
         viewCosts: boolean;
     };
     hasAvailableStock: boolean;
@@ -65,8 +65,8 @@ export default function RawMaterialsShow({
     hasActivity,
 }: Props) {
     const flash = usePage().props.flash;
-    // Sin permiso de borrado físico, el servidor desactiva aunque la MP no tenga historial.
-    const deactivates = hasActivity || !can.forceDelete;
+    // El servidor decide si «eliminar» borra o desactiva (permiso de borrado y sin historial).
+    const deactivates = !can.deletePermanently;
 
     const totalAvailableQuantity = rawMaterial.inventory_batches.reduce(
         (sum, batch) => sum + (Number(batch.remaining_quantity) || 0),
@@ -388,7 +388,7 @@ export default function RawMaterialsShow({
                 onOpenChange={setDeleteOpen}
                 rawMaterial={rawMaterial}
                 hasActivity={hasActivity}
-                canDeletePermanently={can.forceDelete}
+                deletesPermanently={can.deletePermanently}
                 processing={deleteProcessing}
                 onConfirm={handleDeleteConfirm}
             />

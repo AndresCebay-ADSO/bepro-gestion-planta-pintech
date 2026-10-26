@@ -66,9 +66,10 @@ export function DataListing<T>({
     empty,
 }: DataListingProps<T>) {
     // Firma estable (clave y papel): `columns` es un arreglo nuevo en cada render y el aviso se repetiría.
-    const columnSignature = JSON.stringify(
-        columns.map(({ key, mobile }) => [key, mobile]),
-    );
+    // Solo en desarrollo: en producción no se calcula nada.
+    const columnSignature = import.meta.env.DEV
+        ? JSON.stringify(columns.map(({ key, mobile }) => [key, mobile]))
+        : '';
 
     useEffect(() => {
         if (!import.meta.env.DEV) {

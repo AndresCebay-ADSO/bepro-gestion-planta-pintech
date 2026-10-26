@@ -227,6 +227,8 @@ Same in all three:
   middle click, new tab); the rest of the row stays selectable text, and the row only highlights on hover. Pass
   `rowHref` only when the user can do the main action (view the detail or, when there is no detail, edit); return
   `undefined` for a row without permission and the identifier is plain text.
+- Exception: an indicator that asks for action, such as the alerts pill, may link to its own screen even though it is
+  not the identifier. Nothing else in the row is a link.
 - The other actions (edit, deactivate, reactivate, delete) go in `<RowActions>` (`components/row-actions.tsx`), the
   «⋯» menu at the end of the row or in the card corner. **The menu never repeats the identifier's action**: no «Ver»
   when the identifier opens the detail, no «Editar» when it opens the edit (screens without a detail, such as

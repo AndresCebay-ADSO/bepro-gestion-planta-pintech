@@ -16,6 +16,7 @@ use App\Models\InventoryBatch;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\UnitOfMeasure;
+use App\Models\User;
 use App\Services\RawMaterialUsageService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -92,10 +93,9 @@ class RawMaterialController extends Controller
                         // Activa: se desactiva o se elimina. Inactiva: solo se puede eliminar, si nunca se usó.
                         'delete' => $rawMaterial->is_active
                             ? Gate::forUser($user)->allows('deactivate', $rawMaterial)
-                            : Gate::forUser($user)->allows('delete', $rawMaterial) && ! $hasActivity,
+                            : $this->deletesPermanently($user, $rawMaterial, $hasActivity),
                         'reactivate' => Gate::forUser($user)->allows('reactivate', $rawMaterial) && ! $rawMaterial->is_active,
-                        // Borrado físico: sin este permiso, «eliminar» una MP sin historial solo la desactiva (destroy()).
-                        'forceDelete' => Gate::forUser($user)->allows('delete', $rawMaterial),
+                        'deletePermanently' => $this->deletesPermanently($user, $rawMaterial, $hasActivity),
                     ],
                 ];
             });
@@ -213,9 +213,9 @@ class RawMaterialController extends Controller
                 'update' => Gate::allows('update', $rawMaterial),
                 'delete' => $rawMaterial->is_active
                     ? Gate::allows('deactivate', $rawMaterial)
-                    : Gate::allows('delete', $rawMaterial) && ! $hasActivity,
+                    : $this->deletesPermanently($request->user(), $rawMaterial, $hasActivity),
                 'reactivate' => Gate::allows('reactivate', $rawMaterial) && ! $rawMaterial->is_active,
-                'forceDelete' => Gate::allows('delete', $rawMaterial),
+                'deletePermanently' => $this->deletesPermanently($request->user(), $rawMaterial, $hasActivity),
                 'viewCosts' => $canViewCosts,
             ],
         ]);
@@ -274,24 +274,26 @@ class RawMaterialController extends Controller
     {
         $this->authorize('deactivate', $rawMaterial);
 
-        // El borrado físico exige además raw_materials.delete (SuperAdmin); si no, se desactiva.
-        $canDeletePermanently = $request->user()?->can('delete', $rawMaterial) ?? false;
+        $user = $request->user();
 
-        return DB::transaction(function () use ($rawMaterial, $canDeletePermanently): RedirectResponse {
+        return DB::transaction(function () use ($rawMaterial, $user): RedirectResponse {
             /** @var RawMaterial $lockedRawMaterial */
             $lockedRawMaterial = RawMaterial::query()
                 ->lockForUpdate()
                 ->findOrFail($rawMaterial->id);
 
-            // Las claves foráneas deciden si tiene historial (docs/POLITICA_ELIMINACION.md §4); si lo tiene, se desactiva.
-            if ($canDeletePermanently && $this->deleteUnused->execute($lockedRawMaterial)) {
+            $hasActivity = $this->usage->hasActivity($lockedRawMaterial);
+
+            // Misma decisión que muestran el listado y el detalle. Las claves foráneas siguen de red (docs/POLITICA_ELIMINACION.md
+            // §4): si aun así tiene historial, el borrado no ocurre y se desactiva.
+            if ($this->deletesPermanently($user, $lockedRawMaterial, $hasActivity) && $this->deleteUnused->execute($lockedRawMaterial)) {
                 return redirect()
                     ->route('raw-materials.index')
                     ->with('success', __('Materia prima eliminada físicamente exitosamente.'));
             }
 
             if (! $lockedRawMaterial->is_active) {
-                return back()->with('error', $canDeletePermanently
+                return back()->with('error', $hasActivity
                     ? __('La materia prima tiene historial: no se puede eliminar y ya se encuentra inactiva.')
                     : __('La materia prima ya se encuentra inactiva.'));
             }
@@ -348,5 +350,14 @@ class RawMaterialController extends Controller
                 'type_label' => $category->type->label(),
             ])
             ->all();
+    }
+
+    /**
+     * Si «eliminar» borra la materia prima de verdad: exige raw_materials.delete y que nunca se haya usado. Si no,
+     * destroy() la desactiva. Única fuente de esa decisión para el listado, el detalle y destroy().
+     */
+    private function deletesPermanently(?User $user, RawMaterial $rawMaterial, bool $hasActivity): bool
+    {
+        return $user !== null && Gate::forUser($user)->allows('delete', $rawMaterial) && ! $hasActivity;
     }
 }
