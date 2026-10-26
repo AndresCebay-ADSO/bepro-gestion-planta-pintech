@@ -87,9 +87,8 @@ Route (routes/web.php, role: middleware)
   2. `{Domain}Filter extends QueryFilter`: declares `protected array $filterable`. Use helper methods `applySearch()` (`LOWER() LIKE`, supports `relation.column`), `applyDateRange()`, `applyExact()`. Never write raw `ILIKE`.
   3. Controller: `(new XFilter($request))->apply(Model::query())->with(...)->paginate(15)->withQueryString()`. Pass `filters => $request->validated()` to Inertia.
   4. Frontend: `useFilters({ routeUrl, initialFilters })` + `<DataTableFilters />`.
-- **UI Table Actions (MANDATORY)**:
-  - Use `<TableActions />` component for all table row actions: icons only (lucide-react), tooltips & `sr-only` text mandatory.
-  - Colors: View (outline), Edit (warning/amber), Delete (destructive/red). Order: View → Edit → Delete.
+- **Listings (MANDATORY)**: listings use `<DataListing>` with `<RowActions>` (`DESIGN.md` §9); `<TableActions>` is
+  legacy and is removed when the last listing migrates.
 - **UI**: follow `DESIGN.md` (UX contract): tokens, tones, typography, icons, forms and listings.
 
 ## Critical Business Invariants (DO NOT VIOLATE)

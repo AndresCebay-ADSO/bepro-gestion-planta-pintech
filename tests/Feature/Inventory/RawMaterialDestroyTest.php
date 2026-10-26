@@ -388,4 +388,49 @@ describe('Raw Material Destroy', function () {
                 ->where('hasActivity', true)
             );
     });
+
+    it('tells apart deactivating from deleting permanently in the index and the show page', function () {
+        // Admin desactiva pero no borra: sin historial, «eliminar» la desactivaría, así que la pantalla debe decir «Desactivar».
+        $this->actingAs($this->admin)
+            ->get(route('raw-materials.index'))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('rawMaterials.data.0.has_activity', false)
+                ->where('rawMaterials.data.0.can.delete', true)
+                ->where('rawMaterials.data.0.can.deletePermanently', false)
+            );
+
+        $this->actingAs($this->admin)
+            ->get(route('raw-materials.show', $this->rawMaterial))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('can.delete', true)
+                ->where('can.deletePermanently', false)
+            );
+
+        // Super-admin borra solo lo que nunca se usó.
+        $superAdmin = userWithRole(SystemRole::SuperAdmin);
+
+        $this->actingAs($superAdmin)
+            ->get(route('raw-materials.index'))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('rawMaterials.data.0.can.deletePermanently', true));
+
+        $this->actingAs($superAdmin)
+            ->get(route('raw-materials.show', $this->rawMaterial))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('can.deletePermanently', true));
+
+        InventoryBatch::factory()->create([
+            'raw_material_id' => $this->rawMaterial->id,
+            'warehouse_id' => $this->warehouse->id,
+            'remaining_quantity' => 0,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('raw-materials.index'))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('rawMaterials.data.0.can.deletePermanently', false));
+
+        $this->actingAs($superAdmin)
+            ->get(route('raw-materials.show', $this->rawMaterial))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('can.deletePermanently', false));
+    });
 });

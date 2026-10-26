@@ -47,6 +47,7 @@ type Props = {
         update: boolean;
         delete: boolean;
         reactivate: boolean;
+        deletePermanently: boolean;
         viewCosts: boolean;
     };
     hasAvailableStock: boolean;
@@ -64,6 +65,8 @@ export default function RawMaterialsShow({
     hasActivity,
 }: Props) {
     const flash = usePage().props.flash;
+    // El servidor decide si «eliminar» borra o desactiva (permiso de borrado y sin historial).
+    const deactivates = !can.deletePermanently;
 
     const totalAvailableQuantity = rawMaterial.inventory_batches.reduce(
         (sum, batch) => sum + (Number(batch.remaining_quantity) || 0),
@@ -123,11 +126,11 @@ export default function RawMaterialsShow({
                             {can.delete && !hasAvailableStock && (
                                 <Button
                                     variant={
-                                        hasActivity ? 'warning' : 'destructive'
+                                        deactivates ? 'warning' : 'destructive'
                                     }
                                     onClick={() => setDeleteOpen(true)}
                                 >
-                                    {hasActivity ? 'Desactivar' : 'Eliminar'}
+                                    {deactivates ? 'Desactivar' : 'Eliminar'}
                                 </Button>
                             )}
 
@@ -385,6 +388,7 @@ export default function RawMaterialsShow({
                 onOpenChange={setDeleteOpen}
                 rawMaterial={rawMaterial}
                 hasActivity={hasActivity}
+                deletesPermanently={can.deletePermanently}
                 processing={deleteProcessing}
                 onConfirm={handleDeleteConfirm}
             />
