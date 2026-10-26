@@ -10,7 +10,7 @@ export default function AppLogo() {
             <div className="flex aspect-square size-12 items-center justify-center rounded-lg bg-sidebar-primary/10">
                 <img
                     src="/images/logo-icon.svg?v=1.1"
-                    alt="Pintech icon"
+                    alt="Logo de Pintech"
                     width={40}
                     height={40}
                     className="size-9 object-contain"

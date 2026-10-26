@@ -13,7 +13,7 @@ export default function AppLogoIcon(
         <img
             {...props}
             src="/images/logo-icon.svg?v=1.1"
-            alt="Pintech Icon"
+            alt="Logo de Pintech"
             width={32}
             height={32}
         />

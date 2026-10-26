@@ -1,3 +1,4 @@
+import { formatDistanceToNow } from 'date-fns';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -97,4 +98,18 @@ export function FormattedDate({
     const formattedValue = formatSafeDate(value, formatType, emptyValue);
 
     return <span>{formattedValue}</span>;
+}
+
+/**
+ * Fecha relativa en español («hace 5 minutos»), o `null` si no hay fecha válida. Única forma de mostrar tiempos
+ * relativos (campana de alertas, último acceso y actividad de usuarios).
+ */
+export function formatRelativeTime(
+    value: string | null | undefined,
+): string | null {
+    const date = parseSafeDate(value);
+
+    return date
+        ? formatDistanceToNow(date, { addSuffix: true, locale: es })
+        : null;
 }

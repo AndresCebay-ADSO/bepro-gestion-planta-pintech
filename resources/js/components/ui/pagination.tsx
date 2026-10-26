@@ -36,7 +36,7 @@ const Pagination: FC<PaginationProps> = ({ links, className }) => {
     return (
         <nav
             role="navigation"
-            aria-label="Pagination"
+            aria-label="Paginación"
             className={cn('flex items-center justify-center space-x-1', className)}
         >
             {/* Previous Button */}
@@ -46,10 +46,10 @@ const Pagination: FC<PaginationProps> = ({ links, className }) => {
                 disabled={!previousLink.url}
                 onClick={() => handleVisit(previousLink.url)}
                 className="h-9 w-9"
-                title="Previous"
+                title="Anterior"
             >
                 <ChevronLeft className="h-4 w-4" />
-                <span className="sr-only">Previous</span>
+                <span className="sr-only">Anterior</span>
             </Button>
 
             {/* Page Numbers */}
@@ -78,10 +78,10 @@ const Pagination: FC<PaginationProps> = ({ links, className }) => {
                 disabled={!nextLink.url}
                 onClick={() => handleVisit(nextLink.url)}
                 className="h-9 w-9"
-                title="Next"
+                title="Siguiente"
             >
                 <ChevronRight className="h-4 w-4" />
-                <span className="sr-only">Next</span>
+                <span className="sr-only">Siguiente</span>
             </Button>
         </nav>
     );

@@ -204,7 +204,7 @@ Same in all three:
 
 - **Breadcrumbs are the only way back.** No loose «← Volver» button in the content; on the phone the breadcrumb
   collapses to the previous level, e.g. «← Productos». _(pending)_
-- The sidebar toggle uses the panel icon (`PanelLeftClose`/`PanelLeftOpen`), never arrows. _(pending)_
+- The sidebar toggle uses the panel icon (`PanelLeftClose`/`PanelLeftOpen`), never arrows; on the phone, `Menu` (☰).
 - Navigation links use Wayfinder (`@/routes`, `@/actions`), never hardcoded URLs.
 
 ## 11. Libraries

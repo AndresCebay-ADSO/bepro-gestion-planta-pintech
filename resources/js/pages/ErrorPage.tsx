@@ -73,7 +73,7 @@ export default function ErrorPage({ status }: { status: ErrorStatus }) {
                 <div className="flex w-full max-w-md flex-col items-center gap-6 text-center">
                     <img
                         src="/images/logo-pintech.svg?v=1.1"
-                        alt="Pintech logo"
+                        alt="Logo de Pintech"
                         className="h-20 w-auto object-contain"
                     />
 
