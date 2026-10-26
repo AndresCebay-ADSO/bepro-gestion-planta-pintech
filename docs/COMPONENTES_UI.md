@@ -189,7 +189,9 @@ Componente de acciones de fila con iconos de colores.
 
 ## Combobox (Buscador Seleccionable)
 
-Componente para selección de opciones con búsqueda integrada. Diseñado para manejar catálogos grandes (ej: 400+ materias primas) y evitar el recorte visual en contenedores pequeños mediante el uso de Portals.
+Campo de selección con búsqueda para catálogos grandes (cientos de materias primas o productos). Es un botón con el
+aspecto del `Select` que abre una lista en un `Popover` de Radix con un buscador arriba (`cmdk`, `ui/command.tsx`). La
+lista se pinta en un Portal, así que no la recorta su contenedor.
 
 **Ubicación:** `resources/js/components/ui/combobox.tsx`
 
@@ -199,11 +201,22 @@ Componente para selección de opciones con búsqueda integrada. Diseñado para m
 |------|------|---------|-------------|
 | `options` | `ComboboxOptionType[]` | - | Array de `{ id, label, description?, disabled? }` |
 | `value` | `string \| number \| null` | - | Valor seleccionado (ID) |
-| `onChange` | `(value: string \| number) => void` | - | Callback al seleccionar una opción |
+| `onChange` | `(value: string \| number) => void` | - | Se llama al elegir una opción **distinta** de la actual (elegir la misma no avisa, para no borrar lo que depende de ella) |
 | `placeholder` | `string` | `'Seleccionar...'` | Texto cuando no hay selección |
 | `emptyText` | `string` | `'Sin resultados.'` | Texto cuando no hay coincidencias |
-| `className` | `string` | - | Clases adicionales para el contenedor |
+| `className` | `string` | - | Clases adicionales **del botón** (el campo), no de la lista |
 | `disabled` | `boolean` | `false` | Deshabilitar el componente |
+| `id` | `string` | - | `id` del botón: lo señala la etiqueta (`htmlFor`) y recibe el foco ante un 422 (`focus-first-error`) |
+
+### Comportamiento
+
+- **Búsqueda** sin tildes, sin mayúsculas, sin espacios y sin signos, en `label` y `description` (`lib/search-text.ts`):
+  «epoxica» encuentra «EPÓXICA» y «aba3» encuentra «ABA-3 QC». Conserva el orden de `options`.
+- **Teclado:** con el campo enfocado, teclear una letra o un número abre la lista con ese texto en el buscador; flecha
+  abajo, Enter o espacio la abren. Escape cierra y el foco vuelve al campo. **Tab** sale con una sola pulsación: si se
+  escribió algo, elige la opción resaltada; sin texto, solo cierra.
+- **Lista:** ~10 opciones a la vista, nunca más alta que el espacio disponible; un nombre largo baja a una segunda línea.
+  En el campo el valor se corta con «…» y el nombre completo queda en `title`.
 
 ### Uso recomendado
 
@@ -211,10 +224,10 @@ Componente para selección de opciones con búsqueda integrada. Diseñado para m
 const options = rawMaterials.map(rm => ({
     id: rm.id,
     label: rm.code,
-    description: rm.name
 }));
 
 <Combobox
+    id="raw_material_id"
     options={options}
     value={data.raw_material_id}
     onChange={(val) => setData('raw_material_id', String(val))}
@@ -224,27 +237,16 @@ const options = rawMaterials.map(rm => ({
 
 ### ¿Cuándo usar Combobox vs Select?
 
-| Característica | Select Standard | Combobox (Buscador) |
-|----------------|-----------------|----------------------|
-| **Número de items** | Pocos (< 15) | Muchos (> 15 o cientos) |
-| **Búsqueda** | No | Sí (instantánea) |
-| **Overflow** | Puede cortarse | Seguro (usa Portals) |
-| **Uso común** | Tipos, Estados, Bodegas | Productos, Materias Primas, Clientes |
+La regla vive en `DESIGN.md` §8: **`Select`** para listas fijas (enums, opciones `{value, label}` de
+`EnumOptions::for()`) o que casi siempre tienen menos de ~8 opciones (tipo de ítem, validez, forma de pago, bodega);
+**`Combobox`** para datos del negocio que crecen y donde buscar ayuda (clientes, productos, materias primas, lotes, OP).
+Los casos dudosos, como la presentación de un producto, se deciden en el rediseño de cada módulo.
 
-### Uso dentro de Sheets (Modales)
+### Dentro de un `Sheet` o `Dialog`
 
-Cuando uses el Combobox dentro de un `Sheet` de Radix UI, **debes agregar `modal={false}`** al Sheet para que el dropdown (que se renderiza via Portal fuera del Sheet) reciba eventos de mouse correctamente:
-
-```tsx
-<Sheet modal={false}>
-    <SheetContent>
-        {/* El Combobox funcionará correctamente aquí */}
-        <Combobox ... />
-    </SheetContent>
-</Sheet>
-```
-
-> ⚠️ **Nota:** Esto permite interacciones fuera del Sheet. Si necesitas bloquear el fondo, considera usar el `Select` estándar de Radix UI en su lugar.
+Los cajones de movimientos de MP y PT usan `modal={false}`, y ahí el Combobox está probado (mouse, rueda y teclado).
+Dentro de un `Sheet` o `Dialog` modal todavía no se ha usado: si se hace, comprobar que la rueda del mouse desplace la
+lista.
 
 ---
 

@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 use App\Actions\Quotations\BuildQuotationPdfDataAction;
 use App\Actions\Quotations\RenderQuotationPdfAction;
+use App\Enums\PaymentMethod;
 use App\Enums\Permission;
+use App\Enums\QuotationItemType;
 use App\Enums\QuotationStatus;
+use App\Enums\QuotationValidity;
 use App\Enums\SystemRole;
 use App\Models\Client;
 use App\Models\Product;
@@ -17,6 +20,7 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Services\QuotationService;
 use App\Services\VariantSalesPriceService;
+use App\Support\EnumOptions;
 use App\Support\ImageDataUri;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Database\Seeders\RolePermissionSeeder;
@@ -207,6 +211,26 @@ it('renders quotation index for comercial user', function () {
             ->where('can.create', true)
         );
 });
+
+it('sends the fixed choices of the quotation form as select options', function (string $routeName) {
+    $quotation = Quotation::factory()->create([
+        'client_id' => $this->client->id,
+        'created_by' => $this->comercialUser->id,
+        'status' => QuotationStatus::Draft,
+    ]);
+
+    $url = $routeName === 'quotations.edit' ? route($routeName, $quotation) : route($routeName);
+
+    $this->actingAs($this->comercialUser)
+        ->get($url)
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('validityDaysOptions', EnumOptions::for(QuotationValidity::cases()))
+            ->where('paymentMethodOptions', EnumOptions::for(PaymentMethod::cases()))
+            ->where('itemTypeOptions', EnumOptions::for(QuotationItemType::cases()))
+            ->where('validityDaysOptions.0', fn ($option) => array_keys($option->all()) === ['value', 'label'])
+        );
+})->with(['quotations.create', 'quotations.edit']);
 
 it('exports quotation pdf', function () {
     $quotation = Quotation::factory()->create([

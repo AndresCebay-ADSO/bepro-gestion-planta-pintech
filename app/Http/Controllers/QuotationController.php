@@ -90,9 +90,9 @@ class QuotationController extends Controller
         return Inertia::render('Quotations/Create', [
             'clients' => $this->clientOptions(),
             'products' => $this->quotationService->catalogProducts(),
-            'validityDaysOptions' => $this->enumOptions(QuotationValidity::cases()),
-            'paymentMethodOptions' => $this->enumOptions(PaymentMethod::cases()),
-            'itemTypeOptions' => $this->enumOptions(QuotationItemType::cases()),
+            'validityDaysOptions' => EnumOptions::for(QuotationValidity::cases()),
+            'paymentMethodOptions' => EnumOptions::for(PaymentMethod::cases()),
+            'itemTypeOptions' => EnumOptions::for(QuotationItemType::cases()),
         ]);
     }
 
@@ -143,9 +143,9 @@ class QuotationController extends Controller
             'quotation' => $this->buildQuotationData($quotation),
             'clients' => $this->clientOptions($kept['client_id']),
             'products' => $this->quotationService->catalogProducts($kept),
-            'validityDaysOptions' => $this->enumOptions(QuotationValidity::cases()),
-            'paymentMethodOptions' => $this->enumOptions(PaymentMethod::cases()),
-            'itemTypeOptions' => $this->enumOptions(QuotationItemType::cases()),
+            'validityDaysOptions' => EnumOptions::for(QuotationValidity::cases()),
+            'paymentMethodOptions' => EnumOptions::for(PaymentMethod::cases()),
+            'itemTypeOptions' => EnumOptions::for(QuotationItemType::cases()),
         ]);
     }
 
@@ -214,25 +214,6 @@ class QuotationController extends Controller
             ->orderBy('business_name')
             ->get(['id', 'business_name', 'nit', 'contact_name', 'phone'])
             ->all();
-    }
-
-    /**
-     * Adapter for the legacy Combobox component which expects {id, label}.
-     * Will be removed when Combobox is replaced by shadcn/ui in a future phase.
-     * For new code, prefer App\Support\EnumOptions::for() which returns {value, label}.
-     *
-     * @param  array<int, \BackedEnum>  $cases
-     * @return array<int, array{id: int|string, label: string}>
-     */
-    private function enumOptions(array $cases): array
-    {
-        return array_map(
-            fn (\BackedEnum $case) => [
-                'id' => $case->value,
-                'label' => method_exists($case, 'label') ? $case->label() : (string) $case->value,
-            ],
-            $cases
-        );
     }
 
     /**

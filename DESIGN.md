@@ -215,6 +215,10 @@ Same in all three:
 - Confirmations use the app dialog (`AlertDialog`, destructive action in red). **Banned:** `window.confirm()`,
   `alert()`. _(pending)_
 - Dates with the app calendar, not the native picker _(pending)_.
+- **`Select` or `Combobox`:** `Select` (`ui/select.tsx`) for fixed lists (enums, options `{value, label}` from
+  `EnumOptions::for()`) or lists that almost always have fewer than ~8 options. `Combobox` (`ui/combobox.tsx`) for
+  business data that grows and where searching helps: clients, products, raw materials, batches, production orders.
+  Unclear cases (such as a product's presentation) are decided in each module's redesign.
 
 ## 9. Tables and listings
 
@@ -294,7 +298,8 @@ A `RowAction` has either `href` (navigates) or `onSelect` (runs a handler), neve
 
 - Components: shadcn/ui on Radix, added with the shadcn CLI into `components/ui/`. When you touch a component that
   imports `@radix-ui/react-*`, switch it to the unified `radix-ui` package in the same change.
-- `@headlessui/react` is on its way out (only the Combobox still uses it): do not add new uses.
+- Combobox (`components/ui/combobox.tsx`): Radix `Popover` + `cmdk` (`ui/command.tsx`). Its search ignores accents,
+  case, spaces and punctuation, in the label and the description (`lib/search-text.ts`). Headless UI was removed: do not add it back.
 - Icons: `lucide-react` only. Charts: not chosen yet; do not add a chart library.
 - Fonts: `@fontsource/*` only, imported in `resources/css/app.css`.
 

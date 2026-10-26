@@ -1,4 +1,3 @@
-import { Transition } from '@headlessui/react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
@@ -114,17 +113,11 @@ export default function Profile({
                             Guardar
                         </Button>
 
-                        <Transition
-                            show={recentlySuccessful}
-                            enter="transition ease-in-out"
-                            enterFrom="opacity-0"
-                            leave="transition ease-in-out"
-                            leaveTo="opacity-0"
-                        >
-                            <p className="text-sm text-muted-foreground">
+                        {recentlySuccessful && (
+                            <p className="animate-in text-sm text-muted-foreground fade-in-0">
                                 Guardado
                             </p>
-                        </Transition>
+                        )}
                     </div>
                 </form>
             </div>
