@@ -89,7 +89,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                                 onValueChange={(val) => setData('role', val)}
                                 disabled={processing}
                             >
-                                <SelectTrigger id="role" className="w-full">
+                                <SelectTrigger id="role">
                                     <SelectValue placeholder="Seleccionar rol..." />
                                 </SelectTrigger>
                                 <SelectContent>

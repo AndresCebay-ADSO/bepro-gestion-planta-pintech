@@ -95,7 +95,7 @@ export default function AdminOrderSidebar({
                                 statusForm.setData('status', value)
                             }
                         >
-                            <SelectTrigger id="status" className="w-full">
+                            <SelectTrigger id="status">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -145,7 +145,7 @@ export default function AdminOrderSidebar({
                                 dataForm.setData('priority', value)
                             }
                         >
-                            <SelectTrigger id="priority" className="w-full">
+                            <SelectTrigger id="priority">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

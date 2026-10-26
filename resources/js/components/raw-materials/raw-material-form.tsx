@@ -186,7 +186,7 @@ export function RawMaterialForm({
                             }
                             disabled={unitLocked}
                         >
-                            <SelectTrigger id="unit" className="w-full min-w-0">
+                            <SelectTrigger id="unit">
                                 <SelectValue placeholder="Seleccionar unidad" />
                             </SelectTrigger>
                             <SelectContent>
@@ -220,10 +220,7 @@ export function RawMaterialForm({
                                 form.setData('category_id', value)
                             }
                         >
-                            <SelectTrigger
-                                id="category"
-                                className="w-full min-w-0"
-                            >
+                            <SelectTrigger id="category">
                                 <SelectValue placeholder="Seleccionar categoría" />
                             </SelectTrigger>
                             <SelectContent>
