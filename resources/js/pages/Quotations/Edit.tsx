@@ -7,7 +7,6 @@ import type {
     ProductOption,
     QuotationFormData,
 } from '@/components/quotations/QuotationForm';
-import type { ComboboxOptionType } from '@/components/ui/combobox';
 import { newRowKey } from '@/lib/quotation-pricing-rows';
 import {
     editPreviewPricing as quotationEditPreviewPricing,
@@ -52,9 +51,9 @@ type Props = {
     quotation: QuotationDetail;
     clients: ClientOption[];
     products: ProductOption[];
-    validityDaysOptions: ComboboxOptionType[];
-    paymentMethodOptions: ComboboxOptionType[];
-    itemTypeOptions: ComboboxOptionType[];
+    validityDaysOptions: { value: string; label: string }[];
+    paymentMethodOptions: { value: string; label: string }[];
+    itemTypeOptions: { value: string; label: string }[];
 };
 
 function mapQuotationToForm(quotation: QuotationDetail): QuotationFormData {

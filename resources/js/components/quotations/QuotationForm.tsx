@@ -8,9 +8,15 @@ import InputError from '@/components/input-error';
 import { IntegerInput } from '@/components/integer-input';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
-import type { ComboboxOptionType } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useQuotationPricingPreview } from '@/hooks/use-quotation-pricing-preview';
 import { dateBoundKeepingSaved } from '@/lib/date-time-helpers';
@@ -76,9 +82,9 @@ export type QuotationFormData = {
 type Props = {
     clients: ClientOption[];
     products: ProductOption[];
-    validityDaysOptions: ComboboxOptionType[];
-    paymentMethodOptions: ComboboxOptionType[];
-    itemTypeOptions: ComboboxOptionType[];
+    validityDaysOptions: { value: string; label: string }[];
+    paymentMethodOptions: { value: string; label: string }[];
+    itemTypeOptions: { value: string; label: string }[];
     initialData: QuotationFormData;
     submitUrl: string;
     /** Ruta de la vista previa de precios: al crear o al editar esta cotización. */
@@ -450,26 +456,54 @@ export default function QuotationForm({
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Validez (días)</Label>
-                            <Combobox
-                                options={validityDaysOptions}
+                            <Label htmlFor="validity_days">
+                                Validez (días)
+                            </Label>
+                            <Select
                                 value={data.validity_days}
-                                onChange={(value) =>
-                                    setData('validity_days', String(value))
+                                onValueChange={(v) =>
+                                    setData('validity_days', v)
                                 }
-                                placeholder="Seleccionar..."
-                            />
+                            >
+                                <SelectTrigger id="validity_days">
+                                    <SelectValue placeholder="Seleccionar..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {validityDaysOptions.map((option) => (
+                                        <SelectItem
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Forma de pago</Label>
-                            <Combobox
-                                options={paymentMethodOptions}
+                            <Label htmlFor="payment_method">
+                                Forma de pago
+                            </Label>
+                            <Select
                                 value={data.payment_method}
-                                onChange={(value) =>
-                                    setData('payment_method', String(value))
+                                onValueChange={(v) =>
+                                    setData('payment_method', v)
                                 }
-                                placeholder="Seleccionar..."
-                            />
+                            >
+                                <SelectTrigger id="payment_method">
+                                    <SelectValue placeholder="Seleccionar..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {paymentMethodOptions.map((option) => (
+                                        <SelectItem
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label>Tiempo de entrega</Label>
@@ -605,21 +639,46 @@ export default function QuotationForm({
                                                 />
                                             </div>
                                             <div className="md:col-span-2">
-                                                <Label className="text-xs">
+                                                <Label
+                                                    htmlFor={`items.${index}.type`}
+                                                    className="text-xs"
+                                                >
                                                     Tipo
                                                 </Label>
-                                                <Combobox
-                                                    options={itemTypeOptions}
+                                                <Select
                                                     value={item.type}
-                                                    onChange={(value) =>
+                                                    onValueChange={(v) =>
                                                         updateItem(
                                                             index,
                                                             'type',
-                                                            String(value),
+                                                            v,
                                                         )
                                                     }
-                                                    placeholder="Seleccionar..."
-                                                />
+                                                >
+                                                    <SelectTrigger
+                                                        id={`items.${index}.type`}
+                                                    >
+                                                        <SelectValue placeholder="Seleccionar..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {itemTypeOptions.map(
+                                                            (option) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        option.value
+                                                                    }
+                                                                    value={
+                                                                        option.value
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        option.label
+                                                                    }
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
                                                 <InputError
                                                     className="text-xs"
                                                     message={itemError(

@@ -8,7 +8,6 @@ import type {
     ClientOption,
     ProductOption,
 } from '@/components/quotations/QuotationForm';
-import type { ComboboxOptionType } from '@/components/ui/combobox';
 import {
     index as quotationsIndex,
     previewPricing as quotationPreviewPricing,
@@ -17,9 +16,9 @@ import {
 type Props = {
     clients: ClientOption[];
     products: ProductOption[];
-    validityDaysOptions: ComboboxOptionType[];
-    paymentMethodOptions: ComboboxOptionType[];
-    itemTypeOptions: ComboboxOptionType[];
+    validityDaysOptions: { value: string; label: string }[];
+    paymentMethodOptions: { value: string; label: string }[];
+    itemTypeOptions: { value: string; label: string }[];
 };
 
 export default function QuotationsCreate({
