@@ -1,13 +1,14 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { BellRing } from 'lucide-react';
+import { BellRing, Pencil, Power, PowerOff, Trash2 } from 'lucide-react';
 import type { ComponentProps } from 'react';
 import { useState } from 'react';
 
 import { ActiveBadge } from '@/components/active-badge';
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
-import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
@@ -45,6 +46,7 @@ type RawMaterialRow = {
         update: boolean;
         delete: boolean;
         reactivate: boolean;
+        forceDelete: boolean;
     };
 };
 
@@ -136,6 +138,105 @@ export default function RawMaterialsIndex({
         );
     };
 
+    const columns: DataListingColumn<RawMaterialRow>[] = [
+        {
+            key: 'code',
+            header: 'Código',
+            cell: (item) => item.code,
+            mobile: 'title',
+            className: 'font-mono',
+            cardClassName: 'font-mono',
+        },
+        {
+            key: 'category',
+            header: 'Categoría',
+            cell: (item) =>
+                item.category ? (
+                    <div className="flex flex-col items-start gap-1">
+                        <span className="text-foreground">
+                            {item.category.name}
+                        </span>
+                        <Badge
+                            variant="secondary"
+                            className="text-xs font-normal"
+                        >
+                            {item.category.type_label}
+                        </Badge>
+                    </div>
+                ) : (
+                    '-'
+                ),
+            mobile: 'subtitle',
+        },
+        {
+            key: 'unit',
+            header: 'Unidad',
+            cell: (item) =>
+                item.unit_of_measure
+                    ? `${item.unit_of_measure.name} (${item.unit_of_measure.symbol})`
+                    : '-',
+            mobile: 'meta',
+            className: 'text-muted-foreground',
+        },
+        ...(can.view_costs
+            ? [
+                  {
+                      key: 'price',
+                      header: 'Precio',
+                      cell: (item: RawMaterialRow) => (
+                          <FormattedNumber
+                              value={item.current_price}
+                              currency
+                              maxDecimals={2}
+                          />
+                      ),
+                      mobile: 'meta' as const,
+                      align: 'right' as const,
+                  },
+              ]
+            : []),
+        {
+            key: 'stock',
+            header: 'Stock disponible',
+            cell: (item) => (
+                <FormattedNumber value={item.available_stock} maxDecimals={2} />
+            ),
+            mobile: 'meta',
+            align: 'right',
+        },
+        {
+            key: 'alerts',
+            header: 'Alertas',
+            cell: (item) =>
+                item.active_alerts_count > 0 ? (
+                    <Link
+                        href={alertsIndex({ query: { status: 'active' } }).url}
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                            item.has_critical_alert
+                                ? 'bg-destructive/15 text-destructive-text'
+                                : 'bg-warning/15 text-warning-text'
+                        }`}
+                        title="Ver alertas activas"
+                    >
+                        <BellRing className="h-3.5 w-3.5" />
+                        {item.active_alerts_count}
+                    </Link>
+                ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                ),
+            // Pide acción: va también en la tarjeta (DESIGN.md §9).
+            mobile: 'meta',
+            align: 'center',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (item) => <ActiveBadge isActive={item.is_active} feminine />,
+            mobile: 'status',
+            align: 'center',
+        },
+    ];
+
     return (
         <>
             <Head title="Materias primas" />
@@ -177,201 +278,55 @@ export default function RawMaterialsIndex({
                     onClear={clearFilters}
                 />
 
-                {/* Tabla */}
-                <div className="overflow-x-auto rounded-lg border border-border bg-card">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/40">
-                            <tr>
-                                <th className="p-3 text-left font-medium">
-                                    Código
-                                </th>
-                                <th className="p-3 text-left font-medium">
-                                    Categoría
-                                </th>
-                                <th className="p-3 text-left font-medium">
-                                    Unidad
-                                </th>
-                                {can.view_costs && (
-                                    <th className="p-3 text-right font-medium">
-                                        Precio
-                                    </th>
-                                )}
-                                <th className="p-3 text-right font-medium">
-                                    Stock Disponible
-                                </th>
-                                <th className="p-3 text-center font-medium">
-                                    Alertas
-                                </th>
-                                <th className="p-3 text-center font-medium">
-                                    Estado
-                                </th>
-                                <th className="p-3 text-right font-medium">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {rawMaterials.data.map((item) => (
-                                <tr
-                                    key={item.id}
-                                    className="border-b border-border/60 transition last:border-0 hover:bg-muted/30"
-                                >
-                                    <td className="p-3 font-medium text-foreground">
-                                        {item.code}
-                                    </td>
-
-                                    <td className="p-3">
-                                        {item.category ? (
-                                            <div className="flex flex-col items-start gap-1">
-                                                <span className="text-foreground">
-                                                    {item.category.name}
-                                                </span>
-                                                <Badge
-                                                    variant="secondary"
-                                                    className="text-xs font-normal"
-                                                >
-                                                    {item.category.type_label}
-                                                </Badge>
-                                            </div>
-                                        ) : (
-                                            <span className="text-muted-foreground">
-                                                -
-                                            </span>
-                                        )}
-                                    </td>
-
-                                    <td className="p-3 text-muted-foreground">
-                                        {item.unit_of_measure
-                                            ? `${item.unit_of_measure.name} (${item.unit_of_measure.symbol})`
-                                            : '-'}
-                                    </td>
-
-                                    {can.view_costs && (
-                                        <td className="p-3 text-right">
-                                            <FormattedNumber
-                                                value={item.current_price}
-                                                currency
-                                                maxDecimals={2}
-                                            />
-                                        </td>
-                                    )}
-
-                                    <td className="p-3 text-right">
-                                        <FormattedNumber
-                                            value={item.available_stock}
-                                            maxDecimals={2}
-                                        />
-                                    </td>
-
-                                    <td className="p-3 text-center">
-                                        {item.active_alerts_count > 0 ? (
-                                            <Link
-                                                href={`${alertsIndex().url}?status=active`}
-                                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-                                                    item.has_critical_alert
-                                                        ? 'bg-destructive/15 text-destructive-text'
-                                                        : 'bg-warning/15 text-warning-text'
-                                                }`}
-                                                title="Ver alertas activas"
-                                            >
-                                                <BellRing className="h-3.5 w-3.5" />
-                                                {item.active_alerts_count}
-                                            </Link>
-                                        ) : (
-                                            <span className="text-xs text-muted-foreground">
-                                                —
-                                            </span>
-                                        )}
-                                    </td>
-
-                                    <td className="p-3 text-center">
-                                        <ActiveBadge
-                                            isActive={item.is_active}
-                                            feminine
-                                        />
-                                    </td>
-
-                                    <td className="p-3 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <TableActions
-                                                permissions={{
-                                                    view: item.can.view,
-                                                    edit: item.can.update,
-                                                    delete: item.can.delete,
-                                                }}
-                                                disabled={{
-                                                    delete: item.has_available_stock,
-                                                }}
-                                                tooltips={{
-                                                    delete: item.has_available_stock
-                                                        ? 'No disponible: tiene stock en bodega'
-                                                        : item.has_activity
-                                                          ? 'Desactivar materia prima'
-                                                          : 'Eliminar permanentemente',
-                                                }}
-                                                deleteIcon={
-                                                    item.has_available_stock ||
-                                                    item.has_activity
-                                                        ? 'power-off'
-                                                        : 'trash'
-                                                }
-                                                onView={() =>
-                                                    router.get(
-                                                        withReturnTo(
-                                                            rawMaterialsShow({
-                                                                raw_material:
-                                                                    item.id,
-                                                            }).url,
-                                                        ),
-                                                    )
-                                                }
-                                                onEdit={() =>
-                                                    router.get(
-                                                        rawMaterialsEdit({
-                                                            raw_material:
-                                                                item.id,
-                                                        }).url,
-                                                    )
-                                                }
-                                                onDelete={() =>
-                                                    setDeleteTarget(item)
-                                                }
-                                            />
-
-                                            {item.can.reactivate && (
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        handleReactivate(
-                                                            item.id,
-                                                        )
-                                                    }
-                                                >
-                                                    Reactivar
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-
-                            {/* Empty State */}
-                            {rawMaterials.data.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={can.view_costs ? 8 : 7}
-                                        className="p-10 text-center text-sm text-muted-foreground"
-                                    >
-                                        No se encontraron materias primas.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <DataListing
+                    rows={rawMaterials.data}
+                    rowKey={(item) => item.id}
+                    rowHref={(item) =>
+                        item.can.view
+                            ? withReturnTo(
+                                  rawMaterialsShow({ raw_material: item.id })
+                                      .url,
+                              )
+                            : undefined
+                    }
+                    rowLabel={(item) => item.code}
+                    columns={columns}
+                    actions={(item) => [
+                        {
+                            label: 'Editar',
+                            icon: Pencil,
+                            href: rawMaterialsEdit({ raw_material: item.id })
+                                .url,
+                            hidden: !item.can.update,
+                        },
+                        {
+                            label: 'Reactivar',
+                            icon: Power,
+                            onSelect: () => handleReactivate(item.id),
+                            hidden: !item.can.reactivate,
+                        },
+                        // Se elimina solo sin historial y con permiso de borrado físico; si no, el servidor desactiva.
+                        // Con stock en bodega no se puede ninguna.
+                        item.can.forceDelete && !item.has_activity
+                            ? {
+                                  label: 'Eliminar',
+                                  icon: Trash2,
+                                  destructive: true,
+                                  onSelect: () => setDeleteTarget(item),
+                                  hidden: !item.can.delete,
+                              }
+                            : {
+                                  label: 'Desactivar',
+                                  icon: PowerOff,
+                                  onSelect: () => setDeleteTarget(item),
+                                  disabledReason: item.has_available_stock
+                                      ? 'No disponible: tiene stock en bodega'
+                                      : undefined,
+                                  hidden: !item.can.delete,
+                              },
+                    ]}
+                    empty="No se encontraron materias primas."
+                />
 
                 {/* Paginación */}
                 <div className="mt-4 flex justify-center">
@@ -388,6 +343,7 @@ export default function RawMaterialsIndex({
                 }}
                 rawMaterial={deleteTarget}
                 hasActivity={deleteTarget?.has_activity ?? false}
+                canDeletePermanently={deleteTarget?.can.forceDelete ?? false}
                 processing={deleteProcessing}
                 onConfirm={handleDeleteConfirm}
             />

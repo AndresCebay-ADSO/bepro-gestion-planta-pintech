@@ -91,22 +91,17 @@ Una tarea se considera finalizada solo si:
 
 ## 6. Estándares de Interfaz de Usuario (UI/UX)
 
-### 📊 Acciones en Tablas
-Para asegurar una interfaz limpia, profesional y accesible, las acciones por fila en las tablas deben seguir estas reglas:
+### 📊 Listados y acciones de fila
+Los listados siguen `DESIGN.md` §9 (contrato de UX):
 
-* **Componente Obligatorio**: Usar exclusivamente el componente `TableActions`.
-* **Prohibición de Texto**: No usar botones con etiquetas de texto dentro de las celdas de acción de las tablas.
-* **Iconografía**: Usar iconos de `lucide-react` (Eye, Pencil, Trash).
-* **Tooltips y Accesibilidad**: Cada acción debe tener un `Tooltip` descriptivo y texto oculto para lectores de pantalla (`sr-only`).
-* **Estados Visuales**:
-    * **View**: Color base/neutral (outline).
-    * **Edit**: Color **Amber** (`variant="warning"`).
-    * **Delete**: Color **Red** (`variant="destructive"`).
-* **Orden de Acciones**: El orden estricto de izquierda a derecha es: 1. Ver, 2. Editar, 3. Eliminar (y acciones adicionales al final).
-* **Text Wrapping**: Para descripciones largas o campos de logs, usar la clase `wrap-break-word` para asegurar que el contenido no rompa el layout de la tabla.
-
-> [!IMPORTANT]
-> Esta norma aplica **SOLO** a las acciones de fila en tablas. Los botones principales de página (ej. "Crear Nuevo") deben seguir siendo botones con texto para mayor claridad.
+* **Componentes**: `<DataListing>` (una sola definición de columnas pinta la tabla en el computador y tarjetas en el
+  celular) y `<RowActions>` (menú «⋯» con las acciones secundarias de la fila, sin color; solo «Eliminar» en rojo, al
+  final).
+* **Enlace**: el identificador de la fila (código, número, nombre) abre el detalle, o la edición si no hay detalle; sin
+  permiso es texto normal.
+* **Acción bloqueada**: visible en el menú con su motivo debajo (`disabledReason`), nunca oculta sin explicación.
+* `TableActions` (iconos de colores por fila) es **legado**: se borra cuando migre el último listado.
+* **Text Wrapping**: para descripciones largas o campos de logs, usar `wrap-break-word` para no romper la tabla.
 
 ---
 

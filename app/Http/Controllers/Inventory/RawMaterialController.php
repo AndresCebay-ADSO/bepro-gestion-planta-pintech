@@ -94,6 +94,8 @@ class RawMaterialController extends Controller
                             ? Gate::forUser($user)->allows('deactivate', $rawMaterial)
                             : Gate::forUser($user)->allows('delete', $rawMaterial) && ! $hasActivity,
                         'reactivate' => Gate::forUser($user)->allows('reactivate', $rawMaterial) && ! $rawMaterial->is_active,
+                        // Borrado físico: sin este permiso, «eliminar» una MP sin historial solo la desactiva (destroy()).
+                        'forceDelete' => Gate::forUser($user)->allows('delete', $rawMaterial),
                     ],
                 ];
             });
@@ -213,6 +215,7 @@ class RawMaterialController extends Controller
                     ? Gate::allows('deactivate', $rawMaterial)
                     : Gate::allows('delete', $rawMaterial) && ! $hasActivity,
                 'reactivate' => Gate::allows('reactivate', $rawMaterial) && ! $rawMaterial->is_active,
+                'forceDelete' => Gate::allows('delete', $rawMaterial),
                 'viewCosts' => $canViewCosts,
             ],
         ]);

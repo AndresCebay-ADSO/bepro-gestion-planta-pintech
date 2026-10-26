@@ -1,9 +1,11 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, Users } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 import { ActiveBadge } from '@/components/active-badge';
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
-import { TableActions } from '@/components/table-actions';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
@@ -50,27 +52,66 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
         },
     });
 
+    const columns: DataListingColumn<ClientRow>[] = [
+        {
+            key: 'business_name',
+            header: 'Razón social',
+            cell: (client) => client.business_name,
+            mobile: 'title',
+        },
+        {
+            key: 'nit',
+            header: 'NIT',
+            cell: (client) => client.nit ?? '-',
+            mobile: 'meta',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'contact_name',
+            header: 'Contacto',
+            cell: (client) => client.contact_name ?? '-',
+            mobile: 'meta',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'phone',
+            header: 'Teléfono',
+            cell: (client) => client.phone ?? '-',
+            mobile: 'meta',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'shipping_address',
+            header: 'Dirección',
+            cell: (client) => client.shipping_address ?? '-',
+            mobile: 'meta',
+            className: 'max-w-xs truncate text-muted-foreground',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (client) => <ActiveBadge isActive={client.is_active} />,
+            mobile: 'status',
+        },
+    ];
+
     return (
         <>
             <Head title="Clientes" />
 
             <div className="space-y-4 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            Clientes
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Gestión de clientes.
-                        </p>
-                    </div>
-                    <Button asChild>
-                        <Link href={clientsCreate().url}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nuevo Cliente
-                        </Link>
-                    </Button>
-                </div>
+                <PageHeader
+                    title="Clientes"
+                    description="Gestión de clientes."
+                    actions={
+                        <Button asChild>
+                            <Link href={clientsCreate().url}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Nuevo cliente
+                            </Link>
+                        </Button>
+                    }
+                />
 
                 <DataTableFilters
                     fields={[
@@ -95,111 +136,44 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
                     onClear={clearFilters}
                 />
 
-                {clients.data.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12">
-                        <Users className="mb-4 h-12 w-12 text-muted-foreground" />
-                        <p className="text-lg font-medium text-muted-foreground">
-                            No hay clientes registrados
-                        </p>
-                    </div>
-                ) : (
-                    <>
-                        <div className="rounded border border-border bg-card">
-                            <table className="w-full text-sm">
-                                <thead className="border-b border-border bg-muted/50">
-                                    <tr>
-                                        <th className="p-3 text-left">
-                                            Razón social
-                                        </th>
-                                        <th className="p-3 text-left">NIT</th>
-                                        <th className="p-3 text-left">
-                                            Contacto
-                                        </th>
-                                        <th className="p-3 text-left">
-                                            Teléfono
-                                        </th>
-                                        <th className="p-3 text-left">
-                                            Dirección
-                                        </th>
-                                        <th className="p-3 text-left">
-                                            Estado
-                                        </th>
-                                        {(can.edit || can.delete) && (
-                                            <th className="p-3 text-right">
-                                                Acciones
-                                            </th>
-                                        )}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {clients.data.map((client) => (
-                                        <tr
-                                            key={client.id}
-                                            className="border-b border-border/50"
-                                        >
-                                            <td className="p-3 font-medium">
-                                                {client.business_name}
-                                            </td>
-                                            <td className="p-3 text-muted-foreground">
-                                                {client.nit ?? '-'}
-                                            </td>
-                                            <td className="p-3 text-muted-foreground">
-                                                {client.contact_name ?? '-'}
-                                            </td>
-                                            <td className="p-3 text-muted-foreground">
-                                                {client.phone ?? '-'}
-                                            </td>
-                                            <td className="max-w-xs truncate p-3 text-muted-foreground">
-                                                {client.shipping_address ?? '-'}
-                                            </td>
-                                            <td className="p-3">
-                                                <ActiveBadge
-                                                    isActive={client.is_active}
-                                                />
-                                            </td>
-                                            {(can.edit || can.delete) && (
-                                                <td className="p-3">
-                                                    {/* Eliminar solo borra clientes sin cotizaciones ni pedidos; si tienen, el servidor pide desactivarlos. */}
-                                                    <TableActions
-                                                        actions={{
-                                                            view: false,
-                                                            edit: can.edit,
-                                                            delete: can.delete,
-                                                        }}
-                                                        onEdit={() =>
-                                                            router.get(
-                                                                clientsEdit(
-                                                                    client.id,
-                                                                ).url,
-                                                            )
-                                                        }
-                                                        onDelete={() => {
-                                                            if (
-                                                                confirm(
-                                                                    '¿Eliminar este cliente definitivamente? Solo es posible si no tiene cotizaciones ni pedidos.',
-                                                                )
-                                                            ) {
-                                                                router.delete(
-                                                                    clientsDestroy(
-                                                                        client.id,
-                                                                    ).url,
-                                                                );
-                                                            }
-                                                        }}
-                                                    />
-                                                </td>
-                                            )}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                {/* Clientes no tiene detalle: el nombre abre la edición. */}
+                <DataListing
+                    rows={clients.data}
+                    rowKey={(client) => client.id}
+                    rowHref={
+                        can.edit
+                            ? (client) => clientsEdit(client.id).url
+                            : undefined
+                    }
+                    rowLabel={(client) => client.business_name}
+                    columns={columns}
+                    // El nombre ya abre la edición: el menú no la repite (DESIGN.md §9).
+                    actions={(client) => [
+                        // Eliminar solo borra clientes sin cotizaciones ni pedidos; si tienen, el servidor pide desactivarlos.
+                        {
+                            label: 'Eliminar',
+                            icon: Trash2,
+                            destructive: true,
+                            onSelect: () => {
+                                if (
+                                    confirm(
+                                        '¿Eliminar este cliente definitivamente? Solo es posible si no tiene cotizaciones ni pedidos.',
+                                    )
+                                ) {
+                                    router.delete(
+                                        clientsDestroy(client.id).url,
+                                    );
+                                }
+                            },
+                            hidden: !can.delete,
+                        },
+                    ]}
+                    empty="No hay clientes registrados"
+                />
 
-                        <div className="mt-4 flex justify-center">
-                            <Pagination links={clients.links} />
-                        </div>
-                    </>
-                )}
+                <div className="mt-4 flex justify-center">
+                    <Pagination links={clients.links} />
+                </div>
             </div>
         </>
     );

@@ -1,9 +1,13 @@
 import { Head, Link } from '@inertiajs/react';
-import { Plus, ShoppingCart } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
+import { FormattedNumber } from '@/components/formatted-number';
+import { PageHeader } from '@/components/page-header';
 import { PriorityBadge } from '@/components/priority-badge';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
@@ -88,31 +92,108 @@ export default function SalesOrdersIndex({
         },
     ];
 
+    const title = can.manage ? 'Gestión de pedidos' : 'Pedidos';
+
+    const columns: DataListingColumn<SalesOrderRow>[] = [
+        {
+            key: 'number',
+            header: 'Nº',
+            cell: (order) => `#${order.id}`,
+            mobile: 'title',
+            className: 'font-mono',
+            cardClassName: 'font-mono',
+        },
+        {
+            key: 'client',
+            header: 'Cliente',
+            cell: (order) => order.client.business_name,
+            mobile: 'subtitle',
+        },
+        ...(can.manage
+            ? [
+                  {
+                      key: 'creator',
+                      header: 'Comercial',
+                      cell: (order: SalesOrderRow) =>
+                          order.creator?.name ?? '-',
+                      mobile: 'meta' as const,
+                      className: 'text-muted-foreground',
+                  },
+              ]
+            : []),
+        {
+            key: 'priority',
+            header: 'Prioridad',
+            cell: (order) => <PriorityBadge value={order.priority} />,
+            mobile: 'meta',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (order) => (
+                <StatusBadge enum="SalesOrderStatus" value={order.status} />
+            ),
+            mobile: 'status',
+        },
+        {
+            key: 'required_date',
+            header: 'Fecha requerida',
+            cell: (order) => (
+                <FormattedDate
+                    value={order.required_date}
+                    format="short"
+                    emptyValue="-"
+                />
+            ),
+            mobile: 'meta',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'estimated_delivery_date',
+            header: 'Fecha estimada',
+            cell: (order) => (
+                <FormattedDate
+                    value={order.estimated_delivery_date}
+                    format="short"
+                    emptyValue="-"
+                />
+            ),
+            mobile: 'meta',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'items',
+            header: 'Productos',
+            cell: (order) => <FormattedNumber value={order.items_count} />,
+            mobile: 'hidden',
+            align: 'right',
+            className: 'text-muted-foreground',
+        },
+    ];
+
     return (
         <>
-            <Head title={can.manage ? 'Gestión de Pedidos' : 'Pedidos'} />
+            <Head title={title} />
 
             <div className="space-y-4 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            {can.manage ? 'Gestión de Pedidos' : 'Pedidos'}
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            {can.manage
-                                ? 'Administración de todos los pedidos de clientes.'
-                                : 'Gestión de pedidos de clientes.'}
-                        </p>
-                    </div>
-                    {can.create && (
-                        <Button asChild>
-                            <Link href={salesOrdersCreate().url}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Nuevo Pedido
-                            </Link>
-                        </Button>
-                    )}
-                </div>
+                <PageHeader
+                    title={title}
+                    description={
+                        can.manage
+                            ? 'Administración de todos los pedidos de clientes.'
+                            : 'Gestión de pedidos de clientes.'
+                    }
+                    actions={
+                        can.create && (
+                            <Button asChild>
+                                <Link href={salesOrdersCreate().url}>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Nuevo pedido
+                                </Link>
+                            </Button>
+                        )
+                    }
+                />
 
                 <DataTableFilters
                     fields={filterFields}
@@ -122,126 +203,28 @@ export default function SalesOrdersIndex({
                     onClear={clearFilters}
                 />
 
-                {orders.data.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12">
-                        <ShoppingCart className="mb-4 h-12 w-12 text-muted-foreground" />
-                        <p className="text-lg font-medium text-muted-foreground">
-                            No hay pedidos registrados
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                            {can.create
-                                ? 'Crea tu primer pedido haciendo clic en "Nuevo Pedido"'
-                                : 'Aún no hay pedidos en el sistema.'}
-                        </p>
-                    </div>
-                ) : (
-                    <>
-                        <div className="rounded border border-border bg-card">
-                            <table className="w-full text-sm">
-                                <thead className="border-b border-border bg-muted/50">
-                                    <tr>
-                                        <th className="p-3 text-left">Nº</th>
-                                        <th className="p-3 text-left">
-                                            Cliente
-                                        </th>
-                                        {can.manage && (
-                                            <th className="p-3 text-left">
-                                                Comercial
-                                            </th>
-                                        )}
-                                        <th className="p-3 text-left">
-                                            Prioridad
-                                        </th>
-                                        <th className="p-3 text-left">
-                                            Estado
-                                        </th>
-                                        <th className="p-3 text-left">
-                                            Fecha requerida
-                                        </th>
-                                        <th className="p-3 text-left">
-                                            Fecha estimada
-                                        </th>
-                                        <th className="p-3 text-left">Items</th>
-                                        <th className="p-3 text-right">
-                                            Acciones
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {orders.data.map((order) => (
-                                        <tr
-                                            key={order.id}
-                                            className="border-b border-border/50"
-                                        >
-                                            <td className="p-3 font-mono text-muted-foreground">
-                                                #{order.id}
-                                            </td>
-                                            <td className="p-3 font-medium">
-                                                {order.client.business_name}
-                                            </td>
-                                            {can.manage && (
-                                                <td className="p-3 text-muted-foreground">
-                                                    {order.creator?.name ?? '-'}
-                                                </td>
-                                            )}
-                                            <td className="p-3">
-                                                <PriorityBadge
-                                                    value={order.priority}
-                                                />
-                                            </td>
-                                            <td className="p-3">
-                                                <StatusBadge
-                                                    enum="SalesOrderStatus"
-                                                    value={order.status}
-                                                />
-                                            </td>
-                                            <td className="p-3 text-muted-foreground">
-                                                <FormattedDate
-                                                    value={order.required_date}
-                                                    format="short"
-                                                    emptyValue="-"
-                                                />
-                                            </td>
-                                            <td className="p-3 text-muted-foreground">
-                                                <FormattedDate
-                                                    value={
-                                                        order.estimated_delivery_date
-                                                    }
-                                                    format="short"
-                                                    emptyValue="-"
-                                                />
-                                            </td>
-                                            <td className="p-3 text-muted-foreground">
-                                                {order.items_count} producto(s)
-                                            </td>
-                                            <td className="p-3 text-right">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    asChild
-                                                >
-                                                    <Link
-                                                        href={
-                                                            salesOrdersShow(
-                                                                order.id,
-                                                            ).url
-                                                        }
-                                                    >
-                                                        Ver
-                                                    </Link>
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                <DataListing
+                    rows={orders.data}
+                    rowKey={(order) => order.id}
+                    rowHref={(order) => salesOrdersShow(order.id).url}
+                    columns={columns}
+                    empty={
+                        <>
+                            <p className="font-medium">
+                                No hay pedidos registrados
+                            </p>
+                            <p>
+                                {can.create
+                                    ? 'Crea tu primer pedido con «Nuevo pedido».'
+                                    : 'Aún no hay pedidos en el sistema.'}
+                            </p>
+                        </>
+                    }
+                />
 
-                        <div className="mt-4 flex justify-center">
-                            <Pagination links={orders.links} />
-                        </div>
-                    </>
-                )}
+                <div className="mt-4 flex justify-center">
+                    <Pagination links={orders.links} />
+                </div>
             </div>
         </>
     );

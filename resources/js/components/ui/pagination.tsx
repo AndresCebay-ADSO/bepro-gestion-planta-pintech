@@ -32,6 +32,12 @@ const Pagination: FC<PaginationProps> = ({ links, className }) => {
     const previousLink = links[0];
     const nextLink = links[links.length - 1];
     const numericLinks = links.slice(1, -1);
+    // En el celular solo caben «Anterior», «Página X de Y» y «Siguiente»; los números, desde md.
+    const pageNumbers = numericLinks
+        .map((link) => Number(link.label))
+        .filter((page) => Number.isInteger(page));
+    const currentPage = Number(numericLinks.find((link) => link.active)?.label);
+    const lastPage = Math.max(...pageNumbers);
 
     return (
         <nav
@@ -52,8 +58,14 @@ const Pagination: FC<PaginationProps> = ({ links, className }) => {
                 <span className="sr-only">Anterior</span>
             </Button>
 
+            {Number.isInteger(currentPage) && (
+                <span className="px-2 text-sm text-muted-foreground tabular-nums md:hidden">
+                    Página {currentPage} de {lastPage}
+                </span>
+            )}
+
             {/* Page Numbers */}
-            <div className="flex items-center space-x-1">
+            <div className="hidden items-center space-x-1 md:flex">
                 {numericLinks.map((link, index) => (
                     <Button
                         key={`${link.label}-${index}`}

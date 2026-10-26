@@ -149,9 +149,12 @@ Componente para mostrar fechas formateadas según estándar colombiano.
 
 ---
 
-## TableActions
+## TableActions (legado)
 
-Componente estandarizado para acciones de fila en tablas.
+> **Legado:** los listados nuevos usan `<DataListing>` y `<RowActions>` (`DESIGN.md` §9). `TableActions` se
+> borra cuando migre el último listado; no usarlo en código nuevo.
+
+Componente de acciones de fila con iconos de colores.
 
 **Ubicación:** `resources/js/components/table-actions.tsx`
 

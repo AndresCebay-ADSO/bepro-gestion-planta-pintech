@@ -182,6 +182,8 @@ phone, and `children` are extra lines under the description.
 - Only `lucide-react`. `size-4` in buttons, tables and fields; `size-5` next to page or card titles. Default stroke.
 - An icon-only button has `sr-only` text **and** a tooltip, both in Spanish:
   `<Button size="icon" variant="outline"><Pencil className="size-4" /><span className="sr-only">Editar</span></Button>`.
+  Exception: the «⋯» button of `<RowActions>` has only the `sr-only` text. It opens a menu, and when the menu closes
+  the focus returns to the button and would leave the tooltip open.
 - One icon per concept: do not reuse a menu icon for a different entry.
 
 ## 7. Numbers
@@ -217,11 +219,67 @@ Same in all three:
 ## 9. Tables and listings
 
 - Listing pattern of `CLAUDE.md`: `Index{Domain}Request` + `{Domain}Filter` + `useFilters` + `<DataTableFilters />`;
-  server-side pagination.
-- The row (or its code) opens the detail; the other actions (edit, deactivate, delete) go in a «⋯» menu at the end of
-  the row, without color. _(pending; until then `<TableActions />` stays mandatory, per `CLAUDE.md`)_
-- Phone: main listings become cards (title, 2–4 values, status, «⋯»); detail tables (lines of an OP or formula) scroll
-  horizontally with the first column fixed. _(pending)_
+  server-side pagination (`ui/pagination.tsx`: on the phone only previous, «Página X de Y» and next).
+- Every listing is a `<DataListing>` (`components/data-listing.tsx`). Each screen describes its columns **once**; the
+  component renders the `<Table>` (`components/ui/table.tsx`) from `md` up and one card per row below `md`. A table
+  wider than its box scrolls inside the box, never the page. No sorting by column (the server orders).
+- **The identifier opens the detail, not the whole row.** With `rowHref` the `title` cell is a `<Link>` (keyboard,
+  middle click, new tab); the rest of the row stays selectable text, and the row only highlights on hover. Pass
+  `rowHref` only when the user can do the main action (view the detail or, when there is no detail, edit); return
+  `undefined` for a row without permission and the identifier is plain text.
+- The other actions (edit, deactivate, reactivate, delete) go in `<RowActions>` (`components/row-actions.tsx`), the
+  «⋯» menu at the end of the row or in the card corner. **The menu never repeats the identifier's action**: no «Ver»
+  when the identifier opens the detail, no «Editar» when it opens the edit (screens without a detail, such as
+  Clients). No color, except «Eliminar» in red, last, after a separator. With no visible action there is no button
+  (and no column when no row has one).
+- A blocked action shows its reason under the label (`disabledReason`; a tooltip does not work on the phone). It is
+  not Radix `disabled`: it keeps focus, is announced with `aria-disabled` and does nothing.
+- Empty listing: the `empty` message in a dashed box, centered. Detail tables (lines of an OP, a formula or a
+  quotation) are not listings: they scroll horizontally with the first column fixed _(pending)_.
+
+Role of each column on the phone card (`mobile`, required; on desktop every column shows):
+
+| `mobile` | What goes there | Card |
+| :-- | :-- | :-- |
+| `title` | The identifier: code, number, name. Exactly one | Top left; the link when there is `rowHref` |
+| `subtitle` | What describes it: category, client, product. At most one | Under the title, muted |
+| `status` | The status or active pill. At most one | Next to the title |
+| `meta` | Quantities, dates, totals, alerts, short data such as contact or priority. **At most 4** | Label-value pairs, 2 columns |
+| `hidden` | Notes and what only serves to compare rows on desktop | Not shown |
+
+What asks for action (alerts, pending items) **never** goes `hidden`: the phone user must see it too. If it does not
+fit in the 4 `meta`, the least important `meta` goes `hidden` instead.
+
+`align: 'right'` for figures (adds `tabular-nums`), `'center'` for pills and alerts. `className` styles the desktop
+cell only (`max-w-xs truncate` would cut the value on the card); `cardClassName` styles the value on the card (for
+example `font-mono` on a code, which then goes in both). The header is the table-header role
+of §5 (12 px); cells are 14 px. In development a console warning flags a definition that breaks these limits
+(`lib/data-listing.ts`). Table and cards are both in the DOM (toggled with `hidden md:block`): a text search in tests
+finds each value twice.
+
+```tsx
+<DataListing
+    rows={rawMaterials.data}
+    rowKey={(item) => item.id}
+    rowHref={(item) => (item.can.view ? withReturnTo(rawMaterialsShow({ raw_material: item.id }).url) : undefined)}
+    rowLabel={(item) => item.code} // «Acciones de MP-001» for screen readers
+    columns={[
+        { key: 'code', header: 'Código', cell: (item) => item.code, mobile: 'title', className: 'font-mono', cardClassName: 'font-mono' },
+        { key: 'category', header: 'Categoría', cell: (item) => item.category?.name ?? '-', mobile: 'subtitle' },
+        { key: 'stock', header: 'Stock disponible', cell: (item) => <FormattedNumber value={item.available_stock} />, mobile: 'meta', align: 'right' },
+        { key: 'alerts', header: 'Alertas', cell: (item) => <FormattedNumber value={item.active_alerts_count} />, mobile: 'meta', align: 'center' },
+        { key: 'status', header: 'Estado', cell: (item) => <ActiveBadge isActive={item.is_active} feminine />, mobile: 'status' },
+    ]}
+    actions={(item) => [
+        { label: 'Editar', icon: Pencil, href: rawMaterialsEdit({ raw_material: item.id }).url, hidden: !item.can.update },
+        { label: 'Desactivar', icon: PowerOff, onSelect: () => setDeleteTarget(item), disabledReason: item.has_available_stock ? 'No disponible: tiene stock en bodega' : undefined },
+        { label: 'Eliminar', icon: Trash2, destructive: true, onSelect: () => setDeleteTarget(item), hidden: !item.can.delete },
+    ]}
+    empty="No se encontraron materias primas."
+/>
+```
+
+A `RowAction` has either `href` (navigates) or `onSelect` (runs a handler), never both; `hidden` removes it (permission).
 
 ## 10. Navigation
 

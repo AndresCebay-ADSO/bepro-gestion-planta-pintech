@@ -17,6 +17,8 @@ export type DeleteRawMaterialDialogProps = {
     onOpenChange: (open: boolean) => void;
     rawMaterial: { id: number; code: string } | null;
     hasActivity: boolean;
+    /** Permiso de borrado físico; sin él, una MP sin historial también se desactiva. */
+    canDeletePermanently: boolean;
     processing: boolean;
     onConfirm: () => void;
 };
@@ -29,12 +31,15 @@ export function DeleteRawMaterialDialog({
     onOpenChange,
     rawMaterial,
     hasActivity,
+    canDeletePermanently,
     processing,
     onConfirm,
 }: DeleteRawMaterialDialogProps) {
     if (!rawMaterial) {
         return null;
     }
+
+    const deactivates = hasActivity || !canDeletePermanently;
 
     return (
         <AlertDialog
@@ -49,24 +54,36 @@ export function DeleteRawMaterialDialog({
                 <AlertDialogHeader>
                     <AlertDialogMedia
                         className={
-                            hasActivity
+                            deactivates
                                 ? 'bg-warning/10 text-warning'
                                 : 'bg-destructive/10 text-destructive'
                         }
                     >
-                        {hasActivity ? (
+                        {deactivates ? (
                             <AlertTriangle className="size-8" />
                         ) : (
                             <Trash2 className="size-8" />
                         )}
                     </AlertDialogMedia>
                     <AlertDialogTitle>
-                        {hasActivity
+                        {deactivates
                             ? 'Desactivar materia prima'
                             : 'Eliminar materia prima permanentemente'}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                        {hasActivity ? (
+                        {deactivates && !hasActivity ? (
+                            <>
+                                La materia prima{' '}
+                                <strong className="font-semibold text-foreground">
+                                    {rawMaterial.code}
+                                </strong>{' '}
+                                pasará a estado{' '}
+                                <strong className="font-semibold text-foreground">
+                                    Inactivo
+                                </strong>
+                                .
+                            </>
+                        ) : hasActivity ? (
                             <>
                                 La materia prima{' '}
                                 <strong className="font-semibold text-foreground">
@@ -97,7 +114,7 @@ export function DeleteRawMaterialDialog({
                         Cancelar
                     </AlertDialogCancel>
                     <AlertDialogAction
-                        variant={hasActivity ? 'warning' : 'destructive'}
+                        variant={deactivates ? 'warning' : 'destructive'}
                         disabled={processing}
                         onClick={(e) => {
                             e.preventDefault();
@@ -107,7 +124,7 @@ export function DeleteRawMaterialDialog({
                         {processing && (
                             <Loader2 className="mr-2 size-4 animate-spin" />
                         )}
-                        {hasActivity
+                        {deactivates
                             ? 'Desactivar'
                             : 'Eliminar definitivamente'}
                     </AlertDialogAction>
