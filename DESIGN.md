@@ -156,16 +156,18 @@ How it works:
 | KPI figure | `text-2xl font-semibold tabular-nums` |
 
 The page title is always `<PageHeader>` (`components/page-header.tsx`), the only `h1` of a screen. No icon next to
-it (the sidebar already shows it) and no outer margin: the page container sets the spacing.
+it (the sidebar already shows it) and no outer margin: the page container sets the spacing. Only `title` is required:
+`description` goes under the title, `badge` next to it, `actions` on the right on desktop and below the title on the
+phone, and `children` are extra lines under the description.
 
 ```tsx
 <PageHeader
     title="Materias primas"
-    description="Inventario base de materias primas de planta." // optional
-    badge={<ActiveBadge isActive={rawMaterial.is_active} />} // optional, next to the title
-    actions={<Button>Nueva materia prima</Button>} // optional, right on desktop, below the title on the phone
+    description="Inventario base de materias primas de planta."
+    badge={<ActiveBadge isActive={rawMaterial.is_active} feminine />}
+    actions={<Button>Nueva materia prima</Button>}
 >
-    {/* optional: extra lines under the description */}
+    {/* Líneas extra bajo la descripción, por ejemplo «Enviada por…» en una OP. */}
 </PageHeader>
 ```
 
