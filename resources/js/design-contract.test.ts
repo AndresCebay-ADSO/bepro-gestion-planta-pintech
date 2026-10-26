@@ -125,12 +125,13 @@ describe('contrato de DESIGN.md', () => {
                 source.slice(0, index).split('\n').length;
             const hits: { index: number; text: string }[] = [];
 
-            // Contenido de un elemento sr-only hasta su primer cierre, con lo que lleve anidado
-            // (`<SheetHeader className="sr-only"><SheetTitle>Menú</SheetTitle>`) y expresiones como `{'Cerrar'}`.
+            // Contenido completo de un elemento sr-only, hasta su propia etiqueta de cierre, con todo lo que lleve
+            // anidado (`<SheetHeader className="sr-only"><SheetTitle>…</SheetTitle><SheetDescription>…`) y
+            // expresiones como `{'Cerrar'}`.
             for (const match of source.matchAll(
-                /className="[^"]*\bsr-only\b[^"]*"[^>]*>([\s\S]*?)<\//g,
+                /<([\w.]+)\b[^>]*className="[^"]*\bsr-only\b[^"]*"[^>]*>([\s\S]*?)<\/\1>/g,
             )) {
-                const content = match[1];
+                const content = match[2];
                 const plain = content
                     .replace(/<[^>]*>/g, ' ')
                     .replace(/\{[^}]*\}/g, ' ');
@@ -141,15 +142,16 @@ describe('contrato de DESIGN.md', () => {
                 }
             }
 
-            // Valor de aria-label, placeholder, title o alt: entre comillas, o una expresión `{…}` leída hasta su llave
-            // de cierre (aunque tenga plantillas `${…}` o ternarios dentro).
+            // Valor de aria-label, placeholder, title o alt: entre comillas dobles o simples (con o sin espacios junto
+            // al `=`: `components/ui/` no pasa por Prettier), o una expresión `{…}` leída hasta su llave de cierre
+            // (aunque tenga plantillas `${…}` o ternarios dentro).
             for (const match of source.matchAll(
-                /\b(?:aria-label|placeholder|title|alt)=(?:"([^"]*)"|\{)/g,
+                /\b(?:aria-label|placeholder|title|alt)\s*=\s*(?:"([^"]*)"|'([^']*)'|\{)/g,
             )) {
                 let texts: string[];
 
-                if (match[1] !== undefined) {
-                    texts = [match[1]];
+                if (match[1] !== undefined || match[2] !== undefined) {
+                    texts = [match[1] ?? match[2]];
                 } else {
                     let depth = 1;
                     let end = match.index + match[0].length;
