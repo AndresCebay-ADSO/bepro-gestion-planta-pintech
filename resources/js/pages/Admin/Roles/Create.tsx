@@ -116,7 +116,7 @@ const RolesCreate: FC<Props> = ({ modules, templates, defaultPermissions }) => {
                                 onValueChange={applyTemplate}
                                 disabled={processing}
                             >
-                                <SelectTrigger id="template" className="w-full">
+                                <SelectTrigger id="template">
                                     <SelectValue placeholder="Selección personalizada" />
                                 </SelectTrigger>
                                 <SelectContent>
