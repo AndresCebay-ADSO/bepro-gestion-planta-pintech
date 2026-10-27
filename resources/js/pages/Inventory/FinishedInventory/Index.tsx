@@ -100,7 +100,7 @@ export default function FinishedInventoryIndex({
         {
             key: 'product',
             header: 'Producto',
-            cell: (row) => row.product?.name ?? '-',
+            cell: (row) => row.product?.name ?? null,
             mobile: 'title',
         },
         {
@@ -118,9 +118,7 @@ export default function FinishedInventoryIndex({
                                 `(${row.variant.presentation_value})`}
                         </div>
                     </>
-                ) : (
-                    '-'
-                ),
+                ) : null,
             mobile: 'subtitle',
             className: 'text-muted-foreground',
         },
@@ -141,9 +139,7 @@ export default function FinishedInventoryIndex({
                             />
                         </div>
                     </>
-                ) : (
-                    '-'
-                ),
+                ) : null,
             mobile: 'meta',
         },
         {
@@ -152,7 +148,7 @@ export default function FinishedInventoryIndex({
             cell: (row) => (
                 <FormattedNumber value={row.quantity} maxDecimals={2} />
             ),
-            mobile: 'meta',
+            mobile: 'primary',
             align: 'right',
             className: 'font-medium text-foreground',
         },

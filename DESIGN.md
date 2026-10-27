@@ -256,11 +256,16 @@ Role of each column on the phone card (`mobile`, required; on desktop every colu
 | `title` | The identifier: code, number, name. Exactly one | Top left; the link when there is `rowHref` |
 | `subtitle` | What describes it: category, client, product. At most one | Under the title, muted |
 | `status` | The status or active pill. At most one | Next to the title |
-| `meta` | Quantities, dates, totals, alerts, short data such as contact or priority. **At most 4** | Label-value pairs, 2 columns |
+| `primary` | The main figure of the row: the one the user opens the listing for (stock, quantity, sale price). At most one, and optional: a listing without such a figure has none | Under the title and subtitle, full width: the label-value label, then the value in `text-lg font-semibold tabular-nums` |
+| `meta` | Quantities, dates, totals, alerts, short data such as contact or priority. **At most 4** (`primary` does not count) | Label-value pairs, 2 columns |
 | `hidden` | Notes and what only serves to compare rows on desktop | Not shown |
 
 What asks for action (alerts, pending items) **never** goes `hidden`: the phone user must see it too. If it does not
 fit in the 4 `meta`, the least important `meta` goes `hidden` instead.
+
+**No value, `null`.** When a row has nothing to show in a column (no alerts, no end date, no seller), `cell` returns
+`null` (`undefined` and `false` count too; `0` and `''` are values). The card leaves that label-value pair out, and the
+table shows «—» in `text-muted-foreground`. Screens never write `'-'` or `'—'` by hand.
 
 `align: 'right'` for figures (adds `tabular-nums`), `'center'` for pills and alerts. `className` styles the desktop
 cell only (`max-w-xs truncate` would cut the value on the card); `cardClassName` styles the value on the card (for
@@ -279,9 +284,10 @@ finds each value twice.
     rowLabel={(item) => item.code} // «Acciones de MP-001» for screen readers
     columns={[
         { key: 'code', header: 'Código', cell: (item) => item.code, mobile: 'title', className: 'font-mono', cardClassName: 'font-mono' },
-        { key: 'category', header: 'Categoría', cell: (item) => item.category?.name ?? '-', mobile: 'subtitle' },
-        { key: 'stock', header: 'Stock disponible', cell: (item) => <FormattedNumber value={item.available_stock} />, mobile: 'meta', align: 'right' },
-        { key: 'alerts', header: 'Alertas', cell: (item) => <FormattedNumber value={item.active_alerts_count} />, mobile: 'meta', align: 'center' },
+        { key: 'category', header: 'Categoría', cell: (item) => item.category?.name ?? null, mobile: 'subtitle' },
+        // The unit symbol goes with the figure («1.000 u»), so there is no Unit column.
+        { key: 'stock', header: 'Stock disponible', cell: (item) => <><FormattedNumber value={item.available_stock} /> {item.unit_of_measure.symbol}</>, mobile: 'primary', align: 'right' },
+        { key: 'alerts', header: 'Alertas', cell: (item) => (item.active_alerts_count > 0 ? <Link href={alertsIndex().url}>{item.active_alerts_count}</Link> : null), mobile: 'meta', align: 'center' },
         { key: 'status', header: 'Estado', cell: (item) => <ActiveBadge isActive={item.is_active} feminine />, mobile: 'status' },
     ]}
     actions={(item) => [

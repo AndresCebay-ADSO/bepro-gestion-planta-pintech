@@ -142,7 +142,7 @@ export default function ProductionOrdersIndex({
                     <FormattedNumber value={order.quantity} /> gal
                 </>
             ),
-            mobile: 'meta',
+            mobile: 'primary',
             align: 'right',
             className: 'font-medium whitespace-nowrap',
         },
@@ -179,9 +179,7 @@ export default function ProductionOrdersIndex({
             cell: (order) =>
                 order.completion_date ? (
                     <FormattedDate value={order.completion_date} />
-                ) : (
-                    '—'
-                ),
+                ) : null,
             mobile: 'meta',
             className: 'whitespace-nowrap text-muted-foreground',
         },

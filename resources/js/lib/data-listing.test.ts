@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { listingColumnProblems, visibleRowActions } from '@/lib/data-listing';
+import {
+    isEmptyCell,
+    listingColumnProblems,
+    visibleRowActions,
+} from '@/lib/data-listing';
 import type { MobileRole } from '@/lib/data-listing';
 
 /*
@@ -52,6 +56,26 @@ describe('columnas de un listado', () => {
         ).toHaveLength(2);
     });
 
+    it('acepta un dato principal además de los 4 datos', () => {
+        expect(
+            listingColumnProblems([
+                column('code', 'title'),
+                column('stock', 'primary'),
+                ...['a', 'b', 'c', 'd'].map((key) => column(key, 'meta')),
+            ]),
+        ).toEqual([]);
+    });
+
+    it('no admite dos datos principales', () => {
+        expect(
+            listingColumnProblems([
+                column('code', 'title'),
+                column('stock', 'primary'),
+                column('price', 'primary'),
+            ]),
+        ).toEqual(['Solo puede haber una columna «primary» (hay 2).']);
+    });
+
     it('no admite más de 4 datos en la tarjeta', () => {
         expect(
             listingColumnProblems([
@@ -69,6 +93,20 @@ describe('columnas de un listado', () => {
                 column('stock', 'hidden'),
             ]),
         ).toEqual(['Claves de columna repetidas: stock.']);
+    });
+});
+
+describe('celda sin dato', () => {
+    it('es null, undefined o false', () => {
+        expect(isEmptyCell(null)).toBe(true);
+        expect(isEmptyCell(undefined)).toBe(true);
+        expect(isEmptyCell(false)).toBe(true);
+    });
+
+    it('el 0 y el texto vacío sí son datos', () => {
+        expect(isEmptyCell(0)).toBe(false);
+        expect(isEmptyCell('')).toBe(false);
+        expect(isEmptyCell('—')).toBe(false);
     });
 });
 

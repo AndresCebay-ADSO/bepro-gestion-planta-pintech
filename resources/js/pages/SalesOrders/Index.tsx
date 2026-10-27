@@ -114,7 +114,7 @@ export default function SalesOrdersIndex({
                       key: 'creator',
                       header: 'Comercial',
                       cell: (order: SalesOrderRow) =>
-                          order.creator?.name ?? '-',
+                          order.creator?.name ?? null,
                       mobile: 'meta' as const,
                       className: 'text-muted-foreground',
                   },

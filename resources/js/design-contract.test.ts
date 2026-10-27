@@ -246,7 +246,6 @@ describe('contrato de DESIGN.md', () => {
         // esperan su propio plan. Al migrar una, se quita de aquí.
         const tableExceptions = [
             'resources/js/pages/Costs/Index.tsx',
-            'resources/js/pages/Prices/Index.tsx',
             'resources/js/pages/Formulas/Show.tsx',
             'resources/js/pages/Inventory/RawMaterials/Show.tsx',
             'resources/js/pages/Inventory/Warehouses/Show.tsx',

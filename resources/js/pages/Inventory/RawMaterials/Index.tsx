@@ -9,7 +9,6 @@ import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
@@ -40,7 +39,7 @@ type RawMaterialRow = {
     has_activity: boolean;
     is_active: boolean;
     unit_of_measure: { id: number; name: string; symbol: string } | null;
-    category: { id: number; name: string; type_label: string } | null;
+    category: { id: number; name: string } | null;
     can: {
         view: boolean;
         update: boolean;
@@ -150,33 +149,8 @@ export default function RawMaterialsIndex({
         {
             key: 'category',
             header: 'Categoría',
-            cell: (item) =>
-                item.category ? (
-                    <div className="flex flex-col items-start gap-1">
-                        <span className="text-foreground">
-                            {item.category.name}
-                        </span>
-                        <Badge
-                            variant="secondary"
-                            className="text-xs font-normal"
-                        >
-                            {item.category.type_label}
-                        </Badge>
-                    </div>
-                ) : (
-                    '-'
-                ),
+            cell: (item) => item.category?.name ?? null,
             mobile: 'subtitle',
-        },
-        {
-            key: 'unit',
-            header: 'Unidad',
-            cell: (item) =>
-                item.unit_of_measure
-                    ? `${item.unit_of_measure.name} (${item.unit_of_measure.symbol})`
-                    : '-',
-            mobile: 'meta',
-            className: 'text-muted-foreground',
         },
         ...(can.view_costs
             ? [
@@ -195,14 +169,22 @@ export default function RawMaterialsIndex({
                   },
               ]
             : []),
+        // El stock lleva el símbolo de la unidad («1.000 u»): no hace falta una columna Unidad.
         {
             key: 'stock',
             header: 'Stock disponible',
             cell: (item) => (
-                <FormattedNumber value={item.available_stock} maxDecimals={2} />
+                <>
+                    <FormattedNumber
+                        value={item.available_stock}
+                        maxDecimals={2}
+                    />
+                    {item.unit_of_measure && ` ${item.unit_of_measure.symbol}`}
+                </>
             ),
-            mobile: 'meta',
+            mobile: 'primary',
             align: 'right',
+            className: 'whitespace-nowrap',
         },
         {
             key: 'alerts',
@@ -221,9 +203,7 @@ export default function RawMaterialsIndex({
                         <BellRing className="h-3.5 w-3.5" />
                         {item.active_alerts_count}
                     </Link>
-                ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                ),
+                ) : null,
             // Pide acción: va también en la tarjeta (DESIGN.md §9).
             mobile: 'meta',
             align: 'center',
