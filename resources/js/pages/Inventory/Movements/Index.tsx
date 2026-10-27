@@ -24,7 +24,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDrawerFormProps } from '@/hooks/use-drawer-form-props';
 import { useFilters } from '@/hooks/use-filters';
-import { cn } from '@/lib/utils';
 import {
     index as inventoryMovementsIndex,
     show as inventoryMovementsShow,
@@ -198,22 +197,23 @@ export default function InventoryMovementsIndex({
         {
             key: 'warehouse',
             header: 'Bodega',
-            cell: (movement) => (
-                <>
-                    <div className="font-medium text-foreground">
-                        {movement.warehouse?.name}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                        {movement.warehouse?.city}
-                    </div>
-                </>
-            ),
+            cell: (movement) =>
+                movement.warehouse ? (
+                    <>
+                        <div className="font-medium text-foreground">
+                            {movement.warehouse.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                            {movement.warehouse.city}
+                        </div>
+                    </>
+                ) : null,
             mobile: 'meta',
         },
         {
             key: 'raw_material',
             header: 'Materia prima',
-            cell: (movement) => movement.raw_material?.code ?? '-',
+            cell: (movement) => movement.raw_material?.code ?? null,
             mobile: 'subtitle',
             className: 'font-mono',
             cardClassName: 'font-mono',
@@ -223,12 +223,11 @@ export default function InventoryMovementsIndex({
             header: 'Cantidad',
             cell: (movement) => (
                 <span
-                    className={cn(
-                        'font-medium',
+                    className={
                         movement.type === 'entry'
                             ? 'text-success-text'
-                            : 'text-warning-text',
-                    )}
+                            : 'text-warning-text'
+                    }
                 >
                     {movement.type === 'entry' ? '+' : '−'}
                     <FormattedNumber
@@ -237,8 +236,10 @@ export default function InventoryMovementsIndex({
                     />
                 </span>
             ),
-            mobile: 'meta',
+            mobile: 'primary',
             align: 'right',
+            // Solo la tabla: en la tarjeta manda el estilo del dato principal.
+            className: 'font-medium',
         },
     ];
 

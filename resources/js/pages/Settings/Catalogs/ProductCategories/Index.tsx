@@ -74,14 +74,15 @@ export default function ProductCategoriesIndex({
         {
             key: 'description',
             header: 'Descripción',
-            cell: (category) => (
-                <span
-                    className="block md:max-w-xs md:truncate"
-                    title={category.description ?? undefined}
-                >
-                    {category.description ?? '-'}
-                </span>
-            ),
+            cell: (category) =>
+                category.description ? (
+                    <span
+                        className="block md:max-w-xs md:truncate"
+                        title={category.description}
+                    >
+                        {category.description}
+                    </span>
+                ) : null,
             mobile: 'subtitle',
             className: 'text-muted-foreground',
         },

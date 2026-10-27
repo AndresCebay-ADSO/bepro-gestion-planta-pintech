@@ -137,13 +137,10 @@ export default function SalesOrdersIndex({
         {
             key: 'required_date',
             header: 'Fecha requerida',
-            cell: (order) => (
-                <FormattedDate
-                    value={order.required_date}
-                    format="short"
-                    emptyValue="-"
-                />
-            ),
+            cell: (order) =>
+                order.required_date ? (
+                    <FormattedDate value={order.required_date} format="short" />
+                ) : null,
             mobile: 'meta',
             className: 'text-muted-foreground',
         },
@@ -154,7 +151,8 @@ export default function SalesOrdersIndex({
                 <FormattedDate
                     value={order.estimated_delivery_date}
                     format="short"
-                    emptyValue="-"
+                    // Producción la pone después: que falte es un dato, se dice.
+                    emptyValue="Sin estimar"
                 />
             ),
             mobile: 'meta',

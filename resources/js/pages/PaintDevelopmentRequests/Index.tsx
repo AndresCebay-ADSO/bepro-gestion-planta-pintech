@@ -109,7 +109,7 @@ export default function PaintDevelopmentRequestsIndex({
         {
             key: 'client',
             header: 'Cliente',
-            cell: (req) => req.client_name ?? '—',
+            cell: (req) => req.client_name ?? null,
             mobile: 'meta',
         },
         {
@@ -126,13 +126,10 @@ export default function PaintDevelopmentRequestsIndex({
         {
             key: 'sample_due_date',
             header: 'Fecha muestra',
-            cell: (req) => (
-                <FormattedDate
-                    value={req.sample_due_date}
-                    format="short"
-                    emptyValue="—"
-                />
-            ),
+            cell: (req) =>
+                req.sample_due_date ? (
+                    <FormattedDate value={req.sample_due_date} format="short" />
+                ) : null,
             mobile: 'meta',
             className: 'whitespace-nowrap',
         },

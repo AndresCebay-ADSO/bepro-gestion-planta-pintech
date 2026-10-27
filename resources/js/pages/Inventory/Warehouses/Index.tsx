@@ -93,14 +93,15 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
             key: 'address',
             header: 'Dirección',
             // `max-w-xs` no limita un <td>: se corta en un bloque, y solo desde md (la tabla).
-            cell: (warehouse) => (
-                <span
-                    className="block md:max-w-xs md:truncate"
-                    title={warehouse.address ?? undefined}
-                >
-                    {warehouse.address ?? '-'}
-                </span>
-            ),
+            cell: (warehouse) =>
+                warehouse.address ? (
+                    <span
+                        className="block md:max-w-xs md:truncate"
+                        title={warehouse.address}
+                    >
+                        {warehouse.address}
+                    </span>
+                ) : null,
             mobile: 'meta',
             className: 'text-muted-foreground',
         },

@@ -124,18 +124,19 @@ export function DataListing<T>({
     const metaColumns = columns.filter((column) => column.mobile === 'meta');
 
     // El identificador es el único enlace de la fila: el resto se puede seleccionar y copiar.
-    // Sin dato, «—» atenuado (en la tarjeta solo llega aquí el título: los demás se omiten).
+    // Sin dato, «—» atenuado (en la tarjeta solo llega aquí el título: los demás se omiten). Un título sin dato
+    // sigue siendo el enlace: la fila tiene que poder abrirse igual.
     const renderValue = (column: DataListingColumn<T>, row: T) => {
         const value = column.cell(row);
-
-        if (isEmptyCell(value)) {
-            return <span className="text-muted-foreground">—</span>;
-        }
-
+        const content = isEmptyCell(value) ? (
+            <span className="text-muted-foreground">—</span>
+        ) : (
+            value
+        );
         const href = column.mobile === 'title' ? rowHref?.(row) : undefined;
 
         if (href === undefined) {
-            return value;
+            return content;
         }
 
         return (
@@ -143,7 +144,7 @@ export function DataListing<T>({
                 href={href}
                 className="rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
-                {value}
+                {content}
             </Link>
         );
     };

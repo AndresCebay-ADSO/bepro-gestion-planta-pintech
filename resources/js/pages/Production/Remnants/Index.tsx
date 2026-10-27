@@ -129,8 +129,8 @@ export default function RemnantsIndex({
                     </span>
                 </>
             ),
-            // Solo sirve para comparar en el computador; con el costo serían cinco datos.
-            mobile: 'hidden',
+            // El principal no cuenta en los 4 datos: la densidad cabe en la tarjeta, también con el costo.
+            mobile: 'meta',
             align: 'right',
         },
         ...(can.viewCosts
@@ -138,6 +138,7 @@ export default function RemnantsIndex({
                   {
                       key: 'cost',
                       header: 'Costo/gal',
+                      // Sin costo es un dato que falta, no un vacío: se dice (como «Sin precio» en Lista de precios).
                       cell: (remnant: RemnantItem) =>
                           remnant.cost_per_gallon != null ? (
                               <FormattedNumber
@@ -146,7 +147,9 @@ export default function RemnantsIndex({
                                   maxDecimals={2}
                               />
                           ) : (
-                              <span className="text-muted-foreground">---</span>
+                              <span className="text-muted-foreground">
+                                  Sin costo
+                              </span>
                           ),
                       mobile: 'meta' as const,
                       align: 'right' as const,
@@ -162,7 +165,7 @@ export default function RemnantsIndex({
                     maxDecimals={4}
                 />
             ),
-            mobile: 'meta',
+            mobile: 'primary',
             align: 'right',
             className: 'font-medium',
         },

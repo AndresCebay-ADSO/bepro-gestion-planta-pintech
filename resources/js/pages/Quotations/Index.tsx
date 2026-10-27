@@ -107,7 +107,7 @@ export default function QuotationsIndex({
         {
             key: 'quotation_number',
             header: 'Número',
-            cell: (quotation) => quotation.quotation_number ?? '—',
+            cell: (quotation) => quotation.quotation_number ?? null,
             mobile: 'title',
             className: 'font-mono',
             cardClassName: 'font-mono',
@@ -129,13 +129,13 @@ export default function QuotationsIndex({
         {
             key: 'quotation_date',
             header: 'Fecha',
-            cell: (quotation) => (
-                <FormattedDate
-                    value={quotation.quotation_date}
-                    format="short"
-                    emptyValue="—"
-                />
-            ),
+            cell: (quotation) =>
+                quotation.quotation_date ? (
+                    <FormattedDate
+                        value={quotation.quotation_date}
+                        format="short"
+                    />
+                ) : null,
             mobile: 'meta',
             className: 'whitespace-nowrap',
         },
@@ -149,7 +149,7 @@ export default function QuotationsIndex({
                     maxDecimals={0}
                 />
             ),
-            mobile: 'meta',
+            mobile: 'primary',
             align: 'right',
         },
     ];

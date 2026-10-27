@@ -98,7 +98,7 @@ export default function ShrinkWrapsIndex({
         {
             key: 'product',
             header: 'Producto',
-            cell: (row) => row.order.product_name ?? '-',
+            cell: (row) => row.order.product_name ?? null,
             mobile: 'subtitle',
             className: 'text-muted-foreground',
         },
@@ -112,7 +112,7 @@ export default function ShrinkWrapsIndex({
             key: 'applications',
             header: 'Aplicaciones',
             cell: (row) => <FormattedNumber value={row.applications} />,
-            mobile: 'meta',
+            mobile: 'primary',
             align: 'right',
             className: 'font-medium',
         },
@@ -120,15 +120,15 @@ export default function ShrinkWrapsIndex({
             key: 'warehouse',
             header: 'Bodega',
             cell: (row) => row.warehouse_name,
-            // Con el costo serían cinco datos: la bodega se ve en el detalle.
-            mobile: can.viewCosts ? 'hidden' : 'meta',
+            mobile: 'meta',
             className: 'text-muted-foreground',
         },
         {
             key: 'created_by',
             header: 'Registró',
             cell: (row) => row.created_by_name,
-            mobile: 'hidden',
+            // Con el costo ya son 4 datos (el principal no cuenta): quien registró se ve en el detalle.
+            mobile: can.viewCosts ? 'hidden' : 'meta',
             className: 'text-muted-foreground',
         },
         ...(can.viewCosts
@@ -136,13 +136,19 @@ export default function ShrinkWrapsIndex({
                   {
                       key: 'cost',
                       header: 'Costo',
-                      cell: (row: Row) => (
-                          <FormattedNumber
-                              value={row.total_cost}
-                              currency
-                              maxDecimals={2}
-                          />
-                      ),
+                      // Sin costo es un dato que falta, no un vacío: se dice (como en Saldos de producción).
+                      cell: (row: Row) =>
+                          row.total_cost == null ? (
+                              <span className="text-muted-foreground">
+                                  Sin costo
+                              </span>
+                          ) : (
+                              <FormattedNumber
+                                  value={row.total_cost}
+                                  currency
+                                  maxDecimals={2}
+                              />
+                          ),
                       mobile: 'meta' as const,
                       align: 'right' as const,
                   },

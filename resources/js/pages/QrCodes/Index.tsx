@@ -89,7 +89,7 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
         {
             key: 'product',
             header: 'Producto',
-            cell: (row) => row.product?.display_name ?? '—',
+            cell: (row) => row.product?.display_name ?? null,
             mobile: 'subtitle',
         },
         {
@@ -106,9 +106,7 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
                             Lote: {row.production_order.lot_number}
                         </div>
                     </>
-                ) : (
-                    '—'
-                ),
+                ) : null,
             mobile: 'meta',
         },
         {
@@ -128,13 +126,10 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
         {
             key: 'created_at',
             header: 'Creado',
-            cell: (row) => (
-                <FormattedDate
-                    value={row.created_at}
-                    format="short"
-                    emptyValue="—"
-                />
-            ),
+            cell: (row) =>
+                row.created_at ? (
+                    <FormattedDate value={row.created_at} format="short" />
+                ) : null,
             mobile: 'meta',
             className: 'whitespace-nowrap text-muted-foreground',
         },
