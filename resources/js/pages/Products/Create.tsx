@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
 import { DecimalInput } from '@/components/decimal-input';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -70,9 +71,9 @@ export default function ProductsCreate({ categories, units, can }: Props) {
 
     return (
         <>
-            <Head title="Crear Producto" />
+            <Head title="Nuevo producto" />
             <div className="space-y-6 p-6">
-                <div className="flex flex-col gap-2">
+                <div className="space-y-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Link
                             href={productsIndex().url}
@@ -83,18 +84,16 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                         <span>/</span>
                         <span>Crear</span>
                     </div>
-                    <h1 className="text-2xl font-semibold text-foreground">
-                        Nuevo Producto
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Registra un nuevo producto de pintura en el catálogo.
-                    </p>
+                    <PageHeader
+                        title="Nuevo producto"
+                        description="Registra un nuevo producto de pintura en el catálogo."
+                    />
                 </div>
 
                 <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
                     {/* Identificación */}
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                        <h2 className="font-medium text-foreground">
+                        <h2 className="text-lg font-semibold text-foreground">
                             Identificación
                         </h2>
 
@@ -184,7 +183,7 @@ export default function ProductsCreate({ categories, units, can }: Props) {
 
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                         <div>
-                            <h2 className="font-medium text-foreground">
+                            <h2 className="text-lg font-semibold text-foreground">
                                 Descripción
                             </h2>
                             <p className="mt-1 text-xs text-muted-foreground">
@@ -214,7 +213,7 @@ export default function ProductsCreate({ categories, units, can }: Props) {
 
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                         <div>
-                            <h2 className="font-medium text-foreground">
+                            <h2 className="text-lg font-semibold text-foreground">
                                 Rangos para certificado de calidad
                             </h2>
                             <p className="mt-1 text-xs text-muted-foreground">
@@ -392,8 +391,8 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                     {can.managePrices && (
                         <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                             <div>
-                                <h2 className="font-medium text-foreground">
-                                    Precios y Costos
+                                <h2 className="text-lg font-semibold text-foreground">
+                                    Precios y costos
                                 </h2>
                                 <p className="mt-1 text-xs text-muted-foreground">
                                     Define CIF y umbral para cálculo automático

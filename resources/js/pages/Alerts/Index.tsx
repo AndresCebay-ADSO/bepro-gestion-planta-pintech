@@ -5,6 +5,7 @@ import { Clock, FlaskConical, PackageX, TrendingUp } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
+import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
@@ -136,23 +137,20 @@ export default function AlertsIndex({
             <Head title="Alertas" />
 
             <div className="space-y-6 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            Alertas del sistema
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Stock bajo, vencimientos y variaciones de precio en
-                            materias primas.
-                        </p>
-                    </div>
-                    <div className="rounded-md border border-border bg-card px-4 py-2 text-sm">
-                        <span className="text-muted-foreground">Activas:</span>{' '}
-                        <span className="font-semibold text-foreground">
-                            {stats.unresolved_count}
-                        </span>
-                    </div>
-                </div>
+                <PageHeader
+                    title="Alertas"
+                    description="Stock bajo, vencimientos y variaciones de precio en materias primas."
+                    actions={
+                        <div className="rounded-md border border-border bg-card px-4 py-2 text-sm">
+                            <span className="text-muted-foreground">
+                                Activas:
+                            </span>{' '}
+                            <span className="font-semibold text-foreground">
+                                {stats.unresolved_count}
+                            </span>
+                        </div>
+                    }
+                />
 
                 {flash?.success && (
                     <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">

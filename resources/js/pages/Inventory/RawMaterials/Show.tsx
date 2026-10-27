@@ -93,13 +93,13 @@ export default function RawMaterialsShow({
 
     return (
         <>
-            <Head title={`Materia Prima ${rawMaterial.code}`} />
+            <Head title={rawMaterial.code} />
 
             <div className="space-y-6 p-6">
                 <DetailPageHeader
                     breadcrumbs={[
                         {
-                            title: 'Materias Primas',
+                            title: 'Materias primas',
                             href: returnTo ?? RawMaterialController.index.url(),
                         },
                         { title: rawMaterial.code, href: '#' },
@@ -267,7 +267,7 @@ export default function RawMaterialsShow({
                 {/* Lotes */}
                 <div className="overflow-x-auto rounded-lg border border-border bg-card">
                     <div className="border-b border-border px-4 py-3">
-                        <h2 className="font-medium text-foreground">
+                        <h2 className="text-lg font-semibold text-foreground">
                             Lotes asociados
                         </h2>
                     </div>

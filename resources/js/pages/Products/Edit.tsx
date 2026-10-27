@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
 import { DecimalInput } from '@/components/decimal-input';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -120,7 +121,7 @@ export default function ProductsEdit({
         <>
             <Head title={`Editar ${product.name}`} />
             <div className="space-y-6 p-6">
-                <div className="flex flex-col gap-2">
+                <div className="space-y-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Link
                             href={productsIndex().url}
@@ -138,15 +139,13 @@ export default function ProductsEdit({
                         <span>/</span>
                         <span>Editar</span>
                     </div>
-                    <h1 className="text-2xl font-semibold text-foreground">
-                        Editar Producto: {product.name}
-                    </h1>
+                    <PageHeader title={`Editar ${product.name}`} />
                 </div>
 
                 <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
                     {/* Identificación */}
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                        <h2 className="font-medium text-foreground">
+                        <h2 className="text-lg font-semibold text-foreground">
                             Identificación
                         </h2>
 
@@ -267,7 +266,7 @@ export default function ProductsEdit({
                     </div>
 
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                        <h2 className="font-medium text-foreground">
+                        <h2 className="text-lg font-semibold text-foreground">
                             Rangos para certificado de calidad
                         </h2>
                         <p className="text-xs text-muted-foreground">
@@ -440,8 +439,8 @@ export default function ProductsEdit({
                     {/* Precios */}
                     {can.managePrices && can.viewCosts && (
                         <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                            <h2 className="font-medium text-foreground">
-                                Precios y Costos
+                            <h2 className="text-lg font-semibold text-foreground">
+                                Precios y costos
                             </h2>
 
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

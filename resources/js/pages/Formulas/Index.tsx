@@ -5,6 +5,7 @@ import type { ComponentProps } from 'react';
 import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
+import { PageHeader } from '@/components/page-header';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -74,25 +75,19 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
         <>
             <Head title="Fórmulas" />
             <div className="space-y-4 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            Fórmulas
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Un producto puede tener varias fórmulas activas para
-                            producir; la de referencia de precio define su
-                            costo.
-                        </p>
-                    </div>
-                    {can.create && (
-                        <Button asChild>
-                            <Link href={withReturnTo(formulasCreate().url)}>
-                                Nueva Fórmula
-                            </Link>
-                        </Button>
-                    )}
-                </div>
+                <PageHeader
+                    title="Fórmulas"
+                    description="Un producto puede tener varias fórmulas activas para producir; la de referencia de precio define su costo."
+                    actions={
+                        can.create && (
+                            <Button asChild>
+                                <Link href={withReturnTo(formulasCreate().url)}>
+                                    Nueva fórmula
+                                </Link>
+                            </Button>
+                        )
+                    }
+                />
 
                 <DataTableFilters
                     fields={filterFields}

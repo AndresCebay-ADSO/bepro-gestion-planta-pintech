@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import InputError from '@/components/input-error';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -50,17 +51,13 @@ export default function WarehousesEdit({ warehouse }: Props) {
 
     return (
         <>
-            <Head title={`Editar ${warehouse.name}`} />
+            <Head title={`Editar bodega: ${warehouse.name}`} />
 
             <div className="mx-auto max-w-3xl space-y-6 p-6">
-                <div className="space-y-1">
-                    <h1 className="text-2xl font-semibold text-foreground">
-                        Editar Bodega
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Actualiza la información de {warehouse.name}.
-                    </p>
-                </div>
+                <PageHeader
+                    title={`Editar bodega: ${warehouse.name}`}
+                    description={`Actualiza la información de ${warehouse.name}.`}
+                />
 
                 <div className="rounded-lg border border-border bg-card p-6">
                     <form

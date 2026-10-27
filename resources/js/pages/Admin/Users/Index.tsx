@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Activity, UserPlus } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import type { FC } from 'react';
 
 import { ActiveBadge } from '@/components/active-badge';
@@ -85,9 +85,9 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
     };
 
     return (
-        <div className="min-h-screen bg-background p-6">
+        <>
             <Head title="Usuarios" />
-            <div className="mx-auto max-w-7xl space-y-8">
+            <div className="space-y-6 p-6">
                 <PageHeader
                     title="Usuarios"
                     description="Gestiona el acceso, permisos y roles del personal de planta."
@@ -95,7 +95,6 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                         can?.create !== false && (
                             <Button asChild>
                                 <Link href={usersCreate().url}>
-                                    <UserPlus className="mr-2 h-4 w-4" />
                                     Nuevo usuario
                                 </Link>
                             </Button>
@@ -303,7 +302,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                     )}
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Users } from 'lucide-react';
 import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
+import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
@@ -82,23 +83,19 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
             <Head title="Bodegas" />
 
             <div className="space-y-6 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            Bodegas
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Administra y consulta las bodegas operativas.
-                        </p>
-                    </div>
-                    {can.create && (
-                        <Button asChild>
-                            <Link href={warehousesCreate().url}>
-                                Nueva Bodega
-                            </Link>
-                        </Button>
-                    )}
-                </div>
+                <PageHeader
+                    title="Bodegas"
+                    description="Administra y consulta las bodegas operativas."
+                    actions={
+                        can.create && (
+                            <Button asChild>
+                                <Link href={warehousesCreate().url}>
+                                    Nueva bodega
+                                </Link>
+                            </Button>
+                        )
+                    }
+                />
 
                 {flash?.success && (
                     <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">

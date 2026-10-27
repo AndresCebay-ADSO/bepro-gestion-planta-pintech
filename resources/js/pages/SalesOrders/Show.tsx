@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, FileText, ShoppingCart } from 'lucide-react';
 
+import { PageHeader } from '@/components/page-header';
 import { PriorityBadge } from '@/components/priority-badge';
 import AdminOrderSidebar from '@/components/sales-orders/AdminOrderSidebar';
 import { StatusBadge } from '@/components/status-badge';
@@ -69,25 +70,32 @@ export default function SalesOrdersShow({
             <Head title={`Pedido #${order.id}`} />
 
             <div className="mx-auto max-w-5xl space-y-6 p-6">
-                <div className="flex items-center gap-4">
+                <div className="space-y-4">
                     <Button variant="ghost" size="sm" asChild>
                         <Link href={salesOrdersIndex().url}>
                             <ArrowLeft className="mr-1 h-4 w-4" />
                             Volver
                         </Link>
                     </Button>
-                    <h1 className="text-2xl font-semibold">
-                        Pedido #{order.id}
-                    </h1>
-                    <PriorityBadge value={order.priority} />
-                    <StatusBadge enum="SalesOrderStatus" value={order.status} />
+                    <PageHeader
+                        title={`Pedido #${order.id}`}
+                        badge={
+                            <div className="flex flex-wrap items-center gap-2">
+                                <PriorityBadge value={order.priority} />
+                                <StatusBadge
+                                    enum="SalesOrderStatus"
+                                    value={order.status}
+                                />
+                            </div>
+                        }
+                    />
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-3">
                     <div className="space-y-6 lg:col-span-2">
                         <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                             <h2 className="text-lg font-semibold">
-                                Información del Cliente
+                                Información del cliente
                             </h2>
                             <div className="space-y-2 text-sm">
                                 <p>
@@ -158,7 +166,7 @@ export default function SalesOrdersShow({
                         <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                             <h2 className="flex items-center gap-2 text-lg font-semibold">
                                 <ShoppingCart className="h-5 w-5" />
-                                Productos Solicitados
+                                Productos solicitados
                             </h2>
 
                             {order.items.length === 0 ? (

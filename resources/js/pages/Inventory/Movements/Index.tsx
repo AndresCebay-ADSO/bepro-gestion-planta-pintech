@@ -9,6 +9,7 @@ import { FormattedNumber } from '@/components/formatted-number';
 import { EntryMovementForm } from '@/components/inventory/entry-movement-form';
 import { ExitMovementForm } from '@/components/inventory/exit-movement-form';
 import { MovementDirectionBadge } from '@/components/movement-direction-badge';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import {
@@ -165,33 +166,29 @@ export default function InventoryMovementsIndex({
 
     return (
         <>
-            <Head title="Movimientos de inventario" />
+            <Head title="Movimientos de MP" />
             <div className="space-y-4 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            Movimientos de Inventario
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Historial de entradas y salidas de materias primas.
-                        </p>
-                    </div>
-                    {can.create && (
-                        <div className="flex items-center gap-2">
-                            <Button onClick={() => openDrawer('entry')}>
-                                <ArrowDownToLine className="mr-2 h-4 w-4" />
-                                Entrada
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => openDrawer('exit')}
-                            >
-                                <ArrowUpFromLine className="mr-2 h-4 w-4" />
-                                Salida
-                            </Button>
-                        </div>
-                    )}
-                </div>
+                <PageHeader
+                    title="Movimientos de MP"
+                    description="Historial de entradas y salidas de materias primas."
+                    actions={
+                        can.create && (
+                            <>
+                                <Button onClick={() => openDrawer('entry')}>
+                                    <ArrowDownToLine className="mr-2 h-4 w-4" />
+                                    Entrada
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => openDrawer('exit')}
+                                >
+                                    <ArrowUpFromLine className="mr-2 h-4 w-4" />
+                                    Salida
+                                </Button>
+                            </>
+                        )
+                    }
+                />
 
                 <DataTableFilters
                     fields={filterFields}

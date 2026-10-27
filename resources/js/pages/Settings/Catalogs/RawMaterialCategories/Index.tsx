@@ -71,7 +71,6 @@ export default function RawMaterialCategoriesIndex({
             <div className="space-y-6">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <Heading
-                        variant="small"
                         title="Categorías de materia prima"
                         description="Agrupan las materias primas. Su tipo de insumo decide dónde se ofrecen: fórmulas, envases, etiquetas o termoencogido."
                     />
@@ -218,8 +217,5 @@ export default function RawMaterialCategoriesIndex({
 }
 
 RawMaterialCategoriesIndex.layout = {
-    breadcrumbs: [
-        { title: 'Categorías de materia prima', href: categoriesIndex() },
-    ],
     wide: true,
 };

@@ -69,7 +69,6 @@ export default function UnitsOfMeasureIndex({ units, filters, can }: Props) {
             <div className="space-y-6">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <Heading
-                        variant="small"
                         title="Unidades de medida"
                         description="Con qué unidad se compran, formulan y venden los productos. Su equivalencia convierte las cantidades de las fórmulas."
                     />
@@ -218,6 +217,5 @@ export default function UnitsOfMeasureIndex({ units, filters, can }: Props) {
 }
 
 UnitsOfMeasureIndex.layout = {
-    breadcrumbs: [{ title: 'Unidades de medida', href: unitsIndex() }],
     wide: true,
 };

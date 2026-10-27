@@ -35,7 +35,6 @@ export default function RawMaterialCategoriesEdit({
 
             <div className="space-y-6">
                 <Heading
-                    variant="small"
                     title={`Editar «${category.name}»`}
                     description={`Materias primas en esta categoría: ${category.raw_materials_count}.`}
                 />

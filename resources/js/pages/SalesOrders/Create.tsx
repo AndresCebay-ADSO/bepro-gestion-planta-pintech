@@ -3,6 +3,7 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 
 import { store as salesOrderStore } from '@/actions/App/Http/Controllers/SalesOrderController';
 import { IntegerInput } from '@/components/integer-input';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -129,23 +130,23 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
 
     return (
         <>
-            <Head title="Nuevo Pedido" />
+            <Head title="Nuevo pedido" />
 
             <div className="mx-auto max-w-4xl space-y-6 p-6">
-                <div className="flex items-center gap-4">
+                <div className="space-y-4">
                     <Button variant="ghost" size="sm" asChild>
                         <Link href={salesOrdersIndex().url}>
                             <ArrowLeft className="mr-1 h-4 w-4" />
                             Volver
                         </Link>
                     </Button>
-                    <h1 className="text-2xl font-semibold">Nuevo Pedido</h1>
+                    <PageHeader title="Nuevo pedido" />
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                         <h2 className="text-lg font-semibold">
-                            Información General
+                            Información general
                         </h2>
 
                         <div className="grid gap-4 md:grid-cols-2">

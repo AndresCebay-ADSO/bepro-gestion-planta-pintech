@@ -1,8 +1,9 @@
-import { Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import type { FC, FormEvent } from 'react';
 
 import UserController from '@/actions/App/Http/Controllers/UserController';
 import InputError from '@/components/input-error';
+import { PageHeader } from '@/components/page-header';
 import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -47,6 +48,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 
     return (
         <div className="min-h-screen bg-background px-4 py-8 text-foreground">
+            <Head title="Nuevo usuario" />
             <div className="mx-auto max-w-2xl">
                 {/* Header */}
                 <div className="mb-8">
@@ -56,13 +58,10 @@ const UsersCreate: FC<Props> = ({ roles }) => {
                     >
                         ← Volver a usuarios
                     </Link>
-                    <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                        Crear Nuevo Usuario
-                    </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Agrega un nuevo usuario al sistema con sus credenciales
-                        y permisos
-                    </p>
+                    <PageHeader
+                        title="Nuevo usuario"
+                        description="Agrega un nuevo usuario al sistema con sus credenciales y permisos."
+                    />
                 </div>
 
                 {/* Form */}

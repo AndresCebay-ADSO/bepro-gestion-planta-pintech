@@ -1,5 +1,4 @@
 import { Head, Link } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataListing } from '@/components/data-listing';
@@ -187,7 +186,6 @@ export default function SalesOrdersIndex({
                         can.create && (
                             <Button asChild>
                                 <Link href={salesOrdersCreate().url}>
-                                    <Plus className="mr-2 h-4 w-4" />
                                     Nuevo pedido
                                 </Link>
                             </Button>

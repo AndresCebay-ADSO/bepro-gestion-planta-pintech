@@ -1,4 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { PageHeader } from '@/components/page-header';
 import {
     RawMaterialForm,
     rawMaterialPayload,
@@ -50,26 +51,24 @@ export default function RawMaterialsCreate({ categories, units, can }: Props) {
 
     return (
         <>
-            <Head title="Nueva Materia Prima" />
+            <Head title="Nueva materia prima" />
 
             <div className="mx-auto max-w-3xl space-y-6 p-6">
-                <div className="flex flex-col gap-2">
+                <div className="space-y-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Link
                             href={rawMaterialsIndex().url}
                             className="hover:text-foreground"
                         >
-                            Materias Primas
+                            Materias primas
                         </Link>
                         <span>/</span>
                         <span>Crear</span>
                     </div>
-                    <h1 className="text-2xl font-semibold">
-                        Nueva Materia Prima
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Registra una nueva materia prima base para inventario.
-                    </p>
+                    <PageHeader
+                        title="Nueva materia prima"
+                        description="Registra una nueva materia prima base para inventario."
+                    />
                 </div>
 
                 <RawMaterialForm

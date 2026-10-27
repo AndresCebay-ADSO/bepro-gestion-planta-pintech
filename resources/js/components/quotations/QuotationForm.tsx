@@ -6,6 +6,7 @@ import { DecimalInput } from '@/components/decimal-input';
 import { FormattedNumber } from '@/components/formatted-number';
 import InputError from '@/components/input-error';
 import { IntegerInput } from '@/components/integer-input';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -294,14 +295,14 @@ export default function QuotationForm({
 
     return (
         <div className="mx-auto max-w-6xl space-y-6 p-6">
-            <div className="flex items-center gap-4">
+            <div className="space-y-4">
                 <Button variant="ghost" size="sm" asChild>
                     <Link href={backUrl}>
                         <ArrowLeft className="mr-1 h-4 w-4" />
                         Volver
                     </Link>
                 </Button>
-                <h1 className="text-2xl font-semibold">{title}</h1>
+                <PageHeader title={title} />
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">

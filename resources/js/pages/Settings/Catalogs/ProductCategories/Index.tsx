@@ -67,7 +67,6 @@ export default function ProductCategoriesIndex({
             <div className="space-y-6">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <Heading
-                        variant="small"
                         title="Categorías de producto"
                         description="Agrupan los productos terminados del portafolio."
                     />
@@ -200,6 +199,5 @@ export default function ProductCategoriesIndex({
 }
 
 ProductCategoriesIndex.layout = {
-    breadcrumbs: [{ title: 'Categorías de producto', href: categoriesIndex() }],
     wide: true,
 };

@@ -1,10 +1,11 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { FileText, Plus } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
+import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
@@ -103,24 +104,19 @@ export default function QuotationsIndex({
             <Head title="Cotizaciones" />
 
             <div className="space-y-4 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            Cotizaciones
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Gestión de ofertas comerciales
-                        </p>
-                    </div>
-                    {can.create && (
-                        <Button asChild>
-                            <Link href={quotationsCreate().url}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Nueva cotización
-                            </Link>
-                        </Button>
-                    )}
-                </div>
+                <PageHeader
+                    title="Cotizaciones"
+                    description="Gestión de ofertas comerciales."
+                    actions={
+                        can.create && (
+                            <Button asChild>
+                                <Link href={quotationsCreate().url}>
+                                    Nueva cotización
+                                </Link>
+                            </Button>
+                        )
+                    }
+                />
 
                 <DataTableFilters
                     fields={filterFields}

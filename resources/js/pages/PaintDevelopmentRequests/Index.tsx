@@ -1,9 +1,10 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { FlaskConical, Plus } from 'lucide-react';
+import { FlaskConical } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
+import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
@@ -84,24 +85,19 @@ export default function PaintDevelopmentRequestsIndex({
             <Head title="Desarrollo de pinturas" />
 
             <div className="space-y-4 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            Desarrollo de pinturas
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Solicitudes de desarrollo de nuevos productos
-                        </p>
-                    </div>
-                    {can.create && (
-                        <Button asChild>
-                            <Link href={requestsCreate().url}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Nueva solicitud
-                            </Link>
-                        </Button>
-                    )}
-                </div>
+                <PageHeader
+                    title="Desarrollo de pinturas"
+                    description="Solicitudes de desarrollo de nuevos productos"
+                    actions={
+                        can.create && (
+                            <Button asChild>
+                                <Link href={requestsCreate().url}>
+                                    Nueva solicitud
+                                </Link>
+                            </Button>
+                        )
+                    }
+                />
 
                 <DataTableFilters
                     fields={filterFields}

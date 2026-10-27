@@ -1,7 +1,8 @@
-import { Link } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Lock, Pencil } from 'lucide-react';
 import type { FC } from 'react';
 
+import { PageHeader } from '@/components/page-header';
 import RolePermissionsFields from '@/components/roles/role-permissions-fields';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,44 +28,43 @@ interface Props {
 const RolesShow: FC<Props> = ({ role, modules, can }) => {
     return (
         <div className="min-h-screen bg-background px-4 py-8 text-foreground">
+            <Head title={role.label} />
             <div className="mx-auto max-w-5xl space-y-6">
                 <div>
                     <Link
                         href={rolesIndex().url}
                         className="mb-4 inline-block text-sm text-primary hover:text-primary/80"
                     >
-                        ← Volver a Roles
+                        ← Volver a roles
                     </Link>
-                    <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                                    {role.label}
-                                </h1>
-                                <Badge
-                                    variant={
-                                        role.is_system ? 'secondary' : 'outline'
-                                    }
-                                >
-                                    {role.is_system
-                                        ? 'Sistema'
-                                        : 'Personalizado'}
-                                </Badge>
-                            </div>
-                            <p className="mt-1 text-sm text-muted-foreground">
+                    <PageHeader
+                        title={role.label}
+                        badge={
+                            <Badge
+                                variant={
+                                    role.is_system ? 'secondary' : 'outline'
+                                }
+                            >
+                                {role.is_system ? 'Sistema' : 'Personalizado'}
+                            </Badge>
+                        }
+                        description={
+                            <>
                                 {role.permissions.length} permisos ·{' '}
                                 {role.users_count} usuarios
-                            </p>
-                        </div>
-                        {can.update && (
-                            <Button asChild>
-                                <Link href={rolesEdit(role.id).url}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Editar rol
-                                </Link>
-                            </Button>
-                        )}
-                    </div>
+                            </>
+                        }
+                        actions={
+                            can.update && (
+                                <Button asChild>
+                                    <Link href={rolesEdit(role.id).url}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Editar rol
+                                    </Link>
+                                </Button>
+                            )
+                        }
+                    />
                 </div>
 
                 {role.is_system && (

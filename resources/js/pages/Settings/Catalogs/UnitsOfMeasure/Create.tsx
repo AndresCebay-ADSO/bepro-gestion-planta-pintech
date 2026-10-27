@@ -31,7 +31,6 @@ export default function UnitsOfMeasureCreate() {
 
             <div className="space-y-6">
                 <Heading
-                    variant="small"
                     title="Nueva unidad de medida"
                     description="Quedará disponible para materias primas, productos, presentaciones y fórmulas."
                 />

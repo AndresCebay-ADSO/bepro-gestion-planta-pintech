@@ -15,6 +15,7 @@ import { FinishedTransferMovementForm } from '@/components/finished-inventory/fi
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { MovementDirectionBadge } from '@/components/movement-direction-badge';
+import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
@@ -185,49 +186,42 @@ export default function FinishedMovementsIndex({
 
     return (
         <>
-            <Head title="Movimientos PT" />
+            <Head title="Movimientos de PT" />
 
             <div className="space-y-4 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="flex items-center gap-2 text-2xl font-semibold text-foreground">
-                            <ArrowLeftRight className="h-7 w-7 text-primary" />
-                            Movimientos PT
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Trazabilidad de entradas, salidas y traslados de
-                            producto terminado.
-                        </p>
-                    </div>
-
-                    {can.create && (
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Button
-                                type="button"
-                                onClick={() => openDrawer('entry')}
-                            >
-                                <ArrowDownToLine className="mr-2 h-4 w-4" />
-                                Entrada
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => openDrawer('exit')}
-                            >
-                                <ArrowUpFromLine className="mr-2 h-4 w-4" />
-                                Salida
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => openDrawer('transfer')}
-                            >
-                                <ArrowLeftRight className="mr-2 h-4 w-4" />
-                                Traslado
-                            </Button>
-                        </div>
-                    )}
-                </div>
+                <PageHeader
+                    title="Movimientos de PT"
+                    description="Trazabilidad de entradas, salidas y traslados de producto terminado."
+                    actions={
+                        can.create && (
+                            <>
+                                <Button
+                                    type="button"
+                                    onClick={() => openDrawer('entry')}
+                                >
+                                    <ArrowDownToLine className="mr-2 h-4 w-4" />
+                                    Entrada
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => openDrawer('exit')}
+                                >
+                                    <ArrowUpFromLine className="mr-2 h-4 w-4" />
+                                    Salida
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => openDrawer('transfer')}
+                                >
+                                    <ArrowLeftRight className="mr-2 h-4 w-4" />
+                                    Traslado
+                                </Button>
+                            </>
+                        )
+                    }
+                />
 
                 <DataTableFilters
                     fields={filterFields}

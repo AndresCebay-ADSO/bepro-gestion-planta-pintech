@@ -1,8 +1,9 @@
-import { Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import type { FC, FormEvent } from 'react';
 
 import UserController from '@/actions/App/Http/Controllers/UserController';
 import InputError from '@/components/input-error';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -54,6 +55,7 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
 
     return (
         <div className="min-h-screen bg-background px-4 py-8 text-foreground">
+            <Head title="Editar usuario" />
             <div className="mx-auto max-w-2xl">
                 {/* Header */}
                 <div className="mb-8">
@@ -63,12 +65,10 @@ const UsersEdit: FC<Props> = ({ user, roles }) => {
                     >
                         ← Volver a usuarios
                     </Link>
-                    <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                        Editar Usuario
-                    </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Actualiza la información, rol y permisos del usuario
-                    </p>
+                    <PageHeader
+                        title="Editar usuario"
+                        description="Actualiza la información, rol y permisos del usuario."
+                    />
                 </div>
 
                 {/* Form */}

@@ -3,6 +3,7 @@ import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
+import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import {
     Card,
@@ -97,17 +98,12 @@ export default function RemnantsIndex({
 
     return (
         <>
-            <Head title="Saldos de Producción" />
+            <Head title="Saldos de producción" />
             <div className="space-y-4 p-6">
-                <div>
-                    <h1 className="text-2xl font-semibold text-foreground">
-                        Saldos de Producción
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Producto terminado sobrante de órdenes completadas,
-                        disponible para reutilizar en nuevas mezclas.
-                    </p>
-                </div>
+                <PageHeader
+                    title="Saldos de producción"
+                    description="Producto terminado sobrante de órdenes completadas, disponible para reutilizar en nuevas mezclas."
+                />
 
                 <Card>
                     <CardHeader>

@@ -2,6 +2,7 @@ import { Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, ChevronRight, Save, Send } from 'lucide-react';
 import { useState } from 'react';
 
+import { PageHeader } from '@/components/page-header';
 import {
     NUMERIC_PAYLOAD_FIELDS,
     withNumericPayloads,
@@ -690,15 +691,18 @@ export default function PaintDevelopmentRequestForm({
         <>
             <div className="space-y-4 p-6">
                 <div className="flex items-center gap-3">
-                    <Button variant="outline" size="icon" asChild>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        asChild
+                        className="shrink-0"
+                    >
                         <Link href={backUrl}>
                             <ArrowLeft className="h-4 w-4" />
                         </Link>
                     </Button>
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            {title}
-                        </h1>
+                    <div className="min-w-0 flex-1">
+                        <PageHeader title={title} />
                     </div>
                 </div>
 

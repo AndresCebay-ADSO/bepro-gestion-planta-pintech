@@ -5,6 +5,7 @@ import type { ComponentProps } from 'react';
 import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
+import { PageHeader } from '@/components/page-header';
 import { TableActions } from '@/components/table-actions';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
@@ -81,15 +82,10 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
             <Head title="Códigos QR" />
 
             <div className="space-y-6 p-6">
-                <div>
-                    <h1 className="text-2xl font-semibold text-foreground">
-                        Códigos QR
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Consulta y gestiona los códigos QR generados para cada
-                        lote de producción.
-                    </p>
-                </div>
+                <PageHeader
+                    title="Códigos QR"
+                    description="Consulta y gestiona los códigos QR generados para cada lote de producción."
+                />
 
                 <DataTableFilters
                     fields={filterFields}

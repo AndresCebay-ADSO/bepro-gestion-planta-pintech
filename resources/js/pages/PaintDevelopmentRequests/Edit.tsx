@@ -8,13 +8,13 @@ import {
 } from '@/routes/paint-development-requests';
 
 type Props = {
-    request: RawPaintDevFormData & { id: number };
+    request: RawPaintDevFormData & { id: number; request_number: number };
 };
 
 export default function PaintDevelopmentRequestEdit({ request }: Props) {
     return (
         <>
-            <Head title={`Editar solicitud ${request.id}`} />
+            <Head title={`Editar solicitud ${request.request_number}`} />
             <PaintDevelopmentRequestForm
                 initialData={request}
                 submitUrl={requestsUpdate(request.id).url}

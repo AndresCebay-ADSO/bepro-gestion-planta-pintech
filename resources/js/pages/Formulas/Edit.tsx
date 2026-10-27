@@ -6,6 +6,7 @@ import {
     formulaPayload,
 } from '@/components/formulas/formula-form';
 import type { FormulaFormData } from '@/components/formulas/formula-form';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { formatForInput } from '@/lib/formatters';
 import {
@@ -68,11 +69,11 @@ export default function FormulasEdit({
     return (
         <>
             <Head
-                title={`Editar Fórmula v${formula.version} — ${formula.product.name}`}
+                title={`Editar fórmula v${formula.version} — ${formula.product.name}`}
             />
 
             <div className="space-y-6 p-6">
-                <div className="flex flex-col gap-2">
+                <div className="space-y-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Link
                             href={formulasIndex().url}
@@ -90,13 +91,10 @@ export default function FormulasEdit({
                         <span>/</span>
                         <span>Editar</span>
                     </div>
-                    <h1 className="text-2xl font-semibold text-foreground">
-                        Editar Fórmula v{formula.version}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Corrige materiales, cantidades o notas sin cambiar el
-                        producto asociado.
-                    </p>
+                    <PageHeader
+                        title={`Editar fórmula v${formula.version}`}
+                        description="Corrige materiales, cantidades o notas sin cambiar el producto asociado."
+                    />
                 </div>
 
                 <FormulaForm

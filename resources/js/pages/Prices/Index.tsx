@@ -3,6 +3,7 @@ import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
+import { PageHeader } from '@/components/page-header';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { index as pricesIndex } from '@/routes/prices';
@@ -72,20 +73,13 @@ export default function PricesIndex({
 
     return (
         <>
-            <Head title="Lista de Precios" />
+            <Head title="Lista de precios" />
 
             <div className="space-y-4 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            Lista de Precios
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Precios de venta vigentes por producto y
-                            presentación.
-                        </p>
-                    </div>
-                </div>
+                <PageHeader
+                    title="Lista de precios"
+                    description="Precios de venta vigentes por producto y presentación."
+                />
 
                 <DataTableFilters
                     fields={filterFields}
@@ -109,9 +103,9 @@ export default function PricesIndex({
                                 <div className="border-b border-border bg-muted/30 p-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h3 className="font-semibold text-foreground">
+                                            <h2 className="text-lg font-semibold text-foreground">
                                                 {product.name}
-                                            </h3>
+                                            </h2>
                                         </div>
                                         {can.view_costs && (
                                             <div className="flex items-center gap-4 text-sm text-muted-foreground">

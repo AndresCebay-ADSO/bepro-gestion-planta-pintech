@@ -5,6 +5,7 @@ import { store as productionOrderStore } from '@/actions/App/Http/Controllers/Pr
 import { DecimalInput } from '@/components/decimal-input';
 import InputError from '@/components/input-error';
 import { IntegerInput } from '@/components/integer-input';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -166,33 +167,30 @@ export default function ProductionOrdersCreate({
 
     return (
         <>
-            <Head title="Nueva Orden de Producción" />
+            <Head title="Nueva orden de producción" />
             <div className="space-y-6 p-6">
-                <div className="flex flex-col gap-2">
+                <div className="space-y-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Link
                             href={productionOrderIndex().url}
                             className="hover:text-foreground"
                         >
-                            Órdenes de Producción
+                            Órdenes de producción
                         </Link>
                         <span>/</span>
                         <span>Nueva</span>
                     </div>
-                    <h1 className="text-2xl font-semibold text-foreground">
-                        Nueva Orden de Producción
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Planifica una nueva producción definiendo producto,
-                        cantidad y plan de envasado.
-                    </p>
+                    <PageHeader
+                        title="Nueva orden de producción"
+                        description="Planifica una nueva producción definiendo producto, cantidad y plan de envasado."
+                    />
                 </div>
 
                 <form onSubmit={handleSubmit} className="max-w-4xl space-y-6">
                     {/* Información General */}
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                        <h2 className="font-medium text-foreground">
-                            Información General
+                        <h2 className="text-lg font-semibold text-foreground">
+                            Información general
                         </h2>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -358,8 +356,8 @@ export default function ProductionOrdersCreate({
                     <div className="rounded-lg border border-border bg-card">
                         <div className="flex items-center justify-between border-b border-border px-6 py-4">
                             <div>
-                                <h2 className="font-medium text-foreground">
-                                    Plan de Envasado
+                                <h2 className="text-lg font-semibold text-foreground">
+                                    Plan de envasado
                                 </h2>
                                 <p className="mt-0.5 text-xs text-muted-foreground">
                                     Define qué presentaciones se producirán y en

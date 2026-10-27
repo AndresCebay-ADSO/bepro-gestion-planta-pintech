@@ -32,7 +32,6 @@ export default function ShrinkWrapTypesCreate({ rawMaterialOptions }: Props) {
 
             <div className="space-y-6">
                 <Heading
-                    variant="small"
                     title="Nuevo tipo de termoencogido"
                     description="Ej.: «Galón» gasta 1 bolsa y 1 bandeja cada vez que se termoencoge."
                 />

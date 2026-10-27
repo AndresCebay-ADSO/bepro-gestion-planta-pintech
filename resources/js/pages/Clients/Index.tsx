@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 import { ActiveBadge } from '@/components/active-badge';
 import { DataListing } from '@/components/data-listing';
@@ -115,7 +115,6 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
                     actions={
                         <Button asChild>
                             <Link href={clientsCreate().url}>
-                                <Plus className="mr-2 h-4 w-4" />
                                 Nuevo cliente
                             </Link>
                         </Button>

@@ -65,7 +65,6 @@ export default function ShrinkWrapTypesIndex({ types, filters, can }: Props) {
             <div className="space-y-6">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <Heading
-                        variant="small"
                         title="Tipos de termoencogido"
                         description="Cada tipo dice cuánto empaque secundario se gasta por aplicación. El operario lo elige al registrar un termoencogido."
                     />
@@ -200,6 +199,5 @@ export default function ShrinkWrapTypesIndex({ types, filters, can }: Props) {
 }
 
 ShrinkWrapTypesIndex.layout = {
-    breadcrumbs: [{ title: 'Tipos de termoencogido', href: typesIndex() }],
     wide: true,
 };
