@@ -22,7 +22,7 @@ export function RecentAlertsCard({
     return (
         <Card className="border-none shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-lg">
+                <CardTitle className="flex items-center gap-2">
                     <BellRing className="h-5 w-5 text-warning-text" />
                     Alertas activas
                 </CardTitle>

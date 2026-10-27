@@ -539,9 +539,7 @@ export default function ProductsShow({
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                             <div className="space-y-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <CardTitle className="text-lg">
-                                        Documentación técnica
-                                    </CardTitle>
+                                    <CardTitle>Documentación técnica</CardTitle>
                                     <Badge
                                         variant="secondary"
                                         className="font-normal"

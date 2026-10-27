@@ -131,7 +131,7 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                     {/* QR Image Card */}
                     <Card className="lg:col-span-1">
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-base">
+                            <CardTitle className="flex items-center gap-2">
                                 <QrCodeIcon className="h-5 w-5 text-primary" />
                                 Código QR
                             </CardTitle>
@@ -166,9 +166,7 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                     {/* Metadata Card */}
                     <Card className="lg:col-span-2">
                         <CardHeader>
-                            <CardTitle className="text-base">
-                                Información del lote
-                            </CardTitle>
+                            <CardTitle>Información del lote</CardTitle>
                             <CardDescription>
                                 Datos del producto y orden de producción
                                 asociados.
@@ -305,7 +303,7 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                 {/* Documents */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-base">
+                        <CardTitle className="flex items-center gap-2">
                             <FileText className="h-5 w-5 text-primary" />
                             Documentos del lote
                         </CardTitle>
