@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\Permission;
 use App\Filters\FinishedInventoryFilter;
 use App\Http\Requests\Inventory\IndexFinishedInventoryRequest;
 use App\Models\FinishedInventory;
@@ -132,6 +133,10 @@ class FinishedInventoryQueryService
             'filters' => array_merge($request->validated(), [
                 'product_name' => $productId !== null ? Product::query()->whereKey($productId)->value('name') : null,
             ]),
+            // El producto enlaza a su detalle, que pide otro permiso: sin él, el nombre queda como texto.
+            'can' => [
+                'viewProducts' => $user->can(Permission::ProductsView->value),
+            ],
         ];
     }
 

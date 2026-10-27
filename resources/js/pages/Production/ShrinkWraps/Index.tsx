@@ -1,19 +1,13 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import type { ComponentProps } from 'react';
 
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
-import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import {
@@ -82,12 +76,84 @@ export default function ShrinkWrapsIndex({
         },
     ];
 
-    const columns = can.viewCosts ? 8 : 7;
+    const columns: DataListingColumn<Row>[] = [
+        {
+            key: 'wrapped_at',
+            header: 'Fecha',
+            cell: (row) => (
+                <FormattedDate value={row.wrapped_at} format="date" />
+            ),
+            mobile: 'meta',
+            className: 'whitespace-nowrap',
+        },
+        {
+            key: 'order',
+            header: 'Orden',
+            cell: (row) =>
+                `${row.order.order_number} · Lote ${row.order.lot_number}`,
+            mobile: 'title',
+            className: 'font-mono',
+            cardClassName: 'font-mono',
+        },
+        {
+            key: 'product',
+            header: 'Producto',
+            cell: (row) => row.order.product_name ?? '-',
+            mobile: 'subtitle',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'type',
+            header: 'Tipo',
+            cell: (row) => row.type_name,
+            mobile: 'meta',
+        },
+        {
+            key: 'applications',
+            header: 'Aplicaciones',
+            cell: (row) => <FormattedNumber value={row.applications} />,
+            mobile: 'meta',
+            align: 'right',
+            className: 'font-medium',
+        },
+        {
+            key: 'warehouse',
+            header: 'Bodega',
+            cell: (row) => row.warehouse_name,
+            // Con el costo serían cinco datos: la bodega se ve en el detalle.
+            mobile: can.viewCosts ? 'hidden' : 'meta',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'created_by',
+            header: 'Registró',
+            cell: (row) => row.created_by_name,
+            mobile: 'hidden',
+            className: 'text-muted-foreground',
+        },
+        ...(can.viewCosts
+            ? [
+                  {
+                      key: 'cost',
+                      header: 'Costo',
+                      cell: (row: Row) => (
+                          <FormattedNumber
+                              value={row.total_cost}
+                              currency
+                              maxDecimals={2}
+                          />
+                      ),
+                      mobile: 'meta' as const,
+                      align: 'right' as const,
+                  },
+              ]
+            : []),
+    ];
 
     return (
         <>
             <Head title="Termoencogido" />
-            <div className="space-y-4 p-6">
+            <div className="space-y-6 p-6">
                 <PageHeader
                     title="Termoencogido"
                     description="Bandejas y bolsas gastadas al termoencoger producto de órdenes completadas. Su costo es gasto general."
@@ -102,155 +168,27 @@ export default function ShrinkWrapsIndex({
                     }
                 />
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Registros</CardTitle>
-                        <CardDescription>
-                            {shrinkWraps.total} registro
-                            {shrinkWraps.total !== 1 ? 's' : ''}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <DataTableFilters
-                            fields={filterFields}
-                            filters={filterState}
-                            onFilter={setFilter}
-                            onFilterImmediate={setFilterImmediate}
-                            onClear={clearFilters}
-                        />
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
+                    onClear={clearFilters}
+                />
 
-                        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead className="border-b border-border bg-muted/50">
-                                        <tr>
-                                            <th className="p-4 text-left font-medium">
-                                                Fecha
-                                            </th>
-                                            <th className="p-4 text-left font-medium">
-                                                Orden
-                                            </th>
-                                            <th className="p-4 text-left font-medium">
-                                                Tipo
-                                            </th>
-                                            <th className="p-4 text-right font-medium">
-                                                Aplicaciones
-                                            </th>
-                                            <th className="p-4 text-left font-medium">
-                                                Bodega
-                                            </th>
-                                            <th className="p-4 text-left font-medium">
-                                                Registró
-                                            </th>
-                                            {can.viewCosts && (
-                                                <th className="p-4 text-right font-medium">
-                                                    Costo
-                                                </th>
-                                            )}
-                                            <th className="p-4 text-right font-medium">
-                                                Acciones
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {shrinkWraps.data.length === 0 ? (
-                                            <tr>
-                                                <td
-                                                    colSpan={columns}
-                                                    className="p-8 text-center text-sm text-muted-foreground"
-                                                >
-                                                    No hay termoencogidos
-                                                    registrados.
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            shrinkWraps.data.map((row) => (
-                                                <tr
-                                                    key={row.id}
-                                                    className="border-b border-border/50 transition-colors hover:bg-muted/30"
-                                                >
-                                                    <td className="p-4 whitespace-nowrap">
-                                                        <FormattedDate
-                                                            value={
-                                                                row.wrapped_at
-                                                            }
-                                                            format="date"
-                                                        />
-                                                    </td>
-                                                    <td className="p-4">
-                                                        <div className="font-medium text-foreground">
-                                                            {
-                                                                row.order
-                                                                    .order_number
-                                                            }
-                                                            {` · Lote ${row.order.lot_number}`}
-                                                        </div>
-                                                        {row.order
-                                                            .product_name && (
-                                                            <div className="text-xs text-muted-foreground">
-                                                                {
-                                                                    row.order
-                                                                        .product_name
-                                                                }
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                    <td className="p-4">
-                                                        {row.type_name}
-                                                    </td>
-                                                    <td className="p-4 text-right font-medium">
-                                                        {row.applications}
-                                                    </td>
-                                                    <td className="p-4 text-muted-foreground">
-                                                        {row.warehouse_name}
-                                                    </td>
-                                                    <td className="p-4 text-muted-foreground">
-                                                        {row.created_by_name}
-                                                    </td>
-                                                    {can.viewCosts && (
-                                                        <td className="p-4 text-right">
-                                                            <FormattedNumber
-                                                                value={
-                                                                    row.total_cost
-                                                                }
-                                                                currency
-                                                                maxDecimals={2}
-                                                            />
-                                                        </td>
-                                                    )}
-                                                    <td className="p-4 text-right">
-                                                        <TableActions
-                                                            permissions={{
-                                                                view: row.can
-                                                                    .view,
-                                                                edit: false,
-                                                                delete: false,
-                                                            }}
-                                                            onView={() =>
-                                                                router.get(
-                                                                    shrinkWrapsShow(
-                                                                        row.id,
-                                                                    ).url,
-                                                                )
-                                                            }
-                                                            tooltips={{
-                                                                view: 'Ver termoencogido',
-                                                            }}
-                                                        />
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                <DataListing
+                    rows={shrinkWraps.data}
+                    rowKey={(row) => row.id}
+                    rowHref={(row) =>
+                        row.can.view ? shrinkWrapsShow(row.id).url : undefined
+                    }
+                    columns={columns}
+                    empty="No hay termoencogidos registrados."
+                />
 
-                        <div className="flex justify-center">
-                            <Pagination links={shrinkWraps.links} />
-                        </div>
-                    </CardContent>
-                </Card>
+                <div className="mt-4 flex justify-center">
+                    <Pagination links={shrinkWraps.links} />
+                </div>
             </div>
         </>
     );

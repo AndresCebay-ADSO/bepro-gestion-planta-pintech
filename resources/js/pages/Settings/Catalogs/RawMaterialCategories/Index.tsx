@@ -1,8 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { Trash2 } from 'lucide-react';
+
 import { ActiveBadge } from '@/components/active-badge';
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
+import { FormattedNumber } from '@/components/formatted-number';
 import Heading from '@/components/heading';
-import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
@@ -64,6 +68,49 @@ export default function RawMaterialCategoriesIndex({
         });
     };
 
+    const columns: DataListingColumn<CategoryRow>[] = [
+        {
+            key: 'code',
+            header: 'Código',
+            cell: (category) => category.code,
+            mobile: 'title',
+            className: 'font-mono',
+            cardClassName: 'font-mono',
+        },
+        {
+            key: 'name',
+            header: 'Nombre',
+            cell: (category) => category.name,
+            mobile: 'subtitle',
+        },
+        {
+            key: 'type',
+            header: 'Tipo de insumo',
+            cell: (category) => (
+                <Badge variant="secondary">{category.type_label}</Badge>
+            ),
+            mobile: 'meta',
+        },
+        {
+            key: 'raw_materials',
+            header: 'Materias primas',
+            cell: (category) => (
+                <FormattedNumber value={category.raw_materials_count} />
+            ),
+            mobile: 'meta',
+            align: 'right',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (category) => (
+                <ActiveBadge isActive={category.is_active} feminine />
+            ),
+            mobile: 'status',
+        },
+    ];
+
     return (
         <>
             <Head title="Categorías de materia prima" />
@@ -112,101 +159,34 @@ export default function RawMaterialCategoriesIndex({
                     onClear={clearFilters}
                 />
 
-                <div className="overflow-x-auto rounded-lg border border-border">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/40">
-                            <tr>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Código
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Nombre
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Tipo de insumo
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Materias primas
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Estado
-                                </th>
-                                <th className="p-3 text-right font-medium text-foreground">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {categories.data.map((category) => {
-                                const inUse = category.raw_materials_count > 0;
-
-                                return (
-                                    <tr
-                                        key={category.id}
-                                        className="border-b border-border/60 last:border-0"
-                                    >
-                                        <td className="p-3 font-mono text-foreground">
-                                            {category.code}
-                                        </td>
-                                        <td className="p-3 text-foreground">
-                                            {category.name}
-                                        </td>
-                                        <td className="p-3">
-                                            <Badge variant="secondary">
-                                                {category.type_label}
-                                            </Badge>
-                                        </td>
-                                        <td className="p-3 text-muted-foreground">
-                                            {category.raw_materials_count}
-                                        </td>
-                                        <td className="p-3">
-                                            <ActiveBadge
-                                                isActive={category.is_active}
-                                                feminine
-                                            />
-                                        </td>
-                                        <td className="p-3 text-right">
-                                            <TableActions
-                                                permissions={{
-                                                    view: false,
-                                                    edit: category.can.update,
-                                                    delete: category.can.delete,
-                                                }}
-                                                onEdit={() =>
-                                                    router.get(
-                                                        categoriesEdit(
-                                                            category.id,
-                                                        ).url,
-                                                    )
-                                                }
-                                                onDelete={() =>
-                                                    handleDelete(category)
-                                                }
-                                                // Con materias primas no se puede eliminar (clave foránea RESTRICT): se desactiva.
-                                                disabled={{ delete: inUse }}
-                                                tooltips={{
-                                                    delete: inUse
-                                                        ? 'Tiene materias primas: no se puede eliminar. Desactívala al editarla.'
-                                                        : 'Eliminar categoría',
-                                                }}
-                                            />
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                            {categories.data.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={6}
-                                        className="p-8 text-center text-sm text-muted-foreground"
-                                    >
-                                        No se encontraron categorías.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                {/* Sin detalle: el código abre la edición. */}
+                <DataListing
+                    rows={categories.data}
+                    rowKey={(category) => category.id}
+                    rowHref={(category) =>
+                        category.can.update
+                            ? categoriesEdit(category.id).url
+                            : undefined
+                    }
+                    rowLabel={(category) => category.code}
+                    columns={columns}
+                    // El código ya abre la edición: el menú no la repite (DESIGN.md §9).
+                    actions={(category) => [
+                        {
+                            label: 'Eliminar',
+                            icon: Trash2,
+                            destructive: true,
+                            onSelect: () => handleDelete(category),
+                            // Con materias primas no se puede eliminar (clave foránea RESTRICT): se desactiva.
+                            disabledReason:
+                                category.raw_materials_count > 0
+                                    ? 'No disponible: tiene materias primas. Desactívala al editarla.'
+                                    : undefined,
+                            hidden: !category.can.delete,
+                        },
+                    ]}
+                    empty="No se encontraron categorías."
+                />
 
                 <div className="flex justify-center">
                     <Pagination links={categories.links} />

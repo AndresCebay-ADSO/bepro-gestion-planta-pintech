@@ -3,6 +3,8 @@ import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { ComponentProps } from 'react';
 
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -23,8 +25,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useDrawerFormProps } from '@/hooks/use-drawer-form-props';
 import { useFilters } from '@/hooks/use-filters';
 import { cn } from '@/lib/utils';
-
-import { index as inventoryMovementsIndex } from '@/routes/inventory-movements';
+import {
+    index as inventoryMovementsIndex,
+    show as inventoryMovementsShow,
+} from '@/routes/inventory-movements';
 import type { InventoryOption, PaginationLink } from '@/types';
 
 const DRAWER_FORM_PROPS = [
@@ -34,16 +38,18 @@ const DRAWER_FORM_PROPS = [
     'oldestEntryDate',
 ];
 
+type MovementRow = {
+    id: number;
+    type: 'entry' | 'exit';
+    quantity: string;
+    movement_date: string;
+    raw_material?: { code: string } | null;
+    warehouse?: { name: string; city: string } | null;
+};
+
 type Props = {
     movements: {
-        data: Array<{
-            id: number;
-            type: 'entry' | 'exit';
-            quantity: string;
-            movement_date: string;
-            raw_material?: { code: string } | null;
-            warehouse?: { name: string; city: string } | null;
-        }>;
+        data: MovementRow[];
         links: PaginationLink[];
     };
     rawMaterials?: InventoryOption[];
@@ -164,10 +170,82 @@ export default function InventoryMovementsIndex({
         router.reload({ only: ['movements'] });
     };
 
+    // Sin código propio: el número del movimiento (el de su detalle) lo identifica.
+    const columns: DataListingColumn<MovementRow>[] = [
+        {
+            key: 'number',
+            header: 'Nº',
+            cell: (movement) => `#${movement.id}`,
+            mobile: 'title',
+            className: 'font-mono',
+            cardClassName: 'font-mono',
+        },
+        {
+            key: 'movement_date',
+            header: 'Fecha',
+            cell: (movement) => (
+                <FormattedDate value={movement.movement_date} />
+            ),
+            mobile: 'meta',
+            className: 'whitespace-nowrap',
+        },
+        {
+            key: 'type',
+            header: 'Tipo',
+            cell: (movement) => <MovementDirectionBadge type={movement.type} />,
+            mobile: 'status',
+        },
+        {
+            key: 'warehouse',
+            header: 'Bodega',
+            cell: (movement) => (
+                <>
+                    <div className="font-medium text-foreground">
+                        {movement.warehouse?.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                        {movement.warehouse?.city}
+                    </div>
+                </>
+            ),
+            mobile: 'meta',
+        },
+        {
+            key: 'raw_material',
+            header: 'Materia prima',
+            cell: (movement) => movement.raw_material?.code ?? '-',
+            mobile: 'subtitle',
+            className: 'font-mono',
+            cardClassName: 'font-mono',
+        },
+        {
+            key: 'quantity',
+            header: 'Cantidad',
+            cell: (movement) => (
+                <span
+                    className={cn(
+                        'font-medium',
+                        movement.type === 'entry'
+                            ? 'text-success-text'
+                            : 'text-warning-text',
+                    )}
+                >
+                    {movement.type === 'entry' ? '+' : '−'}
+                    <FormattedNumber
+                        value={movement.quantity}
+                        maxDecimals={2}
+                    />
+                </span>
+            ),
+            mobile: 'meta',
+            align: 'right',
+        },
+    ];
+
     return (
         <>
             <Head title="Movimientos de MP" />
-            <div className="space-y-4 p-6">
+            <div className="space-y-6 p-6">
                 <PageHeader
                     title="Movimientos de MP"
                     description="Historial de entradas y salidas de materias primas."
@@ -209,84 +287,15 @@ export default function InventoryMovementsIndex({
                     </div>
                 )}
 
-                <div className="rounded-xl border border-border bg-card shadow-sm">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/50">
-                            <tr>
-                                <th className="p-4 text-left font-medium">
-                                    Fecha
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Tipo
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Bodega
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Materia Prima
-                                </th>
-                                <th className="p-4 text-right font-medium">
-                                    Cantidad
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {movements.data.map((movement) => (
-                                <tr
-                                    key={movement.id}
-                                    className="border-b border-border/50 transition-colors hover:bg-muted/30"
-                                >
-                                    <td className="p-4">
-                                        <FormattedDate
-                                            value={movement.movement_date}
-                                        />
-                                    </td>
-                                    <td className="p-4">
-                                        <MovementDirectionBadge
-                                            type={movement.type}
-                                        />
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="font-medium text-foreground">
-                                            {movement.warehouse?.name}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                            {movement.warehouse?.city}
-                                        </div>
-                                    </td>
-                                    <td className="p-4 font-mono">
-                                        {movement.raw_material?.code ?? '-'}
-                                    </td>
-                                    <td
-                                        className={cn(
-                                            'p-4 text-right font-medium tabular-nums',
-                                            movement.type === 'entry'
-                                                ? 'text-success-text'
-                                                : 'text-warning-text',
-                                        )}
-                                    >
-                                        {movement.type === 'entry' ? '+' : '−'}
-                                        <FormattedNumber
-                                            value={movement.quantity}
-                                            maxDecimals={2}
-                                        />
-                                    </td>
-                                </tr>
-                            ))}
-                            {movements.data.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={5}
-                                        className="p-8 text-center text-muted-foreground"
-                                    >
-                                        No hay movimientos registrados para los
-                                        filtros seleccionados.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <DataListing
+                    rows={movements.data}
+                    rowKey={(movement) => movement.id}
+                    rowHref={(movement) =>
+                        inventoryMovementsShow(movement.id).url
+                    }
+                    columns={columns}
+                    empty="No hay movimientos registrados para los filtros seleccionados."
+                />
 
                 <div className="mt-4 flex justify-center">
                     <Pagination links={movements.links} />

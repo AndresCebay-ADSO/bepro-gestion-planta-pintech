@@ -1,13 +1,10 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    ArrowDownToLine,
-    ArrowLeftRight,
-    ArrowUpFromLine,
-    Eye,
-} from 'lucide-react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
 
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FinishedEntryMovementForm } from '@/components/finished-inventory/finished-entry-movement-form';
 import { FinishedExitMovementForm } from '@/components/finished-inventory/finished-exit-movement-form';
@@ -35,7 +32,10 @@ import {
     index as finishedMovementsIndex,
     show as showFinishedMovement,
 } from '@/routes/finished-inventory-movements';
-import type { FinishedMovementsPage } from '@/types/finished-inventory';
+import type {
+    FinishedInventoryMovement,
+    FinishedMovementsPage,
+} from '@/types/finished-inventory';
 
 type DrawerMode = 'entry' | 'exit' | 'transfer';
 
@@ -181,6 +181,125 @@ export default function FinishedMovementsIndex({
         router.reload({ only: ['movements'] });
     };
 
+    // Sin código propio: el número del movimiento (el de su detalle) lo identifica.
+    const columns: DataListingColumn<FinishedInventoryMovement>[] = [
+        {
+            key: 'number',
+            header: 'Nº',
+            cell: (movement) => `#${movement.id}`,
+            mobile: 'title',
+            className: 'font-mono',
+            cardClassName: 'font-mono',
+        },
+        {
+            key: 'movement_date',
+            header: 'Fecha',
+            cell: (movement) => (
+                <FormattedDate value={movement.movement_date} />
+            ),
+            mobile: 'meta',
+            className: 'whitespace-nowrap',
+        },
+        {
+            key: 'type',
+            header: 'Tipo',
+            cell: (movement) => <MovementDirectionBadge type={movement.type} />,
+            mobile: 'status',
+        },
+        {
+            key: 'reason',
+            header: 'Razón',
+            cell: (movement) => (
+                <StatusBadge
+                    enum="FinishedInventoryMovementReason"
+                    value={movement.reason}
+                />
+            ),
+            mobile: 'meta',
+        },
+        {
+            key: 'product',
+            header: 'Producto',
+            cell: (movement) => (
+                <>
+                    <div className="font-medium text-foreground">
+                        {movement.product?.name ?? '-'}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                        {movement.product_variant?.presentation_label ??
+                            movement.product_variant?.name ??
+                            'Sin presentación'}
+                    </div>
+                    {movement.batch && (
+                        <div className="text-xs text-muted-foreground">
+                            Lote{' '}
+                            {finishedLotLabel(
+                                movement.batch.production_order.lot_number,
+                                movement.batch.production_order.color,
+                            )}
+                        </div>
+                    )}
+                </>
+            ),
+            mobile: 'subtitle',
+        },
+        {
+            key: 'warehouse',
+            header: 'Bodega',
+            cell: (movement) => (
+                <>
+                    <div className="font-medium text-foreground">
+                        {movement.warehouse?.name ?? '-'}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                        {movement.warehouse?.city ?? '-'}
+                    </div>
+                </>
+            ),
+            mobile: 'meta',
+        },
+        {
+            key: 'quantity',
+            header: 'Cantidad',
+            cell: (movement) => (
+                <span
+                    className={cn(
+                        'font-medium',
+                        movement.type === 'entry'
+                            ? 'text-success-text'
+                            : 'text-warning-text',
+                    )}
+                >
+                    {movement.type === 'entry' ? '+' : '−'}
+                    <FormattedNumber
+                        value={movement.quantity}
+                        maxDecimals={2}
+                    />
+                </span>
+            ),
+            mobile: 'meta',
+            align: 'right',
+        },
+        {
+            key: 'origin',
+            header: 'Origen',
+            cell: (movement) =>
+                movement.production_order ? (
+                    <>
+                        <div className="text-foreground">
+                            {movement.production_order.order_number}
+                        </div>
+                        <div className="text-xs">Producción</div>
+                    </>
+                ) : (
+                    (movement.created_by?.name ?? '-')
+                ),
+            // Cinco datos no caben en la tarjeta: el origen se ve en el detalle.
+            mobile: 'hidden',
+            className: 'text-muted-foreground',
+        },
+    ];
+
     const drawer = drawerCopy[drawerState.mode];
     const DrawerIcon = drawer.icon;
 
@@ -188,7 +307,7 @@ export default function FinishedMovementsIndex({
         <>
             <Head title="Movimientos de PT" />
 
-            <div className="space-y-4 p-6">
+            <div className="space-y-6 p-6">
                 <PageHeader
                     title="Movimientos de PT"
                     description="Trazabilidad de entradas, salidas y traslados de producto terminado."
@@ -242,165 +361,17 @@ export default function FinishedMovementsIndex({
                     </div>
                 )}
 
-                <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/40">
-                            <tr>
-                                <th className="p-3 text-left font-medium">
-                                    Fecha
-                                </th>
-                                <th className="p-3 text-left font-medium">
-                                    Tipo
-                                </th>
-                                <th className="p-3 text-left font-medium">
-                                    Razón
-                                </th>
-                                <th className="p-3 text-left font-medium">
-                                    Producto
-                                </th>
-                                <th className="p-3 text-left font-medium">
-                                    Bodega
-                                </th>
-                                <th className="p-3 text-right font-medium">
-                                    Cantidad
-                                </th>
-                                <th className="p-3 text-left font-medium">
-                                    Origen
-                                </th>
-                                <th className="p-3 text-right font-medium">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {movements.data.length === 0 ? (
-                                <tr>
-                                    <td
-                                        colSpan={8}
-                                        className="p-10 text-center text-muted-foreground"
-                                    >
-                                        No hay movimientos PT registrados con
-                                        los criterios seleccionados.
-                                    </td>
-                                </tr>
-                            ) : (
-                                movements.data.map((movement) => (
-                                    <tr
-                                        key={movement.id}
-                                        className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30"
-                                    >
-                                        <td className="p-3">
-                                            <FormattedDate
-                                                value={movement.movement_date}
-                                            />
-                                        </td>
-                                        <td className="p-3">
-                                            <MovementDirectionBadge
-                                                type={movement.type}
-                                            />
-                                        </td>
-                                        <td className="p-3">
-                                            <StatusBadge
-                                                enum="FinishedInventoryMovementReason"
-                                                value={movement.reason}
-                                            />
-                                        </td>
-                                        <td className="p-3">
-                                            <div className="font-medium text-foreground">
-                                                {movement.product?.name ?? '-'}
-                                            </div>
-                                            <div className="text-xs text-muted-foreground">
-                                                {movement.product_variant
-                                                    ?.presentation_label ??
-                                                    movement.product_variant
-                                                        ?.name ??
-                                                    'Sin presentación'}
-                                            </div>
-                                            {movement.batch && (
-                                                <div className="text-xs text-muted-foreground">
-                                                    Lote{' '}
-                                                    {finishedLotLabel(
-                                                        movement.batch
-                                                            .production_order
-                                                            .lot_number,
-                                                        movement.batch
-                                                            .production_order
-                                                            .color,
-                                                    )}
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="p-3">
-                                            <div className="font-medium text-foreground">
-                                                {movement.warehouse?.name ??
-                                                    '-'}
-                                            </div>
-                                            <div className="text-xs text-muted-foreground">
-                                                {movement.warehouse?.city ??
-                                                    '-'}
-                                            </div>
-                                        </td>
-                                        <td
-                                            className={cn(
-                                                'p-3 text-right font-medium tabular-nums',
-                                                movement.type === 'entry'
-                                                    ? 'text-success-text'
-                                                    : 'text-warning-text',
-                                            )}
-                                        >
-                                            {movement.type === 'entry'
-                                                ? '+'
-                                                : '−'}
-                                            <FormattedNumber
-                                                value={movement.quantity}
-                                                maxDecimals={2}
-                                            />
-                                        </td>
-                                        <td className="p-3 text-muted-foreground">
-                                            {movement.production_order ? (
-                                                <>
-                                                    <div className="text-foreground">
-                                                        {
-                                                            movement
-                                                                .production_order
-                                                                .order_number
-                                                        }
-                                                    </div>
-                                                    <div className="text-xs">
-                                                        Producción
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                (movement.created_by?.name ??
-                                                '-')
-                                            )}
-                                        </td>
-                                        <td className="p-3">
-                                            <div className="flex justify-end gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    asChild
-                                                >
-                                                    <Link
-                                                        href={showFinishedMovement.url(
-                                                            movement.id,
-                                                        )}
-                                                        aria-label={`Ver movimiento ${movement.id}`}
-                                                    >
-                                                        <Eye className="h-4 w-4" />
-                                                    </Link>
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <DataListing
+                    rows={movements.data}
+                    rowKey={(movement) => movement.id}
+                    rowHref={(movement) =>
+                        showFinishedMovement.url(movement.id)
+                    }
+                    columns={columns}
+                    empty="No hay movimientos PT registrados con los criterios seleccionados."
+                />
 
-                <div className="flex justify-center">
+                <div className="mt-4 flex justify-center">
                     <Pagination links={movements.links} />
                 </div>
             </div>

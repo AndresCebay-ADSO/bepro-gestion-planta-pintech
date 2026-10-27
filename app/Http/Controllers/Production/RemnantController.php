@@ -60,7 +60,11 @@ class RemnantController extends Controller
             'remnants' => $remnants,
             'filters' => $request->validated(),
             'statusOptions' => EnumOptions::for(RemnantStatus::cases()),
-            'can' => ['viewCosts' => $canViewCosts],
+            'can' => [
+                'viewCosts' => $canViewCosts,
+                // La orden de origen enlaza a la OP, que pide otro permiso: sin él, queda como texto.
+                'viewProductionOrders' => $request->user()?->can(Permission::ProductionOrdersView->value) ?? false,
+            ],
             'warehouseOptions' => Warehouse::query()
                 ->select('id', 'name')
                 ->orderBy('name')

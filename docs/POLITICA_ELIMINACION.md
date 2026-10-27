@@ -176,7 +176,7 @@ fórmulas, clientes, documentos · (4) selectores · (5) usuarios (`hasActivity`
 - ✅ `App\Services\DeactivationGuardService`: bloqueos de producto (órdenes en curso), presentación (stock de producto
   terminado) y bodega (stock u órdenes en curso). `ProductionOrderStatus::open()`.
 - ✅ Productos (se llevan sus presentaciones y documentos sin historial), presentaciones, bodegas, fórmulas y clientes
-  (permiso `clients.deactivate`, casilla "Cliente activo", listado con estado y `<TableActions />`).
+  (permiso `clients.deactivate`, casilla "Cliente activo", listado con estado y menú de acciones de fila).
 - ✅ Documentos de producto: auditados; el archivo se borra con `DB::afterCommit` (si la transacción se revierte, se
   conserva). La firma de usuario sigue el mismo patrón.
 - ✅ Usuarios: `hasActivity()` solo consulta la auditoría; el resto lo protegen las claves foráneas (B11).

@@ -1,12 +1,13 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { FlaskConical } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { Pencil } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
-import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
@@ -80,11 +81,65 @@ export default function PaintDevelopmentRequestsIndex({
         },
     ];
 
+    const columns: DataListingColumn<RequestRow>[] = [
+        {
+            key: 'request_number',
+            header: 'Número',
+            cell: (req) => req.request_number,
+            mobile: 'title',
+            className: 'font-mono',
+            cardClassName: 'font-mono',
+        },
+        {
+            key: 'project_name',
+            header: 'Proyecto',
+            cell: (req) => (
+                <span
+                    className="block md:max-w-xs md:truncate"
+                    title={req.project_name}
+                >
+                    {req.project_name}
+                </span>
+            ),
+            mobile: 'subtitle',
+        },
+        {
+            key: 'client',
+            header: 'Cliente',
+            cell: (req) => req.client_name ?? '—',
+            mobile: 'meta',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (req) => (
+                <StatusBadge
+                    enum="PaintDevelopmentRequestStatus"
+                    value={req.status}
+                />
+            ),
+            mobile: 'status',
+        },
+        {
+            key: 'sample_due_date',
+            header: 'Fecha muestra',
+            cell: (req) => (
+                <FormattedDate
+                    value={req.sample_due_date}
+                    format="short"
+                    emptyValue="—"
+                />
+            ),
+            mobile: 'meta',
+            className: 'whitespace-nowrap',
+        },
+    ];
+
     return (
         <>
             <Head title="Desarrollo de pinturas" />
 
-            <div className="space-y-4 p-6">
+            <div className="space-y-6 p-6">
                 <PageHeader
                     title="Desarrollo de pinturas"
                     description="Solicitudes de desarrollo de nuevos productos"
@@ -107,103 +162,27 @@ export default function PaintDevelopmentRequestsIndex({
                     onClear={clearFilters}
                 />
 
-                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/30">
-                            <tr>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Número
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Proyecto
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Cliente
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Estado
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Fecha muestra
-                                </th>
-                                <th className="px-4 py-3 text-right font-medium">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {requests.data.length === 0 ? (
-                                <tr>
-                                    <td
-                                        colSpan={6}
-                                        className="px-4 py-10 text-center text-muted-foreground"
-                                    >
-                                        <FlaskConical className="mx-auto mb-2 h-8 w-8 opacity-40" />
-                                        No hay solicitudes registradas.
-                                    </td>
-                                </tr>
-                            ) : (
-                                requests.data.map((req) => (
-                                    <tr
-                                        key={req.id}
-                                        className="border-b border-border last:border-0"
-                                    >
-                                        <td className="px-4 py-3 font-mono text-xs">
-                                            {req.request_number}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {req.project_name}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {req.client_name ?? '—'}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <StatusBadge
-                                                enum="PaintDevelopmentRequestStatus"
-                                                value={req.status}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <FormattedDate
-                                                value={req.sample_due_date}
-                                                format="short"
-                                                emptyValue="—"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <TableActions
-                                                actions={{
-                                                    view: true,
-                                                    edit:
-                                                        req.status === 'draft',
-                                                    delete: false,
-                                                }}
-                                                onView={() =>
-                                                    router.get(
-                                                        requestsShow(req.id)
-                                                            .url,
-                                                    )
-                                                }
-                                                onEdit={
-                                                    req.status === 'draft'
-                                                        ? () =>
-                                                              router.get(
-                                                                  requestsEdit(
-                                                                      req.id,
-                                                                  ).url,
-                                                              )
-                                                        : undefined
-                                                }
-                                            />
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <DataListing
+                    rows={requests.data}
+                    rowKey={(req) => req.id}
+                    rowHref={(req) => requestsShow(req.id).url}
+                    rowLabel={(req) => `la solicitud ${req.request_number}`}
+                    columns={columns}
+                    actions={(req) => [
+                        // Solo un borrador se puede editar.
+                        {
+                            label: 'Editar',
+                            icon: Pencil,
+                            href: requestsEdit(req.id).url,
+                            hidden: req.status !== 'draft',
+                        },
+                    ]}
+                    empty="No hay solicitudes registradas."
+                />
 
-                <Pagination links={requests.links} />
+                <div className="mt-4 flex justify-center">
+                    <Pagination links={requests.links} />
+                </div>
             </div>
         </>
     );

@@ -1,11 +1,13 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import type { ComponentProps } from 'react';
 
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
+import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
-import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
@@ -100,10 +102,95 @@ export default function ProductionOrdersIndex({
         },
     ];
 
+    const columns: DataListingColumn<ProductionOrderItem>[] = [
+        {
+            key: 'order_number',
+            header: 'Orden',
+            cell: (order) => order.order_number,
+            mobile: 'title',
+            className: 'font-mono',
+            cardClassName: 'font-mono',
+        },
+        {
+            key: 'lot_number',
+            header: 'Lote',
+            cell: (order) => order.lot_number,
+            mobile: 'meta',
+            className: 'font-mono text-muted-foreground',
+            cardClassName: 'font-mono',
+        },
+        {
+            key: 'product',
+            header: 'Producto',
+            cell: (order) => (
+                <>
+                    <div className="font-medium text-foreground">
+                        {order.product_display_name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                        Fórmula v{order.formula?.version ?? 1}
+                    </div>
+                </>
+            ),
+            mobile: 'subtitle',
+        },
+        {
+            key: 'quantity',
+            header: 'Cant. planificada',
+            cell: (order) => (
+                <>
+                    <FormattedNumber value={order.quantity} /> gal
+                </>
+            ),
+            mobile: 'meta',
+            align: 'right',
+            className: 'font-medium whitespace-nowrap',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (order) => (
+                <StatusBadge
+                    enum="ProductionOrderStatus"
+                    value={order.status}
+                />
+            ),
+            mobile: 'status',
+        },
+        {
+            key: 'dates',
+            header: 'Fechas',
+            cell: (order) => (
+                <>
+                    <div>
+                        Plan: <FormattedDate value={order.planned_date} />
+                    </div>
+                    <div>
+                        Creada: <FormattedDate value={order.created_at} />
+                    </div>
+                </>
+            ),
+            mobile: 'meta',
+            className: 'whitespace-nowrap text-muted-foreground',
+        },
+        {
+            key: 'completion_date',
+            header: 'Fecha fin',
+            cell: (order) =>
+                order.completion_date ? (
+                    <FormattedDate value={order.completion_date} />
+                ) : (
+                    '—'
+                ),
+            mobile: 'meta',
+            className: 'whitespace-nowrap text-muted-foreground',
+        },
+    ];
+
     return (
         <>
             <Head title="Órdenes de producción" />
-            <div className="space-y-4 p-6">
+            <div className="space-y-6 p-6">
                 <PageHeader
                     title="Órdenes de producción"
                     description="Gestión y seguimiento de la fabricación de pinturas en Planta Cali."
@@ -126,123 +213,18 @@ export default function ProductionOrdersIndex({
                     onClear={clearFilters}
                 />
 
-                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/50">
-                            <tr>
-                                <th className="p-4 text-left font-medium">
-                                    Orden #
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Producto
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Cant. Planificada
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Estado
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Fechas
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Fecha Fin
-                                </th>
-                                <th className="p-4 text-right font-medium">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {orders.data.map((order) => (
-                                <tr
-                                    key={order.id}
-                                    className="border-b border-border/50 transition-colors hover:bg-muted/30"
-                                >
-                                    <td className="p-4">
-                                        <div className="font-mono font-medium text-foreground">
-                                            {order.order_number}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                            Lote {order.lot_number}
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="font-medium text-foreground">
-                                            {order.product_display_name}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                            Fórmula v
-                                            {order.formula?.version ?? 1}
-                                        </div>
-                                    </td>
-                                    <td className="p-4 font-medium">
-                                        {order.quantity} gal
-                                    </td>
-                                    <td className="p-4">
-                                        <StatusBadge
-                                            enum="ProductionOrderStatus"
-                                            value={order.status}
-                                        />
-                                    </td>
-                                    <td className="p-4 text-xs">
-                                        <div className="text-muted-foreground">
-                                            Plan:{' '}
-                                            <FormattedDate
-                                                value={order.planned_date}
-                                            />
-                                        </div>
-                                        <div className="text-muted-foreground/80">
-                                            Creada:{' '}
-                                            <FormattedDate
-                                                value={order.created_at}
-                                            />
-                                        </div>
-                                    </td>
-                                    <td className="p-4 text-xs text-muted-foreground">
-                                        {order.completion_date ? (
-                                            <FormattedDate
-                                                value={order.completion_date}
-                                            />
-                                        ) : (
-                                            '—'
-                                        )}
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <TableActions
-                                            actions={{
-                                                view: true,
-                                                edit: false,
-                                                delete: false,
-                                            }}
-                                            onView={() =>
-                                                router.get(
-                                                    withReturnTo(
-                                                        productionOrderShow({
-                                                            production_order:
-                                                                order.id,
-                                                        }).url,
-                                                    ),
-                                                )
-                                            }
-                                        />
-                                    </td>
-                                </tr>
-                            ))}
-                            {orders.data.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={7}
-                                        className="p-8 text-center text-sm text-muted-foreground"
-                                    >
-                                        No hay órdenes de producción
-                                        registradas.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <DataListing
+                    rows={orders.data}
+                    rowKey={(order) => order.id}
+                    rowHref={(order) =>
+                        withReturnTo(
+                            productionOrderShow({ production_order: order.id })
+                                .url,
+                        )
+                    }
+                    columns={columns}
+                    empty="No hay órdenes de producción registradas."
+                />
 
                 <div className="mt-4 flex justify-center">
                     <Pagination links={orders.links} />

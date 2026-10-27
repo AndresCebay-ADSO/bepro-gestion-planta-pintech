@@ -1,12 +1,13 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { BadgeDollarSign } from 'lucide-react';
+import { BadgeDollarSign, Trash2 } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { ActiveBadge } from '@/components/active-badge';
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { PageHeader } from '@/components/page-header';
-import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
@@ -15,6 +16,7 @@ import { withReturnTo } from '@/lib/navigation';
 import {
     index as formulasIndex,
     create as formulasCreate,
+    destroy as formulasDestroy,
     show as formulasShow,
 } from '@/routes/formulas';
 import type { PaginationLink } from '@/types/ui';
@@ -71,10 +73,73 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
         },
     ];
 
+    const columns: DataListingColumn<FormulaItem>[] = [
+        {
+            key: 'product',
+            header: 'Producto',
+            cell: (formula) => formula.product?.name ?? '-',
+            mobile: 'title',
+        },
+        {
+            key: 'version',
+            header: 'Versión',
+            cell: (formula) => (
+                <>
+                    <div className="font-mono">v{formula.version}</div>
+                    {formula.name && (
+                        <div className="text-xs text-muted-foreground">
+                            {formula.name}
+                        </div>
+                    )}
+                </>
+            ),
+            mobile: 'subtitle',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (formula) => (
+                <div className="flex flex-wrap gap-1.5">
+                    <ActiveBadge isActive={formula.is_active} feminine />
+                    {formula.is_price_reference && (
+                        <Badge variant="outline">
+                            <BadgeDollarSign aria-hidden="true" />
+                            Referencia de precio
+                        </Badge>
+                    )}
+                </div>
+            ),
+            mobile: 'status',
+        },
+        {
+            key: 'notes',
+            header: 'Notas',
+            cell: (formula) => (
+                <span
+                    className="block md:max-w-xs md:truncate"
+                    title={formula.notes ?? undefined}
+                >
+                    {formula.notes ?? '-'}
+                </span>
+            ),
+            mobile: 'hidden',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'created_at',
+            header: 'Creada',
+            cell: (formula) => (
+                <FormattedDate value={formula.created_at} format="datetime" />
+            ),
+            mobile: 'meta',
+            className: 'text-muted-foreground',
+        },
+    ];
+
     return (
         <>
             <Head title="Fórmulas" />
-            <div className="space-y-4 p-6">
+            <div className="space-y-6 p-6">
                 <PageHeader
                     title="Fórmulas"
                     description="Un producto puede tener varias fórmulas activas para producir; la de referencia de precio define su costo."
@@ -97,119 +162,39 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                     onClear={clearFilters}
                 />
 
-                <div className="rounded-xl border border-border bg-card shadow-sm">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/50">
-                            <tr>
-                                <th className="p-4 text-left font-medium">
-                                    Producto
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Versión
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Estado
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Notas
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Creada
-                                </th>
-                                <th className="p-4 text-right font-medium">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {formulas.data.map((formula) => (
-                                <tr
-                                    key={formula.id}
-                                    className="border-b border-border/50 transition-colors hover:bg-muted/30"
-                                >
-                                    <td className="p-4">
-                                        <div className="font-medium text-foreground">
-                                            {formula.product?.name ?? '-'}
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="font-mono">
-                                            v{formula.version}
-                                        </div>
-                                        {formula.name && (
-                                            <div className="text-xs text-muted-foreground">
-                                                {formula.name}
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex flex-wrap gap-1.5">
-                                            <ActiveBadge
-                                                isActive={formula.is_active}
-                                                feminine
-                                            />
-                                            {formula.is_price_reference && (
-                                                <Badge variant="outline">
-                                                    <BadgeDollarSign aria-hidden="true" />
-                                                    Referencia de precio
-                                                </Badge>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="max-w-xs truncate p-4 text-muted-foreground">
-                                        {formula.notes ?? '-'}
-                                    </td>
-                                    <td className="p-4 text-xs text-muted-foreground">
-                                        <FormattedDate
-                                            value={formula.created_at}
-                                            format="datetime"
-                                        />
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <TableActions
-                                            actions={{
-                                                view: true,
-                                                edit: false,
-                                                // La de referencia no se elimina (se elige otra antes).
-                                                delete: !formula.is_price_reference,
-                                            }}
-                                            onView={() =>
-                                                router.get(
-                                                    withReturnTo(
-                                                        formulasShow({
-                                                            formula: formula.id,
-                                                        }).url,
-                                                    ),
-                                                )
-                                            }
-                                            onDelete={() => {
-                                                if (
-                                                    window.confirm(
-                                                        `¿Eliminar la fórmula v${formula.version} de ${formula.product?.name}?`,
-                                                    )
-                                                ) {
-                                                    router.delete(
-                                                        `/formulas/${formula.id}`,
-                                                    );
-                                                }
-                                            }}
-                                        />
-                                    </td>
-                                </tr>
-                            ))}
-                            {formulas.data.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={6}
-                                        className="p-8 text-center text-sm text-muted-foreground"
-                                    >
-                                        No hay fórmulas registradas.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <DataListing
+                    rows={formulas.data}
+                    rowKey={(formula) => formula.id}
+                    rowHref={(formula) =>
+                        withReturnTo(formulasShow({ formula: formula.id }).url)
+                    }
+                    rowLabel={(formula) =>
+                        `${formula.product?.name ?? 'fórmula'} v${formula.version}`
+                    }
+                    columns={columns}
+                    actions={(formula) => [
+                        {
+                            label: 'Eliminar',
+                            icon: Trash2,
+                            destructive: true,
+                            onSelect: () => {
+                                if (
+                                    window.confirm(
+                                        `¿Eliminar la fórmula v${formula.version} de ${formula.product?.name}?`,
+                                    )
+                                ) {
+                                    router.delete(
+                                        formulasDestroy({ formula: formula.id })
+                                            .url,
+                                    );
+                                }
+                            },
+                            // La de referencia no se elimina (se elige otra antes).
+                            hidden: formula.is_price_reference,
+                        },
+                    ]}
+                    empty="No hay fórmulas registradas."
+                />
 
                 <div className="mt-4 flex justify-center">
                     <Pagination links={formulas.links} />

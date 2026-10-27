@@ -227,6 +227,9 @@ Same in all three:
 
 - Listing pattern of `CLAUDE.md`: `Index{Domain}Request` + `{Domain}Filter` + `useFilters` + `<DataTableFilters />`;
   server-side pagination (`ui/pagination.tsx`: on the phone only previous, «Página X de Y» and next).
+- Page frame: a listing uses the full width of the content area with `space-y-6 p-6` as its wrapper; no `max-w-*`,
+  no `mx-auto`, no own background. Settings screens (catalogs) already sit inside the card of the Settings layout,
+  which sets the padding: their wrapper is `space-y-6` with no padding.
 - Every listing is a `<DataListing>` (`components/data-listing.tsx`). Each screen describes its columns **once**; the
   component renders the `<Table>` (`components/ui/table.tsx`) from `md` up and one card per row below `md`. A table
   wider than its box scrolls inside the box, never the page. No sorting by column (the server orders).

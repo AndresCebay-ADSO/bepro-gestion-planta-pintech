@@ -1,13 +1,14 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Activity } from 'lucide-react';
+import { Activity, Trash2 } from 'lucide-react';
 import type { FC } from 'react';
 
 import { ActiveBadge } from '@/components/active-badge';
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { PageHeader } from '@/components/page-header';
-import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -75,14 +76,49 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
         },
     });
 
-    const getInitials = (name: string) => {
-        return name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
-            .substring(0, 2);
-    };
+    const columns: DataListingColumn<User>[] = [
+        {
+            key: 'name',
+            header: 'Usuario',
+            cell: (user) => user.name,
+            mobile: 'title',
+        },
+        {
+            key: 'email',
+            header: 'Correo',
+            cell: (user) => user.email,
+            mobile: 'subtitle',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'role',
+            header: 'Rol',
+            cell: (user) => (
+                <Badge variant="secondary">{user.role_label}</Badge>
+            ),
+            mobile: 'meta',
+            className: 'whitespace-nowrap',
+        },
+        {
+            key: 'last_login_at',
+            header: 'Último acceso',
+            cell: (user) =>
+                user.last_login_at
+                    ? formatDistanceToNow(new Date(user.last_login_at), {
+                          addSuffix: true,
+                          locale: es,
+                      })
+                    : 'Nunca',
+            mobile: 'meta',
+            className: 'whitespace-nowrap text-muted-foreground',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (user) => <ActiveBadge isActive={user.is_active} />,
+            mobile: 'status',
+        },
+    ];
 
     return (
         <>
@@ -116,149 +152,45 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                     onClear={clearFilters}
                 />
 
-                {/* GRID */}
+                {/* min-w-0: sin él, la columna de la grilla se ensancha con la tabla y esta no se desplaza en su caja. */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-                    {/* TABLE */}
-                    <div className="lg:col-span-9">
-                        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                            <table className="w-full">
-                                <thead className="border-b border-border bg-muted/30">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                                            Usuario
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                                            Rol
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                                            Último Acceso
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                                            Estado
-                                        </th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase">
-                                            Acciones
-                                        </th>
-                                    </tr>
-                                </thead>
+                    <div className="min-w-0 lg:col-span-9">
+                        {/* Sin detalle: el nombre abre la edición. */}
+                        <DataListing
+                            rows={users.data}
+                            rowKey={(user) => user.id}
+                            rowHref={(user) =>
+                                user.can.update
+                                    ? usersEdit(user.id).url
+                                    : undefined
+                            }
+                            rowLabel={(user) => user.name}
+                            columns={columns}
+                            // El nombre ya abre la edición: el menú no la repite (DESIGN.md §9).
+                            actions={(user) => [
+                                {
+                                    label: 'Eliminar',
+                                    icon: Trash2,
+                                    destructive: true,
+                                    onSelect: () => {
+                                        if (
+                                            confirm(
+                                                '¿Eliminar este usuario definitivamente?',
+                                            )
+                                        ) {
+                                            router.delete(
+                                                usersDestroy(user.id).url,
+                                            );
+                                        }
+                                    },
+                                    hidden: !user.can.delete,
+                                },
+                            ]}
+                            empty="No se encontraron usuarios."
+                        />
 
-                                <tbody className="divide-y divide-border">
-                                    {users.data.length > 0 ? (
-                                        users.data.map((user) => (
-                                            <tr
-                                                key={user.id}
-                                                className="transition-colors hover:bg-muted/30"
-                                            >
-                                                {/* USER */}
-                                                <td className="px-4 py-3">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 font-semibold text-primary">
-                                                            {getInitials(
-                                                                user.name,
-                                                            )}
-                                                        </div>
-                                                        <div className="min-w-0">
-                                                            <p className="truncate text-sm font-semibold text-foreground">
-                                                                {user.name}
-                                                            </p>
-                                                            <p className="truncate text-xs text-muted-foreground">
-                                                                {user.email}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </td>
-
-                                                {/* ROLE */}
-                                                <td className="px-4 py-3 whitespace-nowrap">
-                                                    <Badge
-                                                        variant="secondary"
-                                                        className="font-semibold uppercase"
-                                                    >
-                                                        {user.role_label}
-                                                    </Badge>
-                                                </td>
-
-                                                {/* LAST LOGIN */}
-                                                <td className="px-4 py-3 text-sm whitespace-nowrap text-muted-foreground">
-                                                    {user.last_login_at
-                                                        ? formatDistanceToNow(
-                                                              new Date(
-                                                                  user.last_login_at,
-                                                              ),
-                                                              {
-                                                                  addSuffix: true,
-                                                                  locale: es,
-                                                              },
-                                                          )
-                                                        : 'Nunca'}
-                                                </td>
-
-                                                {/* STATUS */}
-                                                <td className="px-4 py-3">
-                                                    <ActiveBadge
-                                                        isActive={
-                                                            user.is_active
-                                                        }
-                                                    />
-                                                </td>
-
-                                                {/* ACTIONS */}
-                                                <td className="px-4 py-3 text-right">
-                                                    <TableActions
-                                                        actions={{
-                                                            view: false,
-                                                            edit: user.can
-                                                                .update,
-                                                            delete: user.can
-                                                                .delete,
-                                                        }}
-                                                        onEdit={() =>
-                                                            router.get(
-                                                                usersEdit(
-                                                                    user.id,
-                                                                ).url,
-                                                            )
-                                                        }
-                                                        onDelete={() => {
-                                                            if (
-                                                                confirm(
-                                                                    '¿Eliminar este usuario definitivamente?',
-                                                                )
-                                                            ) {
-                                                                router.delete(
-                                                                    usersDestroy(
-                                                                        user.id,
-                                                                    ).url,
-                                                                );
-                                                            }
-                                                        }}
-                                                    />
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td
-                                                colSpan={5}
-                                                className="py-12 text-center text-muted-foreground"
-                                            >
-                                                No se encontraron usuarios.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-
-                            {/* PAGINATION */}
-                            <div className="border-t border-border px-4 py-4">
-                                <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-                                    <span className="text-xs font-medium text-muted-foreground">
-                                        Mostrando {users.data.length} de{' '}
-                                        {users.total} usuarios
-                                    </span>
-                                    <Pagination links={users.links} />
-                                </div>
-                            </div>
+                        <div className="mt-4 flex justify-center">
+                            <Pagination links={users.links} />
                         </div>
                     </div>
 
@@ -269,7 +201,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
                                         <Activity className="h-5 w-5 text-primary" />
-                                        Registro de Actividad
+                                        Registro de actividad
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
@@ -291,9 +223,13 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                                             </p>
                                         </div>
                                     ))}
-                                    <Button asChild className="mt-4 w-full">
+                                    <Button
+                                        asChild
+                                        variant="outline"
+                                        className="mt-4 w-full"
+                                    >
                                         <Link href={auditLogsIndex().url}>
-                                            VER TODOS LOS LOGS
+                                            Ver toda la auditoría
                                         </Link>
                                     </Button>
                                 </CardContent>

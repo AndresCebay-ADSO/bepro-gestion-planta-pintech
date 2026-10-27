@@ -1,17 +1,15 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Users } from 'lucide-react';
+import { Pencil, Trash2, Users } from 'lucide-react';
+
 import { ActiveBadge } from '@/components/active-badge';
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
+import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
-import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { useFilters } from '@/hooks/use-filters';
 import {
     index as warehousesIndex,
@@ -20,7 +18,6 @@ import {
     edit as warehousesEdit,
     destroy as warehousesDestroy,
 } from '@/routes/warehouses';
-
 import { form as warehousesAssignUsersForm } from '@/routes/warehouses/assign-users';
 import type { PaginationLink } from '@/types/ui';
 
@@ -78,6 +75,63 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
         });
     };
 
+    const columns: DataListingColumn<WarehouseRow>[] = [
+        {
+            key: 'name',
+            header: 'Nombre',
+            cell: (warehouse) => warehouse.name,
+            mobile: 'title',
+        },
+        {
+            key: 'city',
+            header: 'Ciudad',
+            cell: (warehouse) => warehouse.city,
+            mobile: 'subtitle',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'address',
+            header: 'Dirección',
+            // `max-w-xs` no limita un <td>: se corta en un bloque, y solo desde md (la tabla).
+            cell: (warehouse) => (
+                <span
+                    className="block md:max-w-xs md:truncate"
+                    title={warehouse.address ?? undefined}
+                >
+                    {warehouse.address ?? '-'}
+                </span>
+            ),
+            mobile: 'meta',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'type',
+            header: 'Tipo',
+            cell: (warehouse) => (
+                <StatusBadge enum="WarehouseType" value={warehouse.type} />
+            ),
+            mobile: 'meta',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (warehouse) => (
+                <ActiveBadge isActive={warehouse.is_active} feminine />
+            ),
+            mobile: 'status',
+        },
+        {
+            key: 'users',
+            header: 'Usuarios',
+            cell: (warehouse) => (
+                <FormattedNumber value={warehouse.users_count} />
+            ),
+            mobile: 'meta',
+            align: 'right',
+            className: 'text-muted-foreground',
+        },
+    ];
+
     return (
         <>
             <Head title="Bodegas" />
@@ -133,134 +187,41 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                     onClear={clearFilters}
                 />
 
-                <div className="overflow-x-auto rounded-lg border border-border bg-card">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/40">
-                            <tr>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Nombre
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Ciudad
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Dirección
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Tipo
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Estado
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Usuarios
-                                </th>
-                                <th className="p-3 text-right font-medium text-foreground">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {warehouses.data.map((warehouse) => (
-                                <tr
-                                    key={warehouse.id}
-                                    className="border-b border-border/60 last:border-0"
-                                >
-                                    <td className="p-3 text-foreground">
-                                        {warehouse.name}
-                                    </td>
-                                    <td className="p-3 text-muted-foreground">
-                                        {warehouse.city}
-                                    </td>
-                                    <td className="p-3 text-muted-foreground">
-                                        {warehouse.address ?? '-'}
-                                    </td>
-                                    <td className="p-3">
-                                        <StatusBadge
-                                            enum="WarehouseType"
-                                            value={warehouse.type}
-                                        />
-                                    </td>
-                                    <td className="p-3">
-                                        <ActiveBadge
-                                            isActive={warehouse.is_active}
-                                            feminine
-                                        />
-                                    </td>
-                                    <td className="p-3 text-muted-foreground">
-                                        {warehouse.users_count}
-                                    </td>
-                                    <td className="p-3 text-right">
-                                        <TableActions
-                                            permissions={{
-                                                view: warehouse.can.view,
-                                                edit: warehouse.can.update,
-                                                delete: warehouse.can.delete,
-                                            }}
-                                            onView={() =>
-                                                router.get(
-                                                    warehousesShow(warehouse.id)
-                                                        .url,
-                                                )
-                                            }
-                                            onEdit={() =>
-                                                router.get(
-                                                    warehousesEdit(warehouse.id)
-                                                        .url,
-                                                )
-                                            }
-                                            onDelete={() =>
-                                                handleDelete(warehouse.id)
-                                            }
-                                        >
-                                            {warehouse.can.update && (
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-8 w-8"
-                                                            asChild
-                                                        >
-                                                            <Link
-                                                                href={
-                                                                    warehousesAssignUsersForm(
-                                                                        warehouse.id,
-                                                                    ).url
-                                                                }
-                                                            >
-                                                                <Users className="h-4 w-4" />
-                                                                <span className="sr-only">
-                                                                    Asignar
-                                                                    usuarios
-                                                                </span>
-                                                            </Link>
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        Asignar usuarios
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            )}
-                                        </TableActions>
-                                    </td>
-                                </tr>
-                            ))}
-                            {warehouses.data.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={6}
-                                        className="p-8 text-center text-sm text-muted-foreground"
-                                    >
-                                        No se encontraron bodegas.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <DataListing
+                    rows={warehouses.data}
+                    rowKey={(warehouse) => warehouse.id}
+                    rowHref={(warehouse) =>
+                        warehouse.can.view
+                            ? warehousesShow(warehouse.id).url
+                            : undefined
+                    }
+                    rowLabel={(warehouse) => warehouse.name}
+                    columns={columns}
+                    actions={(warehouse) => [
+                        {
+                            label: 'Editar',
+                            icon: Pencil,
+                            href: warehousesEdit(warehouse.id).url,
+                            hidden: !warehouse.can.update,
+                        },
+                        {
+                            label: 'Asignar usuarios',
+                            icon: Users,
+                            href: warehousesAssignUsersForm(warehouse.id).url,
+                            hidden: !warehouse.can.update,
+                        },
+                        {
+                            label: 'Eliminar',
+                            icon: Trash2,
+                            destructive: true,
+                            onSelect: () => handleDelete(warehouse.id),
+                            hidden: !warehouse.can.delete,
+                        },
+                    ]}
+                    empty="No se encontraron bodegas."
+                />
 
-                <div className="flex justify-center">
+                <div className="mt-4 flex justify-center">
                     <Pagination links={warehouses.links} />
                 </div>
             </div>
