@@ -30,6 +30,9 @@ type RequestRow = {
     sample_due_date: string | null;
     city: string;
     created_at: string;
+    can: {
+        update: boolean;
+    };
 };
 
 type Props = {
@@ -169,12 +172,12 @@ export default function PaintDevelopmentRequestsIndex({
                     rowLabel={(req) => `la solicitud ${req.request_number}`}
                     columns={columns}
                     actions={(req) => [
-                        // Solo un borrador se puede editar.
+                        // El servidor decide: solo un borrador, con permiso de editar y acceso a la solicitud.
                         {
                             label: 'Editar',
                             icon: Pencil,
                             href: requestsEdit(req.id).url,
-                            hidden: req.status !== 'draft',
+                            hidden: !req.can.update,
                         },
                     ]}
                     empty="No hay solicitudes registradas."

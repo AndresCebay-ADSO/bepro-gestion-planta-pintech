@@ -31,6 +31,9 @@ type QuotationRow = {
     total: number;
     items_count: number;
     created_at: string;
+    can: {
+        update: boolean;
+    };
 };
 
 type Props = {
@@ -187,12 +190,12 @@ export default function QuotationsIndex({
                     }
                     columns={columns}
                     actions={(quotation) => [
-                        // Solo un borrador se puede editar.
+                        // El servidor decide: solo un borrador, con permiso de editar y acceso a la cotización.
                         {
                             label: 'Editar',
                             icon: Pencil,
                             href: quotationsEdit(quotation.id).url,
-                            hidden: quotation.status !== 'draft',
+                            hidden: !quotation.can.update,
                         },
                     ]}
                     empty="No hay cotizaciones registradas."

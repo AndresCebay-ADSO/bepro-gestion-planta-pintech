@@ -264,7 +264,9 @@ fit in the 4 `meta`, the least important `meta` goes `hidden` instead.
 
 `align: 'right'` for figures (adds `tabular-nums`), `'center'` for pills and alerts. `className` styles the desktop
 cell only (`max-w-xs truncate` would cut the value on the card); `cardClassName` styles the value on the card (for
-example `font-mono` on a code, which then goes in both). The header is the table-header role
+example `font-mono` on a code, which then goes in both). Secondary free text (contacts, addresses, notes) is cut on
+desktop with `md:max-w-xs md:truncate` and the full text in `title`; the main text of a row (an alert message, an audit
+description) wraps instead (`whitespace-normal`). The header is the table-header role
 of §5 (12 px); cells are 14 px. In development a console warning flags a definition that breaks these limits
 (`lib/data-listing.ts`). Table and cards are both in the DOM (toggled with `hidden md:block`): a text search in tests
 finds each value twice.

@@ -324,15 +324,10 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
         {
             key: 'description',
             header: 'Descripción',
-            cell: (log) => (
-                <span
-                    className="block md:max-w-xs md:truncate"
-                    title={log.description}
-                >
-                    {log.description}
-                </span>
-            ),
+            cell: (log) => log.description,
             mobile: 'subtitle',
+            // Es lo principal de la fila: se lee entero, salta de línea.
+            className: 'min-w-64 whitespace-normal',
         },
         {
             key: 'properties',

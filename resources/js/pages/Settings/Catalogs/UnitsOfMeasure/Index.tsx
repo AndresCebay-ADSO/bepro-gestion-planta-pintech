@@ -181,8 +181,11 @@ export default function UnitsOfMeasureIndex({ units, filters, can }: Props) {
                             destructive: true,
                             onSelect: () => handleDelete(unit),
                             // En uso no se puede eliminar (claves foráneas RESTRICT): se desactiva.
+                            // La salida («desactívala al editarla») solo se ofrece a quien puede editar.
                             disabledReason: unit.in_use
-                                ? 'No disponible: está en uso. Desactívala al editarla.'
+                                ? unit.can.update
+                                    ? 'No disponible: está en uso. Desactívala al editarla.'
+                                    : 'No disponible: está en uso.'
                                 : undefined,
                             hidden: !unit.can.delete,
                         },

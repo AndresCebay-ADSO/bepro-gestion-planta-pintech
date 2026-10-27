@@ -178,9 +178,12 @@ export default function RawMaterialCategoriesIndex({
                             destructive: true,
                             onSelect: () => handleDelete(category),
                             // Con materias primas no se puede eliminar (clave foránea RESTRICT): se desactiva.
+                            // La salida («desactívala al editarla») solo se ofrece a quien puede editar.
                             disabledReason:
                                 category.raw_materials_count > 0
-                                    ? 'No disponible: tiene materias primas. Desactívala al editarla.'
+                                    ? category.can.update
+                                        ? 'No disponible: tiene materias primas. Desactívala al editarla.'
+                                        : 'No disponible: tiene materias primas.'
                                     : undefined,
                             hidden: !category.can.delete,
                         },

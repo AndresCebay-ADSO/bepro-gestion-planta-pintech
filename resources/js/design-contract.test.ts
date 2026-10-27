@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -273,9 +273,10 @@ describe('contrato de DESIGN.md', () => {
 
         expect(report(found)).toEqual([]);
 
-        // Una excepción que ya no tiene tabla sobra: se quita para que el guardián la vigile.
+        // Una excepción que ya no existe o ya no tiene tabla sobra: se quita para que el guardián la vigile.
         const staleExceptions = tableExceptions.filter(
             (path) =>
+                !existsSync(join(root, path)) ||
                 !/<(?:table|Table)\b/.test(
                     readFileSync(join(root, path), 'utf8'),
                 ),

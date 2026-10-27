@@ -9,6 +9,7 @@ use App\Actions\Formulas\CreateFormulaAction;
 use App\Actions\Formulas\DeleteFormulaAction;
 use App\Actions\Formulas\SetPriceReferenceFormulaAction;
 use App\Actions\Formulas\UpdateFormulaAction;
+use App\Enums\Permission;
 use App\Filters\FormulaFilter;
 use App\Http\Requests\Formulas\IndexFormulaRequest;
 use App\Http\Requests\Formulas\StoreFormulaRequest;
@@ -49,6 +50,7 @@ class FormulaController extends Controller
             'filters' => $request->validated(),
             'can' => [
                 'create' => Gate::allows('create', Formula::class),
+                'delete' => $request->user()?->can(Permission::FormulasDelete->value) ?? false,
             ],
         ]);
     }

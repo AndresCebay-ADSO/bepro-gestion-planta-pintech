@@ -39,7 +39,7 @@ type Props = {
         links: PaginationLink[];
     };
     filters: Record<string, string | null | undefined>;
-    can: { create: boolean };
+    can: { create: boolean; delete: boolean };
 };
 
 const statusOptions = [
@@ -189,8 +189,11 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                                     );
                                 }
                             },
-                            // La de referencia no se elimina (se elige otra antes).
-                            hidden: formula.is_price_reference,
+                            // La de referencia no se elimina: se elige otra antes.
+                            disabledReason: formula.is_price_reference
+                                ? 'No disponible: es la fórmula de referencia de precio. Elige otra antes.'
+                                : undefined,
+                            hidden: !can.delete,
                         },
                     ]}
                     empty="No hay fórmulas registradas."

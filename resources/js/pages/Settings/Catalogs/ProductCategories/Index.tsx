@@ -166,9 +166,12 @@ export default function ProductCategoriesIndex({
                             destructive: true,
                             onSelect: () => handleDelete(category),
                             // Con productos no se puede eliminar (clave foránea RESTRICT): se desactiva.
+                            // La salida («desactívala al editarla») solo se ofrece a quien puede editar.
                             disabledReason:
                                 category.products_count > 0
-                                    ? 'No disponible: tiene productos. Desactívala al editarla.'
+                                    ? category.can.update
+                                        ? 'No disponible: tiene productos. Desactívala al editarla.'
+                                        : 'No disponible: tiene productos.'
                                     : undefined,
                             hidden: !category.can.delete,
                         },

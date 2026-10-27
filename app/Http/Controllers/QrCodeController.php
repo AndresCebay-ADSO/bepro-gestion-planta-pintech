@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Permission;
 use App\Filters\QrCodeFilter;
 use App\Http\Requests\QrCodes\IndexQrCodeRequest;
 use App\Http\Requests\QrCodes\UpdateQrCodeRequest;
@@ -128,6 +129,8 @@ class QrCodeController extends Controller
             ],
             'can' => [
                 'update' => $request->user()?->can('update', $qrCode) ?? false,
+                // La orden enlaza a la OP, que pide otro permiso: sin él, queda como texto.
+                'viewProductionOrders' => $request->user()?->can(Permission::ProductionOrdersView->value) ?? false,
             ],
         ]);
     }

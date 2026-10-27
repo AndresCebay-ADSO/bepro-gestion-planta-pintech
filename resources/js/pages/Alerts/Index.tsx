@@ -161,6 +161,8 @@ export default function AlertsIndex({
             header: 'Mensaje',
             cell: (alert) => alert.message,
             mobile: 'title',
+            // Es lo principal de la fila: se lee entero, salta de línea.
+            className: 'min-w-64 whitespace-normal',
         },
         {
             key: 'severity',

@@ -67,6 +67,10 @@ class QuotationController extends Controller
                 'total' => (float) $quotation->total,
                 'items_count' => $quotation->items_count,
                 'created_at' => $quotation->created_at?->toIso8601String(),
+                // La política ya exige borrador, `quotations.edit` y acceso a la cotización.
+                'can' => [
+                    'update' => $user?->can('update', $quotation) ?? false,
+                ],
             ]);
 
         return Inertia::render('Quotations/Index', [

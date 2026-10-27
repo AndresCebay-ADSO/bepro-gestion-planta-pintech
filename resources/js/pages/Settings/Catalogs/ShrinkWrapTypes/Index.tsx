@@ -160,8 +160,11 @@ export default function ShrinkWrapTypesIndex({ types, filters, can }: Props) {
                             destructive: true,
                             onSelect: () => handleDelete(type),
                             // Con registros no se puede eliminar (clave foránea RESTRICT): se desactiva.
+                            // La salida («desactívalo al editarlo») solo se ofrece a quien puede editar.
                             disabledReason: type.in_use
-                                ? 'No disponible: ya tiene termoencogidos registrados. Desactívalo al editarlo.'
+                                ? type.can.update
+                                    ? 'No disponible: ya tiene termoencogidos registrados. Desactívalo al editarlo.'
+                                    : 'No disponible: ya tiene termoencogidos registrados.'
                                 : undefined,
                             hidden: !type.can.delete,
                         },
