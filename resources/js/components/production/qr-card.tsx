@@ -26,7 +26,7 @@ export function QrCard({
     return (
         <Card className="border-primary/25 bg-gradient-to-b from-primary/5 to-card shadow-sm">
             <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-base">
+                <CardTitle className="flex items-center gap-2">
                     <QrCode className="h-5 w-5 text-primary" />
                     Documentación pública del lote
                 </CardTitle>

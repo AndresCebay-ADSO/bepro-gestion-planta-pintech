@@ -98,7 +98,7 @@ export function ConsumeRemnantsCard({
     return (
         <Card className="border-emerald-200 shadow-sm dark:border-emerald-900/50">
             <CardHeader className="bg-emerald-50/50 pb-4 dark:bg-emerald-950/20">
-                <CardTitle className="flex items-center gap-2 text-base text-emerald-800 dark:text-emerald-300">
+                <CardTitle className="flex items-center gap-2 text-success-text">
                     <FlaskConical className="h-4 w-4" />
                     Saldos de Producto Terminado
                 </CardTitle>

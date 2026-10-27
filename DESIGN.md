@@ -312,8 +312,7 @@ A `RowAction` has either `href` (navigates) or `onSelect` (runs a handler), neve
 
 1. Component + 2–3 example screens in a first PR, reviewed in the browser.
 2. The remaining screens in a second, mechanical PR that repeats the approved pattern.
-3. Every PR that touches screens: check light, dark and **390 px**, with before/after screenshots in
-   `~/proyecto/capturas/<branch>/`.
+3. Every PR that touches screens: check light, dark and 390 px.
 
 PR checklist:
 - [ ] Only tokens; no raw palette, hex or arbitrary sizes in `pages/`, `components/`, `layouts/`.
