@@ -1,15 +1,15 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { QrCode } from 'lucide-react';
+import { Head } from '@inertiajs/react';
 import type { ComponentProps } from 'react';
 
 import { ActiveBadge } from '@/components/active-badge';
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
+import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
-import { TableActions } from '@/components/table-actions';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
-import { show as productionOrderShow } from '@/routes/production-orders';
 import { index as qrCodesIndex, show as qrCodesShow } from '@/routes/qr-codes';
 import type { PaginationLink } from '@/types/ui';
 
@@ -77,6 +77,69 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
         },
     ];
 
+    const columns: DataListingColumn<QrCodeRow>[] = [
+        {
+            key: 'token',
+            header: 'Token',
+            cell: (row) => row.token_short,
+            mobile: 'title',
+            className: 'font-mono',
+            cardClassName: 'font-mono',
+        },
+        {
+            key: 'product',
+            header: 'Producto',
+            cell: (row) => row.product?.display_name ?? '—',
+            mobile: 'subtitle',
+        },
+        {
+            key: 'order',
+            header: 'Orden / Lote',
+            // Solo el token es enlace (DESIGN.md §9): la OP se abre desde el detalle del QR.
+            cell: (row) =>
+                row.production_order ? (
+                    <>
+                        <div className="font-mono">
+                            {row.production_order.order_number}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                            Lote: {row.production_order.lot_number}
+                        </div>
+                    </>
+                ) : (
+                    '—'
+                ),
+            mobile: 'meta',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (row) => <ActiveBadge isActive={row.is_active} />,
+            mobile: 'status',
+        },
+        {
+            key: 'documents',
+            header: 'Documentos',
+            cell: (row) => <FormattedNumber value={row.documents_count} />,
+            mobile: 'meta',
+            align: 'right',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'created_at',
+            header: 'Creado',
+            cell: (row) => (
+                <FormattedDate
+                    value={row.created_at}
+                    format="short"
+                    emptyValue="—"
+                />
+            ),
+            mobile: 'meta',
+            className: 'whitespace-nowrap text-muted-foreground',
+        },
+    ];
+
     return (
         <>
             <Head title="Códigos QR" />
@@ -95,145 +158,17 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
                     onClear={clearFilters}
                 />
 
-                <div className="overflow-hidden rounded-lg border border-border bg-card">
-                    <table className="min-w-full divide-y divide-border text-sm">
-                        <thead className="bg-muted/40">
-                            <tr>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Token
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Producto
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Orden / Lote
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Estado
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Docs
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Creado
-                                </th>
-                                <th className="px-4 py-3 text-right font-medium">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                            {qrCodes.data.length === 0 ? (
-                                <tr>
-                                    <td
-                                        colSpan={7}
-                                        className="px-4 py-10 text-center text-muted-foreground"
-                                    >
-                                        No hay códigos QR registrados.
-                                    </td>
-                                </tr>
-                            ) : (
-                                qrCodes.data.map((row) => (
-                                    <tr
-                                        key={row.id}
-                                        className="hover:bg-muted/30"
-                                    >
-                                        <td className="px-4 py-3 align-top">
-                                            <div className="flex items-center gap-2 font-mono text-xs text-foreground">
-                                                <QrCode className="h-4 w-4 text-muted-foreground" />
-                                                {row.token_short}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 align-top">
-                                            {row.product ? (
-                                                <div>
-                                                    <p className="font-medium text-foreground">
-                                                        {
-                                                            row.product
-                                                                .display_name
-                                                        }
-                                                    </p>
-                                                </div>
-                                            ) : (
-                                                <span className="text-muted-foreground">
-                                                    —
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 align-top">
-                                            {row.production_order ? (
-                                                <div>
-                                                    <Link
-                                                        href={
-                                                            productionOrderShow(
-                                                                {
-                                                                    production_order:
-                                                                        row
-                                                                            .production_order
-                                                                            .id,
-                                                                },
-                                                            ).url
-                                                        }
-                                                        className="font-medium text-primary hover:underline"
-                                                    >
-                                                        {
-                                                            row.production_order
-                                                                .order_number
-                                                        }
-                                                    </Link>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Lote:{' '}
-                                                        {
-                                                            row.production_order
-                                                                .lot_number
-                                                        }
-                                                    </p>
-                                                </div>
-                                            ) : (
-                                                <span className="text-muted-foreground">
-                                                    —
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 align-top">
-                                            <ActiveBadge
-                                                isActive={row.is_active}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3 align-top text-muted-foreground">
-                                            {row.documents_count}
-                                        </td>
-                                        <td className="px-4 py-3 align-top text-muted-foreground">
-                                            <FormattedDate
-                                                value={row.created_at}
-                                                format="short"
-                                                emptyValue="—"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3 text-right align-top">
-                                            <TableActions
-                                                actions={{
-                                                    view: true,
-                                                    edit: false,
-                                                    delete: false,
-                                                }}
-                                                onView={() =>
-                                                    router.get(
-                                                        qrCodesShow({
-                                                            qrCode: row.id,
-                                                        }).url,
-                                                    )
-                                                }
-                                            />
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <DataListing
+                    rows={qrCodes.data}
+                    rowKey={(row) => row.id}
+                    rowHref={(row) => qrCodesShow({ qrCode: row.id }).url}
+                    columns={columns}
+                    empty="No hay códigos QR registrados."
+                />
 
-                <Pagination links={qrCodes.links} />
+                <div className="mt-4 flex justify-center">
+                    <Pagination links={qrCodes.links} />
+                </div>
             </div>
         </>
     );

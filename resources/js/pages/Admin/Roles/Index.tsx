@@ -1,9 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { Pencil, Trash2 } from 'lucide-react';
 import type { FC } from 'react';
 
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
+import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
-import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
@@ -54,6 +57,42 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
         },
     });
 
+    const columns: DataListingColumn<RoleRow>[] = [
+        {
+            key: 'label',
+            header: 'Rol',
+            cell: (role) => role.label,
+            mobile: 'title',
+        },
+        {
+            key: 'type',
+            header: 'Tipo',
+            cell: (role) => (
+                <Badge variant={role.is_system ? 'secondary' : 'outline'}>
+                    {role.is_system ? 'Sistema' : 'Personalizado'}
+                </Badge>
+            ),
+            mobile: 'subtitle',
+            className: 'whitespace-nowrap',
+        },
+        {
+            key: 'permissions',
+            header: 'Permisos',
+            cell: (role) => <FormattedNumber value={role.permissions_count} />,
+            mobile: 'meta',
+            align: 'right',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'users',
+            header: 'Usuarios',
+            cell: (role) => <FormattedNumber value={role.users_count} />,
+            mobile: 'meta',
+            align: 'right',
+            className: 'text-muted-foreground',
+        },
+    ];
+
     return (
         <>
             <Head title="Roles" />
@@ -84,119 +123,40 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
                     onClear={clearFilters}
                 />
 
-                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="border-b border-border bg-muted/50">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                                        Rol
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                                        Tipo
-                                    </th>
-                                    <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase">
-                                        Permisos
-                                    </th>
-                                    <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase">
-                                        Usuarios
-                                    </th>
-                                    <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase">
-                                        Acciones
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                                {roles.data.length > 0 ? (
-                                    roles.data.map((role) => (
-                                        <tr
-                                            key={role.id}
-                                            className="transition-colors hover:bg-muted/30"
-                                        >
-                                            <td className="px-4 py-3 text-sm font-semibold text-foreground">
-                                                {role.label}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                <Badge
-                                                    variant={
-                                                        role.is_system
-                                                            ? 'secondary'
-                                                            : 'outline'
-                                                    }
-                                                >
-                                                    {role.is_system
-                                                        ? 'Sistema'
-                                                        : 'Personalizado'}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-4 py-3 text-right text-sm text-muted-foreground">
-                                                {role.permissions_count}
-                                            </td>
-                                            <td className="px-4 py-3 text-right text-sm text-muted-foreground">
-                                                {role.users_count}
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <TableActions
-                                                    actions={{
-                                                        view: true,
-                                                        edit: role.can.update,
-                                                        delete: role.can.delete,
-                                                    }}
-                                                    onView={() =>
-                                                        router.get(
-                                                            rolesShow(role.id)
-                                                                .url,
-                                                        )
-                                                    }
-                                                    onEdit={() =>
-                                                        router.get(
-                                                            rolesEdit(role.id)
-                                                                .url,
-                                                        )
-                                                    }
-                                                    onDelete={() => {
-                                                        if (
-                                                            confirm(
-                                                                `¿Eliminar el rol "${role.label}"?`,
-                                                            )
-                                                        ) {
-                                                            router.delete(
-                                                                rolesDestroy(
-                                                                    role.id,
-                                                                ).url,
-                                                                {
-                                                                    preserveScroll: true,
-                                                                },
-                                                            );
-                                                        }
-                                                    }}
-                                                />
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td
-                                            colSpan={5}
-                                            className="py-12 text-center text-muted-foreground"
-                                        >
-                                            No se encontraron roles.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                <DataListing
+                    rows={roles.data}
+                    rowKey={(role) => role.id}
+                    rowHref={(role) => rolesShow(role.id).url}
+                    rowLabel={(role) => role.label}
+                    columns={columns}
+                    actions={(role) => [
+                        {
+                            label: 'Editar',
+                            icon: Pencil,
+                            href: rolesEdit(role.id).url,
+                            hidden: !role.can.update,
+                        },
+                        {
+                            label: 'Eliminar',
+                            icon: Trash2,
+                            destructive: true,
+                            onSelect: () => {
+                                if (
+                                    confirm(`¿Eliminar el rol "${role.label}"?`)
+                                ) {
+                                    router.delete(rolesDestroy(role.id).url, {
+                                        preserveScroll: true,
+                                    });
+                                }
+                            },
+                            hidden: !role.can.delete,
+                        },
+                    ]}
+                    empty="No se encontraron roles."
+                />
 
-                    <div className="border-t border-border px-4 py-4">
-                        <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-                            <span className="text-xs font-medium text-muted-foreground">
-                                Mostrando {roles.data.length} de {roles.total}{' '}
-                                roles
-                            </span>
-                            <Pagination links={roles.links} />
-                        </div>
-                    </div>
+                <div className="mt-4 flex justify-center">
+                    <Pagination links={roles.links} />
                 </div>
             </div>
         </>

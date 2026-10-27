@@ -4,6 +4,8 @@ import { es } from 'date-fns/locale';
 import type { ComponentProps } from 'react';
 import AuditLogController from '@/actions/App/Http/Controllers/Admin/AuditLogController';
 
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { PageHeader } from '@/components/page-header';
 import Pagination from '@/components/ui/pagination';
@@ -266,6 +268,76 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
         },
     ];
 
+    // Sin detalle ni acciones: la fecha identifica el evento.
+    const columns: DataListingColumn<ActivityLog>[] = [
+        {
+            key: 'created_at',
+            header: 'Fecha',
+            cell: (log) =>
+                format(new Date(log.createdAt), 'dd MMM yyyy, HH:mm', {
+                    locale: es,
+                }),
+            mobile: 'title',
+            className: 'whitespace-nowrap',
+        },
+        {
+            key: 'causer',
+            header: 'Causante',
+            cell: (log) =>
+                log.causer ? (
+                    <div>
+                        <div className="font-medium">{log.causer.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                            {log.causer.email}
+                        </div>
+                    </div>
+                ) : (
+                    <span className="text-muted-foreground italic">
+                        Sistema / Anónimo
+                    </span>
+                ),
+            mobile: 'meta',
+        },
+        {
+            key: 'log_name',
+            header: 'Módulo',
+            cell: (log) => (
+                <span className="rounded bg-secondary px-2 py-1 text-xs tracking-wider text-secondary-foreground uppercase">
+                    {log.logName}
+                </span>
+            ),
+            mobile: 'meta',
+        },
+        {
+            key: 'event',
+            header: 'Evento',
+            cell: (log) => (
+                <span
+                    className={`${pillClasses} ${toneClasses[eventTones[log.event] ?? 'neutral']}`}
+                >
+                    {getEventLabel(log.event)}
+                </span>
+            ),
+            mobile: 'status',
+            align: 'center',
+        },
+        {
+            key: 'description',
+            header: 'Descripción',
+            cell: (log) => log.description,
+            mobile: 'subtitle',
+            // Es lo principal de la fila: se lee entero, salta de línea.
+            className: 'min-w-64 whitespace-normal',
+        },
+        {
+            key: 'properties',
+            header: 'Detalles',
+            cell: (log) => formatProperties(log.properties),
+            mobile: 'meta',
+            className: 'max-w-xs font-mono text-xs text-muted-foreground',
+        },
+    ];
+
     return (
         <>
             <Head title="Auditoría" />
@@ -285,96 +357,12 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                     onClear={clearFilters}
                 />
 
-                {/* Tabla */}
-                <div className="overflow-x-auto rounded-lg border border-border bg-card">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/40">
-                            <tr>
-                                <th className="p-3 text-left font-medium">
-                                    Fecha
-                                </th>
-                                <th className="p-3 text-left font-medium">
-                                    Causante
-                                </th>
-                                <th className="p-3 text-left font-medium">
-                                    Módulo
-                                </th>
-                                <th className="p-3 text-center font-medium">
-                                    Evento
-                                </th>
-                                <th className="p-3 text-left font-medium">
-                                    Descripción
-                                </th>
-                                <th className="p-3 text-left font-medium">
-                                    Detalles (Properties)
-                                </th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {logs.data.map((log) => (
-                                <tr
-                                    key={log.id}
-                                    className="border-b border-border/60 transition last:border-0 hover:bg-muted/30"
-                                >
-                                    <td className="p-3 text-xs whitespace-nowrap text-muted-foreground">
-                                        {format(
-                                            new Date(log.createdAt),
-                                            'dd MMM yyyy, HH:mm',
-                                            { locale: es },
-                                        )}
-                                    </td>
-                                    <td className="p-3">
-                                        {log.causer ? (
-                                            <div>
-                                                <div className="font-medium">
-                                                    {log.causer.name}
-                                                </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    {log.causer.email}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <span className="text-muted-foreground italic">
-                                                Sistema / Anónimo
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="p-3">
-                                        <span className="rounded bg-secondary px-2 py-1 text-xs tracking-wider text-secondary-foreground uppercase">
-                                            {log.logName}
-                                        </span>
-                                    </td>
-                                    <td className="p-3 text-center">
-                                        <span
-                                            className={`${pillClasses} ${toneClasses[eventTones[log.event] ?? 'neutral']}`}
-                                        >
-                                            {getEventLabel(log.event)}
-                                        </span>
-                                    </td>
-                                    <td className="max-w-[200px] p-3 break-words text-foreground">
-                                        {log.description}
-                                    </td>
-                                    <td className="max-w-[200px] p-3 font-mono text-xs text-muted-foreground">
-                                        {formatProperties(log.properties)}
-                                    </td>
-                                </tr>
-                            ))}
-
-                            {logs.data.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={6}
-                                        className="p-10 text-center text-sm text-muted-foreground"
-                                    >
-                                        No hay registros que coincidan con los
-                                        filtros.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <DataListing
+                    rows={logs.data}
+                    rowKey={(log) => log.id}
+                    columns={columns}
+                    empty="No hay registros que coincidan con los filtros."
+                />
 
                 {/* Paginación */}
                 <div className="mt-4 flex justify-center">

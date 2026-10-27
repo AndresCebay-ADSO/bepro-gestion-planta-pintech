@@ -1,13 +1,14 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { FileText } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { Pencil } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
-import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
@@ -30,6 +31,9 @@ type QuotationRow = {
     total: number;
     items_count: number;
     created_at: string;
+    can: {
+        update: boolean;
+    };
 };
 
 type Props = {
@@ -99,11 +103,62 @@ export default function QuotationsIndex({
         label: 'Fecha de cotización',
     });
 
+    const columns: DataListingColumn<QuotationRow>[] = [
+        {
+            key: 'quotation_number',
+            header: 'Número',
+            cell: (quotation) => quotation.quotation_number ?? '—',
+            mobile: 'title',
+            className: 'font-mono',
+            cardClassName: 'font-mono',
+        },
+        {
+            key: 'client',
+            header: 'Cliente',
+            cell: (quotation) => quotation.client.business_name,
+            mobile: 'subtitle',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (quotation) => (
+                <StatusBadge enum="QuotationStatus" value={quotation.status} />
+            ),
+            mobile: 'status',
+        },
+        {
+            key: 'quotation_date',
+            header: 'Fecha',
+            cell: (quotation) => (
+                <FormattedDate
+                    value={quotation.quotation_date}
+                    format="short"
+                    emptyValue="—"
+                />
+            ),
+            mobile: 'meta',
+            className: 'whitespace-nowrap',
+        },
+        {
+            key: 'total',
+            header: 'Total',
+            cell: (quotation) => (
+                <FormattedNumber
+                    value={quotation.total}
+                    currency
+                    maxDecimals={0}
+                />
+            ),
+            mobile: 'meta',
+            align: 'right',
+        },
+    ];
+
     return (
         <>
             <Head title="Cotizaciones" />
 
-            <div className="space-y-4 p-6">
+            <div className="space-y-6 p-6">
                 <PageHeader
                     title="Cotizaciones"
                     description="Gestión de ofertas comerciales."
@@ -126,109 +181,29 @@ export default function QuotationsIndex({
                     onClear={clearFilters}
                 />
 
-                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/30">
-                            <tr>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Número
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Cliente
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Estado
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Fecha
-                                </th>
-                                <th className="px-4 py-3 text-right font-medium">
-                                    Total
-                                </th>
-                                <th className="px-4 py-3 text-right font-medium">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {quotations.data.length === 0 ? (
-                                <tr>
-                                    <td
-                                        colSpan={6}
-                                        className="px-4 py-10 text-center text-muted-foreground"
-                                    >
-                                        <FileText className="mx-auto mb-2 h-8 w-8 opacity-40" />
-                                        No hay cotizaciones registradas.
-                                    </td>
-                                </tr>
-                            ) : (
-                                quotations.data.map((quotation) => (
-                                    <tr
-                                        key={quotation.id}
-                                        className="border-b border-border last:border-0"
-                                    >
-                                        <td className="px-4 py-3 font-mono text-xs">
-                                            {quotation.quotation_number ?? '—'}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {quotation.client.business_name}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <StatusBadge
-                                                enum="QuotationStatus"
-                                                value={quotation.status}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <FormattedDate
-                                                value={quotation.quotation_date}
-                                                format="short"
-                                                emptyValue="—"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <FormattedNumber
-                                                value={quotation.total}
-                                                currency
-                                                maxDecimals={0}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <TableActions
-                                                actions={{
-                                                    view: true,
-                                                    edit:
-                                                        quotation.status ===
-                                                        'draft',
-                                                    delete: false,
-                                                }}
-                                                onView={() =>
-                                                    router.get(
-                                                        quotationsShow(
-                                                            quotation.id,
-                                                        ).url,
-                                                    )
-                                                }
-                                                onEdit={
-                                                    quotation.status === 'draft'
-                                                        ? () =>
-                                                              router.get(
-                                                                  quotationsEdit(
-                                                                      quotation.id,
-                                                                  ).url,
-                                                              )
-                                                        : undefined
-                                                }
-                                            />
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <DataListing
+                    rows={quotations.data}
+                    rowKey={(quotation) => quotation.id}
+                    rowHref={(quotation) => quotationsShow(quotation.id).url}
+                    rowLabel={(quotation) =>
+                        `la cotización ${quotation.quotation_number ?? quotation.id}`
+                    }
+                    columns={columns}
+                    actions={(quotation) => [
+                        // El servidor decide: solo un borrador, con permiso de editar y acceso a la cotización.
+                        {
+                            label: 'Editar',
+                            icon: Pencil,
+                            href: quotationsEdit(quotation.id).url,
+                            hidden: !quotation.can.update,
+                        },
+                    ]}
+                    empty="No hay cotizaciones registradas."
+                />
 
-                <Pagination links={quotations.links} />
+                <div className="mt-4 flex justify-center">
+                    <Pagination links={quotations.links} />
+                </div>
             </div>
         </>
     );

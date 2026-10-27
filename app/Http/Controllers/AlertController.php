@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\AlertSeverity;
+use App\Enums\Permission;
 use App\Filters\AlertFilter;
 use App\Http\Requests\Alerts\IndexAlertRequest;
 use App\Models\Alert;
@@ -77,6 +78,11 @@ class AlertController extends Controller
             'severityOptions' => EnumOptions::for(AlertSeverity::cases()),
             'stats' => [
                 'unresolved_count' => $this->alertService->unresolvedCount($request->user()),
+            ],
+            // El mensaje enlaza a la materia prima, que pide otro permiso (las alertas de precio se ven con
+            // `costs.view`): sin él, queda como texto.
+            'can' => [
+                'viewRawMaterials' => $request->user()->can(Permission::RawMaterialsView->value),
             ],
         ]);
     }

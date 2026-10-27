@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -237,6 +237,63 @@ describe('contrato de DESIGN.md', () => {
 
             return hits;
         });
+
+        expect(report(found)).toEqual([]);
+    });
+
+    it('pinta los listados con DataListing, sin tablas a mano en pages/', () => {
+        // Excepciones por archivo: Costos y Precios no son listados (se rediseñan aparte) y las tablas de detalle
+        // esperan su propio plan. Al migrar una, se quita de aquí.
+        const tableExceptions = [
+            'resources/js/pages/Costs/Index.tsx',
+            'resources/js/pages/Prices/Index.tsx',
+            'resources/js/pages/Formulas/Show.tsx',
+            'resources/js/pages/Inventory/RawMaterials/Show.tsx',
+            'resources/js/pages/Inventory/Warehouses/Show.tsx',
+            'resources/js/pages/Inventory/Warehouses/AssignUsers.tsx',
+            'resources/js/pages/Production/ShrinkWraps/Show.tsx',
+            'resources/js/pages/Products/Show.tsx',
+            'resources/js/pages/QrCodes/Show.tsx',
+            'resources/js/pages/Quotations/Show.tsx',
+            'resources/js/pages/SalesOrders/Show.tsx',
+        ];
+
+        const files = screenFiles.filter(
+            (file) =>
+                relativePath(file).startsWith('resources/js/pages/') &&
+                !tableExceptions.includes(relativePath(file)),
+        );
+
+        const found = violations(files, [
+            {
+                pattern: /<(?:table|Table)\b/g,
+                rule: 'DESIGN.md §9: un listado es <DataListing>, no una tabla escrita a mano',
+            },
+        ]);
+
+        expect(report(found)).toEqual([]);
+
+        // Una excepción que ya no existe o ya no tiene tabla sobra: se quita para que el guardián la vigile.
+        const staleExceptions = tableExceptions.filter(
+            (path) =>
+                !existsSync(join(root, path)) ||
+                !/<(?:table|Table)\b/.test(
+                    readFileSync(join(root, path), 'utf8'),
+                ),
+        );
+
+        expect(staleExceptions).toEqual([]);
+    });
+
+    it('no importa el componente retirado TableActions', () => {
+        const files = filesUnder(join(root, 'resources/js'), ['.ts', '.tsx']);
+
+        const found = violations(files, [
+            {
+                pattern: /from\s+['"][^'"]*\/table-actions['"]/g,
+                rule: 'DESIGN.md §9: las acciones de fila van en <RowActions>',
+            },
+        ]);
 
         expect(report(found)).toEqual([]);
     });

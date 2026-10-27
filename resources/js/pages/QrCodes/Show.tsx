@@ -68,6 +68,7 @@ type Props = {
     qrCode: QrCodeDetail;
     can: {
         update: boolean;
+        viewProductionOrders: boolean;
     };
 };
 
@@ -235,22 +236,31 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                     </p>
                                     {qrCode.production_order ? (
                                         <div className="mt-1">
-                                            <Link
-                                                href={
-                                                    productionOrderShow({
-                                                        production_order:
-                                                            qrCode
-                                                                .production_order
-                                                                .id,
-                                                    }).url
-                                                }
-                                                className="font-medium text-primary hover:underline"
-                                            >
-                                                {
-                                                    qrCode.production_order
-                                                        .order_number
-                                                }
-                                            </Link>
+                                            {can.viewProductionOrders ? (
+                                                <Link
+                                                    href={
+                                                        productionOrderShow({
+                                                            production_order:
+                                                                qrCode
+                                                                    .production_order
+                                                                    .id,
+                                                        }).url
+                                                    }
+                                                    className="font-medium text-primary hover:underline"
+                                                >
+                                                    {
+                                                        qrCode.production_order
+                                                            .order_number
+                                                    }
+                                                </Link>
+                                            ) : (
+                                                <span className="font-medium">
+                                                    {
+                                                        qrCode.production_order
+                                                            .order_number
+                                                    }
+                                                </span>
+                                            )}
                                             <p className="text-xs text-muted-foreground">
                                                 Lote:{' '}
                                                 {

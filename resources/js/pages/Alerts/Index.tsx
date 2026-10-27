@@ -1,13 +1,20 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Clock, FlaskConical, PackageX, TrendingUp } from 'lucide-react';
+import {
+    CheckCircle2,
+    Clock,
+    FlaskConical,
+    PackageX,
+    TrendingUp,
+} from 'lucide-react';
 import type { ComponentProps } from 'react';
 
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
-import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { pillClasses, toneClasses } from '@/lib/tones';
@@ -58,6 +65,9 @@ type Props = {
     stats: {
         unresolved_count: number;
     };
+    can: {
+        viewRawMaterials: boolean;
+    };
 };
 
 function renderTypeIcon(type: string) {
@@ -86,6 +96,7 @@ export default function AlertsIndex({
     typeOptions,
     severityOptions,
     stats,
+    can,
 }: Props) {
     const {
         filters: filterState,
@@ -132,6 +143,59 @@ export default function AlertsIndex({
         });
     };
 
+    const columns: DataListingColumn<AlertRow>[] = [
+        {
+            key: 'type',
+            header: 'Tipo',
+            cell: (alert) => (
+                <span className={`${pillClasses} ${toneClasses.neutral}`}>
+                    {renderTypeIcon(alert.type)}
+                    {alert.type_label}
+                </span>
+            ),
+            mobile: 'subtitle',
+            className: 'whitespace-nowrap',
+        },
+        {
+            key: 'message',
+            header: 'Mensaje',
+            cell: (alert) => alert.message,
+            mobile: 'title',
+            // Es lo principal de la fila: se lee entero, salta de línea.
+            className: 'min-w-64 whitespace-normal',
+        },
+        {
+            key: 'severity',
+            header: 'Urgencia',
+            cell: (alert) => (
+                <StatusBadge enum="AlertSeverity" value={alert.severity} />
+            ),
+            mobile: 'status',
+        },
+        {
+            key: 'created_at',
+            header: 'Fecha',
+            cell: (alert) =>
+                alert.created_at
+                    ? format(new Date(alert.created_at), 'dd MMM yyyy HH:mm', {
+                          locale: es,
+                      })
+                    : '-',
+            mobile: 'meta',
+            className: 'whitespace-nowrap text-muted-foreground',
+        },
+        {
+            key: 'resolved_by',
+            header: 'Resuelta por',
+            cell: (alert) =>
+                alert.is_resolved
+                    ? (alert.resolved_by?.name ?? 'Resuelta')
+                    : '-',
+            mobile: 'meta',
+            className: 'text-muted-foreground',
+        },
+    ];
+
     return (
         <>
             <Head title="Alertas" />
@@ -167,115 +231,32 @@ export default function AlertsIndex({
                     onClear={clearFilters}
                 />
 
-                <div className="overflow-hidden rounded-lg border border-border bg-card">
-                    <table className="min-w-full divide-y divide-border text-sm">
-                        <thead className="bg-muted/40">
-                            <tr>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Tipo
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Mensaje
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Urgencia
-                                </th>
-                                <th className="px-4 py-3 text-left font-medium">
-                                    Fecha
-                                </th>
-                                <th className="px-4 py-3 text-right font-medium">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                            {alerts.data.length === 0 ? (
-                                <tr>
-                                    <td
-                                        colSpan={5}
-                                        className="px-4 py-10 text-center text-muted-foreground"
-                                    >
-                                        No hay alertas para los filtros
-                                        seleccionados.
-                                    </td>
-                                </tr>
-                            ) : (
-                                alerts.data.map((alert) => (
-                                    <tr key={alert.id}>
-                                        <td className="px-4 py-3 align-top">
-                                            <span
-                                                className={`${pillClasses} ${toneClasses.neutral}`}
-                                            >
-                                                {renderTypeIcon(alert.type)}
-                                                {alert.type_label}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 align-top">
-                                            <p className="font-medium text-foreground">
-                                                {alert.message}
-                                            </p>
-                                            {alert.raw_material && (
-                                                <Link
-                                                    href={rawMaterialShow.url(
-                                                        alert.raw_material.id,
-                                                    )}
-                                                    className="mt-1 inline-block font-mono text-xs text-primary hover:underline"
-                                                >
-                                                    {alert.raw_material.code}
-                                                </Link>
-                                            )}
-                                            {alert.is_resolved &&
-                                                alert.resolved_by && (
-                                                    <p className="mt-1 text-xs text-muted-foreground">
-                                                        Resuelta por{' '}
-                                                        {alert.resolved_by.name}
-                                                    </p>
-                                                )}
-                                        </td>
-                                        <td className="px-4 py-3 align-top">
-                                            <StatusBadge
-                                                enum="AlertSeverity"
-                                                value={alert.severity}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3 align-top text-muted-foreground">
-                                            {alert.created_at
-                                                ? format(
-                                                      new Date(
-                                                          alert.created_at,
-                                                      ),
-                                                      'dd MMM yyyy HH:mm',
-                                                      { locale: es },
-                                                  )
-                                                : '-'}
-                                        </td>
-                                        <td className="px-4 py-3 text-right align-top">
-                                            {alert.can.resolve ? (
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() =>
-                                                        handleResolve(alert.id)
-                                                    }
-                                                >
-                                                    Resolver
-                                                </Button>
-                                            ) : (
-                                                <span className="text-xs text-muted-foreground">
-                                                    {alert.is_resolved
-                                                        ? 'Resuelta'
-                                                        : '-'}
-                                                </span>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <DataListing
+                    rows={alerts.data}
+                    rowKey={(alert) => alert.id}
+                    // El mensaje abre la materia prima de la alerta (las alertas no tienen detalle propio), si se
+                    // tiene permiso de verla: las alertas de precio se ven con el de costos.
+                    rowHref={(alert) =>
+                        alert.raw_material && can.viewRawMaterials
+                            ? rawMaterialShow.url(alert.raw_material.id)
+                            : undefined
+                    }
+                    rowLabel={(alert) => alert.message}
+                    columns={columns}
+                    actions={(alert) => [
+                        {
+                            label: 'Resolver',
+                            icon: CheckCircle2,
+                            onSelect: () => handleResolve(alert.id),
+                            hidden: !alert.can.resolve,
+                        },
+                    ]}
+                    empty="No hay alertas para los filtros seleccionados."
+                />
 
-                <Pagination links={alerts.links} />
+                <div className="mt-4 flex justify-center">
+                    <Pagination links={alerts.links} />
+                </div>
             </div>
         </>
     );

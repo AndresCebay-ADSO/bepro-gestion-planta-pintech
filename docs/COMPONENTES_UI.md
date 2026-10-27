@@ -149,41 +149,19 @@ Componente para mostrar fechas formateadas según estándar colombiano.
 
 ---
 
-## TableActions (legado)
+## DataListing y RowActions (listados)
 
-> **Legado:** los listados nuevos usan `<DataListing>` y `<RowActions>` (`DESIGN.md` §9). `TableActions` se
-> borra cuando migre el último listado; no usarlo en código nuevo.
+Todo listado es un `<DataListing>` con sus acciones de fila en `<RowActions>`. Las reglas (papel de cada columna en la
+tarjeta del celular, enlace del identificador, acciones bloqueadas, marco de página) están en `DESIGN.md` §9, que es
+la fuente; aquí solo la ubicación.
 
-Componente de acciones de fila con iconos de colores.
+**Ubicación:** `resources/js/components/data-listing.tsx`, `resources/js/components/row-actions.tsx` y la lógica pura
+en `resources/js/lib/data-listing.ts` (con sus pruebas de Vitest).
 
-**Ubicación:** `resources/js/components/table-actions.tsx`
-
-### Props
-
-| Prop | Tipo | Descripción |
-|------|------|-------------|
-| `permissions` | `{ view?: boolean; edit?: boolean; delete?: boolean; }` | Permisos disponibles |
-| `onView` | `() => void` | Handler para ver detalle |
-| `onEdit` | `() => void` | Handler para editar |
-| `onDelete` | `() => void` | Handler para eliminar |
-
-### Convenciones
-
-- Siempre usar en columnas de acción de tablas
-- Nunca usar botones con texto visible
-- Orden fijo: Ver → Editar → Eliminar
-- Colores: Ver (neutral), Editar (amber), Eliminar (destructive)
-
-### Uso
-
-```tsx
-<TableActions
-    permissions={{ view: true, edit: can.update, delete: can.delete }}
-    onView={() => router.get(route('items.show', item))}
-    onEdit={() => router.get(route('items.edit', item))}
-    onDelete={() => handleDelete(item)}
-/>
-```
+- Las columnas se describen una sola vez: la tabla se pinta desde `md` y una tarjeta por fila debajo.
+- El identificador abre el detalle (o la edición si no hay detalle) con `rowHref`; el menú «⋯» no repite esa acción.
+- `resources/js/design-contract.test.ts` falla si aparece un `<table>` en `pages/` fuera de las tablas de detalle
+  exceptuadas.
 
 ---
 

@@ -100,7 +100,9 @@ Los listados siguen `DESIGN.md` §9 (contrato de UX):
 * **Enlace**: el identificador de la fila (código, número, nombre) abre el detalle, o la edición si no hay detalle; sin
   permiso es texto normal.
 * **Acción bloqueada**: visible en el menú con su motivo debajo (`disabledReason`), nunca oculta sin explicación.
-* `TableActions` (iconos de colores por fila) es **legado**: se borra cuando migre el último listado.
+* **Marco de página**: ancho completo, envoltorio `space-y-6 p-6`, sin `max-w-*`, `mx-auto` ni fondo propio.
+* No se escriben tablas a mano en `pages/` (lo vigila `design-contract.test.ts`); las tablas de detalle exceptuadas
+  esperan su propio plan.
 * **Text Wrapping**: para descripciones largas o campos de logs, usar `wrap-break-word` para no romper la tabla.
 
 ---

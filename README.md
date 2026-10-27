@@ -328,7 +328,7 @@ Carpeta `docs/`:
 - `ARQUITECTURA.md` - Guía y decisiones de arquitectura del sistema.
 - `POLITICA_COSTOS_MATERIA_PRIMA.md` - Costeo FIFO y precios de referencia.
 - `MATRIZ_RBAC.md` - Matriz de roles y permisos del sistema; §8, las decisiones de implementación que cita el código.
-- `COMPONENTES_UI.md` - Componentes reutilizables (FormattedNumber, FormattedDate, TableActions).
+- `COMPONENTES_UI.md` - Componentes reutilizables (FormattedNumber, FormattedDate, DataListing y RowActions).
 - `DESIGN.md` (raíz del repositorio) - Contrato de UX: tema claro/oscuro, colores, tonos, tipografía y componentes.
 - `SISTEMA_AUDITORIA.md` - Guía del registro de actividad y auditoría.
 - `LOGOS.md` - Guía de assets y branding corporativo.

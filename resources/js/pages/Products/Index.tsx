@@ -1,6 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 
 import { ActiveBadge } from '@/components/active-badge';
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -49,11 +51,32 @@ export default function ProductsIndex({
         },
     });
 
+    const columns: DataListingColumn<ProductRow>[] = [
+        {
+            key: 'name',
+            header: 'Nombre',
+            cell: (product) => product.name,
+            mobile: 'title',
+        },
+        {
+            key: 'category',
+            header: 'Categoría',
+            cell: (product) => product.category?.name ?? '-',
+            mobile: 'subtitle',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (product) => <ActiveBadge isActive={product.is_active} />,
+            mobile: 'status',
+        },
+    ];
+
     return (
         <>
             <Head title="Portafolio de productos" />
 
-            <div className="space-y-4 p-6">
+            <div className="space-y-6 p-6">
                 <PageHeader
                     title="Portafolio de productos"
                     description="Gestión del catálogo de productos y precios."
@@ -91,54 +114,15 @@ export default function ProductsIndex({
                     onClear={clearFilters}
                 />
 
-                <div className="rounded border border-border bg-card">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border">
-                            <tr>
-                                <th className="p-3 text-left">Nombre</th>
-                                <th className="p-3 text-left">Categoría</th>
-                                <th className="p-3 text-left">Estado</th>
-                                <th className="p-3 text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {productsData.data.map((product) => (
-                                <tr
-                                    key={product.id}
-                                    className="border-b border-border/50"
-                                >
-                                    <td className="p-3 font-medium">
-                                        {product.name}
-                                    </td>
-                                    <td className="p-3">
-                                        {product.category?.name ?? '-'}
-                                    </td>
-                                    <td className="p-3">
-                                        <ActiveBadge
-                                            isActive={product.is_active}
-                                        />
-                                    </td>
-                                    <td className="space-x-2 p-3 text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            asChild
-                                        >
-                                            <Link
-                                                href={withReturnTo(
-                                                    productsShow(product.id)
-                                                        .url,
-                                                )}
-                                            >
-                                                Ver
-                                            </Link>
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                <DataListing
+                    rows={productsData.data}
+                    rowKey={(product) => product.id}
+                    rowHref={(product) =>
+                        withReturnTo(productsShow(product.id).url)
+                    }
+                    columns={columns}
+                    empty="No se encontraron productos."
+                />
 
                 <div className="mt-4 flex justify-center">
                     <Pagination links={productsData.links} />

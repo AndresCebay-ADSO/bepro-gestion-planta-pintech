@@ -1,9 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { Trash2 } from 'lucide-react';
+
 import { ActiveBadge } from '@/components/active-badge';
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import Heading from '@/components/heading';
-import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
@@ -58,6 +61,48 @@ export default function ShrinkWrapTypesIndex({ types, filters, can }: Props) {
         });
     };
 
+    const columns: DataListingColumn<TypeRow>[] = [
+        {
+            key: 'name',
+            header: 'Nombre',
+            cell: (type) => type.name,
+            mobile: 'title',
+        },
+        {
+            key: 'items',
+            header: 'Consumo por aplicación',
+            cell: (type) => (
+                <ul className="space-y-0.5">
+                    {type.items.map((item) => (
+                        <li key={item.raw_material_id}>
+                            <FormattedNumber
+                                value={item.quantity}
+                                maxDecimals={4}
+                            />{' '}
+                            {item.unit_symbol}{' '}
+                            <span className="font-mono text-foreground">
+                                {item.code}
+                            </span>
+                            {!item.is_active && (
+                                <span className="ml-1 text-xs text-warning-text">
+                                    (inactiva)
+                                </span>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            ),
+            mobile: 'meta',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (type) => <ActiveBadge isActive={type.is_active} />,
+            mobile: 'status',
+        },
+    ];
+
     return (
         <>
             <Head title="Tipos de termoencogido" />
@@ -98,97 +143,34 @@ export default function ShrinkWrapTypesIndex({ types, filters, can }: Props) {
                     onClear={clearFilters}
                 />
 
-                <div className="overflow-x-auto rounded-lg border border-border">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/40">
-                            <tr>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Nombre
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Consumo por aplicación
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Estado
-                                </th>
-                                <th className="p-3 text-right font-medium text-foreground">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {types.data.map((type) => (
-                                <tr
-                                    key={type.id}
-                                    className="border-b border-border/60 last:border-0"
-                                >
-                                    <td className="p-3 text-foreground">
-                                        {type.name}
-                                    </td>
-                                    <td className="p-3 text-muted-foreground">
-                                        <ul className="space-y-0.5">
-                                            {type.items.map((item) => (
-                                                <li key={item.raw_material_id}>
-                                                    <FormattedNumber
-                                                        value={item.quantity}
-                                                        maxDecimals={4}
-                                                    />{' '}
-                                                    {item.unit_symbol}{' '}
-                                                    <span className="font-mono text-foreground">
-                                                        {item.code}
-                                                    </span>
-                                                    {!item.is_active && (
-                                                        <span className="ml-1 text-xs text-warning-text">
-                                                            (inactiva)
-                                                        </span>
-                                                    )}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </td>
-                                    <td className="p-3">
-                                        <ActiveBadge
-                                            isActive={type.is_active}
-                                        />
-                                    </td>
-                                    <td className="p-3 text-right">
-                                        <TableActions
-                                            permissions={{
-                                                view: false,
-                                                edit: type.can.update,
-                                                delete: type.can.delete,
-                                            }}
-                                            onEdit={() =>
-                                                router.get(
-                                                    typesEdit(type.id).url,
-                                                )
-                                            }
-                                            onDelete={() => handleDelete(type)}
-                                            // Con registros no se puede eliminar (clave foránea RESTRICT): se desactiva.
-                                            disabled={{ delete: type.in_use }}
-                                            tooltips={{
-                                                delete: type.in_use
-                                                    ? 'Ya tiene termoencogidos registrados: no se puede eliminar. Desactívalo al editarlo.'
-                                                    : 'Eliminar tipo',
-                                            }}
-                                        />
-                                    </td>
-                                </tr>
-                            ))}
-                            {types.data.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={4}
-                                        className="p-8 text-center text-sm text-muted-foreground"
-                                    >
-                                        No se encontraron tipos de
-                                        termoencogido.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                {/* Sin detalle: el nombre abre la edición. */}
+                <DataListing
+                    rows={types.data}
+                    rowKey={(type) => type.id}
+                    rowHref={(type) =>
+                        type.can.update ? typesEdit(type.id).url : undefined
+                    }
+                    rowLabel={(type) => type.name}
+                    columns={columns}
+                    // El nombre ya abre la edición: el menú no la repite (DESIGN.md §9).
+                    actions={(type) => [
+                        {
+                            label: 'Eliminar',
+                            icon: Trash2,
+                            destructive: true,
+                            onSelect: () => handleDelete(type),
+                            // Con registros no se puede eliminar (clave foránea RESTRICT): se desactiva.
+                            // La salida («desactívalo al editarlo») solo se ofrece a quien puede editar.
+                            disabledReason: type.in_use
+                                ? type.can.update
+                                    ? 'No disponible: ya tiene termoencogidos registrados. Desactívalo al editarlo.'
+                                    : 'No disponible: ya tiene termoencogidos registrados.'
+                                : undefined,
+                            hidden: !type.can.delete,
+                        },
+                    ]}
+                    empty="No se encontraron tipos de termoencogido."
+                />
 
                 <div className="flex justify-center">
                     <Pagination links={types.links} />

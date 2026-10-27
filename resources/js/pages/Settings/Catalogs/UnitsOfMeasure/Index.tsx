@@ -1,12 +1,15 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { Trash2 } from 'lucide-react';
+
 import { ActiveBadge } from '@/components/active-badge';
 import {
     UnitEquivalence,
     describeUnitUsage,
 } from '@/components/catalogs/unit-of-measure-form';
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import Heading from '@/components/heading';
-import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
@@ -62,6 +65,64 @@ export default function UnitsOfMeasureIndex({ units, filters, can }: Props) {
         router.delete(unitsDestroy(unit.id).url, { preserveScroll: true });
     };
 
+    const columns: DataListingColumn<UnitRow>[] = [
+        {
+            key: 'code',
+            header: 'Código',
+            cell: (unit) => unit.code,
+            mobile: 'title',
+            className: 'font-mono',
+            cardClassName: 'font-mono',
+        },
+        {
+            key: 'name',
+            header: 'Nombre',
+            cell: (unit) => unit.name,
+            mobile: 'subtitle',
+        },
+        {
+            key: 'symbol',
+            header: 'Símbolo',
+            cell: (unit) => unit.symbol,
+            mobile: 'meta',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'equivalence',
+            header: 'Equivalencia',
+            cell: (unit) => (
+                <span
+                    className={
+                        unit.to_kg_conversion || unit.to_liter_conversion
+                            ? ''
+                            : 'text-muted-foreground'
+                    }
+                >
+                    <UnitEquivalence
+                        symbol={unit.symbol}
+                        kg={unit.to_kg_conversion}
+                        liter={unit.to_liter_conversion}
+                    />
+                </span>
+            ),
+            mobile: 'meta',
+            className: 'whitespace-nowrap',
+        },
+        {
+            key: 'usage',
+            header: 'En uso',
+            cell: (unit) => describeUnitUsage(unit.usage),
+            mobile: 'meta',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (unit) => <ActiveBadge isActive={unit.is_active} feminine />,
+            mobile: 'status',
+        },
+    ];
+
     return (
         <>
             <Head title="Unidades de medida" />
@@ -103,110 +164,34 @@ export default function UnitsOfMeasureIndex({ units, filters, can }: Props) {
                     onClear={clearFilters}
                 />
 
-                <div className="overflow-x-auto rounded-lg border border-border">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/40">
-                            <tr>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Código
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Nombre
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Símbolo
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Equivalencia
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    En uso
-                                </th>
-                                <th className="p-3 text-left font-medium text-foreground">
-                                    Estado
-                                </th>
-                                <th className="p-3 text-right font-medium text-foreground">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {units.data.map((unit) => (
-                                <tr
-                                    key={unit.id}
-                                    className="border-b border-border/60 last:border-0"
-                                >
-                                    <td className="p-3 font-mono text-foreground">
-                                        {unit.code}
-                                    </td>
-                                    <td className="p-3 text-foreground">
-                                        {unit.name}
-                                    </td>
-                                    <td className="p-3 text-muted-foreground">
-                                        {unit.symbol}
-                                    </td>
-                                    <td className="p-3 whitespace-nowrap">
-                                        <span
-                                            className={
-                                                unit.to_kg_conversion ||
-                                                unit.to_liter_conversion
-                                                    ? ''
-                                                    : 'text-muted-foreground'
-                                            }
-                                        >
-                                            <UnitEquivalence
-                                                symbol={unit.symbol}
-                                                kg={unit.to_kg_conversion}
-                                                liter={unit.to_liter_conversion}
-                                            />
-                                        </span>
-                                    </td>
-                                    <td className="p-3 text-muted-foreground">
-                                        {describeUnitUsage(unit.usage)}
-                                    </td>
-                                    <td className="p-3">
-                                        <ActiveBadge
-                                            isActive={unit.is_active}
-                                            feminine
-                                        />
-                                    </td>
-                                    <td className="p-3 text-right">
-                                        <TableActions
-                                            permissions={{
-                                                view: false,
-                                                edit: unit.can.update,
-                                                delete: unit.can.delete,
-                                            }}
-                                            onEdit={() =>
-                                                router.get(
-                                                    unitsEdit(unit.id).url,
-                                                )
-                                            }
-                                            onDelete={() => handleDelete(unit)}
-                                            // En uso no se puede eliminar (claves foráneas RESTRICT): se desactiva.
-                                            disabled={{ delete: unit.in_use }}
-                                            tooltips={{
-                                                delete: unit.in_use
-                                                    ? 'En uso: no se puede eliminar. Desactívala al editarla.'
-                                                    : 'Eliminar unidad',
-                                            }}
-                                        />
-                                    </td>
-                                </tr>
-                            ))}
-                            {units.data.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={7}
-                                        className="p-8 text-center text-sm text-muted-foreground"
-                                    >
-                                        No se encontraron unidades de medida.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                {/* Sin detalle: el código abre la edición. */}
+                <DataListing
+                    rows={units.data}
+                    rowKey={(unit) => unit.id}
+                    rowHref={(unit) =>
+                        unit.can.update ? unitsEdit(unit.id).url : undefined
+                    }
+                    rowLabel={(unit) => unit.code}
+                    columns={columns}
+                    // El código ya abre la edición: el menú no la repite (DESIGN.md §9).
+                    actions={(unit) => [
+                        {
+                            label: 'Eliminar',
+                            icon: Trash2,
+                            destructive: true,
+                            onSelect: () => handleDelete(unit),
+                            // En uso no se puede eliminar (claves foráneas RESTRICT): se desactiva.
+                            // La salida («desactívala al editarla») solo se ofrece a quien puede editar.
+                            disabledReason: unit.in_use
+                                ? unit.can.update
+                                    ? 'No disponible: está en uso. Desactívala al editarla.'
+                                    : 'No disponible: está en uso.'
+                                : undefined,
+                            hidden: !unit.can.delete,
+                        },
+                    ]}
+                    empty="No se encontraron unidades de medida."
+                />
 
                 <div className="flex justify-center">
                     <Pagination links={units.links} />

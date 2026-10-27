@@ -56,6 +56,10 @@ class PaintDevelopmentRequestController extends Controller
                 'sample_due_date' => $paintRequest->sample_due_date?->toDateString(),
                 'city' => $paintRequest->city,
                 'created_at' => $paintRequest->created_at?->toIso8601String(),
+                // La política ya exige borrador, `paint_development_requests.edit` y acceso a la solicitud.
+                'can' => [
+                    'update' => $user?->can('update', $paintRequest) ?? false,
+                ],
             ]);
 
         return Inertia::render('PaintDevelopmentRequests/Index', [

@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Enums\Permission;
 use App\Enums\SystemRole;
 use App\Models\User;
 use App\Services\TimezoneService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /*
@@ -71,6 +73,24 @@ function userWithRole(SystemRole $role, array $attributes = []): User
 
     $user = User::factory()->create($attributes);
     $user->assignRole($role->value);
+
+    return $user;
+}
+
+/**
+ * Usuario con un rol personalizado que solo tiene los permisos dados.
+ *
+ * @param  list<Permission>  $permissions
+ */
+function userWithPermissions(array $permissions): User
+{
+    test()->seed(RolePermissionSeeder::class);
+
+    $role = Role::create(['name' => 'Rol de prueba '.uniqid(), 'guard_name' => 'web']);
+    $role->givePermissionTo(array_map(fn (Permission $permission): string => $permission->value, $permissions));
+
+    $user = User::factory()->create(['email_verified_at' => now()]);
+    $user->assignRole($role);
 
     return $user;
 }

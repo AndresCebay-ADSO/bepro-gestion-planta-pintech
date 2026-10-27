@@ -227,6 +227,9 @@ Same in all three:
 
 - Listing pattern of `CLAUDE.md`: `Index{Domain}Request` + `{Domain}Filter` + `useFilters` + `<DataTableFilters />`;
   server-side pagination (`ui/pagination.tsx`: on the phone only previous, «Página X de Y» and next).
+- Page frame: a listing uses the full width of the content area with `space-y-6 p-6` as its wrapper; no `max-w-*`,
+  no `mx-auto`, no own background. Settings screens (catalogs) already sit inside the card of the Settings layout,
+  which sets the padding: their wrapper is `space-y-6` with no padding.
 - Every listing is a `<DataListing>` (`components/data-listing.tsx`). Each screen describes its columns **once**; the
   component renders the `<Table>` (`components/ui/table.tsx`) from `md` up and one card per row below `md`. A table
   wider than its box scrolls inside the box, never the page. No sorting by column (the server orders).
@@ -261,7 +264,9 @@ fit in the 4 `meta`, the least important `meta` goes `hidden` instead.
 
 `align: 'right'` for figures (adds `tabular-nums`), `'center'` for pills and alerts. `className` styles the desktop
 cell only (`max-w-xs truncate` would cut the value on the card); `cardClassName` styles the value on the card (for
-example `font-mono` on a code, which then goes in both). The header is the table-header role
+example `font-mono` on a code, which then goes in both). Secondary free text (contacts, addresses, notes) is cut on
+desktop with `md:max-w-xs md:truncate` and the full text in `title`; the main text of a row (an alert message, an audit
+description) wraps instead (`whitespace-normal`). The header is the table-header role
 of §5 (12 px); cells are 14 px. In development a console warning flags a definition that breaks these limits
 (`lib/data-listing.ts`). Table and cards are both in the DOM (toggled with `hidden md:block`): a text search in tests
 finds each value twice.

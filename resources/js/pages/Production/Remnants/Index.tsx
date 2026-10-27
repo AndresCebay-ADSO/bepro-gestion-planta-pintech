@@ -1,17 +1,12 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import type { ComponentProps } from 'react';
 
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { index as remnantsIndex } from '@/routes/production/remnants';
@@ -51,6 +46,7 @@ type Props = {
     warehouseOptions: Option[];
     can: {
         viewCosts: boolean;
+        viewProductionOrders: boolean;
     };
 };
 
@@ -96,179 +92,138 @@ export default function RemnantsIndex({
         },
     ];
 
+    const columns: DataListingColumn<RemnantItem>[] = [
+        {
+            key: 'product',
+            header: 'Producto',
+            cell: (remnant) => remnant.product_name,
+            mobile: 'subtitle',
+            className: 'font-medium text-foreground',
+        },
+        {
+            key: 'source_order',
+            header: 'Orden origen',
+            cell: (remnant) => remnant.source_order_number,
+            mobile: 'title',
+            className: 'font-mono',
+            cardClassName: 'font-mono',
+        },
+        {
+            key: 'warehouse',
+            header: 'Bodega',
+            cell: (remnant) => remnant.warehouse_name,
+            mobile: 'meta',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'density',
+            header: 'Densidad',
+            cell: (remnant) => (
+                <>
+                    <FormattedNumber
+                        value={remnant.density_kg_per_gallon}
+                        maxDecimals={4}
+                    />{' '}
+                    <span className="text-xs text-muted-foreground">
+                        kg/gal
+                    </span>
+                </>
+            ),
+            // Solo sirve para comparar en el computador; con el costo serían cinco datos.
+            mobile: 'hidden',
+            align: 'right',
+        },
+        ...(can.viewCosts
+            ? [
+                  {
+                      key: 'cost',
+                      header: 'Costo/gal',
+                      cell: (remnant: RemnantItem) =>
+                          remnant.cost_per_gallon != null ? (
+                              <FormattedNumber
+                                  value={remnant.cost_per_gallon}
+                                  currency
+                                  maxDecimals={2}
+                              />
+                          ) : (
+                              <span className="text-muted-foreground">---</span>
+                          ),
+                      mobile: 'meta' as const,
+                      align: 'right' as const,
+                  },
+              ]
+            : []),
+        {
+            key: 'available_gallons',
+            header: 'Disponible (gal)',
+            cell: (remnant) => (
+                <FormattedNumber
+                    value={remnant.available_quantity_gallons}
+                    maxDecimals={4}
+                />
+            ),
+            mobile: 'meta',
+            align: 'right',
+            className: 'font-medium',
+        },
+        {
+            key: 'available_kg',
+            header: 'Disponible (kg)',
+            cell: (remnant) => (
+                <FormattedNumber
+                    value={remnant.available_quantity_kg}
+                    maxDecimals={4}
+                />
+            ),
+            mobile: 'meta',
+            align: 'right',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (remnant) => (
+                <StatusBadge enum="RemnantStatus" value={remnant.status} />
+            ),
+            mobile: 'status',
+        },
+    ];
+
     return (
         <>
             <Head title="Saldos de producción" />
-            <div className="space-y-4 p-6">
+            <div className="space-y-6 p-6">
                 <PageHeader
                     title="Saldos de producción"
                     description="Producto terminado sobrante de órdenes completadas, disponible para reutilizar en nuevas mezclas."
                 />
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Saldos de Producto Terminado</CardTitle>
-                        <CardDescription>
-                            {remnants.total} saldo
-                            {remnants.total !== 1 ? 's' : ''} registrado
-                            {remnants.total !== 1 ? 's' : ''}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <DataTableFilters
-                            fields={filterFields}
-                            filters={filterState}
-                            onFilter={setFilter}
-                            onFilterImmediate={setFilterImmediate}
-                            onClear={clearFilters}
-                        />
+                <DataTableFilters
+                    fields={filterFields}
+                    filters={filterState}
+                    onFilter={setFilter}
+                    onFilterImmediate={setFilterImmediate}
+                    onClear={clearFilters}
+                />
 
-                        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead className="border-b border-border bg-muted/50">
-                                        <tr>
-                                            <th className="p-4 text-left font-medium">
-                                                Producto
-                                            </th>
-                                            <th className="p-4 text-left font-medium">
-                                                Orden Origen
-                                            </th>
-                                            <th className="p-4 text-left font-medium">
-                                                Bodega
-                                            </th>
-                                            <th className="p-4 text-right font-medium">
-                                                Densidad
-                                            </th>
-                                            {can.viewCosts && (
-                                                <th className="p-4 text-right font-medium">
-                                                    Costo/gal
-                                                </th>
-                                            )}
-                                            <th className="p-4 text-right font-medium">
-                                                Disponible (gal)
-                                            </th>
-                                            <th className="p-4 text-right font-medium">
-                                                Disponible (kg)
-                                            </th>
-                                            <th className="p-4 text-left font-medium">
-                                                Estado
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {remnants.data.length === 0 ? (
-                                            <tr>
-                                                <td
-                                                    colSpan={
-                                                        can.viewCosts ? 8 : 7
-                                                    }
-                                                    className="p-8 text-center text-sm text-muted-foreground"
-                                                >
-                                                    No hay saldos registrados.
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            remnants.data.map((remnant) => (
-                                                <tr
-                                                    key={remnant.id}
-                                                    className="border-b border-border/50 transition-colors hover:bg-muted/30"
-                                                >
-                                                    <td className="p-4">
-                                                        <div className="font-medium text-foreground">
-                                                            {
-                                                                remnant.product_name
-                                                            }
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-4">
-                                                        <Link
-                                                            href={
-                                                                productionOrderShow(
-                                                                    {
-                                                                        production_order:
-                                                                            remnant.source_order_id,
-                                                                    },
-                                                                ).url
-                                                            }
-                                                            className="font-medium text-primary hover:underline"
-                                                        >
-                                                            {
-                                                                remnant.source_order_number
-                                                            }
-                                                        </Link>
-                                                    </td>
-                                                    <td className="p-4 text-muted-foreground">
-                                                        {remnant.warehouse_name}
-                                                    </td>
-                                                    <td className="p-4 text-right">
-                                                        <FormattedNumber
-                                                            value={
-                                                                remnant.density_kg_per_gallon
-                                                            }
-                                                            maxDecimals={4}
-                                                        />{' '}
-                                                        <span className="text-xs text-muted-foreground">
-                                                            kg/gal
-                                                        </span>
-                                                    </td>
-                                                    {can.viewCosts && (
-                                                        <td className="p-4 text-right">
-                                                            {remnant.cost_per_gallon !=
-                                                            null ? (
-                                                                <FormattedNumber
-                                                                    value={
-                                                                        remnant.cost_per_gallon
-                                                                    }
-                                                                    currency
-                                                                    maxDecimals={
-                                                                        2
-                                                                    }
-                                                                />
-                                                            ) : (
-                                                                <span className="text-muted-foreground">
-                                                                    ---
-                                                                </span>
-                                                            )}
-                                                        </td>
-                                                    )}
-                                                    <td className="p-4 text-right font-medium">
-                                                        <FormattedNumber
-                                                            value={
-                                                                remnant.available_quantity_gallons
-                                                            }
-                                                            maxDecimals={4}
-                                                        />
-                                                    </td>
-                                                    <td className="p-4 text-right text-muted-foreground">
-                                                        <FormattedNumber
-                                                            value={
-                                                                remnant.available_quantity_kg
-                                                            }
-                                                            maxDecimals={4}
-                                                        />
-                                                    </td>
-                                                    <td className="p-4">
-                                                        <StatusBadge
-                                                            enum="RemnantStatus"
-                                                            value={
-                                                                remnant.status
-                                                            }
-                                                        />
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                <DataListing
+                    rows={remnants.data}
+                    rowKey={(remnant) => remnant.id}
+                    // Los saldos no tienen detalle: la orden de origen abre su OP, si se tiene permiso de verla.
+                    rowHref={(remnant) =>
+                        can.viewProductionOrders
+                            ? productionOrderShow({
+                                  production_order: remnant.source_order_id,
+                              }).url
+                            : undefined
+                    }
+                    columns={columns}
+                    empty="No hay saldos registrados."
+                />
 
-                        <div className="flex justify-center">
-                            <Pagination links={remnants.links} />
-                        </div>
-                    </CardContent>
-                </Card>
+                <div className="mt-4 flex justify-center">
+                    <Pagination links={remnants.links} />
+                </div>
             </div>
         </>
     );

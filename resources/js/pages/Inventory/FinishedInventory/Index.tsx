@@ -1,6 +1,8 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import type { ComponentProps } from 'react';
 
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { EnumLabel } from '@/components/enum-label';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -48,12 +50,16 @@ type Props = {
         product_id?: number | string | null;
         product_name?: string | null;
     };
+    can: {
+        viewProducts: boolean;
+    };
 };
 
 export default function FinishedInventoryIndex({
     inventory,
     warehouseOptions,
     filters,
+    can,
 }: Props) {
     const {
         filters: filterState,
@@ -90,11 +96,73 @@ export default function FinishedInventoryIndex({
         setFilterImmediate('product_id', '');
     };
 
+    const columns: DataListingColumn<InventoryRow>[] = [
+        {
+            key: 'product',
+            header: 'Producto',
+            cell: (row) => row.product?.name ?? '-',
+            mobile: 'title',
+        },
+        {
+            key: 'variant',
+            header: 'Variante',
+            cell: (row) =>
+                row.variant ? (
+                    <>
+                        <div className="text-foreground">
+                            {row.variant.name}
+                        </div>
+                        <div className="text-xs">
+                            {row.variant.presentation_label ?? '-'}{' '}
+                            {row.variant.presentation_value != null &&
+                                `(${row.variant.presentation_value})`}
+                        </div>
+                    </>
+                ) : (
+                    '-'
+                ),
+            mobile: 'subtitle',
+            className: 'text-muted-foreground',
+        },
+        {
+            key: 'warehouse',
+            header: 'Bodega',
+            cell: (row) =>
+                row.warehouse ? (
+                    <>
+                        <div className="text-foreground">
+                            {row.warehouse.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                            {row.warehouse.city} ·{' '}
+                            <EnumLabel
+                                enum="WarehouseType"
+                                value={row.warehouse.type}
+                            />
+                        </div>
+                    </>
+                ) : (
+                    '-'
+                ),
+            mobile: 'meta',
+        },
+        {
+            key: 'quantity',
+            header: 'Cantidad',
+            cell: (row) => (
+                <FormattedNumber value={row.quantity} maxDecimals={2} />
+            ),
+            mobile: 'meta',
+            align: 'right',
+            className: 'font-medium text-foreground',
+        },
+    ];
+
     return (
         <>
             <Head title="Inventario PT" />
 
-            <div className="space-y-4 p-6">
+            <div className="space-y-6 p-6">
                 <PageHeader
                     title="Inventario PT"
                     description="Disponibilidad de producto terminado por variante y bodega."
@@ -126,112 +194,20 @@ export default function FinishedInventoryIndex({
                     onClear={clearFilters}
                 />
 
-                <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/40">
-                            <tr>
-                                <th className="p-3 text-left font-medium">
-                                    Producto
-                                </th>
-                                <th className="p-3 text-left font-medium">
-                                    Variante
-                                </th>
-                                <th className="p-3 text-left font-medium">
-                                    Bodega
-                                </th>
-                                <th className="p-3 text-right font-medium">
-                                    Cantidad
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {inventory.data.length === 0 ? (
-                                <tr>
-                                    <td
-                                        colSpan={4}
-                                        className="p-10 text-center text-muted-foreground"
-                                    >
-                                        No hay stock de producto terminado con
-                                        los criterios seleccionados.
-                                    </td>
-                                </tr>
-                            ) : (
-                                inventory.data.map((row) => (
-                                    <tr
-                                        key={row.id}
-                                        className="border-b border-border/60 last:border-0"
-                                    >
-                                        <td className="p-3">
-                                            {row.product ? (
-                                                <Link
-                                                    href={withReturnTo(
-                                                        productsShow(
-                                                            row.product.id,
-                                                        ).url,
-                                                    )}
-                                                    className="font-medium text-foreground hover:text-primary"
-                                                >
-                                                    {row.product.name}
-                                                </Link>
-                                            ) : (
-                                                '-'
-                                            )}
-                                        </td>
-                                        <td className="p-3 text-muted-foreground">
-                                            {row.variant ? (
-                                                <>
-                                                    <div className="text-foreground">
-                                                        {row.variant.name}
-                                                    </div>
-                                                    <div className="text-xs">
-                                                        {row.variant
-                                                            .presentation_label ??
-                                                            '-'}{' '}
-                                                        {row.variant
-                                                            .presentation_value !=
-                                                            null &&
-                                                            `(${row.variant.presentation_value})`}
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                '-'
-                                            )}
-                                        </td>
-                                        <td className="p-3 text-muted-foreground">
-                                            {row.warehouse ? (
-                                                <>
-                                                    <div className="text-foreground">
-                                                        {row.warehouse.name}
-                                                    </div>
-                                                    <div className="text-xs">
-                                                        {row.warehouse.city} ·{' '}
-                                                        <EnumLabel
-                                                            enum="WarehouseType"
-                                                            value={
-                                                                row.warehouse
-                                                                    .type
-                                                            }
-                                                        />
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                '-'
-                                            )}
-                                        </td>
-                                        <td className="p-3 text-right font-medium text-foreground">
-                                            <FormattedNumber
-                                                value={row.quantity}
-                                                maxDecimals={2}
-                                            />
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <DataListing
+                    rows={inventory.data}
+                    rowKey={(row) => row.id}
+                    // El detalle del producto pide otro permiso: sin él, el nombre queda como texto.
+                    rowHref={(row) =>
+                        row.product && can.viewProducts
+                            ? withReturnTo(productsShow(row.product.id).url)
+                            : undefined
+                    }
+                    columns={columns}
+                    empty="No hay stock de producto terminado con los criterios seleccionados."
+                />
 
-                <div className="flex justify-center">
+                <div className="mt-4 flex justify-center">
                     <Pagination links={inventory.links} />
                 </div>
             </div>

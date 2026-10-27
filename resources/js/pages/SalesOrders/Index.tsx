@@ -174,7 +174,7 @@ export default function SalesOrdersIndex({
         <>
             <Head title={title} />
 
-            <div className="space-y-4 p-6">
+            <div className="space-y-6 p-6">
                 <PageHeader
                     title={title}
                     description={
