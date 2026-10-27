@@ -1,5 +1,4 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { KeyRound } from 'lucide-react';
 import type { FC } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
@@ -56,19 +55,16 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
     });
 
     return (
-        <div className="min-h-screen bg-background p-6">
+        <>
             <Head title="Roles" />
-            <div className="mx-auto max-w-7xl space-y-8">
+            <div className="space-y-6 p-6">
                 <PageHeader
                     title="Roles"
                     description="Los roles del sistema se gestionan en código y se muestran en solo lectura. Crea roles personalizados para otras combinaciones de permisos."
                     actions={
                         can.create && (
                             <Button asChild>
-                                <Link href={rolesCreate().url}>
-                                    <KeyRound className="mr-2 h-4 w-4" />
-                                    Nuevo rol
-                                </Link>
+                                <Link href={rolesCreate().url}>Nuevo rol</Link>
                             </Button>
                         )
                     }
@@ -203,7 +199,7 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

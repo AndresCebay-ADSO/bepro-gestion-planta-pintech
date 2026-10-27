@@ -217,6 +217,5 @@ export default function UnitsOfMeasureIndex({ units, filters, can }: Props) {
 }
 
 UnitsOfMeasureIndex.layout = {
-    breadcrumbs: [{ title: 'Unidades de medida', href: unitsIndex() }],
     wide: true,
 };

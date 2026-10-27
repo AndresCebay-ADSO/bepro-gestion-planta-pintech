@@ -199,6 +199,5 @@ export default function ShrinkWrapTypesIndex({ types, filters, can }: Props) {
 }
 
 ShrinkWrapTypesIndex.layout = {
-    breadcrumbs: [{ title: 'Tipos de termoencogido', href: typesIndex() }],
     wide: true,
 };

@@ -185,6 +185,9 @@ phone, and `children` are extra lines under the description.
   Exception: the «⋯» button of `<RowActions>` has only the `sr-only` text. It opens a menu, and when the menu closes
   the focus returns to the button and would leave the tooltip open.
 - One icon per concept: do not reuse a menu icon for a different entry.
+- A button with text carries an icon only when the icon adds what the text does not: movement direction (entry,
+  exit, transfer) and file format (PDF, Excel). Create, edit, save and send buttons carry none («Nuevo producto»).
+  Detail screens that still have one lose it when they are touched.
 
 ## 7. Numbers
 
@@ -289,6 +292,8 @@ A `RowAction` has either `href` (navigates) or `onSelect` (runs a handler), neve
 
 ## 10. Navigation
 
+- Breadcrumbs appear only below the first level (detail, create, edit), starting at the listing. A first-level
+  screen (a listing or a Settings screen) has none: one crumb would repeat the sidebar.
 - **Breadcrumbs are the only way back.** No loose «← Volver» button in the content; on the phone the breadcrumb
   collapses to the previous level, e.g. «← Productos». _(pending)_
 - The sidebar toggle uses the panel icon (`PanelLeftClose`/`PanelLeftOpen`), never arrows; on the phone, `Menu` (☰).

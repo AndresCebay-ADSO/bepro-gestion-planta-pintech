@@ -1,5 +1,4 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
@@ -112,7 +111,6 @@ export default function ProductionOrdersIndex({
                         can.create && (
                             <Button asChild>
                                 <Link href={productionOrderCreate().url}>
-                                    <Plus className="mr-2 h-4 w-4" />
                                     Nueva orden
                                 </Link>
                             </Button>

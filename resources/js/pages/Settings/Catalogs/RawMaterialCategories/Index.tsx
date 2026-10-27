@@ -217,8 +217,5 @@ export default function RawMaterialCategoriesIndex({
 }
 
 RawMaterialCategoriesIndex.layout = {
-    breadcrumbs: [
-        { title: 'Categorías de materia prima', href: categoriesIndex() },
-    ],
     wide: true,
 };

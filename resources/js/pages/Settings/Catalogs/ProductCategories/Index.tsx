@@ -199,6 +199,5 @@ export default function ProductCategoriesIndex({
 }
 
 ProductCategoriesIndex.layout = {
-    breadcrumbs: [{ title: 'Categorías de producto', href: categoriesIndex() }],
     wide: true,
 };

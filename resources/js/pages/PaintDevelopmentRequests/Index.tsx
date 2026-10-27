@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { FlaskConical, Plus } from 'lucide-react';
+import { FlaskConical } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
@@ -88,16 +88,16 @@ export default function PaintDevelopmentRequestsIndex({
                 <PageHeader
                     title="Desarrollo de pinturas"
                     description="Solicitudes de desarrollo de nuevos productos"
-                >
-                    {can.create && (
-                        <Button asChild>
-                            <Link href={requestsCreate().url}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Nueva solicitud
-                            </Link>
-                        </Button>
-                    )}
-                </PageHeader>
+                    actions={
+                        can.create && (
+                            <Button asChild>
+                                <Link href={requestsCreate().url}>
+                                    Nueva solicitud
+                                </Link>
+                            </Button>
+                        )
+                    }
+                />
 
                 <DataTableFilters
                     fields={filterFields}

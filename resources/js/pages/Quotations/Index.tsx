@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { FileText, Plus } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
@@ -111,7 +111,6 @@ export default function QuotationsIndex({
                         can.create && (
                             <Button asChild>
                                 <Link href={quotationsCreate().url}>
-                                    <Plus className="mr-2 h-4 w-4" />
                                     Nueva cotización
                                 </Link>
                             </Button>

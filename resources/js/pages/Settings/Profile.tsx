@@ -4,7 +4,6 @@ import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileCo
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import UserIdentityFields from '@/components/users/user-identity-fields';
-import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
 
 export default function Profile({
@@ -123,12 +122,3 @@ export default function Profile({
         </>
     );
 }
-
-Profile.layout = {
-    breadcrumbs: [
-        {
-            title: 'Perfil',
-            href: edit(),
-        },
-    ],
-};
