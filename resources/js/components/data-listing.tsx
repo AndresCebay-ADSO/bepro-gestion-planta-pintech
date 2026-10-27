@@ -12,17 +12,23 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { listingColumnProblems, visibleRowActions } from '@/lib/data-listing';
+import {
+    isEmptyCell,
+    listingColumnProblems,
+    visibleRowActions,
+} from '@/lib/data-listing';
 import type { MobileRole } from '@/lib/data-listing';
 import { cn } from '@/lib/utils';
 
 export type DataListingColumn<T> = {
     key: string;
     header: string;
+    /** Sin dato, `null` (o `undefined`/`false`): la tarjeta omite el par y la tabla muestra «—». */
     cell: (row: T) => ReactNode;
     /**
      * Papel en la tarjeta del celular (DESIGN.md §9): `title` el identificador, `subtitle` lo que lo describe,
-     * `status` la pastilla, `meta` cantidades, fechas y totales (máximo 4), `hidden` no aparece.
+     * `status` la pastilla, `primary` el dato principal (a lo sumo uno, en grande), `meta` cantidades, fechas y
+     * totales (máximo 4), `hidden` no aparece.
      */
     mobile: MobileRole;
     /** Cifras a la derecha (con `tabular-nums`); estados y alertas al centro. */
@@ -114,14 +120,22 @@ export function DataListing<T>({
         (column) => column.mobile === 'subtitle',
     );
     const statusColumn = columns.find((column) => column.mobile === 'status');
+    const primaryColumn = columns.find((column) => column.mobile === 'primary');
     const metaColumns = columns.filter((column) => column.mobile === 'meta');
 
     // El identificador es el único enlace de la fila: el resto se puede seleccionar y copiar.
+    // Sin dato, «—» atenuado (en la tarjeta solo llega aquí el título: los demás se omiten).
     const renderValue = (column: DataListingColumn<T>, row: T) => {
+        const value = column.cell(row);
+
+        if (isEmptyCell(value)) {
+            return <span className="text-muted-foreground">—</span>;
+        }
+
         const href = column.mobile === 'title' ? rowHref?.(row) : undefined;
 
         if (href === undefined) {
-            return column.cell(row);
+            return value;
         }
 
         return (
@@ -129,10 +143,22 @@ export function DataListing<T>({
                 href={href}
                 className="rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
-                {column.cell(row)}
+                {value}
             </Link>
         );
     };
+
+    // Pares etiqueta-dato de la tarjeta: el principal primero y luego los `meta`; los que no tienen dato no aparecen.
+    const cardPairs = (row: T) =>
+        [primaryColumn, ...metaColumns].flatMap((column) => {
+            if (column === undefined) {
+                return [];
+            }
+
+            const value = column.cell(row);
+
+            return isEmptyCell(value) ? [] : [{ column, value }];
+        });
 
     return (
         <>
@@ -192,77 +218,96 @@ export function DataListing<T>({
 
             {/* Celular: una tarjeta por fila. */}
             <ul className="space-y-3 md:hidden">
-                {entries.map(({ row, key, actions: rowActions }) => (
-                    <li
-                        key={key}
-                        className="rounded-lg border border-border bg-card p-4"
-                    >
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1 space-y-1">
-                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                    {titleColumn && (
-                                        <div
-                                            className={cn(
-                                                'min-w-0 font-medium break-words',
-                                                titleColumn.cardClassName,
-                                            )}
-                                        >
-                                            {renderValue(titleColumn, row)}
-                                        </div>
-                                    )}
-                                    {statusColumn && (
-                                        <div
-                                            className={
-                                                statusColumn.cardClassName
-                                            }
-                                        >
-                                            {statusColumn.cell(row)}
-                                        </div>
-                                    )}
-                                </div>
-                                {subtitleColumn && (
-                                    <div
-                                        className={cn(
-                                            'text-sm text-muted-foreground',
-                                            subtitleColumn.cardClassName,
+                {entries.map(({ row, key, actions: rowActions }) => {
+                    const status = statusColumn?.cell(row);
+                    const subtitle = subtitleColumn?.cell(row);
+                    const pairs = cardPairs(row);
+
+                    return (
+                        <li
+                            key={key}
+                            className="rounded-lg border border-border bg-card p-4"
+                        >
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 flex-1 space-y-1">
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                        {titleColumn && (
+                                            <div
+                                                className={cn(
+                                                    'min-w-0 font-medium break-words',
+                                                    titleColumn.cardClassName,
+                                                )}
+                                            >
+                                                {renderValue(titleColumn, row)}
+                                            </div>
                                         )}
-                                    >
-                                        {subtitleColumn.cell(row)}
+                                        {statusColumn &&
+                                            !isEmptyCell(status) && (
+                                                <div
+                                                    className={
+                                                        statusColumn.cardClassName
+                                                    }
+                                                >
+                                                    {status}
+                                                </div>
+                                            )}
                                     </div>
+                                    {subtitleColumn &&
+                                        !isEmptyCell(subtitle) && (
+                                            <div
+                                                className={cn(
+                                                    'text-sm text-muted-foreground',
+                                                    subtitleColumn.cardClassName,
+                                                )}
+                                            >
+                                                {subtitle}
+                                            </div>
+                                        )}
+                                </div>
+                                {hasActions && (
+                                    <RowActions
+                                        actions={rowActions}
+                                        itemLabel={rowLabel?.(row)}
+                                        className="-mt-1 -mr-2 shrink-0"
+                                    />
                                 )}
                             </div>
-                            {hasActions && (
-                                <RowActions
-                                    actions={rowActions}
-                                    itemLabel={rowLabel?.(row)}
-                                    className="-mt-1 -mr-2 shrink-0"
-                                />
-                            )}
-                        </div>
 
-                        {metaColumns.length > 0 && (
-                            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
-                                {metaColumns.map((column) => (
-                                    <div key={column.key} className="min-w-0">
-                                        <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                            {column.header}
-                                        </dt>
-                                        <dd
+                            {/* El principal va a todo el ancho y en grande; los `meta`, en 2 columnas. */}
+                            {pairs.length > 0 && (
+                                <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
+                                    {pairs.map(({ column, value }) => (
+                                        <div
+                                            key={column.key}
                                             className={cn(
-                                                'text-sm break-words',
-                                                column.align === 'right' &&
-                                                    'tabular-nums',
-                                                column.cardClassName,
+                                                'min-w-0',
+                                                column.mobile === 'primary' &&
+                                                    'col-span-2',
                                             )}
                                         >
-                                            {column.cell(row)}
-                                        </dd>
-                                    </div>
-                                ))}
-                            </dl>
-                        )}
-                    </li>
-                ))}
+                                            <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                                {column.header}
+                                            </dt>
+                                            <dd
+                                                className={cn(
+                                                    'break-words',
+                                                    column.mobile === 'primary'
+                                                        ? 'text-lg font-semibold tabular-nums'
+                                                        : 'text-sm',
+                                                    column.align === 'right' &&
+                                                        'tabular-nums',
+                                                    column.cardClassName,
+                                                )}
+                                            >
+                                                {value}
+                                            </dd>
+                                        </div>
+                                    ))}
+                                </dl>
+                            )}
+                        </li>
+                    );
+                })}
             </ul>
         </>
     );

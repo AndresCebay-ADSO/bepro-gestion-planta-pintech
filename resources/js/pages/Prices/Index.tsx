@@ -1,6 +1,8 @@
 import { Head } from '@inertiajs/react';
 import type { ComponentProps } from 'react';
 
+import { DataListing } from '@/components/data-listing';
+import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
@@ -71,11 +73,77 @@ export default function PricesIndex({
         },
     ];
 
+    const variantColumns: DataListingColumn<VariantRow>[] = [
+        {
+            key: 'presentation',
+            header: 'Presentación',
+            cell: (variant) => variant.presentation_label ?? variant.name,
+            mobile: 'title',
+        },
+        {
+            key: 'code',
+            header: 'Código',
+            cell: (variant) => variant.code,
+            mobile: 'subtitle',
+            className: 'font-mono text-muted-foreground',
+            cardClassName: 'font-mono',
+        },
+        ...(can.view_costs
+            ? [
+                  {
+                      // Costo con CIF: no es el «Costo» de la línea del producto.
+                      key: 'internal_price',
+                      header: 'Precio interno',
+                      cell: (variant: VariantRow) => (
+                          <FormattedNumber
+                              value={variant.current_price}
+                              currency
+                              maxDecimals={2}
+                          />
+                      ),
+                      mobile: 'meta' as const,
+                      align: 'right' as const,
+                      className: 'text-muted-foreground',
+                  },
+              ]
+            : []),
+        {
+            key: 'sales_price',
+            header: 'Precio de venta',
+            // Sin precio es un dato que falta, no un vacío: se dice en vez de omitirlo.
+            cell: (variant) =>
+                variant.sales_price === null ? (
+                    <span className="text-muted-foreground">Sin precio</span>
+                ) : (
+                    <FormattedNumber
+                        value={variant.sales_price}
+                        currency
+                        maxDecimals={2}
+                    />
+                ),
+            mobile: 'primary',
+            align: 'right',
+            className: 'font-medium',
+        },
+        {
+            key: 'stock',
+            header: 'Stock disponible',
+            cell: (variant) => (
+                <FormattedNumber
+                    value={variant.available_stock}
+                    maxDecimals={2}
+                />
+            ),
+            mobile: 'meta',
+            align: 'right',
+        },
+    ];
+
     return (
         <>
             <Head title="Lista de precios" />
 
-            <div className="space-y-4 p-6">
+            <div className="space-y-6 p-6">
                 <PageHeader
                     title="Lista de precios"
                     description="Precios de venta vigentes por producto y presentación."
@@ -89,175 +157,55 @@ export default function PricesIndex({
                     onClear={clearFilters}
                 />
 
-                <div className="space-y-6">
-                    {productsData.data.length === 0 ? (
-                        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-                            No hay productos registrados.
-                        </div>
-                    ) : (
-                        productsData.data.map((product) => (
-                            <div
-                                key={product.id}
-                                className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
-                            >
-                                <div className="border-b border-border bg-muted/30 p-4">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h2 className="text-lg font-semibold text-foreground">
-                                                {product.name}
-                                            </h2>
-                                        </div>
-                                        {can.view_costs && (
-                                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                                <span>
-                                                    Costo:{' '}
-                                                    <FormattedNumber
-                                                        value={
-                                                            product.current_cost
-                                                        }
-                                                        currency
-                                                        maxDecimals={2}
-                                                    />
-                                                </span>
-                                                <span>
-                                                    Margen Venta:{' '}
-                                                    <FormattedNumber
-                                                        value={
-                                                            product.sales_margin
-                                                        }
-                                                        maxDecimals={2}
-                                                    />
-                                                    % (s/ venta)
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
-                                        <thead className="border-b border-border bg-muted/50">
-                                            <tr>
-                                                <th className="p-4 text-left font-medium">
-                                                    Variante
-                                                </th>
-                                                <th className="p-4 text-left font-medium">
-                                                    Presentación
-                                                </th>
-                                                {can.view_costs && (
-                                                    <>
-                                                        <th className="p-4 text-right font-medium">
-                                                            Precio Interno
-                                                        </th>
-                                                    </>
-                                                )}
-                                                <th className="p-4 text-right font-medium">
-                                                    Precio Venta
-                                                </th>
-                                                <th className="p-4 text-right font-medium">
-                                                    Disponible
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {product.variants.length === 0 ? (
-                                                <tr>
-                                                    <td
-                                                        colSpan={
-                                                            can.view_costs
-                                                                ? 5
-                                                                : 4
-                                                        }
-                                                        className="p-4 text-center text-sm text-muted-foreground"
-                                                    >
-                                                        No hay variantes
-                                                        registradas.
-                                                    </td>
-                                                </tr>
-                                            ) : (
-                                                product.variants.map(
-                                                    (variant) => (
-                                                        <tr
-                                                            key={variant.id}
-                                                            className="border-b border-border/50 transition-colors hover:bg-muted/30"
-                                                        >
-                                                            <td className="p-4">
-                                                                <div className="font-medium text-foreground">
-                                                                    {
-                                                                        variant.name
-                                                                    }
-                                                                </div>
-                                                                {variant.code && (
-                                                                    <div className="font-mono text-xs text-muted-foreground">
-                                                                        {
-                                                                            variant.code
-                                                                        }
-                                                                    </div>
-                                                                )}
-                                                            </td>
-                                                            <td className="p-4">
-                                                                <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-                                                                    {variant.presentation_label ??
-                                                                        '-'}{' '}
-                                                                    {variant.presentation_value !==
-                                                                        null && (
-                                                                        <span className="ml-1 text-muted-foreground">
-                                                                            (
-                                                                            {
-                                                                                variant.presentation_value
-                                                                            }{' '}
-                                                                            gl)
-                                                                        </span>
-                                                                    )}
-                                                                </span>
-                                                            </td>
-                                                            {can.view_costs && (
-                                                                <td className="p-4 text-right text-muted-foreground">
-                                                                    <FormattedNumber
-                                                                        value={
-                                                                            variant.current_price
-                                                                        }
-                                                                        currency
-                                                                        maxDecimals={
-                                                                            2
-                                                                        }
-                                                                    />
-                                                                </td>
-                                                            )}
-                                                            <td className="p-4 text-right">
-                                                                <FormattedNumber
-                                                                    value={
-                                                                        variant.sales_price
-                                                                    }
-                                                                    currency
-                                                                    maxDecimals={
-                                                                        2
-                                                                    }
-                                                                    bold
-                                                                    size="lg"
-                                                                />
-                                                            </td>
-                                                            <td className="p-4 text-right text-muted-foreground">
-                                                                <FormattedNumber
-                                                                    value={
-                                                                        variant.available_stock
-                                                                    }
-                                                                    maxDecimals={
-                                                                        2
-                                                                    }
-                                                                />
-                                                            </td>
-                                                        </tr>
-                                                    ),
-                                                )
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
+                {productsData.data.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-border px-4 py-12 text-center text-sm text-muted-foreground">
+                        No hay productos registrados.
+                    </div>
+                ) : (
+                    productsData.data.map((product) => (
+                        <section key={product.id} className="space-y-3">
+                            <div className="space-y-1">
+                                <h2 className="text-lg font-semibold">
+                                    {product.name}
+                                </h2>
+                                {/* En el celular, Costo y Margen pasan a dos líneas. */}
+                                {can.view_costs && (
+                                    <p className="flex flex-wrap gap-x-2 text-sm text-muted-foreground">
+                                        <span className="whitespace-nowrap">
+                                            Costo:{' '}
+                                            <FormattedNumber
+                                                value={product.current_cost}
+                                                currency
+                                                maxDecimals={2}
+                                            />
+                                        </span>
+                                        <span
+                                            aria-hidden="true"
+                                            className="hidden sm:inline"
+                                        >
+                                            ·
+                                        </span>
+                                        <span className="whitespace-nowrap">
+                                            Margen de venta:{' '}
+                                            <FormattedNumber
+                                                value={product.sales_margin}
+                                                maxDecimals={2}
+                                            />
+                                            % (s/ venta)
+                                        </span>
+                                    </p>
+                                )}
                             </div>
-                        ))
-                    )}
-                </div>
+
+                            <DataListing
+                                rows={product.variants}
+                                rowKey={(variant) => variant.id}
+                                columns={variantColumns}
+                                empty="No hay presentaciones registradas."
+                            />
+                        </section>
+                    ))
+                )}
 
                 <div className="flex justify-center">
                     <Pagination links={productsData.links} />

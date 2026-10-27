@@ -3,14 +3,15 @@
  */
 
 /** Papel de una columna en la tarjeta del celular. En el computador se ven todas. */
-export type MobileRole = 'title' | 'subtitle' | 'status' | 'meta' | 'hidden';
+export type MobileRole =
+    'title' | 'subtitle' | 'status' | 'primary' | 'meta' | 'hidden';
 
-/** Máximo de pares etiqueta-dato en la tarjeta del celular. */
+/** Máximo de pares etiqueta-dato en la tarjeta del celular (sin contar el `primary`). */
 export const MAX_MOBILE_META = 4;
 
 /**
- * Problemas de una definición de columnas: exactamente un `title`, a lo sumo un `subtitle` y un `status`, hasta
- * `MAX_MOBILE_META` `meta` y claves sin repetir. Vacío si es válida.
+ * Problemas de una definición de columnas: exactamente un `title`, a lo sumo un `subtitle`, un `status` y un
+ * `primary`, hasta `MAX_MOBILE_META` `meta` y claves sin repetir. Vacío si es válida.
  */
 export function listingColumnProblems(
     columns: readonly { key: string; mobile: MobileRole }[],
@@ -25,7 +26,7 @@ export function listingColumnProblems(
         );
     }
 
-    for (const role of ['subtitle', 'status'] as const) {
+    for (const role of ['subtitle', 'status', 'primary'] as const) {
         if (count(role) > 1) {
             problems.push(
                 `Solo puede haber una columna «${role}» (hay ${count(role)}).`,
@@ -49,6 +50,14 @@ export function listingColumnProblems(
     }
 
     return problems;
+}
+
+/**
+ * Celda sin dato: `null`, `undefined` o `false`. La tarjeta omite su par etiqueta-dato y la tabla muestra «—».
+ * El 0 y el texto vacío sí son datos.
+ */
+export function isEmptyCell(value: unknown): value is null | undefined | false {
+    return value === null || value === undefined || value === false;
 }
 
 /**
