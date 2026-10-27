@@ -1,8 +1,9 @@
-import { Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import type { FC, FormEvent } from 'react';
 
 import InputError from '@/components/input-error';
+import { PageHeader } from '@/components/page-header';
 import RolePermissionsFields from '@/components/roles/role-permissions-fields';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,21 +68,19 @@ const RolesCreate: FC<Props> = ({ modules, templates, defaultPermissions }) => {
 
     return (
         <div className="min-h-screen bg-background px-4 py-8 text-foreground">
+            <Head title="Nuevo rol" />
             <div className="mx-auto max-w-5xl">
                 <div className="mb-8">
                     <Link
                         href={rolesIndex().url}
                         className="mb-4 inline-block text-sm text-primary hover:text-primary/80"
                     >
-                        ← Volver a Roles
+                        ← Volver a roles
                     </Link>
-                    <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                        Nuevo rol
-                    </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Elige los permisos del rol. Al marcar uno se incluyen
-                        los permisos que necesita para funcionar.
-                    </p>
+                    <PageHeader
+                        title="Nuevo rol"
+                        description="Elige los permisos del rol. Al marcar uno se incluyen los permisos que necesita para funcionar."
+                    />
                 </div>
 
                 <form

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useReducer } from 'react';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { DecimalInput } from '@/components/decimal-input';
 import { FormattedNumber } from '@/components/formatted-number';
+import { PageHeader } from '@/components/page-header';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { NUMBER_TYPES } from '@/lib/number-types';
@@ -461,16 +462,10 @@ export default function CostsIndex({
             <Head title="Costos" />
 
             <div className="space-y-4 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            Costos
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Gestión de costos y márgenes de venta por producto.
-                        </p>
-                    </div>
-                </div>
+                <PageHeader
+                    title="Costos"
+                    description="Gestión de costos y márgenes de venta por producto."
+                />
 
                 <DataTableFilters
                     fields={[

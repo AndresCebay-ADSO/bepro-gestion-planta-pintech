@@ -14,7 +14,7 @@ type Props = {
 export default function PaintDevelopmentRequestEdit({ request }: Props) {
     return (
         <>
-            <Head title={`Editar solicitud ${request.id}`} />
+            <Head title="Editar solicitud de desarrollo" />
             <PaintDevelopmentRequestForm
                 initialData={request}
                 submitUrl={requestsUpdate(request.id).url}

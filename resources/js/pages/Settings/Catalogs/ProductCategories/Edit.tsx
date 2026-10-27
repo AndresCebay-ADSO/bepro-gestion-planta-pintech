@@ -26,7 +26,6 @@ export default function ProductCategoriesEdit({ category }: Props) {
 
             <div className="space-y-6">
                 <Heading
-                    variant="small"
                     title={`Editar «${category.name}»`}
                     description={`Productos en esta categoría: ${category.products_count}.`}
                 />

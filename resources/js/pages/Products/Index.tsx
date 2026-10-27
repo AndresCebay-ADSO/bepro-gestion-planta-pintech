@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 
 import { ActiveBadge } from '@/components/active-badge';
 import { DataTableFilters } from '@/components/data-table-filters';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
@@ -50,26 +51,22 @@ export default function ProductsIndex({
 
     return (
         <>
-            <Head title="Productos" />
+            <Head title="Portafolio de productos" />
 
             <div className="space-y-4 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            Productos
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Gestión del catálogo de productos y precios.
-                        </p>
-                    </div>
-                    {can.create && (
-                        <Button asChild>
-                            <Link href={productsCreate().url}>
-                                Nuevo Producto
-                            </Link>
-                        </Button>
-                    )}
-                </div>
+                <PageHeader
+                    title="Portafolio de productos"
+                    description="Gestión del catálogo de productos y precios."
+                    actions={
+                        can.create && (
+                            <Button asChild>
+                                <Link href={productsCreate().url}>
+                                    Nuevo producto
+                                </Link>
+                            </Button>
+                        )
+                    }
+                />
 
                 <DataTableFilters
                     fields={[

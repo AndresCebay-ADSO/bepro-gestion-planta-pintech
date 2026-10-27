@@ -1,15 +1,10 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    Download,
-    FileText,
-    Pencil,
-    ShoppingCart,
-} from 'lucide-react';
+import { ArrowLeft, Download, Pencil, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
+import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import {
     AlertDialog,
@@ -165,239 +160,278 @@ export default function QuotationsShow({
             />
 
             <div className="mx-auto max-w-6xl space-y-6 p-6">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link href={quotationsIndex().url}>
-                                <ArrowLeft className="mr-1 h-4 w-4" />
-                                Volver
-                            </Link>
-                        </Button>
-                        <div>
-                            <h1 className="flex items-center gap-2 text-2xl font-semibold">
-                                <FileText className="h-6 w-6" />
-                                {quotation.quotation_number
-                                    ? `Cotización No.${quotation.quotation_number}`
-                                    : 'Cotización'}
-                            </h1>
+                <div className="space-y-4">
+                    <Button variant="ghost" size="sm" asChild>
+                        <Link href={quotationsIndex().url}>
+                            <ArrowLeft className="mr-1 h-4 w-4" />
+                            Volver
+                        </Link>
+                    </Button>
+                    <PageHeader
+                        title={
+                            quotation.quotation_number
+                                ? `Cotización No.${quotation.quotation_number}`
+                                : 'Cotización'
+                        }
+                        badge={
                             <StatusBadge
                                 enum="QuotationStatus"
                                 value={quotation.status}
-                                className="mt-1"
                             />
-                        </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                        {salesOrderId && can.viewSalesOrder && (
-                            <Button variant="outline" asChild>
-                                <Link href={salesOrdersShow(salesOrderId).url}>
-                                    <ShoppingCart className="mr-2 h-4 w-4" />
-                                    Pedido #{salesOrderId}
-                                </Link>
-                            </Button>
-                        )}
-                        {can.exportPdf && (
-                            <Button variant="outline" asChild>
-                                <a
-                                    href={quotationsExportPdf(quotation.id).url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                >
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Descargar PDF
-                                </a>
-                            </Button>
-                        )}
-                        {can.update && (
-                            <Button asChild>
-                                <Link href={quotationsEdit(quotation.id).url}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Editar
-                                </Link>
-                            </Button>
-                        )}
-                        {can.convertToOrder && (
-                            <Dialog
-                                open={convertDialogOpen}
-                                onOpenChange={(open) => {
-                                    if (convertForm.processing) {
-                                        return;
-                                    }
-
-                                    // Se limpia al abrir y no en un useEffect: useForm devuelve un
-                                    // objeto nuevo en cada render y como dependencia causaba un bucle
-                                    // infinito (pantalla en blanco).
-                                    if (open) {
-                                        convertForm.reset();
-                                        convertForm.clearErrors();
-                                    }
-
-                                    setConvertDialogOpen(open);
-                                }}
-                            >
-                                <DialogTrigger asChild>
-                                    <Button>
-                                        <ShoppingCart className="mr-2 h-4 w-4" />
-                                        Convertir en pedido
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>
-                                            Convertir cotización en pedido
-                                        </DialogTitle>
-                                        <DialogDescription>
-                                            Se creará un pedido con los
-                                            productos de esta cotización.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="space-y-4 py-2">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="priority">
-                                                Prioridad
-                                            </Label>
-                                            <Select
-                                                value={
-                                                    convertForm.data.priority
-                                                }
-                                                onValueChange={(value) =>
-                                                    convertForm.setData(
-                                                        'priority',
-                                                        value,
-                                                    )
-                                                }
-                                            >
-                                                <SelectTrigger id="priority">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="low">
-                                                        Baja
-                                                    </SelectItem>
-                                                    <SelectItem value="medium">
-                                                        Media
-                                                    </SelectItem>
-                                                    <SelectItem value="high">
-                                                        Alta
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            {convertForm.errors.priority && (
-                                                <p className="text-sm text-destructive">
-                                                    {
-                                                        convertForm.errors
-                                                            .priority
-                                                    }
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="required_date">
-                                                Fecha requerida
-                                            </Label>
-                                            <Input
-                                                id="required_date"
-                                                type="date"
-                                                min={plantToday}
-                                                value={
-                                                    convertForm.data
-                                                        .required_date
-                                                }
-                                                onChange={(e) =>
-                                                    convertForm.setData(
-                                                        'required_date',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                            {convertForm.errors
-                                                .required_date && (
-                                                <p className="text-sm text-destructive">
-                                                    {
-                                                        convertForm.errors
-                                                            .required_date
-                                                    }
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="shipping_address">
-                                                Dirección de envío *
-                                            </Label>
-                                            <Textarea
-                                                id="shipping_address"
-                                                rows={2}
-                                                maxLength={255}
-                                                value={
-                                                    convertForm.data
-                                                        .shipping_address
-                                                }
-                                                onChange={(e) =>
-                                                    convertForm.setData(
-                                                        'shipping_address',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                            <p className="text-xs text-muted-foreground">
-                                                {quotation.client
-                                                    .shipping_address
-                                                    ? 'Dirección registrada del cliente. Cámbiala si este pedido va a otro lugar.'
-                                                    : 'Este cliente no tiene dirección registrada: escribe a dónde va este pedido.'}
-                                            </p>
-                                            {convertForm.errors
-                                                .shipping_address && (
-                                                <p className="text-sm text-destructive">
-                                                    {
-                                                        convertForm.errors
-                                                            .shipping_address
-                                                    }
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="notes">Notas</Label>
-                                            <Textarea
-                                                id="notes"
-                                                rows={3}
-                                                value={convertForm.data.notes}
-                                                onChange={(e) =>
-                                                    convertForm.setData(
-                                                        'notes',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                            {convertForm.errors.notes && (
-                                                <p className="text-sm text-destructive">
-                                                    {convertForm.errors.notes}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <DialogFooter>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() =>
-                                                setConvertDialogOpen(false)
+                        }
+                        actions={
+                            <>
+                                {salesOrderId && can.viewSalesOrder && (
+                                    <Button variant="outline" asChild>
+                                        <Link
+                                            href={
+                                                salesOrdersShow(salesOrderId)
+                                                    .url
                                             }
-                                            disabled={convertForm.processing}
                                         >
-                                            Cancelar
-                                        </Button>
-                                        <Button
-                                            onClick={handleConvertToOrder}
-                                            disabled={convertForm.processing}
+                                            <ShoppingCart className="mr-2 h-4 w-4" />
+                                            Pedido #{salesOrderId}
+                                        </Link>
+                                    </Button>
+                                )}
+                                {can.exportPdf && (
+                                    <Button variant="outline" asChild>
+                                        <a
+                                            href={
+                                                quotationsExportPdf(
+                                                    quotation.id,
+                                                ).url
+                                            }
+                                            target="_blank"
+                                            rel="noreferrer"
                                         >
-                                            Confirmar conversión
-                                        </Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-                        )}
-                    </div>
+                                            <Download className="mr-2 h-4 w-4" />
+                                            Descargar PDF
+                                        </a>
+                                    </Button>
+                                )}
+                                {can.update && (
+                                    <Button asChild>
+                                        <Link
+                                            href={
+                                                quotationsEdit(quotation.id).url
+                                            }
+                                        >
+                                            <Pencil className="mr-2 h-4 w-4" />
+                                            Editar
+                                        </Link>
+                                    </Button>
+                                )}
+                                {can.convertToOrder && (
+                                    <Dialog
+                                        open={convertDialogOpen}
+                                        onOpenChange={(open) => {
+                                            if (convertForm.processing) {
+                                                return;
+                                            }
+
+                                            // Se limpia al abrir y no en un useEffect: useForm devuelve un
+                                            // objeto nuevo en cada render y como dependencia causaba un bucle
+                                            // infinito (pantalla en blanco).
+                                            if (open) {
+                                                convertForm.reset();
+                                                convertForm.clearErrors();
+                                            }
+
+                                            setConvertDialogOpen(open);
+                                        }}
+                                    >
+                                        <DialogTrigger asChild>
+                                            <Button>
+                                                <ShoppingCart className="mr-2 h-4 w-4" />
+                                                Convertir en pedido
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>
+                                                    Convertir cotización en
+                                                    pedido
+                                                </DialogTitle>
+                                                <DialogDescription>
+                                                    Se creará un pedido con los
+                                                    productos de esta
+                                                    cotización.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <div className="space-y-4 py-2">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="priority">
+                                                        Prioridad
+                                                    </Label>
+                                                    <Select
+                                                        value={
+                                                            convertForm.data
+                                                                .priority
+                                                        }
+                                                        onValueChange={(
+                                                            value,
+                                                        ) =>
+                                                            convertForm.setData(
+                                                                'priority',
+                                                                value,
+                                                            )
+                                                        }
+                                                    >
+                                                        <SelectTrigger id="priority">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="low">
+                                                                Baja
+                                                            </SelectItem>
+                                                            <SelectItem value="medium">
+                                                                Media
+                                                            </SelectItem>
+                                                            <SelectItem value="high">
+                                                                Alta
+                                                            </SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    {convertForm.errors
+                                                        .priority && (
+                                                        <p className="text-sm text-destructive">
+                                                            {
+                                                                convertForm
+                                                                    .errors
+                                                                    .priority
+                                                            }
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="required_date">
+                                                        Fecha requerida
+                                                    </Label>
+                                                    <Input
+                                                        id="required_date"
+                                                        type="date"
+                                                        min={plantToday}
+                                                        value={
+                                                            convertForm.data
+                                                                .required_date
+                                                        }
+                                                        onChange={(e) =>
+                                                            convertForm.setData(
+                                                                'required_date',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                    />
+                                                    {convertForm.errors
+                                                        .required_date && (
+                                                        <p className="text-sm text-destructive">
+                                                            {
+                                                                convertForm
+                                                                    .errors
+                                                                    .required_date
+                                                            }
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="shipping_address">
+                                                        Dirección de envío *
+                                                    </Label>
+                                                    <Textarea
+                                                        id="shipping_address"
+                                                        rows={2}
+                                                        maxLength={255}
+                                                        value={
+                                                            convertForm.data
+                                                                .shipping_address
+                                                        }
+                                                        onChange={(e) =>
+                                                            convertForm.setData(
+                                                                'shipping_address',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                    />
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {quotation.client
+                                                            .shipping_address
+                                                            ? 'Dirección registrada del cliente. Cámbiala si este pedido va a otro lugar.'
+                                                            : 'Este cliente no tiene dirección registrada: escribe a dónde va este pedido.'}
+                                                    </p>
+                                                    {convertForm.errors
+                                                        .shipping_address && (
+                                                        <p className="text-sm text-destructive">
+                                                            {
+                                                                convertForm
+                                                                    .errors
+                                                                    .shipping_address
+                                                            }
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="notes">
+                                                        Notas
+                                                    </Label>
+                                                    <Textarea
+                                                        id="notes"
+                                                        rows={3}
+                                                        value={
+                                                            convertForm.data
+                                                                .notes
+                                                        }
+                                                        onChange={(e) =>
+                                                            convertForm.setData(
+                                                                'notes',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                    />
+                                                    {convertForm.errors
+                                                        .notes && (
+                                                        <p className="text-sm text-destructive">
+                                                            {
+                                                                convertForm
+                                                                    .errors
+                                                                    .notes
+                                                            }
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <DialogFooter>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        setConvertDialogOpen(
+                                                            false,
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        convertForm.processing
+                                                    }
+                                                >
+                                                    Cancelar
+                                                </Button>
+                                                <Button
+                                                    onClick={
+                                                        handleConvertToOrder
+                                                    }
+                                                    disabled={
+                                                        convertForm.processing
+                                                    }
+                                                >
+                                                    Confirmar conversión
+                                                </Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
+                            </>
+                        }
+                    />
                 </div>
 
                 {can.updateStatus && (

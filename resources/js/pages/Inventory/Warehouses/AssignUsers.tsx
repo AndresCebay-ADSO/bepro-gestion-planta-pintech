@@ -1,4 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -64,17 +65,13 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
 
     return (
         <>
-            <Head title={`Asignar usuarios - ${warehouse.name}`} />
+            <Head title={`Asignar usuarios: ${warehouse.name}`} />
 
             <div className="mx-auto max-w-4xl space-y-6 p-6">
-                <div className="space-y-1">
-                    <h1 className="text-2xl font-semibold text-foreground">
-                        Asignar Usuarios
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Bodega: {warehouse.name} ({warehouse.city})
-                    </p>
-                </div>
+                <PageHeader
+                    title={`Asignar usuarios: ${warehouse.name}`}
+                    description={`Bodega: ${warehouse.name} (${warehouse.city})`}
+                />
 
                 <form
                     onSubmit={(event) => {

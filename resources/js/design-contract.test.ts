@@ -197,4 +197,85 @@ describe('contrato de DESIGN.md', () => {
 
         expect(report(violations(files, [fontCdn]))).toEqual([]);
     });
+
+    it('solo usa h1 visible en PageHeader (y excepciones aprobadas)', () => {
+        const h1Exceptions = [
+            'resources/js/components/page-header.tsx',
+            // Temporal: el banner del dashboard se reemplaza cuando se rediseñe el dashboard.
+            'resources/js/components/dashboard/DashboardHeader.tsx',
+            'resources/js/pages/auth/',
+            'resources/js/layouts/auth/',
+            'resources/js/pages/Public/QrLanding/',
+            'resources/js/pages/welcome.tsx',
+            'resources/js/pages/ErrorPage.tsx',
+        ];
+
+        const files = screenFiles.filter(
+            (file) =>
+                !h1Exceptions.some((prefix) =>
+                    relativePath(file).startsWith(prefix),
+                ),
+        );
+
+        const found = files.flatMap((file) => {
+            const source = readFileSync(file, 'utf8');
+            const lineOf = (index: number) =>
+                source.slice(0, index).split('\n').length;
+            const hits: Violation[] = [];
+
+            for (const match of source.matchAll(/<h1\b([\s\S]*?)>/gi)) {
+                const attrs = match[1];
+
+                if (!/\bsr-only\b/.test(attrs)) {
+                    hits.push({
+                        location: `${relativePath(file)}:${lineOf(match.index)}`,
+                        match: match[0].replace(/\s+/g, ' ').slice(0, 120),
+                        rule: 'DESIGN.md §5: el único h1 visible debe ser <PageHeader>',
+                    });
+                }
+            }
+
+            return hits;
+        });
+
+        expect(report(found)).toEqual([]);
+    });
+
+    it('no usa h2 de tamaño text-xl o superior', () => {
+        const h2Exceptions = [
+            'resources/js/pages/auth/',
+            'resources/js/layouts/auth/',
+            'resources/js/pages/Public/QrLanding/',
+        ];
+
+        const files = screenFiles.filter(
+            (file) =>
+                !h2Exceptions.some((prefix) =>
+                    relativePath(file).startsWith(prefix),
+                ),
+        );
+
+        const found = files.flatMap((file) => {
+            const source = readFileSync(file, 'utf8');
+            const lineOf = (index: number) =>
+                source.slice(0, index).split('\n').length;
+            const hits: Violation[] = [];
+
+            for (const match of source.matchAll(/<h2\b([\s\S]*?)>/gi)) {
+                const attrs = match[1];
+
+                if (/\btext-(?:xl|[2-9]xl)\b/.test(attrs)) {
+                    hits.push({
+                        location: `${relativePath(file)}:${lineOf(match.index)}`,
+                        match: match[0].replace(/\s+/g, ' ').slice(0, 120),
+                        rule: 'DESIGN.md §5: los subtítulos h2 deben ser text-lg (18 px) o menores',
+                    });
+                }
+            }
+
+            return hits;
+        });
+
+        expect(report(found)).toEqual([]);
+    });
 });

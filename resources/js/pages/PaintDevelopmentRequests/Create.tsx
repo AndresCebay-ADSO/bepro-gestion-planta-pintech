@@ -14,7 +14,7 @@ export default function PaintDevelopmentRequestCreate() {
                 initialData={{}}
                 submitUrl={requestsStore().url}
                 method="post"
-                title="Solicitud de desarrollo de una pintura nueva"
+                title="Nueva solicitud de desarrollo"
                 backUrl={requestsIndex().url}
                 saveLabel="Guardar borrador"
                 submitLabel="Guardar y enviar"

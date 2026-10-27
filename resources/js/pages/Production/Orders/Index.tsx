@@ -4,6 +4,7 @@ import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
+import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import { TableActions } from '@/components/table-actions';
 import { Button } from '@/components/ui/button';
@@ -102,27 +103,22 @@ export default function ProductionOrdersIndex({
 
     return (
         <>
-            <Head title="Órdenes de Producción" />
+            <Head title="Órdenes de producción" />
             <div className="space-y-4 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            Órdenes de Producción
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Gestión y seguimiento de la fabricación de pinturas
-                            en Planta Cali.
-                        </p>
-                    </div>
-                    {can.create && (
-                        <Button asChild>
-                            <Link href={productionOrderCreate().url}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Nueva Orden
-                            </Link>
-                        </Button>
-                    )}
-                </div>
+                <PageHeader
+                    title="Órdenes de producción"
+                    description="Gestión y seguimiento de la fabricación de pinturas en Planta Cali."
+                    actions={
+                        can.create && (
+                            <Button asChild>
+                                <Link href={productionOrderCreate().url}>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Nueva orden
+                                </Link>
+                            </Button>
+                        )
+                    }
+                />
 
                 <DataTableFilters
                     fields={filterFields}

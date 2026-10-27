@@ -6,12 +6,11 @@ import { edit as editAppearance } from '@/routes/appearance';
 export default function Appearance() {
     return (
         <>
-            <Head title="Configuración de apariencia" />
+            <Head title="Apariencia" />
 
             <div className="space-y-6">
                 <Heading
-                    variant="small"
-                    title="Configuración de apariencia"
+                    title="Apariencia"
                     description="Actualiza la configuración de apariencia de tu cuenta"
                 />
                 <AppearanceTabs />
@@ -23,7 +22,7 @@ export default function Appearance() {
 Appearance.layout = {
     breadcrumbs: [
         {
-            title: 'Configuración de apariencia',
+            title: 'Apariencia',
             href: editAppearance(),
         },
     ],

@@ -11,6 +11,7 @@ import { useState } from 'react';
 
 import { ActiveBadge } from '@/components/active-badge';
 import { FormattedDate } from '@/components/formatted-date';
+import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -110,19 +111,11 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                     </div>
                 )}
 
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            Detalle del QR
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Token:{' '}
-                            <span className="font-mono">{qrCode.token}</span>
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <ActiveBadge isActive={qrCode.is_active} />
-                        {can.update && (
+                <PageHeader
+                    title={`QR — ${qrCode.token}`}
+                    badge={<ActiveBadge isActive={qrCode.is_active} />}
+                    actions={
+                        can.update && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -130,9 +123,9 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                             >
                                 {qrCode.is_active ? 'Desactivar' : 'Activar'}
                             </Button>
-                        )}
-                    </div>
-                </div>
+                        )
+                    }
+                />
 
                 <div className="grid gap-6 lg:grid-cols-3">
                     {/* QR Image Card */}

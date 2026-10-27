@@ -5,6 +5,7 @@ import type { ComponentProps } from 'react';
 import AuditLogController from '@/actions/App/Http/Controllers/Admin/AuditLogController';
 
 import { DataTableFilters } from '@/components/data-table-filters';
+import { PageHeader } from '@/components/page-header';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { pillClasses, toneClasses } from '@/lib/tones';
@@ -267,19 +268,13 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
 
     return (
         <>
-            <Head title="Registro de Actividades" />
+            <Head title="Auditoría" />
 
             <div className="space-y-6 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            Registro de Actividades
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Auditoría de eventos, cambios de sistema y accesos.
-                        </p>
-                    </div>
-                </div>
+                <PageHeader
+                    title="Auditoría"
+                    description="Auditoría de eventos, cambios de sistema y accesos."
+                />
 
                 {/* Filters */}
                 <DataTableFilters

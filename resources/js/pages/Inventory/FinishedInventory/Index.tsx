@@ -1,10 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
-import { Package } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
 import { EnumLabel } from '@/components/enum-label';
 import { FormattedNumber } from '@/components/formatted-number';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
@@ -95,18 +95,10 @@ export default function FinishedInventoryIndex({
             <Head title="Inventario PT" />
 
             <div className="space-y-4 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="flex items-center gap-2 text-2xl font-semibold text-foreground">
-                            <Package className="h-7 w-7 text-primary" />
-                            Inventario PT
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Disponibilidad de producto terminado por variante y
-                            bodega.
-                        </p>
-                    </div>
-                </div>
+                <PageHeader
+                    title="Inventario PT"
+                    description="Disponibilidad de producto terminado por variante y bodega."
+                />
 
                 {filterState.product_id ? (
                     <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2 text-sm">

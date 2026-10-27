@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
+import { PageHeader } from '@/components/page-header';
 import {
     RawMaterialForm,
     rawMaterialPayload,
@@ -119,16 +120,16 @@ export default function RawMaterialsEdit({
 
     return (
         <>
-            <Head title={`Editar ${rawMaterial.code}`} />
+            <Head title={`Editar materia prima: ${rawMaterial.code}`} />
 
             <div className="mx-auto max-w-3xl space-y-6 p-6">
-                <div className="flex flex-col gap-2">
+                <div className="space-y-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Link
                             href={rawMaterialsIndex().url}
                             className="hover:text-foreground"
                         >
-                            Materias Primas
+                            Materias primas
                         </Link>
                         <span>/</span>
                         <Link
@@ -140,10 +141,16 @@ export default function RawMaterialsEdit({
                         <span>/</span>
                         <span>Editar</span>
                     </div>
-                    <h1 className="text-2xl font-semibold">
-                        Editar Materia Prima:{' '}
-                        <span className="font-mono">{rawMaterial.code}</span>
-                    </h1>
+                    <PageHeader
+                        title={
+                            <>
+                                Editar materia prima:{' '}
+                                <span className="font-mono">
+                                    {rawMaterial.code}
+                                </span>
+                            </>
+                        }
+                    />
                 </div>
 
                 <RawMaterialForm

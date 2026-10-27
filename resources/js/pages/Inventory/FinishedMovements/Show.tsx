@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { MovementDirectionBadge } from '@/components/movement-direction-badge';
+import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { finishedLotLabel } from '@/lib/finished-lot';
@@ -38,25 +39,27 @@ export default function FinishedMovementsShow({ movement }: Props) {
 
             <div className="space-y-5 p-6">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div className="space-y-2">
+                    <div className="space-y-4">
                         <Button variant="ghost" size="sm" asChild>
                             <Link href={finishedMovementsIndex.url()}>
                                 <ArrowLeft className="mr-2 h-4 w-4" />
                                 Movimientos PT
                             </Link>
                         </Button>
-                        <div>
-                            <h1 className="text-2xl font-semibold text-foreground">
-                                Movimiento PT #{movement.id}
-                            </h1>
-                            <div className="mt-2 flex flex-wrap items-center gap-2">
-                                <MovementDirectionBadge type={movement.type} />
-                                <StatusBadge
-                                    enum="FinishedInventoryMovementReason"
-                                    value={movement.reason}
-                                />
-                            </div>
-                        </div>
+                        <PageHeader
+                            title={`Movimiento PT #${movement.id}`}
+                            badge={
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <MovementDirectionBadge
+                                        type={movement.type}
+                                    />
+                                    <StatusBadge
+                                        enum="FinishedInventoryMovementReason"
+                                        value={movement.reason}
+                                    />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
 

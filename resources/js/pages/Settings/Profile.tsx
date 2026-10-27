@@ -63,12 +63,11 @@ export default function Profile({
 
     return (
         <>
-            <Head title="Configuración de perfil" />
+            <Head title="Perfil" />
 
             <div className="space-y-6">
                 <Heading
-                    variant="small"
-                    title="Información del perfil"
+                    title="Perfil"
                     description="Actualiza tu nombre, correo electrónico y cargo"
                 />
 
@@ -128,7 +127,7 @@ export default function Profile({
 Profile.layout = {
     breadcrumbs: [
         {
-            title: 'Configuración de perfil',
+            title: 'Perfil',
             href: edit(),
         },
     ],

@@ -40,7 +40,6 @@ export default function ShrinkWrapTypesEdit({
 
             <div className="space-y-6">
                 <Heading
-                    variant="small"
                     title={`Editar «${type.name}»`}
                     description="Los termoencogidos ya registrados conservan la receta con que se registraron."
                 />

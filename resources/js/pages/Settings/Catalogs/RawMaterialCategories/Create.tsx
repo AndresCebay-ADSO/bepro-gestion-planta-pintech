@@ -28,7 +28,6 @@ export default function RawMaterialCategoriesCreate({ typeOptions }: Props) {
 
             <div className="space-y-6">
                 <Heading
-                    variant="small"
                     title="Nueva categoría de materia prima"
                     description="Elige bien el tipo de insumo: no se podrá cambiar cuando la categoría tenga materias primas."
                 />

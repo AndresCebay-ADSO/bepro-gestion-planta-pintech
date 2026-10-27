@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import InputError from '@/components/input-error';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -39,17 +40,13 @@ export default function WarehousesCreate() {
 
     return (
         <>
-            <Head title="Nueva Bodega" />
+            <Head title="Nueva bodega" />
 
             <div className="mx-auto max-w-3xl space-y-6 p-6">
-                <div className="space-y-1">
-                    <h1 className="text-2xl font-semibold text-foreground">
-                        Nueva Bodega
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Registra una nueva bodega para control de inventario.
-                    </p>
-                </div>
+                <PageHeader
+                    title="Nueva bodega"
+                    description="Registra una nueva bodega para control de inventario."
+                />
 
                 <div className="rounded-lg border border-border bg-card p-6">
                     <form

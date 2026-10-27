@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { ActiveBadge } from '@/components/active-badge';
 import { FormattedNumber } from '@/components/formatted-number';
+import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -64,47 +65,46 @@ export default function WarehousesShow({ warehouse, can }: Props) {
 
     return (
         <>
-            <Head title={`Bodega ${warehouse.name}`} />
+            <Head title={warehouse.name} />
 
             <div className="space-y-6 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground">
-                            {warehouse.name}
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Detalle de bodega, usuarios e inventario terminado.
-                        </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" asChild>
-                            <Link href={warehousesIndex().url}>Volver</Link>
-                        </Button>
-                        {can.assignUsers && (
+                <PageHeader
+                    title={warehouse.name}
+                    description="Detalle de bodega, usuarios e inventario terminado."
+                    actions={
+                        <>
                             <Button variant="outline" asChild>
-                                <Link href={assignUsersForm(warehouse.id).url}>
-                                    Asignar usuarios
-                                </Link>
+                                <Link href={warehousesIndex().url}>Volver</Link>
                             </Button>
-                        )}
-                        {can.update && (
-                            <Button asChild>
-                                <Link href={warehousesEdit(warehouse.id).url}>
-                                    Editar
-                                </Link>
-                            </Button>
-                        )}
-                        {can.delete && (
-                            <Button
-                                variant="destructive"
-                                onClick={handleDelete}
-                            >
-                                Eliminar
-                            </Button>
-                        )}
-                    </div>
-                </div>
+                            {can.assignUsers && (
+                                <Button variant="outline" asChild>
+                                    <Link
+                                        href={assignUsersForm(warehouse.id).url}
+                                    >
+                                        Asignar usuarios
+                                    </Link>
+                                </Button>
+                            )}
+                            {can.update && (
+                                <Button asChild>
+                                    <Link
+                                        href={warehousesEdit(warehouse.id).url}
+                                    >
+                                        Editar
+                                    </Link>
+                                </Button>
+                            )}
+                            {can.delete && (
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleDelete}
+                                >
+                                    Eliminar
+                                </Button>
+                            )}
+                        </>
+                    }
+                />
 
                 <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-2">
                     <div>
@@ -150,7 +150,7 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                 <div className="grid gap-6 lg:grid-cols-2">
                     <div className="overflow-x-auto rounded-lg border border-border bg-card">
                         <div className="border-b border-border px-4 py-3">
-                            <h2 className="font-medium text-foreground">
+                            <h2 className="text-lg font-semibold text-foreground">
                                 Usuarios asignados
                             </h2>
                         </div>
@@ -203,7 +203,7 @@ export default function WarehousesShow({ warehouse, can }: Props) {
 
                     <div className="overflow-x-auto rounded-lg border border-border bg-card">
                         <div className="border-b border-border px-4 py-3">
-                            <h2 className="font-medium text-foreground">
+                            <h2 className="text-lg font-semibold text-foreground">
                                 Stock de producto terminado
                             </h2>
                         </div>

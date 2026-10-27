@@ -70,7 +70,6 @@ export default function UnitsOfMeasureEdit({ unit }: Props) {
 
             <div className="space-y-6">
                 <Heading
-                    variant="small"
                     title={`Editar «${unit.name}»`}
                     description={`En uso: ${describeUnitUsage(unit.usage)}.`}
                 />

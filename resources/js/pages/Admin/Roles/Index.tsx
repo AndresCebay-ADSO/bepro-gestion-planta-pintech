@@ -1,8 +1,9 @@
-import { Link, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { KeyRound } from 'lucide-react';
 import type { FC } from 'react';
 
 import { DataTableFilters } from '@/components/data-table-filters';
+import { PageHeader } from '@/components/page-header';
 import { TableActions } from '@/components/table-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -56,27 +57,22 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
 
     return (
         <div className="min-h-screen bg-background p-6">
+            <Head title="Roles" />
             <div className="mx-auto max-w-7xl space-y-8">
-                <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-                    <div>
-                        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                            Roles y permisos
-                        </h1>
-                        <p className="mt-1 text-muted-foreground">
-                            Los roles del sistema se gestionan en código y se
-                            muestran en solo lectura. Crea roles personalizados
-                            para otras combinaciones de permisos.
-                        </p>
-                    </div>
-                    {can.create && (
-                        <Button asChild className="shrink-0">
-                            <Link href={rolesCreate().url}>
-                                <KeyRound className="mr-2 h-4 w-4" />
-                                Nuevo rol
-                            </Link>
-                        </Button>
-                    )}
-                </div>
+                <PageHeader
+                    title="Roles"
+                    description="Los roles del sistema se gestionan en código y se muestran en solo lectura. Crea roles personalizados para otras combinaciones de permisos."
+                    actions={
+                        can.create && (
+                            <Button asChild>
+                                <Link href={rolesCreate().url}>
+                                    <KeyRound className="mr-2 h-4 w-4" />
+                                    Nuevo rol
+                                </Link>
+                            </Button>
+                        )
+                    }
+                />
 
                 <DataTableFilters
                     fields={[

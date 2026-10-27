@@ -22,7 +22,6 @@ export default function ProductCategoriesCreate() {
 
             <div className="space-y-6">
                 <Heading
-                    variant="small"
                     title="Nueva categoría de producto"
                     description="Quedará disponible al registrar productos."
                 />

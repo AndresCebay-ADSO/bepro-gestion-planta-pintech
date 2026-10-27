@@ -11,6 +11,7 @@ import {
 import { useState } from 'react';
 
 import { FormattedDate } from '@/components/formatted-date';
+import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 
 import { Button } from '@/components/ui/button';
@@ -158,69 +159,89 @@ export default function PaintDevelopmentRequestShow({
             <Head title={`Solicitud ${request.request_number}`} />
 
             <div className="space-y-4 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-center gap-3">
-                        <Button variant="outline" size="icon" asChild>
-                            <Link href={requestsIndex().url}>
-                                <ArrowLeft className="h-4 w-4" />
-                            </Link>
-                        </Button>
-                        <div>
-                            <h1 className="text-2xl font-semibold text-foreground">
-                                Solicitud {request.request_number}
-                            </h1>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                {statusIcon}
-                                <StatusBadge
-                                    enum="PaintDevelopmentRequestStatus"
-                                    value={request.status}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                        {can.submit && (
-                            <Button
-                                variant="default"
-                                onClick={() => setSubmitDialogOpen(true)}
-                            >
-                                <Send className="mr-2 h-4 w-4" />
-                                Enviar
-                            </Button>
-                        )}
-                        {can.update && (
-                            <Button variant="outline" asChild>
-                                <Link href={requestsEdit(request.id).url}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Editar
-                                </Link>
-                            </Button>
-                        )}
-                        {can.exportPdf && (
-                            <Button variant="outline" asChild>
-                                <a
-                                    href={requestsExportPdf(request.id).url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                >
-                                    <FileDown className="mr-2 h-4 w-4" />
-                                    PDF
-                                </a>
-                            </Button>
-                        )}
-                        {can.updateStatus && nextStatusOptions.length > 0 && (
-                            <Button
-                                variant="secondary"
-                                onClick={() => {
-                                    setSelectedStatus('');
-                                    setReviewNotes(request.review_notes ?? '');
-                                    setStatusDialogOpen(true);
-                                }}
-                            >
-                                Cambiar estado
-                            </Button>
-                        )}
+                <div className="flex items-start gap-3">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        asChild
+                        className="mt-0.5 shrink-0"
+                    >
+                        <Link href={requestsIndex().url}>
+                            <ArrowLeft className="h-4 w-4" />
+                        </Link>
+                    </Button>
+                    <div className="min-w-0 flex-1">
+                        <PageHeader
+                            title={`Solicitud ${request.request_number}`}
+                            badge={
+                                <div className="flex items-center gap-2">
+                                    {statusIcon}
+                                    <StatusBadge
+                                        enum="PaintDevelopmentRequestStatus"
+                                        value={request.status}
+                                    />
+                                </div>
+                            }
+                            actions={
+                                <>
+                                    {can.submit && (
+                                        <Button
+                                            variant="default"
+                                            onClick={() =>
+                                                setSubmitDialogOpen(true)
+                                            }
+                                        >
+                                            <Send className="mr-2 h-4 w-4" />
+                                            Enviar
+                                        </Button>
+                                    )}
+                                    {can.update && (
+                                        <Button variant="outline" asChild>
+                                            <Link
+                                                href={
+                                                    requestsEdit(request.id).url
+                                                }
+                                            >
+                                                <Pencil className="mr-2 h-4 w-4" />
+                                                Editar
+                                            </Link>
+                                        </Button>
+                                    )}
+                                    {can.exportPdf && (
+                                        <Button variant="outline" asChild>
+                                            <a
+                                                href={
+                                                    requestsExportPdf(
+                                                        request.id,
+                                                    ).url
+                                                }
+                                                target="_blank"
+                                                rel="noreferrer"
+                                            >
+                                                <FileDown className="mr-2 h-4 w-4" />
+                                                PDF
+                                            </a>
+                                        </Button>
+                                    )}
+                                    {can.updateStatus &&
+                                        nextStatusOptions.length > 0 && (
+                                            <Button
+                                                variant="secondary"
+                                                onClick={() => {
+                                                    setSelectedStatus('');
+                                                    setReviewNotes(
+                                                        request.review_notes ??
+                                                            '',
+                                                    );
+                                                    setStatusDialogOpen(true);
+                                                }}
+                                            >
+                                                Cambiar estado
+                                            </Button>
+                                        )}
+                                </>
+                            }
+                        />
                     </div>
                 </div>
 
