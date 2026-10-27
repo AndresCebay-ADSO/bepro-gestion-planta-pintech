@@ -103,9 +103,9 @@ export default function PricesIndex({
                                 <div className="border-b border-border bg-muted/30 p-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h3 className="font-semibold text-foreground">
+                                            <h2 className="text-lg font-semibold text-foreground">
                                                 {product.name}
-                                            </h3>
+                                            </h2>
                                         </div>
                                         {can.view_costs && (
                                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
