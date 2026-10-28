@@ -2,12 +2,14 @@ import { useState } from 'react';
 import type { ComponentProps } from 'react';
 
 import { Input } from '@/components/ui/input';
+import { useNumericField } from '@/hooks/use-numeric-field';
 import {
-    acceptsEdit,
     checkDecimalText,
     DECIMAL_SEPARATOR_ERROR,
     decimalAmbiguityHint,
+    decimalField,
     decimalLimitsMessage,
+    pastedThousandsHint,
 } from '@/lib/numeric-input';
 import type { DecimalLimits } from '@/lib/numeric-input';
 import { cn } from '@/lib/utils';
@@ -18,7 +20,7 @@ type DecimalInputProps = Omit<
 > &
     DecimalLimits & {
         value: string | number | null | undefined;
-        /** Recibe el texto tal como quedó escrito; se convierte al enviar con `toDecimalPayload`. */
+        /** Recibe el texto sin miles (`1200,5`); se convierte al enviar con `toDecimalPayload`. */
         onValueChange: (value: string) => void;
         /** Clases del contenedor (campo y mensaje), p. ej. `flex-1` dentro de una fila flex. */
         containerClassName?: string;
@@ -26,7 +28,8 @@ type DecimalInputProps = Omit<
 
 /**
  * Campo decimal del sistema (auditoría 3.6, INV-15): acepta punto o coma como separador decimal, sin rueda del mouse
- * ni `e`, y con los decimales de su columna. Reglas en `@/lib/numeric-input`.
+ * ni `e`, y con los decimales de su columna. Muestra los miles mientras se escribe (`1.200,5`); el formulario guarda el
+ * texto sin ellos. Reglas en `@/lib/numeric-input`.
  */
 export function DecimalInput({
     value,
@@ -38,6 +41,7 @@ export function DecimalInput({
     ...props
 }: DecimalInputProps) {
     const limits = { maxDecimals, maxIntegerDigits, allowNegative };
+    const field = decimalField(limits);
     const text = value === null || value === undefined ? '' : String(value);
     const textCheck = checkDecimalText(text, limits);
     const hasSeparatorError = textCheck === 'separator-error';
@@ -51,8 +55,26 @@ export function DecimalInput({
     // El aviso es sobre lo que escribió el usuario: un valor que llega del servidor con tres decimales (2,125 kg) no lo
     // muestra al abrir la página.
     const [isEdited, setIsEdited] = useState(false);
-    const hint = isEdited ? decimalAmbiguityHint(text) : null;
+    // Lo pegado que se leyó como miles y podía ser un decimal (`1.250`). Vale para el valor que dejó el pegado: si el
+    // valor cambia (otra tecla, un `reset()` del formulario, un valor recalculado), el aviso se va.
+    const [pasteHint, setPasteHint] = useState<{
+        text: string;
+        message: string;
+    } | null>(null);
+    const hint =
+        (pasteHint?.text === text ? pasteHint.message : null) ??
+        (isEdited ? decimalAmbiguityHint(text) : null);
     const isEditable = !props.disabled && !props.readOnly;
+    const numeric = useNumericField({
+        field,
+        text,
+        onValueChange,
+        inputProps: props,
+        onEdited: () => setIsEdited(true),
+        onPasteHint: (message, next) =>
+            setPasteHint(message === null ? null : { text: next, message }),
+        pasteHint: (pasted) => pastedThousandsHint(pasted, limits),
+    });
 
     // El contenedor está siempre, aunque no haya mensaje: si apareciera solo con el mensaje, React volvería a montar
     // el campo y se perdería el foco mientras se escribe. `w-0 min-w-full`: el mensaje toma el ancho del campo y se
@@ -66,19 +88,7 @@ export function DecimalInput({
                 inputMode={allowNegative ? 'text' : 'decimal'}
                 autoComplete="off"
                 aria-invalid={error !== null || props['aria-invalid']}
-                value={text}
-                onChange={(event) => {
-                    const next = event.target.value;
-
-                    if (
-                        acceptsEdit(next, text, (value) =>
-                            checkDecimalText(value, limits),
-                        )
-                    ) {
-                        setIsEdited(true);
-                        onValueChange(next);
-                    }
-                }}
+                {...numeric}
             />
             {error ? (
                 <p

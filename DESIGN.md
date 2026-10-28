@@ -195,7 +195,7 @@ phone, and `children` are extra lines under the description.
 - **No number is printed raw.** Never `{order.quantity}`; always `<FormattedNumber>` or the helpers in
   `lib/formatters.ts` (`formatNumber`, `formatQuantity`, `formatCurrency`, `formatPercent`). Use `tabular-nums` in
   numeric columns.
-- Inputs: `DecimalInput` / `IntegerInput`, never `<Input type="number">`. Thousands dot while typing _(pending)_.
+- Inputs: `DecimalInput` / `IntegerInput`, never `type="number"`. Thousands dot while typing; a typed dot is decimal.
 
 ## 8. Forms
 

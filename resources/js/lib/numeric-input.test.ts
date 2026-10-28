@@ -2,18 +2,29 @@ import { describe, expect, it } from 'vitest';
 
 import {
     acceptsEdit,
+    applyNumericEdit,
     checkDecimalText,
     checkIntegerText,
     decimalAmbiguityHint,
+    decimalField,
     decimalLimitsMessage,
+    formatDecimalDisplay,
+    formatIntegerDisplay,
     idPayload,
+    integerField,
+    integerInWords,
     integerLimitsMessage,
     isValidDecimalText,
     isValidIntegerText,
+    normalizeNumericInsertion,
     parseDecimal,
+    pastedThousandsHint,
+    replaceNumericRange,
+    stripThousandsDots,
     toDecimalPayload,
     withDecimalPayloads,
 } from '@/lib/numeric-input';
+import type { NumericEdit, NumericField } from '@/lib/numeric-input';
 
 /*
  * Auditoría 3.6, INV-15 (y OPC-11, OPL-10, OPX-02, PT-03): en los campos `type="number"`, `1,5` se guardaba como 15.
@@ -241,7 +252,7 @@ describe('negativos: solo en los campos con allowNegative (ajuste de precio, tem
 
     it('el aviso de miles conserva el signo', () => {
         expect(decimalAmbiguityHint('-1.200')).toBe(
-            'Se registrará -1,2. Si es un número sin decimales, escríbelo sin punto: -1200.',
+            'Se registrará -1,2. Si es menos mil doscientos, escríbelo sin punto ni coma: -1200.',
         );
     });
 });
@@ -329,19 +340,19 @@ describe('decimalAmbiguityHint: aviso cuando se escribe como miles', () => {
     it.each([
         [
             '1.200',
-            'Se registrará 1,2. Si es un número sin decimales, escríbelo sin punto: 1200.',
+            'Se registrará 1,2. Si es mil doscientos, escríbelo sin punto ni coma: 1200.',
         ],
         [
             '12.500',
-            'Se registrará 12,5. Si es un número sin decimales, escríbelo sin punto: 12500.',
+            'Se registrará 12,5. Si es doce mil quinientos, escríbelo sin punto ni coma: 12500.',
         ],
         [
             '1,250',
-            'Se registrará 1,25. Si es un número sin decimales, escríbelo sin coma: 1250.',
+            'Se registrará 1,25. Si es mil doscientos cincuenta, escríbelo sin punto ni coma: 1250.',
         ],
         [
             '1.000',
-            'Se registrará 1. Si es un número sin decimales, escríbelo sin punto: 1000.',
+            'Se registrará 1. Si es mil, escríbelo sin punto ni coma: 1000.',
         ],
     ])('avisa en %j', (text, hint) => {
         expect(decimalAmbiguityHint(text)).toBe(hint);
@@ -382,4 +393,556 @@ describe('idPayload: el ID que se envía al servidor', () => {
             expect(idPayload(value)).toBe(value);
         },
     );
+});
+
+describe('integerInWords: el número del aviso, en palabras', () => {
+    it.each([
+        ['0', 'cero'],
+        ['1', 'uno'],
+        ['16', 'dieciséis'],
+        ['21', 'veintiuno'],
+        ['31', 'treinta y uno'],
+        ['100', 'cien'],
+        ['101', 'ciento uno'],
+        ['1000', 'mil'],
+        ['1001', 'mil uno'],
+        ['1250', 'mil doscientos cincuenta'],
+        ['12500', 'doce mil quinientos'],
+        ['21000', 'veintiún mil'],
+        ['31000', 'treinta y un mil'],
+        ['101000', 'ciento un mil'],
+        ['100000', 'cien mil'],
+        ['1000000', 'un millón'],
+        ['2500000', 'dos millones quinientos mil'],
+        ['21000000', 'veintiún millones'],
+        ['1000000000', 'mil millones'],
+        [
+            '12345678123',
+            'doce mil trescientos cuarenta y cinco millones seiscientos setenta y ocho mil ciento veintitrés',
+        ],
+        ['1000000000000', 'un billón'],
+        ['01250', 'mil doscientos cincuenta'],
+    ])('%s → «%s»', (digits, words) => {
+        expect(integerInWords(digits)).toBe(words);
+    });
+});
+
+/*
+ * Miles mientras se escribe: el formulario guarda el texto sin miles (`1200,5`) y el campo muestra `1.200,5`. El punto
+ * que se teclea es decimal.
+ */
+
+describe('formatDecimalDisplay: lo que se ve en un campo decimal', () => {
+    it.each([
+        ['', ''],
+        ['5', '5'],
+        ['1200', '1.200'],
+        ['1200.5', '1.200,5'],
+        ['1200,5', '1.200,5'],
+        ['0,5', '0,5'],
+        [',5', ',5'],
+        ['1200,', '1.200,'],
+        ['12345678,1234', '12.345.678,1234'],
+        ['1,250', '1,250'],
+    ])('%j → %j', (text, display) => {
+        expect(formatDecimalDisplay(text)).toBe(display);
+    });
+
+    it('con ceros a la izquierda no agrupa: «0.125» parecería un decimal', () => {
+        expect(formatDecimalDisplay('0125')).toBe('0125');
+        expect(formatDecimalDisplay('0001,5')).toBe('0001,5');
+        expect(formatDecimalDisplay('0,125')).toBe('0,125');
+    });
+
+    it('agrupa los negativos en los campos que los admiten', () => {
+        expect(formatDecimalDisplay('-1200,5', { allowNegative: true })).toBe(
+            '-1.200,5',
+        );
+        expect(formatDecimalDisplay('-', { allowNegative: true })).toBe('-');
+    });
+
+    it.each([
+        ['1,200,5', 'texto con dos separadores'],
+        ['1.200,5', 'punto y coma'],
+        ['123456789', 'más enteros de los que caben (llegó del servidor)'],
+        ['1,12345', 'más decimales de los que caben'],
+        ['-5.26', 'negativo en un campo sin negativos'],
+    ])('deja tal cual %j (%s)', (text) => {
+        expect(formatDecimalDisplay(text)).toBe(text);
+    });
+});
+
+describe('formatIntegerDisplay: lo que se ve en un campo de enteros', () => {
+    it.each([
+        ['', ''],
+        ['12', '12'],
+        ['1200', '1.200'],
+        ['1250000', '1.250.000'],
+    ])('%j → %j', (text, display) => {
+        expect(formatIntegerDisplay(text)).toBe(display);
+    });
+
+    it.each(['3,5', '1200.', '123456789', '0125'])(
+        'deja tal cual %j',
+        (text) => {
+            expect(formatIntegerDisplay(text)).toBe(text);
+        },
+    );
+});
+
+describe('pastedThousandsHint: lo pegado que se leyó como miles', () => {
+    it('avisa cuando un solo grupo con punto pudo ser un decimal', () => {
+        expect(pastedThousandsHint('1.250')).toBe(
+            'El punto de «1.250» se leyó como separador de miles (mil doscientos cincuenta). Si era un decimal, escríbelo con coma: 1,25.',
+        );
+        expect(pastedThousandsHint('$ 1.000')).toBe(
+            'El punto de «1.000» se leyó como separador de miles (mil). Si era un decimal, escríbelo con coma: 1.',
+        );
+    });
+
+    it.each([
+        ['1.250.000', 'varios grupos: no puede ser un decimal'],
+        ['1.250,5', 'con coma decimal'],
+        ['1250', 'sin separador'],
+        ['0.125', 'el primer grupo en 0 es decimal'],
+        ['1,250', 'una coma es decimal'],
+    ])('no avisa con %j (%s)', (pasted) => {
+        expect(pastedThousandsHint(pasted)).toBeNull();
+    });
+
+    it('no avisa en un campo sin decimales: ahí 1250 es la única lectura', () => {
+        expect(pastedThousandsHint('1.250', { maxDecimals: 0 })).toBeNull();
+        expect(pastedThousandsHint('1.250', { maxDecimals: 2 })).not.toBeNull();
+    });
+});
+
+describe('stripThousandsDots: quitar el formato', () => {
+    it.each([
+        ['1.200,5', '1200,5'],
+        ['-12.345.678,1234', '-12345678,1234'],
+        ['1.200', '1200'],
+        [',5', ',5'],
+    ])('%j → %j', (display, text) => {
+        expect(stripThousandsDots(display)).toBe(text);
+    });
+});
+
+describe('normalizeNumericInsertion: lo pegado, sin formato', () => {
+    it.each([
+        ['1.250.000,75', '1250000,75', 'punto y coma: el último es el decimal'],
+        ['1,250,000.75', '1250000.75', 'coma y punto: el último es el decimal'],
+        ['1.250.000', '1250000', 'el mismo separador repetido son miles'],
+        ['1,250,000', '1250000', 'la misma coma repetida son miles'],
+        ['1250000.75', '1250000.75', 'un solo separador es decimal'],
+        [
+            '1.250',
+            '1250',
+            'un punto con grupo de tres son miles (viene de un listado)',
+        ],
+        ['1.200', '1200', 'el «1.200» copiado del propio campo'],
+        ['0.125', '0.125', 'el primer grupo en 0 es decimal'],
+        ['1,250', '1,250', 'una sola coma es decimal'],
+        ['1,250.5', '1250.5', 'formato inglés: coma de miles y punto decimal'],
+        [
+            '1.5.2',
+            '1.5.2',
+            'grupos que no son de tres: se deja para que el campo marque el error',
+        ],
+        ['12.34.5', '12.34.5', 'otra agrupación mal formada'],
+        ['1.25,5', '1.25,5', 'punto que no agrupa tres, con coma'],
+        ['15%', '15', 'signo de porcentaje'],
+        ['1 250 000,75', '1250000,75', 'espacios'],
+        ['1\u00a0250\u202f000', '1250000', 'espacios duros'],
+        ['$ 1.250.000', '1250000', 'signo de pesos'],
+        ['-1.250,5', '-1250,5', 'negativo'],
+        ['.', '.', 'el punto tecleado'],
+        ['', '', 'vacío'],
+    ])('%j → %j (%s)', (pasted, text) => {
+        expect(normalizeNumericInsertion(pasted)).toBe(text);
+    });
+
+    it('deja las letras para que el campo las rechace', () => {
+        expect(normalizeNumericInsertion('12 kg')).toBe('12kg');
+    });
+});
+
+/** Lo que se ve después del cambio, con el cursor marcado con `|`. */
+function shown(edit: NumericEdit): string {
+    return `${edit.display.slice(0, edit.caret)}|${edit.display.slice(edit.caret)}`;
+}
+
+/** Teclear `typed` con el cursor en `caret` de lo que se ve. */
+function typeAt(
+    field: NumericField,
+    current: string,
+    caret: number,
+    typed: string,
+): NumericEdit {
+    const display = field.format(current);
+
+    return applyNumericEdit(
+        field,
+        current,
+        `${display.slice(0, caret)}${typed}${display.slice(caret)}`,
+        caret + typed.length,
+        'insertText',
+    );
+}
+
+/** La tecla de borrar con el cursor en `caret`. */
+function backspaceAt(
+    field: NumericField,
+    current: string,
+    caret: number,
+): NumericEdit {
+    const display = field.format(current);
+
+    return applyNumericEdit(
+        field,
+        current,
+        `${display.slice(0, caret - 1)}${display.slice(caret)}`,
+        caret - 1,
+        'deleteContentBackward',
+    );
+}
+
+/** Supr con el cursor en `caret`. */
+function deleteAt(
+    field: NumericField,
+    current: string,
+    caret: number,
+): NumericEdit {
+    const display = field.format(current);
+
+    return applyNumericEdit(
+        field,
+        current,
+        `${display.slice(0, caret)}${display.slice(caret + 1)}`,
+        caret,
+        'deleteContentForward',
+    );
+}
+
+/** Teclear todo el texto, tecla por tecla, desde el campo vacío. */
+function typeAll(field: NumericField, keys: string): NumericEdit {
+    let edit: NumericEdit = { value: '', display: '', caret: 0 };
+
+    for (const key of keys) {
+        edit = typeAt(field, edit.value, edit.caret, key);
+    }
+
+    return edit;
+}
+
+describe('applyNumericEdit: teclear en un campo decimal', () => {
+    const decimal = decimalField();
+
+    it.each([
+        ['1200,5', '1200,5', '1.200,5|'],
+        ['1200.5', '1200,5', '1.200,5|'],
+        ['12345678,1234', '12345678,1234', '12.345.678,1234|'],
+        ['.5', ',5', ',5|'],
+        ['1250', '1250', '1.250|'],
+        ['1.250', '1,250', '1,250|'],
+    ])('%j se guarda %j y se ve %j', (keys, value, display) => {
+        const edit = typeAll(decimal, keys);
+
+        expect(edit.value).toBe(value);
+        expect(shown(edit)).toBe(display);
+    });
+
+    it('el punto de miles tecleado por costumbre queda escrito, sin agrupar y con error', () => {
+        const edit = typeAll(decimal, '1.200,5');
+
+        expect(edit.value).toBe('1,200,5');
+        expect(edit.display).toBe('1,200,5');
+        expect(checkDecimalText(edit.value)).toBe('separator-error');
+    });
+
+    it('rechaza letras, espacios y lo que no cabe, con el cursor donde estaba', () => {
+        expect(shown(typeAt(decimal, '1200', 1, 'a'))).toBe('1|.200');
+        expect(shown(typeAt(decimal, '1200', 5, ' '))).toBe('1.200|');
+        expect(typeAt(decimal, '12345678', 10, '9').value).toBe('12345678');
+        expect(typeAt(decimal, '1,1234', 6, '5').value).toBe('1,1234');
+        expect(typeAt(decimal, '5', 0, '-').value).toBe('5');
+    });
+
+    it('el cursor queda tras los mismos dígitos cuando se mueven los puntos', () => {
+        expect(shown(typeAt(decimal, '100', 3, '0'))).toBe('1.000|');
+        expect(shown(typeAt(decimal, '1000', 0, '5'))).toBe('5|1.000');
+        expect(shown(typeAt(decimal, '1200', 1, '5'))).toBe('15|.200');
+        expect(shown(typeAt(decimal, '1200', 2, '5'))).toBe('15|.200');
+        expect(shown(typeAt(decimal, '1200', 3, '5'))).toBe('12.5|00');
+        expect(shown(typeAt(decimal, '1200', 5, '.'))).toBe('1.200,|');
+    });
+
+    it('un punto tecleado en medio es decimal', () => {
+        const edit = typeAt(decimal, '1200', 1, '.');
+
+        expect(edit.value).toBe('1,200');
+        expect(shown(edit)).toBe('1,|200');
+    });
+
+    it('agrupa los negativos', () => {
+        const negative = decimalField({ allowNegative: true });
+
+        expect(shown(typeAll(negative, '-1200.5'))).toBe('-1.200,5|');
+    });
+});
+
+describe('applyNumericEdit: borrar y suprimir en un campo decimal', () => {
+    const decimal = decimalField();
+
+    it('borrar un dígito reagrupa y deja el cursor tras los mismos dígitos', () => {
+        expect(shown(backspaceAt(decimal, '1200', 3))).toBe('1|00');
+        expect(shown(backspaceAt(decimal, '1200', 5))).toBe('120|');
+        expect(shown(backspaceAt(decimal, '1250000', 1))).toBe('|250.000');
+    });
+
+    it('borrar justo después de un punto de miles salta el punto y borra el dígito anterior', () => {
+        const edit = backspaceAt(decimal, '1200', 2);
+
+        expect(edit.value).toBe('200');
+        expect(shown(edit)).toBe('|200');
+        expect(shown(backspaceAt(decimal, '1250000', 6))).toBe('125|.000');
+    });
+
+    it('Supr justo antes de un punto de miles salta el punto y borra el dígito siguiente', () => {
+        const edit = deleteAt(decimal, '1200', 1);
+
+        expect(edit.value).toBe('100');
+        expect(shown(edit)).toBe('1|00');
+        expect(shown(deleteAt(decimal, '1250000', 1))).toBe('1|50.000');
+    });
+
+    it('Supr en un dígito reagrupa', () => {
+        expect(shown(deleteAt(decimal, '1200', 0))).toBe('|200');
+        expect(shown(deleteAt(decimal, '1200,5', 4))).toBe('120|,5');
+        expect(shown(deleteAt(decimal, '1200,5', 5))).toBe('12.00|5');
+    });
+
+    it('borrar la coma junta el número y lo agrupa', () => {
+        expect(shown(backspaceAt(decimal, '12,345', 3))).toBe('12|.345');
+    });
+
+    it('un valor del servidor que no cabe se ve tal cual y se puede borrar', () => {
+        const margin = decimalField({ maxDecimals: 2 });
+        const edit = backspaceAt(margin, '-5.26', 5);
+
+        expect(margin.format('-5.26')).toBe('-5.26');
+        expect(edit.value).toBe('-5.2');
+        expect(shown(edit)).toBe('-5.2|');
+        expect(typeAt(margin, '-5.26', 5, '1').value).toBe('-5.26');
+    });
+
+    it('con error, se borra como texto normal hasta que vuelve a agruparse', () => {
+        const edit = backspaceAt(decimal, '1,200,5', 7);
+
+        expect(edit.value).toBe('1,200,');
+        expect(edit.display).toBe('1,200,');
+
+        const fixed = backspaceAt(decimal, '1200,,5', 6);
+
+        expect(fixed.value).toBe('1200,5');
+        expect(shown(fixed)).toBe('1.200,|5');
+    });
+
+    it('reemplazar una selección que contiene un punto de miles', () => {
+        // «2.3» de «12.345» seleccionado y reemplazado por «9».
+        const edit = replaceNumericRange(
+            decimal,
+            '12345',
+            1,
+            4,
+            '9',
+            'insertText',
+        );
+
+        expect(edit.value).toBe('1945');
+        expect(shown(edit)).toBe('1.9|45');
+    });
+
+    it('seleccionar solo el punto de miles y borrarlo no borra un dígito', () => {
+        // «12.345» con el «.» seleccionado (2 a 3) y la tecla de borrar: lo que se ve queda «12345».
+        const edit = applyNumericEdit(
+            decimal,
+            '12345',
+            '12345',
+            2,
+            'deleteContentBackward',
+            { start: 2, end: 3 },
+        );
+
+        expect(edit.value).toBe('12345');
+        expect(shown(edit)).toBe('12|.345');
+    });
+
+    it('con selección, el tramo es la selección y no se adivina', () => {
+        // «2.3» de «12.345» seleccionado y reemplazado por «9», leído desde el evento.
+        const edit = applyNumericEdit(
+            decimal,
+            '12345',
+            '1945',
+            2,
+            'insertText',
+            { start: 1, end: 4 },
+        );
+
+        expect(edit.value).toBe('1945');
+        expect(shown(edit)).toBe('1.9|45');
+    });
+
+    it('una selección hecha cuando se veía otro valor se ignora', () => {
+        // Se seleccionó todo «5.67» y después el valor cambió desde fuera: la selección ya no vale.
+        const money = decimalField({ maxDecimals: 2 });
+        const edit = applyNumericEdit(
+            money,
+            '5.6789',
+            '5.678',
+            5,
+            'deleteContentBackward',
+            { start: 0, end: 4, display: '5,67' },
+        );
+
+        expect(edit.value).toBe('5.678');
+    });
+
+    it('una selección que no corresponde al cambio se ignora', () => {
+        expect(
+            applyNumericEdit(decimal, '1200', '12005', 5, 'insertText', {
+                start: 0,
+                end: 2,
+            }).value,
+        ).toBe('12005');
+    });
+
+    it('reemplazar «2.» de «12.345» por «2» no borra el dígito de al lado', () => {
+        // Lo que se ve queda «12345»: comparando, solo falta el punto, pero no fue la tecla de borrar.
+        const edit = applyNumericEdit(
+            decimal,
+            '12345',
+            '12345',
+            2,
+            'insertText',
+        );
+
+        expect(edit.value).toBe('12345');
+        expect(shown(edit)).toBe('12|.345');
+    });
+});
+
+describe('replaceNumericRange: pegar', () => {
+    const decimal = decimalField();
+    const money = decimalField({ maxDecimals: 2, maxIntegerDigits: 12 });
+
+    it.each([
+        ['1.250.000,75', '1250000,75', '1.250.000,75|'],
+        ['1250000.75', '1250000,75', '1.250.000,75|'],
+        ['1 250 000,75', '1250000,75', '1.250.000,75|'],
+        ['$ 1.250.000', '1250000', '1.250.000|'],
+        ['1.250', '1250', '1.250|'],
+        ['0.125', '0,125', '0,125|'],
+    ])('%j en el campo vacío', (pasted, value, display) => {
+        const edit = replaceNumericRange(decimal, '', 0, 0, pasted);
+
+        expect(edit.value).toBe(value);
+        expect(shown(edit)).toBe(display);
+    });
+
+    it('pegado sobre todo el texto lo reemplaza, aunque empiece igual', () => {
+        const edit = replaceNumericRange(money, '1250', 0, 5, '1.250.000');
+
+        expect(edit.value).toBe('1250000');
+        expect(shown(edit)).toBe('1.250.000|');
+    });
+
+    it('pegado en medio, el cursor queda al final de lo pegado', () => {
+        expect(shown(replaceNumericRange(decimal, '15', 1, 1, '000'))).toBe(
+            '10.00|5',
+        );
+    });
+
+    it('«$ 1.250» en un campo de dinero son mil doscientos cincuenta, no se descarta', () => {
+        expect(replaceNumericRange(money, '', 0, 0, '$ 1.250').value).toBe(
+            '1250',
+        );
+    });
+
+    it('una agrupación mal formada no se arregla adivinando: queda escrita con error', () => {
+        const edit = replaceNumericRange(decimal, '', 0, 0, '1.5.2');
+
+        expect(edit.value).toBe('1.5.2');
+        expect(edit.display).toBe('1.5.2');
+        expect(checkDecimalText(edit.value)).toBe('separator-error');
+        expect(replaceNumericRange(decimal, '', 0, 0, '12.34.5').value).toBe(
+            '12.34.5',
+        );
+    });
+
+    it('un espacio, un «$» o un «%» solos sobre una selección no borran los dígitos', () => {
+        // «200» de «1.200» seleccionado (2 a 5).
+        for (const typed of [' ', '$', '%', '\u00a0']) {
+            const edit = replaceNumericRange(decimal, '1200', 2, 5, typed);
+
+            expect(edit.value).toBe('1200');
+            expect(edit.display).toBe('1.200');
+        }
+    });
+
+    it('rechaza completo lo que tiene letras o no cabe', () => {
+        expect(replaceNumericRange(decimal, '12', 2, 2, '5 kg').value).toBe(
+            '12',
+        );
+        expect(replaceNumericRange(decimal, '12', 0, 2, 'abc').value).toBe(
+            '12',
+        );
+        expect(
+            replaceNumericRange(decimal, '', 0, 0, '1.250.000.000').value,
+        ).toBe('');
+    });
+});
+
+describe('applyNumericEdit: campo de enteros', () => {
+    const integer = integerField(10);
+
+    it.each([
+        ['1200', '1200', '1.200|'],
+        ['1250000', '1250000', '1.250.000|'],
+    ])('%j se guarda %j y se ve %j', (keys, value, display) => {
+        const edit = typeAll(integer, keys);
+
+        expect(edit.value).toBe(value);
+        expect(shown(edit)).toBe(display);
+    });
+
+    it('un punto o una coma tecleados quedan escritos, sin agrupar y con error', () => {
+        const dot = typeAll(integer, '1200.5');
+        const comma = typeAll(integer, '3,5');
+
+        expect(dot.value).toBe('1200.5');
+        expect(dot.display).toBe('1200.5');
+        expect(checkIntegerText(dot.value)).toBe('separator-error');
+        expect(comma.value).toBe('3,5');
+    });
+
+    it('borrar y suprimir junto a un punto de miles', () => {
+        expect(shown(backspaceAt(integer, '1200', 2))).toBe('|200');
+        expect(shown(deleteAt(integer, '1200', 1))).toBe('1|00');
+    });
+
+    it('pegar miles los quita', () => {
+        expect(replaceNumericRange(integer, '', 0, 0, '1.250.000').value).toBe(
+            '1250000',
+        );
+        expect(replaceNumericRange(integer, '', 0, 0, '1.250').value).toBe(
+            '1250',
+        );
+    });
+
+    it('pegar un decimal en enteros queda escrito con error', () => {
+        const edit = replaceNumericRange(integer, '', 0, 0, '3.5');
+
+        expect(edit.value).toBe('3.5');
+        expect(checkIntegerText(edit.value)).toBe('separator-error');
+    });
 });

@@ -4,63 +4,54 @@ Documentación de componentes React reutilizables para mantener consistencia vis
 
 ---
 
-## DecimalInput (Patrón para números decimales precisos)
+## DecimalInput e IntegerInput (campos numéricos)
 
-Patrón para inputs que requieren precisión decimal exacta (cantidades, costos, fórmulas). **Evita el clásico "fantasma del punto flotante"** causado por la representación binaria IEEE 754.
+Todo número que escribe el usuario usa uno de estos dos componentes; nunca `<Input type="number">`. Las reglas viven
+en `resources/js/lib/numeric-input.ts` (con sus pruebas en `numeric-input.test.ts`) y los eventos en
+`resources/js/hooks/use-numeric-field.ts`. El contrato visual está en `DESIGN.md` §7.
 
-### El problema
+| Componente | Para | Teclado en el celular |
+|------------|------|-----------------------|
+| `DecimalInput` | Cantidades, costos, precios, porcentajes | Decimal (`allowNegative`: completo, porque el de iOS no trae el signo menos) |
+| `IntegerInput` | Unidades, envases, etiquetas | Numérico |
 
-JavaScript usa punto flotante binario. Números simples como `0.06` no tienen representación exacta:
+### Comportamiento
 
-```javascript
-0.06.toString()           // "0.06" (parece OK)
-0.1 + 0.2 === 0.3       // false (da 0.30000000000000004)
-// En inputs: 0.06 → 0.060000000000000005 al re-renderizar
-```
-
-Esto causa que valores "cambien solos" al interactuar con otros campos del formulario.
-
-### La solución: type="text" + validación
-
-Mantener el valor como **string** durante toda la vida del formulario. Solo convertir a número en el backend.
+- **El formulario guarda texto sin miles** (`"1200,5"`), nunca un `number`: así no aparecen errores de punto
+  flotante (`0.1 + 0.2`). Se convierte una sola vez al enviar, con `toDecimalPayload` / `withDecimalPayloads`.
+- **El campo muestra los miles mientras se escribe** (`1.200,5`). El punto que se teclea es **decimal** y entra como
+  coma; los puntos de miles los pone el campo.
+- **Pegar:** lo pegado viene de algo ya formateado, así que una agrupación de miles bien formada se lee como miles
+  (`1.250` → 1250, `1.250.000,75`, `1,250,000.75`). Un separador suelto es decimal (`1250000.75`, `0.125`). Una
+  mezcla mal formada (`1.5.2`) queda escrita con error: nunca se quitan separadores adivinando. Un solo grupo con
+  punto (`1.250`) se registra como miles y el campo lo avisa, por si era un decimal (salvo en campos sin decimales). Lo pegado sin texto (una imagen)
+  no hace nada.
+- **Límites:** los decimales y dígitos de su columna (`maxDecimals`, `maxIntegerDigits`, `maxDigits`). Lo que no cabe
+  (letras, un decimal de más) se rechaza completo. Un valor guardado que no cabe se ve tal cual, con aviso, y se
+  puede borrar.
+- **Errores:** un segundo separador (o uno en un entero) queda escrito y marcado; nunca se borra un carácter para que
+  el número «quepa», porque eso cambiaría su valor sin aviso.
+- **Aviso:** `1.250` tecleado se registra como 1,25 y el campo lo dice con el número en palabras.
+- **Ceros a la izquierda** (`0125`): se ven sin agrupar, porque `0.125` parecería un decimal.
+- **`onValueChange` actualiza el estado en el mismo evento** (`form.setData`): el campo pone el cursor antes de que
+  React vuelva a pintar. Con `debounce` o `startTransition`, el cursor saltaría.
+- **Casos límite aceptados:** deshacer con Ctrl+Z no funciona dentro del campo; un punto tecleado justo donde se ve
+  el de miles en un entero se ve igual, pero marcado con error.
 
 ```tsx
-<Input
-    type="text"                    // ← NUNCA "number" para decimales precisos
-    inputMode="decimal"              // ← Teclado numérico en móviles
-    pattern="^\d*\.?\d{0,4}$"        // ← Validación HTML5 (max 4 decimales)
-    value={detail.quantity}          // ← String, no number
-    onChange={(e) => {
-        const val = e.target.value;
-        // Solo permitir: vacío, dígitos, un punto, máx 4 decimales
-        if (val === '' || /^\d*\.?\d{0,4}$/.test(val)) {
-            updateDetail(index, 'quantity', val);
-        }
-    }}
-    placeholder="Ej: 1.5"
+<DecimalInput
+    id="quantity"
+    value={form.data.quantity}
+    onValueChange={(value) => form.setData('quantity', value)}
+    maxDecimals={4}
+    placeholder="0,00"
 />
 ```
 
-### ¿Cuándo usar este patrón?
-
-| Contexto | ¿Usar patrón? | Razón |
-|----------|---------------|-------|
-| Cantidades de fórmulas | ✅ **Sí** | Precisión crítica |
-| Costos / Precios | ✅ **Sí** | Precisión monetaria |
-| Porcentajes | ✅ **Sí** | Ej: 0.06% exacto |
-| Stock físico (unidades) | ❌ No | `type="number"` está OK |
-| IDs, cantidades enteras | ❌ No | `type="number"` o `type="text"` simple |
-
 ### Validación en backend (PHP/Laravel)
 
-```php
-'quantity' => ['required', 'numeric', 'regex:/^\d+(\.\d{1,4})?$/']
-```
-
-### Referencias
-
-- [What Every Programmer Should Know About Floating-Point Arithmetic](https://floating-point-gui.de/)
-- IEEE 754 Double Precision (64-bit)
+El servidor vuelve a validar tipo y escala (`NumberType`), con los mensajes en español: el campo ayuda, pero no es
+la validación.
 
 ---
 
