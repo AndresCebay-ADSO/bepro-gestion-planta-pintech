@@ -291,7 +291,7 @@ export function DateRangePicker({
                         variant="outline"
                         disabled={disabled}
                         className={cn(
-                            'h-9 w-full justify-between font-normal text-left shadow-xs transition-colors',
+                            'h-9 w-full justify-between font-normal text-left shadow-xs',
                             hasValue &&
                                 'pr-8 border-primary/40 bg-primary/5 text-foreground font-medium',
                             !hasValue && 'text-muted-foreground',
