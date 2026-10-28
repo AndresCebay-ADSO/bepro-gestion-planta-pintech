@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatForInput } from '@/lib/formatters';
+import {
+    formatCurrency,
+    formatForInput,
+    formatPercent,
+} from '@/lib/formatters';
 import { NUMBER_TYPES } from '@/lib/number-types';
 import { checkDecimalText } from '@/lib/numeric-input';
 
@@ -54,5 +58,28 @@ describe('formatForInput: un valor guardado listo para un campo', () => {
         expect(
             checkDecimalText(formatForInput('1500.5000'), NUMBER_TYPES.money),
         ).toBe('valid');
+    });
+});
+
+describe('formatCurrency: un vacío nunca lleva símbolo de moneda', () => {
+    it('sin valor devuelve solo el texto de vacío', () => {
+        expect(formatCurrency(null)).toBe('-');
+        expect(formatCurrency('', '$', { emptyValue: 'Sin precio' })).toBe(
+            'Sin precio',
+        );
+        expect(
+            formatCurrency(undefined, '$', { emptyValue: 'Sin costo' }),
+        ).toBe('Sin costo');
+    });
+
+    it('con valor sigue llevando el símbolo', () => {
+        expect(formatCurrency(1500)).toBe('$1.500');
+    });
+});
+
+describe('formatPercent: el vacío se puede nombrar', () => {
+    it('sin valor devuelve el texto de vacío, «-» por defecto', () => {
+        expect(formatPercent(null)).toBe('-');
+        expect(formatPercent(null, 2, 'Sin dato')).toBe('Sin dato');
     });
 });

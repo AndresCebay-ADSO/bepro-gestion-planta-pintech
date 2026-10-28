@@ -32,7 +32,7 @@ interface FormattedNumberProps {
     percent?: boolean;
     /** Máximo de decimales a mostrar (default: 4) */
     maxDecimals?: number;
-    /** Valor a mostrar cuando el número es null/undefined (default: '-') */
+    /** Valor a mostrar cuando el número es null/undefined, atenuado (default: '-'). Ej.: «Sin precio» */
     emptyValue?: string;
     /** Alineación del texto */
     align?: 'left' | 'right' | 'center';
@@ -63,7 +63,7 @@ export function FormattedNumber({
     let formatted: string;
 
     if (percent) {
-        formatted = formatPercent(value, maxDecimals);
+        formatted = formatPercent(value, maxDecimals, emptyValue);
     } else if (currency) {
         const currencySymbol = typeof currency === 'string' ? currency : '$';
         formatted = formatCurrency(value, currencySymbol, {
@@ -78,6 +78,9 @@ export function FormattedNumber({
             trimTrailingZeros,
         });
     }
+
+    // Sin número: el emptyValue va atenuado, es un dato que falta (DESIGN.md §9)
+    const isEmpty = value === null || value === undefined || value === '';
 
     // Determinar clases de alineación
     const alignClasses = {
@@ -116,6 +119,7 @@ export function FormattedNumber({
                 colorClass,
                 bold && 'font-semibold',
                 className,
+                isEmpty && 'text-muted-foreground',
             )}
         >
             {formatted}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+    cardPairs,
     isEmptyCell,
     listingColumnProblems,
     visibleRowActions,
@@ -97,16 +98,86 @@ describe('columnas de un listado', () => {
 });
 
 describe('celda sin dato', () => {
-    it('es null, undefined o false', () => {
+    it('es null, undefined, false o el texto vacío', () => {
         expect(isEmptyCell(null)).toBe(true);
         expect(isEmptyCell(undefined)).toBe(true);
         expect(isEmptyCell(false)).toBe(true);
+        expect(isEmptyCell('')).toBe(true);
     });
 
-    it('el 0 y el texto vacío sí son datos', () => {
+    it('el 0 y un texto con contenido sí son datos', () => {
         expect(isEmptyCell(0)).toBe(false);
-        expect(isEmptyCell('')).toBe(false);
+        expect(isEmptyCell(' ')).toBe(false);
         expect(isEmptyCell('—')).toBe(false);
+    });
+});
+
+describe('pares de la tarjeta del celular', () => {
+    type Row = Record<string, string | number | null>;
+
+    const cellColumn = (key: string, mobile: MobileRole) => ({
+        key,
+        mobile,
+        cell: (row: Row) => row[key] ?? null,
+    });
+    const keysOf = (pairs: { column: { key: string } }[]) =>
+        pairs.map(({ column }) => column.key);
+
+    it('pone el principal primero y luego los datos en su orden', () => {
+        const columns = [
+            cellColumn('code', 'title'),
+            cellColumn('date', 'meta'),
+            cellColumn('client', 'subtitle'),
+            cellColumn('stock', 'primary'),
+            cellColumn('status', 'status'),
+            cellColumn('price', 'meta'),
+            cellColumn('notes', 'hidden'),
+        ];
+        const row = {
+            code: 'MP-001',
+            date: '2026-10-28',
+            client: 'Cliente',
+            stock: 120,
+            status: 'Activo',
+            price: 5000,
+            notes: 'Nota',
+        };
+
+        expect(cardPairs(columns, row)).toEqual([
+            { column: columns[3], value: 120 },
+            { column: columns[1], value: '2026-10-28' },
+            { column: columns[5], value: 5000 },
+        ]);
+    });
+
+    it('omite los que no tienen dato, pero no el 0', () => {
+        const columns = [
+            cellColumn('code', 'title'),
+            cellColumn('stock', 'primary'),
+            cellColumn('date', 'meta'),
+            cellColumn('seller', 'meta'),
+            cellColumn('alerts', 'meta'),
+        ];
+
+        expect(
+            keysOf(
+                cardPairs(columns, {
+                    code: 'MP-001',
+                    stock: 0,
+                    date: null,
+                    seller: '',
+                }),
+            ),
+        ).toEqual(['stock']);
+    });
+
+    it('queda vacío sin principal ni datos', () => {
+        expect(
+            cardPairs(
+                [cellColumn('code', 'title'), cellColumn('notes', 'hidden')],
+                { code: 'MP-001', notes: 'Nota' },
+            ),
+        ).toEqual([]);
     });
 });
 

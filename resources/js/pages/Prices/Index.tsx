@@ -95,18 +95,14 @@ export default function PricesIndex({
                       key: 'internal_price',
                       header: 'Precio interno',
                       // Sin precio es un dato que falta (aún sin costear), como el de venta.
-                      cell: (variant: VariantRow) =>
-                          variant.current_price == null ? (
-                              <span className="text-muted-foreground">
-                                  Sin precio
-                              </span>
-                          ) : (
-                              <FormattedNumber
-                                  value={variant.current_price}
-                                  currency
-                                  maxDecimals={2}
-                              />
-                          ),
+                      cell: (variant: VariantRow) => (
+                          <FormattedNumber
+                              value={variant.current_price}
+                              currency
+                              maxDecimals={2}
+                              emptyValue="Sin precio"
+                          />
+                      ),
                       mobile: 'meta' as const,
                       align: 'right' as const,
                       className: 'text-muted-foreground',
@@ -117,16 +113,14 @@ export default function PricesIndex({
             key: 'sales_price',
             header: 'Precio de venta',
             // Sin precio es un dato que falta, no un vacío: se dice en vez de omitirlo.
-            cell: (variant) =>
-                variant.sales_price == null ? (
-                    <span className="text-muted-foreground">Sin precio</span>
-                ) : (
-                    <FormattedNumber
-                        value={variant.sales_price}
-                        currency
-                        maxDecimals={2}
-                    />
-                ),
+            cell: (variant) => (
+                <FormattedNumber
+                    value={variant.sales_price}
+                    currency
+                    maxDecimals={2}
+                    emptyValue="Sin precio"
+                />
+            ),
             mobile: 'primary',
             align: 'right',
             className: 'font-medium',

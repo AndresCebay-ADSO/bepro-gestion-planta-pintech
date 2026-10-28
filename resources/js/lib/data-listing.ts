@@ -53,11 +53,33 @@ export function listingColumnProblems(
 }
 
 /**
- * Celda sin dato: `null`, `undefined` o `false`. La tarjeta omite su par etiqueta-dato y la tabla muestra «—».
- * El 0 y el texto vacío sí son datos.
+ * Celda sin dato: `null`, `undefined`, `false` o el texto vacío. La tarjeta omite su par etiqueta-dato y la tabla
+ * muestra «—». El 0 sí es un dato.
  */
-export function isEmptyCell(value: unknown): value is null | undefined | false {
-    return value === null || value === undefined || value === false;
+export function isEmptyCell(
+    value: unknown,
+): value is null | undefined | false | '' {
+    return (
+        value === null || value === undefined || value === false || value === ''
+    );
+}
+
+/**
+ * Pares etiqueta-dato de la tarjeta del celular: el `primary` primero, luego los `meta` en su orden; los que no
+ * tienen dato no aparecen.
+ */
+export function cardPairs<Row, Value, Column extends { mobile: MobileRole }>(
+    columns: readonly (Column & { cell: (row: Row) => Value })[],
+    row: Row,
+): { column: Column; value: Value }[] {
+    return [
+        ...columns.filter((column) => column.mobile === 'primary'),
+        ...columns.filter((column) => column.mobile === 'meta'),
+    ].flatMap((column) => {
+        const value = column.cell(row);
+
+        return isEmptyCell(value) ? [] : [{ column, value }];
+    });
 }
 
 /**
