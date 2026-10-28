@@ -12,6 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { dateBoundKeepingSaved } from '@/lib/date-time-helpers';
 import {
     update as salesOrderUpdate,
@@ -225,14 +226,13 @@ export default function AdminOrderSidebar({
 
                     <div className="space-y-2">
                         <Label htmlFor="notes">Notas</Label>
-                        <textarea
+                        <Textarea
                             id="notes"
                             rows={3}
                             value={dataForm.data.notes}
                             onChange={(e) =>
                                 dataForm.setData('notes', e.target.value)
                             }
-                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background md:text-sm"
                         />
                         {dataForm.errors.notes && (
                             <p className="text-sm text-destructive">

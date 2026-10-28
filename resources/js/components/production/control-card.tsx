@@ -274,7 +274,6 @@ export function ControlCard({
                         <Label className="text-xs">Inicio Agitación</Label>
                         <Input
                             type="datetime-local"
-                            className="h-9"
                             value={toLocalDateTimeInput(
                                 data.agitation_start_time,
                             )}
@@ -291,7 +290,6 @@ export function ControlCard({
                         <Label className="text-xs">Fin Agitación</Label>
                         <Input
                             type="datetime-local"
-                            className="h-9"
                             value={toLocalDateTimeInput(
                                 data.agitation_end_time,
                             )}
@@ -308,7 +306,6 @@ export function ControlCard({
                         <Label className="text-xs">Inicio Empaque</Label>
                         <Input
                             type="datetime-local"
-                            className="h-9"
                             value={toLocalDateTimeInput(
                                 data.packaging_start_time,
                             )}
@@ -325,7 +322,6 @@ export function ControlCard({
                         <Label className="text-xs">Fin Empaque</Label>
                         <Input
                             type="datetime-local"
-                            className="h-9"
                             value={toLocalDateTimeInput(
                                 data.packaging_end_time,
                             )}
