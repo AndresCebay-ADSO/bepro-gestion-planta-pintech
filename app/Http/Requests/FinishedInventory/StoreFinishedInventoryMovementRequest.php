@@ -8,17 +8,17 @@ use App\Enums\FinishedInventoryMovementReason;
 use App\Enums\InventoryMovementType;
 use App\Enums\NumberType;
 use App\Http\Requests\Concerns\ReadsIdInput;
+use App\Http\Requests\Concerns\ValidatesBatchEntryDate;
 use App\Models\FinishedInventoryMovement;
 use App\Models\FinishedProductBatch;
 use App\Rules\PlantDate;
-use App\Services\TimezoneService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreFinishedInventoryMovementRequest extends FormRequest
 {
-    use ReadsIdInput;
+    use ReadsIdInput, ValidatesBatchEntryDate;
 
     public function authorize(): bool
     {
@@ -67,9 +67,17 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
             function ($validator): void {
                 $this->validateReasonForType($validator);
                 $this->validateTransferFields($validator);
-                $this->validateBatchBelongsToWarehouse($validator);
-                $this->validateEntryIsForActiveProduct($validator);
-                $this->validateDateNotBeforeBatchEntry($validator);
+
+                // El lote se consulta una sola vez para las tres validaciones que lo usan.
+                $batch = $this->selectedBatch();
+
+                if ($batch === null) {
+                    return;
+                }
+
+                $this->validateBatchBelongsToWarehouse($validator, $batch);
+                $this->validateEntryIsForActiveProduct($validator, $batch);
+                $this->validateDateNotBeforeBatchEntry($validator, $batch);
             },
         ];
     }
@@ -114,20 +122,27 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
         }
     }
 
-    private function validateBatchBelongsToWarehouse(Validator $validator): void
+    /** El lote elegido, con lo que necesitan las validaciones: su stock en la bodega indicada y si está activo. */
+    private function selectedBatch(): ?FinishedProductBatch
     {
-        $batchId = $this->input('finished_product_batch_id');
-        $type = $this->input('type');
+        $batchId = $this->idInput('finished_product_batch_id');
 
-        if ($batchId === null || $type !== 'exit') {
-            return;
+        if ($batchId === 0) {
+            return null;
         }
 
-        $batch = FinishedProductBatch::query()
-            ->with(['stocks' => fn ($q) => $q->where('warehouse_id', $this->idInput('warehouse_id'))->available()])
-            ->find((int) $batchId);
+        return FinishedProductBatch::query()
+            ->with([
+                'stocks' => fn ($q) => $q->where('warehouse_id', $this->idInput('warehouse_id'))->available(),
+                'product:id,is_active',
+                'productVariant:id,is_active',
+            ])
+            ->find($batchId);
+    }
 
-        if ($batch === null) {
+    private function validateBatchBelongsToWarehouse(Validator $validator, FinishedProductBatch $batch): void
+    {
+        if ($this->input('type') !== 'exit') {
             return;
         }
 
@@ -136,52 +151,24 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
         }
     }
 
-    /**
-     * Ningún movimiento (entrada, salida o traslado) puede fecharse antes de que su lote entrara: el kardex lo mostraría
-     * antes de la entrada, como en materia prima. El `entry_date` del lote no cambia, así que no hace falta bloquearlo
-     * aquí. Solo se compara una fecha ya válida.
-     */
-    private function validateDateNotBeforeBatchEntry(Validator $validator): void
+    /** Ningún movimiento (entrada, salida o traslado) puede fecharse antes de que su lote entrara (`ValidatesBatchEntryDate`). */
+    private function validateDateNotBeforeBatchEntry(Validator $validator, FinishedProductBatch $batch): void
     {
-        $batchId = $this->input('finished_product_batch_id');
-        $movementDate = $this->input('movement_date');
-
-        if ($validator->errors()->hasAny(['finished_product_batch_id', 'movement_date']) || ! is_string($movementDate)) {
+        // Con el lote rechazado (otra bodega, sin stock, inactivo), la fecha no se compara: el error es el lote.
+        if ($validator->errors()->has('finished_product_batch_id')) {
             return;
         }
 
-        $batch = FinishedProductBatch::query()->find((int) $batchId);
-
-        if ($batch === null) {
-            return;
-        }
-
-        $entryDate = $batch->entry_date->format('Y-m-d');
-
-        if (strcmp($movementDate, $entryDate) < 0) {
-            $validator->errors()->add('movement_date', __('La fecha de movimiento no puede ser anterior a la entrada del lote (:date).', [
-                'date' => app(TimezoneService::class)->formatPlantDate($entryDate),
-            ]));
-        }
+        $this->validateMovementNotBeforeBatchEntry($validator, $batch->entry_date);
     }
 
     /**
      * Una entrada no puede sumar stock a un producto o presentación inactivos: ningún pedido lo ofrecería. Las salidas y
      * los traslados sí se permiten, para poder dar salida a lo que quede (docs/POLITICA_ELIMINACION.md §3.1).
      */
-    private function validateEntryIsForActiveProduct(Validator $validator): void
+    private function validateEntryIsForActiveProduct(Validator $validator, FinishedProductBatch $batch): void
     {
-        $batchId = $this->input('finished_product_batch_id');
-
-        if ($batchId === null || $this->input('type') !== InventoryMovementType::Entry->value) {
-            return;
-        }
-
-        $batch = FinishedProductBatch::query()
-            ->with(['product:id,is_active', 'productVariant:id,is_active'])
-            ->find((int) $batchId);
-
-        if ($batch === null) {
+        if ($this->input('type') !== InventoryMovementType::Entry->value) {
             return;
         }
 

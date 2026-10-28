@@ -147,6 +147,8 @@ export function PlantDateInput({
             >
                 <Calendar
                     mode="single"
+                    // Tocar el día ya elegido no lo quita: el campo se vacía con «Quitar fecha».
+                    required
                     autoFocus
                     today={parsePlantDate(plantToday)}
                     selected={selected}

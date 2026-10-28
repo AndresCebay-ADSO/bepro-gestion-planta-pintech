@@ -110,7 +110,9 @@ test('los movimientos de PT se registran en unidades enteras', function (): void
         'production_order_id' => ProductionOrder::factory()->create(['product_id' => $this->product->id])->id,
         'product_variant_id' => $this->variant->id,
         'initial_quantity' => '20',
-        'entry_date' => now(),
+        // Fecha fija en el pasado: con `now()` (UTC), de 19:00 a 24:00 en Bogotá el lote entraría «mañana» y el
+        // movimiento de hoy en la planta quedaría antes de su entrada.
+        'entry_date' => '2026-09-01',
     ]);
     $warehouse = Warehouse::factory()->create();
     $payload = fn (string $quantity): array => [

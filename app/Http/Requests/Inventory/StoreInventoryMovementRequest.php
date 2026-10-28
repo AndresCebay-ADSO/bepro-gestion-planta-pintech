@@ -7,13 +7,13 @@ namespace App\Http\Requests\Inventory;
 use App\Enums\InventoryMovementType;
 use App\Enums\NumberType;
 use App\Enums\WarehouseType;
+use App\Http\Requests\Concerns\ValidatesBatchEntryDate;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
 use App\Models\RawMaterial;
 use App\Models\Warehouse;
 use App\Rules\PlantDate;
 use App\Services\InventoryService;
-use App\Services\TimezoneService;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -21,6 +21,8 @@ use Illuminate\Validation\Rules\ExcludeIf;
 
 class StoreInventoryMovementRequest extends FormRequest
 {
+    use ValidatesBatchEntryDate;
+
     public function authorize(): bool
     {
         return $this->user()?->can('create', InventoryMovement::class) ?? false;
@@ -125,19 +127,9 @@ class StoreInventoryMovementRequest extends FormRequest
                     $validator->errors()->add('batch_id', __('El lote seleccionado no pertenece a la bodega indicada.'));
                 }
 
-                // Una salida no puede fecharse antes de que su lote entrara: el kardex mostraría la salida antes de la
-                // entrada (INV-16). El `entry_date` del lote no cambia, así que no hace falta bloquearlo aquí. Solo se
-                // compara una fecha ya válida.
-                $movementDate = $this->input('movement_date');
-                $entryDate = $batch->entry_date->format('Y-m-d');
-
-                if ($this->input('type') === InventoryMovementType::Exit->value
-                    && ! $validator->errors()->has('movement_date')
-                    && is_string($movementDate)
-                    && strcmp($movementDate, $entryDate) < 0) {
-                    $validator->errors()->add('movement_date', __('La fecha de movimiento no puede ser anterior a la entrada del lote (:date).', [
-                        'date' => app(TimezoneService::class)->formatPlantDate($entryDate),
-                    ]));
+                // Una salida no puede fecharse antes de que su lote entrara (una entrada a un lote nuevo lo crea con su fecha).
+                if ($this->input('type') === InventoryMovementType::Exit->value) {
+                    $this->validateMovementNotBeforeBatchEntry($validator, $batch->entry_date);
                 }
             },
         ];

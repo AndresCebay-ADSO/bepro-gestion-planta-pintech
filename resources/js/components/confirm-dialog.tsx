@@ -91,11 +91,13 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
         [],
     );
 
-    // Al irse de la pantalla (un enlace, el botón atrás), la pregunta abierta queda sin respuesta: se da por cancelada.
-    // `router.on` devuelve la función que quita el oyente: es la limpieza del efecto.
+    // Al irse de la pantalla, la pregunta abierta queda sin respuesta: se da por cancelada. `navigate` y no `before`:
+    // el botón Atrás del navegador no pasa por `before` (Inertia restaura la página del historial), y una visita a la
+    // misma URL (recargas, también las parciales de los cajones) reemplaza la página sin `navigate`, así que no cierra
+    // la pregunta. `router.on` devuelve la función que quita el oyente: es la limpieza del efecto.
     useEffect(
         () =>
-            router.on('before', () => {
+            router.on('navigate', () => {
                 settle(false);
             }),
         [settle],

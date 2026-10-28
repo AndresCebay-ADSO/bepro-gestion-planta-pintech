@@ -41,7 +41,9 @@ function createFinishedMovementFixture(string $code = 'PROD-RET'): array
         'production_order_id' => ProductionOrder::factory()->create(['product_id' => $product->id])->id,
         'product_variant_id' => ProductVariant::factory()->create(['product_id' => $product->id])->id,
         'initial_quantity' => '20',
-        'entry_date' => now(),
+        // Fecha fija en el pasado: con `now()` (UTC), de 19:00 a 24:00 en Bogotá el lote entraría «mañana» y el
+        // movimiento de hoy en la planta quedaría antes de su entrada.
+        'entry_date' => '2026-09-01',
     ]);
 
     return [$admin, $product, $batch];
@@ -220,7 +222,9 @@ it('rejects entries into a batch whose variant is inactive', function () {
         'production_order_id' => ProductionOrder::factory()->create(['product_id' => $product->id])->id,
         'product_variant_id' => $variant->id,
         'initial_quantity' => '20',
-        'entry_date' => now(),
+        // Fecha fija en el pasado: con `now()` (UTC), de 19:00 a 24:00 en Bogotá el lote entraría «mañana» y el
+        // movimiento de hoy en la planta quedaría antes de su entrada.
+        'entry_date' => '2026-09-01',
     ]);
 
     actingAs($admin)
