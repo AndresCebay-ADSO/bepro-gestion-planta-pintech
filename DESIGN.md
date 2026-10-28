@@ -213,6 +213,9 @@ Same in all three:
 - Footer: «Cancelar» on the left, main action (primary) on the right, disabled while saving. Fixed at the bottom on the
   phone.
 - **A 422 never closes the form**: data and errors stay. Focus goes to the first invalid field (`lib/focus-first-error.ts`).
+- Fields are 16 px on the phone and 14 px from `md` (`text-base md:text-sm`, built into `ui/input` and `ui/textarea`):
+  below 16 px, iOS Safari zooms the page when a field gets focus. Never set `text-xs`/`text-sm` on a field, and never
+  block zoom in the viewport (`maximum-scale=1` also stops pinch zoom on Android).
 - `noValidate` on the `<form>`: the server validates. Empty numeric fields start empty with a placeholder, never a typed
   `0`: «0,00» for decimals, «0» for integers.
 - Confirmations use the app dialog (`AlertDialog`, destructive action in red). **Banned:** `window.confirm()`,

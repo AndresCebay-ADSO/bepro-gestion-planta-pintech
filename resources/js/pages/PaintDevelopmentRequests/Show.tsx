@@ -346,7 +346,7 @@ export default function PaintDevelopmentRequestShow({
                         <select
                             value={selectedStatus}
                             onChange={(e) => setSelectedStatus(e.target.value)}
-                            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                            className="h-10 w-full rounded-md border border-input bg-background px-3 text-base md:text-sm"
                         >
                             <option value="">Selecciona un estado</option>
                             {nextStatusOptions.map((opt) => (

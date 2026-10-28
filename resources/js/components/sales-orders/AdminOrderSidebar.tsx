@@ -232,7 +232,7 @@ export default function AdminOrderSidebar({
                             onChange={(e) =>
                                 dataForm.setData('notes', e.target.value)
                             }
-                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background md:text-sm"
                         />
                         {dataForm.errors.notes && (
                             <p className="text-sm text-destructive">
