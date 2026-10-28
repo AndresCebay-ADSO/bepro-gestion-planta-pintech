@@ -3,7 +3,9 @@
  *
  * Regla (decidida el 2026-10-14): el punto y la coma son los dos separador decimal, nunca de miles, y se admite uno
  * solo. Mil doscientos se escribe `1200`; `1.200` es uno coma dos. Los puntos de miles los pone el campo en lo que se
- * ve (`1.200,5`), nunca el usuario: el punto que se teclea entra como coma decimal.
+ * ve (`1.200,5`), nunca el usuario: el punto que se teclea entra como coma decimal. Lo pegado es distinto: viene de
+ * algo ya formateado (un listado muestra `1.250`), así que una agrupación de miles bien formada se lee como miles
+ * (`normalizeNumericInsertion`).
  *
  * El formulario guarda lo que el usuario escribió, sin miles (`"1200,5"`), y lo convierte una sola vez al enviar, con
  * `toDecimalPayload`. Nunca se quitan caracteres para que el número «quepa», porque eso cambia su valor sin aviso:
@@ -65,7 +67,7 @@ export type NumericTextCheck = 'valid' | 'separator-error' | 'reject';
 export const DECIMAL_SEPARATOR_ERROR =
     'Usa un solo separador decimal. El punto de miles lo pone el campo: mil doscientos se escribe 1200.';
 export const INTEGER_SEPARATOR_ERROR =
-    'Solo números enteros, sin punto ni coma.';
+    'Solo números enteros: quita el punto o la coma que escribiste (los puntos de miles los pone el campo).';
 
 const DIGITS_AND_SEPARATORS = /^[\d.,]*$/;
 const SIGNED_DIGITS_AND_SEPARATORS = /^-?[\d.,]*$/;
@@ -387,6 +389,9 @@ export type NumericField = {
     dotIsDecimal: boolean;
 };
 
+/** Lo que estaba seleccionado en el campo y lo que se veía en ese momento. */
+export type NumericSelection = { start: number; end: number; display?: string };
+
 /** Lo que queda después de un cambio: el texto que guarda el formulario, lo que se ve y dónde queda el cursor. */
 export type NumericEdit = {
     value: string;
@@ -396,7 +401,15 @@ export type NumericEdit = {
 
 const THOUSANDS_DOT = '.';
 
+/**
+ * Pone los puntos de miles. Con ceros a la izquierda (`0125`) no agrupa: `0.125` parecería un decimal y el valor es 125,
+ * así que se ve tal cual se escribió.
+ */
 function groupThousands(digits: string): string {
+    if (/^0\d/.test(digits)) {
+        return digits;
+    }
+
     return digits.replace(/\B(?=(\d{3})+(?!\d))/g, THOUSANDS_DOT);
 }
 
@@ -430,30 +443,65 @@ export function stripThousandsDots(display: string): string {
     return display.replaceAll(THOUSANDS_DOT, '');
 }
 
+/** Lo pegado sin lo que acompaña a un número: espacios (también los duros), `$` y `%`. Una sola fuente para el valor y el aviso. */
+export function compactNumericText(text: string): string {
+    return text.replace(/[\s$%]/g, '');
+}
+
+/** Miles con punto y decimal con coma, bien agrupados: `1.250`, `1.250.000,75`. El primer grupo no es 0 (`0.125`). */
+const DOT_GROUPED = /^-?[1-9]\d{0,2}(?:\.\d{3})+(?:,\d*)?$/;
+/** Miles con coma y decimal con punto (formato inglés): `1,250.5`, `1,250,000`. Una sola coma (`1,250`) es decimal. */
+const COMMA_GROUPED = /^-?[1-9]\d{0,2}(?:(?:,\d{3})+\.\d*|(?:,\d{3}){2,})$/;
+
 /**
- * Lo pegado (o tecleado) en un campo numérico, sin formato. Se quitan los espacios y el `$`. Si hay punto y coma, el
- * último es el decimal y los demás son miles (`1.250.000,75` → `1250000,75`); si se repite el mismo separador, son
- * miles (`1.250.000` → `1250000`); uno solo es decimal, igual que al teclear (`1.250` es uno coma veinticinco). Lo
- * demás (letras) se deja para que el campo lo rechace completo.
+ * Lo pegado en un campo numérico, sin formato. Se quitan los espacios, el `$` y el `%`. Lo pegado viene de algo ya
+ * formateado (los listados muestran `1.250,5`), así que una agrupación de miles **bien formada** se lee como miles:
+ * `1.250` → `1250`, `1.250.000,75` → `1250000,75`, `1,250,000.75` → `1250000.75`. Un solo separador que no forma
+ * grupos de tres es decimal, igual que al teclear (`1250000.75`, `0.125`, `1,250`). Cualquier otra mezcla (`1.5.2`) se
+ * deja tal cual para que el campo marque el error: nunca se quitan separadores adivinando. Las letras también se dejan,
+ * para que el campo las rechace completas.
  */
 export function normalizeNumericInsertion(text: string): string {
-    const compact = text.replace(/[\s$]/g, '');
-    const separators = compact.match(/[.,]/g) ?? [];
+    const compact = compactNumericText(text);
 
-    if (separators.length < 2) {
-        return compact;
+    if (DOT_GROUPED.test(compact)) {
+        return compact.replaceAll('.', '');
     }
 
-    if (new Set(separators).size === 1) {
-        return compact.replace(/[.,]/g, '');
+    if (COMMA_GROUPED.test(compact)) {
+        return compact.replaceAll(',', '');
     }
 
-    const decimalAt = Math.max(
-        compact.lastIndexOf('.'),
-        compact.lastIndexOf(','),
-    );
+    return compact;
+}
 
-    return `${compact.slice(0, decimalAt).replace(/[.,]/g, '')}${compact.slice(decimalAt)}`;
+/** Un número pegado con un solo grupo de miles con punto (`1.250`): se registra como 1250, pero pudo ser un decimal. */
+const SINGLE_DOT_GROUP = /^(-?)([1-9]\d{0,2})\.(\d{3})$/;
+
+/**
+ * Aviso para lo pegado que se leyó como miles y podía ser un decimal (`1.250` copiado de un texto en inglés). Es el
+ * espejo de `decimalAmbiguityHint`: al teclear, `1.250` es decimal y se avisa; al pegar, es miles y también se avisa.
+ * Habla de lo pegado, no del valor del campo (se pudo pegar en medio de otros dígitos). En un campo sin decimales
+ * (`maxDecimals` 0) no avisa: ahí 1250 es la única lectura.
+ */
+export function pastedThousandsHint(
+    pasted: string,
+    { maxDecimals = DEFAULT_MAX_DECIMALS }: DecimalLimits = {},
+): string | null {
+    const match =
+        maxDecimals > 0
+            ? SINGLE_DOT_GROUP.exec(compactNumericText(pasted))
+            : null;
+
+    if (!match) {
+        return null;
+    }
+
+    const [, sign, integerPart, fractionPart] = match;
+    const words = `${sign ? 'menos ' : ''}${integerInWords(integerPart + fractionPart)}`;
+    const decimals = fractionPart.replace(/0+$/, '');
+
+    return `El punto de «${sign}${integerPart}.${fractionPart}» se leyó como separador de miles (${words}). Si era un decimal, escríbelo con coma: ${sign}${integerPart}${decimals ? `,${decimals}` : ''}.`;
 }
 
 export function decimalField(limits: DecimalLimits = {}): NumericField {
@@ -499,7 +547,8 @@ function displayCaret(
 /**
  * Reemplaza lo que se ve entre `start` y `end` por `text` (lo tecleado o pegado, o nada al borrar) y lo aplica al texto
  * guardado: cada carácter que se ve, salvo los puntos de miles, es uno del texto guardado. Lo insertado se normaliza
- * con `normalizeNumericInsertion` y, en un campo decimal, su punto entra como coma.
+ * con `normalizeNumericInsertion` y, en un campo decimal, su punto entra como coma (si queda un solo separador; con
+ * varios se deja como vino, marcado con error).
  *
  * Borrar solo un punto de miles (`inputType` `deleteContentBackward` o `deleteContentForward`) salta el punto y borra el
  * dígito de al lado: el anterior con la tecla de borrar, el siguiente con Supr. Si el campo no acepta el cambio
@@ -518,9 +567,16 @@ export function replaceNumericRange(
     const toValueIndex = (index: number) =>
         isGrouped ? stripThousandsDots(shown.slice(0, index)).length : index;
     const normalized = normalizeNumericInsertion(text);
-    const inserted = field.dotIsDecimal
-        ? normalized.replaceAll('.', ',')
-        : normalized;
+
+    // Un espacio, un `$` o un `%` solos no son un número: sobre una selección la borrarían. Se rechazan como una letra.
+    if (text !== '' && normalized === '') {
+        return { value: current, display: shown, caret: end };
+    }
+
+    const inserted =
+        field.dotIsDecimal && separatorCount(normalized) <= 1
+            ? normalized.replaceAll('.', ',')
+            : normalized;
     let valueStart = toValueIndex(start);
     let valueEnd = toValueIndex(end);
 
@@ -561,6 +617,10 @@ export function replaceNumericRange(
  * borrar. Lo que cambió se busca comparando con lo que se veía: lo de después del cursor quedó igual, y lo de antes,
  * hasta donde coincide. Con lo que se teclea o se borra sin selección, eso da el tramo exacto; lo pegado sobre una
  * selección no siempre (si empieza igual que lo que reemplaza), por eso lo pegado va por `replaceNumericRange`.
+ *
+ * Si había texto seleccionado (`selection`, lo que se veía seleccionado antes del cambio), el tramo es esa selección y no
+ * se adivina; tampoco se salta el punto de miles: seleccionar solo el punto de `12.345` y borrarlo no borra un dígito.
+ * La selección trae lo que se veía cuando se hizo (`display`): si el valor cambió desde fuera después, ya no vale.
  */
 export function applyNumericEdit(
     field: NumericField,
@@ -568,8 +628,35 @@ export function applyNumericEdit(
     next: string,
     caret: number,
     inputType: string = '',
+    selection?: NumericSelection,
 ): NumericEdit {
     const shown = field.format(current);
+
+    if (
+        selection &&
+        selection.start < selection.end &&
+        (selection.display === undefined || selection.display === shown)
+    ) {
+        const before = shown.slice(0, selection.start);
+        const after = shown.slice(selection.end);
+
+        // La selección guardada tiene que corresponder a este cambio; si no, se compara como siempre.
+        if (
+            selection.end <= shown.length &&
+            next.length >= before.length + after.length &&
+            next.startsWith(before) &&
+            next.endsWith(after)
+        ) {
+            return replaceNumericRange(
+                field,
+                current,
+                selection.start,
+                selection.end,
+                next.slice(before.length, next.length - after.length),
+            );
+        }
+    }
+
     let suffix = 0;
     const maxSuffix = Math.min(next.length - caret, shown.length);
 
@@ -611,13 +698,15 @@ function showNumericEdit(input: HTMLInputElement, edit: NumericEdit): string {
 
 /**
  * `applyNumericEdit` dentro del `onChange` del campo. El cambio se lee del evento `input` (lo que quedó, el cursor y su
- * `inputType`), nunca de las teclas: en los teclados de Android, `keydown` llega como `Unidentified`.
+ * `inputType`), nunca de las teclas: en los teclados de Android, `keydown` llega como `Unidentified`. `selection` es lo
+ * que estaba seleccionado antes del cambio (`useNumericField` lo guarda).
  */
 export function applyNumericInput(
     input: HTMLInputElement,
     nativeEvent: Event,
     field: NumericField,
     current: string,
+    selection?: NumericSelection,
 ): string {
     const inputType =
         'inputType' in nativeEvent ? String(nativeEvent.inputType) : '';
@@ -630,6 +719,7 @@ export function applyNumericInput(
             input.value,
             input.selectionStart ?? input.value.length,
             inputType,
+            selection,
         ),
     );
 }

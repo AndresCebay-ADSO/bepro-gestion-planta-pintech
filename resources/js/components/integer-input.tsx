@@ -1,9 +1,8 @@
 import type { ComponentProps } from 'react';
 
 import { Input } from '@/components/ui/input';
+import { useNumericField } from '@/hooks/use-numeric-field';
 import {
-    applyNumericInput,
-    applyNumericPaste,
     checkIntegerText,
     INTEGER_SEPARATOR_ERROR,
     integerField,
@@ -44,11 +43,12 @@ export function IntegerInput({
             : textCheck === 'reject'
               ? integerLimitsMessage(maxDigits)
               : null;
-    const changeTo = (next: string) => {
-        if (next !== text) {
-            onValueChange(next);
-        }
-    };
+    const numeric = useNumericField({
+        field,
+        text,
+        onValueChange,
+        inputProps: props,
+    });
 
     // Contenedor fijo y mensaje con el ancho del campo, como en DecimalInput.
     return (
@@ -62,33 +62,7 @@ export function IntegerInput({
                 inputMode="numeric"
                 autoComplete="off"
                 aria-invalid={error !== null || props['aria-invalid']}
-                value={field.format(text)}
-                onChange={(event) =>
-                    changeTo(
-                        applyNumericInput(
-                            event.currentTarget,
-                            event.nativeEvent,
-                            field,
-                            text,
-                        ),
-                    )
-                }
-                onPaste={(event) => {
-                    props.onPaste?.(event);
-
-                    // En un campo de solo lectura el navegador no pega, pero el evento llega igual.
-                    if (!event.defaultPrevented && !props.readOnly) {
-                        event.preventDefault();
-                        changeTo(
-                            applyNumericPaste(
-                                event.currentTarget,
-                                event.clipboardData.getData('text'),
-                                field,
-                                text,
-                            ),
-                        );
-                    }
-                }}
+                {...numeric}
             />
             {error && (
                 <p
