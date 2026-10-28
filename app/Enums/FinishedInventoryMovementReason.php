@@ -55,8 +55,8 @@ enum FinishedInventoryMovementReason: string implements HasTone
      * servicio de traslado, que crea la salida y la entrada juntas. Una entrada «Producción» a mano inflaba el
      * inventario con apariencia de producción real (auditoría 3.6, PT-02).
      *
-     * Las listas de `entryReasons` y `exitReasons` del front (`types/finished-inventory.ts`) son copia de estas; un test
-     * las compara.
+     * El cajón de movimientos de PT las recibe del controlador (`entryReasonOptions` y `exitReasonOptions`), así que el
+     * front no tiene copia.
      *
      * @return list<self>
      */

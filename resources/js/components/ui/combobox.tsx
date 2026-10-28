@@ -36,6 +36,9 @@ interface ComboboxProps {
     disabled?: boolean;
     /** El `id` del disparador: la etiqueta lo señala y el foco va a él cuando el servidor rechaza el valor. */
     id?: string;
+    /** Ayuda y error del campo (los enlaza `<FormField>`). */
+    'aria-describedby'?: string;
+    'aria-invalid'?: boolean;
 }
 
 /** Una tecla que escribe texto (letra, número, signo), sin atajos de Ctrl/Cmd/Alt. El espacio abre la lista. */
@@ -62,6 +65,8 @@ export function Combobox({
     className,
     disabled = false,
     id,
+    'aria-describedby': ariaDescribedBy,
+    'aria-invalid': ariaInvalid,
 }: ComboboxProps) {
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState('');
@@ -171,11 +176,13 @@ export function Combobox({
                     id={id}
                     role="combobox"
                     aria-expanded={open}
+                    aria-describedby={ariaDescribedBy}
+                    aria-invalid={ariaInvalid}
                     title={selectedOption?.label}
                     data-slot="combobox-trigger"
                     onKeyDown={handleTriggerKeyDown}
                     className={cn(
-                        'flex h-9 w-full min-w-0 items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none hover:bg-muted/25 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
+                        'flex h-9 w-full min-w-0 items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-base whitespace-nowrap shadow-xs md:text-sm transition-[color,box-shadow] outline-none hover:bg-muted/25 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
                         className,
                     )}
                 >

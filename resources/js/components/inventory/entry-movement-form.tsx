@@ -1,9 +1,11 @@
 import { useForm, usePage } from '@inertiajs/react';
 import type { FormEvent, ChangeEvent } from 'react';
 import { DecimalInput } from '@/components/decimal-input';
-import { Button } from '@/components/ui/button';
+import { FormActions } from '@/components/form-actions';
+import { FormField } from '@/components/form-field';
+import { PlantDateInput } from '@/components/plant-date-input';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { SheetBody, SheetFooter } from '@/components/ui/sheet';
 import { NUMBER_TYPES } from '@/lib/number-types';
 import { idPayload, toDecimalPayload } from '@/lib/numeric-input';
 import { store as inventoryMovementsStore } from '@/routes/inventory-movements';
@@ -18,6 +20,7 @@ type Props = {
     /** Fecha más vieja que admite una entrada (D1b); la valida el servidor. */
     oldestEntryDate?: string;
     onSuccess?: () => void;
+    onCancel: () => void;
 };
 
 export function EntryMovementForm({
@@ -27,6 +30,7 @@ export function EntryMovementForm({
     defaultWarehouseId,
     oldestEntryDate,
     onSuccess,
+    onCancel,
 }: Props) {
     const { plantToday } = usePage().props;
     const form = useForm<{
@@ -85,9 +89,6 @@ export function EntryMovementForm({
                 form.reset();
                 onSuccess?.();
             },
-            onError: () => {
-                // Let Inertia display inline errors automatically via form.errors
-            },
         });
     };
 
@@ -101,118 +102,117 @@ export function EntryMovementForm({
     const isCostReadOnly = Boolean(form.data.batch_id !== '' && batchHasPrice);
 
     return (
-        <form onSubmit={submit} className="flex flex-col gap-6">
-            <MovementFormBase
-                form={form}
-                rawMaterials={rawMaterials}
-                batches={batches}
-                warehouses={warehouses}
-                type="entry"
-                movementDateMin={oldestEntryDate}
-            >
-                <div className="space-y-2">
-                    <Label htmlFor="cost_price">Precio de Costo (u)</Label>
-                    <DecimalInput
-                        id="cost_price"
-                        {...NUMBER_TYPES.money}
-                        value={form.data.cost_price}
-                        onValueChange={(value) => {
-                            if (!isCostReadOnly) {
-                                form.setData('cost_price', value);
+        <form
+            noValidate
+            onSubmit={submit}
+            className="flex min-h-0 flex-1 flex-col"
+        >
+            <SheetBody>
+                <MovementFormBase
+                    form={form}
+                    rawMaterials={rawMaterials}
+                    batches={batches}
+                    warehouses={warehouses}
+                    type="entry"
+                    movementDateMin={oldestEntryDate}
+                    beforeDate={
+                        <FormField
+                            id="cost_price"
+                            label="Precio de costo (u)"
+                            help={
+                                isCostReadOnly
+                                    ? 'Costo fijado por el lote seleccionado.'
+                                    : undefined
                             }
-                        }}
-                        readOnly={isCostReadOnly}
-                        className={
-                            isCostReadOnly
-                                ? 'cursor-not-allowed bg-muted/50'
-                                : ''
-                        }
-                        placeholder="0"
-                    />
-                    {isCostReadOnly && (
-                        <p className="text-xs text-muted-foreground">
-                            Costo fijado por el lote seleccionado.
-                        </p>
-                    )}
-                    {form.errors.cost_price && (
-                        <p className="text-sm text-destructive">
-                            {form.errors.cost_price}
-                        </p>
-                    )}
-                </div>
-
-                {form.data.batch_id === '' && (
-                    <>
-                        <div className="space-y-2">
-                            <Label htmlFor="lot_number">Número de lote</Label>
-                            <Input
-                                id="lot_number"
-                                maxLength={50}
-                                value={form.data.lot_number}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                    form.setData('lot_number', e.target.value)
+                            error={form.errors.cost_price}
+                        >
+                            <DecimalInput
+                                {...NUMBER_TYPES.money}
+                                value={form.data.cost_price}
+                                onValueChange={(value) => {
+                                    if (!isCostReadOnly) {
+                                        form.setData('cost_price', value);
+                                    }
+                                }}
+                                readOnly={isCostReadOnly}
+                                className={
+                                    isCostReadOnly
+                                        ? 'cursor-not-allowed bg-muted/50'
+                                        : ''
                                 }
-                                placeholder="Ej. LOT-2026-001"
+                                placeholder="0,00"
                             />
-                            {form.errors.lot_number && (
-                                <p className="text-sm text-destructive">
-                                    {form.errors.lot_number}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="supplier">Proveedor</Label>
-                            <Input
-                                id="supplier"
-                                maxLength={150}
-                                value={form.data.supplier}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                    form.setData('supplier', e.target.value)
-                                }
-                                placeholder="Proveedor"
-                            />
-                            {form.errors.supplier && (
-                                <p className="text-sm text-destructive">
-                                    {form.errors.supplier}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="expiry_date">
-                                Fecha de vencimiento
-                            </Label>
-                            <Input
-                                id="expiry_date"
-                                type="date"
-                                min={form.data.movement_date}
-                                value={form.data.expiry_date}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                    form.setData('expiry_date', e.target.value)
-                                }
-                            />
-                            {form.errors.expiry_date && (
-                                <p className="text-sm text-destructive">
-                                    {form.errors.expiry_date}
-                                </p>
-                            )}
-                        </div>
-                    </>
-                )}
-            </MovementFormBase>
-
-            <div className="flex justify-end border-t pt-4">
-                <Button
-                    type="submit"
-                    disabled={form.processing}
-                    className="w-full sm:w-auto"
+                        </FormField>
+                    }
                 >
-                    {form.processing
-                        ? 'Registrando Entrada...'
-                        : 'Registrar Entrada'}
-                </Button>
-            </div>
+                    {/* Lote nuevo: número y vencimiento en una fila; el proveedor, que suele ser largo, a lo ancho. */}
+                    {form.data.batch_id === '' && (
+                        <>
+                            <FormField
+                                id="lot_number"
+                                label="Número de lote"
+                                error={form.errors.lot_number}
+                            >
+                                <Input
+                                    maxLength={50}
+                                    value={form.data.lot_number}
+                                    onChange={(
+                                        e: ChangeEvent<HTMLInputElement>,
+                                    ) =>
+                                        form.setData(
+                                            'lot_number',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder="Ej. LOT-2026-001"
+                                />
+                            </FormField>
+
+                            <FormField
+                                id="expiry_date"
+                                label="Fecha de vencimiento"
+                                error={form.errors.expiry_date}
+                            >
+                                <PlantDateInput
+                                    clearable
+                                    min={form.data.movement_date}
+                                    placeholder="Sin vencimiento"
+                                    value={form.data.expiry_date}
+                                    onChange={(value) =>
+                                        form.setData('expiry_date', value)
+                                    }
+                                />
+                            </FormField>
+
+                            <FormField
+                                id="supplier"
+                                label="Proveedor"
+                                error={form.errors.supplier}
+                                className="md:col-span-2"
+                            >
+                                <Input
+                                    maxLength={150}
+                                    value={form.data.supplier}
+                                    onChange={(
+                                        e: ChangeEvent<HTMLInputElement>,
+                                    ) =>
+                                        form.setData('supplier', e.target.value)
+                                    }
+                                    placeholder="Proveedor"
+                                />
+                            </FormField>
+                        </>
+                    )}
+                </MovementFormBase>
+            </SheetBody>
+
+            <SheetFooter>
+                <FormActions
+                    submitLabel="Registrar entrada"
+                    processing={form.processing}
+                    onCancel={onCancel}
+                />
+            </SheetFooter>
         </form>
     );
 }

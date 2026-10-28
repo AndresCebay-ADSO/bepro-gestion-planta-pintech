@@ -5,25 +5,13 @@ declare(strict_types=1);
 use App\Enums\FinishedInventoryMovementReason;
 use App\Enums\InventoryMovementType;
 use App\Enums\SystemRole;
+use App\Support\EnumOptions;
 
 /*
  * Auditoría 3.6, PR 10 (PT-02): el servidor aceptaba una entrada manual con razón «Producción» (+50 unidades sin OP ni
- * costo). Solo la crea completar una orden. Las razones manuales de cada tipo son las que ofrece el formulario.
+ * costo). Solo la crea completar una orden. Las razones manuales de cada tipo son las que el controlador manda al
+ * cajón.
  */
-
-/**
- * Los `value` de una lista del front (`entryReasons` o `exitReasons`).
- *
- * @return list<string>
- */
-function frontReasonValues(string $constant): array
-{
-    $source = file_get_contents(resource_path('js/types/finished-inventory.ts'));
-    preg_match('/export const '.$constant.': Array<\{.*?\}> = \[(.*?)\];/s', $source, $block);
-    preg_match_all("/value: '([a-z_]+)'/", $block[1] ?? '', $values);
-
-    return $values[1];
-}
 
 it('does not accept a manual entry with the production reason', function (): void {
     actingAsRole(SystemRole::Admin, ['email_verified_at' => now()]);
@@ -75,12 +63,33 @@ it('does not ask for a type when the reason is a transfer', function (): void {
         ->assertJsonMissingValidationErrors(['type', 'reason']);
 });
 
-it('has the same manual reasons as the front lists', function (): void {
-    $php = fn (InventoryMovementType $type): array => array_map(
-        fn (FinishedInventoryMovementReason $reason): string => $reason->value,
-        FinishedInventoryMovementReason::manualReasonsFor($type),
-    );
+it('offers in the drawer exactly the reasons the form request accepts', function (string $type, string $prop): void {
+    actingAsRole(SystemRole::Admin, ['email_verified_at' => now()]);
 
-    expect(frontReasonValues('entryReasons'))->toEqualCanonicalizing($php(InventoryMovementType::Entry))
-        ->and(frontReasonValues('exitReasons'))->toEqualCanonicalizing($php(InventoryMovementType::Exit));
-});
+    $offered = $this->get(route('finished-inventory-movements.index'))->assertOk()->inertiaProps($prop);
+
+    expect($offered)->toBe(EnumOptions::for(
+        FinishedInventoryMovementReason::manualReasonsFor(InventoryMovementType::from($type)),
+    ));
+
+    $offeredValues = array_column($offered, 'value');
+
+    // El traslado tiene su propio cajón (se envía como salida con destino): no es una razón que se elija.
+    foreach (FinishedInventoryMovementReason::cases() as $reason) {
+        if ($reason === FinishedInventoryMovementReason::Transfer) {
+            continue;
+        }
+
+        $response = $this->postJson(route('finished-inventory-movements.store'), [
+            'type' => $type,
+            'reason' => $reason->value,
+        ]);
+
+        in_array($reason->value, $offeredValues, true)
+            ? $response->assertJsonMissingValidationErrors(['reason'])
+            : $response->assertJsonValidationErrors(['reason']);
+    }
+})->with([
+    'entrada' => ['entry', 'entryReasonOptions'],
+    'salida' => ['exit', 'exitReasonOptions'],
+]);

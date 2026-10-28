@@ -1,7 +1,8 @@
 import { useForm, usePage } from '@inertiajs/react';
 import type { SubmitEvent } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { FormActions } from '@/components/form-actions';
+import { SheetBody, SheetFooter } from '@/components/ui/sheet';
 import { idPayload } from '@/lib/numeric-input';
 import { store as storeFinishedMovement } from '@/routes/finished-inventory-movements';
 import type {
@@ -17,6 +18,7 @@ type Props = {
     warehouses: FinishedWarehouseOption[];
     defaultWarehouseId?: number | null;
     onSuccess?: () => void;
+    onCancel: () => void;
 };
 
 export function FinishedTransferMovementForm({
@@ -24,6 +26,7 @@ export function FinishedTransferMovementForm({
     warehouses,
     defaultWarehouseId,
     onSuccess,
+    onCancel,
 }: Props) {
     const { plantToday } = usePage().props;
     const form = useForm<FinishedMovementFormData>({
@@ -59,23 +62,27 @@ export function FinishedTransferMovementForm({
     };
 
     return (
-        <form onSubmit={submit} className="flex flex-col gap-6">
-            <FinishedMovementFormFields
-                form={form}
-                batches={batches}
-                warehouses={warehouses}
-                showDestinationWarehouse
-            />
+        <form
+            noValidate
+            onSubmit={submit}
+            className="flex min-h-0 flex-1 flex-col"
+        >
+            <SheetBody>
+                <FinishedMovementFormFields
+                    form={form}
+                    batches={batches}
+                    warehouses={warehouses}
+                    showDestinationWarehouse
+                />
+            </SheetBody>
 
-            <div className="flex justify-end border-t pt-4">
-                <Button
-                    type="submit"
-                    disabled={form.processing}
-                    className="w-full sm:w-auto"
-                >
-                    {form.processing ? 'Trasladando...' : 'Registrar traslado'}
-                </Button>
-            </div>
+            <SheetFooter>
+                <FormActions
+                    submitLabel="Registrar traslado"
+                    processing={form.processing}
+                    onCancel={onCancel}
+                />
+            </SheetFooter>
         </form>
     );
 }

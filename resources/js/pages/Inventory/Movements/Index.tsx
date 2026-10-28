@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import {
     Sheet,
+    SheetBody,
     SheetContent,
     SheetDescription,
     SheetHeader,
@@ -164,8 +165,11 @@ export default function InventoryMovementsIndex({
         }
     }, [can.create, openDrawer]);
 
-    const onSuccessForm = () => {
+    const closeDrawer = () =>
         setDrawerState((prev) => ({ ...prev, isOpen: false }));
+
+    const onSuccessForm = () => {
+        closeDrawer();
         router.reload({ only: ['movements'] });
     };
 
@@ -310,25 +314,22 @@ export default function InventoryMovementsIndex({
                 }
                 modal={false}
             >
-                <SheetContent
-                    side="right"
-                    className="flex w-full flex-col sm:max-w-2xl"
-                >
-                    <SheetHeader className="mb-6 flex-shrink-0">
+                <SheetContent side="right" className="sm:max-w-2xl">
+                    <SheetHeader>
                         <SheetTitle className="flex items-center gap-2">
                             {drawerState.mode === 'entry' ? (
                                 <>
                                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-success/15 text-success-text">
                                         <ArrowDownToLine className="h-4 w-4" />
                                     </span>
-                                    Registrar Entrada
+                                    Registrar entrada
                                 </>
                             ) : (
                                 <>
                                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-warning/15 text-warning-text">
                                         <ArrowUpFromLine className="h-4 w-4" />
                                     </span>
-                                    Registrar Salida
+                                    Registrar salida
                                 </>
                             )}
                         </SheetTitle>
@@ -339,37 +340,25 @@ export default function InventoryMovementsIndex({
                         </SheetDescription>
                     </SheetHeader>
 
-                    <div className="-mr-2 flex-1 overflow-y-auto pr-2">
-                        {isLoadingFormData ? (
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <Skeleton className="h-4 w-1/4" />
-                                        <Skeleton className="h-10 w-full" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Skeleton className="h-4 w-1/4" />
-                                        <Skeleton className="h-10 w-full" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Skeleton className="h-4 w-1/4" />
-                                        <Skeleton className="h-10 w-full" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Skeleton className="h-4 w-1/4" />
-                                        <Skeleton className="h-10 w-full" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Skeleton className="h-4 w-1/4" />
-                                        <Skeleton className="h-10 w-full" />
-                                    </div>
+                    {isLoadingFormData ? (
+                        <SheetBody>
+                            <div className="space-y-5">
+                                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                                    {Array.from({ length: 6 }, (_, index) => (
+                                        <div key={index} className="space-y-2">
+                                            <Skeleton className="h-4 w-1/4" />
+                                            <Skeleton className="h-10 w-full" />
+                                        </div>
+                                    ))}
                                 </div>
                                 <div className="space-y-2">
                                     <Skeleton className="h-4 w-1/4" />
                                     <Skeleton className="h-24 w-full" />
                                 </div>
                             </div>
-                        ) : fetchError ? (
+                        </SheetBody>
+                    ) : fetchError ? (
+                        <SheetBody>
                             <div className="mt-6 rounded-md border border-destructive/50 bg-destructive/10 p-4 text-center">
                                 <p className="text-sm font-medium text-destructive">
                                     {fetchError}
@@ -383,35 +372,39 @@ export default function InventoryMovementsIndex({
                                     Reintentar
                                 </Button>
                             </div>
-                        ) : rawMaterials && batches && warehouses ? (
-                            drawerState.mode === 'entry' ? (
-                                <EntryMovementForm
-                                    oldestEntryDate={oldestEntryDate}
-                                    rawMaterials={rawMaterials}
-                                    batches={batches}
-                                    warehouses={warehouses}
-                                    defaultWarehouseId={
-                                        currentWarehouseId ?? undefined
-                                    }
-                                    onSuccess={onSuccessForm}
-                                />
-                            ) : (
-                                <ExitMovementForm
-                                    rawMaterials={rawMaterials}
-                                    batches={batches}
-                                    warehouses={warehouses}
-                                    defaultWarehouseId={
-                                        currentWarehouseId ?? undefined
-                                    }
-                                    onSuccess={onSuccessForm}
-                                />
-                            )
+                        </SheetBody>
+                    ) : rawMaterials && batches && warehouses ? (
+                        drawerState.mode === 'entry' ? (
+                            <EntryMovementForm
+                                oldestEntryDate={oldestEntryDate}
+                                rawMaterials={rawMaterials}
+                                batches={batches}
+                                warehouses={warehouses}
+                                defaultWarehouseId={
+                                    currentWarehouseId ?? undefined
+                                }
+                                onSuccess={onSuccessForm}
+                                onCancel={closeDrawer}
+                            />
                         ) : (
+                            <ExitMovementForm
+                                rawMaterials={rawMaterials}
+                                batches={batches}
+                                warehouses={warehouses}
+                                defaultWarehouseId={
+                                    currentWarehouseId ?? undefined
+                                }
+                                onSuccess={onSuccessForm}
+                                onCancel={closeDrawer}
+                            />
+                        )
+                    ) : (
+                        <SheetBody>
                             <div className="py-8 text-center text-muted-foreground">
                                 No se pudieron cargar los datos del formulario.
                             </div>
-                        )}
-                    </div>
+                        </SheetBody>
+                    )}
                 </SheetContent>
             </Sheet>
         </>

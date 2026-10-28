@@ -104,6 +104,9 @@ class FinishedInventoryMovementController extends Controller
             'filters' => $request->validated(),
             'typeOptions' => EnumOptions::for(InventoryMovementType::cases()),
             'reasonOptions' => EnumOptions::for(FinishedInventoryMovementReason::cases()),
+            // Razones del cajón: las que acepta `StoreFinishedInventoryMovementRequest` para cada tipo, sin copia en el front.
+            'entryReasonOptions' => EnumOptions::for(FinishedInventoryMovementReason::manualReasonsFor(InventoryMovementType::Entry)),
+            'exitReasonOptions' => EnumOptions::for(FinishedInventoryMovementReason::manualReasonsFor(InventoryMovementType::Exit)),
             'can' => [
                 'create' => Gate::allows('create', FinishedInventoryMovement::class),
             ],

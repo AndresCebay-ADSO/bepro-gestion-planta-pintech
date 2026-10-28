@@ -8,6 +8,7 @@ import { DataTableFilters } from '@/components/data-table-filters';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
+import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import {
     index as clientsIndex,
@@ -40,6 +41,7 @@ type Props = {
 };
 
 export default function ClientsIndex({ clients, filters, can }: Props) {
+    const confirm = useConfirm();
     const {
         filters: filterState,
         setFilter,
@@ -163,11 +165,15 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
                             label: 'Eliminar',
                             icon: Trash2,
                             destructive: true,
-                            onSelect: () => {
+                            onSelect: async () => {
                                 if (
-                                    confirm(
-                                        '¿Eliminar este cliente definitivamente? Solo es posible si no tiene cotizaciones ni pedidos.',
-                                    )
+                                    await confirm({
+                                        title: `¿Eliminar a ${client.business_name}?`,
+                                        description:
+                                            'Se borra definitivamente. Solo es posible si no tiene cotizaciones ni pedidos.',
+                                        confirmLabel: 'Eliminar',
+                                        destructive: true,
+                                    })
                                 ) {
                                     router.delete(
                                         clientsDestroy(client.id).url,

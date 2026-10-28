@@ -11,6 +11,7 @@ use App\Http\Requests\Concerns\ReadsIdInput;
 use App\Models\FinishedInventoryMovement;
 use App\Models\FinishedProductBatch;
 use App\Rules\PlantDate;
+use App\Services\TimezoneService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -68,6 +69,7 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
                 $this->validateTransferFields($validator);
                 $this->validateBatchBelongsToWarehouse($validator);
                 $this->validateEntryIsForActiveProduct($validator);
+                $this->validateDateNotBeforeBatchEntry($validator);
             },
         ];
     }
@@ -131,6 +133,35 @@ class StoreFinishedInventoryMovementRequest extends FormRequest
 
         if ($batch->stocks->isEmpty()) {
             $validator->errors()->add('finished_product_batch_id', __('El lote seleccionado no tiene stock disponible en la bodega indicada.'));
+        }
+    }
+
+    /**
+     * Ningún movimiento (entrada, salida o traslado) puede fecharse antes de que su lote entrara: el kardex lo mostraría
+     * antes de la entrada, como en materia prima. El `entry_date` del lote no cambia, así que no hace falta bloquearlo
+     * aquí. Solo se compara una fecha ya válida.
+     */
+    private function validateDateNotBeforeBatchEntry(Validator $validator): void
+    {
+        $batchId = $this->input('finished_product_batch_id');
+        $movementDate = $this->input('movement_date');
+
+        if ($validator->errors()->hasAny(['finished_product_batch_id', 'movement_date']) || ! is_string($movementDate)) {
+            return;
+        }
+
+        $batch = FinishedProductBatch::query()->find((int) $batchId);
+
+        if ($batch === null) {
+            return;
+        }
+
+        $entryDate = $batch->entry_date->format('Y-m-d');
+
+        if (strcmp($movementDate, $entryDate) < 0) {
+            $validator->errors()->add('movement_date', __('La fecha de movimiento no puede ser anterior a la entrada del lote (:date).', [
+                'date' => app(TimezoneService::class)->formatPlantDate($entryDate),
+            ]));
         }
     }
 

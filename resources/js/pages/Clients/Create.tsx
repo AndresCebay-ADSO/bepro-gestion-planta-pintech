@@ -1,11 +1,13 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { Head, useForm } from '@inertiajs/react';
 
 import { store as clientStore } from '@/actions/App/Http/Controllers/ClientController';
 import ClientForm from '@/components/clients/ClientForm';
+import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
-import { Button } from '@/components/ui/button';
-import { index as clientsIndex } from '@/routes/clients';
+import {
+    create as clientsCreate,
+    index as clientsIndex,
+} from '@/routes/clients';
 
 export default function ClientsCreate() {
     const { data, setData, post, processing, errors } = useForm({
@@ -25,16 +27,8 @@ export default function ClientsCreate() {
         <>
             <Head title="Nuevo cliente" />
 
-            <div className="mx-auto max-w-2xl space-y-6 p-6">
-                <div className="space-y-4">
-                    <Button variant="ghost" size="sm" asChild>
-                        <Link href={clientsIndex().url}>
-                            <ArrowLeft className="mr-1 h-4 w-4" />
-                            Volver
-                        </Link>
-                    </Button>
-                    <PageHeader title="Nuevo cliente" />
-                </div>
+            <FormPage width="narrow">
+                <PageHeader title="Nuevo cliente" />
 
                 <ClientForm
                     data={data}
@@ -42,9 +36,17 @@ export default function ClientsCreate() {
                     errors={errors}
                     processing={processing}
                     onSubmit={handleSubmit}
-                    submitLabel="Guardar Cliente"
+                    submitLabel="Guardar cliente"
                 />
-            </div>
+            </FormPage>
         </>
     );
 }
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10).
+ClientsCreate.layout = {
+    breadcrumbs: [
+        { title: 'Clientes', href: clientsIndex() },
+        { title: 'Nuevo cliente', href: clientsCreate() },
+    ],
+};

@@ -14,6 +14,7 @@ use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 
 use function Pest\Laravel\actingAs;
@@ -271,3 +272,46 @@ it('rejects a warehouse that is not an integer on an exit without reaching the d
         ])
         ->assertInvalid(['warehouse_id']);
 })->with(['texto' => ['abc'], 'mayor que un bigint' => ['9223372036854775808']]);
+
+it('rejects a movement dated before its batch entered', function (string $type, string $reason): void {
+    [$admin, , $batch] = createFinishedMovementFixture('PROD-FECHA');
+    $origin = Warehouse::factory()->create();
+    $destination = Warehouse::factory()->create();
+    $entryDate = Carbon::parse(plantToday())->subDays(5)->toDateString();
+    $batch->update(['entry_date' => $entryDate]);
+
+    // La salida y el traslado necesitan stock en la bodega de origen; la entrada de hoy lo deja.
+    if ($type === 'exit') {
+        registerFinishedMovement($admin, $batch, $origin, 'entry', 'adjustment', '10');
+    }
+
+    $payload = [
+        'finished_product_batch_id' => $batch->id,
+        'warehouse_id' => $origin->id,
+        'destination_warehouse_id' => $reason === 'transfer' ? $destination->id : null,
+        'type' => $type,
+        'reason' => $reason,
+        'quantity' => '1',
+    ];
+
+    actingAs($admin)
+        ->postJson(route('finished-inventory-movements.store'), [
+            ...$payload,
+            'movement_date' => Carbon::parse($entryDate)->subDay()->toDateString(),
+        ])
+        ->assertJsonValidationErrors([
+            'movement_date' => __('La fecha de movimiento no puede ser anterior a la entrada del lote (:date).', [
+                'date' => Carbon::parse($entryDate)->format('d/m/Y'),
+            ]),
+        ]);
+
+    // El mismo día en que entró el lote sí vale: el movimiento se registra.
+    actingAs($admin)
+        ->post(route('finished-inventory-movements.store'), [...$payload, 'movement_date' => $entryDate])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+})->with([
+    'entrada' => ['entry', 'adjustment'],
+    'salida' => ['exit', 'sale'],
+    'traslado' => ['exit', 'transfer'],
+]);

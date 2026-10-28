@@ -12,6 +12,11 @@ export type FinishedMovementReason =
     | 'transformation'
     | 'deterioration';
 
+export type FinishedReasonOption = {
+    value: FinishedMovementReason;
+    label: string;
+};
+
 export type FinishedProductOption = {
     id: number;
     code: string | null;
@@ -99,6 +104,9 @@ export type FinishedMovementsPage = {
     warehouseOptions: { value: string; label: string }[];
     typeOptions: { value: string; label: string }[];
     reasonOptions: { value: string; label: string }[];
+    /** Razones que acepta el servidor para una entrada y una salida a mano (el traslado tiene su propio cajón). */
+    entryReasonOptions: FinishedReasonOption[];
+    exitReasonOptions: FinishedReasonOption[];
     currentWarehouseId?: number | null;
     filters: {
         search?: string;
@@ -112,22 +120,3 @@ export type FinishedMovementsPage = {
         create: boolean;
     };
 };
-
-export const entryReasons: Array<{
-    value: FinishedMovementReason;
-    label: string;
-}> = [
-    { value: 'return', label: 'Devolución' },
-    { value: 'adjustment', label: 'Ajuste' },
-];
-
-export const exitReasons: Array<{
-    value: FinishedMovementReason;
-    label: string;
-}> = [
-    { value: 'sale', label: 'Venta' },
-    { value: 'sample', label: 'Muestra' },
-    { value: 'deterioration', label: 'Deterioro' },
-    { value: 'transformation', label: 'Transformación' },
-    { value: 'adjustment', label: 'Ajuste' },
-];

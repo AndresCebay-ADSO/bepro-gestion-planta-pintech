@@ -176,6 +176,7 @@ lista se pinta en un Portal, así que no la recorta su contenedor.
 | `className` | `string` | - | Clases adicionales **del botón** (el campo), no de la lista |
 | `disabled` | `boolean` | `false` | Deshabilitar el componente |
 | `id` | `string` | - | `id` del botón: lo señala la etiqueta (`htmlFor`) y recibe el foco ante un 422 (`focus-first-error`) |
+| `aria-describedby`, `aria-invalid` | - | - | La ayuda y el error del campo; los pone `<FormField>` |
 
 ### Comportamiento
 
@@ -209,13 +210,123 @@ const options = rawMaterials.map(rm => ({
 La regla vive en `DESIGN.md` §8: **`Select`** para listas fijas (enums, opciones `{value, label}` de
 `EnumOptions::for()`) o que casi siempre tienen menos de ~8 opciones (tipo de ítem, validez, forma de pago, bodega);
 **`Combobox`** para datos del negocio que crecen y donde buscar ayuda (clientes, productos, materias primas, lotes, OP).
-Los casos dudosos, como la presentación de un producto, se deciden en el rediseño de cada módulo.
+Los casos dudosos, como la presentación de un producto, se deciden en el rediseño de cada módulo. Los lotes van
+siempre en `Combobox`, aunque sean pocos: el número de lote es la etiqueta y lo que queda, la entrada y el vencimiento
+van en la descripción; donde el movimiento puede crear un lote, «Registrar como nuevo lote» es la primera opción.
 
 ### Dentro de un `Sheet` o `Dialog`
 
 Los cajones de movimientos de MP y PT usan `modal={false}`, y ahí el Combobox está probado (mouse, rueda y teclado).
 Dentro de un `Sheet` o `Dialog` modal todavía no se ha usado: si se hace, comprobar que la rueda del mouse desplace la
 lista.
+
+---
+
+## Piezas de formulario
+
+Las reglas (contenedor de cada formulario, columnas, pie, 422, `noValidate`) están en `DESIGN.md` §8, que es la fuente.
+Ejemplos completos: los cajones de movimientos de MP y PT (`components/inventory/`, `components/finished-inventory/`) y
+Clientes (`components/clients/ClientForm.tsx`, `pages/Clients/{Create,Edit}.tsx`).
+
+### FormPage
+
+**Ubicación:** `resources/js/components/form-page.tsx`. Marco de una página de formulario: centrado, con relleno y uno
+de dos anchos. `width="narrow"` (`max-w-3xl`) sin líneas ni matrices; `width="wide"` (`max-w-5xl`) con líneas o una
+matriz. Las migas van en el `layout` de la página; no hay botón «←».
+
+```tsx
+<FormPage width="narrow">
+    <PageHeader title="Nuevo cliente" />
+    <ClientForm … />
+</FormPage>
+```
+
+### FormField
+
+**Ubicación:** `resources/js/components/form-field.tsx`. Etiqueta, campo, ayuda y error con el mismo espacio. Pone en el
+campo el `id` (el de la llave del error, para que `focus-first-error` lo encuentre), `aria-describedby` (ayuda y error)
+y `aria-invalid`. Ocupa su columna (`min-w-0`); `className="md:col-span-2"` para la fila completa.
+
+| Prop | Descripción |
+|------|-------------|
+| `id` | `id` del campo y `htmlFor` de la etiqueta. Igual a la llave del error del servidor (`quantity`, `items.2.quantity`) |
+| `label`, `help`, `error` | Etiqueta, ayuda (`text-xs`) y mensaje del servidor (`InputError`) |
+| `required` | Asterisco rojo en la etiqueta |
+| `children` | Un elemento (`Input`, `Textarea`, `DecimalInput`, `IntegerInput`, `Combobox`, `PlantDateInput`) o, para un `Select`, una función que recibe los props para el `SelectTrigger` |
+
+```tsx
+<FormField id="quantity" label="Cantidad" error={form.errors.quantity}>
+    <DecimalInput value={form.data.quantity} onValueChange={(v) => form.setData('quantity', v)} placeholder="0,00" />
+</FormField>
+
+<FormField id="reason" label="Razón" error={form.errors.reason}>
+    {(control) => (
+        <Select value={form.data.reason} onValueChange={(v) => form.setData('reason', v)}>
+            <SelectTrigger {...control}><SelectValue placeholder="Selecciona razón" /></SelectTrigger>
+            <SelectContent>{/* … */}</SelectContent>
+        </Select>
+    )}
+</FormField>
+```
+
+### FormActions
+
+**Ubicación:** `resources/js/components/form-actions.tsx`. «Cancelar» a la izquierda y el botón principal (`submit`,
+primario) a la derecha, deshabilitado y con rueda mientras `processing`. `cancelHref` (página: vuelve al listado) u
+`onCancel` (cajón o ventana: la cierra); sin ninguno, solo el botón principal.
+
+### Cajón y ventana (`ui/sheet.tsx`, `ui/dialog.tsx`)
+
+Un formulario en cajón o ventana pone los campos en `SheetBody`/`DialogBody` (se desplazan por dentro) y el pie en
+`SheetFooter`/`DialogFooter` (fijo abajo). El `<form>` envuelve los dos con `className="flex min-h-0 flex-1 flex-col"`
+y `noValidate`. Al abrir, el foco va al primer campo; si las opciones todavía cargan (esqueleto), espera a que aparezca.
+El cajón de la derecha flota con margen desde `sm` y ocupa la pantalla en el celular; la ventana nunca pasa del alto de
+la pantalla.
+
+```tsx
+<form noValidate onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
+    <SheetBody>{/* campos */}</SheetBody>
+    <SheetFooter>
+        <FormActions submitLabel="Registrar entrada" processing={form.processing} onCancel={onCancel} />
+    </SheetFooter>
+</form>
+```
+
+### ConfirmDialog y useConfirm
+
+**Ubicación:** `resources/js/components/confirm-dialog.tsx` y `resources/js/hooks/use-confirm.ts`. Reemplaza al
+`confirm()` del navegador. `ConfirmDialogProvider` (montado en `app.tsx`) pinta un único diálogo; `useConfirm()`
+devuelve una función que abre el diálogo y espera la respuesta (`true` al confirmar, `false` al cancelar o cerrar).
+`destructive` pone el botón en rojo. Si empieza una navegación de Inertia con la pregunta abierta, se da por
+cancelada. `<ConfirmDialog>` sirve cuando el diálogo se controla con estado propio. `confirm()` y los campos
+`type="date"`/`"datetime-local"` los prohíbe `design-contract.test.ts` (con una lista de excepciones que se va vaciando).
+
+```tsx
+const confirm = useConfirm();
+
+if (await confirm({ title: `¿Eliminar a ${client.business_name}?`, confirmLabel: 'Eliminar', destructive: true })) {
+    router.delete(clientsDestroy(client.id).url);
+}
+```
+
+### PlantDateInput
+
+**Ubicación:** `resources/js/components/plant-date-input.tsx`; la lógica pura en `resources/js/lib/plant-date.ts` (con
+sus pruebas). Fecha de planta (`YYYY-MM-DD`) con el calendario de la app (selector de mes y año), nunca el nativo. El
+valor por defecto lo pone el formulario (normalmente `plantToday`).
+
+| Prop | Descripción |
+|------|-------------|
+| `value`, `onChange` | `YYYY-MM-DD` o `''` |
+| `notFuture` / `notPast` | No después / no antes de hoy en la planta |
+| `min`, `max` | Límites fijos; se combinan con los anteriores y gana el más estricto |
+| `saved` | La fecha guardada: se puede conservar aunque quede fuera de los límites (como `PlantDate::allowing()`) |
+| `clearable` | Muestra «Quitar fecha» (campos opcionales) |
+| `id`, `placeholder`, `disabled` | Como en los demás campos |
+
+```tsx
+<PlantDateInput notFuture min={oldestEntryDate} value={form.data.movement_date} onChange={(v) => form.setData('movement_date', v)} />
+```
 
 ---
 
