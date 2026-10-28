@@ -11,7 +11,6 @@
 export interface FormatNumberOptions {
     currency?: string;
     maxDecimals?: number;
-    alwaysShowCurrency?: boolean;
     emptyValue?: string;
     /** Eliminar ceros al final (útil para vistas de detalle) */
     trimTrailingZeros?: boolean;
@@ -84,19 +83,6 @@ function parseToNumber(value: number | string): number | null {
 }
 
 /**
- * Manejo centralizado de valores vacíos
- */
-function handleEmpty(
-    currency: string | undefined,
-    alwaysShowCurrency: boolean,
-    emptyValue: string,
-): string {
-    return alwaysShowCurrency && currency
-        ? `${currency}${emptyValue}`
-        : emptyValue;
-}
-
-/**
  * Formatea un número según estándar colombiano
  */
 export function formatNumber(
@@ -106,20 +92,19 @@ export function formatNumber(
     const {
         currency,
         maxDecimals = 4,
-        alwaysShowCurrency = false,
         emptyValue = '-',
         trimTrailingZeros = false,
     } = options;
 
-    // Vacíos
+    // Vacíos: nunca llevan símbolo de moneda («Sin precio», no «$Sin precio»)
     if (value === null || value === undefined || value === '') {
-        return handleEmpty(currency, alwaysShowCurrency, emptyValue);
+        return emptyValue;
     }
 
     const numValue = parseToNumber(value);
 
     if (numValue === null) {
-        return handleEmpty(currency, alwaysShowCurrency, emptyValue);
+        return emptyValue;
     }
 
     const formatter = getFormatter(maxDecimals);
@@ -146,13 +131,9 @@ export function formatNumber(
 export function formatCurrency(
     value: number | string | null | undefined,
     currencySymbol: string = '$',
-    options: Omit<FormatNumberOptions, 'currency' | 'alwaysShowCurrency'> = {},
+    options: Omit<FormatNumberOptions, 'currency'> = {},
 ): string {
-    return formatNumber(value, {
-        ...options,
-        currency: currencySymbol,
-        alwaysShowCurrency: true,
-    });
+    return formatNumber(value, { ...options, currency: currencySymbol });
 }
 
 /**
@@ -171,15 +152,16 @@ export function formatQuantity(
 export function formatPercent(
     value: number | string | null | undefined,
     maxDecimals: number = 2,
+    emptyValue: string = '-',
 ): string {
     if (value === null || value === undefined || value === '') {
-        return '-';
+        return emptyValue;
     }
 
     const numValue = parseToNumber(value);
 
     if (numValue === null) {
-        return '-';
+        return emptyValue;
     }
 
     return `${formatNumber(numValue * 100, { maxDecimals })}%`;

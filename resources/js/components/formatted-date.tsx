@@ -5,6 +5,7 @@ import { es } from 'date-fns/locale';
 export interface FormattedDateProps {
     value: string | null | undefined;
     format?: 'short' | 'long' | 'datetime' | 'date';
+    /** Texto sin fecha, atenuado (default: '-'). Ej.: «Sin estimar» */
     emptyValue?: string;
 }
 
@@ -91,13 +92,25 @@ export function FormattedDate({
     format: formatType = 'short',
     emptyValue = '-',
 }: FormattedDateProps) {
+    // Sin fecha: el emptyValue va atenuado, es un dato que falta (DESIGN.md §9)
     if (!value) {
-        return <span>{emptyValue}</span>;
+        return <span className="text-muted-foreground">{emptyValue}</span>;
     }
 
     const formattedValue = formatSafeDate(value, formatType, emptyValue);
 
-    return <span>{formattedValue}</span>;
+    // Fecha inválida: también es un dato que falta
+    return (
+        <span
+            className={
+                formattedValue === emptyValue
+                    ? 'text-muted-foreground'
+                    : undefined
+            }
+        >
+            {formattedValue}
+        </span>
+    );
 }
 
 /**

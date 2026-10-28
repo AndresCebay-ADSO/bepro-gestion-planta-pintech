@@ -253,11 +253,9 @@ export default function FinishedMovementsIndex({
                         <div className="font-medium text-foreground">
                             {movement.warehouse.name}
                         </div>
-                        {movement.warehouse.city && (
-                            <div className="text-xs text-muted-foreground">
-                                {movement.warehouse.city}
-                            </div>
-                        )}
+                        <div className="text-xs text-muted-foreground">
+                            {movement.warehouse.city}
+                        </div>
                     </>
                 ) : null,
             mobile: 'meta',

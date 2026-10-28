@@ -13,6 +13,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import {
+    cardPairs,
     isEmptyCell,
     listingColumnProblems,
     visibleRowActions,
@@ -23,7 +24,7 @@ import { cn } from '@/lib/utils';
 export type DataListingColumn<T> = {
     key: string;
     header: string;
-    /** Sin dato, `null` (o `undefined`/`false`): la tarjeta omite el par y la tabla muestra «—». */
+    /** Sin dato, `null` (o `undefined`, `false`, `''`): la tarjeta omite el par y la tabla muestra «—». */
     cell: (row: T) => ReactNode;
     /**
      * Papel en la tarjeta del celular (DESIGN.md §9): `title` el identificador, `subtitle` lo que lo describe,
@@ -120,16 +121,19 @@ export function DataListing<T>({
         (column) => column.mobile === 'subtitle',
     );
     const statusColumn = columns.find((column) => column.mobile === 'status');
-    const primaryColumn = columns.find((column) => column.mobile === 'primary');
-    const metaColumns = columns.filter((column) => column.mobile === 'meta');
 
     // El identificador es el único enlace de la fila: el resto se puede seleccionar y copiar.
     // Sin dato, «—» atenuado (en la tarjeta solo llega aquí el título: los demás se omiten). Un título sin dato
-    // sigue siendo el enlace: la fila tiene que poder abrirse igual.
+    // sigue siendo el enlace: la fila tiene que poder abrirse igual. El lector de pantalla dice «Sin dato», no «—».
     const renderValue = (column: DataListingColumn<T>, row: T) => {
         const value = column.cell(row);
         const content = isEmptyCell(value) ? (
-            <span className="text-muted-foreground">—</span>
+            <>
+                <span aria-hidden="true" className="text-muted-foreground">
+                    —
+                </span>
+                <span className="sr-only">Sin dato</span>
+            </>
         ) : (
             value
         );
@@ -148,18 +152,6 @@ export function DataListing<T>({
             </Link>
         );
     };
-
-    // Pares etiqueta-dato de la tarjeta: el principal primero y luego los `meta`; los que no tienen dato no aparecen.
-    const cardPairs = (row: T) =>
-        [primaryColumn, ...metaColumns].flatMap((column) => {
-            if (column === undefined) {
-                return [];
-            }
-
-            const value = column.cell(row);
-
-            return isEmptyCell(value) ? [] : [{ column, value }];
-        });
 
     return (
         <>
@@ -222,7 +214,7 @@ export function DataListing<T>({
                 {entries.map(({ row, key, actions: rowActions }) => {
                     const status = statusColumn?.cell(row);
                     const subtitle = subtitleColumn?.cell(row);
-                    const pairs = cardPairs(row);
+                    const pairs = cardPairs(columns, row);
 
                     return (
                         <li
@@ -292,10 +284,15 @@ export function DataListing<T>({
                                             <dd
                                                 className={cn(
                                                     'break-words',
+                                                    // `**:text-lg`: FormattedNumber pone su propio tamaño y le
+                                                    // ganaría al del principal; la unidad de al lado sí lo hereda.
                                                     column.mobile === 'primary'
-                                                        ? 'text-lg font-semibold tabular-nums'
+                                                        ? 'text-lg font-semibold tabular-nums **:text-lg'
                                                         : 'text-sm',
-                                                    column.align === 'right' &&
+                                                    column.mobile !==
+                                                        'primary' &&
+                                                        column.align ===
+                                                            'right' &&
                                                         'tabular-nums',
                                                     column.cardClassName,
                                                 )}

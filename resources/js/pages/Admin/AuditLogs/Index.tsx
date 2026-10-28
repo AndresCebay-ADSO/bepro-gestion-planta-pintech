@@ -128,6 +128,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
         }
 
         // Solo las claves que cambiaron: las que tienen el mismo valor antes y después no se listan ni se cuentan.
+        // Se compara por valor (JSON), no por referencia: un campo objeto igual antes y después no cambió.
         const keys = (
             attributes ? Object.keys(attributes) : Object.keys(old || {})
         ).filter(
@@ -137,7 +138,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                     attributes &&
                     key in old &&
                     key in attributes &&
-                    old[key] === attributes[key]
+                    JSON.stringify(old[key]) === JSON.stringify(attributes[key])
                 ),
         );
 

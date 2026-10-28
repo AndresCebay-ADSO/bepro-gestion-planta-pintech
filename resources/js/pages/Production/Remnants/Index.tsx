@@ -139,18 +139,14 @@ export default function RemnantsIndex({
                       key: 'cost',
                       header: 'Costo/gal',
                       // Sin costo es un dato que falta, no un vacío: se dice (como «Sin precio» en Lista de precios).
-                      cell: (remnant: RemnantItem) =>
-                          remnant.cost_per_gallon != null ? (
-                              <FormattedNumber
-                                  value={remnant.cost_per_gallon}
-                                  currency
-                                  maxDecimals={2}
-                              />
-                          ) : (
-                              <span className="text-muted-foreground">
-                                  Sin costo
-                              </span>
-                          ),
+                      cell: (remnant: RemnantItem) => (
+                          <FormattedNumber
+                              value={remnant.cost_per_gallon}
+                              currency
+                              maxDecimals={2}
+                              emptyValue="Sin costo"
+                          />
+                      ),
                       mobile: 'meta' as const,
                       align: 'right' as const,
                   },

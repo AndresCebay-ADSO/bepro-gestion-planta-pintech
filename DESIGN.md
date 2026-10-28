@@ -264,8 +264,15 @@ What asks for action (alerts, pending items) **never** goes `hidden`: the phone 
 fit in the 4 `meta`, the least important `meta` goes `hidden` instead.
 
 **No value, `null`.** When a row has nothing to show in a column (no alerts, no end date, no seller), `cell` returns
-`null` (`undefined` and `false` count too; `0` and `''` are values). The card leaves that label-value pair out, and the
-table shows «—» in `text-muted-foreground`. Screens never write `'-'` or `'—'` by hand.
+`null` (`undefined` and `false` count too; `0` is a value; `''` counts as empty). The card leaves that label-value pair
+out, and the table shows «—» in `text-muted-foreground` (screen readers hear «Sin dato»). Screens never write `'-'` or
+`'—'` by hand.
+
+**Missing value, muted text.** Telling the two apart: what is normal not to have returns `null` (above); a value that
+should be there and is missing (a price not yet costed, an estimated date production has not set) is said in words,
+through the `emptyValue` of `FormattedNumber` or `FormattedDate`, which renders it in `text-muted-foreground`:
+`<FormattedNumber value={variant.sales_price} currency emptyValue="Sin precio" />`. No hand-written ternary with a
+muted `<span>`.
 
 `align: 'right'` for figures (adds `tabular-nums`), `'center'` for pills and alerts. `className` styles the desktop
 cell only (`max-w-xs truncate` would cut the value on the card); `cardClassName` styles the value on the card (for
@@ -286,7 +293,7 @@ finds each value twice.
         { key: 'code', header: 'Código', cell: (item) => item.code, mobile: 'title', className: 'font-mono', cardClassName: 'font-mono' },
         { key: 'category', header: 'Categoría', cell: (item) => item.category?.name ?? null, mobile: 'subtitle' },
         // The unit symbol goes with the figure («1.000 u»), so there is no Unit column.
-        { key: 'stock', header: 'Stock disponible', cell: (item) => <><FormattedNumber value={item.available_stock} /> {item.unit_of_measure.symbol}</>, mobile: 'primary', align: 'right' },
+        { key: 'stock', header: 'Stock disponible', cell: (item) => <><FormattedNumber value={item.available_stock} /> {item.unit_of_measure?.symbol}</>, mobile: 'primary', align: 'right' },
         { key: 'alerts', header: 'Alertas', cell: (item) => (item.active_alerts_count > 0 ? <Link href={alertsIndex().url}>{item.active_alerts_count}</Link> : null), mobile: 'meta', align: 'center' },
         { key: 'status', header: 'Estado', cell: (item) => <ActiveBadge isActive={item.is_active} feminine />, mobile: 'status' },
     ]}

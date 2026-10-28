@@ -137,18 +137,14 @@ export default function ShrinkWrapsIndex({
                       key: 'cost',
                       header: 'Costo',
                       // Sin costo es un dato que falta, no un vacío: se dice (como en Saldos de producción).
-                      cell: (row: Row) =>
-                          row.total_cost == null ? (
-                              <span className="text-muted-foreground">
-                                  Sin costo
-                              </span>
-                          ) : (
-                              <FormattedNumber
-                                  value={row.total_cost}
-                                  currency
-                                  maxDecimals={2}
-                              />
-                          ),
+                      cell: (row: Row) => (
+                          <FormattedNumber
+                              value={row.total_cost}
+                              currency
+                              maxDecimals={2}
+                              emptyValue="Sin costo"
+                          />
+                      ),
                       mobile: 'meta' as const,
                       align: 'right' as const,
                   },
