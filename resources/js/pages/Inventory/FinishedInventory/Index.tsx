@@ -112,11 +112,18 @@ export default function FinishedInventoryIndex({
                         <div className="text-foreground">
                             {row.variant.name}
                         </div>
-                        <div className="text-xs">
-                            {row.variant.presentation_label ?? '-'}{' '}
-                            {row.variant.presentation_value != null &&
-                                `(${row.variant.presentation_value})`}
-                        </div>
+                        {(row.variant.presentation_label ||
+                            row.variant.presentation_value != null) && (
+                            <div className="text-xs">
+                                {[
+                                    row.variant.presentation_label,
+                                    row.variant.presentation_value != null &&
+                                        `(${row.variant.presentation_value})`,
+                                ]
+                                    .filter(Boolean)
+                                    .join(' ')}
+                            </div>
+                        )}
                     </>
                 ) : null,
             mobile: 'subtitle',

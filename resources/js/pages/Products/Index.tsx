@@ -61,7 +61,7 @@ export default function ProductsIndex({
         {
             key: 'category',
             header: 'Categoría',
-            cell: (product) => product.category?.name ?? '-',
+            cell: (product) => product.category?.name ?? null,
             mobile: 'subtitle',
         },
         {

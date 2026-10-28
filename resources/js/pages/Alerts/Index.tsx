@@ -180,7 +180,7 @@ export default function AlertsIndex({
                     ? format(new Date(alert.created_at), 'dd MMM yyyy HH:mm', {
                           locale: es,
                       })
-                    : '-',
+                    : null,
             mobile: 'meta',
             className: 'whitespace-nowrap text-muted-foreground',
         },
@@ -190,7 +190,7 @@ export default function AlertsIndex({
             cell: (alert) =>
                 alert.is_resolved
                     ? (alert.resolved_by?.name ?? 'Resuelta')
-                    : '-',
+                    : null,
             mobile: 'meta',
             className: 'text-muted-foreground',
         },

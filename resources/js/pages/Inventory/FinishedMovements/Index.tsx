@@ -27,7 +27,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useDrawerFormProps } from '@/hooks/use-drawer-form-props';
 import { useFilters } from '@/hooks/use-filters';
 import { finishedLotLabel } from '@/lib/finished-lot';
-import { cn } from '@/lib/utils';
 import {
     index as finishedMovementsIndex,
     show as showFinishedMovement,
@@ -222,9 +221,11 @@ export default function FinishedMovementsIndex({
             header: 'Producto',
             cell: (movement) => (
                 <>
-                    <div className="font-medium text-foreground">
-                        {movement.product?.name ?? '-'}
-                    </div>
+                    {movement.product && (
+                        <div className="font-medium text-foreground">
+                            {movement.product.name}
+                        </div>
+                    )}
                     <div className="text-xs text-muted-foreground">
                         {movement.product_variant?.presentation_label ??
                             movement.product_variant?.name ??
@@ -246,16 +247,19 @@ export default function FinishedMovementsIndex({
         {
             key: 'warehouse',
             header: 'Bodega',
-            cell: (movement) => (
-                <>
-                    <div className="font-medium text-foreground">
-                        {movement.warehouse?.name ?? '-'}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                        {movement.warehouse?.city ?? '-'}
-                    </div>
-                </>
-            ),
+            cell: (movement) =>
+                movement.warehouse ? (
+                    <>
+                        <div className="font-medium text-foreground">
+                            {movement.warehouse.name}
+                        </div>
+                        {movement.warehouse.city && (
+                            <div className="text-xs text-muted-foreground">
+                                {movement.warehouse.city}
+                            </div>
+                        )}
+                    </>
+                ) : null,
             mobile: 'meta',
         },
         {
@@ -263,12 +267,11 @@ export default function FinishedMovementsIndex({
             header: 'Cantidad',
             cell: (movement) => (
                 <span
-                    className={cn(
-                        'font-medium',
+                    className={
                         movement.type === 'entry'
                             ? 'text-success-text'
-                            : 'text-warning-text',
-                    )}
+                            : 'text-warning-text'
+                    }
                 >
                     {movement.type === 'entry' ? '+' : '−'}
                     <FormattedNumber
@@ -277,8 +280,10 @@ export default function FinishedMovementsIndex({
                     />
                 </span>
             ),
-            mobile: 'meta',
+            mobile: 'primary',
             align: 'right',
+            // Solo la tabla: en la tarjeta manda el estilo del dato principal.
+            className: 'font-medium',
         },
         {
             key: 'origin',
@@ -292,10 +297,10 @@ export default function FinishedMovementsIndex({
                         <div className="text-xs">Producción</div>
                     </>
                 ) : (
-                    (movement.created_by?.name ?? '-')
+                    (movement.created_by?.name ?? null)
                 ),
-            // Cinco datos no caben en la tarjeta: el origen se ve en el detalle.
-            mobile: 'hidden',
+            // El principal no cuenta en los 4 datos: el origen cabe en la tarjeta.
+            mobile: 'meta',
             className: 'text-muted-foreground',
         },
     ];

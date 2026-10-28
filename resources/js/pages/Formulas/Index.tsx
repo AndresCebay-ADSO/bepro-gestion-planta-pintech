@@ -77,7 +77,7 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
         {
             key: 'product',
             header: 'Producto',
-            cell: (formula) => formula.product?.name ?? '-',
+            cell: (formula) => formula.product?.name ?? null,
             mobile: 'title',
         },
         {
@@ -114,14 +114,15 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
         {
             key: 'notes',
             header: 'Notas',
-            cell: (formula) => (
-                <span
-                    className="block md:max-w-xs md:truncate"
-                    title={formula.notes ?? undefined}
-                >
-                    {formula.notes ?? '-'}
-                </span>
-            ),
+            cell: (formula) =>
+                formula.notes ? (
+                    <span
+                        className="block md:max-w-xs md:truncate"
+                        title={formula.notes}
+                    >
+                        {formula.notes}
+                    </span>
+                ) : null,
             mobile: 'hidden',
             className: 'text-muted-foreground',
         },

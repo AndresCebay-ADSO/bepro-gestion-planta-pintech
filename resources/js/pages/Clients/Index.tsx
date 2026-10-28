@@ -62,21 +62,21 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
         {
             key: 'nit',
             header: 'NIT',
-            cell: (client) => client.nit ?? '-',
+            cell: (client) => client.nit ?? null,
             mobile: 'meta',
             className: 'text-muted-foreground',
         },
         {
             key: 'contact_name',
             header: 'Contacto',
-            cell: (client) => client.contact_name ?? '-',
+            cell: (client) => client.contact_name ?? null,
             mobile: 'meta',
             className: 'text-muted-foreground',
         },
         {
             key: 'phone',
             header: 'Teléfono',
-            cell: (client) => client.phone ?? '-',
+            cell: (client) => client.phone ?? null,
             mobile: 'meta',
             className: 'text-muted-foreground',
         },
@@ -85,14 +85,15 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
             header: 'Dirección',
             // `max-w-xs` no limita un <td>: se corta en un bloque, y solo desde md (la tabla).
             // La tarjeta del celular la muestra entera.
-            cell: (client) => (
-                <span
-                    className="block md:max-w-xs md:truncate"
-                    title={client.shipping_address ?? undefined}
-                >
-                    {client.shipping_address ?? '-'}
-                </span>
-            ),
+            cell: (client) =>
+                client.shipping_address ? (
+                    <span
+                        className="block md:max-w-xs md:truncate"
+                        title={client.shipping_address}
+                    >
+                        {client.shipping_address}
+                    </span>
+                ) : null,
             mobile: 'meta',
             className: 'text-muted-foreground',
         },

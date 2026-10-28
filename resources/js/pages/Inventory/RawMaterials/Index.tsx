@@ -157,13 +157,19 @@ export default function RawMaterialsIndex({
                   {
                       key: 'price',
                       header: 'Precio',
-                      cell: (item: RawMaterialRow) => (
-                          <FormattedNumber
-                              value={item.current_price}
-                              currency
-                              maxDecimals={2}
-                          />
-                      ),
+                      // Sin precio es un dato que falta (sin compras registradas), no un vacío: se dice.
+                      cell: (item: RawMaterialRow) =>
+                          item.current_price === null ? (
+                              <span className="text-muted-foreground">
+                                  Sin precio
+                              </span>
+                          ) : (
+                              <FormattedNumber
+                                  value={item.current_price}
+                                  currency
+                                  maxDecimals={2}
+                              />
+                          ),
                       mobile: 'meta' as const,
                       align: 'right' as const,
                   },

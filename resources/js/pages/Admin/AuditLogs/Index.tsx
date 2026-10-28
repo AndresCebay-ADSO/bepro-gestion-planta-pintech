@@ -101,7 +101,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
 
     const formatProperties = (properties: Record<string, any>) => {
         if (!properties || Object.keys(properties).length === 0) {
-            return '-';
+            return null;
         }
 
         const attributes = properties.attributes;
@@ -127,12 +127,22 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
             return <span className="text-muted-foreground">{jsonStr}</span>;
         }
 
-        const keys = attributes
-            ? Object.keys(attributes)
-            : Object.keys(old || {});
+        // Solo las claves que cambiaron: las que tienen el mismo valor antes y después no se listan ni se cuentan.
+        const keys = (
+            attributes ? Object.keys(attributes) : Object.keys(old || {})
+        ).filter(
+            (key) =>
+                !(
+                    old &&
+                    attributes &&
+                    key in old &&
+                    key in attributes &&
+                    old[key] === attributes[key]
+                ),
+        );
 
         if (keys.length === 0) {
-            return '-';
+            return null;
         }
 
         const formatVal = (val: any) => {
@@ -177,10 +187,6 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                     const oldVal = old ? old[key] : undefined;
                     const hasOld = old && key in old;
                     const hasNew = attributes && key in attributes;
-
-                    if (hasOld && hasNew && newVal === oldVal) {
-                        return null;
-                    }
 
                     return (
                         <li

@@ -94,13 +94,19 @@ export default function PricesIndex({
                       // Costo con CIF: no es el «Costo» de la línea del producto.
                       key: 'internal_price',
                       header: 'Precio interno',
-                      cell: (variant: VariantRow) => (
-                          <FormattedNumber
-                              value={variant.current_price}
-                              currency
-                              maxDecimals={2}
-                          />
-                      ),
+                      // Sin precio es un dato que falta (aún sin costear), como el de venta.
+                      cell: (variant: VariantRow) =>
+                          variant.current_price == null ? (
+                              <span className="text-muted-foreground">
+                                  Sin precio
+                              </span>
+                          ) : (
+                              <FormattedNumber
+                                  value={variant.current_price}
+                                  currency
+                                  maxDecimals={2}
+                              />
+                          ),
                       mobile: 'meta' as const,
                       align: 'right' as const,
                       className: 'text-muted-foreground',
@@ -112,7 +118,7 @@ export default function PricesIndex({
             header: 'Precio de venta',
             // Sin precio es un dato que falta, no un vacío: se dice en vez de omitirlo.
             cell: (variant) =>
-                variant.sales_price === null ? (
+                variant.sales_price == null ? (
                     <span className="text-muted-foreground">Sin precio</span>
                 ) : (
                     <FormattedNumber
