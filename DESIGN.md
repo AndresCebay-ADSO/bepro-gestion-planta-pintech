@@ -213,6 +213,11 @@ Same in all three:
 - Footer: «Cancelar» on the left, main action (primary) on the right, disabled while saving. Fixed at the bottom on the
   phone.
 - **A 422 never closes the form**: data and errors stay. Focus goes to the first invalid field (`lib/focus-first-error.ts`).
+- On touch screens every field is at least 16 px (an `any-pointer: coarse` rule in `resources/css/app.css`, outside `@layer`, so it beats
+  `text-sm`): below 16 px, iOS Safari zooms the page when a field gets focus, upright or in landscape. On desktop
+  fields keep their component's size (14 px from `md`). Never block zoom in the viewport (`maximum-scale=1` also stops pinch zoom on Android). Because
+  the rule is outside `@layer`, a utility cannot change a field's size on touch screens; a field that must be larger
+  than 16 px there sets it with `style={{ fontSize }}`.
 - `noValidate` on the `<form>`: the server validates. Empty numeric fields start empty with a placeholder, never a typed
   `0`: «0,00» for decimals, «0» for integers.
 - Confirmations use the app dialog (`AlertDialog`, destructive action in red). **Banned:** `window.confirm()`,

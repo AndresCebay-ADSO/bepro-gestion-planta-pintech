@@ -132,7 +132,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                                 tabIndex={1}
                                                 autoComplete="email"
                                                 placeholder="gerente.planta@pintech.com"
-                                                className="rounded-lg border-input bg-background pl-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
+                                                className="rounded-lg border-input bg-background pl-9 text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
                                             />
                                         </div>
                                         <InputError message={errors.email} />

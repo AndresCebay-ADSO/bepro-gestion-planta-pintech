@@ -334,4 +334,36 @@ describe('contrato de DESIGN.md', () => {
 
         expect(report(found)).toEqual([]);
     });
+
+    it('ningún campo hace que iOS acerque la página', () => {
+        // Safari de iOS acerca la página al enfocar un campo con letra de menos de 16 px. Una regla de app.css, fuera de
+        // @layer (les gana a las utilidades), pone todo campo a 16 px como mínimo en pantallas táctiles, de pie o
+        // acostado. Así no depende de que cada pantalla elija bien el tamaño.
+        const css = readFileSync(join(root, 'resources/css/app.css'), 'utf8');
+        const rule =
+            /@media \(any-pointer: coarse\)\s*\{\s*input,\s*select,\s*textarea\s*\{\s*font-size:\s*max\(16px, 1em\);/.exec(
+                css,
+            );
+
+        expect(
+            rule,
+            'regla de 16 px para pantallas táctiles en app.css',
+        ).not.toBeNull();
+
+        // Fuera de toda capa: las llaves abiertas antes de la regla están todas cerradas.
+        const before = css.slice(0, rule?.index ?? 0);
+        const depth =
+            (before.match(/\{/g) ?? []).length -
+            (before.match(/\}/g) ?? []).length;
+
+        expect(depth, 'la regla de 16 px no puede ir dentro de @layer').toBe(0);
+
+        // Y nadie lo «arregla» bloqueando el zoom: en Android eso también impide ampliar con los dedos.
+        const layout = readFileSync(
+            join(root, 'resources/views/app.blade.php'),
+            'utf8',
+        );
+
+        expect(layout).not.toMatch(/maximum-scale|user-scalable\s*=\s*["']?no/);
+    });
 });

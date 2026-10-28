@@ -28,7 +28,7 @@ export default function SelectField({
             <select
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background outline-none focus:ring-2 focus:ring-ring"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-base ring-offset-background outline-none focus:ring-2 focus:ring-ring md:text-sm"
             >
                 <option value="">{placeholder}</option>
                 {options.map((o) => (

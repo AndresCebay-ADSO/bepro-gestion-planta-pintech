@@ -195,3 +195,20 @@
         @apply bg-background text-foreground antialiased transition-colors duration-200;
     }
 }
+
+/*
+ * Safari de iOS acerca la página al enfocar un campo con letra de menos de 16 px. En pantallas táctiles (celular de pie
+ * o acostado, tableta) todo campo va a 16 px como mínimo, sea cual sea su clase: una sola regla para todos, también los
+ * nativos y los que vengan. Va fuera de `@layer` para ganarles a las utilidades (`text-sm`, `md:text-sm`) sin
+ * `!important`. `any-pointer` y no `pointer`: un iPad con trackpad puede reportar el trackpad como puntero principal,
+ * pero la pantalla táctil sigue ahí. En el computador los campos quedan como los define su componente (14 px desde
+ * `md`). Ojo: `1em` es la letra del contenedor, así que un campo que deba verse más grande que 16 px en el celular lo
+ * pone con `style={{ fontSize }}` (DESIGN.md §8).
+ */
+@media (any-pointer: coarse) {
+    input,
+    select,
+    textarea {
+        font-size: max(16px, 1em);
+    }
+}

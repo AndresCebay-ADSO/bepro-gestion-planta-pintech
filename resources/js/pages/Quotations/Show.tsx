@@ -445,7 +445,7 @@ export default function QuotationsShow({
                                 onChange={(e) =>
                                     setData('status', e.target.value)
                                 }
-                                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                                className="h-10 rounded-md border border-input bg-background px-3 text-base md:text-sm"
                             >
                                 {statusOptions.map((option) => (
                                     <option
