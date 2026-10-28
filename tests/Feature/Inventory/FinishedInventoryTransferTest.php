@@ -55,7 +55,8 @@ function finishedTransferFixture(?Warehouse $origin = null, ?Warehouse $destinat
         'production_order_id' => ProductionOrder::factory()->create(['product_id' => $product->id])->id,
         'product_variant_id' => $variant->id,
         'initial_quantity' => '20',
-        'entry_date' => now(),
+        // Antes de las fechas que usan las pruebas: ningún movimiento puede fecharse antes de que el lote entrara.
+        'entry_date' => '2026-09-01',
     ]);
 
     $origin ??= Warehouse::factory()->factory()->create();

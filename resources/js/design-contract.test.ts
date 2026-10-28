@@ -284,6 +284,73 @@ describe('contrato de DESIGN.md', () => {
         expect(staleExceptions).toEqual([]);
     });
 
+    describe('formularios: confirmación y fechas de la app, no las del navegador', () => {
+        // Excepciones por archivo: los migra la segunda parte de los formularios. Al migrar uno, se quita de aquí.
+        const cases: {
+            name: string;
+            pattern: RegExp;
+            rule: string;
+            exceptions: string[];
+        }[] = [
+            {
+                name: 'pide confirmación con useConfirm(), no con confirm() del navegador',
+                // `confirm(` suelto o `window.confirm(`; el de `useConfirm()` recibe un objeto (`confirm({`).
+                pattern: /(?<![\w.])(?:window\.)?confirm\((?!\{)/g,
+                rule: 'DESIGN.md §8: la confirmación es useConfirm() / <ConfirmDialog>',
+                exceptions: [
+                    'resources/js/components/production/line-adjustments-panel.tsx',
+                    'resources/js/components/production/packaging-section.tsx',
+                    'resources/js/pages/Admin/Roles/Index.tsx',
+                    'resources/js/pages/Admin/Users/Index.tsx',
+                    'resources/js/pages/Formulas/Index.tsx',
+                    'resources/js/pages/Formulas/Show.tsx',
+                    'resources/js/pages/Inventory/Warehouses/Index.tsx',
+                    'resources/js/pages/Inventory/Warehouses/Show.tsx',
+                    'resources/js/pages/Products/Show.tsx',
+                    'resources/js/pages/Settings/Catalogs/ProductCategories/Index.tsx',
+                    'resources/js/pages/Settings/Catalogs/RawMaterialCategories/Index.tsx',
+                    'resources/js/pages/Settings/Catalogs/ShrinkWrapTypes/Index.tsx',
+                    'resources/js/pages/Settings/Catalogs/UnitsOfMeasure/Index.tsx',
+                ],
+            },
+            {
+                name: 'pide fechas con <PlantDateInput>, no con el selector nativo',
+                pattern: /\btype=["'](?:date|datetime-local)["']/g,
+                rule: 'DESIGN.md §8: las fechas usan <PlantDateInput> (el calendario de la app)',
+                exceptions: [
+                    'resources/js/components/paint-development-requests/fields/TextField.tsx',
+                    'resources/js/components/paint-development-requests/steps/ContextStep.tsx',
+                    'resources/js/components/production/control-card.tsx',
+                    'resources/js/components/quotations/QuotationForm.tsx',
+                    'resources/js/components/sales-orders/AdminOrderSidebar.tsx',
+                    'resources/js/pages/Production/Orders/Create.tsx',
+                    'resources/js/pages/Production/ShrinkWraps/Create.tsx',
+                    'resources/js/pages/Quotations/Show.tsx',
+                    'resources/js/pages/SalesOrders/Create.tsx',
+                ],
+            },
+        ];
+
+        it.each(cases)('$name', ({ pattern, rule, exceptions }) => {
+            const files = screenFiles.filter(
+                (file) => !exceptions.includes(relativePath(file)),
+            );
+
+            expect(report(violations(files, [{ pattern, rule }]))).toEqual([]);
+
+            // Una excepción que ya no existe o ya no lo usa sobra: se quita para que el guardián la vigile.
+            const staleExceptions = exceptions.filter(
+                (path) =>
+                    !existsSync(join(root, path)) ||
+                    !new RegExp(pattern.source).test(
+                        readFileSync(join(root, path), 'utf8'),
+                    ),
+            );
+
+            expect(staleExceptions).toEqual([]);
+        });
+    });
+
     it('no importa el componente retirado TableActions', () => {
         const files = filesUnder(join(root, 'resources/js'), ['.ts', '.tsx']);
 

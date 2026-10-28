@@ -1,6 +1,7 @@
 import { useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { Button } from '@/components/ui/button';
+import { FormActions } from '@/components/form-actions';
+import { SheetBody, SheetFooter } from '@/components/ui/sheet';
 import { idPayload, toDecimalPayload } from '@/lib/numeric-input';
 import { store as inventoryMovementsStore } from '@/routes/inventory-movements';
 import type { InventoryOption } from '@/types';
@@ -12,6 +13,7 @@ type Props = {
     warehouses: InventoryOption[];
     defaultWarehouseId?: number;
     onSuccess?: () => void;
+    onCancel: () => void;
 };
 
 export function ExitMovementForm({
@@ -20,6 +22,7 @@ export function ExitMovementForm({
     warehouses,
     defaultWarehouseId,
     onSuccess,
+    onCancel,
 }: Props) {
     const { plantToday } = usePage().props;
     const form = useForm<{
@@ -58,34 +61,32 @@ export function ExitMovementForm({
                 form.reset();
                 onSuccess?.();
             },
-            onError: () => {
-                // Let Inertia display inline errors automatically via form.errors
-            },
         });
     };
 
     return (
-        <form onSubmit={submit} className="flex flex-col gap-6">
-            <MovementFormBase
-                form={form}
-                rawMaterials={rawMaterials}
-                batches={batches}
-                warehouses={warehouses}
-                type="exit"
-            />
+        <form
+            noValidate
+            onSubmit={submit}
+            className="flex min-h-0 flex-1 flex-col"
+        >
+            <SheetBody>
+                <MovementFormBase
+                    form={form}
+                    rawMaterials={rawMaterials}
+                    batches={batches}
+                    warehouses={warehouses}
+                    type="exit"
+                />
+            </SheetBody>
 
-            <div className="flex justify-end border-t pt-4">
-                <Button
-                    type="submit"
-                    disabled={form.processing}
-                    variant="destructive"
-                    className="w-full bg-amber-600 text-white hover:bg-amber-700 sm:w-auto"
-                >
-                    {form.processing
-                        ? 'Registrando Salida...'
-                        : 'Registrar Salida'}
-                </Button>
-            </div>
+            <SheetFooter>
+                <FormActions
+                    submitLabel="Registrar salida"
+                    processing={form.processing}
+                    onCancel={onCancel}
+                />
+            </SheetFooter>
         </form>
     );
 }

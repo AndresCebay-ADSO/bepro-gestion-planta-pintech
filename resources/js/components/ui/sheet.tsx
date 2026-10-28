@@ -1,7 +1,8 @@
-import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
+import { Dialog as SheetPrimitive } from "radix-ui"
 import * as React from "react"
 
+import { useFocusFirstField } from "@/hooks/use-focus-first-field"
 import { cn } from "@/lib/utils"
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
@@ -42,23 +43,35 @@ function SheetOverlay({
   )
 }
 
+/**
+ * Cajón lateral. A la derecha (formularios, DESIGN.md §8) flota como el contenido de la app desde `sm`: margen con la
+ * ventana, esquinas redondeadas y sombra; en el celular ocupa la pantalla. Con `SheetBody` los campos se desplazan por
+ * dentro y `SheetFooter` queda fijo abajo; al abrir, el foco va al primer campo del cuerpo, no a la X.
+ */
 function SheetContent({
   className,
   children,
   side = "right",
+  onOpenAutoFocus,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left"
 }) {
+  const handleOpenAutoFocus = useFocusFirstField(
+    '[data-slot="sheet-body"]',
+    onOpenAutoFocus
+  )
+
   return (
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content
         data-slot="sheet-content"
+        onOpenAutoFocus={handleOpenAutoFocus}
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 p-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col shadow-lg outline-none transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
           side === "right" &&
-            "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
+            "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-full border-l sm:inset-y-2 sm:right-2 sm:h-auto sm:w-[calc(100%-1rem)] sm:max-w-sm sm:rounded-xl sm:border",
           side === "left" &&
             "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm",
           side === "top" &&
@@ -70,7 +83,10 @@ function SheetContent({
         {...props}
       >
         {children}
-        <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
+        <SheetPrimitive.Close
+          data-slot="sheet-close"
+          className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none"
+        >
           <XIcon className="size-4" />
           <span className="sr-only">Cerrar</span>
         </SheetPrimitive.Close>
@@ -83,17 +99,29 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sheet-header"
-      className={cn("flex flex-col gap-1.5", className)}
+      className={cn("flex shrink-0 flex-col gap-1.5 px-6 pt-6 pb-4 pr-12", className)}
       {...props}
     />
   )
 }
 
+/** Los campos: se desplazan por dentro, con el encabezado y el pie siempre a la vista. */
+function SheetBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="sheet-body"
+      className={cn("min-h-0 flex-1 overflow-y-auto px-6 py-2", className)}
+      {...props}
+    />
+  )
+}
+
+/** Pie fijo abajo, con la línea que lo separa de los campos. Lleva `<FormActions>`. */
 function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sheet-footer"
-      className={cn("mt-auto flex flex-col gap-2", className)}
+      className={cn("mt-auto flex shrink-0 flex-col gap-2 border-t px-6 py-4", className)}
       {...props}
     />
   )
@@ -131,6 +159,7 @@ export {
   SheetClose,
   SheetContent,
   SheetHeader,
+  SheetBody,
   SheetFooter,
   SheetTitle,
   SheetDescription,

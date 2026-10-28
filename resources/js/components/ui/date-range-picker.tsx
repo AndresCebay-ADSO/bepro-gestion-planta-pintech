@@ -26,6 +26,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
+import { toPlantDate } from '@/lib/plant-date';
 import { cn } from '@/lib/utils';
 
 export type DateRangePickerProps = {
@@ -149,11 +150,6 @@ function safeParseDate(value?: string | null): Date | undefined {
     return isValid(parsed) ? parsed : undefined;
 }
 
-function formatDateString(date?: Date): string | undefined {
-    if (!date || !isValid(date)) return undefined;
-    return format(date, 'yyyy-MM-dd');
-}
-
 export function DateRangePicker({
     valueFrom,
     valueTo,
@@ -203,8 +199,8 @@ export function DateRangePicker({
 
     const handleApplyPreset = (preset: Preset) => {
         const { from, to } = preset.getValue();
-        const fromStr = formatDateString(from);
-        const toStr = formatDateString(to);
+        const fromStr = toPlantDate(from);
+        const toStr = toPlantDate(to);
         setDraftRange({ from, to });
         setCalendarMonth(to);
         onChange(fromStr, toStr);
@@ -218,8 +214,8 @@ export function DateRangePicker({
 
         const { from: pFrom, to: pTo } = preset.getValue();
         return (
-            formatDateString(activeFrom) === formatDateString(pFrom) &&
-            formatDateString(activeTo) === formatDateString(pTo)
+            toPlantDate(activeFrom) === toPlantDate(pFrom) &&
+            toPlantDate(activeTo) === toPlantDate(pTo)
         );
     };
 
@@ -230,8 +226,8 @@ export function DateRangePicker({
             return;
         }
 
-        const fromStr = formatDateString(draftRange.from);
-        const toStr = formatDateString(draftRange.to ?? draftRange.from);
+        const fromStr = toPlantDate(draftRange.from);
+        const toStr = toPlantDate(draftRange.to ?? draftRange.from);
         onChange(fromStr, toStr);
         setOpen(false);
     };
@@ -295,7 +291,7 @@ export function DateRangePicker({
                         variant="outline"
                         disabled={disabled}
                         className={cn(
-                            'h-9 w-full justify-between font-normal text-left shadow-xs transition-colors',
+                            'h-9 w-full justify-between font-normal text-left shadow-xs',
                             hasValue &&
                                 'pr-8 border-primary/40 bg-primary/5 text-foreground font-medium',
                             !hasValue && 'text-muted-foreground',
@@ -314,34 +310,40 @@ export function DateRangePicker({
 
                 <PopoverContent
                 align={align}
-                className="w-auto p-0 shadow-2xl border-border bg-popover rounded-xl overflow-hidden"
+                collisionPadding={8}
+                className="w-auto max-w-(--radix-popover-content-available-width) max-h-(--radix-popover-content-available-height) overflow-y-auto p-0 shadow-2xl border-border bg-popover rounded-xl"
             >
                 <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-border">
                     {showPresets && (
-                        <div className="flex flex-col p-3 gap-1 min-w-[150px] bg-muted/20">
+                        // En el celular, los atajos son una fila de pastillas que se desplaza de lado, encima del
+                        // calendario; desde `sm`, una columna a la izquierda.
+                        <div className="flex flex-col gap-1 bg-muted/20 p-3 sm:min-w-[150px]">
                             <span className="px-2 pb-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                 Atajos rápidos
                             </span>
-                            {PRESETS.map((preset) => {
-                                const active = isPresetActive(preset);
-                                return (
-                                    <Button
-                                        key={preset.label}
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleApplyPreset(preset)}
-                                        className={cn(
-                                            'justify-start text-xs h-7 px-2.5 font-normal rounded-md transition-colors text-left',
-                                            active
-                                                ? 'bg-primary text-primary-foreground font-semibold hover:bg-primary/90 hover:text-primary-foreground'
-                                                : 'hover:bg-primary/10 hover:text-primary',
-                                        )}
-                                    >
-                                        {preset.label}
-                                    </Button>
-                                );
-                            })}
+                            {/* `w-0 min-w-full`: la fila no ensancha la ventanita; toma el ancho del calendario y se desplaza. */}
+                            <div className="flex w-0 min-w-full gap-1.5 overflow-x-auto pb-1 sm:w-auto sm:min-w-0 sm:flex-col sm:gap-1 sm:overflow-visible sm:pb-0">
+                                {PRESETS.map((preset) => {
+                                    const active = isPresetActive(preset);
+                                    return (
+                                        <Button
+                                            key={preset.label}
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleApplyPreset(preset)}
+                                            className={cn(
+                                                'h-8 shrink-0 rounded-full border px-3 text-sm font-normal transition-colors sm:h-7 sm:justify-start sm:rounded-md sm:border-0 sm:px-2.5 sm:text-left sm:text-xs',
+                                                active
+                                                    ? 'bg-primary text-primary-foreground font-semibold hover:bg-primary/90 hover:text-primary-foreground'
+                                                    : 'hover:bg-primary/10 hover:text-primary',
+                                            )}
+                                        >
+                                            {preset.label}
+                                        </Button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
 
@@ -356,7 +358,6 @@ export function DateRangePicker({
                             locale={es}
                         />
 
-                        {/* Selection actions footer matching reference */}
                         <div className="flex items-center justify-between border-t border-border pt-2.5 px-2 pb-1 mt-1">
                             <Button
                                 type="button"
@@ -367,7 +368,7 @@ export function DateRangePicker({
                                     onChange(undefined, undefined);
                                     setOpen(false);
                                 }}
-                                className="h-8 text-xs text-muted-foreground hover:text-destructive px-2.5"
+                                className="h-8 text-sm text-muted-foreground hover:text-destructive px-2.5"
                             >
                                 Limpiar
                             </Button>
@@ -378,7 +379,7 @@ export function DateRangePicker({
                                     variant="outline"
                                     size="sm"
                                     onClick={handleCancel}
-                                    className="h-8 text-xs px-3"
+                                    className="h-8 text-sm px-3"
                                 >
                                     Cancelar
                                 </Button>
@@ -387,7 +388,7 @@ export function DateRangePicker({
                                     variant="default"
                                     size="sm"
                                     onClick={handleApplyDraft}
-                                    className="h-8 text-xs px-3.5 font-medium shadow-xs"
+                                    className="h-8 text-sm px-3.5 font-medium shadow-xs"
                                 >
                                     Aplicar
                                 </Button>

@@ -207,11 +207,23 @@ Three containers, chosen by size:
 | `Dialog` | Short: up to ~6 fields, one section, no lines; create and edit in the same dialog (client, warehouse, catalogs) |
 | `Sheet` | Frequent entries from a listing where the list behind matters (raw material and finished goods movements) |
 
+Page frame: a form page wraps its content in `<FormPage>` (`components/form-page.tsx`), centered with
+`mx-auto w-full space-y-6 p-6` and one of two widths: `width="narrow"` (`max-w-3xl`) for forms without item lines or
+matrices (client, raw material, warehouse, user, product, shrink wrap) and `width="wide"` (`max-w-5xl`) for forms with
+lines or a matrix (OP, formula, quotation, order, role, R&D). Settings screens keep the layout's card.
+
 Same in all three:
-- One field piece (label, help, error). One column on the phone, two on desktop for short fields; each field fills its
-  column.
-- Footer: «Cancelar» on the left, main action (primary) on the right, disabled while saving. Fixed at the bottom on the
-  phone.
+- One field piece, `<FormField>` (`components/form-field.tsx`): label, field, help (`text-xs text-muted-foreground`)
+  and error, with `htmlFor`, `aria-describedby` and `aria-invalid` wired. One column on the phone, two on desktop for
+  short fields, paired by meaning (a lone field spans the row); each field fills its column (`min-w-0`) and a long
+  value is cut with «…», never overflowing it.
+- Footer: `<FormActions>` (`components/form-actions.tsx`), «Cancelar» on the left and the main action (primary, never
+  a direct color) on the right, disabled with a spinner while saving; stacked on the phone with the action on top. In
+  a `Sheet` or `Dialog` the fields go in `SheetBody`/`DialogBody` (they scroll inside) and the actions in
+  `SheetFooter`/`DialogFooter`, fixed at the bottom.
+- `Sheet` and `Dialog` never grow taller than the screen. The form `Sheet` floats like the content (margin, rounded
+  corners, shadow) from `sm` and fills the screen on the phone. When one opens, focus goes to the first field, not to
+  the close button.
 - **A 422 never closes the form**: data and errors stay. Focus goes to the first invalid field (`lib/focus-first-error.ts`).
 - On touch screens every field is at least 16 px (an `any-pointer: coarse` rule in `resources/css/app.css`, outside `@layer`, so it beats
   `text-sm`): below 16 px, iOS Safari zooms the page when a field gets focus, upright or in landscape. On desktop
@@ -220,13 +232,18 @@ Same in all three:
   than 16 px there sets it with `style={{ fontSize }}`.
 - `noValidate` on the `<form>`: the server validates. Empty numeric fields start empty with a placeholder, never a typed
   `0`: «0,00» for decimals, «0» for integers.
-- Confirmations use the app dialog (`AlertDialog`, destructive action in red). **Banned:** `window.confirm()`,
-  `alert()`. _(pending)_
-- Dates with the app calendar, not the native picker _(pending)_.
+- Confirmations use the app dialog: `const confirm = useConfirm()` and `if (await confirm({ title, description,
+  confirmLabel, destructive }))`, or `<ConfirmDialog>` with its own state (`components/confirm-dialog.tsx`, over
+  `AlertDialog`; the destructive action in red). **Banned:** `window.confirm()`, `alert()`.
+- Dates with the app calendar, never the native picker: `<PlantDateInput>` (`components/plant-date-input.tsx`), with
+  month and year selectors. It holds the bounds (`notFuture`, `notPast`, `min`, `max`) against the plant's today and
+  keeps an out-of-bounds saved date (`saved`); the form sets the default value, usually `plantToday`.
 - **`Select` or `Combobox`:** `Select` (`ui/select.tsx`) for fixed lists (enums, options `{value, label}` from
   `EnumOptions::for()`) or lists that almost always have fewer than ~8 options. `Combobox` (`ui/combobox.tsx`) for
   business data that grows and where searching helps: clients, products, raw materials, batches, production orders.
-  Unclear cases (such as a product's presentation) are decided in each module's redesign.
+  Unclear cases (such as a product's presentation) are decided in each module's redesign. Batches always go in a
+  `Combobox`, even when there are few: the label is the lot number and the description holds what is left, the entry
+  date and the expiry date. Where a movement can create a batch, «Registrar como nuevo lote» is the first option.
 
 ## 9. Tables and listings
 

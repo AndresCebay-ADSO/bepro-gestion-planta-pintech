@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
 import {
     Sheet,
+    SheetBody,
     SheetContent,
     SheetDescription,
     SheetHeader,
@@ -79,6 +80,8 @@ export default function FinishedMovementsIndex({
     warehouseOptions,
     typeOptions,
     reasonOptions,
+    entryReasonOptions,
+    exitReasonOptions,
     can,
     currentWarehouseId,
     filters,
@@ -175,8 +178,11 @@ export default function FinishedMovementsIndex({
         }
     }, [can.create, openDrawer]);
 
-    const closeDrawerAfterSuccess = () => {
+    const closeDrawer = () =>
         setDrawerState((state) => ({ ...state, isOpen: false }));
+
+    const closeDrawerAfterSuccess = () => {
+        closeDrawer();
         router.reload({ only: ['movements'] });
     };
 
@@ -386,11 +392,8 @@ export default function FinishedMovementsIndex({
                 }
                 modal={false}
             >
-                <SheetContent
-                    side="right"
-                    className="flex w-full flex-col sm:max-w-2xl"
-                >
-                    <SheetHeader className="mb-6 flex-shrink-0">
+                <SheetContent side="right" className="sm:max-w-2xl">
+                    <SheetHeader>
                         <SheetTitle className="flex items-center gap-2">
                             <span
                                 className={`flex h-8 w-8 items-center justify-center rounded-full ${drawer.iconClassName}`}
@@ -404,19 +407,21 @@ export default function FinishedMovementsIndex({
                         </SheetDescription>
                     </SheetHeader>
 
-                    <div className="-mr-2 flex-1 overflow-y-auto pr-2">
-                        {isLoadingFormData ? (
+                    {isLoadingFormData ? (
+                        <SheetBody>
                             <div className="space-y-5">
-                                <Skeleton className="h-10 w-full" />
                                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                                     <Skeleton className="h-10 w-full" />
                                     <Skeleton className="h-10 w-full" />
                                     <Skeleton className="h-10 w-full" />
                                     <Skeleton className="h-10 w-full" />
                                 </div>
+                                <Skeleton className="h-10 w-full" />
                                 <Skeleton className="h-24 w-full" />
                             </div>
-                        ) : fetchError ? (
+                        </SheetBody>
+                    ) : fetchError ? (
+                        <SheetBody>
                             <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
                                 <p>{fetchError}</p>
                                 <Button
@@ -429,35 +434,42 @@ export default function FinishedMovementsIndex({
                                     Reintentar
                                 </Button>
                             </div>
-                        ) : batches && warehouses ? (
-                            drawerState.mode === 'entry' ? (
-                                <FinishedEntryMovementForm
-                                    batches={batches}
-                                    warehouses={warehouses}
-                                    defaultWarehouseId={currentWarehouseId}
-                                    onSuccess={closeDrawerAfterSuccess}
-                                />
-                            ) : drawerState.mode === 'exit' ? (
-                                <FinishedExitMovementForm
-                                    batches={batches}
-                                    warehouses={warehouses}
-                                    defaultWarehouseId={currentWarehouseId}
-                                    onSuccess={closeDrawerAfterSuccess}
-                                />
-                            ) : (
-                                <FinishedTransferMovementForm
-                                    batches={batches}
-                                    warehouses={warehouses}
-                                    defaultWarehouseId={currentWarehouseId}
-                                    onSuccess={closeDrawerAfterSuccess}
-                                />
-                            )
+                        </SheetBody>
+                    ) : batches && warehouses ? (
+                        drawerState.mode === 'entry' ? (
+                            <FinishedEntryMovementForm
+                                batches={batches}
+                                warehouses={warehouses}
+                                reasons={entryReasonOptions}
+                                defaultWarehouseId={currentWarehouseId}
+                                onSuccess={closeDrawerAfterSuccess}
+                                onCancel={closeDrawer}
+                            />
+                        ) : drawerState.mode === 'exit' ? (
+                            <FinishedExitMovementForm
+                                batches={batches}
+                                warehouses={warehouses}
+                                reasons={exitReasonOptions}
+                                defaultWarehouseId={currentWarehouseId}
+                                onSuccess={closeDrawerAfterSuccess}
+                                onCancel={closeDrawer}
+                            />
                         ) : (
+                            <FinishedTransferMovementForm
+                                batches={batches}
+                                warehouses={warehouses}
+                                defaultWarehouseId={currentWarehouseId}
+                                onSuccess={closeDrawerAfterSuccess}
+                                onCancel={closeDrawer}
+                            />
+                        )
+                    ) : (
+                        <SheetBody>
                             <div className="py-8 text-center text-muted-foreground">
                                 No se pudieron cargar los datos del formulario.
                             </div>
-                        )}
-                    </div>
+                        </SheetBody>
+                    )}
                 </SheetContent>
             </Sheet>
         </>

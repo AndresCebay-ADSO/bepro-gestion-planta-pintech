@@ -11,6 +11,15 @@ export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
     endYear?: number;
 };
 
+const MONTHS = Array.from({ length: 12 }, (_, month) => month);
+
+const CAPTION_SELECT_CLASS =
+    'relative inline-flex min-w-0 items-center gap-0.5 px-1.5 py-0.5 rounded-md hover:bg-accent/60 transition-colors cursor-pointer border border-transparent hover:border-border/60 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 focus-within:border-ring';
+
+function startOfMonthDate(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
 function CustomMonthCaption({
     calendarMonth,
     startYear = 2021,
@@ -20,7 +29,9 @@ function CustomMonthCaption({
     startYear?: number;
     endYear?: number;
 }) {
-    const { previousMonth, nextMonth, goToMonth } = useDayPicker();
+    const { previousMonth, nextMonth, goToMonth, dayPickerProps } =
+        useDayPicker();
+    const { startMonth, endMonth } = dayPickerProps;
     const currentYear = calendarMonth.date.getFullYear();
     const currentMonthIdx = calendarMonth.date.getMonth();
 
@@ -32,9 +43,36 @@ function CustomMonthCaption({
         return list;
     }, [startYear, endYear]);
 
+    // Un mes fuera de `startMonth`/`endMonth` no se ofrece; al cambiar de año, el mes se lleva dentro del rango.
+    const monthIndex = (year: number, month: number) => year * 12 + month;
+    const isMonthOutOfRange = (year: number, month: number) =>
+        (startMonth !== undefined &&
+            monthIndex(year, month) <
+                monthIndex(startMonth.getFullYear(), startMonth.getMonth())) ||
+        (endMonth !== undefined &&
+            monthIndex(year, month) >
+                monthIndex(endMonth.getFullYear(), endMonth.getMonth()));
+
+    const goToClampedMonth = (year: number, month: number) => {
+        let target = new Date(year, month, 1);
+
+        if (startMonth && target < startOfMonthDate(startMonth)) {
+            target = startOfMonthDate(startMonth);
+        }
+
+        if (endMonth && target > startOfMonthDate(endMonth)) {
+            target = startOfMonthDate(endMonth);
+        }
+
+        goToMonth(target);
+    };
+
     const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newYear = parseInt(e.target.value, 10);
-        goToMonth(new Date(newYear, currentMonthIdx, 1));
+        goToClampedMonth(parseInt(e.target.value, 10), currentMonthIdx);
+    };
+
+    const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        goToClampedMonth(currentYear, parseInt(e.target.value, 10));
     };
 
     return (
@@ -49,16 +87,38 @@ function CustomMonthCaption({
                 <ChevronLeft className="h-4 w-4" />
             </button>
 
-            <div className="flex items-center justify-center gap-1.5 w-[165px] px-1">
-                <span className="text-sm font-semibold capitalize text-foreground select-none truncate">
-                    {format(calendarMonth.date, 'MMMM', { locale: es })}
-                </span>
+            <div className="flex items-center justify-center gap-1 w-[190px] px-1">
+                {/* Mes y año son selectores para ir rápido a una fecha vieja; el nativo va encima, transparente. */}
+                <div className={CAPTION_SELECT_CLASS}>
+                    <span className="text-sm font-semibold capitalize text-foreground select-none truncate">
+                        {format(calendarMonth.date, 'MMMM', { locale: es })}
+                    </span>
+                    <ChevronsUpDown className="h-3 w-3 shrink-0 text-muted-foreground opacity-70" />
+                    <select
+                        aria-label="Seleccionar mes"
+                        value={currentMonthIdx}
+                        onChange={handleMonthChange}
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full focus:outline-hidden"
+                    >
+                        {MONTHS.map((month) => (
+                            <option
+                                key={month}
+                                value={month}
+                                disabled={isMonthOutOfRange(currentYear, month)}
+                            >
+                                {format(new Date(2000, month, 1), 'MMMM', {
+                                    locale: es,
+                                })}
+                            </option>
+                        ))}
+                    </select>
+                </div>
 
-                <div className="relative inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md hover:bg-accent/60 transition-colors cursor-pointer border border-transparent hover:border-border/60 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 focus-within:border-ring shrink-0">
+                <div className={CAPTION_SELECT_CLASS}>
                     <span className="text-sm font-semibold text-foreground select-none">
                         {currentYear}
                     </span>
-                    <ChevronsUpDown className="h-3 w-3 text-muted-foreground opacity-70" />
+                    <ChevronsUpDown className="h-3 w-3 shrink-0 text-muted-foreground opacity-70" />
                     <select
                         aria-label="Seleccionar año"
                         value={currentYear}

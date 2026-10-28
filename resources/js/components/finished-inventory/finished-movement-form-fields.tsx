@@ -1,13 +1,12 @@
-import { usePage } from '@inertiajs/react';
 import type { useForm } from '@inertiajs/react';
 import type { ChangeEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { FormField } from '@/components/form-field';
 import { formatSafeDate } from '@/components/formatted-date';
 import { IntegerInput } from '@/components/integer-input';
+import { PlantDateInput } from '@/components/plant-date-input';
 import { Combobox } from '@/components/ui/combobox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -16,13 +15,13 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useEnumCase } from '@/hooks/use-enum-case';
 import { finishedLotLabel } from '@/lib/finished-lot';
 import { formatNumber } from '@/lib/formatters';
 import { UNITS_MAX_DIGITS } from '@/lib/number-types';
 import type {
     FinishedBatchOption,
     FinishedMovementReason,
+    FinishedReasonOption,
     FinishedWarehouseOption,
 } from '@/types/finished-inventory';
 
@@ -41,7 +40,7 @@ type Props = {
     form: ReturnType<typeof useForm<FinishedMovementFormData>>;
     batches: FinishedBatchOption[];
     warehouses: FinishedWarehouseOption[];
-    reasons?: Array<{ value: FinishedMovementReason; label: string }>;
+    reasons?: FinishedReasonOption[];
     showDestinationWarehouse?: boolean;
 };
 
@@ -138,11 +137,6 @@ export function FinishedMovementFormFields({
     reasons,
     showDestinationWarehouse = false,
 }: Props) {
-    const { plantToday } = usePage().props;
-    const transferReason = useEnumCase(
-        'FinishedInventoryMovementReason',
-        'transfer',
-    );
     const selectedOriginWarehouseId = Number(form.data.warehouse_id);
     const selectedOriginWarehouse =
         Number.isFinite(selectedOriginWarehouseId) &&
@@ -227,51 +221,103 @@ export function FinishedMovementFormFields({
         }
     }, [filteredBatches, selectedBatchId, setFormData]);
 
+    const warehouseItems = (list: FinishedWarehouseOption[]) =>
+        list.map((warehouse) => (
+            <SelectItem key={warehouse.id} value={String(warehouse.id)}>
+                {warehouse.name}
+                {warehouse.city ? ` (${warehouse.city})` : ''}
+            </SelectItem>
+        ));
+
+    // Orden del razonamiento: qué registro es (razón), dónde (bodega), qué (producto → presentación → lote), cuánto,
+    // cuándo y notas. En dos columnas, por pares; el lote va a lo ancho porque su texto es largo.
     return (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            <div className="space-y-2">
-                <Label htmlFor="warehouse_id">
-                    {showDestinationWarehouse ? 'Bodega origen' : 'Bodega'}
-                </Label>
-                <Select
-                    value={form.data.warehouse_id}
-                    onValueChange={(value) => {
-                        form.setData('warehouse_id', value);
-                        form.setData('finished_product_batch_id', '');
-                        setSelectedProductKey('');
-                        setSelectedVariantKey('');
+            {reasons && (
+                <FormField id="reason" label="Razón" error={form.errors.reason}>
+                    {(control) => (
+                        <Select
+                            value={form.data.reason}
+                            onValueChange={(value) =>
+                                form.setData(
+                                    'reason',
+                                    value as FinishedMovementReason,
+                                )
+                            }
+                        >
+                            <SelectTrigger {...control}>
+                                <SelectValue placeholder="Selecciona razón" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {reasons.map((reason) => (
+                                    <SelectItem
+                                        key={reason.value}
+                                        value={reason.value}
+                                    >
+                                        {reason.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+                </FormField>
+            )}
 
-                        if (form.data.destination_warehouse_id === value) {
-                            form.setData('destination_warehouse_id', '');
-                        }
-                    }}
-                >
-                    <SelectTrigger id="warehouse_id">
-                        <SelectValue placeholder="Selecciona bodega" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {warehouses.map((warehouse) => (
-                            <SelectItem
-                                key={warehouse.id}
-                                value={String(warehouse.id)}
-                            >
-                                {warehouse.name}
-                                {warehouse.city ? ` (${warehouse.city})` : ''}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                {form.errors.warehouse_id && (
-                    <p className="text-sm text-destructive">
-                        {form.errors.warehouse_id}
-                    </p>
+            <FormField
+                id="warehouse_id"
+                label={showDestinationWarehouse ? 'Bodega origen' : 'Bodega'}
+                error={form.errors.warehouse_id}
+            >
+                {(control) => (
+                    <Select
+                        value={form.data.warehouse_id}
+                        onValueChange={(value) => {
+                            form.setData('warehouse_id', value);
+                            form.setData('finished_product_batch_id', '');
+                            setSelectedProductKey('');
+                            setSelectedVariantKey('');
+
+                            if (form.data.destination_warehouse_id === value) {
+                                form.setData('destination_warehouse_id', '');
+                            }
+                        }}
+                    >
+                        <SelectTrigger {...control}>
+                            <SelectValue placeholder="Selecciona bodega" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {warehouseItems(warehouses)}
+                        </SelectContent>
+                    </Select>
                 )}
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-                <Label htmlFor="finished_product_key">Producto</Label>
+            {showDestinationWarehouse && (
+                <FormField
+                    id="destination_warehouse_id"
+                    label="Bodega destino"
+                    error={form.errors.destination_warehouse_id}
+                >
+                    {(control) => (
+                        <Select
+                            value={form.data.destination_warehouse_id ?? ''}
+                            onValueChange={(value) =>
+                                form.setData('destination_warehouse_id', value)
+                            }
+                        >
+                            <SelectTrigger {...control}>
+                                <SelectValue placeholder="Selecciona destino" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {warehouseItems(destinationWarehouses)}
+                            </SelectContent>
+                        </Select>
+                    )}
+                </FormField>
+            )}
+
+            <FormField id="finished_product_key" label="Producto">
                 <Combobox
-                    id="finished_product_key"
                     options={productOptions}
                     value={activeProductKey}
                     onChange={(value) => {
@@ -295,41 +341,45 @@ export function FinishedMovementFormFields({
                         selectedOriginWarehouse === null
                     }
                 />
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-                <Label htmlFor="finished_variant_key">Presentación</Label>
-                <Select
-                    value={activeVariantKey}
-                    onValueChange={(value) => {
-                        setSelectedVariantKey(value);
-                        form.setData('finished_product_batch_id', '');
-                    }}
-                    disabled={variantOptions.length === 0}
-                >
-                    <SelectTrigger id="finished_variant_key">
-                        <SelectValue
-                            placeholder={
-                                activeProductKey
-                                    ? 'Selecciona presentación'
-                                    : 'Selecciona producto primero'
-                            }
-                        />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {variantOptions.map((option) => (
-                            <SelectItem key={option.id} value={option.id}>
-                                {option.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
+            <FormField id="finished_variant_key" label="Presentación">
+                {(control) => (
+                    <Select
+                        value={activeVariantKey}
+                        onValueChange={(value) => {
+                            setSelectedVariantKey(value);
+                            form.setData('finished_product_batch_id', '');
+                        }}
+                        disabled={variantOptions.length === 0}
+                    >
+                        <SelectTrigger {...control}>
+                            <SelectValue
+                                placeholder={
+                                    activeProductKey
+                                        ? 'Selecciona presentación'
+                                        : 'Selecciona producto primero'
+                                }
+                            />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {variantOptions.map((option) => (
+                                <SelectItem key={option.id} value={option.id}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                )}
+            </FormField>
 
-            <div className="space-y-2">
-                <Label htmlFor="finished_product_batch_id">Lote PT</Label>
+            <FormField
+                id="finished_product_batch_id"
+                label="Lote PT"
+                error={form.errors.finished_product_batch_id}
+                className="md:col-span-2"
+            >
                 <Combobox
-                    id="finished_product_batch_id"
                     options={filteredBatches.map((batch) => ({
                         id: String(batch.id),
                         label: batchLabel(batch),
@@ -350,133 +400,40 @@ export function FinishedMovementFormFields({
                     emptyText="No hay lotes disponibles"
                     disabled={!activeVariantKey}
                 />
-                {form.errors.finished_product_batch_id && (
-                    <p className="text-sm text-destructive">
-                        {form.errors.finished_product_batch_id}
-                    </p>
-                )}
-            </div>
+            </FormField>
 
-            {showDestinationWarehouse && (
-                <div className="space-y-2">
-                    <Label htmlFor="destination_warehouse_id">
-                        Bodega destino
-                    </Label>
-                    <Select
-                        value={form.data.destination_warehouse_id ?? ''}
-                        onValueChange={(value) =>
-                            form.setData('destination_warehouse_id', value)
-                        }
-                    >
-                        <SelectTrigger id="destination_warehouse_id">
-                            <SelectValue placeholder="Selecciona destino" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {destinationWarehouses.map((warehouse) => (
-                                <SelectItem
-                                    key={warehouse.id}
-                                    value={String(warehouse.id)}
-                                >
-                                    {warehouse.name}
-                                    {warehouse.city
-                                        ? ` (${warehouse.city})`
-                                        : ''}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    {form.errors.destination_warehouse_id && (
-                        <p className="text-sm text-destructive">
-                            {form.errors.destination_warehouse_id}
-                        </p>
-                    )}
-                </div>
-            )}
-
-            {reasons && (
-                <div className="space-y-2">
-                    <Label htmlFor="reason">Razón</Label>
-                    <Select
-                        value={form.data.reason}
-                        onValueChange={(value) =>
-                            form.setData(
-                                'reason',
-                                value as FinishedMovementReason,
-                            )
-                        }
-                    >
-                        <SelectTrigger id="reason">
-                            <SelectValue placeholder="Selecciona razón" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {reasons.map((reason) => (
-                                <SelectItem
-                                    key={reason.value}
-                                    value={reason.value}
-                                >
-                                    {reason.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    {form.errors.reason && (
-                        <p className="text-sm text-destructive">
-                            {form.errors.reason}
-                        </p>
-                    )}
-                </div>
-            )}
-
-            {showDestinationWarehouse && (
-                <div className="space-y-2">
-                    <Label htmlFor="reason">Razón</Label>
-                    <Input
-                        id="reason"
-                        value={transferReason?.label ?? ''}
-                        disabled
-                        className="bg-muted text-muted-foreground"
-                    />
-                </div>
-            )}
-
-            <div className="space-y-2">
-                <Label htmlFor="quantity">Cantidad</Label>
+            <FormField
+                id="quantity"
+                label="Cantidad"
+                error={form.errors.quantity}
+            >
                 <IntegerInput
-                    id="quantity"
                     maxDigits={UNITS_MAX_DIGITS}
                     value={form.data.quantity}
                     onValueChange={(value) => form.setData('quantity', value)}
                     placeholder="0"
                 />
-                {form.errors.quantity && (
-                    <p className="text-sm text-destructive">
-                        {form.errors.quantity}
-                    </p>
-                )}
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-                <Label htmlFor="movement_date">Fecha</Label>
-                <Input
-                    id="movement_date"
-                    type="date"
-                    max={plantToday}
+            <FormField
+                id="movement_date"
+                label="Fecha"
+                error={form.errors.movement_date}
+            >
+                <PlantDateInput
+                    notFuture
                     value={form.data.movement_date}
-                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                        form.setData('movement_date', event.target.value)
-                    }
+                    onChange={(value) => form.setData('movement_date', value)}
                 />
-                {form.errors.movement_date && (
-                    <p className="text-sm text-destructive">
-                        {form.errors.movement_date}
-                    </p>
-                )}
-            </div>
+            </FormField>
 
-            <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="notes">Notas</Label>
+            <FormField
+                id="notes"
+                label="Notas"
+                error={form.errors.notes}
+                className="md:col-span-2"
+            >
                 <Textarea
-                    id="notes"
                     value={form.data.notes}
                     onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
                         form.setData('notes', event.target.value)
@@ -484,12 +441,7 @@ export function FinishedMovementFormFields({
                     placeholder="Observaciones del movimiento..."
                     className="min-h-24"
                 />
-                {form.errors.notes && (
-                    <p className="text-sm text-destructive">
-                        {form.errors.notes}
-                    </p>
-                )}
-            </div>
+            </FormField>
         </div>
     );
 }

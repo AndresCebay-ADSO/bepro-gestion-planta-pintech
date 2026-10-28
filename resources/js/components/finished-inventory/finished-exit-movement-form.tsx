@@ -1,13 +1,14 @@
 import { useForm, usePage } from '@inertiajs/react';
 import type { SubmitEvent } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { FormActions } from '@/components/form-actions';
+import { SheetBody, SheetFooter } from '@/components/ui/sheet';
 import { idPayload } from '@/lib/numeric-input';
 import { store as storeFinishedMovement } from '@/routes/finished-inventory-movements';
-import { exitReasons } from '@/types/finished-inventory';
 import type {
     FinishedBatchOption,
     FinishedMovementReason,
+    FinishedReasonOption,
     FinishedWarehouseOption,
 } from '@/types/finished-inventory';
 import { FinishedMovementFormFields } from './finished-movement-form-fields';
@@ -16,15 +17,20 @@ import type { FinishedMovementFormData } from './finished-movement-form-fields';
 type Props = {
     batches: FinishedBatchOption[];
     warehouses: FinishedWarehouseOption[];
+    /** Las razones que acepta el servidor para este tipo (`entryReasonOptions`/`exitReasonOptions`). */
+    reasons: FinishedReasonOption[];
     defaultWarehouseId?: number | null;
     onSuccess?: () => void;
+    onCancel: () => void;
 };
 
 export function FinishedExitMovementForm({
     batches,
     warehouses,
+    reasons,
     defaultWarehouseId,
     onSuccess,
+    onCancel,
 }: Props) {
     const { plantToday } = usePage().props;
     const form = useForm<FinishedMovementFormData>({
@@ -58,23 +64,27 @@ export function FinishedExitMovementForm({
     };
 
     return (
-        <form onSubmit={submit} className="flex flex-col gap-6">
-            <FinishedMovementFormFields
-                form={form}
-                batches={batches}
-                warehouses={warehouses}
-                reasons={exitReasons}
-            />
+        <form
+            noValidate
+            onSubmit={submit}
+            className="flex min-h-0 flex-1 flex-col"
+        >
+            <SheetBody>
+                <FinishedMovementFormFields
+                    form={form}
+                    batches={batches}
+                    warehouses={warehouses}
+                    reasons={reasons}
+                />
+            </SheetBody>
 
-            <div className="flex justify-end border-t pt-4">
-                <Button
-                    type="submit"
-                    disabled={form.processing}
-                    className="w-full bg-amber-600 text-white hover:bg-amber-700 sm:w-auto"
-                >
-                    {form.processing ? 'Registrando...' : 'Registrar salida'}
-                </Button>
-            </div>
+            <SheetFooter>
+                <FormActions
+                    submitLabel="Registrar salida"
+                    processing={form.processing}
+                    onCancel={onCancel}
+                />
+            </SheetFooter>
         </form>
     );
 }

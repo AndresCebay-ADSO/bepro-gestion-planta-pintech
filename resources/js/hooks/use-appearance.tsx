@@ -42,6 +42,24 @@ const isDarkMode = (appearance: Appearance): boolean => {
     return appearance === 'dark' || (appearance === 'system' && prefersDark());
 };
 
+/**
+ * Aplica un cambio de tema sin transiciones. Cada componente anima sus colores a su ritmo (`transition-colors`,
+ * `transition-[color,box-shadow]`…): al pasar de claro a oscuro, unas partes cambiaban al instante y otras se
+ * desvanecían después. Durante el cambio se apagan todas y el tema cambia de una vez; las animaciones de siempre (pasar
+ * el mouse, abrir un menú) no se tocan.
+ */
+const withoutTransitions = (change: () => void): void => {
+    const style = document.createElement('style');
+
+    style.textContent =
+        '*, *::before, *::after { transition: none !important; }';
+    document.head.appendChild(style);
+    change();
+    // El navegador tiene que recalcular los estilos con la regla puesta; si se quita antes, anima igual.
+    void window.getComputedStyle(document.body).transition;
+    window.setTimeout(() => style.remove(), 1);
+};
+
 const applyTheme = (appearance: Appearance): void => {
     if (typeof document === 'undefined') {
         return;
@@ -50,9 +68,11 @@ const applyTheme = (appearance: Appearance): void => {
     const isDark = isDarkMode(appearance);
     const resolvedAppearance: ResolvedAppearance = isDark ? 'dark' : 'light';
 
-    document.documentElement.classList.toggle('dark', isDark);
-    document.documentElement.dataset.theme = resolvedAppearance;
-    document.documentElement.style.colorScheme = resolvedAppearance;
+    withoutTransitions(() => {
+        document.documentElement.classList.toggle('dark', isDark);
+        document.documentElement.dataset.theme = resolvedAppearance;
+        document.documentElement.style.colorScheme = resolvedAppearance;
+    });
 };
 
 const subscribe = (callback: () => void) => {

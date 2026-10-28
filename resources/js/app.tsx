@@ -1,4 +1,5 @@
 import { createInertiaApp, router } from '@inertiajs/react';
+import { ConfirmDialogProvider } from '@/components/confirm-dialog';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
 import AppLayout from '@/layouts/app-layout';
@@ -47,7 +48,11 @@ createInertiaApp({
     },
     strictMode: true,
     withApp(app) {
-        return <TooltipProvider delayDuration={0}>{app}</TooltipProvider>;
+        return (
+            <TooltipProvider delayDuration={0}>
+                <ConfirmDialogProvider>{app}</ConfirmDialogProvider>
+            </TooltipProvider>
+        );
     },
     progress: {
         color: '#4B5563',
