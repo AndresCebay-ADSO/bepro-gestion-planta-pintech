@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
+import { PlantDateInput } from '@/components/plant-date-input';
 import { StatusBadge } from '@/components/status-badge';
 import {
     AlertDialog,
@@ -27,7 +28,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -37,6 +37,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { quotationName } from '@/lib/quotation-name';
 import {
     convertToOrder as quotationsConvertToOrder,
     edit as quotationsEdit,
@@ -151,13 +152,7 @@ export default function QuotationsShow({
 
     return (
         <>
-            <Head
-                title={
-                    quotation.quotation_number
-                        ? `Cotización No.${quotation.quotation_number}`
-                        : 'Cotización'
-                }
-            />
+            <Head title={quotationName(quotation)} />
 
             <div className="mx-auto max-w-6xl space-y-6 p-6">
                 <div className="space-y-4">
@@ -168,11 +163,7 @@ export default function QuotationsShow({
                         </Link>
                     </Button>
                     <PageHeader
-                        title={
-                            quotation.quotation_number
-                                ? `Cotización No.${quotation.quotation_number}`
-                                : 'Cotización'
-                        }
+                        title={quotationName(quotation)}
                         badge={
                             <StatusBadge
                                 enum="QuotationStatus"
@@ -308,18 +299,17 @@ export default function QuotationsShow({
                                                     <Label htmlFor="required_date">
                                                         Fecha requerida
                                                     </Label>
-                                                    <Input
+                                                    <PlantDateInput
                                                         id="required_date"
-                                                        type="date"
-                                                        min={plantToday}
+                                                        notPast
                                                         value={
                                                             convertForm.data
                                                                 .required_date
                                                         }
-                                                        onChange={(e) =>
+                                                        onChange={(value) =>
                                                             convertForm.setData(
                                                                 'required_date',
-                                                                e.target.value,
+                                                                value,
                                                             )
                                                         }
                                                     />

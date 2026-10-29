@@ -37,6 +37,7 @@ export default function ShrinkWrapTypesCreate({ rawMaterialOptions }: Props) {
                 />
 
                 <form
+                    noValidate
                     onSubmit={(event) => {
                         event.preventDefault();
                         form.transform(shrinkWrapTypePayload);

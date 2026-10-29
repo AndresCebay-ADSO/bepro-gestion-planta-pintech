@@ -27,6 +27,7 @@ export default function ProductCategoriesCreate() {
                 />
 
                 <form
+                    noValidate
                     onSubmit={(event) => {
                         event.preventDefault();
                         form.post(categoriesStore().url);

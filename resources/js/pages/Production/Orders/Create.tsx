@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { Plus, Trash2 } from 'lucide-react';
 
 import { store as productionOrderStore } from '@/actions/App/Http/Controllers/ProductionOrderController';
@@ -6,6 +6,7 @@ import { DecimalInput } from '@/components/decimal-input';
 import InputError from '@/components/input-error';
 import { IntegerInput } from '@/components/integer-input';
 import { PageHeader } from '@/components/page-header';
+import { PlantDateInput } from '@/components/plant-date-input';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -51,7 +52,6 @@ export default function ProductionOrdersCreate({
     products,
     warehouses,
 }: Props) {
-    const { plantToday } = usePage().props;
     const { data, setData, post, processing, errors, clearErrors, transform } =
         useForm({
             product_id: '',
@@ -186,7 +186,11 @@ export default function ProductionOrdersCreate({
                     />
                 </div>
 
-                <form onSubmit={handleSubmit} className="max-w-4xl space-y-6">
+                <form
+                    noValidate
+                    onSubmit={handleSubmit}
+                    className="max-w-4xl space-y-6"
+                >
                     {/* Información General */}
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                         <h2 className="text-lg font-semibold text-foreground">
@@ -305,13 +309,12 @@ export default function ProductionOrdersCreate({
                                 <Label htmlFor="planned_date">
                                     Fecha Planificada *
                                 </Label>
-                                <Input
+                                <PlantDateInput
                                     id="planned_date"
-                                    type="date"
-                                    min={plantToday}
+                                    notPast
                                     value={data.planned_date}
-                                    onChange={(e) =>
-                                        setData('planned_date', e.target.value)
+                                    onChange={(value) =>
+                                        setData('planned_date', value)
                                     }
                                 />
                                 <InputError message={errors.planned_date} />

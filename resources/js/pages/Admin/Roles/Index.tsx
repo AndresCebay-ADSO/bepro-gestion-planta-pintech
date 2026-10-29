@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
+import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import {
     create as rolesCreate,
@@ -46,6 +47,7 @@ interface Props {
 }
 
 const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
+    const confirm = useConfirm();
     const {
         filters: filterState,
         setFilter,
@@ -140,9 +142,13 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
                             label: 'Eliminar',
                             icon: Trash2,
                             destructive: true,
-                            onSelect: () => {
+                            onSelect: async () => {
                                 if (
-                                    confirm(`¿Eliminar el rol "${role.label}"?`)
+                                    await confirm({
+                                        title: `¿Eliminar el rol «${role.label}»?`,
+                                        confirmLabel: 'Eliminar',
+                                        destructive: true,
+                                    })
                                 ) {
                                     router.delete(rolesDestroy(role.id).url, {
                                         preserveScroll: true,

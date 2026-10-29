@@ -96,6 +96,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                         )}
 
                         <Form
+                            noValidate
                             action={email.url()}
                             method="post"
                             className="flex flex-col gap-5"

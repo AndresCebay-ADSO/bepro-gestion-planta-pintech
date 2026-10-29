@@ -70,7 +70,7 @@ export function OrderColorDialog({ orderId, color }: OrderColorDialogProps) {
 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent>
-                    <form onSubmit={submit} className="space-y-4">
+                    <form noValidate onSubmit={submit} className="space-y-4">
                         <DialogHeader>
                             <DialogTitle>Color de la orden</DialogTitle>
                             <DialogDescription>

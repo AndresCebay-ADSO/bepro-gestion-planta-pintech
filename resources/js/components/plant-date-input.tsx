@@ -42,6 +42,7 @@ type PlantDateInputProps = {
     className?: string;
     'aria-describedby'?: string;
     'aria-invalid'?: boolean;
+    'aria-required'?: boolean;
 };
 
 /**
@@ -64,6 +65,7 @@ export function PlantDateInput({
     className,
     'aria-describedby': ariaDescribedBy,
     'aria-invalid': ariaInvalid,
+    'aria-required': ariaRequired,
 }: PlantDateInputProps) {
     const { plantToday } = usePage().props;
     const [open, setOpen] = useState(false);
@@ -111,13 +113,17 @@ export function PlantDateInput({
     return (
         <Popover open={open} onOpenChange={handleOpenChange}>
             <PopoverTrigger asChild disabled={disabled}>
-                {/* Mismo aspecto que `SelectTrigger`: llena su columna y corta el texto con «…». */}
+                {/* Mismo aspecto que `SelectTrigger`: llena su columna y corta el texto con «…». Rol `combobox`, como el
+                    `Combobox` y el `SelectTrigger`: con el de `button`, el lector de pantalla no anuncia `aria-required`. */}
                 <button
                     type="button"
                     id={id}
+                    role="combobox"
+                    aria-expanded={open}
                     aria-haspopup="dialog"
                     aria-describedby={ariaDescribedBy}
                     aria-invalid={ariaInvalid}
+                    aria-required={ariaRequired}
                     data-slot="plant-date-input"
                     className={cn(
                         'flex h-9 w-full min-w-0 items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-base whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none hover:bg-muted/25 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm dark:aria-invalid:ring-destructive/40',

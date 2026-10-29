@@ -75,6 +75,7 @@ export default function UnitsOfMeasureEdit({ unit }: Props) {
                 />
 
                 <form
+                    noValidate
                     onSubmit={(event) => {
                         event.preventDefault();
 

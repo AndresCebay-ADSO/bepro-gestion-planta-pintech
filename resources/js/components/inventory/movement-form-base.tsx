@@ -15,6 +15,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useSelectionDateMin } from '@/hooks/use-selection-date-min';
 import { formatForInput, formatNumber } from '@/lib/formatters';
 import type { InventoryOption } from '@/types';
 
@@ -24,7 +25,10 @@ type Props = {
     batches: InventoryOption[];
     warehouses: InventoryOption[];
     type: 'entry' | 'exit';
-    /** Solo en una entrada: no más de un mes atrás (D1b). */
+    /**
+     * Límite propio del formulario para la fecha (la entrada: no más de un mes atrás, D1b). En una salida, el lote elegido
+     * lo sube a su entrada.
+     */
     movementDateMin?: string;
     /** Junto a la fecha del movimiento, en su misma fila (el precio de una entrada). */
     beforeDate?: ReactNode;
@@ -90,6 +94,19 @@ export function MovementFormBase({
         ],
         [filteredBatches, type],
     );
+
+    // Una salida no puede fecharse antes de que su lote entrara (lo valida el servidor). En una entrada no aplica: un lote
+    // nuevo se crea con la fecha del movimiento.
+    const exitBatch =
+        type === 'exit' && form.data.batch_id
+            ? filteredBatches.find((b) => String(b.id) === form.data.batch_id)
+            : undefined;
+    const movementDateFloor = useSelectionDateMin({
+        selectedDate: exitBatch?.entry_date,
+        min: movementDateMin,
+        value: form.data.movement_date,
+        clear: () => form.setData('movement_date', ''),
+    });
 
     const selectBatch = (value: string) => {
         const batchId = value === NEW_BATCH ? '' : value;
@@ -244,7 +261,7 @@ export function MovementFormBase({
             >
                 <PlantDateInput
                     notFuture
-                    min={movementDateMin}
+                    min={movementDateFloor}
                     value={form.data.movement_date}
                     onChange={(value) => form.setData('movement_date', value)}
                 />

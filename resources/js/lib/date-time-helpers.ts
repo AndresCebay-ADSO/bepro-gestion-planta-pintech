@@ -44,20 +44,3 @@ export function toUtcIsoString(localDateTimeString: string): string {
 
     return date.toISOString();
 }
-
-/**
- * Límite (`min` o `max`) de un campo de fecha que permite conservar la fecha ya guardada, como `PlantDate::allowing()`
- * en el servidor: sin límite mientras el campo tenga exactamente esa fecha, y con el límite normal si el usuario la
- * cambia. Un `min`/`max` fijo no puede decir «desde hoy, o justo la guardada».
- */
-export function dateBoundKeepingSaved(
-    value: string,
-    saved: string | null | undefined,
-    bound: string | null | undefined,
-): string | undefined {
-    if (saved && value === saved) {
-        return undefined;
-    }
-
-    return bound ?? undefined;
-}

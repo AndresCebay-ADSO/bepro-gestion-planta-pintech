@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+    earliestPlantDate,
+    isBeforePlantDate,
     isPlantDate,
     isPlantDateSelectable,
+    latestPlantDate,
     parsePlantDate,
     plantDateBounds,
     plantDateInitialMonth,
@@ -39,6 +42,46 @@ describe('isPlantDate y parsePlantDate', () => {
     it('turns a picked day back into a plant date', () => {
         expect(toPlantDate(new Date(2026, 0, 5))).toBe('2026-01-05');
         expect(toPlantDate(parsePlantDate('2026-12-31')!)).toBe('2026-12-31');
+    });
+});
+
+describe('latestPlantDate y earliestPlantDate', () => {
+    it('takes the latest or the earliest of the dates', () => {
+        expect(latestPlantDate('2026-10-01', '2026-09-28')).toBe('2026-10-01');
+        expect(latestPlantDate('2026-08-15', '2026-09-28')).toBe('2026-09-28');
+        expect(earliestPlantDate('2026-10-01', '2026-09-28')).toBe(
+            '2026-09-28',
+        );
+    });
+
+    it('keeps the only date when the other one is missing', () => {
+        expect(latestPlantDate(undefined, '2026-09-28')).toBe('2026-09-28');
+        expect(latestPlantDate('2026-10-01', null)).toBe('2026-10-01');
+    });
+
+    it('ignores values that are not plant dates', () => {
+        expect(latestPlantDate('', '2026-09-28')).toBe('2026-09-28');
+        expect(latestPlantDate('2026-10-01T00:00:00Z', null)).toBeUndefined();
+        expect(latestPlantDate()).toBeUndefined();
+        expect(earliestPlantDate(undefined, null)).toBeUndefined();
+    });
+});
+
+describe('isBeforePlantDate', () => {
+    it('is true when the date is before the minimum', () => {
+        expect(isBeforePlantDate('2026-09-30', '2026-10-01')).toBe(true);
+    });
+
+    it('is false on the minimum or after it', () => {
+        expect(isBeforePlantDate('2026-10-01', '2026-10-01')).toBe(false);
+        expect(isBeforePlantDate('2026-10-28', '2026-10-01')).toBe(false);
+    });
+
+    it('is false without a minimum or without a date', () => {
+        expect(isBeforePlantDate('2026-09-30', undefined)).toBe(false);
+        expect(isBeforePlantDate('2026-09-30', null)).toBe(false);
+        expect(isBeforePlantDate('', '2026-10-01')).toBe(false);
+        expect(isBeforePlantDate(undefined, '2026-10-01')).toBe(false);
     });
 });
 

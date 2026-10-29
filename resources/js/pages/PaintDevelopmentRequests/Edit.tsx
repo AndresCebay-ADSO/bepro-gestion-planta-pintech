@@ -3,7 +3,9 @@ import { Head } from '@inertiajs/react';
 import type { RawPaintDevFormData } from '@/components/paint-development-requests/PaintDevelopmentRequestForm';
 import PaintDevelopmentRequestForm from '@/components/paint-development-requests/PaintDevelopmentRequestForm';
 import {
+    edit as requestsEdit,
     index as requestsIndex,
+    show as requestsShow,
     update as requestsUpdate,
 } from '@/routes/paint-development-requests';
 
@@ -19,11 +21,22 @@ export default function PaintDevelopmentRequestEdit({ request }: Props) {
                 initialData={request}
                 submitUrl={requestsUpdate(request.id).url}
                 method="put"
+                cancelHref={requestsShow(request.id).url}
                 title="Editar solicitud de desarrollo"
-                backUrl={requestsIndex().url}
                 saveLabel="Guardar cambios"
                 submitLabel="Guardar y enviar"
             />
         </>
     );
 }
+
+PaintDevelopmentRequestEdit.layout = (props: Props) => ({
+    breadcrumbs: [
+        { title: 'Desarrollo de pinturas', href: requestsIndex() },
+        {
+            title: `Solicitud ${props.request.request_number}`,
+            href: requestsShow(props.request.id),
+        },
+        { title: 'Editar', href: requestsEdit(props.request.id) },
+    ],
+});

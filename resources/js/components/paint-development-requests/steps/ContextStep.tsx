@@ -15,6 +15,8 @@ import {
     ciclosTermicosOptions,
 } from '@/components/paint-development-requests/options';
 import type { StepProps } from '@/components/paint-development-requests/types';
+import { PlantDateInput } from '@/components/plant-date-input';
+import { Label } from '@/components/ui/label';
 
 function ctxValue(
     payload: Record<string, unknown>,
@@ -39,8 +41,8 @@ export default function ContextStep({
     setPayload,
     setData,
     errors,
-    sampleDueDateMin,
-}: StepProps & { sampleDueDateMin: string | undefined }) {
+    savedSampleDueDate,
+}: StepProps & { savedSampleDueDate?: string | null }) {
     const ctx = data.context_payload;
 
     return (
@@ -84,15 +86,25 @@ export default function ContextStep({
                         required
                         error={errors.city}
                     />
-                    <TextField
-                        label="Fecha requerida para la muestra"
-                        value={data.sample_due_date}
-                        onChange={(v) => setData('sample_due_date', v)}
-                        required
-                        type="date"
-                        min={sampleDueDateMin}
-                        error={errors.sample_due_date}
-                    />
+                    {/* No antes de hoy; un borrador viejo conserva la fecha que ya tenía (como el servidor). */}
+                    <div className="space-y-1.5">
+                        <Label htmlFor="sample_due_date">
+                            Fecha requerida para la muestra
+                            <span className="ml-0.5 text-destructive">*</span>
+                        </Label>
+                        <PlantDateInput
+                            id="sample_due_date"
+                            notPast
+                            saved={savedSampleDueDate}
+                            value={data.sample_due_date}
+                            onChange={(v) => setData('sample_due_date', v)}
+                        />
+                        {errors.sample_due_date && (
+                            <p className="text-xs text-destructive">
+                                {errors.sample_due_date}
+                            </p>
+                        )}
+                    </div>
                     <div className="md:col-span-2">
                         <TextField
                             label="Producto usado actualmente"

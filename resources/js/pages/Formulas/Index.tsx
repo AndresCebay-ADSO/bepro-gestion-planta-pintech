@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
+import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import { withReturnTo } from '@/lib/navigation';
 import {
@@ -48,6 +49,7 @@ const statusOptions = [
 ];
 
 export default function FormulasIndex({ formulas, filters, can }: Props) {
+    const confirm = useConfirm();
     const {
         filters: filterState,
         setFilter,
@@ -178,11 +180,13 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                             label: 'Eliminar',
                             icon: Trash2,
                             destructive: true,
-                            onSelect: () => {
+                            onSelect: async () => {
                                 if (
-                                    window.confirm(
-                                        `¿Eliminar la fórmula v${formula.version} de ${formula.product?.name}?`,
-                                    )
+                                    await confirm({
+                                        title: `¿Eliminar la fórmula v${formula.version} de ${formula.product?.name ?? 'fórmula'}?`,
+                                        confirmLabel: 'Eliminar',
+                                        destructive: true,
+                                    })
                                 ) {
                                     router.delete(
                                         formulasDestroy({ formula: formula.id })

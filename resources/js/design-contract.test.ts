@@ -62,6 +62,30 @@ function report(found: Violation[]): string[] {
     );
 }
 
+/** La etiqueta de apertura completa desde `start` (`<form … >`): salta los `>` dentro de `{…}` y de comillas. */
+function openingTag(source: string, start: number): string {
+    let depth = 0;
+    let quote: string | null = null;
+
+    for (let index = start; index < source.length; index++) {
+        const char = source[index];
+
+        if (quote) {
+            quote = char === quote ? null : quote;
+        } else if (char === '"' || char === "'" || char === '`') {
+            quote = char;
+        } else if (char === '{') {
+            depth++;
+        } else if (char === '}') {
+            depth--;
+        } else if (char === '>' && depth === 0) {
+            return source.slice(start, index + 1);
+        }
+    }
+
+    return source.slice(start);
+}
+
 const excluded = [
     'resources/js/components/ui/',
     'resources/js/pages/welcome.tsx',
@@ -285,7 +309,7 @@ describe('contrato de DESIGN.md', () => {
     });
 
     describe('formularios: confirmación y fechas de la app, no las del navegador', () => {
-        // Excepciones por archivo: los migra la segunda parte de los formularios. Al migrar uno, se quita de aquí.
+        // Excepciones por archivo, con su motivo. Al resolver una, se quita de aquí.
         const cases: {
             name: string;
             pattern: RegExp;
@@ -294,39 +318,19 @@ describe('contrato de DESIGN.md', () => {
         }[] = [
             {
                 name: 'pide confirmación con useConfirm(), no con confirm() del navegador',
-                // `confirm(` suelto o `window.confirm(`; el de `useConfirm()` recibe un objeto (`confirm({`).
-                pattern: /(?<![\w.])(?:window\.)?confirm\((?!\{)/g,
+                // `confirm(` suelto o `window.confirm(`; el de `useConfirm()` recibe un objeto (`confirm({`, que Prettier
+                // puede partir en dos líneas cuando está muy anidado: por eso se lee el archivo entero).
+                pattern: /(?<![\w.])(?:window\.)?confirm\((?!\s*\{)/g,
                 rule: 'DESIGN.md §8: la confirmación es useConfirm() / <ConfirmDialog>',
-                exceptions: [
-                    'resources/js/components/production/line-adjustments-panel.tsx',
-                    'resources/js/components/production/packaging-section.tsx',
-                    'resources/js/pages/Admin/Roles/Index.tsx',
-                    'resources/js/pages/Admin/Users/Index.tsx',
-                    'resources/js/pages/Formulas/Index.tsx',
-                    'resources/js/pages/Formulas/Show.tsx',
-                    'resources/js/pages/Inventory/Warehouses/Index.tsx',
-                    'resources/js/pages/Inventory/Warehouses/Show.tsx',
-                    'resources/js/pages/Products/Show.tsx',
-                    'resources/js/pages/Settings/Catalogs/ProductCategories/Index.tsx',
-                    'resources/js/pages/Settings/Catalogs/RawMaterialCategories/Index.tsx',
-                    'resources/js/pages/Settings/Catalogs/ShrinkWrapTypes/Index.tsx',
-                    'resources/js/pages/Settings/Catalogs/UnitsOfMeasure/Index.tsx',
-                ],
+                exceptions: [],
             },
             {
                 name: 'pide fechas con <PlantDateInput>, no con el selector nativo',
                 pattern: /\btype=["'](?:date|datetime-local)["']/g,
                 rule: 'DESIGN.md §8: las fechas usan <PlantDateInput> (el calendario de la app)',
+                // Fecha con hora (`datetime-local`): `PlantDateInput` solo maneja días. Hasta el rediseño de la OP.
                 exceptions: [
-                    'resources/js/components/paint-development-requests/fields/TextField.tsx',
-                    'resources/js/components/paint-development-requests/steps/ContextStep.tsx',
                     'resources/js/components/production/control-card.tsx',
-                    'resources/js/components/quotations/QuotationForm.tsx',
-                    'resources/js/components/sales-orders/AdminOrderSidebar.tsx',
-                    'resources/js/pages/Production/Orders/Create.tsx',
-                    'resources/js/pages/Production/ShrinkWraps/Create.tsx',
-                    'resources/js/pages/Quotations/Show.tsx',
-                    'resources/js/pages/SalesOrders/Create.tsx',
                 ],
             },
         ];
@@ -336,7 +340,17 @@ describe('contrato de DESIGN.md', () => {
                 (file) => !exceptions.includes(relativePath(file)),
             );
 
-            expect(report(violations(files, [{ pattern, rule }]))).toEqual([]);
+            const found = files.flatMap((file) => {
+                const source = readFileSync(file, 'utf8');
+
+                return [...source.matchAll(pattern)].map((match) => ({
+                    location: `${relativePath(file)}:${source.slice(0, match.index).split('\n').length}`,
+                    match: match[0],
+                    rule,
+                }));
+            });
+
+            expect(report(found)).toEqual([]);
 
             // Una excepción que ya no existe o ya no lo usa sobra: se quita para que el guardián la vigile.
             const staleExceptions = exceptions.filter(
@@ -349,6 +363,25 @@ describe('contrato de DESIGN.md', () => {
 
             expect(staleExceptions).toEqual([]);
         });
+    });
+
+    it('deja la validación al servidor: todo <form> y <Form> lleva noValidate', () => {
+        const found = screenFiles.flatMap((file) => {
+            const source = readFileSync(file, 'utf8');
+
+            return [...source.matchAll(/<(?:form|Form)\b/g)]
+                .filter(
+                    (match) =>
+                        !openingTag(source, match.index).includes('noValidate'),
+                )
+                .map((match) => ({
+                    location: `${relativePath(file)}:${source.slice(0, match.index).split('\n').length}`,
+                    match: match[0],
+                    rule: 'DESIGN.md §8: noValidate en el formulario; el mensaje lo da el servidor, en español',
+                }));
+        });
+
+        expect(report(found)).toEqual([]);
     });
 
     it('no importa el componente retirado TableActions', () => {

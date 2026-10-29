@@ -66,6 +66,7 @@ const UsersCreate: FC<Props> = ({ roles }) => {
 
                 {/* Form */}
                 <form
+                    noValidate
                     onSubmit={handleSubmit}
                     className="space-y-6 rounded-xl border border-border bg-card p-6 shadow-xs md:p-8"
                 >

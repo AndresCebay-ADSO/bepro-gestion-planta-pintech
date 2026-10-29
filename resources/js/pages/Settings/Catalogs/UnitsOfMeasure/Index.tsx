@@ -12,6 +12,7 @@ import { DataTableFilters } from '@/components/data-table-filters';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
+import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import {
     create as unitsCreate,
@@ -53,11 +54,17 @@ export default function UnitsOfMeasureIndex({ units, filters, can }: Props) {
         },
     });
 
-    const handleDelete = (unit: UnitRow) => {
+    const confirm = useConfirm();
+
+    const handleDelete = async (unit: UnitRow) => {
         if (
-            !window.confirm(
-                `¿Eliminar la unidad «${unit.name}»? Solo se puede si nada la usa; si no, desactívala.`,
-            )
+            !(await confirm({
+                title: `¿Eliminar la unidad «${unit.name}»?`,
+                description:
+                    'Solo se puede si nada la usa; si no, desactívala.',
+                confirmLabel: 'Eliminar',
+                destructive: true,
+            }))
         ) {
             return;
         }

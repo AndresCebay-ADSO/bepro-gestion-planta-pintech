@@ -1,5 +1,5 @@
-import { Link, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, ChevronRight, Save, Send } from 'lucide-react';
+import { Link, useForm } from '@inertiajs/react';
+import { ChevronRight, Save, Send } from 'lucide-react';
 import { useState } from 'react';
 
 import { PageHeader } from '@/components/page-header';
@@ -20,7 +20,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { dateBoundKeepingSaved } from '@/lib/date-time-helpers';
 import { isValidIntegerText, parseDecimal } from '@/lib/numeric-input';
 
 export type RawPaintDevFormData = {
@@ -247,8 +246,9 @@ type Props = {
     initialData: Partial<RawPaintDevFormData>;
     submitUrl: string;
     method?: 'post' | 'put';
+    /** «Cancelar»: al listado al crear, al detalle al editar. */
+    cancelHref: string;
     title: string;
-    backUrl: string;
     saveLabel: string;
     submitLabel: string;
 };
@@ -268,21 +268,13 @@ export default function PaintDevelopmentRequestForm({
     initialData,
     submitUrl,
     method = 'post',
+    cancelHref,
     title,
-    backUrl,
     saveLabel,
     submitLabel,
 }: Props) {
-    const { plantToday } = usePage().props;
     const { data, setData, post, put, processing, errors, transform } =
         useForm<PaintDevFormData>(toFormData(initialData));
-
-    // No antes de hoy; un borrador viejo puede conservar exactamente la fecha que ya tenía (D-PDR1, como el servidor).
-    const sampleDueDateMin = dateBoundKeepingSaved(
-        data.sample_due_date,
-        initialData.sample_due_date,
-        plantToday,
-    );
 
     const [step, setStep] = useState(1);
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -690,21 +682,7 @@ export default function PaintDevelopmentRequestForm({
     return (
         <>
             <div className="space-y-4 p-6">
-                <div className="flex items-center gap-3">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        asChild
-                        className="shrink-0"
-                    >
-                        <Link href={backUrl}>
-                            <ArrowLeft className="h-4 w-4" />
-                        </Link>
-                    </Button>
-                    <div className="min-w-0 flex-1">
-                        <PageHeader title={title} />
-                    </div>
-                </div>
+                <PageHeader title={title} />
 
                 {/* Stepper */}
                 <div className="flex items-center justify-between">
@@ -748,14 +726,14 @@ export default function PaintDevelopmentRequestForm({
                     />
                 </div>
 
-                <form className="space-y-6">
+                <form noValidate className="space-y-6">
                     {step === 1 && (
                         <ContextStep
                             data={data}
                             setPayload={handleSetPayload}
                             setData={handleSetData}
                             errors={combinedErrors}
-                            sampleDueDateMin={sampleDueDateMin}
+                            savedSampleDueDate={initialData.sample_due_date}
                         />
                     )}
                     {step === 2 && (
@@ -801,10 +779,16 @@ export default function PaintDevelopmentRequestForm({
 
                     {/* Footer actions */}
                     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4 shadow-sm">
-                        <div className="text-xs text-muted-foreground">
-                            Los campos con{' '}
-                            <span className="text-destructive">*</span> son
-                            obligatorios
+                        {/* «Cancelar» a la izquierda (DESIGN.md §8): sin él, el formulario no tiene salida. */}
+                        <div className="flex flex-wrap items-center gap-3">
+                            <Button variant="outline" asChild>
+                                <Link href={cancelHref}>Cancelar</Link>
+                            </Button>
+                            <div className="text-xs text-muted-foreground">
+                                Los campos con{' '}
+                                <span className="text-destructive">*</span> son
+                                obligatorios
+                            </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {step > 1 && (

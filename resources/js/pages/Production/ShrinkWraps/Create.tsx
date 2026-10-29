@@ -4,9 +4,9 @@ import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormattedNumber } from '@/components/formatted-number';
 import InputError from '@/components/input-error';
 import { IntegerInput } from '@/components/integer-input';
+import { PlantDateInput } from '@/components/plant-date-input';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -16,6 +16,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useSelectionDateMin } from '@/hooks/use-selection-date-min';
 import { isValidIntegerText } from '@/lib/numeric-input';
 import {
     create as shrinkWrapsCreate,
@@ -62,6 +63,12 @@ export default function ShrinkWrapsCreate({
     const selectedOrder = orderOptions.find(
         (order) => String(order.value) === form.data.production_order_id,
     );
+    // No se termoencoge antes de que la OP se completara (lo valida el servidor): el calendario no ofrece esos días.
+    const wrappedAtMin = useSelectionDateMin({
+        selectedDate: selectedOrder?.completion_date,
+        value: form.data.wrapped_at,
+        clear: () => form.setData('wrapped_at', ''),
+    });
     const selectedType = typeOptions.find(
         (type) => String(type.value) === form.data.shrink_wrap_type_id,
     );
@@ -86,6 +93,7 @@ export default function ShrinkWrapsCreate({
                 />
 
                 <form
+                    noValidate
                     onSubmit={(event) => {
                         event.preventDefault();
                         form.post(shrinkWrapsStore().url);
@@ -163,19 +171,13 @@ export default function ShrinkWrapsCreate({
 
                         <div className="grid gap-2">
                             <Label htmlFor="wrapped_at">Fecha</Label>
-                            <Input
+                            <PlantDateInput
                                 id="wrapped_at"
-                                type="date"
-                                max={today}
-                                min={
-                                    selectedOrder?.completion_date ?? undefined
-                                }
+                                notFuture
+                                min={wrappedAtMin}
                                 value={form.data.wrapped_at}
-                                onChange={(event) =>
-                                    form.setData(
-                                        'wrapped_at',
-                                        event.target.value,
-                                    )
+                                onChange={(value) =>
+                                    form.setData('wrapped_at', value)
                                 }
                             />
                             <InputError message={form.errors.wrapped_at} />

@@ -120,6 +120,7 @@ export default function Login({ status, canResetPassword }: Props) {
 
                         {/* Formulario */}
                         <Form
+                            noValidate
                             action={store.url()}
                             method="post"
                             resetOnSuccess={['password']}

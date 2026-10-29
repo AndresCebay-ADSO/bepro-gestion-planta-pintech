@@ -13,6 +13,7 @@ import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/hooks/use-confirm';
 import { resolveModuleListHref } from '@/lib/navigation';
 import { index as formulasIndex } from '@/routes/formulas';
 import { show as productsShow } from '@/routes/products';
@@ -48,17 +49,20 @@ type Props = {
 };
 
 export default function FormulasShow({ returnTo, formula, can }: Props) {
+    const confirm = useConfirm();
     const formulasListHref = resolveModuleListHref(
         returnTo,
         '/formulas',
         formulasIndex().url,
     );
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (
-            !window.confirm(
-                `¿Eliminar la fórmula v${formula.version} de ${formula.product?.name}?`,
-            )
+            !(await confirm({
+                title: `¿Eliminar la fórmula v${formula.version} de ${formula.product?.name ?? 'fórmula'}?`,
+                confirmLabel: 'Eliminar',
+                destructive: true,
+            }))
         ) {
             return;
         }

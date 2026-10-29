@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
+import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import {
     index as warehousesIndex,
@@ -60,12 +61,15 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
         },
     });
     const flash = usePage().props.flash;
+    const confirm = useConfirm();
 
-    const handleDelete = (id: number) => {
+    const handleDelete = async (id: number) => {
         if (
-            !window.confirm(
-                '¿Estás seguro de que quieres eliminar esta bodega?',
-            )
+            !(await confirm({
+                title: '¿Eliminar esta bodega?',
+                confirmLabel: 'Eliminar',
+                destructive: true,
+            }))
         ) {
             return;
         }

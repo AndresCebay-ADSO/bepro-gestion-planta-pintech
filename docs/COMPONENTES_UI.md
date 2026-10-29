@@ -176,7 +176,7 @@ lista se pinta en un Portal, así que no la recorta su contenedor.
 | `className` | `string` | - | Clases adicionales **del botón** (el campo), no de la lista |
 | `disabled` | `boolean` | `false` | Deshabilitar el componente |
 | `id` | `string` | - | `id` del botón: lo señala la etiqueta (`htmlFor`) y recibe el foco ante un 422 (`focus-first-error`) |
-| `aria-describedby`, `aria-invalid` | - | - | La ayuda y el error del campo; los pone `<FormField>` |
+| `aria-describedby`, `aria-invalid`, `aria-required` | - | - | La ayuda, el error y si es obligatorio; los pone `<FormField>` |
 
 ### Comportamiento
 
@@ -244,8 +244,8 @@ matriz. Las migas van en el `layout` de la página; no hay botón «←».
 ### FormField
 
 **Ubicación:** `resources/js/components/form-field.tsx`. Etiqueta, campo, ayuda y error con el mismo espacio. Pone en el
-campo el `id` (el de la llave del error, para que `focus-first-error` lo encuentre), `aria-describedby` (ayuda y error)
-y `aria-invalid`. Ocupa su columna (`min-w-0`); `className="md:col-span-2"` para la fila completa.
+campo el `id` (el de la llave del error, para que `focus-first-error` lo encuentre), `aria-describedby` (ayuda y error),
+`aria-invalid` y, con `required`, `aria-required` (el asterisco va oculto al lector de pantalla). Ocupa su columna (`min-w-0`); `className="md:col-span-2"` para la fila completa.
 
 | Prop | Descripción |
 |------|-------------|
@@ -299,7 +299,8 @@ la pantalla.
 devuelve una función que abre el diálogo y espera la respuesta (`true` al confirmar, `false` al cancelar o cerrar).
 `destructive` pone el botón en rojo. Si empieza una navegación de Inertia con la pregunta abierta, se da por
 cancelada. `<ConfirmDialog>` sirve cuando el diálogo se controla con estado propio. `confirm()` y los campos
-`type="date"`/`"datetime-local"` los prohíbe `design-contract.test.ts` (con una lista de excepciones que se va vaciando).
+`type="date"`/`"datetime-local"` los prohíbe `design-contract.test.ts` (única excepción: la fecha con hora del
+certificado de calidad, en `production/control-card.tsx`), que también exige `noValidate` en todo `<form>` y `<Form>`.
 
 ```tsx
 const confirm = useConfirm();
@@ -323,6 +324,7 @@ valor por defecto lo pone el formulario (normalmente `plantToday`).
 | `saved` | La fecha guardada: se puede conservar aunque quede fuera de los límites (como `PlantDate::allowing()`) |
 | `clearable` | Muestra «Quitar fecha» (campos opcionales) |
 | `id`, `placeholder`, `disabled` | Como en los demás campos |
+| `aria-describedby`, `aria-invalid`, `aria-required` | Los pone `<FormField>` |
 
 ```tsx
 <PlantDateInput notFuture min={oldestEntryDate} value={form.data.movement_date} onChange={(v) => form.setData('movement_date', v)} />

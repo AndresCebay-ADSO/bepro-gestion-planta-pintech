@@ -66,6 +66,34 @@ export function toPlantDate(date: Date): string {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+/** La más tardía de varias fechas de planta (el mínimo más estricto). Las que no son fechas válidas se ignoran. */
+export function latestPlantDate(
+    ...values: Array<string | null | undefined>
+): string | undefined {
+    return values
+        .filter((value): value is string => isPlantDate(value))
+        .sort()
+        .at(-1);
+}
+
+/** La más temprana de varias fechas de planta (el máximo más estricto). Las que no son fechas válidas se ignoran. */
+export function earliestPlantDate(
+    ...values: Array<string | null | undefined>
+): string | undefined {
+    return values
+        .filter((value): value is string => isPlantDate(value))
+        .sort()
+        .at(0);
+}
+
+/** Si `value` cae antes de `min`. Solo con dos fechas válidas: sin fecha o sin mínimo no hay nada que comparar. */
+export function isBeforePlantDate(
+    value: string | null | undefined,
+    min: string | null | undefined,
+): boolean {
+    return isPlantDate(value) && isPlantDate(min) && value < min;
+}
+
 /**
  * Los límites efectivos: `notFuture` y `notPast` se suman a `min`/`max` y gana el más estricto. Un límite que no es una
  * fecha válida se ignora (el servidor sigue validando).
@@ -77,16 +105,8 @@ export function plantDateBounds({
     notFuture = false,
     notPast = false,
 }: PlantDateBoundsInput): PlantDateBounds {
-    const mins = [isPlantDate(min) ? min : null, notPast ? today : null];
-    const maxes = [isPlantDate(max) ? max : null, notFuture ? today : null];
-    const effectiveMin = mins
-        .filter((value): value is string => value !== null)
-        .sort()
-        .at(-1);
-    const effectiveMax = maxes
-        .filter((value): value is string => value !== null)
-        .sort()
-        .at(0);
+    const effectiveMin = latestPlantDate(min, notPast ? today : null);
+    const effectiveMax = earliestPlantDate(max, notFuture ? today : null);
 
     return {
         ...(effectiveMin ? { min: effectiveMin } : {}),

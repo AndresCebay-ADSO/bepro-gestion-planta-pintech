@@ -70,7 +70,7 @@ export default function Profile({
                     description="Actualiza tu nombre, correo electrónico y cargo"
                 />
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form noValidate onSubmit={handleSubmit} className="space-y-6">
                     <UserIdentityFields
                         data={data}
                         setData={setData}

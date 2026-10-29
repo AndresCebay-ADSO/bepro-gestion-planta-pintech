@@ -9,6 +9,7 @@ import { FormattedNumber } from '@/components/formatted-number';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
+import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import {
     create as categoriesCreate,
@@ -54,8 +55,16 @@ export default function ProductCategoriesIndex({
         },
     });
 
-    const handleDelete = (category: CategoryRow) => {
-        if (!window.confirm(`¿Eliminar la categoría «${category.name}»?`)) {
+    const confirm = useConfirm();
+
+    const handleDelete = async (category: CategoryRow) => {
+        if (
+            !(await confirm({
+                title: `¿Eliminar la categoría «${category.name}»?`,
+                confirmLabel: 'Eliminar',
+                destructive: true,
+            }))
+        ) {
             return;
         }
 

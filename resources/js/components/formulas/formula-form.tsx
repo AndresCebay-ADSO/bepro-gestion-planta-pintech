@@ -120,7 +120,7 @@ export function FormulaForm({
     };
 
     return (
-        <form onSubmit={onSubmit} className="space-y-6">
+        <form noValidate onSubmit={onSubmit} className="space-y-6">
             <div className="max-w-2xl space-y-4 rounded-lg border border-border bg-card p-6">
                 <h2 className="font-medium text-foreground">{heading}</h2>
 

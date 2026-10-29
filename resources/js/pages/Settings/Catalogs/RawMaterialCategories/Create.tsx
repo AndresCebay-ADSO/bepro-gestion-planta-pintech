@@ -33,6 +33,7 @@ export default function RawMaterialCategoriesCreate({ typeOptions }: Props) {
                 />
 
                 <form
+                    noValidate
                     onSubmit={(event) => {
                         event.preventDefault();
                         form.post(categoriesStore().url);

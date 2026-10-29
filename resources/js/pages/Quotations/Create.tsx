@@ -9,6 +9,7 @@ import type {
     ProductOption,
 } from '@/components/quotations/QuotationForm';
 import {
+    create as quotationsCreate,
     index as quotationsIndex,
     previewPricing as quotationPreviewPricing,
 } from '@/routes/quotations';
@@ -67,3 +68,10 @@ export default function QuotationsCreate({
         </>
     );
 }
+
+QuotationsCreate.layout = {
+    breadcrumbs: [
+        { title: 'Cotizaciones', href: quotationsIndex() },
+        { title: 'Nueva cotización', href: quotationsCreate() },
+    ],
+};

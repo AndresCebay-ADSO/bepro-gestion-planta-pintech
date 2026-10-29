@@ -19,6 +19,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
             )}
 
             <Form
+                noValidate
                 action={send.url()}
                 method="post"
                 className="space-y-6 text-center"
