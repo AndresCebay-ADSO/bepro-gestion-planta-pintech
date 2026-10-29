@@ -54,7 +54,7 @@ export default function WarehousesEdit({ warehouse }: Props) {
                     className="space-y-6"
                 >
                     <div className="rounded-lg border border-border bg-card p-6">
-                        <WarehouseFields form={form} />
+                        <WarehouseFields form={form} lockType />
                     </div>
 
                     <FormActions
