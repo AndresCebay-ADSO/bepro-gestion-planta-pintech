@@ -1,19 +1,13 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import InputError from '@/components/input-error';
+import { Head, useForm } from '@inertiajs/react';
+import { FormActions } from '@/components/form-actions';
+import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { WarehouseFields } from '@/components/warehouses/warehouse-form';
+import type { WarehouseFormData } from '@/components/warehouses/warehouse-form';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import {
+    edit as warehousesEdit,
     index as warehousesIndex,
+    show as warehousesShow,
     update as warehousesUpdate,
 } from '@/routes/warehouses';
 
@@ -28,16 +22,8 @@ type Props = {
     };
 };
 
-type WarehouseForm = {
-    name: string;
-    city: string;
-    address: string;
-    type: 'factory' | 'storage';
-    is_active: boolean;
-};
-
 export default function WarehousesEdit({ warehouse }: Props) {
-    const form = useForm<WarehouseForm>({
+    const form = useForm<WarehouseFormData>({
         name: warehouse.name,
         city: warehouse.city,
         address: warehouse.address ?? '',
@@ -53,114 +39,42 @@ export default function WarehousesEdit({ warehouse }: Props) {
         <>
             <Head title={`Editar bodega: ${warehouse.name}`} />
 
-            <div className="mx-auto max-w-3xl space-y-6 p-6">
+            <FormPage width="narrow">
                 <PageHeader
                     title={`Editar bodega: ${warehouse.name}`}
                     description={`Actualiza la información de ${warehouse.name}.`}
                 />
 
-                <div className="rounded-lg border border-border bg-card p-6">
-                    <form
-                        noValidate
-                        onSubmit={(event) => {
-                            event.preventDefault();
-                            submit();
-                        }}
-                        className="grid gap-5"
-                    >
-                        <div className="grid gap-2">
-                            <Label htmlFor="name">Nombre</Label>
-                            <Input
-                                id="name"
-                                value={form.data.name}
-                                onChange={(event) =>
-                                    form.setData('name', event.target.value)
-                                }
-                                maxLength={100}
-                            />
-                            <InputError message={form.errors.name} />
-                        </div>
+                <form
+                    noValidate
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        submit();
+                    }}
+                    className="space-y-6"
+                >
+                    <div className="rounded-lg border border-border bg-card p-6">
+                        <WarehouseFields form={form} />
+                    </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="city">Ciudad</Label>
-                            <Input
-                                id="city"
-                                value={form.data.city}
-                                onChange={(event) =>
-                                    form.setData('city', event.target.value)
-                                }
-                                maxLength={100}
-                            />
-                            <InputError message={form.errors.city} />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="address">Dirección</Label>
-                            <Input
-                                id="address"
-                                value={form.data.address}
-                                onChange={(event) =>
-                                    form.setData('address', event.target.value)
-                                }
-                                maxLength={255}
-                            />
-                            <InputError message={form.errors.address} />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="type">Tipo de Bodega</Label>
-                            <Select
-                                value={form.data.type}
-                                onValueChange={(value: 'factory' | 'storage') =>
-                                    form.setData('type', value)
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccione el tipo" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="factory">
-                                        Fábrica
-                                    </SelectItem>
-                                    <SelectItem value="storage">
-                                        Bodega / Punto de Venta
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <InputError message={form.errors.type} />
-                        </div>
-
-                        <div className="flex items-center gap-3 rounded-md border border-border px-3 py-2">
-                            <Checkbox
-                                id="is_active"
-                                checked={form.data.is_active}
-                                onCheckedChange={(checked) =>
-                                    form.setData('is_active', checked === true)
-                                }
-                            />
-                            <Label
-                                htmlFor="is_active"
-                                className="cursor-pointer"
-                            >
-                                Bodega activa
-                            </Label>
-                        </div>
-
-                        <div className="flex flex-col gap-2 pt-2 sm:flex-row">
-                            <Button type="submit" disabled={form.processing}>
-                                {form.processing
-                                    ? 'Actualizando...'
-                                    : 'Guardar cambios'}
-                            </Button>
-                            <Button type="button" variant="outline" asChild>
-                                <Link href={warehousesIndex().url}>
-                                    Cancelar
-                                </Link>
-                            </Button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+                    <FormActions
+                        submitLabel="Guardar cambios"
+                        processing={form.processing}
+                        cancelHref={warehousesIndex().url}
+                    />
+                </form>
+            </FormPage>
         </>
     );
 }
+
+WarehousesEdit.layout = (props: Props) => ({
+    breadcrumbs: [
+        { title: 'Bodegas', href: warehousesIndex() },
+        {
+            title: props.warehouse.name,
+            href: warehousesShow(props.warehouse.id),
+        },
+        { title: 'Editar', href: warehousesEdit(props.warehouse.id) },
+    ],
+});

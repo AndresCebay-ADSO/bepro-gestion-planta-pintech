@@ -7,9 +7,8 @@
 import { Check } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { FormCheckbox } from '@/components/form-field';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import type { Permission } from '@/types/permissions';
 import type { PermissionModuleGroup } from '@/types/roles';
 
@@ -177,26 +176,24 @@ export default function RolePermissionsFields({
                     >
                         <legend className="sr-only">{module.label}</legend>
                         <div className="mb-3 flex items-center justify-between gap-3 border-b border-border pb-3">
-                            <div className="flex items-center gap-3">
-                                <Checkbox
-                                    id={moduleId}
-                                    checked={moduleState}
-                                    disabled={disabled}
-                                    onCheckedChange={(checked) =>
-                                        checked === true
-                                            ? grant(names)
-                                            : revoke(names)
-                                    }
-                                    aria-label={`Todo el módulo ${module.label}`}
-                                />
-                                <Label
-                                    htmlFor={moduleId}
-                                    aria-hidden="true"
-                                    className="cursor-pointer font-semibold"
-                                >
-                                    {module.label}
-                                </Label>
-                            </div>
+                            <FormCheckbox
+                                id={moduleId}
+                                label={
+                                    <span className="font-semibold">
+                                        <span className="sr-only">
+                                            Todo el módulo{' '}
+                                        </span>
+                                        {module.label}
+                                    </span>
+                                }
+                                checked={moduleState}
+                                disabled={disabled}
+                                onCheckedChange={(checked) =>
+                                    checked === true
+                                        ? grant(names)
+                                        : revoke(names)
+                                }
+                            />
                             {/* aria-label no se anuncia en un <span> sin rol: el texto accesible va aparte. */}
                             <span className="text-xs text-muted-foreground">
                                 <span aria-hidden="true">
@@ -211,8 +208,6 @@ export default function RolePermissionsFields({
 
                         <div className="space-y-3">
                             {module.permissions.map((permission) => {
-                                const id = `permission-${permission.name}`;
-                                const descId = `desc-${permission.name}`;
                                 const dependencyLabels = permission.dependencies
                                     .map((dependency) => labels.get(dependency))
                                     .filter(Boolean);
@@ -221,43 +216,19 @@ export default function RolePermissionsFields({
                                     dependencyLabels.length > 0;
 
                                 return (
-                                    <div
+                                    <FormCheckbox
                                         key={permission.name}
-                                        className="flex items-start gap-3"
-                                    >
-                                        <Checkbox
-                                            id={id}
-                                            checked={
-                                                selectedSet.has(
-                                                    permission.name,
-                                                ) || permission.required
-                                            }
-                                            disabled={
-                                                disabled || permission.required
-                                            }
-                                            aria-describedby={
-                                                hasHelpText ? descId : undefined
-                                            }
-                                            onCheckedChange={(checked) =>
-                                                checked === true
-                                                    ? grant([permission.name])
-                                                    : revoke([permission.name])
-                                            }
-                                        />
-                                        <div className="grid gap-0.5">
-                                            <Label
-                                                htmlFor={id}
-                                                className="cursor-pointer text-sm font-normal"
-                                            >
+                                        id={`permission-${permission.name}`}
+                                        label={
+                                            <span className="font-normal">
                                                 {permission.label}
-                                            </Label>
-                                            {hasHelpText && (
-                                                <div
-                                                    id={descId}
-                                                    className="space-y-0.5"
-                                                >
+                                            </span>
+                                        }
+                                        help={
+                                            hasHelpText && (
+                                                <>
                                                     {permission.required && (
-                                                        <span className="block text-xs text-muted-foreground">
+                                                        <span className="block">
                                                             Obligatorio: sin él,
                                                             los usuarios no
                                                             pueden entrar al
@@ -266,17 +237,29 @@ export default function RolePermissionsFields({
                                                     )}
                                                     {dependencyLabels.length >
                                                         0 && (
-                                                        <span className="block text-xs text-muted-foreground">
+                                                        <span className="block">
                                                             Incluye:{' '}
                                                             {dependencyLabels.join(
                                                                 ', ',
                                                             )}
                                                         </span>
                                                     )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
+                                                </>
+                                            )
+                                        }
+                                        checked={
+                                            selectedSet.has(permission.name) ||
+                                            permission.required
+                                        }
+                                        disabled={
+                                            disabled || permission.required
+                                        }
+                                        onCheckedChange={(checked) =>
+                                            checked === true
+                                                ? grant([permission.name])
+                                                : revoke([permission.name])
+                                        }
+                                    />
                                 );
                             })}
                         </div>

@@ -1,7 +1,8 @@
 import { Slot } from 'radix-ui';
-import type { ReactElement, ReactNode } from 'react';
+import type { ComponentProps, ReactElement, ReactNode } from 'react';
 
 import InputError from '@/components/input-error';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
@@ -85,5 +86,88 @@ export function FormField({
             )}
             <InputError id={errorId} message={error} />
         </div>
+    );
+}
+
+type FormCheckboxProps = {
+    /** El `id` de la casilla (igual a la llave del error). */
+    id: string;
+    /** El texto junto a la casilla. */
+    label: ReactNode;
+    /** Ayuda bajo el texto. */
+    help?: ReactNode;
+    error?: string;
+    className?: string;
+} & Omit<
+    ComponentProps<typeof Checkbox>,
+    'id' | 'className' | 'aria-describedby' | 'aria-invalid'
+>;
+
+/**
+ * Una casilla con su texto al lado (DESIGN.md §8): «Activo», «Controla inventario», «Recordar sesión», un permiso.
+ * Ayuda y error van bajo el texto, alineados con él, y quedan enlazados para el lector de pantalla como en
+ * `<FormField>`. El resto de props (`checked`, `onCheckedChange`, `disabled`, `name`…) van a la casilla.
+ */
+export function FormCheckbox({
+    id,
+    label,
+    help,
+    error,
+    className,
+    ...checkboxProps
+}: FormCheckboxProps) {
+    const helpId = help ? `${id}-help` : undefined;
+    const errorId = error ? `${id}-error` : undefined;
+    const describedBy = [helpId, errorId].filter(Boolean).join(' ');
+
+    return (
+        <div
+            data-slot="form-checkbox"
+            className={cn('flex min-w-0 items-start gap-3', className)}
+        >
+            <Checkbox
+                id={id}
+                className="mt-0.5"
+                {...(describedBy ? { 'aria-describedby': describedBy } : {})}
+                {...(error ? { 'aria-invalid': true } : {})}
+                {...checkboxProps}
+            />
+            <div className="grid min-w-0 gap-1">
+                <Label htmlFor={id} className="cursor-pointer leading-5">
+                    {label}
+                </Label>
+                {help && (
+                    <p id={helpId} className="text-xs text-muted-foreground">
+                        {help}
+                    </p>
+                )}
+                <InputError id={errorId} message={error} />
+            </div>
+        </div>
+    );
+}
+
+type FormErrorProps = {
+    /**
+     * La llave del error cuando no tiene un campo propio (`items`, `production_order`): el foco llega aquí ante un 422
+     * (`lib/focus-first-error.ts`) en vez de al primer mensaje de la página.
+     */
+    id?: string;
+    message?: string;
+    className?: string;
+};
+
+/**
+ * Un error del formulario que no es de un campo (DESIGN.md §8): el de una lista de líneas entera («agrega al menos
+ * una»), una confirmación que pide el servidor o la orden que cambió mientras se editaba.
+ */
+export function FormError({ id, message, className }: FormErrorProps) {
+    return (
+        <InputError
+            id={id}
+            tabIndex={id ? -1 : undefined}
+            message={message}
+            className={cn('outline-none', className)}
+        />
     );
 }

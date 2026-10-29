@@ -3,10 +3,9 @@ import { Plus } from 'lucide-react';
 
 import { store as salesOrderStore } from '@/actions/App/Http/Controllers/SalesOrderController';
 import { FormActions } from '@/components/form-actions';
-import { FormField } from '@/components/form-field';
+import { FormError, FormField } from '@/components/form-field';
 import { FormLineItem } from '@/components/form-line-item';
 import { FormPage } from '@/components/form-page';
-import InputError from '@/components/input-error';
 import { IntegerInput } from '@/components/integer-input';
 import { PageHeader } from '@/components/page-header';
 import { PlantDateInput } from '@/components/plant-date-input';
@@ -343,7 +342,7 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                             </Button>
                         </div>
 
-                        <InputError message={errors.items} />
+                        <FormError id="items" message={errors.items} />
 
                         {data.items.length === 0 ? (
                             <div className="rounded border border-dashed border-border py-8 text-center text-muted-foreground">

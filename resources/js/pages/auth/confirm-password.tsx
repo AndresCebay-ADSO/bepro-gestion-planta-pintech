@@ -1,9 +1,7 @@
 import { Form, Head } from '@inertiajs/react';
-import InputError from '@/components/input-error';
+import { FormActions } from '@/components/form-actions';
+import { FormField } from '@/components/form-field';
 import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 import { store } from '@/routes/password/confirm';
 
 export default function ConfirmPassword() {
@@ -19,29 +17,24 @@ export default function ConfirmPassword() {
             >
                 {({ processing, errors }) => (
                     <div className="space-y-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="password">Contraseña</Label>
+                        <FormField
+                            id="password"
+                            label="Contraseña"
+                            error={errors.password}
+                        >
                             <PasswordInput
-                                id="password"
                                 name="password"
                                 placeholder="Contraseña"
                                 autoComplete="current-password"
                                 autoFocus
                             />
+                        </FormField>
 
-                            <InputError message={errors.password} />
-                        </div>
-
-                        <div className="flex items-center">
-                            <Button
-                                className="w-full"
-                                disabled={processing}
-                                data-test="confirm-password-button"
-                            >
-                                {processing && <Spinner />}
-                                Confirmar contraseña
-                            </Button>
-                        </div>
+                        <FormActions
+                            submitLabel="Confirmar contraseña"
+                            processing={processing}
+                            fullWidth
+                        />
                     </div>
                 )}
             </Form>

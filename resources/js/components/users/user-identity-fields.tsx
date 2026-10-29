@@ -1,6 +1,5 @@
-import InputError from '@/components/input-error';
+import { FormField } from '@/components/form-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { SignatureUploadField } from '@/components/users/signature-upload-field';
 
 export interface UserIdentityData {
@@ -38,73 +37,33 @@ export const UserIdentityFields = <
     errors,
     currentSignatureUrl,
     disabled = false,
-    className = 'space-y-6',
+    className = 'grid gap-6 md:grid-cols-2',
     showSignature = true,
     emailReadOnly = false,
 }: UserIdentityFieldsProps<T>) => {
     return (
         <div className={className}>
-            {/* Nombre Completo */}
-            <div className="grid gap-2">
-                <Label htmlFor="name">
-                    Nombre Completo <span className="text-destructive">*</span>
-                </Label>
+            <FormField
+                id="name"
+                label="Nombre completo"
+                required
+                error={errors.name}
+            >
                 <Input
-                    id="name"
                     name="name"
                     value={data.name}
                     onChange={(e) =>
                         setData('name', e.target.value as T['name'])
                     }
-                    required
                     maxLength={255}
                     autoComplete="name"
                     placeholder="Ej: Juan Pérez"
                     disabled={disabled}
                 />
-                <InputError message={errors.name} />
-            </div>
+            </FormField>
 
-            {/* Correo Electrónico */}
-            <div className="grid gap-2">
-                <Label htmlFor="email">
-                    Correo Electrónico{' '}
-                    <span className="text-destructive">*</span>
-                </Label>
+            <FormField id="job_title" label="Cargo" error={errors.job_title}>
                 <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={data.email}
-                    onChange={(e) =>
-                        setData(
-                            'email',
-                            e.target.value.toLowerCase() as T['email'],
-                        )
-                    }
-                    required
-                    maxLength={255}
-                    readOnly={emailReadOnly}
-                    className={
-                        emailReadOnly ? 'cursor-not-allowed bg-muted/50' : ''
-                    }
-                    autoComplete="username"
-                    placeholder="juan@pintech.com"
-                    disabled={disabled}
-                />
-                {emailReadOnly && (
-                    <p className="text-xs text-muted-foreground">
-                        Para cambiar tu correo, pídelo a un administrador.
-                    </p>
-                )}
-                <InputError message={errors.email} />
-            </div>
-
-            {/* Cargo */}
-            <div className="grid gap-2">
-                <Label htmlFor="job_title">Cargo</Label>
-                <Input
-                    id="job_title"
                     name="job_title"
                     value={data.job_title ?? ''}
                     onChange={(e) =>
@@ -114,14 +73,42 @@ export const UserIdentityFields = <
                     placeholder="Ej: Gerente de Producción"
                     disabled={disabled}
                 />
-                <InputError message={errors.job_title} />
-            </div>
+            </FormField>
 
-            {/* Teléfono */}
-            <div className="grid gap-2">
-                <Label htmlFor="phone">Teléfono</Label>
+            <FormField
+                id="email"
+                label="Correo electrónico"
+                required
+                help={
+                    emailReadOnly
+                        ? 'Para cambiar tu correo, pídelo a un administrador.'
+                        : undefined
+                }
+                error={errors.email}
+            >
                 <Input
-                    id="phone"
+                    name="email"
+                    type="email"
+                    value={data.email}
+                    onChange={(e) =>
+                        setData(
+                            'email',
+                            e.target.value.toLowerCase() as T['email'],
+                        )
+                    }
+                    maxLength={255}
+                    readOnly={emailReadOnly}
+                    className={
+                        emailReadOnly ? 'cursor-not-allowed bg-muted/50' : ''
+                    }
+                    autoComplete="username"
+                    placeholder="juan@pintech.com"
+                    disabled={disabled}
+                />
+            </FormField>
+
+            <FormField id="phone" label="Teléfono" error={errors.phone}>
+                <Input
                     name="phone"
                     type="tel"
                     value={data.phone ?? ''}
@@ -132,12 +119,11 @@ export const UserIdentityFields = <
                     placeholder="Ej: 3001234567"
                     disabled={disabled}
                 />
-                <InputError message={errors.phone} />
-            </div>
+            </FormField>
 
-            {/* Firma Digital */}
             {showSignature && (
                 <SignatureUploadField
+                    className="md:col-span-2"
                     currentSignatureUrl={
                         data.remove_signature ? null : currentSignatureUrl
                     }

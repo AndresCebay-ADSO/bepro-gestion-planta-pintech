@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import { DecimalInput } from '@/components/decimal-input';
 import { FormActions } from '@/components/form-actions';
-import { FormField } from '@/components/form-field';
+import { FormError, FormField } from '@/components/form-field';
 import { FormLineItem } from '@/components/form-line-item';
 import { FormPage } from '@/components/form-page';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -557,7 +557,8 @@ export default function QuotationForm({
                         </Button>
                     </div>
 
-                    <InputError
+                    <FormError
+                        id="items"
                         message={errors.items ?? previewErrors.general.items}
                     />
 

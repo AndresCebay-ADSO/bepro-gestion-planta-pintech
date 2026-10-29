@@ -1,4 +1,4 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
 import { FormPage } from '@/components/form-page';
@@ -10,6 +10,7 @@ import type { FormulaFormData } from '@/components/formulas/formula-form';
 import { PageHeader } from '@/components/page-header';
 import { formatForInput } from '@/lib/formatters';
 import {
+    edit as formulasEdit,
     index as formulasIndex,
     show as formulasShow,
     update as formulasUpdate,
@@ -74,29 +75,10 @@ export default function FormulasEdit({
             />
 
             <FormPage width="wide">
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Link
-                            href={formulasIndex().url}
-                            className="hover:text-foreground"
-                        >
-                            Fórmulas
-                        </Link>
-                        <span>/</span>
-                        <Link
-                            href={formulasShow({ formula: formula.id }).url}
-                            className="hover:text-foreground"
-                        >
-                            v{formula.version}
-                        </Link>
-                        <span>/</span>
-                        <span>Editar</span>
-                    </div>
-                    <PageHeader
-                        title={`Editar fórmula v${formula.version}`}
-                        description="Corrige materiales, cantidades o notas sin cambiar el producto asociado."
-                    />
-                </div>
+                <PageHeader
+                    title={`Editar fórmula v${formula.version}`}
+                    description="Corrige materiales, cantidades o notas sin cambiar el producto asociado."
+                />
 
                 <FormulaForm
                     data={data}
@@ -118,3 +100,15 @@ export default function FormulasEdit({
         </>
     );
 }
+
+// Las migas son la única forma de volver (DESIGN.md §10).
+FormulasEdit.layout = (props: Props) => ({
+    breadcrumbs: [
+        { title: 'Fórmulas', href: formulasIndex() },
+        {
+            title: `v${props.formula.version}`,
+            href: formulasShow({ formula: props.formula.id }),
+        },
+        { title: 'Editar', href: formulasEdit({ formula: props.formula.id }) },
+    ],
+});

@@ -1,8 +1,7 @@
 // Components
 import { Form, Head } from '@inertiajs/react';
+import { FormActions } from '@/components/form-actions';
 import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
 
@@ -26,10 +25,11 @@ export default function VerifyEmail({ status }: { status?: string }) {
             >
                 {({ processing }) => (
                     <>
-                        <Button disabled={processing} variant="secondary">
-                            {processing && <Spinner />}
-                            Reenviar correo de verificación
-                        </Button>
+                        <FormActions
+                            submitLabel="Reenviar correo de verificación"
+                            processing={processing}
+                            fullWidth
+                        />
 
                         <TextLink
                             href={logout()}

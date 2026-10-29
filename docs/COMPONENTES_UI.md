@@ -255,7 +255,8 @@ lista.
 
 Las reglas (contenedor de cada formulario, columnas, pie, 422, `noValidate`) están en `DESIGN.md` §8, que es la fuente.
 Ejemplos completos: los cajones de movimientos de MP y PT (`components/inventory/`, `components/finished-inventory/`),
-Clientes (`components/clients/ClientForm.tsx`, `pages/Clients/{Create,Edit}.tsx`) y, con líneas, la fórmula
+Clientes (`components/clients/ClientForm.tsx`, `pages/Clients/{Create,Edit}.tsx`), producto
+(`components/products/product-form.tsx`), los catálogos de Configuración (`components/catalogs/`) y, con líneas, la fórmula
 (`components/formulas/formula-form.tsx`) y la nueva OP (`pages/Production/Orders/Create.tsx`).
 
 ### FormPage
@@ -302,11 +303,45 @@ Un grupo de radios o casillas recibe la función y se nombra con la etiqueta, cu
 </FormField>
 ```
 
+### FormCheckbox
+
+**Ubicación:** `resources/js/components/form-field.tsx`. Una casilla con su texto al lado («Activo», «Controla
+inventario», «Recordar sesión», cada permiso de un rol). La ayuda y el error van bajo el texto, alineados con él, y quedan
+enlazados como en `FormField` (`aria-describedby`, `aria-invalid`). El resto de props (`checked`, `onCheckedChange`,
+`disabled`, `name`) van a la casilla.
+
+```tsx
+<FormCheckbox
+    id="is_active"
+    label="Bodega activa"
+    help={form.data.is_active ? undefined : 'Inactiva, no se podrá elegir…'}
+    error={form.errors.is_active}
+    checked={form.data.is_active}
+    onCheckedChange={(checked) => form.setData('is_active', checked === true)}
+/>
+```
+
+### FormError
+
+**Ubicación:** `resources/js/components/form-field.tsx`. Un error del formulario que no es de un campo: el de una lista
+de líneas entera (`items`, `details`, `packaging`), una confirmación que pide el servidor (`confirm_factor_change`) o la
+orden que cambió mientras se editaba (`production_order`). Con `id` igual a la llave del error, un 422 lleva el foco al
+mensaje (`tabIndex={-1}`) en vez de al primero de la página.
+
+```tsx
+<FormError id="items" message={errors.items} />
+```
+
+`design-contract.test.ts` vigila que `pages/` y `components/` no tengan `<InputError` ni `<Label htmlFor=` escritos a
+mano fuera de `form-field.tsx`, con una lista corta de excepciones con su motivo.
+
 ### FormActions
 
 **Ubicación:** `resources/js/components/form-actions.tsx`. «Cancelar» a la izquierda y el botón principal (`submit`,
 primario) a la derecha, deshabilitado y con rueda mientras `processing`. `cancelHref` (página: vuelve al listado) u
-`onCancel` (cajón o ventana: la cierra); sin ninguno, solo el botón principal.
+`onCancel` (cajón o ventana: la cierra); sin ninguno, solo el botón principal. `cancelLabel` cambia el texto de
+«Cancelar» (en «Cancelar orden», «Volver»); `destructive` pone el botón principal en rojo; `fullWidth` deja los botones
+a todo el ancho, uno debajo del otro, también en el computador (las pantallas de acceso, de tarjeta angosta).
 
 Un formulario por pasos pasa sus botones como `children` en lugar de `submitLabel`: quedan a la derecha, con «Cancelar»
 a la izquierda, y en el celular se apilan con el último (el principal) arriba.

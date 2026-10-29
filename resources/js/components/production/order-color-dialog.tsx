@@ -3,10 +3,12 @@ import { Pencil } from 'lucide-react';
 import { useState } from 'react';
 
 import { updateColor as productionOrderUpdateColor } from '@/actions/App/Http/Controllers/ProductionOrderController';
-import InputError from '@/components/input-error';
+import { FormActions } from '@/components/form-actions';
+import { FormError, FormField } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
+    DialogBody,
     DialogContent,
     DialogDescription,
     DialogFooter,
@@ -14,7 +16,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Tooltip,
     TooltipContent,
@@ -70,7 +71,11 @@ export function OrderColorDialog({ orderId, color }: OrderColorDialogProps) {
 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent>
-                    <form noValidate onSubmit={submit} className="space-y-4">
+                    <form
+                        noValidate
+                        onSubmit={submit}
+                        className="flex min-h-0 flex-col gap-4"
+                    >
                         <DialogHeader>
                             <DialogTitle>Color de la orden</DialogTitle>
                             <DialogDescription>
@@ -79,38 +84,36 @@ export function OrderColorDialog({ orderId, color }: OrderColorDialogProps) {
                                 no se puede cambiar después de completarla.
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="space-y-2">
-                            <Label htmlFor="order-color">Color</Label>
-                            <Input
-                                id="order-color"
-                                value={data.color}
-                                maxLength={100}
-                                placeholder="Ej.: RAL 3020"
-                                onChange={(e) =>
-                                    setData('color', e.target.value)
-                                }
-                            />
-                            <InputError message={errors.color} />
+                        <DialogBody className="space-y-4">
+                            <FormField
+                                id="color"
+                                label="Color"
+                                error={errors.color}
+                            >
+                                <Input
+                                    value={data.color}
+                                    maxLength={100}
+                                    placeholder="Ej.: RAL 3020"
+                                    onChange={(e) =>
+                                        setData('color', e.target.value)
+                                    }
+                                />
+                            </FormField>
                             {/* La orden cambió de estado mientras se editaba (RejectsStaleOrderWrites). */}
-                            <InputError
+                            <FormError
+                                id="production_order"
                                 message={
                                     (errors as Partial<Record<string, string>>)
                                         .production_order
                                 }
                             />
-                        </div>
+                        </DialogBody>
                         <DialogFooter>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setOpen(false)}
-                                disabled={processing}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button type="submit" disabled={processing}>
-                                {processing ? 'Guardando…' : 'Guardar'}
-                            </Button>
+                            <FormActions
+                                submitLabel="Guardar"
+                                processing={processing}
+                                onCancel={() => setOpen(false)}
+                            />
                         </DialogFooter>
                     </form>
                 </DialogContent>

@@ -4,10 +4,9 @@ import { Plus } from 'lucide-react';
 import { store as productionOrderStore } from '@/actions/App/Http/Controllers/ProductionOrderController';
 import { DecimalInput } from '@/components/decimal-input';
 import { FormActions } from '@/components/form-actions';
-import { FormField } from '@/components/form-field';
+import { FormError, FormField } from '@/components/form-field';
 import { FormLineItem } from '@/components/form-line-item';
 import { FormPage } from '@/components/form-page';
-import InputError from '@/components/input-error';
 import { IntegerInput } from '@/components/integer-input';
 import { PageHeader } from '@/components/page-header';
 import { PlantDateInput } from '@/components/plant-date-input';
@@ -470,7 +469,8 @@ export default function ProductionOrdersCreate({
                             </div>
                         )}
 
-                        <InputError
+                        <FormError
+                            id="packaging"
                             message={
                                 (errors as Record<string, string>).packaging
                             }

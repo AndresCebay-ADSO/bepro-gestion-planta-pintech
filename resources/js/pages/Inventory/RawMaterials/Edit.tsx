@@ -1,5 +1,6 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { useState } from 'react';
+import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
 import {
     RawMaterialForm,
@@ -19,9 +20,9 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
 import { formatForInput } from '@/lib/formatters';
 import {
+    edit as rawMaterialsEdit,
     index as rawMaterialsIndex,
     show as rawMaterialsShow,
     update as rawMaterialsUpdate,
@@ -122,36 +123,17 @@ export default function RawMaterialsEdit({
         <>
             <Head title={`Editar materia prima: ${rawMaterial.code}`} />
 
-            <div className="mx-auto max-w-3xl space-y-6 p-6">
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Link
-                            href={rawMaterialsIndex().url}
-                            className="hover:text-foreground"
-                        >
-                            Materias primas
-                        </Link>
-                        <span>/</span>
-                        <Link
-                            href={rawMaterialsShow(rawMaterial.id).url}
-                            className="font-mono hover:text-foreground"
-                        >
-                            {rawMaterial.code}
-                        </Link>
-                        <span>/</span>
-                        <span>Editar</span>
-                    </div>
-                    <PageHeader
-                        title={
-                            <>
-                                Editar materia prima:{' '}
-                                <span className="font-mono">
-                                    {rawMaterial.code}
-                                </span>
-                            </>
-                        }
-                    />
-                </div>
+            <FormPage width="narrow">
+                <PageHeader
+                    title={
+                        <>
+                            Editar materia prima:{' '}
+                            <span className="font-mono">
+                                {rawMaterial.code}
+                            </span>
+                        </>
+                    }
+                />
 
                 <RawMaterialForm
                     form={form}
@@ -159,16 +141,11 @@ export default function RawMaterialsEdit({
                     units={units}
                     onSubmit={submit}
                     submitLabel="Guardar cambios"
+                    cancelHref={rawMaterialsIndex().url}
                     canEditPrice={can.updateCosts}
                     unitLocked={unitLocked}
                 />
-
-                <div className="flex justify-end gap-2 pt-2 pr-2">
-                    <Button variant="outline" asChild>
-                        <Link href={rawMaterialsIndex().url}>Cancelar</Link>
-                    </Button>
-                </div>
-            </div>
+            </FormPage>
 
             <AlertDialog open={confirming} onOpenChange={setConfirming}>
                 <AlertDialogContent>
@@ -210,3 +187,14 @@ export default function RawMaterialsEdit({
         </>
     );
 }
+
+RawMaterialsEdit.layout = (props: Props) => ({
+    breadcrumbs: [
+        { title: 'Materias primas', href: rawMaterialsIndex() },
+        {
+            title: props.rawMaterial.code,
+            href: rawMaterialsShow(props.rawMaterial.id),
+        },
+        { title: 'Editar', href: rawMaterialsEdit(props.rawMaterial.id) },
+    ],
+});

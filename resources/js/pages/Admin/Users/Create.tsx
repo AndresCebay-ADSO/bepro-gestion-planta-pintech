@@ -1,13 +1,12 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import type { FC, FormEvent } from 'react';
+import { Head, useForm } from '@inertiajs/react';
+import type { FormEvent } from 'react';
 
 import UserController from '@/actions/App/Http/Controllers/UserController';
-import InputError from '@/components/input-error';
+import { FormActions } from '@/components/form-actions';
+import { FormCheckbox, FormField } from '@/components/form-field';
+import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
 import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -22,7 +21,7 @@ interface Props {
     roles: RoleOption[];
 }
 
-const UsersCreate: FC<Props> = ({ roles }) => {
+const UsersCreate = ({ roles }: Props) => {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
@@ -47,153 +46,124 @@ const UsersCreate: FC<Props> = ({ roles }) => {
     };
 
     return (
-        <div className="min-h-screen bg-background px-4 py-8 text-foreground">
+        <>
             <Head title="Nuevo usuario" />
-            <div className="mx-auto max-w-2xl">
-                {/* Header */}
-                <div className="mb-8">
-                    <Link
-                        href={UserController.index.url()}
-                        className="mb-4 inline-block text-sm text-primary hover:text-primary/80"
-                    >
-                        ← Volver a usuarios
-                    </Link>
-                    <PageHeader
-                        title="Nuevo usuario"
-                        description="Agrega un nuevo usuario al sistema con sus credenciales y permisos."
-                    />
-                </div>
+            <FormPage width="narrow">
+                <PageHeader
+                    title="Nuevo usuario"
+                    description="Agrega un nuevo usuario al sistema con sus credenciales y permisos."
+                />
 
-                {/* Form */}
-                <form
-                    noValidate
-                    onSubmit={handleSubmit}
-                    className="space-y-6 rounded-xl border border-border bg-card p-6 shadow-xs md:p-8"
-                >
-                    {/* Identidad y Firma Compartida */}
-                    <UserIdentityFields
-                        data={data}
-                        setData={setData}
-                        errors={errors}
-                        disabled={processing}
-                    />
+                <form noValidate onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-6 rounded-lg border border-border bg-card p-6">
+                        <UserIdentityFields
+                            data={data}
+                            setData={setData}
+                            errors={errors}
+                            disabled={processing}
+                        />
 
-                    <div className="space-y-6 border-t border-border pt-6">
-                        {/* Rol */}
-                        <div className="grid gap-2">
-                            <Label htmlFor="role">
-                                Rol <span className="text-destructive">*</span>
-                            </Label>
-                            <Select
-                                value={data.role}
-                                onValueChange={(val) => setData('role', val)}
-                                disabled={processing}
+                        <div className="space-y-6 border-t border-border pt-6">
+                            <FormField
+                                id="role"
+                                label="Rol"
+                                required
+                                error={errors.role}
                             >
-                                <SelectTrigger id="role">
-                                    <SelectValue placeholder="Seleccionar rol..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {roles.map((role) => (
-                                        <SelectItem
-                                            key={role.id}
-                                            value={role.name}
-                                        >
-                                            {role.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <InputError message={errors.role} />
-                        </div>
+                                {(control) => (
+                                    <Select
+                                        value={data.role}
+                                        onValueChange={(val) =>
+                                            setData('role', val)
+                                        }
+                                        disabled={processing}
+                                    >
+                                        <SelectTrigger {...control}>
+                                            <SelectValue placeholder="Seleccionar rol..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {roles.map((role) => (
+                                                <SelectItem
+                                                    key={role.id}
+                                                    value={role.name}
+                                                >
+                                                    {role.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </FormField>
 
-                        {/* Estado Activo */}
-                        <div className="flex items-center gap-3">
-                            <Checkbox
+                            <FormCheckbox
                                 id="is_active"
+                                label="Usuario activo"
+                                error={errors.is_active}
                                 checked={data.is_active}
                                 onCheckedChange={(checked) =>
                                     setData('is_active', checked === true)
                                 }
                                 disabled={processing}
                             />
-                            <Label
-                                htmlFor="is_active"
-                                className="cursor-pointer"
-                            >
-                                Usuario activo
-                            </Label>
                         </div>
-                    </div>
 
-                    <div className="space-y-6 border-t border-border pt-6">
-                        {/* Contraseña */}
-                        <div className="grid gap-2">
-                            <Label htmlFor="password">
-                                Contraseña{' '}
-                                <span className="text-destructive">*</span>
-                            </Label>
-                            <PasswordInput
+                        <div className="grid gap-6 border-t border-border pt-6 md:grid-cols-2">
+                            <FormField
                                 id="password"
-                                name="password"
-                                value={data.password}
-                                onChange={(e) =>
-                                    setData('password', e.target.value)
-                                }
-                                placeholder="Mínimo 8 caracteres"
-                                disabled={processing}
-                            />
-                            <InputError message={errors.password} />
-                        </div>
+                                label="Contraseña"
+                                required
+                                error={errors.password}
+                            >
+                                <PasswordInput
+                                    name="password"
+                                    value={data.password}
+                                    onChange={(e) =>
+                                        setData('password', e.target.value)
+                                    }
+                                    placeholder="Mínimo 8 caracteres"
+                                    disabled={processing}
+                                />
+                            </FormField>
 
-                        {/* Confirmar Contraseña */}
-                        <div className="grid gap-2">
-                            <Label htmlFor="password_confirmation">
-                                Confirmar Contraseña{' '}
-                                <span className="text-destructive">*</span>
-                            </Label>
-                            <PasswordInput
+                            <FormField
                                 id="password_confirmation"
-                                name="password_confirmation"
-                                value={data.password_confirmation}
-                                onChange={(e) =>
-                                    setData(
-                                        'password_confirmation',
-                                        e.target.value,
-                                    )
-                                }
-                                placeholder="Repite la contraseña"
-                                disabled={processing}
-                            />
-                            <InputError
-                                message={errors.password_confirmation}
-                            />
+                                label="Confirmar contraseña"
+                                required
+                                error={errors.password_confirmation}
+                            >
+                                <PasswordInput
+                                    name="password_confirmation"
+                                    value={data.password_confirmation}
+                                    onChange={(e) =>
+                                        setData(
+                                            'password_confirmation',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder="Repite la contraseña"
+                                    disabled={processing}
+                                />
+                            </FormField>
                         </div>
                     </div>
 
-                    {/* Botones */}
-                    <div className="flex gap-4 pt-4">
-                        <Button
-                            type="submit"
-                            disabled={processing}
-                            className="flex-1"
-                        >
-                            {processing ? 'Creando...' : 'Crear Usuario'}
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            asChild
-                            className="flex-1"
-                        >
-                            <Link href={UserController.index.url()}>
-                                Cancelar
-                            </Link>
-                        </Button>
-                    </div>
+                    <FormActions
+                        submitLabel="Crear usuario"
+                        processing={processing}
+                        cancelHref={UserController.index.url()}
+                    />
                 </form>
-            </div>
-        </div>
+            </FormPage>
+        </>
     );
+};
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10).
+UsersCreate.layout = {
+    breadcrumbs: [
+        { title: 'Usuarios', href: UserController.index() },
+        { title: 'Nuevo usuario', href: UserController.create() },
+    ],
 };
 
 export default UsersCreate;

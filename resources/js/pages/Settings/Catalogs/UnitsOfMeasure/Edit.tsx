@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import {
     UnitEquivalence,
@@ -8,6 +8,7 @@ import {
     sameFactor,
     UNIT_FACTOR_FIELDS,
 } from '@/components/catalogs/unit-of-measure-form';
+import { FormActions } from '@/components/form-actions';
 import Heading from '@/components/heading';
 import {
     AlertDialog,
@@ -19,7 +20,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
 import { withDecimalPayloads } from '@/lib/numeric-input';
 import {
     edit as unitsEdit,
@@ -98,16 +98,13 @@ export default function UnitsOfMeasureEdit({ unit }: Props) {
                         }
                     />
 
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                        <Button type="submit" disabled={form.processing}>
-                            {form.processing
-                                ? 'Guardando...'
-                                : 'Guardar cambios'}
-                        </Button>
-                        <Button type="button" variant="outline" asChild>
-                            <Link href={unitsIndex().url}>Cancelar</Link>
-                        </Button>
-                    </div>
+                    <FormActions
+                        submitLabel="Guardar cambios"
+
+                        processing={form.processing}
+
+                        cancelHref={unitsIndex().url}
+                    />
                 </form>
             </div>
 
