@@ -1,5 +1,5 @@
-import { Link, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { Link, useForm } from '@inertiajs/react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
 
 import { DecimalInput } from '@/components/decimal-input';
@@ -7,6 +7,7 @@ import { FormattedNumber } from '@/components/formatted-number';
 import InputError from '@/components/input-error';
 import { IntegerInput } from '@/components/integer-input';
 import { PageHeader } from '@/components/page-header';
+import { PlantDateInput } from '@/components/plant-date-input';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -20,7 +21,6 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useQuotationPricingPreview } from '@/hooks/use-quotation-pricing-preview';
-import { dateBoundKeepingSaved } from '@/lib/date-time-helpers';
 import { formatNumber } from '@/lib/formatters';
 import { NUMBER_TYPES, UNITS_MAX_DIGITS } from '@/lib/number-types';
 import { toDecimalPayload } from '@/lib/numeric-input';
@@ -126,7 +126,6 @@ export default function QuotationForm({
     backUrl,
     submitLabel,
 }: Props) {
-    const { plantToday } = usePage().props;
     const {
         data,
         setData,
@@ -295,17 +294,9 @@ export default function QuotationForm({
 
     return (
         <div className="mx-auto max-w-6xl space-y-6 p-6">
-            <div className="space-y-4">
-                <Button variant="ghost" size="sm" asChild>
-                    <Link href={backUrl}>
-                        <ArrowLeft className="mr-1 h-4 w-4" />
-                        Volver
-                    </Link>
-                </Button>
-                <PageHeader title={title} />
-            </div>
+            <PageHeader title={title} />
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form noValidate onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                     <h2 className="text-lg font-semibold">Cliente</h2>
                     <div className="grid gap-4 md:grid-cols-2">
@@ -440,19 +431,20 @@ export default function QuotationForm({
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Fecha cotización</Label>
-                            <Input
-                                type="date"
-                                max={dateBoundKeepingSaved(
-                                    data.quotation_date,
+                            <Label htmlFor="quotation_date">
+                                Fecha cotización
+                            </Label>
+                            <PlantDateInput
+                                id="quotation_date"
+                                notFuture
+                                saved={
                                     method === 'put'
                                         ? initialData.quotation_date
-                                        : null,
-                                    plantToday,
-                                )}
+                                        : null
+                                }
                                 value={data.quotation_date}
-                                onChange={(e) =>
-                                    setData('quotation_date', e.target.value)
+                                onChange={(value) =>
+                                    setData('quotation_date', value)
                                 }
                             />
                         </div>

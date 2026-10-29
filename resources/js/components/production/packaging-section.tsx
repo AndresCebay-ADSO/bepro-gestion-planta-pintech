@@ -19,6 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useConfirm } from '@/hooks/use-confirm';
 import type {
     LabelMaterialOption,
     ProductionOrderFormData,
@@ -54,6 +55,7 @@ export function PackagingSection({
     showCosts = true,
     canPrintLabels = false,
 }: PackagingSectionProps) {
+    const confirm = useConfirm();
     const showActions = !isReadOnly || canPrintLabels;
     const columnCount = (showCosts ? 6 : 4) + (showActions ? 1 : 0);
 
@@ -178,10 +180,15 @@ export function PackagingSection({
                                                             variant="ghost"
                                                             size="icon"
                                                             className="h-7 w-7 text-destructive hover:text-destructive"
-                                                            onClick={() => {
+                                                            onClick={async () => {
                                                                 if (
-                                                                    confirm(
-                                                                        '¿Eliminar esta presentación del plan de envasado?',
+                                                                    await confirm(
+                                                                        {
+                                                                            title: '¿Eliminar esta presentación del plan de envasado?',
+                                                                            confirmLabel:
+                                                                                'Eliminar',
+                                                                            destructive: true,
+                                                                        },
                                                                     )
                                                                 ) {
                                                                     router.delete(

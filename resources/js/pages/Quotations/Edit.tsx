@@ -7,10 +7,13 @@ import type {
     ProductOption,
     QuotationFormData,
 } from '@/components/quotations/QuotationForm';
+import { quotationName } from '@/lib/quotation-name';
 import { newRowKey } from '@/lib/quotation-pricing-rows';
 import {
+    edit as quotationsEdit,
     editPreviewPricing as quotationEditPreviewPricing,
     index as quotationsIndex,
+    show as quotationsShow,
 } from '@/routes/quotations';
 
 type QuotationDetail = {
@@ -105,9 +108,7 @@ export default function QuotationsEdit({
 }: Props) {
     return (
         <>
-            <Head
-                title={`Editar Cotización ${quotation.quotation_number ?? quotation.id}`}
-            />
+            <Head title={`Editar ${quotationName(quotation)}`} />
             <QuotationForm
                 clients={clients}
                 products={products}
@@ -125,3 +126,14 @@ export default function QuotationsEdit({
         </>
     );
 }
+
+QuotationsEdit.layout = (props: Props) => ({
+    breadcrumbs: [
+        { title: 'Cotizaciones', href: quotationsIndex() },
+        {
+            title: quotationName(props.quotation),
+            href: quotationsShow(props.quotation.id),
+        },
+        { title: 'Editar', href: quotationsEdit(props.quotation.id) },
+    ],
+});

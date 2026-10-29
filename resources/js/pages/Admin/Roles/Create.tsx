@@ -84,6 +84,7 @@ const RolesCreate: FC<Props> = ({ modules, templates, defaultPermissions }) => {
                 </div>
 
                 <form
+                    noValidate
                     onSubmit={handleSubmit}
                     className="space-y-6 rounded-xl border border-border bg-card p-6 shadow-xs md:p-8"
                 >

@@ -59,6 +59,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useConfirm } from '@/hooks/use-confirm';
 import { withReturnTo } from '@/lib/navigation';
 import { PRESENTATION_VALUE_LIMITS } from '@/lib/number-types';
 import { toDecimalPayload } from '@/lib/numeric-input';
@@ -185,6 +186,7 @@ export default function ProductsShow({
     rawMaterials,
     labelMaterials,
 }: Props) {
+    const confirm = useConfirm();
     const [dialogMode, setDialogMode] = useState<'create' | 'edit' | null>(
         null,
     );
@@ -248,18 +250,30 @@ export default function ProductsShow({
         document: null as File | null,
     });
 
-    const handleDelete = () => {
-        if (!window.confirm(`¿Eliminar el producto ${product.name}?`)) {
+    const handleDelete = async () => {
+        if (
+            !(await confirm({
+                title: `¿Eliminar el producto ${product.name}?`,
+                confirmLabel: 'Eliminar',
+                destructive: true,
+            }))
+        ) {
             return;
         }
 
         router.delete(destroyProduct({ product: product.id }).url);
     };
 
-    const handleDeleteVariant = (
+    const handleDeleteVariant = async (
         variant: NonNullable<Props['product']['variants']>[number],
     ) => {
-        if (!window.confirm(`¿Eliminar la variante "${variant.name}"?`)) {
+        if (
+            !(await confirm({
+                title: `¿Eliminar la variante «${variant.name}»?`,
+                confirmLabel: 'Eliminar',
+                destructive: true,
+            }))
+        ) {
             return;
         }
 
@@ -579,6 +593,7 @@ export default function ProductsShow({
                                             </DialogDescription>
                                         </DialogHeader>
                                         <form
+                                            noValidate
                                             onSubmit={handleDocumentSubmit}
                                             className="space-y-4"
                                         >
@@ -812,10 +827,15 @@ export default function ProductsShow({
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                                                onClick={() => {
+                                                                onClick={async () => {
                                                                     if (
-                                                                        window.confirm(
-                                                                            '¿Eliminar este documento técnico?',
+                                                                        await confirm(
+                                                                            {
+                                                                                title: '¿Eliminar este documento técnico?',
+                                                                                confirmLabel:
+                                                                                    'Eliminar',
+                                                                                destructive: true,
+                                                                            },
                                                                         )
                                                                     ) {
                                                                         router.delete(
@@ -982,6 +1002,7 @@ export default function ProductsShow({
                                         </DialogTitle>
                                     </DialogHeader>
                                     <form
+                                        noValidate
                                         onSubmit={handleSubmit}
                                         className="space-y-4"
                                     >

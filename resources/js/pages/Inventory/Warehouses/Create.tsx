@@ -50,6 +50,7 @@ export default function WarehousesCreate() {
 
                 <div className="rounded-lg border border-border bg-card p-6">
                     <form
+                        noValidate
                         onSubmit={(event) => {
                             event.preventDefault();
                             submit();

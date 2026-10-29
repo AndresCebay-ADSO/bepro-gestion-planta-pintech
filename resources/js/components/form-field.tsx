@@ -10,6 +10,7 @@ export type FormFieldControlProps = {
     id: string;
     'aria-describedby'?: string;
     'aria-invalid'?: true;
+    'aria-required'?: true;
 };
 
 type FormFieldProps = {
@@ -19,7 +20,7 @@ type FormFieldProps = {
     /** Ayuda bajo el campo (`text-xs text-muted-foreground`). */
     help?: ReactNode;
     error?: string;
-    /** Marca la etiqueta con un asterisco rojo. */
+    /** Marca la etiqueta con un asterisco rojo (oculto al lector de pantalla) y el campo con `aria-required`. */
     required?: boolean;
     /** Clases del contenedor: por ejemplo `md:col-span-2` para ocupar las dos columnas. */
     className?: string;
@@ -52,6 +53,7 @@ export function FormField({
         id,
         ...(describedBy ? { 'aria-describedby': describedBy } : {}),
         ...(error ? { 'aria-invalid': true } : {}),
+        ...(required ? { 'aria-required': true } : {}),
     };
 
     return (

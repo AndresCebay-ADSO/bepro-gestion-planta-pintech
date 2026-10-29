@@ -4,6 +4,7 @@ import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/hooks/use-confirm';
 import {
     destroy as warehousesDestroy,
     edit as warehousesEdit,
@@ -55,8 +56,16 @@ type Props = {
 };
 
 export default function WarehousesShow({ warehouse, can }: Props) {
-    const handleDelete = () => {
-        if (!window.confirm('¿Estás seguro de eliminar esta bodega?')) {
+    const confirm = useConfirm();
+
+    const handleDelete = async () => {
+        if (
+            !(await confirm({
+                title: `¿Eliminar la bodega «${warehouse.name}»?`,
+                confirmLabel: 'Eliminar',
+                destructive: true,
+            }))
+        ) {
             return;
         }
 

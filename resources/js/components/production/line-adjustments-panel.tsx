@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useConfirm } from '@/hooks/use-confirm';
 import { toDecimalPayload } from '@/lib/numeric-input';
 import type {
     ProductionOrderLineAdjustment,
@@ -34,6 +35,8 @@ export function LineAdjustmentsPanel({
     isCompleted,
     isReadOnly,
 }: LineAdjustmentsPanelProps) {
+    const confirm = useConfirm();
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -90,11 +93,14 @@ export function LineAdjustmentsPanel({
                                                     variant="ghost"
                                                     size="icon"
                                                     className="h-7 w-7 text-destructive hover:text-destructive"
-                                                    onClick={() => {
+                                                    onClick={async () => {
                                                         if (
-                                                            confirm(
-                                                                '¿Eliminar este ajuste de línea?',
-                                                            )
+                                                            await confirm({
+                                                                title: '¿Eliminar este ajuste de línea?',
+                                                                confirmLabel:
+                                                                    'Eliminar',
+                                                                destructive: true,
+                                                            })
                                                         ) {
                                                             router.delete(
                                                                 destroyLineAdjustment(

@@ -151,7 +151,7 @@ export function RawMaterialForm({
     const minimumStock = parseDecimal(form.data.minimum_stock);
 
     return (
-        <form onSubmit={handleSubmit} className="grid min-w-0 gap-6">
+        <form noValidate onSubmit={handleSubmit} className="grid min-w-0 gap-6">
             {/* Block 1: Identification */}
             <div className="space-y-4 rounded-lg border border-border bg-card p-6 shadow-sm">
                 <h2 className="font-medium text-foreground">Identificación</h2>

@@ -74,6 +74,7 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
                 />
 
                 <form
+                    noValidate
                     onSubmit={(event) => {
                         event.preventDefault();
                         submit();

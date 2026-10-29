@@ -207,6 +207,9 @@ Three containers, chosen by size:
 | `Dialog` | Short: up to ~6 fields, one section, no lines; create and edit in the same dialog (client, warehouse, catalogs) |
 | `Sheet` | Frequent entries from a listing where the list behind matters (raw material and finished goods movements) |
 
+Clients, warehouses and the catalogs are still pages (`<FormPage width="narrow">`): moving them to a `Dialog` changes
+their routes and controllers, so it happens in each module's redesign, not as a form change.
+
 Page frame: a form page wraps its content in `<FormPage>` (`components/form-page.tsx`), centered with
 `mx-auto w-full space-y-6 p-6` and one of two widths: `width="narrow"` (`max-w-3xl`) for forms without item lines or
 matrices (client, raw material, warehouse, user, product, shrink wrap) and `width="wide"` (`max-w-5xl`) for forms with
@@ -214,7 +217,7 @@ lines or a matrix (OP, formula, quotation, order, role, R&D). Settings screens k
 
 Same in all three:
 - One field piece, `<FormField>` (`components/form-field.tsx`): label, field, help (`text-xs text-muted-foreground`)
-  and error, with `htmlFor`, `aria-describedby` and `aria-invalid` wired. One column on the phone, two on desktop for
+  and error, with `htmlFor`, `aria-describedby`, `aria-invalid` and `aria-required` wired. One column on the phone, two on desktop for
   short fields, paired by meaning (a lone field spans the row); each field fills its column (`min-w-0`) and a long
   value is cut with «…», never overflowing it.
 - Footer: `<FormActions>` (`components/form-actions.tsx`), «Cancelar» on the left and the main action (primary, never
@@ -238,6 +241,9 @@ Same in all three:
 - Dates with the app calendar, never the native picker: `<PlantDateInput>` (`components/plant-date-input.tsx`), with
   month and year selectors. It holds the bounds (`notFuture`, `notPast`, `min`, `max`) against the plant's today and
   keeps an out-of-bounds saved date (`saved`); the form sets the default value, usually `plantToday`.
+  The only exception is a date with a time (`datetime-local`, the quality certificate in
+  `components/production/control-card.tsx`): `PlantDateInput` handles days only, so it keeps the native picker until
+  the production order redesign.
 - **`Select` or `Combobox`:** `Select` (`ui/select.tsx`) for fixed lists (enums, options `{value, label}` from
   `EnumOptions::for()`) or lists that almost always have fewer than ~8 options. `Combobox` (`ui/combobox.tsx`) for
   business data that grows and where searching helps: clients, products, raw materials, batches, production orders.

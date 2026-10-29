@@ -45,6 +45,7 @@ export default function ShrinkWrapTypesEdit({
                 />
 
                 <form
+                    noValidate
                     onSubmit={(event) => {
                         event.preventDefault();
                         form.transform(shrinkWrapTypePayload);

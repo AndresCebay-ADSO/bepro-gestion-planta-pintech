@@ -18,6 +18,7 @@ export default function ResetPassword({ token, email }: Props) {
             <Head title="Restablecer contraseña — Pintech" />
 
             <Form
+                noValidate
                 action={update.url()}
                 method="post"
                 transform={(data) => ({ ...data, token, email })}

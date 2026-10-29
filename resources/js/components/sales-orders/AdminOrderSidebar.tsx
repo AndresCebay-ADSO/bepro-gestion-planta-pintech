@@ -2,6 +2,7 @@ import { useForm } from '@inertiajs/react';
 import { RefreshCw, Save } from 'lucide-react';
 
 import { FormattedDate } from '@/components/formatted-date';
+import { PlantDateInput } from '@/components/plant-date-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +14,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { dateBoundKeepingSaved } from '@/lib/date-time-helpers';
 import {
     update as salesOrderUpdate,
     updateStatus as salesOrderUpdateStatus,
@@ -83,6 +83,7 @@ export default function AdminOrderSidebar({
         <div className="space-y-6">
             {can.updateStatus && statusTransitions.length > 0 && (
                 <form
+                    noValidate
                     onSubmit={handleStatusUpdate}
                     className="space-y-4 rounded-lg border border-border bg-card p-6"
                 >
@@ -133,6 +134,7 @@ export default function AdminOrderSidebar({
 
             {can.update && (
                 <form
+                    noValidate
                     onSubmit={handleDataUpdate}
                     className="space-y-4 rounded-lg border border-border bg-card p-6"
                 >
@@ -166,19 +168,15 @@ export default function AdminOrderSidebar({
                         <Label htmlFor="estimated_delivery_date">
                             Fecha estimada de entrega
                         </Label>
-                        <Input
+                        <PlantDateInput
                             id="estimated_delivery_date"
-                            type="date"
-                            min={dateBoundKeepingSaved(
-                                dataForm.data.estimated_delivery_date,
-                                order.estimated_delivery_date,
-                                order.created_on,
-                            )}
+                            min={order.created_on}
+                            saved={order.estimated_delivery_date}
                             value={dataForm.data.estimated_delivery_date}
-                            onChange={(e) =>
+                            onChange={(value) =>
                                 dataForm.setData(
                                     'estimated_delivery_date',
-                                    e.target.value,
+                                    value,
                                 )
                             }
                         />

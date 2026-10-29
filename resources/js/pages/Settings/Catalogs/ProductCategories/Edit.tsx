@@ -31,6 +31,7 @@ export default function ProductCategoriesEdit({ category }: Props) {
                 />
 
                 <form
+                    noValidate
                     onSubmit={(event) => {
                         event.preventDefault();
                         form.put(categoriesUpdate(category.id).url);

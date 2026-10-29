@@ -1,5 +1,5 @@
-import { Link, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, ChevronRight, Save, Send } from 'lucide-react';
+import { useForm } from '@inertiajs/react';
+import { ChevronRight, Save, Send } from 'lucide-react';
 import { useState } from 'react';
 
 import { PageHeader } from '@/components/page-header';
@@ -20,7 +20,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { dateBoundKeepingSaved } from '@/lib/date-time-helpers';
 import { isValidIntegerText, parseDecimal } from '@/lib/numeric-input';
 
 export type RawPaintDevFormData = {
@@ -248,7 +247,6 @@ type Props = {
     submitUrl: string;
     method?: 'post' | 'put';
     title: string;
-    backUrl: string;
     saveLabel: string;
     submitLabel: string;
 };
@@ -269,20 +267,11 @@ export default function PaintDevelopmentRequestForm({
     submitUrl,
     method = 'post',
     title,
-    backUrl,
     saveLabel,
     submitLabel,
 }: Props) {
-    const { plantToday } = usePage().props;
     const { data, setData, post, put, processing, errors, transform } =
         useForm<PaintDevFormData>(toFormData(initialData));
-
-    // No antes de hoy; un borrador viejo puede conservar exactamente la fecha que ya tenía (D-PDR1, como el servidor).
-    const sampleDueDateMin = dateBoundKeepingSaved(
-        data.sample_due_date,
-        initialData.sample_due_date,
-        plantToday,
-    );
 
     const [step, setStep] = useState(1);
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -690,21 +679,7 @@ export default function PaintDevelopmentRequestForm({
     return (
         <>
             <div className="space-y-4 p-6">
-                <div className="flex items-center gap-3">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        asChild
-                        className="shrink-0"
-                    >
-                        <Link href={backUrl}>
-                            <ArrowLeft className="h-4 w-4" />
-                        </Link>
-                    </Button>
-                    <div className="min-w-0 flex-1">
-                        <PageHeader title={title} />
-                    </div>
-                </div>
+                <PageHeader title={title} />
 
                 {/* Stepper */}
                 <div className="flex items-center justify-between">
@@ -748,14 +723,14 @@ export default function PaintDevelopmentRequestForm({
                     />
                 </div>
 
-                <form className="space-y-6">
+                <form noValidate className="space-y-6">
                     {step === 1 && (
                         <ContextStep
                             data={data}
                             setPayload={handleSetPayload}
                             setData={handleSetData}
                             errors={combinedErrors}
-                            sampleDueDateMin={sampleDueDateMin}
+                            savedSampleDueDate={initialData.sample_due_date}
                         />
                     )}
                     {step === 2 && (

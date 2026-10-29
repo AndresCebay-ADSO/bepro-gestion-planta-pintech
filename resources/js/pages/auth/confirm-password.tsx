@@ -12,6 +12,7 @@ export default function ConfirmPassword() {
             <Head title="Confirmar contraseña" />
 
             <Form
+                noValidate
                 action={store.url()}
                 method="post"
                 resetOnSuccess={['password']}

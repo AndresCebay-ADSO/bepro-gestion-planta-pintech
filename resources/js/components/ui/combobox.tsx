@@ -36,9 +36,10 @@ interface ComboboxProps {
     disabled?: boolean;
     /** El `id` del disparador: la etiqueta lo señala y el foco va a él cuando el servidor rechaza el valor. */
     id?: string;
-    /** Ayuda y error del campo (los enlaza `<FormField>`). */
+    /** Ayuda, error y obligatoriedad del campo (los enlaza `<FormField>`). */
     'aria-describedby'?: string;
     'aria-invalid'?: boolean;
+    'aria-required'?: boolean;
 }
 
 /** Una tecla que escribe texto (letra, número, signo), sin atajos de Ctrl/Cmd/Alt. El espacio abre la lista. */
@@ -67,6 +68,7 @@ export function Combobox({
     id,
     'aria-describedby': ariaDescribedBy,
     'aria-invalid': ariaInvalid,
+    'aria-required': ariaRequired,
 }: ComboboxProps) {
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState('');
@@ -178,6 +180,7 @@ export function Combobox({
                     aria-expanded={open}
                     aria-describedby={ariaDescribedBy}
                     aria-invalid={ariaInvalid}
+                    aria-required={ariaRequired}
                     title={selectedOption?.label}
                     data-slot="combobox-trigger"
                     onKeyDown={handleTriggerKeyDown}

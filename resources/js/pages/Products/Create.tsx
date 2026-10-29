@@ -90,7 +90,11 @@ export default function ProductsCreate({ categories, units, can }: Props) {
                     />
                 </div>
 
-                <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
+                <form
+                    noValidate
+                    onSubmit={handleSubmit}
+                    className="max-w-2xl space-y-6"
+                >
                     {/* Identificación */}
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                         <h2 className="text-lg font-semibold text-foreground">

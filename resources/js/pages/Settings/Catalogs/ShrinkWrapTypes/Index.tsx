@@ -9,6 +9,7 @@ import { FormattedNumber } from '@/components/formatted-number';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/components/ui/pagination';
+import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import {
     create as typesCreate,
@@ -51,8 +52,16 @@ export default function ShrinkWrapTypesIndex({ types, filters, can }: Props) {
         },
     });
 
-    const handleDelete = (type: TypeRow) => {
-        if (!window.confirm(`¿Eliminar el tipo «${type.name}»?`)) {
+    const confirm = useConfirm();
+
+    const handleDelete = async (type: TypeRow) => {
+        if (
+            !(await confirm({
+                title: `¿Eliminar el tipo «${type.name}»?`,
+                confirmLabel: 'Eliminar',
+                destructive: true,
+            }))
+        ) {
             return;
         }
 

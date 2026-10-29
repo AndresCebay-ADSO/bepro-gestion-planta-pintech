@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Pagination from '@/components/ui/pagination';
+import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
 import {
@@ -65,6 +66,7 @@ interface Props {
 }
 
 const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
+    const confirm = useConfirm();
     const {
         filters: filterState,
         setFilter,
@@ -172,11 +174,13 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                                     label: 'Eliminar',
                                     icon: Trash2,
                                     destructive: true,
-                                    onSelect: () => {
+                                    onSelect: async () => {
                                         if (
-                                            confirm(
-                                                '¿Eliminar este usuario definitivamente?',
-                                            )
+                                            await confirm({
+                                                title: '¿Eliminar este usuario definitivamente?',
+                                                confirmLabel: 'Eliminar',
+                                                destructive: true,
+                                            })
                                         ) {
                                             router.delete(
                                                 usersDestroy(user.id).url,

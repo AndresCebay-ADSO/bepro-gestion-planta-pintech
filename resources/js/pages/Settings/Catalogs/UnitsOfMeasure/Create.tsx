@@ -36,6 +36,7 @@ export default function UnitsOfMeasureCreate() {
                 />
 
                 <form
+                    noValidate
                     onSubmit={(event) => {
                         event.preventDefault();
                         form.transform((data) =>

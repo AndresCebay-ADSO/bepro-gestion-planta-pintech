@@ -269,6 +269,8 @@ export function ControlCard({
                     </div>
                 </div>
                 <Separator />
+                {/* Fecha con hora: `PlantDateInput` solo maneja días, así que estos cuatro campos siguen con el selector
+                    nativo `datetime-local`. Es la única excepción a DESIGN.md §8; se resuelve con el rediseño de la OP. */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                         <Label className="text-xs">Inicio Agitación</Label>

@@ -15,6 +15,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useBatchMovementDate } from '@/hooks/use-batch-movement-date';
 import { finishedLotLabel } from '@/lib/finished-lot';
 import { formatNumber } from '@/lib/formatters';
 import { UNITS_MAX_DIGITS } from '@/lib/number-types';
@@ -209,6 +210,17 @@ export function FinishedMovementFormFields({
     );
     const selectedBatchId = form.data.finished_product_batch_id;
     const setFormData = form.setData;
+    // El servidor rechaza un movimiento fechado antes de la entrada del lote: el calendario no ofrece esos días.
+    const selectedBatch = selectedBatchId
+        ? filteredBatches.find(
+              (batch) => String(batch.id) === String(selectedBatchId),
+          )
+        : undefined;
+    const movementDateMin = useBatchMovementDate({
+        batchEntryDate: selectedBatch?.entry_date,
+        movementDate: form.data.movement_date,
+        clearMovementDate: () => setFormData('movement_date', ''),
+    });
 
     useEffect(() => {
         if (
@@ -422,6 +434,7 @@ export function FinishedMovementFormFields({
             >
                 <PlantDateInput
                     notFuture
+                    min={movementDateMin}
                     value={form.data.movement_date}
                     onChange={(value) => form.setData('movement_date', value)}
                 />

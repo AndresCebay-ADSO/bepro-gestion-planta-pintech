@@ -1,9 +1,10 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { Plus, Trash2 } from 'lucide-react';
 
 import { store as salesOrderStore } from '@/actions/App/Http/Controllers/SalesOrderController';
 import { IntegerInput } from '@/components/integer-input';
 import { PageHeader } from '@/components/page-header';
+import { PlantDateInput } from '@/components/plant-date-input';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -17,7 +18,10 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { UNITS_MAX_DIGITS } from '@/lib/number-types';
-import { index as salesOrdersIndex } from '@/routes/sales-orders';
+import {
+    create as salesOrdersCreate,
+    index as salesOrdersIndex,
+} from '@/routes/sales-orders';
 
 type ClientOption = {
     id: number;
@@ -54,7 +58,6 @@ type Props = {
 };
 
 export default function SalesOrdersCreate({ clients, products }: Props) {
-    const { plantToday } = usePage().props;
     const { data, setData, post, processing, errors } = useForm({
         client_id: '',
         client_business_name: '',
@@ -133,17 +136,9 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
             <Head title="Nuevo pedido" />
 
             <div className="mx-auto max-w-4xl space-y-6 p-6">
-                <div className="space-y-4">
-                    <Button variant="ghost" size="sm" asChild>
-                        <Link href={salesOrdersIndex().url}>
-                            <ArrowLeft className="mr-1 h-4 w-4" />
-                            Volver
-                        </Link>
-                    </Button>
-                    <PageHeader title="Nuevo pedido" />
-                </div>
+                <PageHeader title="Nuevo pedido" />
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form noValidate onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                         <h2 className="text-lg font-semibold">
                             Información general
@@ -199,13 +194,12 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                 <Label htmlFor="required_date">
                                     Fecha requerida *
                                 </Label>
-                                <Input
+                                <PlantDateInput
                                     id="required_date"
-                                    type="date"
-                                    min={plantToday}
+                                    notPast
                                     value={data.required_date}
-                                    onChange={(e) =>
-                                        setData('required_date', e.target.value)
+                                    onChange={(value) =>
+                                        setData('required_date', value)
                                     }
                                 />
                                 {errors.required_date && (
@@ -544,3 +538,10 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
         </>
     );
 }
+
+SalesOrdersCreate.layout = {
+    breadcrumbs: [
+        { title: 'Pedidos', href: salesOrdersIndex() },
+        { title: 'Nuevo pedido', href: salesOrdersCreate() },
+    ],
+};
