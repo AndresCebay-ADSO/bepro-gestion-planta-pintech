@@ -265,20 +265,17 @@ describe('contrato de DESIGN.md', () => {
         expect(report(found)).toEqual([]);
     });
 
-    it('pinta los listados con DataListing, sin tablas a mano en pages/', () => {
-        // Excepciones por archivo: Costos y Precios no son listados (se rediseñan aparte) y las tablas de detalle
-        // esperan su propio plan. Al migrar una, se quita de aquí.
+    it('pinta los listados con DataListing y las líneas con DetailTable, sin tablas a mano en pages/', () => {
+        // Excepciones por archivo: Costos no es un listado (se rediseña aparte) y estas tablas de detalle aún no usan
+        // <DetailTable>. Al migrar una, se quita de aquí.
         const tableExceptions = [
             'resources/js/pages/Costs/Index.tsx',
-            'resources/js/pages/Formulas/Show.tsx',
             'resources/js/pages/Inventory/RawMaterials/Show.tsx',
             'resources/js/pages/Inventory/Warehouses/Show.tsx',
             'resources/js/pages/Inventory/Warehouses/AssignUsers.tsx',
             'resources/js/pages/Production/ShrinkWraps/Show.tsx',
             'resources/js/pages/Products/Show.tsx',
             'resources/js/pages/QrCodes/Show.tsx',
-            'resources/js/pages/Quotations/Show.tsx',
-            'resources/js/pages/SalesOrders/Show.tsx',
         ];
 
         const files = screenFiles.filter(
@@ -290,7 +287,7 @@ describe('contrato de DESIGN.md', () => {
         const found = violations(files, [
             {
                 pattern: /<(?:table|Table)\b/g,
-                rule: 'DESIGN.md §9: un listado es <DataListing>, no una tabla escrita a mano',
+                rule: 'DESIGN.md §9: un listado es <DataListing> y una tabla de detalle <DetailTable>, no una tabla escrita a mano',
             },
         ]);
 

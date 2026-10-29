@@ -2,6 +2,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Download, Pencil, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 
+import { DetailTable } from '@/components/detail-table';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
@@ -572,94 +573,106 @@ export default function QuotationsShow({
                     </div>
                 </div>
 
-                <div className="overflow-x-auto rounded-lg border border-border bg-card">
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/30">
-                            <tr>
-                                <th className="px-4 py-3 text-left">
-                                    Producto
-                                </th>
-                                <th className="px-4 py-3 text-left">Tipo</th>
-                                <th className="px-4 py-3 text-left">Color</th>
-                                <th className="px-4 py-3 text-left">
-                                    Descripción
-                                </th>
-                                <th className="px-4 py-3 text-right">Cant.</th>
-                                <th className="px-4 py-3 text-right">
-                                    Precio lista
-                                </th>
-                                <th className="px-4 py-3 text-right">
-                                    Ajuste %
-                                </th>
-                                <th className="px-4 py-3 text-right">
-                                    Precio unit.
-                                </th>
-                                <th className="px-4 py-3 text-right">
-                                    Subtotal
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {quotation.items.map((item) => (
-                                <tr
-                                    key={item.id}
-                                    className="border-b border-border last:border-0"
-                                >
-                                    <td className="px-4 py-3">
-                                        <div className="font-medium">
-                                            {item.product.name}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                            {item.product_variant.name}
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        {item.type_label ?? '—'}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        {item.color ?? '—'}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        {item.description ?? '—'}
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                        {item.quantity}
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                        <FormattedNumber
-                                            value={item.list_unit_price}
-                                            currency
-                                            maxDecimals={0}
-                                        />
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                        <FormattedNumber
-                                            value={item.price_adjustment_pct}
-                                            maxDecimals={2}
-                                            trimTrailingZeros
-                                        />
-                                        %
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                        <FormattedNumber
-                                            value={item.unit_price}
-                                            currency
-                                            maxDecimals={0}
-                                        />
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                        <FormattedNumber
-                                            value={item.subtotal}
-                                            currency
-                                            maxDecimals={0}
-                                        />
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                <DetailTable
+                    rows={quotation.items}
+                    rowKey={(item) => item.id}
+                    caption="Productos cotizados"
+                    columns={[
+                        {
+                            key: 'product',
+                            header: 'Producto',
+                            cell: (item) => (
+                                <>
+                                    <div>{item.product.name}</div>
+                                    <div className="text-xs font-normal text-muted-foreground">
+                                        {item.product_variant.name}
+                                    </div>
+                                </>
+                            ),
+                        },
+                        {
+                            key: 'type',
+                            header: 'Tipo',
+                            cell: (item) => item.type_label,
+                        },
+                        {
+                            key: 'color',
+                            header: 'Color',
+                            cell: (item) => item.color,
+                        },
+                        {
+                            key: 'description',
+                            header: 'Descripción',
+                            cell: (item) => item.description,
+                        },
+                        {
+                            key: 'quantity',
+                            header: 'Cant.',
+                            cell: (item) => (
+                                <FormattedNumber
+                                    value={item.quantity}
+                                    maxDecimals={0}
+                                />
+                            ),
+                            align: 'right',
+                        },
+                        {
+                            key: 'list_unit_price',
+                            header: 'Precio lista',
+                            cell: (item) => (
+                                <FormattedNumber
+                                    value={item.list_unit_price}
+                                    currency
+                                    maxDecimals={0}
+                                />
+                            ),
+                            align: 'right',
+                        },
+                        {
+                            key: 'price_adjustment_pct',
+                            header: 'Ajuste %',
+                            cell: (item) => (
+                                <>
+                                    <FormattedNumber
+                                        value={item.price_adjustment_pct}
+                                        maxDecimals={2}
+                                        trimTrailingZeros
+                                    />
+                                    %
+                                </>
+                            ),
+                            align: 'right',
+                        },
+                        {
+                            key: 'unit_price',
+                            header: 'Precio unit.',
+                            cell: (item) => (
+                                <FormattedNumber
+                                    value={item.unit_price}
+                                    currency
+                                    maxDecimals={0}
+                                />
+                            ),
+                            align: 'right',
+                        },
+                        {
+                            key: 'subtotal',
+                            header: 'Subtotal',
+                            cell: (item) => (
+                                <FormattedNumber
+                                    value={item.subtotal}
+                                    currency
+                                    maxDecimals={0}
+                                />
+                            ),
+                            align: 'right',
+                        },
+                    ]}
+                    empty="Esta cotización no tiene productos."
+                />
 
+                {/* Los totales van aparte y no al pie de la tabla: en el celular la tabla se desplaza y el Total quedaría
+                    fuera de la vista. */}
                 <div className="ml-auto max-w-sm rounded-lg border border-border bg-card p-6">
                     <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
@@ -671,7 +684,15 @@ export default function QuotationsShow({
                             />
                         </div>
                         <div className="flex justify-between">
-                            <span>IVA {quotation.iva_percentage}%</span>
+                            <span>
+                                IVA{' '}
+                                <FormattedNumber
+                                    value={quotation.iva_percentage}
+                                    maxDecimals={2}
+                                    trimTrailingZeros
+                                />
+                                %
+                            </span>
                             <FormattedNumber
                                 value={quotation.iva_amount}
                                 currency

@@ -18,7 +18,10 @@ export default function AppSidebarLayout({
                 <div className="px-4 py-2">
                     <FlashMessages />
                 </div>
-                {children}
+                {/* Caja de bloque para la página: dentro del flex de <main>, una raíz con mx-auto toma el ancho de su
+                    contenido (una tabla, el nombre largo de un cliente en un selector) y no el de la pantalla, y en el
+                    celular la página entera se ensancha. */}
+                <div className="min-w-0">{children}</div>
             </AppContent>
             <AlertToastNotifier />
         </AppShell>

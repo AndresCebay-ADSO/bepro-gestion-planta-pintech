@@ -2,6 +2,8 @@ import { Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 
+import { EmptyCell } from '@/components/empty-cell';
+import { EmptyState } from '@/components/empty-state';
 import { RowActions } from '@/components/row-actions';
 import type { RowAction } from '@/components/row-actions';
 import {
@@ -97,11 +99,7 @@ export function DataListing<T>({
     }, [columnSignature]);
 
     if (rows.length === 0) {
-        return (
-            <div className="rounded-lg border border-dashed border-border px-4 py-12 text-center text-sm text-muted-foreground">
-                {empty}
-            </div>
-        );
+        return <EmptyState>{empty}</EmptyState>;
     }
 
     // Las acciones de cada fila se calculan una sola vez: sirven a la tabla, a la tarjeta y a la columna de acciones.
@@ -123,20 +121,11 @@ export function DataListing<T>({
     const statusColumn = columns.find((column) => column.mobile === 'status');
 
     // El identificador es el único enlace de la fila: el resto se puede seleccionar y copiar.
-    // Sin dato, «—» atenuado (en la tarjeta solo llega aquí el título: los demás se omiten). Un título sin dato
-    // sigue siendo el enlace: la fila tiene que poder abrirse igual. El lector de pantalla dice «Sin dato», no «—».
+    // Sin dato, <EmptyCell> (en la tarjeta solo llega aquí el título: los demás se omiten). Un título sin dato
+    // sigue siendo el enlace: la fila tiene que poder abrirse igual.
     const renderValue = (column: DataListingColumn<T>, row: T) => {
         const value = column.cell(row);
-        const content = isEmptyCell(value) ? (
-            <>
-                <span aria-hidden="true" className="text-muted-foreground">
-                    —
-                </span>
-                <span className="sr-only">Sin dato</span>
-            </>
-        ) : (
-            value
-        );
+        const content = isEmptyCell(value) ? <EmptyCell /> : value;
         const href = column.mobile === 'title' ? rowHref?.(row) : undefined;
 
         if (href === undefined) {

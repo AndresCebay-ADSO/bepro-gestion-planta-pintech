@@ -9,6 +9,7 @@ import {
     priceReference as formulasPriceReference,
 } from '@/actions/App/Http/Controllers/FormulaController';
 import { DetailPageHeader } from '@/components/detail-page-header';
+import { DetailTable } from '@/components/detail-table';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { Badge } from '@/components/ui/badge';
@@ -234,12 +235,10 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                 )}
 
                 {/* Ingredientes */}
-                <div className="rounded-lg border border-border bg-card">
-                    <div className="border-b border-border px-6 py-4">
-                        <h2 className="font-medium text-foreground">
-                            Ingredientes
-                        </h2>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
+                <section className="space-y-4">
+                    <div>
+                        <h2 className="text-lg font-semibold">Ingredientes</h2>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
                             Materias primas necesarias para producir una unidad
                             de{' '}
                             <span className="font-medium">
@@ -251,62 +250,50 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                         </p>
                     </div>
 
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/40">
-                            <tr>
-                                <th className="w-14 p-4 text-center font-medium">
-                                    Paso
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Código MP
-                                </th>
-                                <th className="p-4 text-right font-medium">
-                                    Cantidad
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Unidad
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {formula.details.map((detail) => (
-                                <tr
-                                    key={detail.id}
-                                    className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30"
-                                >
-                                    <td className="p-4 text-center text-muted-foreground tabular-nums">
-                                        {detail.step_order ?? '—'}
-                                    </td>
-                                    <td className="p-4 font-mono font-medium text-foreground">
-                                        {detail.raw_material?.code ?? '-'}
-                                    </td>
-                                    <td className="p-4 text-right text-foreground tabular-nums">
+                    <DetailTable
+                        rows={formula.details}
+                        rowKey={(detail) => detail.id}
+                        caption="Ingredientes"
+                        columns={[
+                            {
+                                key: 'step',
+                                header: 'Paso',
+                                cell: (detail) => (
+                                    <FormattedNumber
+                                        value={detail.step_order}
+                                        maxDecimals={0}
+                                    />
+                                ),
+                                align: 'center',
+                                className: 'w-14 text-muted-foreground',
+                            },
+                            {
+                                key: 'code',
+                                header: 'Código MP',
+                                cell: (detail) =>
+                                    detail.raw_material?.code ?? null,
+                                className: 'font-mono font-medium',
+                            },
+                            {
+                                // La unidad va con la cifra («12,5 kg»): sin columna aparte, la tabla cabe a 390 px.
+                                key: 'quantity',
+                                header: 'Cantidad',
+                                cell: (detail) => (
+                                    <>
                                         <FormattedNumber
                                             value={detail.quantity}
                                             maxDecimals={4}
                                         />
-                                    </td>
-                                    <td className="p-4 text-muted-foreground">
-                                        {detail.unit_of_measure
-                                            ? `${detail.unit_of_measure.name} (${detail.unit_of_measure.symbol})`
-                                            : '-'}
-                                    </td>
-                                </tr>
-                            ))}
-                            {formula.details.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={4}
-                                        className="p-8 text-center text-sm text-muted-foreground"
-                                    >
-                                        Esta fórmula no tiene ingredientes
-                                        registrados.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                        {detail.unit_of_measure &&
+                                            ` ${detail.unit_of_measure.symbol}`}
+                                    </>
+                                ),
+                                align: 'right',
+                            },
+                        ]}
+                        empty="Esta fórmula no tiene ingredientes registrados."
+                    />
+                </section>
             </div>
         </>
     );
