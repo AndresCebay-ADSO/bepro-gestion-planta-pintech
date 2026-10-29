@@ -202,7 +202,7 @@ class QuotationController extends Controller
 
         $filename = 'COT. '.($quotation->quotation_number ?? $quotation->id).'.pdf';
 
-        return $this->renderQuotationPdf->execute($quotation)->download($filename);
+        return $this->renderQuotationPdf->execute($quotation)->stream($filename);
     }
 
     /**

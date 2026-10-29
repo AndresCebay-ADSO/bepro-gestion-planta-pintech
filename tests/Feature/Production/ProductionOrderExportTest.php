@@ -107,7 +107,7 @@ function createExportTestDependencies(): array
     return [$order, $user];
 }
 
-test('exportPdf returns a PDF download for an authenticated user', function () {
+test('exportPdf returns an inline PDF response for an authenticated user', function () {
     [$order, $user] = createExportTestDependencies();
 
     $response = $this->actingAs($user)
@@ -115,6 +115,9 @@ test('exportPdf returns a PDF download for an authenticated user', function () {
 
     $response->assertSuccessful();
     $response->assertHeader('content-type', 'application/pdf');
+    expect($response->headers->get('content-disposition'))
+        ->toStartWith('inline;')
+        ->toContain('orden-produccion-OP-EXP-0001.pdf');
     expect(strlen($response->content()))->toBeGreaterThan(0);
 });
 

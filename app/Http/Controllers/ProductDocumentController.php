@@ -41,7 +41,14 @@ class ProductDocumentController extends Controller
 
         abort_unless(Storage::disk('local')->exists($document->file_path), 404);
 
-        return Storage::disk('local')->download($document->file_path, $document->file_name);
+        return Storage::disk('local')->response(
+            $document->file_path,
+            $document->file_name,
+            [
+                'Content-Type' => 'application/pdf',
+                'X-Content-Type-Options' => 'nosniff',
+            ]
+        );
     }
 
     public function destroy(ProductDocument $document): RedirectResponse

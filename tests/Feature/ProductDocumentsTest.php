@@ -63,6 +63,36 @@ test('authorized users can upload and version product PDF documents', function (
         ->and(ProductDocument::query()->where('product_id', $product->id)->where('is_current', true)->first()->version)->toBe(2);
 });
 
+test('authorized users can preview product PDF documents inline with nosniff header', function () {
+    Storage::fake('local');
+    [$user, $product] = createProductDocumentFixture();
+
+    Storage::disk('local')->put("product-documents/{$product->id}/ficha.pdf", "%PDF-1.4\ncontent");
+
+    $document = ProductDocument::create([
+        'product_id' => $product->id,
+        'document_type' => QrDocumentType::TechnicalDataSheet,
+        'file_name' => 'Ficha Técnica.pdf',
+        'file_path' => "product-documents/{$product->id}/ficha.pdf",
+        'file_size' => 100,
+        'mime_type' => 'application/pdf',
+        'version' => 1,
+        'is_current' => true,
+        'uploaded_by' => $user->id,
+    ]);
+
+    $response = $this->actingAs($user)
+        ->get(route('products.documents.download', $document));
+
+    $response->assertSuccessful()
+        ->assertHeader('Content-Type', 'application/pdf')
+        ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+    expect($response->headers->get('Content-Disposition'))
+        ->toStartWith('inline;')
+        ->toContain('Ficha Tecnica.pdf');
+});
+
 test('product document upload validates PDF files', function () {
     Storage::fake('local');
     [$user, $product] = createProductDocumentFixture();

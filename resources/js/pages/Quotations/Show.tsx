@@ -1,5 +1,5 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Download, Pencil, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, FileText, Pencil, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 
 import { DetailTable } from '@/components/detail-table';
@@ -195,10 +195,10 @@ export default function QuotationsShow({
                                                 ).url
                                             }
                                             target="_blank"
-                                            rel="noreferrer"
+                                            rel="noopener noreferrer"
                                         >
-                                            <Download className="mr-2 h-4 w-4" />
-                                            Descargar PDF
+                                            <FileText className="size-4" />
+                                            Ver PDF
                                         </a>
                                     </Button>
                                 )}
