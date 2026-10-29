@@ -1,11 +1,14 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, FileText, ShoppingCart } from 'lucide-react';
 
+import { DetailTable } from '@/components/detail-table';
+import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
 import { PriorityBadge } from '@/components/priority-badge';
 import AdminOrderSidebar from '@/components/sales-orders/AdminOrderSidebar';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
+import { quotationName } from '@/lib/quotation-name';
 import { show as quotationsShow } from '@/routes/quotations';
 import { index as salesOrdersIndex } from '@/routes/sales-orders';
 
@@ -38,7 +41,7 @@ type SalesOrderDetail = {
     estimated_delivery_date: string | null;
     notes: string | null;
     shipping_address: string | null;
-    quotation_id: number | null;
+    quotation: { id: number; quotation_number: number | null } | null;
     items: ProductItem[];
     created_at: string;
     created_on: string | null;
@@ -92,7 +95,8 @@ export default function SalesOrdersShow({
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-3">
-                    <div className="space-y-6 lg:col-span-2">
+                    {/* min-w-0: sin él, la columna de la grilla se ensancha con la tabla y esta no se desplaza. */}
+                    <div className="min-w-0 space-y-6 lg:col-span-2">
                         <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                             <h2 className="text-lg font-semibold">
                                 Información del cliente
@@ -136,7 +140,7 @@ export default function SalesOrdersShow({
                                         </span>
                                     </p>
                                 )}
-                                {order.quotation_id && can.viewQuotation && (
+                                {order.quotation && can.viewQuotation && (
                                     <p>
                                         <span className="text-muted-foreground">
                                             Origen:
@@ -150,12 +154,12 @@ export default function SalesOrdersShow({
                                             <Link
                                                 href={
                                                     quotationsShow(
-                                                        order.quotation_id,
+                                                        order.quotation.id,
                                                     ).url
                                                 }
                                             >
                                                 <FileText className="mr-1 h-3 w-3" />
-                                                Cotización #{order.quotation_id}
+                                                {quotationName(order.quotation)}
                                             </Link>
                                         </Button>
                                     </p>
@@ -169,59 +173,47 @@ export default function SalesOrdersShow({
                                 Productos solicitados
                             </h2>
 
-                            {order.items.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">
-                                    No hay productos en este pedido.
-                                </p>
-                            ) : (
-                                <div className="overflow-hidden rounded border border-border">
-                                    <table className="w-full text-sm">
-                                        <thead className="border-b border-border bg-muted/50">
-                                            <tr>
-                                                <th className="p-3 text-left">
-                                                    Producto
-                                                </th>
-                                                <th className="p-3 text-left">
-                                                    Presentación
-                                                </th>
-                                                <th className="p-3 text-left">
-                                                    Color
-                                                </th>
-                                                <th className="p-3 text-right">
-                                                    Cantidad
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {order.items.map((item) => (
-                                                <tr
-                                                    key={item.id}
-                                                    className="border-b border-border/50"
-                                                >
-                                                    <td className="p-3">
-                                                        <span className="font-medium">
-                                                            {item.product.name}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-3 text-muted-foreground">
-                                                        {item.product_variant
-                                                            ?.presentation_label ??
-                                                            item.product_variant
-                                                                ?.name ??
-                                                            'Base'}
-                                                    </td>
-                                                    <td className="p-3 text-muted-foreground">
-                                                        {item.color ?? '—'}
-                                                    </td>
-                                                    <td className="p-3 text-right font-medium">
-                                                        {item.quantity}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
+                            <DetailTable
+                                rows={order.items}
+                                rowKey={(item) => item.id}
+                                caption="Productos solicitados"
+                                columns={[
+                                    {
+                                        key: 'product',
+                                        header: 'Producto',
+                                        cell: (item) => item.product.name,
+                                    },
+                                    {
+                                        key: 'presentation',
+                                        header: 'Presentación',
+                                        cell: (item) =>
+                                            item.product_variant
+                                                ?.presentation_label ??
+                                            item.product_variant?.name ??
+                                            'Base',
+                                        className: 'text-muted-foreground',
+                                    },
+                                    {
+                                        key: 'color',
+                                        header: 'Color',
+                                        cell: (item) => item.color,
+                                        className: 'text-muted-foreground',
+                                    },
+                                    {
+                                        key: 'quantity',
+                                        header: 'Cantidad',
+                                        cell: (item) => (
+                                            <FormattedNumber
+                                                value={item.quantity}
+                                                maxDecimals={0}
+                                            />
+                                        ),
+                                        align: 'right',
+                                        className: 'font-medium',
+                                    },
+                                ]}
+                                empty="No hay productos en este pedido."
+                            />
                         </div>
 
                         {order.notes && (

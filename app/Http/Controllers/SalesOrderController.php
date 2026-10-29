@@ -199,7 +199,11 @@ class SalesOrderController extends Controller
             'estimated_delivery_date' => $salesOrder->estimated_delivery_date?->format('Y-m-d'),
             'notes' => $salesOrder->notes,
             'shipping_address' => $salesOrder->shipping_address,
-            'quotation_id' => $salesOrder->quotation_id,
+            // El número, no solo el id: el enlace dice «Cotización No. 57», como el título de la cotización.
+            'quotation' => $salesOrder->quotation ? [
+                'id' => $salesOrder->quotation->id,
+                'quotation_number' => $salesOrder->quotation->quotation_number,
+            ] : null,
             // Solo los campos que usa la vista: el modelo completo expondría costos y márgenes (docs/MATRIZ_RBAC.md).
             'items' => $salesOrder->items->map(fn ($item) => [
                 'id' => $item->id,

@@ -151,8 +151,36 @@ en `resources/js/lib/data-listing.ts` (con sus pruebas de Vitest).
 
 - Las columnas se describen una sola vez: la tabla se pinta desde `md` y una tarjeta por fila debajo.
 - El identificador abre el detalle (o la edición si no hay detalle) con `rowHref`; el menú «⋯» no repite esa acción.
-- `resources/js/design-contract.test.ts` falla si aparece un `<table>` en `pages/` fuera de las tablas de detalle
-  exceptuadas.
+- `resources/js/design-contract.test.ts` falla si aparece un `<table>` en `pages/` fuera de las excepciones que lista
+  (las tablas de detalle que aún no usan `<DetailTable>`).
+
+---
+
+## DetailTable (tablas de detalle)
+
+Las líneas de **un** registro (los productos de un pedido o una cotización, los ingredientes de una fórmula) no son un
+listado: en el celular siguen siendo tabla, se desplazan a lo ancho dentro de su caja y la primera columna queda fija.
+Reglas y ejemplo en `DESIGN.md` §9.
+
+**Ubicación:** `resources/js/components/detail-table.tsx` y la lógica pura de la fila de totales en
+`resources/js/lib/detail-table.ts` (con sus pruebas de Vitest).
+
+- Columnas como las de `DataListing`, sin papel de tarjeta: `key`, `header`, `cell`, `align`, `className`.
+- `footer`: filas de totales en `<tfoot>`; la etiqueta va a la derecha, junto a la primera cifra.
+- `caption`: qué contiene la tabla, solo para el lector de pantalla.
+- Pinta su propia caja con borde: no se envuelve en otra.
+
+---
+
+## EmptyCell y EmptyState (sin dato, sin filas)
+
+Las comparten `DataListing` y `DetailTable`; una pantalla no las necesita si usa esas dos.
+
+**Ubicación:** `resources/js/components/empty-cell.tsx` y `resources/js/components/empty-state.tsx`.
+
+- `<EmptyCell />`: «—» atenuado, que el lector de pantalla lee «Sin dato». Sale cuando `cell` devuelve un valor vacío
+  (`isEmptyCell` en `lib/data-listing.ts`: `null`, `undefined`, `false` o `''`; el `0` es un dato).
+- `<EmptyState>mensaje</EmptyState>`: el mensaje centrado en una caja punteada, cuando la tabla no tiene filas.
 
 ---
 

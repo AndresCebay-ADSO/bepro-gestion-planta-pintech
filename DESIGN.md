@@ -274,8 +274,9 @@ Same in all three:
   (and no column when no row has one).
 - A blocked action shows its reason under the label (`disabledReason`; a tooltip does not work on the phone). It is
   not Radix `disabled`: it keeps focus, is announced with `aria-disabled` and does nothing.
-- Empty listing: the `empty` message in a dashed box, centered. Detail tables (lines of an OP, a formula or a
-  quotation) are not listings: they scroll horizontally with the first column fixed _(pending)_.
+- Empty listing: the `empty` message in a dashed box, centered (`<EmptyState>`, `components/empty-state.tsx`).
+- Detail tables (the lines of **one** record: the products of an order or a quotation, the ingredients of a formula)
+  are not listings: see «Detail tables» below.
 
 Role of each column on the phone card (`mobile`, required; on desktop every column shows):
 
@@ -293,7 +294,8 @@ fit in the 4 `meta`, the least important `meta` goes `hidden` instead.
 
 **No value, `null`.** When a row has nothing to show in a column (no alerts, no end date, no seller), `cell` returns
 `null` (`undefined` and `false` count too; `0` is a value; `''` counts as empty). The card leaves that label-value pair
-out, and the table shows «—» in `text-muted-foreground` (screen readers hear «Sin dato»). Screens never write `'-'` or
+out, and the table shows «—» in `text-muted-foreground` (screen readers hear «Sin dato»; `<EmptyCell>`,
+`components/empty-cell.tsx`). Screens never write `'-'` or
 `'—'` by hand.
 
 **Missing value, muted text.** Telling the two apart: what is normal not to have returns `null` (above); a value that
@@ -335,6 +337,35 @@ finds each value twice.
 ```
 
 A `RowAction` has either `href` (navigates) or `onSelect` (runs a handler), never both; `hidden` removes it (permission).
+
+**Detail tables.** Comparing the lines is the point, so on the phone they stay a table: `<DetailTable>`
+(`components/detail-table.tsx`) scrolls horizontally inside its own box, never the page, and its first column stays
+fixed. That column says what the line is (product, ingredient, step, lot), so it goes first. Columns have the shape of
+`DataListing` without the card role: `key`, `header`, `cell`, `align` (`'right'` adds `tabular-nums`), `className`.
+Figures and pills never wrap; text wraps, with a minimum width so it never leaves one word per line. Empty cells and the
+empty table follow the listing rules above (`null` → «—», `empty` → dashed box; shared `<EmptyCell>` and
+`<EmptyState>`). Totals go in `footer` (a `<tfoot>`): each row's label sits right-aligned next to its first figure.
+`caption` names the table for screen readers only. The component draws its own bordered box: do not wrap it in another.
+The line on the right of the fixed column shows only while the table overflows its box. Rows do not highlight on hover:
+they open nothing.
+
+```tsx
+<DetailTable
+    rows={quotation.items}
+    rowKey={(item) => item.id}
+    caption="Productos cotizados"
+    columns={[
+        { key: 'product', header: 'Producto', cell: (item) => item.product.name },
+        { key: 'color', header: 'Color', cell: (item) => item.color }, // null → «—»
+        { key: 'quantity', header: 'Cant.', cell: (item) => <FormattedNumber value={item.quantity} maxDecimals={0} />, align: 'right' },
+        { key: 'subtotal', header: 'Subtotal', cell: (item) => <FormattedNumber value={item.subtotal} currency maxDecimals={0} />, align: 'right' },
+    ]}
+    footer={[
+        { key: 'total', label: 'Total', values: { subtotal: <FormattedNumber value={quotation.total} currency maxDecimals={0} bold /> } },
+    ]}
+    empty="Esta cotización no tiene productos."
+/>
+```
 
 ## 10. Navigation
 

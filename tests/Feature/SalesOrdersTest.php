@@ -195,6 +195,9 @@ it('exposes viewQuotation permission on order linked to quotation', function () 
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('can.viewQuotation', true)
+            // El enlace dice «Cotización No. N»: hace falta el número, no solo el id.
+            ->where('order.quotation.id', $quotation->id)
+            ->where('order.quotation.quotation_number', $quotation->quotation_number)
         );
 
     $this->actingAs($comercial)
