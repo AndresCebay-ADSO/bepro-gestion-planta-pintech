@@ -1,14 +1,18 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Head, useForm } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 
 import { store as salesOrderStore } from '@/actions/App/Http/Controllers/SalesOrderController';
+import { FormActions } from '@/components/form-actions';
+import { FormField } from '@/components/form-field';
+import { FormLineItem } from '@/components/form-line-item';
+import { FormPage } from '@/components/form-page';
+import InputError from '@/components/input-error';
 import { IntegerInput } from '@/components/integer-input';
 import { PageHeader } from '@/components/page-header';
 import { PlantDateInput } from '@/components/plant-date-input';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -17,6 +21,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { clearListErrors } from '@/lib/form-errors';
 import { UNITS_MAX_DIGITS } from '@/lib/number-types';
 import {
     create as salesOrdersCreate,
@@ -58,7 +63,7 @@ type Props = {
 };
 
 export default function SalesOrdersCreate({ clients, products }: Props) {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, clearErrors } = useForm({
         client_id: '',
         client_business_name: '',
         client_nit: '',
@@ -103,6 +108,7 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
     };
 
     const removeItem = (index: number) => {
+        clearListErrors(errors, clearErrors, 'items');
         setData(
             'items',
             data.items.filter((_, i) => i !== index),
@@ -135,7 +141,7 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
         <>
             <Head title="Nuevo pedido" />
 
-            <div className="mx-auto max-w-4xl space-y-6 p-6">
+            <FormPage width="wide">
                 <PageHeader title="Nuevo pedido" />
 
                 <form noValidate onSubmit={handleSubmit} className="space-y-6">
@@ -145,8 +151,12 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                         </h2>
 
                         <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="client_id">Cliente *</Label>
+                            <FormField
+                                id="client_id"
+                                label="Cliente"
+                                required
+                                error={errors.client_id}
+                            >
                                 <Combobox
                                     options={clientOptions}
                                     value={data.client_id}
@@ -183,90 +193,79 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                     }}
                                     placeholder="Seleccionar cliente..."
                                 />
-                                {errors.client_id && (
-                                    <p className="text-sm text-destructive">
-                                        {errors.client_id}
-                                    </p>
-                                )}
-                            </div>
+                            </FormField>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="required_date">
-                                    Fecha requerida *
-                                </Label>
+                            <FormField
+                                id="required_date"
+                                label="Fecha requerida"
+                                required
+                                error={errors.required_date}
+                            >
                                 <PlantDateInput
-                                    id="required_date"
                                     notPast
                                     value={data.required_date}
                                     onChange={(value) =>
                                         setData('required_date', value)
                                     }
                                 />
-                                {errors.required_date && (
-                                    <p className="text-sm text-destructive">
-                                        {errors.required_date}
-                                    </p>
-                                )}
-                            </div>
+                            </FormField>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="priority">Prioridad *</Label>
-                                <Select
-                                    value={data.priority}
-                                    onValueChange={(value) =>
-                                        setData('priority', value)
-                                    }
-                                >
-                                    <SelectTrigger id="priority">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="low">
-                                            Baja
-                                        </SelectItem>
-                                        <SelectItem value="medium">
-                                            Media
-                                        </SelectItem>
-                                        <SelectItem value="high">
-                                            Alta
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {errors.priority && (
-                                    <p className="text-sm text-destructive">
-                                        {errors.priority}
-                                    </p>
+                            <FormField
+                                id="priority"
+                                label="Prioridad"
+                                required
+                                error={errors.priority}
+                            >
+                                {(control) => (
+                                    <Select
+                                        value={data.priority}
+                                        onValueChange={(value) =>
+                                            setData('priority', value)
+                                        }
+                                    >
+                                        <SelectTrigger {...control}>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="low">
+                                                Baja
+                                            </SelectItem>
+                                            <SelectItem value="medium">
+                                                Media
+                                            </SelectItem>
+                                            <SelectItem value="high">
+                                                Alta
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 )}
-                            </div>
+                            </FormField>
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="client_business_name">
-                                    Razón social
-                                </Label>
+                            <FormField
+                                id="client_business_name"
+                                label="Razón social"
+                            >
                                 <Input
-                                    id="client_business_name"
                                     value={data.client_business_name}
                                     readOnly
                                     className="bg-muted/50"
                                 />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="client_nit">NIT</Label>
+                            </FormField>
+                            <FormField id="client_nit" label="NIT">
                                 <Input
-                                    id="client_nit"
                                     value={data.client_nit}
                                     readOnly
                                     className="bg-muted/50"
                                 />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="client_contact_name">
-                                    Contacto
-                                </Label>
+                            </FormField>
+                            <FormField
+                                id="client_contact_name"
+                                label="Contacto"
+                                error={errors.client_contact_name}
+                            >
                                 <Input
-                                    id="client_contact_name"
                                     value={data.client_contact_name}
                                     onChange={(e) =>
                                         setData(
@@ -276,36 +275,36 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                     }
                                     placeholder="Nombre del contacto para este pedido"
                                 />
-                                {errors.client_contact_name && (
-                                    <p className="text-sm text-destructive">
-                                        {errors.client_contact_name}
-                                    </p>
-                                )}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="client_phone">Teléfono</Label>
+                            </FormField>
+                            <FormField
+                                id="client_phone"
+                                label="Teléfono"
+                                error={errors.client_phone}
+                            >
                                 <Input
-                                    id="client_phone"
                                     value={data.client_phone}
                                     onChange={(e) =>
                                         setData('client_phone', e.target.value)
                                     }
                                     placeholder="Teléfono de contacto para este pedido"
                                 />
-                                {errors.client_phone && (
-                                    <p className="text-sm text-destructive">
-                                        {errors.client_phone}
-                                    </p>
-                                )}
-                            </div>
+                            </FormField>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="shipping_address">
-                                Dirección de entrega *
-                            </Label>
+                        <FormField
+                            id="shipping_address"
+                            label="Dirección de entrega"
+                            required
+                            error={errors.shipping_address}
+                            help={
+                                selectedClient
+                                    ? selectedClient.shipping_address
+                                        ? 'Dirección registrada del cliente. Cámbiala si este pedido va a otro lugar; la del cliente no se modifica.'
+                                        : 'Este cliente no tiene dirección registrada: escribe a dónde va este pedido.'
+                                    : undefined
+                            }
+                        >
                             <Textarea
-                                id="shipping_address"
                                 maxLength={255}
                                 value={data.shipping_address}
                                 onChange={(e) =>
@@ -313,40 +312,25 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                 }
                                 placeholder="Calle, número, colonia, ciudad, etc."
                             />
-                            {selectedClient && (
-                                <p className="text-xs text-muted-foreground">
-                                    {selectedClient.shipping_address
-                                        ? 'Dirección registrada del cliente. Cámbiala si este pedido va a otro lugar; la del cliente no se modifica.'
-                                        : 'Este cliente no tiene dirección registrada: escribe a dónde va este pedido.'}
-                                </p>
-                            )}
-                            {errors.shipping_address && (
-                                <p className="text-sm text-destructive">
-                                    {errors.shipping_address}
-                                </p>
-                            )}
-                        </div>
+                        </FormField>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="notes">Notas</Label>
+                        <FormField
+                            id="notes"
+                            label="Notas"
+                            error={errors.notes}
+                        >
                             <Textarea
-                                id="notes"
                                 value={data.notes}
                                 onChange={(e) =>
                                     setData('notes', e.target.value)
                                 }
                                 placeholder="Observaciones adicionales..."
                             />
-                            {errors.notes && (
-                                <p className="text-sm text-destructive">
-                                    {errors.notes}
-                                </p>
-                            )}
-                        </div>
+                        </FormField>
                     </div>
 
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-3">
                             <h2 className="text-lg font-semibold">Productos</h2>
                             <Button
                                 type="button"
@@ -359,11 +343,7 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                             </Button>
                         </div>
 
-                        {errors.items && (
-                            <p className="text-sm text-destructive">
-                                {errors.items}
-                            </p>
-                        )}
+                        <InputError message={errors.items} />
 
                         {data.items.length === 0 ? (
                             <div className="rounded border border-dashed border-border py-8 text-center text-muted-foreground">
@@ -382,16 +362,29 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                               label: v.name,
                                           }))
                                         : [];
+                                    const itemErrors = errors as Record<
+                                        string,
+                                        string | undefined
+                                    >;
 
                                     return (
-                                        <div
+                                        <FormLineItem
                                             key={index}
-                                            className="grid grid-cols-1 gap-3 rounded border border-border p-3 md:grid-cols-12"
+                                            index={index}
+                                            onRemove={() => removeItem(index)}
+                                            className="md:grid-cols-12"
                                         >
-                                            <div className="space-y-1 md:col-span-4">
-                                                <Label className="text-xs">
-                                                    Producto *
-                                                </Label>
+                                            <FormField
+                                                id={`items.${index}.product_id`}
+                                                label="Producto"
+                                                required
+                                                error={
+                                                    itemErrors[
+                                                        `items.${index}.product_id`
+                                                    ]
+                                                }
+                                                className="md:col-span-4"
+                                            >
                                                 <Combobox
                                                     options={productOptions}
                                                     value={item.product_id}
@@ -404,23 +397,18 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                                     }
                                                     placeholder="Seleccionar..."
                                                 />
-                                                {errors[
-                                                    `items.${index}.product_id`
-                                                ] && (
-                                                    <p className="text-xs text-destructive">
-                                                        {
-                                                            errors[
-                                                                `items.${index}.product_id`
-                                                            ]
-                                                        }
-                                                    </p>
-                                                )}
-                                            </div>
+                                            </FormField>
 
-                                            <div className="space-y-1 md:col-span-3">
-                                                <Label className="text-xs">
-                                                    Presentación
-                                                </Label>
+                                            <FormField
+                                                id={`items.${index}.product_variant_id`}
+                                                label="Presentación"
+                                                error={
+                                                    itemErrors[
+                                                        `items.${index}.product_variant_id`
+                                                    ]
+                                                }
+                                                className="md:col-span-3"
+                                            >
                                                 <Combobox
                                                     options={variantOptions}
                                                     value={
@@ -436,23 +424,19 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                                     placeholder="Seleccionar..."
                                                     disabled={!selectedProduct}
                                                 />
-                                                {errors[
-                                                    `items.${index}.product_variant_id`
-                                                ] && (
-                                                    <p className="text-xs text-destructive">
-                                                        {
-                                                            errors[
-                                                                `items.${index}.product_variant_id`
-                                                            ]
-                                                        }
-                                                    </p>
-                                                )}
-                                            </div>
+                                            </FormField>
 
-                                            <div className="space-y-1 md:col-span-2">
-                                                <Label className="text-xs">
-                                                    Cantidad *
-                                                </Label>
+                                            <FormField
+                                                id={`items.${index}.quantity`}
+                                                label="Cantidad"
+                                                required
+                                                error={
+                                                    itemErrors[
+                                                        `items.${index}.quantity`
+                                                    ]
+                                                }
+                                                className="md:col-span-2"
+                                            >
                                                 <IntegerInput
                                                     maxDigits={UNITS_MAX_DIGITS}
                                                     value={item.quantity}
@@ -464,23 +448,18 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                                         )
                                                     }
                                                 />
-                                                {errors[
-                                                    `items.${index}.quantity`
-                                                ] && (
-                                                    <p className="text-xs text-destructive">
-                                                        {
-                                                            errors[
-                                                                `items.${index}.quantity`
-                                                            ]
-                                                        }
-                                                    </p>
-                                                )}
-                                            </div>
+                                            </FormField>
 
-                                            <div className="space-y-1 md:col-span-2">
-                                                <Label className="text-xs">
-                                                    Color
-                                                </Label>
+                                            <FormField
+                                                id={`items.${index}.color`}
+                                                label="Color"
+                                                error={
+                                                    itemErrors[
+                                                        `items.${index}.color`
+                                                    ]
+                                                }
+                                                className="md:col-span-3"
+                                            >
                                                 <Input
                                                     value={item.color}
                                                     maxLength={100}
@@ -493,48 +472,21 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
                                                         )
                                                     }
                                                 />
-                                                {errors[
-                                                    `items.${index}.color`
-                                                ] && (
-                                                    <p className="text-xs text-destructive">
-                                                        {
-                                                            errors[
-                                                                `items.${index}.color`
-                                                            ]
-                                                        }
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            <div className="flex items-end justify-end md:col-span-1">
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        removeItem(index)
-                                                    }
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            </div>
-                                        </div>
+                                            </FormField>
+                                        </FormLineItem>
                                     );
                                 })}
                             </div>
                         )}
                     </div>
 
-                    <div className="flex justify-end gap-3">
-                        <Button variant="outline" asChild>
-                            <Link href={salesOrdersIndex().url}>Cancelar</Link>
-                        </Button>
-                        <Button type="submit" disabled={processing}>
-                            Guardar Pedido
-                        </Button>
-                    </div>
+                    <FormActions
+                        submitLabel="Guardar Pedido"
+                        processing={processing}
+                        cancelHref={salesOrdersIndex().url}
+                    />
                 </form>
-            </div>
+            </FormPage>
         </>
     );
 }

@@ -1,7 +1,9 @@
-import { Label } from '@/components/ui/label';
+import { FormField } from '@/components/form-field';
 import { Textarea } from '@/components/ui/textarea';
 
 type Props = {
+    /** El `id` del campo: igual a la llave del error, para que el foco llegue a él ante un 422. */
+    id: string;
     label: string;
     value: string;
     onChange: (value: string) => void;
@@ -11,6 +13,7 @@ type Props = {
 };
 
 export default function TextAreaField({
+    id,
     label,
     value,
     onChange,
@@ -19,17 +22,12 @@ export default function TextAreaField({
     error,
 }: Props) {
     return (
-        <div className="space-y-1.5">
-            <Label>
-                {label}
-                {required && <span className="ml-0.5 text-destructive">*</span>}
-            </Label>
+        <FormField id={id} label={label} required={required} error={error}>
             <Textarea
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
             />
-            {error && <p className="text-xs text-destructive">{error}</p>}
-        </div>
+        </FormField>
     );
 }

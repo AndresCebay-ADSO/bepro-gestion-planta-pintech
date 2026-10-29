@@ -48,6 +48,7 @@ export default function PerformanceStep({
                 </h2>
                 <div className="grid gap-4">
                     <CheckboxGroup
+                        id="performance_payload.funcion"
                         label="Función principal del producto"
                         values={perfArray(perf, 'funcion')}
                         onChange={(v) =>
@@ -58,6 +59,7 @@ export default function PerformanceStep({
                         error={errors['performance_payload.funcion']}
                     />
                     <SelectField
+                        id="performance_payload.vida_util"
                         label="Vida útil esperada del sistema"
                         value={perfValue(perf, 'vida_util')}
                         onChange={(v) =>
@@ -68,6 +70,7 @@ export default function PerformanceStep({
                         error={errors['performance_payload.vida_util']}
                     />
                     <SelectField
+                        id="performance_payload.prioridad"
                         label="Prioridad técnica principal"
                         value={perfValue(perf, 'prioridad')}
                         onChange={(v) =>
@@ -78,6 +81,7 @@ export default function PerformanceStep({
                         error={errors['performance_payload.prioridad']}
                     />
                     <CheckboxGroup
+                        id="performance_payload.pruebas"
                         label="Pruebas o evidencias requeridas"
                         values={perfArray(perf, 'pruebas')}
                         onChange={(v) =>
@@ -87,6 +91,7 @@ export default function PerformanceStep({
                     />
                     <div className="grid gap-4 md:grid-cols-2">
                         <NumberField
+                            id="performance_payload.adherencia_obj"
                             label="Adherencia objetivo"
                             value={perfValue(perf, 'adherencia_obj')}
                             onChange={(v) =>
@@ -101,6 +106,7 @@ export default function PerformanceStep({
                             error={errors['performance_payload.adherencia_obj']}
                         />
                         <NumberField
+                            id="performance_payload.camara_obj"
                             label="Cámara salina objetivo"
                             value={perfValue(perf, 'camara_obj')}
                             onChange={(v) =>
@@ -116,6 +122,7 @@ export default function PerformanceStep({
                         />
                     </div>
                     <TextAreaField
+                        id="performance_payload.criterios_tecnicos"
                         label="Otros criterios cuantificables de aceptación"
                         value={perfValue(perf, 'criterios_tecnicos')}
                         onChange={(v) =>
@@ -128,6 +135,7 @@ export default function PerformanceStep({
                         placeholder="Dureza, flexibilidad, impacto, resistencia química, temperatura..."
                     />
                     <TextAreaField
+                        id="performance_payload.indispensable"
                         label="Características indispensables"
                         value={perfValue(perf, 'indispensable')}
                         onChange={(v) =>
@@ -142,6 +150,7 @@ export default function PerformanceStep({
                         error={errors['performance_payload.indispensable']}
                     />
                     <TextAreaField
+                        id="performance_payload.negociable"
                         label="Características negociables"
                         value={perfValue(perf, 'negociable')}
                         onChange={(v) =>
@@ -158,6 +167,7 @@ export default function PerformanceStep({
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
                     <TextField
+                        id="performance_payload.color"
                         label="Color o referencia"
                         value={perfValue(perf, 'color')}
                         onChange={(v) =>
@@ -168,6 +178,7 @@ export default function PerformanceStep({
                         error={errors['performance_payload.color']}
                     />
                     <SelectField
+                        id="performance_payload.brillo"
                         label="Nivel de brillo"
                         value={perfValue(perf, 'brillo')}
                         onChange={(v) =>
@@ -178,6 +189,7 @@ export default function PerformanceStep({
                         error={errors['performance_payload.brillo']}
                     />
                     <SelectField
+                        id="performance_payload.textura"
                         label="Textura"
                         value={perfValue(perf, 'textura')}
                         onChange={(v) =>
@@ -188,6 +200,7 @@ export default function PerformanceStep({
                         error={errors['performance_payload.textura']}
                     />
                     <SelectField
+                        id="performance_payload.cubricion"
                         label="Cubrición esperada"
                         value={perfValue(perf, 'cubricion')}
                         onChange={(v) =>
@@ -198,6 +211,7 @@ export default function PerformanceStep({
                         error={errors['performance_payload.cubricion']}
                     />
                     <NumberField
+                        id="performance_payload.delta_e"
                         label="Tolerancia máxima de color ΔE"
                         value={perfValue(perf, 'delta_e')}
                         onChange={(v) =>
@@ -207,6 +221,7 @@ export default function PerformanceStep({
                         error={errors['performance_payload.delta_e']}
                     />
                     <SelectField
+                        id="performance_payload.retencion"
                         label="Importancia de retención de color y brillo"
                         value={perfValue(perf, 'retencion')}
                         onChange={(v) =>
@@ -218,6 +233,7 @@ export default function PerformanceStep({
                     />
                     <div className="md:col-span-2">
                         <TextAreaField
+                            id="performance_payload.acabado_ref"
                             label="Referencia visual o acabado competidor"
                             value={perfValue(perf, 'acabado_ref')}
                             onChange={(v) =>

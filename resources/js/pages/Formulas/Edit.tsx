@@ -1,13 +1,13 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
+import { FormPage } from '@/components/form-page';
 import {
     FormulaForm,
     formulaPayload,
 } from '@/components/formulas/formula-form';
 import type { FormulaFormData } from '@/components/formulas/formula-form';
 import { PageHeader } from '@/components/page-header';
-import { Button } from '@/components/ui/button';
 import { formatForInput } from '@/lib/formatters';
 import {
     index as formulasIndex,
@@ -46,16 +46,17 @@ export default function FormulasEdit({
     rawMaterials,
     units,
 }: Props) {
-    const { data, setData, processing, errors } = useForm<FormulaFormData>({
-        product_id: String(formula.product.id),
-        name: formula.name ?? '',
-        notes: formula.notes ?? '',
-        details: formula.details.map((detail) => ({
-            raw_material_id: String(detail.raw_material_id),
-            quantity: formatForInput(detail.quantity),
-            unit_of_measure_id: String(detail.unit_of_measure_id),
-        })),
-    });
+    const { data, setData, processing, errors, clearErrors } =
+        useForm<FormulaFormData>({
+            product_id: String(formula.product.id),
+            name: formula.name ?? '',
+            notes: formula.notes ?? '',
+            details: formula.details.map((detail) => ({
+                raw_material_id: String(detail.raw_material_id),
+                quantity: formatForInput(detail.quantity),
+                unit_of_measure_id: String(detail.unit_of_measure_id),
+            })),
+        });
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -72,7 +73,7 @@ export default function FormulasEdit({
                 title={`Editar fórmula v${formula.version} — ${formula.product.name}`}
             />
 
-            <div className="space-y-6 p-6">
+            <FormPage width="wide">
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Link
@@ -107,19 +108,13 @@ export default function FormulasEdit({
                     heading="Información General"
                     description="Ajusta los ingredientes por paso. Si esta fórmula ya fue usada en órdenes, la edición se bloquea para proteger el histórico."
                     submitLabel="Guardar cambios"
+                    cancelHref={formulasShow({ formula: formula.id }).url}
                     onSubmit={handleSubmit}
                     setData={setData}
+                    clearErrors={clearErrors}
                     lockProduct
                 />
-
-                <div className="flex gap-3">
-                    <Button type="button" variant="outline" asChild>
-                        <Link href={formulasShow({ formula: formula.id }).url}>
-                            Cancelar
-                        </Link>
-                    </Button>
-                </div>
-            </div>
+            </FormPage>
         </>
     );
 }

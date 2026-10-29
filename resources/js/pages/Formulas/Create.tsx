@@ -2,6 +2,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
 import { DetailPageHeader } from '@/components/detail-page-header';
+import { FormPage } from '@/components/form-page';
 import {
     createEmptyFormulaDetail,
     FormulaForm,
@@ -36,7 +37,7 @@ export default function FormulasCreate({
     selectedProductId,
     returnTo,
 }: Props) {
-    const { data, setData, processing, errors } =
+    const { data, setData, processing, errors, clearErrors } =
         useForm<FormulaCreateFormData>({
             product_id: selectedProductId ?? '',
             name: '',
@@ -67,7 +68,7 @@ export default function FormulasCreate({
     return (
         <>
             <Head title="Nueva Fórmula" />
-            <div className="space-y-6 p-6">
+            <FormPage width="wide">
                 <DetailPageHeader
                     breadcrumbs={breadcrumbs}
                     title="Nueva Fórmula"
@@ -87,11 +88,13 @@ export default function FormulasCreate({
                     heading="Información General"
                     description="Una fila por paso; el orden importa en planta. Cantidades por 1 galón (ej. 1.5 kg de resina por galón)."
                     submitLabel="Crear Fórmula"
+                    cancelHref={returnTo ?? formulasIndex().url}
                     onSubmit={handleSubmit}
                     setData={setData}
+                    clearErrors={clearErrors}
                     lockProduct={Boolean(selectedProductId)}
                 />
-            </div>
+            </FormPage>
         </>
     );
 }

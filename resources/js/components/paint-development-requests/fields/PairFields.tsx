@@ -1,5 +1,6 @@
 import { DecimalInput } from '@/components/decimal-input';
-import { Label } from '@/components/ui/label';
+import { FormField } from '@/components/form-field';
+import type { FormFieldControlProps } from '@/components/form-field';
 import { TECHNICAL_NUMBER_LIMITS } from '@/lib/number-types';
 
 type FieldDef = {
@@ -13,6 +14,12 @@ type FieldDef = {
 };
 
 type Props = {
+    /**
+     * El grupo de datos de los dos campos (`context_payload`): cada uno toma como `id` su propia llave
+     * (`context_payload.temp_min`), la misma de su error, para que el foco llegue al campo exacto. La etiqueta señala el
+     * primero.
+     */
+    payload: string;
     label: string;
     a: FieldDef;
     b: FieldDef;
@@ -20,10 +27,17 @@ type Props = {
     error?: string;
 };
 
-function PairInput({ field }: { field: FieldDef }) {
+function PairInput({
+    field,
+    control,
+}: {
+    field: FieldDef;
+    control: Partial<FormFieldControlProps> & { 'aria-label'?: string };
+}) {
     return (
-        <div className="relative">
+        <div className="relative min-w-0">
             <DecimalInput
+                {...control}
                 {...TECHNICAL_NUMBER_LIMITS}
                 allowNegative={field.allowNegative}
                 value={field.value}
@@ -37,18 +51,35 @@ function PairInput({ field }: { field: FieldDef }) {
     );
 }
 
-export default function PairFields({ label, a, b, required, error }: Props) {
+/** Dos números bajo una sola etiqueta (mínimo y máximo): el lector de pantalla nombra el segundo con su ayuda. */
+export default function PairFields({
+    payload,
+    label,
+    a,
+    b,
+    required,
+    error,
+}: Props) {
     return (
-        <div className="space-y-1.5">
-            <Label>
-                {label}
-                {required && <span className="ml-0.5 text-destructive">*</span>}
-            </Label>
-            <div className="grid grid-cols-2 gap-3">
-                <PairInput field={a} />
-                <PairInput field={b} />
-            </div>
-            {error && <p className="text-xs text-destructive">{error}</p>}
-        </div>
+        <FormField
+            id={`${payload}.${a.name}`}
+            label={label}
+            required={required}
+            error={error}
+        >
+            {(control) => (
+                <div className="grid grid-cols-2 gap-3">
+                    <PairInput field={a} control={control} />
+                    <PairInput
+                        field={b}
+                        control={{
+                            ...control,
+                            id: `${payload}.${b.name}`,
+                            'aria-label': `${label}, ${b.placeholder}`,
+                        }}
+                    />
+                </div>
+            )}
+        </FormField>
     );
 }

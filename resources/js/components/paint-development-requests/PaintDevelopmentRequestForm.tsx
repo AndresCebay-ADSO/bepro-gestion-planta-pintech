@@ -1,7 +1,9 @@
-import { Link, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { ChevronRight, Save, Send } from 'lucide-react';
 import { useState } from 'react';
 
+import { FormActions } from '@/components/form-actions';
+import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
 import {
     NUMERIC_PAYLOAD_FIELDS,
@@ -20,7 +22,10 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Spinner } from '@/components/ui/spinner';
+import { focusFirstError, orderedErrorKeys } from '@/lib/focus-first-error';
 import { isValidIntegerText, parseDecimal } from '@/lib/numeric-input';
+import { firstErrorStep } from '@/lib/paint-development-steps';
 
 export type RawPaintDevFormData = {
     client_name: string | null;
@@ -285,14 +290,27 @@ export default function PaintDevelopmentRequestForm({
         ...localErrors,
     };
 
+    // Solo se pinta el paso actual: ante un error, el formulario va al paso del primero y le pone el foco (en el
+    // celular, el campo puede quedar fuera de la vista). Lo usan la validación del navegador y la del servidor.
+    const showErrors = (stepErrors: Record<string, string>) => {
+        const target = firstErrorStep(orderedErrorKeys(stepErrors));
+
+        if (target === undefined) {
+            return;
+        }
+
+        setStep(target);
+        // Después de que el paso se pinte: antes, su campo no existe.
+        window.setTimeout(() => focusFirstError(stepErrors), 50);
+    };
+
     const handleSubmit = (asDraft: boolean) => {
         for (let i = 1; i <= 4; i++) {
             const stepErrors = validateStep(i);
 
             if (Object.keys(stepErrors).length > 0) {
                 setLocalErrors((prev) => ({ ...prev, ...stepErrors }));
-                setStep(i);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                showErrors(stepErrors);
 
                 return;
             }
@@ -303,10 +321,16 @@ export default function PaintDevelopmentRequestForm({
             _draft: asDraft,
         }));
 
+        // Un 422 de un campo de otro paso (una regla que el navegador no revisa, como un mínimo o un largo).
+        const options = {
+            onError: (serverErrors: Record<string, string>) =>
+                showErrors(serverErrors),
+        };
+
         if (method === 'put') {
-            put(submitUrl);
+            put(submitUrl, options);
         } else {
-            post(submitUrl);
+            post(submitUrl, options);
         }
     };
 
@@ -667,8 +691,7 @@ export default function PaintDevelopmentRequestForm({
 
                 if (Object.keys(stepErrors).length > 0) {
                     setLocalErrors((prev) => ({ ...prev, ...stepErrors }));
-                    setStep(i);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    showErrors(stepErrors);
 
                     return;
                 }
@@ -681,7 +704,7 @@ export default function PaintDevelopmentRequestForm({
 
     return (
         <>
-            <div className="space-y-4 p-6">
+            <FormPage width="wide">
                 <PageHeader title={title} />
 
                 {/* Stepper */}
@@ -777,64 +800,65 @@ export default function PaintDevelopmentRequestForm({
                         </div>
                     )}
 
-                    {/* Footer actions */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4 shadow-sm">
-                        {/* «Cancelar» a la izquierda (DESIGN.md §8): sin él, el formulario no tiene salida. */}
-                        <div className="flex flex-wrap items-center gap-3">
-                            <Button variant="outline" asChild>
-                                <Link href={cancelHref}>Cancelar</Link>
+                    <p className="text-xs text-muted-foreground">
+                        Los campos con{' '}
+                        <span className="text-destructive">*</span> son
+                        obligatorios
+                    </p>
+
+                    {/* Los botones de paso a la derecha, con «Cancelar» a la izquierda (DESIGN.md §8). */}
+                    <FormActions cancelHref={cancelHref}>
+                        {step > 1 && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => goStep(step - 1)}
+                            >
+                                ← Anterior
                             </Button>
-                            <div className="text-xs text-muted-foreground">
-                                Los campos con{' '}
-                                <span className="text-destructive">*</span> son
-                                obligatorios
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {step > 1 && (
+                        )}
+                        {step < 4 && (
+                            <Button
+                                type="button"
+                                variant="default"
+                                onClick={() => goStep(step + 1)}
+                            >
+                                Continuar →
+                            </Button>
+                        )}
+                        {step === 4 && (
+                            <>
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() => goStep(step - 1)}
+                                    disabled={processing}
+                                    onClick={() => handleSubmit(true)}
                                 >
-                                    ← Anterior
+                                    {processing ? (
+                                        <Spinner />
+                                    ) : (
+                                        <Save className="mr-2 h-4 w-4" />
+                                    )}
+                                    {saveLabel}
                                 </Button>
-                            )}
-                            {step < 4 && (
                                 <Button
                                     type="button"
                                     variant="default"
-                                    onClick={() => goStep(step + 1)}
+                                    disabled={processing}
+                                    onClick={() => setConfirmOpen(true)}
                                 >
-                                    Continuar →
-                                </Button>
-                            )}
-                            {step === 4 && (
-                                <>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        disabled={processing}
-                                        onClick={() => handleSubmit(true)}
-                                    >
-                                        <Save className="mr-2 h-4 w-4" />
-                                        {saveLabel}
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="default"
-                                        disabled={processing}
-                                        onClick={() => setConfirmOpen(true)}
-                                    >
+                                    {processing ? (
+                                        <Spinner />
+                                    ) : (
                                         <Send className="mr-2 h-4 w-4" />
-                                        {submitLabel}
-                                    </Button>
-                                </>
-                            )}
-                        </div>
-                    </div>
+                                    )}
+                                    {submitLabel}
+                                </Button>
+                            </>
+                        )}
+                    </FormActions>
                 </form>
-            </div>
+            </FormPage>
 
             {/* Confirm submit dialog */}
             <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>

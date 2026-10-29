@@ -1,11 +1,11 @@
 import { useForm } from '@inertiajs/react';
 import { RefreshCw, Save } from 'lucide-react';
 
+import { FormField } from '@/components/form-field';
 import { FormattedDate } from '@/components/formatted-date';
 import { PlantDateInput } from '@/components/plant-date-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -89,34 +89,37 @@ export default function AdminOrderSidebar({
                 >
                     <h2 className="text-lg font-semibold">Estado</h2>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="status">Estado del pedido</Label>
-                        <Select
-                            value={statusForm.data.status}
-                            onValueChange={(value) =>
-                                statusForm.setData('status', value)
-                            }
-                        >
-                            <SelectTrigger id="status">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value={order.status}>
-                                    {order.status_label}
-                                </SelectItem>
-                                {statusTransitions.map((t) => (
-                                    <SelectItem key={t.value} value={t.value}>
-                                        {t.label}
+                    <FormField
+                        id="status"
+                        label="Estado del pedido"
+                        error={statusForm.errors.status}
+                    >
+                        {(control) => (
+                            <Select
+                                value={statusForm.data.status}
+                                onValueChange={(value) =>
+                                    statusForm.setData('status', value)
+                                }
+                            >
+                                <SelectTrigger {...control}>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={order.status}>
+                                        {order.status_label}
                                     </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {statusForm.errors.status && (
-                            <p className="text-sm text-destructive">
-                                {statusForm.errors.status}
-                            </p>
+                                    {statusTransitions.map((t) => (
+                                        <SelectItem
+                                            key={t.value}
+                                            value={t.value}
+                                        >
+                                            {t.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         )}
-                    </div>
+                    </FormField>
 
                     <Button
                         type="submit"
@@ -140,36 +143,38 @@ export default function AdminOrderSidebar({
                 >
                     <h2 className="text-lg font-semibold">Datos del pedido</h2>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="priority">Prioridad</Label>
-                        <Select
-                            value={dataForm.data.priority}
-                            onValueChange={(value) =>
-                                dataForm.setData('priority', value)
-                            }
-                        >
-                            <SelectTrigger id="priority">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="low">Baja</SelectItem>
-                                <SelectItem value="medium">Media</SelectItem>
-                                <SelectItem value="high">Alta</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        {dataForm.errors.priority && (
-                            <p className="text-sm text-destructive">
-                                {dataForm.errors.priority}
-                            </p>
+                    <FormField
+                        id="priority"
+                        label="Prioridad"
+                        error={dataForm.errors.priority}
+                    >
+                        {(control) => (
+                            <Select
+                                value={dataForm.data.priority}
+                                onValueChange={(value) =>
+                                    dataForm.setData('priority', value)
+                                }
+                            >
+                                <SelectTrigger {...control}>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="low">Baja</SelectItem>
+                                    <SelectItem value="medium">
+                                        Media
+                                    </SelectItem>
+                                    <SelectItem value="high">Alta</SelectItem>
+                                </SelectContent>
+                            </Select>
                         )}
-                    </div>
+                    </FormField>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="estimated_delivery_date">
-                            Fecha estimada de entrega
-                        </Label>
+                    <FormField
+                        id="estimated_delivery_date"
+                        label="Fecha estimada de entrega"
+                        error={dataForm.errors.estimated_delivery_date}
+                    >
                         <PlantDateInput
-                            id="estimated_delivery_date"
                             clearable
                             min={order.created_on}
                             saved={order.estimated_delivery_date}
@@ -181,17 +186,14 @@ export default function AdminOrderSidebar({
                                 )
                             }
                         />
-                        {dataForm.errors.estimated_delivery_date && (
-                            <p className="text-sm text-destructive">
-                                {dataForm.errors.estimated_delivery_date}
-                            </p>
-                        )}
-                    </div>
+                    </FormField>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="client_contact_name">Contacto</Label>
+                    <FormField
+                        id="client_contact_name"
+                        label="Contacto"
+                        error={dataForm.errors.client_contact_name}
+                    >
                         <Input
-                            id="client_contact_name"
                             value={dataForm.data.client_contact_name}
                             onChange={(e) =>
                                 dataForm.setData(
@@ -200,45 +202,34 @@ export default function AdminOrderSidebar({
                                 )
                             }
                         />
-                        {dataForm.errors.client_contact_name && (
-                            <p className="text-sm text-destructive">
-                                {dataForm.errors.client_contact_name}
-                            </p>
-                        )}
-                    </div>
+                    </FormField>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="client_phone">Teléfono</Label>
+                    <FormField
+                        id="client_phone"
+                        label="Teléfono"
+                        error={dataForm.errors.client_phone}
+                    >
                         <Input
-                            id="client_phone"
                             value={dataForm.data.client_phone}
                             onChange={(e) =>
                                 dataForm.setData('client_phone', e.target.value)
                             }
                         />
-                        {dataForm.errors.client_phone && (
-                            <p className="text-sm text-destructive">
-                                {dataForm.errors.client_phone}
-                            </p>
-                        )}
-                    </div>
+                    </FormField>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="notes">Notas</Label>
+                    <FormField
+                        id="notes"
+                        label="Notas"
+                        error={dataForm.errors.notes}
+                    >
                         <Textarea
-                            id="notes"
                             rows={3}
                             value={dataForm.data.notes}
                             onChange={(e) =>
                                 dataForm.setData('notes', e.target.value)
                             }
                         />
-                        {dataForm.errors.notes && (
-                            <p className="text-sm text-destructive">
-                                {dataForm.errors.notes}
-                            </p>
-                        )}
-                    </div>
+                    </FormField>
 
                     <Button
                         type="submit"

@@ -1,9 +1,11 @@
 import { DecimalInput } from '@/components/decimal-input';
+import { FormField } from '@/components/form-field';
 import { IntegerInput } from '@/components/integer-input';
-import { Label } from '@/components/ui/label';
 import { TECHNICAL_NUMBER_LIMITS } from '@/lib/number-types';
 
 type Props = {
+    /** El `id` del campo: igual a la llave del error, para que el foco llegue a él ante un 422. */
+    id: string;
     label: string;
     value: string;
     onChange: (value: string) => void;
@@ -16,6 +18,7 @@ type Props = {
 };
 
 export default function NumberField({
+    id,
     label,
     value,
     onChange,
@@ -26,33 +29,32 @@ export default function NumberField({
     integer,
 }: Props) {
     return (
-        <div className="space-y-1.5">
-            <Label>
-                {label}
-                {required && <span className="ml-0.5 text-destructive">*</span>}
-            </Label>
-            <div className="relative">
-                {integer ? (
-                    <IntegerInput
-                        value={value}
-                        onValueChange={onChange}
-                        placeholder={placeholder}
-                    />
-                ) : (
-                    <DecimalInput
-                        {...TECHNICAL_NUMBER_LIMITS}
-                        value={value}
-                        onValueChange={onChange}
-                        placeholder={placeholder}
-                    />
-                )}
-                {suffix && (
-                    <span className="pointer-events-none absolute top-2.5 right-3 text-xs text-muted-foreground">
-                        {suffix}
-                    </span>
-                )}
-            </div>
-            {error && <p className="text-xs text-destructive">{error}</p>}
-        </div>
+        <FormField id={id} label={label} required={required} error={error}>
+            {(control) => (
+                <div className="relative">
+                    {integer ? (
+                        <IntegerInput
+                            {...control}
+                            value={value}
+                            onValueChange={onChange}
+                            placeholder={placeholder}
+                        />
+                    ) : (
+                        <DecimalInput
+                            {...control}
+                            {...TECHNICAL_NUMBER_LIMITS}
+                            value={value}
+                            onValueChange={onChange}
+                            placeholder={placeholder}
+                        />
+                    )}
+                    {suffix && (
+                        <span className="pointer-events-none absolute top-2.5 right-3 text-xs text-muted-foreground">
+                            {suffix}
+                        </span>
+                    )}
+                </div>
+            )}
+        </FormField>
     );
 }

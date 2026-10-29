@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { formErrorMessages } from '@/lib/form-errors';
+import {
+    clearListErrors,
+    formErrorMessages,
+    listErrorKeys,
+} from '@/lib/form-errors';
 
 /*
  * Auditoría 3.6, OPL-11: al completar la OP, la falta de stock de un ajuste (`line_adjustments`) o un error de fila
@@ -36,5 +40,51 @@ describe('formErrorMessages', () => {
             [],
         );
         expect(formErrorMessages({})).toEqual([]);
+    });
+});
+
+describe('listErrorKeys', () => {
+    const errors = {
+        items: 'Agrega al menos un producto.',
+        'items.0.quantity': 'La cantidad es obligatoria.',
+        'items.2.color': 'El color es obligatorio.',
+        items_note: 'Otro campo.',
+        client_id: 'El cliente es obligatorio.',
+    };
+
+    it('returns the list key and the keys of its lines', () => {
+        expect(listErrorKeys(errors, 'items')).toEqual([
+            'items',
+            'items.0.quantity',
+            'items.2.color',
+        ]);
+    });
+
+    it('does not take a field whose name only starts like the list', () => {
+        expect(listErrorKeys(errors, 'items')).not.toContain('items_note');
+    });
+
+    it('returns nothing when the list has no errors', () => {
+        expect(listErrorKeys(errors, 'details')).toEqual([]);
+    });
+});
+
+describe('clearListErrors', () => {
+    it('clears only the keys of the list', () => {
+        const cleared: string[][] = [];
+        clearListErrors(
+            { 'items.1.quantity': 'Obligatoria.', client_id: 'Obligatorio.' },
+            (...fields: string[]) => cleared.push(fields),
+            'items',
+        );
+
+        expect(cleared).toEqual([['items.1.quantity']]);
+    });
+
+    it('does not call clearErrors when the list has no errors (it would clear the whole form)', () => {
+        let calls = 0;
+        clearListErrors({ client_id: 'Obligatorio.' }, () => calls++, 'items');
+
+        expect(calls).toBe(0);
     });
 });

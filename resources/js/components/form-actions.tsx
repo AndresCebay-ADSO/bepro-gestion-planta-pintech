@@ -1,12 +1,11 @@
 import { Link } from '@inertiajs/react';
+import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 type FormActionsProps = {
-    /** Texto del botón principal: «Registrar entrada», «Guardar cliente». */
-    submitLabel: string;
     /** Mientras guarda, el botón principal se deshabilita y muestra la rueda. */
     processing?: boolean;
     /** «Cancelar» en un cajón o una ventana: la cierra. */
@@ -15,7 +14,21 @@ type FormActionsProps = {
     cancelHref?: string;
     cancelLabel?: string;
     className?: string;
-};
+} & (
+    | {
+          /** Texto del botón principal: «Registrar entrada», «Guardar cliente». */
+          submitLabel: string;
+          children?: never;
+      }
+    | {
+          submitLabel?: never;
+          /**
+           * Botones propios a la derecha, en lugar del botón principal: los pasos de un formulario largo («Anterior»,
+           * «Continuar», «Guardar borrador», «Enviar»). El último es el principal: en el celular queda arriba.
+           */
+          children: ReactNode;
+      }
+);
 
 /**
  * Pie de un formulario (DESIGN.md §8): «Cancelar» a la izquierda y la acción principal a la derecha, con el botón
@@ -29,6 +42,7 @@ export function FormActions({
     cancelHref,
     cancelLabel = 'Cancelar',
     className,
+    children,
 }: FormActionsProps) {
     const hasCancel = onCancel !== undefined || cancelHref !== undefined;
 
@@ -50,10 +64,16 @@ export function FormActions({
                     {cancelLabel}
                 </Button>
             ) : null}
-            <Button type="submit" disabled={processing}>
-                {processing && <Spinner />}
-                {submitLabel}
-            </Button>
+            {children !== undefined ? (
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
+                    {children}
+                </div>
+            ) : (
+                <Button type="submit" disabled={processing}>
+                    {processing && <Spinner />}
+                    {submitLabel}
+                </Button>
+            )}
         </div>
     );
 }

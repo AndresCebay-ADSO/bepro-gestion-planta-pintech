@@ -1,6 +1,8 @@
-import { Label } from '@/components/ui/label';
+import { FormField } from '@/components/form-field';
 
 type Props = {
+    /** El `id` del campo: igual a la llave del error, para que el foco llegue a él ante un 422. */
+    id: string;
     label: string;
     value: string;
     onChange: (value: string) => void;
@@ -11,6 +13,7 @@ type Props = {
 };
 
 export default function SelectField({
+    id,
     label,
     value,
     onChange,
@@ -20,15 +23,11 @@ export default function SelectField({
     error,
 }: Props) {
     return (
-        <div className="space-y-1.5">
-            <Label>
-                {label}
-                {required && <span className="ml-0.5 text-destructive">*</span>}
-            </Label>
+        <FormField id={id} label={label} required={required} error={error}>
             <select
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-base ring-offset-background outline-none focus:ring-2 focus:ring-ring md:text-sm"
+                className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 text-base ring-offset-background outline-none focus:ring-2 focus:ring-ring md:text-sm"
             >
                 <option value="">{placeholder}</option>
                 {options.map((o) => (
@@ -37,7 +36,6 @@ export default function SelectField({
                     </option>
                 ))}
             </select>
-            {error && <p className="text-xs text-destructive">{error}</p>}
-        </div>
+        </FormField>
     );
 }

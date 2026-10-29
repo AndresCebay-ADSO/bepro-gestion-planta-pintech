@@ -221,12 +221,21 @@ Same in all three:
   short fields, paired by meaning (a lone field spans the row); each field fills its column (`min-w-0`) and a long
   value is cut with «…», never overflowing it.
 - Footer: `<FormActions>` (`components/form-actions.tsx`), «Cancelar» on the left and the main action (primary, never
-  a direct color) on the right, disabled with a spinner while saving; stacked on the phone with the action on top. In
+  a direct color) on the right, disabled with a spinner while saving; stacked on the phone with the action on top. A
+  step-by-step form (R&D) passes its own buttons as `children` instead of `submitLabel` («Anterior», «Continuar»,
+  «Guardar borrador», «Enviar»): they stay on the right, the last one being the main action. In
   a `Sheet` or `Dialog` the fields go in `SheetBody`/`DialogBody` (they scroll inside) and the actions in
   `SheetFooter`/`DialogFooter`, fixed at the bottom.
 - `Sheet` and `Dialog` never grow taller than the screen. The form `Sheet` floats like the content (margin, rounded
   corners, shadow) from `sm` and fills the screen on the phone. When one opens, focus goes to the first field, not to
   the close button.
+- **Line editors** (the lines of a formula, the packaging plan of a production order, a quotation, an order): each
+  line is a `<FormLineItem>` (`components/form-line-item.tsx`). On the phone it is a block with a «Línea N» header,
+  the remove button and the fields one under the other; from `md`, the fields go in one row (`md:grid-cols-12`, each
+  `<FormField>` with its `md:col-span-*`) with the remove button at the end. Never a 12-column grid on the phone. Field
+  ids are the row's error keys (`items.2.quantity`), so a 422 focuses the right field. Editors with many short lines
+  (formula, packaging) pass `labelsOnFirstRowOnly`: from `md` only the first row shows its labels, the rest keep them
+  for screen readers.
 - **A 422 never closes the form**: data and errors stay. Focus goes to the first invalid field (`lib/focus-first-error.ts`).
 - On touch screens every field is at least 16 px (an `any-pointer: coarse` rule in `resources/css/app.css`, outside `@layer`, so it beats
   `text-sm`): below 16 px, iOS Safari zooms the page when a field gets focus, upright or in landscape. On desktop

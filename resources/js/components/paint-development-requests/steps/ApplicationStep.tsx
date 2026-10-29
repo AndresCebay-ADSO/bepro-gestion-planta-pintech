@@ -50,6 +50,7 @@ export default function ApplicationStep({
                 </h2>
                 <div className="grid gap-4">
                     <CheckboxGroup
+                        id="application_payload.metodo"
                         label="Método de aplicación"
                         values={appArray(app, 'metodo')}
                         onChange={(v) =>
@@ -60,6 +61,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.metodo']}
                     />
                     <PairFields
+                        payload="application_payload"
                         label="Condiciones durante la aplicación"
                         a={{
                             name: 'temp_aplicacion',
@@ -92,6 +94,7 @@ export default function ApplicationStep({
                         }
                     />
                     <SelectField
+                        id="application_payload.geometria"
                         label="Geometría o tipo de pieza"
                         value={appValue(app, 'geometria')}
                         onChange={(v) =>
@@ -102,6 +105,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.geometria']}
                     />
                     <PairFields
+                        payload="application_payload"
                         label="Espesor seco requerido por mano"
                         a={{
                             name: 'dft_min',
@@ -125,6 +129,7 @@ export default function ApplicationStep({
                         }
                     />
                     <NumberField
+                        id="application_payload.manos"
                         label="Número previsto de manos"
                         value={appValue(app, 'manos')}
                         onChange={(v) =>
@@ -136,6 +141,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.manos']}
                     />
                     <TextField
+                        id="application_payload.repinte"
                         label="Tiempo disponible entre manos"
                         value={appValue(app, 'repinte')}
                         onChange={(v) =>
@@ -146,6 +152,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.repinte']}
                     />
                     <TextField
+                        id="application_payload.servicio"
                         label="Tiempo máximo para puesta en servicio"
                         value={appValue(app, 'servicio')}
                         onChange={(v) =>
@@ -156,6 +163,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.servicio']}
                     />
                     <SelectField
+                        id="application_payload.antidescuelgue"
                         label="Exigencia de resistencia al descuelgue"
                         value={appValue(app, 'antidescuelgue')}
                         onChange={(v) =>
@@ -170,6 +178,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.antidescuelgue']}
                     />
                     <TextAreaField
+                        id="application_payload.equipo_detalle"
                         label="Equipo, boquilla, presión o restricciones"
                         value={appValue(app, 'equipo_detalle')}
                         onChange={(v) =>
@@ -190,6 +199,7 @@ export default function ApplicationStep({
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
                     <SelectField
+                        id="application_payload.vehiculo"
                         label="Base requerida"
                         value={appValue(app, 'vehiculo')}
                         onChange={(v) =>
@@ -200,6 +210,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.vehiculo']}
                     />
                     <SelectField
+                        id="application_payload.tecnologia"
                         label="Tecnología preferida"
                         value={appValue(app, 'tecnologia')}
                         onChange={(v) => {
@@ -220,6 +231,7 @@ export default function ApplicationStep({
                     {appValue(app, 'tecnologia') === 'Otra' && (
                         <div className="md:col-span-2">
                             <TextField
+                                id="application_payload.otra_tecnologia"
                                 label="Especifica la tecnología"
                                 value={appValue(app, 'otra_tecnologia')}
                                 onChange={(v) =>
@@ -239,6 +251,7 @@ export default function ApplicationStep({
                         </div>
                     )}
                     <SelectField
+                        id="application_payload.componentes"
                         label="Número de componentes"
                         value={appValue(app, 'componentes')}
                         onChange={(v) =>
@@ -249,6 +262,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.componentes']}
                     />
                     <SelectField
+                        id="application_payload.relacion_mezcla"
                         label="Relación de mezcla preferida"
                         value={appValue(app, 'relacion_mezcla')}
                         onChange={(v) =>
@@ -261,6 +275,7 @@ export default function ApplicationStep({
                         options={relacionMezclaOptions}
                     />
                     <NumberField
+                        id="application_payload.pot_life"
                         label="Pot life mínimo requerido"
                         value={appValue(app, 'pot_life')}
                         onChange={(v) =>
@@ -271,6 +286,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.pot_life']}
                     />
                     <NumberField
+                        id="application_payload.solidos_vol"
                         label="Sólidos por volumen objetivo"
                         value={appValue(app, 'solidos_vol')}
                         onChange={(v) =>
@@ -280,6 +296,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.solidos_vol']}
                     />
                     <SelectField
+                        id="application_payload.ajustador"
                         label="¿Se permite ajustador?"
                         value={appValue(app, 'ajustador')}
                         onChange={(v) =>
@@ -290,6 +307,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.ajustador']}
                     />
                     <NumberField
+                        id="application_payload.voc"
                         label="VOC máximo permitido"
                         value={appValue(app, 'voc')}
                         onChange={(v) =>
@@ -300,6 +318,7 @@ export default function ApplicationStep({
                     />
                     <div className="md:col-span-2">
                         <CheckboxGroup
+                            id="application_payload.restricciones"
                             label="Restricciones especiales"
                             values={appArray(app, 'restricciones')}
                             onChange={(v) =>
@@ -314,6 +333,7 @@ export default function ApplicationStep({
                     </div>
                     <div className="md:col-span-2">
                         <TextAreaField
+                            id="application_payload.sistema_capas"
                             label="Sistema completo previsto"
                             value={appValue(app, 'sistema_capas')}
                             onChange={(v) =>
