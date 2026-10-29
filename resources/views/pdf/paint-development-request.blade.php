@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Solicitud de Desarrollo {{ $request['request_number'] }}</title>
+    <title>Solicitud {{ $request['request_number'] }}</title>
     <style>
         body { font-family: Arial, sans-serif; font-size: 12px; color: #333; margin: 24px; }
         h1 { font-size: 18px; margin-bottom: 4px; }

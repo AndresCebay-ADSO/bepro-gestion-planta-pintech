@@ -22,7 +22,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Estampitas</title>
+    <title>Estampita lote {{ $labels[0]['lot'] }}</title>
     <style>
         @page {
             margin: 0;
