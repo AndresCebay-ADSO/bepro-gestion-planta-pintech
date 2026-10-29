@@ -43,6 +43,7 @@ export default function SpecificationsStep({
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
                     <TextField
+                        id="specifications_payload.viscosidad_metodo"
                         label="Viscosidad y método"
                         value={specValue(spec, 'viscosidad_metodo')}
                         onChange={(v) =>
@@ -55,6 +56,7 @@ export default function SpecificationsStep({
                         placeholder="Ej. 75–85 KU a 25 °C"
                     />
                     <TextField
+                        id="specifications_payload.densidad"
                         label="Densidad objetivo"
                         value={specValue(spec, 'densidad')}
                         onChange={(v) =>
@@ -63,6 +65,7 @@ export default function SpecificationsStep({
                         placeholder="Ej. 1,45–1,55 kg/L a 25 °C"
                     />
                     <TextField
+                        id="specifications_payload.solidos_peso"
                         label="Sólidos por peso objetivo"
                         value={specValue(spec, 'solidos_peso')}
                         onChange={(v) =>
@@ -75,6 +78,7 @@ export default function SpecificationsStep({
                         placeholder="Ej. 75 ± 2%"
                     />
                     <TextField
+                        id="specifications_payload.finura"
                         label="Finura de molienda"
                         value={specValue(spec, 'finura')}
                         onChange={(v) =>
@@ -166,6 +170,7 @@ export default function SpecificationsStep({
                         error={errors['specifications_payload.frecuencia']}
                     />
                     <TextAreaField
+                        id="specifications_payload.almacenamiento"
                         label="Condiciones de almacenamiento y transporte"
                         value={specValue(spec, 'almacenamiento')}
                         onChange={(v) =>
@@ -177,6 +182,7 @@ export default function SpecificationsStep({
                         }
                     />
                     <TextAreaField
+                        id="specifications_payload.kit_ab"
                         label="Configuración del kit A/B"
                         value={specValue(spec, 'kit_ab')}
                         onChange={(v) =>
@@ -193,6 +199,7 @@ export default function SpecificationsStep({
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
                     <TextField
+                        id="specifications_payload.competidor"
                         label="Producto competidor o referencia"
                         value={specValue(spec, 'competidor')}
                         onChange={(v) =>
@@ -279,6 +286,7 @@ export default function SpecificationsStep({
                     />
                     <div className="md:col-span-2">
                         <TextAreaField
+                            id="specifications_payload.criterios_aprobacion"
                             label="Criterios exactos de aprobación"
                             value={specValue(spec, 'criterios_aprobacion')}
                             onChange={(v) =>
@@ -299,6 +307,7 @@ export default function SpecificationsStep({
                     </div>
                     <div className="md:col-span-2">
                         <TextAreaField
+                            id="specifications_payload.observaciones"
                             label="Observaciones adicionales"
                             value={specValue(spec, 'observaciones')}
                             onChange={(v) =>

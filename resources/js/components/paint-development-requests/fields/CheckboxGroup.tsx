@@ -1,10 +1,8 @@
-import { useId } from 'react';
-
 import { FormField } from '@/components/form-field';
 
 type Props = {
     /** El `id` del grupo: igual a la llave del error, para que el foco llegue a él ante un 422. */
-    id?: string;
+    id: string;
     label: string;
     values: string[];
     onChange: (values: string[]) => void;
@@ -22,8 +20,6 @@ export default function CheckboxGroup({
     required,
     error,
 }: Props) {
-    const fallbackId = useId();
-
     const toggle = (val: string) => {
         onChange(
             values.includes(val)
@@ -33,12 +29,7 @@ export default function CheckboxGroup({
     };
 
     return (
-        <FormField
-            id={id ?? fallbackId}
-            label={label}
-            required={required}
-            error={error}
-        >
+        <FormField id={id} label={label} required={required} error={error}>
             {/* `aria-required` no aplica a un grupo de casillas: el asterisco de la etiqueta lo dice. */}
             {(control) => (
                 <div

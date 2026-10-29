@@ -21,6 +21,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { clearListErrors } from '@/lib/form-errors';
 import { UNITS_MAX_DIGITS } from '@/lib/number-types';
 import {
     create as salesOrdersCreate,
@@ -62,7 +63,7 @@ type Props = {
 };
 
 export default function SalesOrdersCreate({ clients, products }: Props) {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, clearErrors } = useForm({
         client_id: '',
         client_business_name: '',
         client_nit: '',
@@ -107,6 +108,7 @@ export default function SalesOrdersCreate({ clients, products }: Props) {
     };
 
     const removeItem = (index: number) => {
+        clearListErrors(errors, clearErrors, 'items');
         setData(
             'items',
             data.items.filter((_, i) => i !== index),

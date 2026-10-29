@@ -1,10 +1,8 @@
-import { useId } from 'react';
-
 import { FormField } from '@/components/form-field';
 
 type Props = {
     /** El `id` del campo: igual a la llave del error, para que el foco llegue a él ante un 422. */
-    id?: string;
+    id: string;
     label: string;
     value: string;
     onChange: (value: string) => void;
@@ -24,15 +22,8 @@ export default function SelectField({
     required,
     error,
 }: Props) {
-    const fallbackId = useId();
-
     return (
-        <FormField
-            id={id ?? fallbackId}
-            label={label}
-            required={required}
-            error={error}
-        >
+        <FormField id={id} label={label} required={required} error={error}>
             <select
                 value={value}
                 onChange={(e) => onChange(e.target.value)}

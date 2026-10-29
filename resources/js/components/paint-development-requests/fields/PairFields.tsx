@@ -1,5 +1,3 @@
-import { useId } from 'react';
-
 import { DecimalInput } from '@/components/decimal-input';
 import { FormField } from '@/components/form-field';
 import type { FormFieldControlProps } from '@/components/form-field';
@@ -16,8 +14,12 @@ type FieldDef = {
 };
 
 type Props = {
-    /** El `id` del primer campo (la etiqueta lo señala); el segundo lleva el mismo con `-b`. */
-    id?: string;
+    /**
+     * El grupo de datos de los dos campos (`context_payload`): cada uno toma como `id` su propia llave
+     * (`context_payload.temp_min`), la misma de su error, para que el foco llegue al campo exacto. La etiqueta señala el
+     * primero.
+     */
+    payload: string;
     label: string;
     a: FieldDef;
     b: FieldDef;
@@ -51,18 +53,16 @@ function PairInput({
 
 /** Dos números bajo una sola etiqueta (mínimo y máximo): el lector de pantalla nombra el segundo con su ayuda. */
 export default function PairFields({
-    id,
+    payload,
     label,
     a,
     b,
     required,
     error,
 }: Props) {
-    const fallbackId = useId();
-
     return (
         <FormField
-            id={id ?? fallbackId}
+            id={`${payload}.${a.name}`}
             label={label}
             required={required}
             error={error}
@@ -74,7 +74,7 @@ export default function PairFields({
                         field={b}
                         control={{
                             ...control,
-                            id: `${control.id}-b`,
+                            id: `${payload}.${b.name}`,
                             'aria-label': `${label}, ${b.placeholder}`,
                         }}
                     />

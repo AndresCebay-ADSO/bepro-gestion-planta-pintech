@@ -61,7 +61,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.metodo']}
                     />
                     <PairFields
-                        id="application_payload.temp_aplicacion"
+                        payload="application_payload"
                         label="Condiciones durante la aplicación"
                         a={{
                             name: 'temp_aplicacion',
@@ -105,7 +105,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.geometria']}
                     />
                     <PairFields
-                        id="application_payload.dft_max"
+                        payload="application_payload"
                         label="Espesor seco requerido por mano"
                         a={{
                             name: 'dft_min',
@@ -178,6 +178,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.antidescuelgue']}
                     />
                     <TextAreaField
+                        id="application_payload.equipo_detalle"
                         label="Equipo, boquilla, presión o restricciones"
                         value={appValue(app, 'equipo_detalle')}
                         onChange={(v) =>
@@ -230,6 +231,7 @@ export default function ApplicationStep({
                     {appValue(app, 'tecnologia') === 'Otra' && (
                         <div className="md:col-span-2">
                             <TextField
+                                id="application_payload.otra_tecnologia"
                                 label="Especifica la tecnología"
                                 value={appValue(app, 'otra_tecnologia')}
                                 onChange={(v) =>
@@ -260,6 +262,7 @@ export default function ApplicationStep({
                         error={errors['application_payload.componentes']}
                     />
                     <SelectField
+                        id="application_payload.relacion_mezcla"
                         label="Relación de mezcla preferida"
                         value={appValue(app, 'relacion_mezcla')}
                         onChange={(v) =>
@@ -315,6 +318,7 @@ export default function ApplicationStep({
                     />
                     <div className="md:col-span-2">
                         <CheckboxGroup
+                            id="application_payload.restricciones"
                             label="Restricciones especiales"
                             values={appArray(app, 'restricciones')}
                             onChange={(v) =>

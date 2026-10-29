@@ -106,6 +106,7 @@ export default function ContextStep({
                     </FormField>
                     <div className="md:col-span-2">
                         <TextField
+                            id="current_product"
                             label="Producto usado actualmente"
                             value={data.current_product}
                             onChange={(v) => setData('current_product', v)}
@@ -252,6 +253,7 @@ export default function ContextStep({
                         error={errors['context_payload.agua_humedad']}
                     />
                     <SelectField
+                        id="context_payload.corrosividad"
                         label="Categoría de corrosividad"
                         value={ctxValue(ctx, 'corrosividad')}
                         onChange={(v) =>
@@ -260,7 +262,7 @@ export default function ContextStep({
                         options={corrosividadOptions}
                     />
                     <PairFields
-                        id="context_payload.temp_max"
+                        payload="context_payload"
                         label="Temperatura de servicio"
                         a={{
                             name: 'temp_min',
@@ -297,6 +299,7 @@ export default function ContextStep({
                         error={errors['context_payload.ciclos_termicos']}
                     />
                     <TextAreaField
+                        id="context_payload.quimicos"
                         label="Químicos, combustibles o contaminantes presentes"
                         value={ctxValue(ctx, 'quimicos')}
                         onChange={(v) =>

@@ -22,6 +22,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { clearListErrors } from '@/lib/form-errors';
 import { PRODUCTION_ORDER_QUANTITY_LIMITS } from '@/lib/number-types';
 import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
 import {
@@ -105,15 +106,8 @@ export default function ProductionOrdersCreate({
 
     // Los errores de las filas van por posición (`packaging.N.campo`): al quitar o cambiar una fila dejarían de
     // corresponder a la fila bajo la que se muestran.
-    const clearPackagingErrors = () => {
-        const packagingErrorKeys = Object.keys(errors).filter((key) =>
-            key.startsWith('packaging'),
-        ) as Parameters<typeof clearErrors>;
-
-        if (packagingErrorKeys.length > 0) {
-            clearErrors(...packagingErrorKeys);
-        }
-    };
+    const clearPackagingErrors = () =>
+        clearListErrors(errors, clearErrors, 'packaging');
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();

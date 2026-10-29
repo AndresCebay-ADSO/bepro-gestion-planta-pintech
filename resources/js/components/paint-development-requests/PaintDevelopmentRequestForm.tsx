@@ -22,7 +22,10 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Spinner } from '@/components/ui/spinner';
+import { focusFirstError, orderedErrorKeys } from '@/lib/focus-first-error';
 import { isValidIntegerText, parseDecimal } from '@/lib/numeric-input';
+import { firstErrorStep } from '@/lib/paint-development-steps';
 
 export type RawPaintDevFormData = {
     client_name: string | null;
@@ -287,14 +290,27 @@ export default function PaintDevelopmentRequestForm({
         ...localErrors,
     };
 
+    // Solo se pinta el paso actual: ante un error, el formulario va al paso del primero y le pone el foco (en el
+    // celular, el campo puede quedar fuera de la vista). Lo usan la validación del navegador y la del servidor.
+    const showErrors = (stepErrors: Record<string, string>) => {
+        const target = firstErrorStep(orderedErrorKeys(stepErrors));
+
+        if (target === undefined) {
+            return;
+        }
+
+        setStep(target);
+        // Después de que el paso se pinte: antes, su campo no existe.
+        window.setTimeout(() => focusFirstError(stepErrors), 50);
+    };
+
     const handleSubmit = (asDraft: boolean) => {
         for (let i = 1; i <= 4; i++) {
             const stepErrors = validateStep(i);
 
             if (Object.keys(stepErrors).length > 0) {
                 setLocalErrors((prev) => ({ ...prev, ...stepErrors }));
-                setStep(i);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                showErrors(stepErrors);
 
                 return;
             }
@@ -305,10 +321,16 @@ export default function PaintDevelopmentRequestForm({
             _draft: asDraft,
         }));
 
+        // Un 422 de un campo de otro paso (una regla que el navegador no revisa, como un mínimo o un largo).
+        const options = {
+            onError: (serverErrors: Record<string, string>) =>
+                showErrors(serverErrors),
+        };
+
         if (method === 'put') {
-            put(submitUrl);
+            put(submitUrl, options);
         } else {
-            post(submitUrl);
+            post(submitUrl, options);
         }
     };
 
@@ -669,8 +691,7 @@ export default function PaintDevelopmentRequestForm({
 
                 if (Object.keys(stepErrors).length > 0) {
                     setLocalErrors((prev) => ({ ...prev, ...stepErrors }));
-                    setStep(i);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    showErrors(stepErrors);
 
                     return;
                 }
@@ -813,7 +834,11 @@ export default function PaintDevelopmentRequestForm({
                                     disabled={processing}
                                     onClick={() => handleSubmit(true)}
                                 >
-                                    <Save className="mr-2 h-4 w-4" />
+                                    {processing ? (
+                                        <Spinner />
+                                    ) : (
+                                        <Save className="mr-2 h-4 w-4" />
+                                    )}
                                     {saveLabel}
                                 </Button>
                                 <Button
@@ -822,7 +847,11 @@ export default function PaintDevelopmentRequestForm({
                                     disabled={processing}
                                     onClick={() => setConfirmOpen(true)}
                                 >
-                                    <Send className="mr-2 h-4 w-4" />
+                                    {processing ? (
+                                        <Spinner />
+                                    ) : (
+                                        <Send className="mr-2 h-4 w-4" />
+                                    )}
                                     {submitLabel}
                                 </Button>
                             </>

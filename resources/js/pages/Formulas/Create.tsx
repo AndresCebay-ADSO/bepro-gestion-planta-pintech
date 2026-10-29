@@ -37,7 +37,7 @@ export default function FormulasCreate({
     selectedProductId,
     returnTo,
 }: Props) {
-    const { data, setData, processing, errors } =
+    const { data, setData, processing, errors, clearErrors } =
         useForm<FormulaCreateFormData>({
             product_id: selectedProductId ?? '',
             name: '',
@@ -91,6 +91,7 @@ export default function FormulasCreate({
                     cancelHref={returnTo ?? formulasIndex().url}
                     onSubmit={handleSubmit}
                     setData={setData}
+                    clearErrors={clearErrors}
                     lockProduct={Boolean(selectedProductId)}
                 />
             </FormPage>

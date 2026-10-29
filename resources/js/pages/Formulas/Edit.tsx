@@ -46,16 +46,17 @@ export default function FormulasEdit({
     rawMaterials,
     units,
 }: Props) {
-    const { data, setData, processing, errors } = useForm<FormulaFormData>({
-        product_id: String(formula.product.id),
-        name: formula.name ?? '',
-        notes: formula.notes ?? '',
-        details: formula.details.map((detail) => ({
-            raw_material_id: String(detail.raw_material_id),
-            quantity: formatForInput(detail.quantity),
-            unit_of_measure_id: String(detail.unit_of_measure_id),
-        })),
-    });
+    const { data, setData, processing, errors, clearErrors } =
+        useForm<FormulaFormData>({
+            product_id: String(formula.product.id),
+            name: formula.name ?? '',
+            notes: formula.notes ?? '',
+            details: formula.details.map((detail) => ({
+                raw_material_id: String(detail.raw_material_id),
+                quantity: formatForInput(detail.quantity),
+                unit_of_measure_id: String(detail.unit_of_measure_id),
+            })),
+        });
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -110,6 +111,7 @@ export default function FormulasEdit({
                     cancelHref={formulasShow({ formula: formula.id }).url}
                     onSubmit={handleSubmit}
                     setData={setData}
+                    clearErrors={clearErrors}
                     lockProduct
                 />
             </FormPage>

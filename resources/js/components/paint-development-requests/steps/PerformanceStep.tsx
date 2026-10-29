@@ -81,6 +81,7 @@ export default function PerformanceStep({
                         error={errors['performance_payload.prioridad']}
                     />
                     <CheckboxGroup
+                        id="performance_payload.pruebas"
                         label="Pruebas o evidencias requeridas"
                         values={perfArray(perf, 'pruebas')}
                         onChange={(v) =>
@@ -121,6 +122,7 @@ export default function PerformanceStep({
                         />
                     </div>
                     <TextAreaField
+                        id="performance_payload.criterios_tecnicos"
                         label="Otros criterios cuantificables de aceptación"
                         value={perfValue(perf, 'criterios_tecnicos')}
                         onChange={(v) =>
@@ -148,6 +150,7 @@ export default function PerformanceStep({
                         error={errors['performance_payload.indispensable']}
                     />
                     <TextAreaField
+                        id="performance_payload.negociable"
                         label="Características negociables"
                         value={perfValue(perf, 'negociable')}
                         onChange={(v) =>
@@ -230,6 +233,7 @@ export default function PerformanceStep({
                     />
                     <div className="md:col-span-2">
                         <TextAreaField
+                            id="performance_payload.acabado_ref"
                             label="Referencia visual o acabado competidor"
                             value={perfValue(perf, 'acabado_ref')}
                             onChange={(v) =>

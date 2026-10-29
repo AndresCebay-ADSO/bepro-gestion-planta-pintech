@@ -18,6 +18,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { clearListErrors } from '@/lib/form-errors';
 import { withDecimalPayloads } from '@/lib/numeric-input';
 
 type RawMaterial = { id: number; code: string };
@@ -64,6 +65,7 @@ type FormulaFormProps = {
         key: K,
         value: FormulaFormData[K],
     ) => void;
+    clearErrors: (...fields: never[]) => void;
     lockProduct?: boolean;
 };
 
@@ -90,6 +92,7 @@ export function FormulaForm({
     description,
     onSubmit,
     setData,
+    clearErrors,
     lockProduct = false,
 }: FormulaFormProps) {
     const productOptions = products.map((product) => ({
@@ -107,6 +110,7 @@ export function FormulaForm({
     };
 
     const removeDetail = (index: number) => {
+        clearListErrors(errors, clearErrors, 'details');
         setData(
             'details',
             data.details.filter((_, currentIndex) => currentIndex !== index),

@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useQuotationPricingPreview } from '@/hooks/use-quotation-pricing-preview';
+import { clearListErrors } from '@/lib/form-errors';
 import { formatNumber } from '@/lib/formatters';
 import { NUMBER_TYPES, UNITS_MAX_DIGITS } from '@/lib/number-types';
 import { toDecimalPayload } from '@/lib/numeric-input';
@@ -214,12 +215,7 @@ export default function QuotationForm({
     };
 
     const removeItem = (index: number) => {
-        // Los errores del último envío van por índice: al borrar una fila dejarían de corresponder.
-        clearErrors(
-            ...(Object.keys(fieldErrors).filter((field) =>
-                field.startsWith('items.'),
-            ) as Array<keyof typeof errors>),
-        );
+        clearListErrors(fieldErrors, clearErrors, 'items');
         setData(
             'items',
             data.items.filter((_, itemIndex) => itemIndex !== index),

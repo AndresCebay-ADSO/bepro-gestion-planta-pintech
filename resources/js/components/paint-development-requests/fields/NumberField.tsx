@@ -1,5 +1,3 @@
-import { useId } from 'react';
-
 import { DecimalInput } from '@/components/decimal-input';
 import { FormField } from '@/components/form-field';
 import { IntegerInput } from '@/components/integer-input';
@@ -7,7 +5,7 @@ import { TECHNICAL_NUMBER_LIMITS } from '@/lib/number-types';
 
 type Props = {
     /** El `id` del campo: igual a la llave del error, para que el foco llegue a él ante un 422. */
-    id?: string;
+    id: string;
     label: string;
     value: string;
     onChange: (value: string) => void;
@@ -30,15 +28,8 @@ export default function NumberField({
     error,
     integer,
 }: Props) {
-    const fallbackId = useId();
-
     return (
-        <FormField
-            id={id ?? fallbackId}
-            label={label}
-            required={required}
-            error={error}
-        >
+        <FormField id={id} label={label} required={required} error={error}>
             {(control) => (
                 <div className="relative">
                     {integer ? (
