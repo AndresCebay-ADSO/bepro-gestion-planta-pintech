@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 import { ChevronRight, Save, Send } from 'lucide-react';
 import { useState } from 'react';
 
@@ -246,6 +246,8 @@ type Props = {
     initialData: Partial<RawPaintDevFormData>;
     submitUrl: string;
     method?: 'post' | 'put';
+    /** «Cancelar»: al listado al crear, al detalle al editar. */
+    cancelHref: string;
     title: string;
     saveLabel: string;
     submitLabel: string;
@@ -266,6 +268,7 @@ export default function PaintDevelopmentRequestForm({
     initialData,
     submitUrl,
     method = 'post',
+    cancelHref,
     title,
     saveLabel,
     submitLabel,
@@ -776,10 +779,16 @@ export default function PaintDevelopmentRequestForm({
 
                     {/* Footer actions */}
                     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4 shadow-sm">
-                        <div className="text-xs text-muted-foreground">
-                            Los campos con{' '}
-                            <span className="text-destructive">*</span> son
-                            obligatorios
+                        {/* «Cancelar» a la izquierda (DESIGN.md §8): sin él, el formulario no tiene salida. */}
+                        <div className="flex flex-wrap items-center gap-3">
+                            <Button variant="outline" asChild>
+                                <Link href={cancelHref}>Cancelar</Link>
+                            </Button>
+                            <div className="text-xs text-muted-foreground">
+                                Los campos con{' '}
+                                <span className="text-destructive">*</span> son
+                                obligatorios
+                            </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {step > 1 && (

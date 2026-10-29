@@ -120,7 +120,7 @@ export default function QuotationsEdit({
                 previewUrl={quotationEditPreviewPricing(quotation.id).url}
                 method="put"
                 title="Editar Cotización"
-                backUrl={quotationsIndex().url}
+                backUrl={quotationsShow(quotation.id).url}
                 submitLabel="Actualizar Cotización"
             />
         </>

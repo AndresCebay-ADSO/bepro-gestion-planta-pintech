@@ -15,7 +15,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useBatchMovementDate } from '@/hooks/use-batch-movement-date';
+import { useSelectionDateMin } from '@/hooks/use-selection-date-min';
 import { formatForInput, formatNumber } from '@/lib/formatters';
 import type { InventoryOption } from '@/types';
 
@@ -101,11 +101,11 @@ export function MovementFormBase({
         type === 'exit' && form.data.batch_id
             ? filteredBatches.find((b) => String(b.id) === form.data.batch_id)
             : undefined;
-    const movementDateFloor = useBatchMovementDate({
-        batchEntryDate: exitBatch?.entry_date,
-        movementDate: form.data.movement_date,
-        clearMovementDate: () => form.setData('movement_date', ''),
+    const movementDateFloor = useSelectionDateMin({
+        selectedDate: exitBatch?.entry_date,
         min: movementDateMin,
+        value: form.data.movement_date,
+        clear: () => form.setData('movement_date', ''),
     });
 
     const selectBatch = (value: string) => {

@@ -15,6 +15,7 @@ export default function PaintDevelopmentRequestCreate() {
                 initialData={{}}
                 submitUrl={requestsStore().url}
                 method="post"
+                cancelHref={requestsIndex().url}
                 title="Nueva solicitud de desarrollo"
                 saveLabel="Guardar borrador"
                 submitLabel="Guardar y enviar"

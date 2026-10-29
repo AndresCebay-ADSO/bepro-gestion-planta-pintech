@@ -170,6 +170,7 @@ export default function AdminOrderSidebar({
                         </Label>
                         <PlantDateInput
                             id="estimated_delivery_date"
+                            clearable
                             min={order.created_on}
                             saved={order.estimated_delivery_date}
                             value={dataForm.data.estimated_delivery_date}

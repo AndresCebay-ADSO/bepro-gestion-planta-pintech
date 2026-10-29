@@ -15,7 +15,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useBatchMovementDate } from '@/hooks/use-batch-movement-date';
+import { useSelectionDateMin } from '@/hooks/use-selection-date-min';
 import { finishedLotLabel } from '@/lib/finished-lot';
 import { formatNumber } from '@/lib/formatters';
 import { UNITS_MAX_DIGITS } from '@/lib/number-types';
@@ -216,10 +216,10 @@ export function FinishedMovementFormFields({
               (batch) => String(batch.id) === String(selectedBatchId),
           )
         : undefined;
-    const movementDateMin = useBatchMovementDate({
-        batchEntryDate: selectedBatch?.entry_date,
-        movementDate: form.data.movement_date,
-        clearMovementDate: () => setFormData('movement_date', ''),
+    const movementDateMin = useSelectionDateMin({
+        selectedDate: selectedBatch?.entry_date,
+        value: form.data.movement_date,
+        clear: () => setFormData('movement_date', ''),
     });
 
     useEffect(() => {

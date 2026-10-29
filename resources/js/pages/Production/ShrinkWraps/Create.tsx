@@ -16,6 +16,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useSelectionDateMin } from '@/hooks/use-selection-date-min';
 import { isValidIntegerText } from '@/lib/numeric-input';
 import {
     create as shrinkWrapsCreate,
@@ -62,6 +63,12 @@ export default function ShrinkWrapsCreate({
     const selectedOrder = orderOptions.find(
         (order) => String(order.value) === form.data.production_order_id,
     );
+    // No se termoencoge antes de que la OP se completara (lo valida el servidor): el calendario no ofrece esos días.
+    const wrappedAtMin = useSelectionDateMin({
+        selectedDate: selectedOrder?.completion_date,
+        value: form.data.wrapped_at,
+        clear: () => form.setData('wrapped_at', ''),
+    });
     const selectedType = typeOptions.find(
         (type) => String(type.value) === form.data.shrink_wrap_type_id,
     );
@@ -167,7 +174,7 @@ export default function ShrinkWrapsCreate({
                             <PlantDateInput
                                 id="wrapped_at"
                                 notFuture
-                                min={selectedOrder?.completion_date}
+                                min={wrappedAtMin}
                                 value={form.data.wrapped_at}
                                 onChange={(value) =>
                                     form.setData('wrapped_at', value)

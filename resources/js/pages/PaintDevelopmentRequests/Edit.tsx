@@ -21,6 +21,7 @@ export default function PaintDevelopmentRequestEdit({ request }: Props) {
                 initialData={request}
                 submitUrl={requestsUpdate(request.id).url}
                 method="put"
+                cancelHref={requestsShow(request.id).url}
                 title="Editar solicitud de desarrollo"
                 saveLabel="Guardar cambios"
                 submitLabel="Guardar y enviar"
