@@ -168,7 +168,10 @@ class QrCodeController extends Controller
         return Storage::disk('local')->response(
             $document->file_path,
             $document->file_name,
-            ['Content-Type' => $document->mime_type ?? 'application/pdf']
+            [
+                'Content-Type' => 'application/pdf',
+                'X-Content-Type-Options' => 'nosniff',
+            ]
         );
     }
 }

@@ -1,7 +1,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     BadgeDollarSign,
-    Download,
+    ExternalLink,
     FileStack,
     FileText,
     Pencil,
@@ -806,17 +806,18 @@ export default function ProductsShow({
                                                                         },
                                                                     ).url
                                                                 }
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
                                                             >
-                                                                <Download className="h-4 w-4" />
+                                                                <ExternalLink className="size-4" />
                                                                 <span className="sr-only">
-                                                                    Descargar
-                                                                    PDF
+                                                                    Ver PDF
                                                                 </span>
                                                             </a>
                                                         </Button>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
-                                                        Descargar PDF
+                                                        Ver PDF
                                                     </TooltipContent>
                                                 </Tooltip>
                                                 {can.manageDocuments && (

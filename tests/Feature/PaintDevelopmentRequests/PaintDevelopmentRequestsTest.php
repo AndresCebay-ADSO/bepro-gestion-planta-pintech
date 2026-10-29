@@ -235,6 +235,9 @@ it('allows admin to export pdf', function () {
 
     $response->assertOk();
     $response->assertHeader('content-type', 'application/pdf');
+    expect($response->headers->get('content-disposition'))
+        ->toStartWith('inline;')
+        ->toContain("SDR-{$request->request_number}.pdf");
 });
 
 it('requires client_name on store', function () {

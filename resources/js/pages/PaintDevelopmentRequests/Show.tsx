@@ -3,7 +3,7 @@ import {
     ArrowLeft,
     CheckCircle2,
     Clock,
-    FileDown,
+    FileText,
     Pencil,
     Send,
     XCircle,
@@ -216,10 +216,10 @@ export default function PaintDevelopmentRequestShow({
                                                     ).url
                                                 }
                                                 target="_blank"
-                                                rel="noreferrer"
+                                                rel="noopener noreferrer"
                                             >
-                                                <FileDown className="mr-2 h-4 w-4" />
-                                                PDF
+                                                <FileText className="size-4" />
+                                                Ver PDF
                                             </a>
                                         </Button>
                                     )}

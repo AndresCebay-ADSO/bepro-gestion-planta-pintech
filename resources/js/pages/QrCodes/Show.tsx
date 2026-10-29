@@ -416,8 +416,8 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                         >
-                                                            <Download className="mr-1.5 h-4 w-4" />
-                                                            Descargar
+                                                            <FileText className="size-4" />
+                                                            Ver PDF
                                                         </a>
                                                     </Button>
                                                 </td>

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Orden de Producción - {{ $order['order_number'] }}</title>
+    <title>Orden {{ $order['order_number'] }}</title>
     <style>
         * {
             margin: 0;

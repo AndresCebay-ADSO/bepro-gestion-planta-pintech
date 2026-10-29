@@ -156,11 +156,19 @@ test('public QR landing keeps a completed lot verified while its certificate is 
 test('public downloads only allow documents associated with the scanned token', function () {
     [$qrCode, $productDocument, $certificate] = createPublicQrFixture();
 
-    $this->get(route('qr.public.documents.download', [$qrCode->token, $certificate]))
-        ->assertSuccessful();
+    $certResponse = $this->get(route('qr.public.documents.download', [$qrCode->token, $certificate]))
+        ->assertSuccessful()
+        ->assertHeader('Content-Type', 'application/pdf')
+        ->assertHeader('X-Content-Type-Options', 'nosniff');
 
-    $this->get(route('qr.public.product-documents.download', [$qrCode->token, $productDocument]))
-        ->assertSuccessful();
+    expect($certResponse->headers->get('Content-Disposition'))->toStartWith('inline;');
+
+    $docResponse = $this->get(route('qr.public.product-documents.download', [$qrCode->token, $productDocument]))
+        ->assertSuccessful()
+        ->assertHeader('Content-Type', 'application/pdf')
+        ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+    expect($docResponse->headers->get('Content-Disposition'))->toStartWith('inline;');
 
     $order = $qrCode->productionOrder;
     $otherOrder = ProductionOrder::create([

@@ -187,7 +187,7 @@ class PaintDevelopmentRequestController extends Controller
 
         $pdf->setPaper('letter');
 
-        return $pdf->download($filename);
+        return $pdf->stream($filename);
     }
 
     private function buildRequestData(PaintDevelopmentRequest $request): array

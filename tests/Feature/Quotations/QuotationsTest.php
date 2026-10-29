@@ -255,10 +255,14 @@ it('exports quotation pdf', function () {
         'sort_order' => 1,
     ]);
 
-    $this->actingAs($this->comercialUser)
+    $response = $this->actingAs($this->comercialUser)
         ->get(route('quotations.export-pdf', $quotation))
         ->assertOk()
         ->assertHeader('content-type', 'application/pdf');
+
+    expect($response->headers->get('content-disposition'))
+        ->toStartWith('inline;')
+        ->toContain('.pdf');
 });
 
 it('renders quotation pdf template with bepro layout sections', function () {
@@ -443,10 +447,14 @@ it('signs the quotation pdf with the signature of the user who created it', func
 
     expect($signature)->toStartWith('data:image/png;base64,');
 
-    $this->actingAs($this->comercialUser)
+    $response = $this->actingAs($this->comercialUser)
         ->get(route('quotations.export-pdf', $quotation))
         ->assertOk()
         ->assertHeader('content-type', 'application/pdf');
+
+    expect($response->headers->get('content-disposition'))
+        ->toStartWith('inline;')
+        ->toContain('.pdf');
 });
 
 it('leaves the advisor signature empty when the creator has none or the file is missing', function (?string $path) {

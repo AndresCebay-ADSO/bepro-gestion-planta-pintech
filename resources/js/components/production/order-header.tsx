@@ -79,7 +79,7 @@ export function OrderHeader({
                             rel="noopener noreferrer"
                         >
                             <FileText className="size-4" />
-                            PDF
+                            Ver PDF
                         </a>
                     </Button>
                     <Button variant="outline" asChild>

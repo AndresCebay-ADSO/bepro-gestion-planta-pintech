@@ -217,7 +217,7 @@ class ProductionOrderController extends Controller
 
         $pdf->setPaper('letter');
 
-        return $pdf->download($filename);
+        return $pdf->stream($filename);
     }
 
     /**

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Cotización - {{ $quotation['quotation_number'] }}</title>
+    <title>Cotización No. {{ $quotation['quotation_number'] }}</title>
     @php
         // Bandas diagonales del encabezado y del pie. DomPDF no recorta divs en diagonal, así que se dibujan en SVG.
         $brandBlue = '#2f67b1';
