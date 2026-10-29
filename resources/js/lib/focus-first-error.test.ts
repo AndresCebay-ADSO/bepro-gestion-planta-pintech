@@ -46,6 +46,24 @@ describe('errorSelectorsFor: dónde buscar el campo de un error', () => {
         ]);
     });
 
+    it('un valor de una lista dentro de un grupo busca el grupo que la contiene', () => {
+        expect(errorSelectorsFor('application_payload.metodo.0')).toEqual([
+            '[id="application_payload.metodo.0"]',
+            '[name="application_payload.metodo.0"]',
+            '[id="application_payload.metodo"]',
+            '[name="application_payload.metodo"]',
+        ]);
+    });
+
+    it('un campo de un grupo sin posición conserva la búsqueda por la raíz', () => {
+        expect(errorSelectorsFor('context_payload.temp_min')).toEqual([
+            '[id="context_payload.temp_min"]',
+            '[name="context_payload.temp_min"]',
+            '[id="context_payload"]',
+            '[name="context_payload"]',
+        ]);
+    });
+
     it('escapa las comillas del nombre', () => {
         expect(errorSelectorsFor('a"b')).toEqual([
             '[id="a\\"b"]',

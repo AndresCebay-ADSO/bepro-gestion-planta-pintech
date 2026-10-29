@@ -20,15 +20,20 @@ export function orderedErrorKeys(errors: ErrorBag): string[] {
 
 /**
  * Selectores donde buscar el campo de una llave. Una llave de fila (`items.2.quantity`) busca primero el campo exacto y
- * después el que contiene la lista (`items`).
+ * después el que contiene la lista (`items`): lo que va antes de la posición. En una lista de valores simples dentro de
+ * un grupo (`application_payload.metodo.0`, las casillas de un grupo), el que la contiene es `application_payload.metodo`.
  */
 export function errorSelectorsFor(key: string): string[] {
     const escaped = key.replace(/["\\]/g, '\\$&');
     const selectors = [`[id="${escaped}"]`, `[name="${escaped}"]`];
 
     if (key.includes('.')) {
-        const root = key.split('.')[0].replace(/["\\]/g, '\\$&');
-        selectors.push(`[id="${root}"]`, `[name="${root}"]`);
+        const parts = key.split('.');
+        const position = parts.findIndex((part) => /^\d+$/.test(part));
+        const container = (
+            position > 0 ? parts.slice(0, position).join('.') : parts[0]
+        ).replace(/["\\]/g, '\\$&');
+        selectors.push(`[id="${container}"]`, `[name="${container}"]`);
     }
 
     return selectors;
