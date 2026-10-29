@@ -8,13 +8,11 @@ import {
     TableBody,
     TableCaption,
     TableCell,
-    TableFooter,
     TableHead,
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
 import { isEmptyCell } from '@/lib/data-listing';
-import { footerLayout } from '@/lib/detail-table';
 import { cn } from '@/lib/utils';
 
 export type DetailTableColumn<T> = {
@@ -28,21 +26,12 @@ export type DetailTableColumn<T> = {
     className?: string;
 };
 
-/** Fila de totales: la etiqueta va a la derecha, junto a la primera cifra; `values` por clave de columna. */
-export type DetailTableFooterRow = {
-    key: string;
-    label: ReactNode;
-    values: Record<string, ReactNode>;
-};
-
 type DetailTableProps<T> = {
     rows: T[];
     rowKey: (row: T) => string | number;
     columns: DetailTableColumn<T>[];
     /** Mensaje cuando no hay filas. */
     empty: ReactNode;
-    /** Filas de totales, en `<tfoot>`. */
-    footer?: DetailTableFooterRow[];
     /** Qué contiene la tabla, solo para el lector de pantalla. */
     caption?: string;
 };
@@ -71,7 +60,6 @@ export function DetailTable<T>({
     rowKey,
     columns,
     empty,
-    footer = [],
     caption,
 }: DetailTableProps<T>) {
     // La línea a la derecha de la columna fija solo sale cuando la tabla no cabe en su caja y se puede desplazar.
@@ -103,7 +91,6 @@ export function DetailTable<T>({
         'sticky left-0 z-10 border-r',
         overflows ? 'border-r-border' : 'border-r-transparent',
     );
-    const columnKeys = columns.map((column) => column.key);
 
     return (
         <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -170,54 +157,6 @@ export function DetailTable<T>({
                         </TableRow>
                     ))}
                 </TableBody>
-                {footer.length > 0 && (
-                    <TableFooter>
-                        {footer.map((footerRow, footerIndex) => {
-                            const { labelSpan, cellKeys } = footerLayout(
-                                columnKeys,
-                                Object.keys(footerRow.values),
-                            );
-
-                            return (
-                                <TableRow
-                                    key={footerRow.key}
-                                    className="hover:bg-transparent"
-                                >
-                                    <TableCell
-                                        colSpan={labelSpan}
-                                        className={cn(
-                                            'text-right',
-                                            footerIndex === 0 && 'border-t',
-                                        )}
-                                    >
-                                        {footerRow.label}
-                                    </TableCell>
-                                    {cellKeys.map((key) => {
-                                        const column = columns.find(
-                                            (candidate) =>
-                                                candidate.key === key,
-                                        );
-
-                                        return (
-                                            <TableCell
-                                                key={key}
-                                                className={cn(
-                                                    alignClasses[
-                                                        column?.align ?? 'left'
-                                                    ],
-                                                    footerIndex === 0 &&
-                                                        'border-t',
-                                                )}
-                                            >
-                                                {footerRow.values[key]}
-                                            </TableCell>
-                                        );
-                                    })}
-                                </TableRow>
-                            );
-                        })}
-                    </TableFooter>
-                )}
             </Table>
         </div>
     );

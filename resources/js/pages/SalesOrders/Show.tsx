@@ -167,7 +167,7 @@ export default function SalesOrdersShow({
                             </div>
                         </div>
 
-                        <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+                        <section className="space-y-4">
                             <h2 className="flex items-center gap-2 text-lg font-semibold">
                                 <ShoppingCart className="h-5 w-5" />
                                 Productos solicitados
@@ -214,7 +214,7 @@ export default function SalesOrdersShow({
                                 ]}
                                 empty="No hay productos en este pedido."
                             />
-                        </div>
+                        </section>
 
                         {order.notes && (
                             <div className="rounded-lg border border-border bg-card p-6">

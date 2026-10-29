@@ -162,13 +162,14 @@ Las líneas de **un** registro (los productos de un pedido o una cotización, lo
 listado: en el celular siguen siendo tabla, se desplazan a lo ancho dentro de su caja y la primera columna queda fija.
 Reglas y ejemplo en `DESIGN.md` §9.
 
-**Ubicación:** `resources/js/components/detail-table.tsx` y la lógica pura de la fila de totales en
-`resources/js/lib/detail-table.ts` (con sus pruebas de Vitest).
+**Ubicación:** `resources/js/components/detail-table.tsx`.
 
 - Columnas como las de `DataListing`, sin papel de tarjeta: `key`, `header`, `cell`, `align`, `className`.
-- `footer`: filas de totales en `<tfoot>`; la etiqueta va a la derecha, junto a la primera cifra.
 - `caption`: qué contiene la tabla, solo para el lector de pantalla.
-- Pinta su propia caja con borde: no se envuelve en otra.
+- Pinta su propia caja con borde: no se envuelve en otra tarjeta. El título de la sección (y su descripción) va
+  justo encima, fuera de cualquier tarjeta.
+- Los totales no van dentro de la tabla (en el celular quedarían fuera de la vista al desplazar): van en una tarjeta
+  debajo, a la derecha, como en `Quotations/Show`.
 
 ---
 

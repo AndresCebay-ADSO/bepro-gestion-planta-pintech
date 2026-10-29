@@ -235,7 +235,7 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                 )}
 
                 {/* Ingredientes */}
-                <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+                <section className="space-y-4">
                     <div>
                         <h2 className="text-lg font-semibold">Ingredientes</h2>
                         <p className="mt-0.5 text-sm text-muted-foreground">
@@ -275,29 +275,25 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                                 className: 'font-mono font-medium',
                             },
                             {
+                                // La unidad va con la cifra («12,5 kg»): sin columna aparte, la tabla cabe a 390 px.
                                 key: 'quantity',
                                 header: 'Cantidad',
                                 cell: (detail) => (
-                                    <FormattedNumber
-                                        value={detail.quantity}
-                                        maxDecimals={4}
-                                    />
+                                    <>
+                                        <FormattedNumber
+                                            value={detail.quantity}
+                                            maxDecimals={4}
+                                        />
+                                        {detail.unit_of_measure &&
+                                            ` ${detail.unit_of_measure.symbol}`}
+                                    </>
                                 ),
                                 align: 'right',
-                            },
-                            {
-                                key: 'unit',
-                                header: 'Unidad',
-                                cell: (detail) =>
-                                    detail.unit_of_measure
-                                        ? `${detail.unit_of_measure.name} (${detail.unit_of_measure.symbol})`
-                                        : null,
-                                className: 'text-muted-foreground',
                             },
                         ]}
                         empty="Esta fórmula no tiene ingredientes registrados."
                     />
-                </div>
+                </section>
             </div>
         </>
     );

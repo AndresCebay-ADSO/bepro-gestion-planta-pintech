@@ -208,6 +208,26 @@ it('exposes viewQuotation permission on order linked to quotation', function () 
         );
 });
 
+it('hides the linked quotation from a user who cannot view it', function () {
+    $comercial = User::factory()->create();
+    $comercial->assignRole(SystemRole::Commercial->value);
+
+    $produccion = User::factory()->create();
+    $produccion->assignRole(SystemRole::Production->value);
+
+    $quotation = Quotation::factory()->create(['created_by' => $comercial->id]);
+    $order = SalesOrder::factory()->create(['quotation_id' => $quotation->id, 'created_by' => $comercial->id]);
+
+    // Producción ve todos los pedidos pero no las cotizaciones: ni el enlace ni el número de la cotización.
+    $this->actingAs($produccion)
+        ->get(route('sales-orders.show', $order))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('can.viewQuotation', false)
+            ->where('order.quotation', null)
+        );
+});
+
 it('allows produccion to update sales order status', function () {
     $user = User::factory()->create();
     $user->assignRole(SystemRole::Production->value);

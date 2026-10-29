@@ -149,9 +149,10 @@ class SalesOrderController extends Controller
         $salesOrder->load(['creator', 'items.product', 'items.productVariant', 'quotation']);
 
         $statusTransitions = $salesOrder->status->nextTransitions();
+        $canViewQuotation = $salesOrder->quotation !== null && ($user?->can('view', $salesOrder->quotation) ?? false);
 
         return Inertia::render('SalesOrders/Show', [
-            'order' => $this->buildOrderData($salesOrder),
+            'order' => $this->buildOrderData($salesOrder, $canViewQuotation),
             'statusTransitions' => array_map(
                 fn (SalesOrderStatus $status) => ['value' => $status->value, 'label' => $status->label()],
                 $statusTransitions
@@ -159,7 +160,7 @@ class SalesOrderController extends Controller
             'can' => [
                 'update' => $user?->can('update', $salesOrder) ?? false,
                 'updateStatus' => $user?->can('updateStatus', $salesOrder) ?? false,
-                'viewQuotation' => $salesOrder->quotation !== null && ($user?->can('view', $salesOrder->quotation) ?? false),
+                'viewQuotation' => $canViewQuotation,
             ],
         ]);
     }
@@ -180,7 +181,7 @@ class SalesOrderController extends Controller
             ->with('success', 'Estado del pedido actualizado con éxito.');
     }
 
-    private function buildOrderData(SalesOrder $salesOrder): array
+    private function buildOrderData(SalesOrder $salesOrder, bool $canViewQuotation): array
     {
         return [
             'id' => $salesOrder->id,
@@ -200,7 +201,8 @@ class SalesOrderController extends Controller
             'notes' => $salesOrder->notes,
             'shipping_address' => $salesOrder->shipping_address,
             // El número, no solo el id: el enlace dice «Cotización No. 57», como el título de la cotización.
-            'quotation' => $salesOrder->quotation ? [
+            // Solo si el usuario puede abrirla: sin permiso, ni su número llega al navegador.
+            'quotation' => $canViewQuotation ? [
                 'id' => $salesOrder->quotation->id,
                 'quotation_number' => $salesOrder->quotation->quotation_number,
             ] : null,

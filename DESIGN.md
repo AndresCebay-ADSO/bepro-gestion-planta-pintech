@@ -344,8 +344,10 @@ fixed. That column says what the line is (product, ingredient, step, lot), so it
 `DataListing` without the card role: `key`, `header`, `cell`, `align` (`'right'` adds `tabular-nums`), `className`.
 Figures and pills never wrap; text wraps, with a minimum width so it never leaves one word per line. Empty cells and the
 empty table follow the listing rules above (`null` → «—», `empty` → dashed box; shared `<EmptyCell>` and
-`<EmptyState>`). Totals go in `footer` (a `<tfoot>`): each row's label sits right-aligned next to its first figure.
-`caption` names the table for screen readers only. The component draws its own bordered box: do not wrap it in another.
+`<EmptyState>`). `caption` names the table for screen readers only. The component draws its own bordered box: do not
+wrap it in another card. The section title (and its description) goes right above it, outside any card.
+**Totals never go inside the table:** on the phone the table scrolls and a total in its last column would be out of
+view. They go in a card below it, right-aligned (`ml-auto max-w-sm`), as in `Quotations/Show`.
 The line on the right of the fixed column shows only while the table overflows its box. Rows do not highlight on hover:
 they open nothing.
 
@@ -360,11 +362,22 @@ they open nothing.
         { key: 'quantity', header: 'Cant.', cell: (item) => <FormattedNumber value={item.quantity} maxDecimals={0} />, align: 'right' },
         { key: 'subtotal', header: 'Subtotal', cell: (item) => <FormattedNumber value={item.subtotal} currency maxDecimals={0} />, align: 'right' },
     ]}
-    footer={[
-        { key: 'total', label: 'Total', values: { subtotal: <FormattedNumber value={quotation.total} currency maxDecimals={0} bold /> } },
-    ]}
     empty="Esta cotización no tiene productos."
 />
+
+{/* Totals: a card below the table, so they show without scrolling. */}
+<div className="ml-auto max-w-sm rounded-lg border border-border bg-card p-6">
+    <div className="space-y-2 text-sm">
+        <div className="flex justify-between">
+            <span>Subtotal</span>
+            <FormattedNumber value={quotation.subtotal} currency maxDecimals={0} />
+        </div>
+        <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
+            <span>Total</span>
+            <FormattedNumber value={quotation.total} currency maxDecimals={0} />
+        </div>
+    </div>
+</div>
 ```
 
 ## 10. Navigation
