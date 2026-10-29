@@ -1,7 +1,9 @@
-import { Link, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { ChevronRight, Save, Send } from 'lucide-react';
 import { useState } from 'react';
 
+import { FormActions } from '@/components/form-actions';
+import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
 import {
     NUMERIC_PAYLOAD_FIELDS,
@@ -681,7 +683,7 @@ export default function PaintDevelopmentRequestForm({
 
     return (
         <>
-            <div className="space-y-4 p-6">
+            <FormPage width="wide">
                 <PageHeader title={title} />
 
                 {/* Stepper */}
@@ -777,64 +779,57 @@ export default function PaintDevelopmentRequestForm({
                         </div>
                     )}
 
-                    {/* Footer actions */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4 shadow-sm">
-                        {/* «Cancelar» a la izquierda (DESIGN.md §8): sin él, el formulario no tiene salida. */}
-                        <div className="flex flex-wrap items-center gap-3">
-                            <Button variant="outline" asChild>
-                                <Link href={cancelHref}>Cancelar</Link>
+                    <p className="text-xs text-muted-foreground">
+                        Los campos con{' '}
+                        <span className="text-destructive">*</span> son
+                        obligatorios
+                    </p>
+
+                    {/* Los botones de paso a la derecha, con «Cancelar» a la izquierda (DESIGN.md §8). */}
+                    <FormActions cancelHref={cancelHref}>
+                        {step > 1 && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => goStep(step - 1)}
+                            >
+                                ← Anterior
                             </Button>
-                            <div className="text-xs text-muted-foreground">
-                                Los campos con{' '}
-                                <span className="text-destructive">*</span> son
-                                obligatorios
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {step > 1 && (
+                        )}
+                        {step < 4 && (
+                            <Button
+                                type="button"
+                                variant="default"
+                                onClick={() => goStep(step + 1)}
+                            >
+                                Continuar →
+                            </Button>
+                        )}
+                        {step === 4 && (
+                            <>
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() => goStep(step - 1)}
+                                    disabled={processing}
+                                    onClick={() => handleSubmit(true)}
                                 >
-                                    ← Anterior
+                                    <Save className="mr-2 h-4 w-4" />
+                                    {saveLabel}
                                 </Button>
-                            )}
-                            {step < 4 && (
                                 <Button
                                     type="button"
                                     variant="default"
-                                    onClick={() => goStep(step + 1)}
+                                    disabled={processing}
+                                    onClick={() => setConfirmOpen(true)}
                                 >
-                                    Continuar →
+                                    <Send className="mr-2 h-4 w-4" />
+                                    {submitLabel}
                                 </Button>
-                            )}
-                            {step === 4 && (
-                                <>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        disabled={processing}
-                                        onClick={() => handleSubmit(true)}
-                                    >
-                                        <Save className="mr-2 h-4 w-4" />
-                                        {saveLabel}
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="default"
-                                        disabled={processing}
-                                        onClick={() => setConfirmOpen(true)}
-                                    >
-                                        <Send className="mr-2 h-4 w-4" />
-                                        {submitLabel}
-                                    </Button>
-                                </>
-                            )}
-                        </div>
-                    </div>
+                            </>
+                        )}
+                    </FormActions>
                 </form>
-            </div>
+            </FormPage>
 
             {/* Confirm submit dialog */}
             <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>

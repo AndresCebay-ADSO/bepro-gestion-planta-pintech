@@ -1,3 +1,4 @@
+import { FormField } from '@/components/form-field';
 import CheckboxGroup from '@/components/paint-development-requests/fields/CheckboxGroup';
 import PairFields from '@/components/paint-development-requests/fields/PairFields';
 import RadioGroup from '@/components/paint-development-requests/fields/RadioGroup';
@@ -16,7 +17,6 @@ import {
 } from '@/components/paint-development-requests/options';
 import type { StepProps } from '@/components/paint-development-requests/types';
 import { PlantDateInput } from '@/components/plant-date-input';
-import { Label } from '@/components/ui/label';
 
 function ctxValue(
     payload: Record<string, unknown>,
@@ -54,6 +54,7 @@ export default function ContextStep({
                 <div className="grid gap-4 md:grid-cols-2">
                     <div className="md:col-span-2">
                         <TextField
+                            id="client_name"
                             label="Nombre del cliente"
                             value={data.client_name}
                             onChange={(v) => setData('client_name', v)}
@@ -63,6 +64,7 @@ export default function ContextStep({
                         />
                     </div>
                     <TextField
+                        id="project_name"
                         label="Nombre del proyecto"
                         value={data.project_name}
                         onChange={(v) => setData('project_name', v)}
@@ -71,6 +73,7 @@ export default function ContextStep({
                         error={errors.project_name}
                     />
                     <TextField
+                        id="responsible"
                         label="Responsable"
                         value={data.responsible}
                         onChange={(v) => setData('responsible', v)}
@@ -79,6 +82,7 @@ export default function ContextStep({
                         error={errors.responsible}
                     />
                     <TextField
+                        id="city"
                         label="Ciudad / región"
                         value={data.city}
                         onChange={(v) => setData('city', v)}
@@ -87,24 +91,19 @@ export default function ContextStep({
                         error={errors.city}
                     />
                     {/* No antes de hoy; un borrador viejo conserva la fecha que ya tenía (como el servidor). */}
-                    <div className="space-y-1.5">
-                        <Label htmlFor="sample_due_date">
-                            Fecha requerida para la muestra
-                            <span className="ml-0.5 text-destructive">*</span>
-                        </Label>
+                    <FormField
+                        id="sample_due_date"
+                        label="Fecha requerida para la muestra"
+                        required
+                        error={errors.sample_due_date}
+                    >
                         <PlantDateInput
-                            id="sample_due_date"
                             notPast
                             saved={savedSampleDueDate}
                             value={data.sample_due_date}
                             onChange={(v) => setData('sample_due_date', v)}
                         />
-                        {errors.sample_due_date && (
-                            <p className="text-xs text-destructive">
-                                {errors.sample_due_date}
-                            </p>
-                        )}
-                    </div>
+                    </FormField>
                     <div className="md:col-span-2">
                         <TextField
                             label="Producto usado actualmente"
@@ -122,6 +121,7 @@ export default function ContextStep({
                 </h2>
                 <div className="grid gap-4">
                     <SelectField
+                        id="context_payload.sustrato"
                         label="Sustrato principal"
                         value={ctxValue(ctx, 'sustrato')}
                         onChange={(v) => {
@@ -141,6 +141,7 @@ export default function ContextStep({
                     />
                     {ctxValue(ctx, 'sustrato') === 'Otro' && (
                         <TextField
+                            id="context_payload.otro_sustrato"
                             label="Especifica el sustrato"
                             value={ctxValue(ctx, 'otro_sustrato')}
                             onChange={(v) =>
@@ -155,6 +156,7 @@ export default function ContextStep({
                         />
                     )}
                     <SelectField
+                        id="context_payload.estado_superficie"
                         label="Estado actual de la superficie"
                         value={ctxValue(ctx, 'estado_superficie')}
                         onChange={(v) =>
@@ -169,6 +171,7 @@ export default function ContextStep({
                         error={errors['context_payload.estado_superficie']}
                     />
                     <RadioGroup
+                        id="context_payload.pintura_existente"
                         label="¿La superficie tiene pintura existente?"
                         value={ctxValue(ctx, 'pintura_existente')}
                         onChange={(v) => {
@@ -192,6 +195,7 @@ export default function ContextStep({
                     />
                     {ctxValue(ctx, 'pintura_existente') === 'Sí' && (
                         <TextAreaField
+                            id="context_payload.sistema_existente"
                             label="Sistema de pintura actual"
                             value={ctxValue(ctx, 'sistema_existente')}
                             onChange={(v) =>
@@ -207,6 +211,7 @@ export default function ContextStep({
                         />
                     )}
                     <CheckboxGroup
+                        id="context_payload.preparacion"
                         label="Preparación superficial disponible"
                         values={ctxArray(ctx, 'preparacion')}
                         onChange={(v) =>
@@ -225,6 +230,7 @@ export default function ContextStep({
                 </h2>
                 <div className="grid gap-4">
                     <CheckboxGroup
+                        id="context_payload.exposicion"
                         label="Tipo de exposición"
                         values={ctxArray(ctx, 'exposicion')}
                         onChange={(v) =>
@@ -235,6 +241,7 @@ export default function ContextStep({
                         error={errors['context_payload.exposicion']}
                     />
                     <SelectField
+                        id="context_payload.agua_humedad"
                         label="Contacto con agua o humedad"
                         value={ctxValue(ctx, 'agua_humedad')}
                         onChange={(v) =>
@@ -253,6 +260,7 @@ export default function ContextStep({
                         options={corrosividadOptions}
                     />
                     <PairFields
+                        id="context_payload.temp_max"
                         label="Temperatura de servicio"
                         a={{
                             name: 'temp_min',
@@ -278,6 +286,7 @@ export default function ContextStep({
                         }
                     />
                     <SelectField
+                        id="context_payload.ciclos_termicos"
                         label="¿Habrá ciclos de calentamiento y enfriamiento?"
                         value={ctxValue(ctx, 'ciclos_termicos')}
                         onChange={(v) =>

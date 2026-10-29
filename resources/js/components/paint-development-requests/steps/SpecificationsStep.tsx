@@ -84,6 +84,7 @@ export default function SpecificationsStep({
                     />
                     <div className="md:col-span-2">
                         <TextAreaField
+                            id="specifications_payload.secados"
                             label="Tiempos de secado objetivo"
                             value={specValue(spec, 'secados')}
                             onChange={(v) =>
@@ -100,6 +101,7 @@ export default function SpecificationsStep({
                     </div>
                     <div className="md:col-span-2">
                         <TextAreaField
+                            id="specifications_payload.estabilidad"
                             label="Estabilidad y vida en almacenamiento"
                             value={specValue(spec, 'estabilidad')}
                             onChange={(v) =>
@@ -123,6 +125,7 @@ export default function SpecificationsStep({
                 </h2>
                 <div className="grid gap-4">
                     <CheckboxGroup
+                        id="specifications_payload.presentacion"
                         label="Presentaciones requeridas"
                         values={specArray(spec, 'presentacion')}
                         onChange={(v) =>
@@ -137,6 +140,7 @@ export default function SpecificationsStep({
                         error={errors['specifications_payload.presentacion']}
                     />
                     <TextField
+                        id="specifications_payload.consumo"
                         label="Consumo estimado"
                         value={specValue(spec, 'consumo')}
                         onChange={(v) =>
@@ -147,6 +151,7 @@ export default function SpecificationsStep({
                         error={errors['specifications_payload.consumo']}
                     />
                     <SelectField
+                        id="specifications_payload.frecuencia"
                         label="Frecuencia de compra"
                         value={specValue(spec, 'frecuencia')}
                         onChange={(v) =>
@@ -200,6 +205,7 @@ export default function SpecificationsStep({
                         placeholder="Marca y referencia exacta"
                     />
                     <SelectField
+                        id="specifications_payload.meta_competidor"
                         label="Objetivo frente a la referencia"
                         value={specValue(spec, 'meta_competidor')}
                         onChange={(v) =>
@@ -214,6 +220,7 @@ export default function SpecificationsStep({
                         error={errors['specifications_payload.meta_competidor']}
                     />
                     <TextField
+                        id="specifications_payload.costo_objetivo"
                         label="Costo o precio objetivo"
                         value={specValue(spec, 'costo_objetivo')}
                         onChange={(v) =>
@@ -228,6 +235,7 @@ export default function SpecificationsStep({
                         error={errors['specifications_payload.costo_objetivo']}
                     />
                     <TextField
+                        id="specifications_payload.cantidad_prueba"
                         label="Cantidad de muestra o prueba industrial"
                         value={specValue(spec, 'cantidad_prueba')}
                         onChange={(v) =>
@@ -242,6 +250,7 @@ export default function SpecificationsStep({
                         error={errors['specifications_payload.cantidad_prueba']}
                     />
                     <TextField
+                        id="specifications_payload.aprobador"
                         label="Quién aprueba el desarrollo"
                         value={specValue(spec, 'aprobador')}
                         onChange={(v) =>
@@ -252,6 +261,7 @@ export default function SpecificationsStep({
                         error={errors['specifications_payload.aprobador']}
                     />
                     <SelectField
+                        id="specifications_payload.forma_aprobacion"
                         label="Forma de aprobación"
                         value={specValue(spec, 'forma_aprobacion')}
                         onChange={(v) =>

@@ -1,8 +1,12 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Head, useForm } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 
 import { store as productionOrderStore } from '@/actions/App/Http/Controllers/ProductionOrderController';
 import { DecimalInput } from '@/components/decimal-input';
+import { FormActions } from '@/components/form-actions';
+import { FormField } from '@/components/form-field';
+import { FormLineItem } from '@/components/form-line-item';
+import { FormPage } from '@/components/form-page';
 import InputError from '@/components/input-error';
 import { IntegerInput } from '@/components/integer-input';
 import { PageHeader } from '@/components/page-header';
@@ -10,7 +14,6 @@ import { PlantDateInput } from '@/components/plant-date-input';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -21,7 +24,10 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { PRODUCTION_ORDER_QUANTITY_LIMITS } from '@/lib/number-types';
 import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
-import { index as productionOrderIndex } from '@/routes/production-orders';
+import {
+    create as productionOrderCreate,
+    index as productionOrderIndex,
+} from '@/routes/production-orders';
 import type { VariantOption } from '@/types/production-orders';
 
 type FormulaOption = {
@@ -168,29 +174,13 @@ export default function ProductionOrdersCreate({
     return (
         <>
             <Head title="Nueva orden de producción" />
-            <div className="space-y-6 p-6">
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Link
-                            href={productionOrderIndex().url}
-                            className="hover:text-foreground"
-                        >
-                            Órdenes de producción
-                        </Link>
-                        <span>/</span>
-                        <span>Nueva</span>
-                    </div>
-                    <PageHeader
-                        title="Nueva orden de producción"
-                        description="Planifica una nueva producción definiendo producto, cantidad y plan de envasado."
-                    />
-                </div>
+            <FormPage width="wide">
+                <PageHeader
+                    title="Nueva orden de producción"
+                    description="Planifica una nueva producción definiendo producto, cantidad y plan de envasado."
+                />
 
-                <form
-                    noValidate
-                    onSubmit={handleSubmit}
-                    className="max-w-4xl space-y-6"
-                >
+                <form noValidate onSubmit={handleSubmit} className="space-y-6">
                     {/* Información General */}
                     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                         <h2 className="text-lg font-semibold text-foreground">
@@ -198,8 +188,12 @@ export default function ProductionOrdersCreate({
                         </h2>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="product_id">Producto *</Label>
+                            <FormField
+                                id="product_id"
+                                label="Producto"
+                                required
+                                error={errors.product_id}
+                            >
                                 <Combobox
                                     options={productOptions}
                                     value={data.product_id}
@@ -213,60 +207,67 @@ export default function ProductionOrdersCreate({
                                     }}
                                     placeholder="Busca o selecciona un producto..."
                                 />
-                                <InputError message={errors.product_id} />
-                            </div>
+                            </FormField>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="formula_id">Fórmula *</Label>
-                                <Select
-                                    value={data.formula_id}
-                                    onValueChange={(v) =>
-                                        setData('formula_id', v)
-                                    }
-                                    disabled={
-                                        !data.product_id ||
-                                        availableFormulas.length === 0
-                                    }
-                                >
-                                    <SelectTrigger id="formula_id">
-                                        <SelectValue
-                                            placeholder={
-                                                !data.product_id
-                                                    ? 'Selecciona un producto primero'
-                                                    : availableFormulas.length ===
-                                                        0
-                                                      ? 'No hay fórmulas activas'
-                                                      : 'Selecciona fórmula'
-                                            }
-                                        />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {availableFormulas.map(
-                                            (f: FormulaOption) => (
-                                                <SelectItem
-                                                    key={f.id}
-                                                    value={String(f.id)}
-                                                >
-                                                    v{f.version}
-                                                    {f.name && ` · ${f.name}`}
-                                                    {f.is_price_reference &&
-                                                        ' (referencia de precio)'}
-                                                </SelectItem>
-                                            ),
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                                <InputError message={errors.formula_id} />
-                            </div>
+                            <FormField
+                                id="formula_id"
+                                label="Fórmula"
+                                required
+                                error={errors.formula_id}
+                            >
+                                {(control) => (
+                                    <Select
+                                        value={data.formula_id}
+                                        onValueChange={(v) =>
+                                            setData('formula_id', v)
+                                        }
+                                        disabled={
+                                            !data.product_id ||
+                                            availableFormulas.length === 0
+                                        }
+                                    >
+                                        <SelectTrigger {...control}>
+                                            <SelectValue
+                                                placeholder={
+                                                    !data.product_id
+                                                        ? 'Selecciona un producto primero'
+                                                        : availableFormulas.length ===
+                                                            0
+                                                          ? 'No hay fórmulas activas'
+                                                          : 'Selecciona fórmula'
+                                                }
+                                            />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {availableFormulas.map(
+                                                (f: FormulaOption) => (
+                                                    <SelectItem
+                                                        key={f.id}
+                                                        value={String(f.id)}
+                                                    >
+                                                        v{f.version}
+                                                        {f.name &&
+                                                            ` · ${f.name}`}
+                                                        {f.is_price_reference &&
+                                                            ' (referencia de precio)'}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </FormField>
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                            <div className="space-y-2">
-                                <Label htmlFor="quantity">
-                                    Cantidad a Producir (galones) *
-                                </Label>
+                            <FormField
+                                id="quantity"
+                                label="Cantidad a Producir (galones)"
+                                required
+                                error={errors.quantity}
+                                help="Galones totales de producto a fabricar"
+                            >
                                 <DecimalInput
-                                    id="quantity"
                                     {...PRODUCTION_ORDER_QUANTITY_LIMITS}
                                     value={data.quantity}
                                     onValueChange={(value) =>
@@ -274,57 +275,61 @@ export default function ProductionOrdersCreate({
                                     }
                                     placeholder="Ej: 50"
                                 />
-                                <p className="text-xs text-muted-foreground">
-                                    Galones totales de producto a fabricar
-                                </p>
-                                <InputError message={errors.quantity} />
-                            </div>
+                            </FormField>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="warehouse_id">Bodega *</Label>
-                                <Select
-                                    value={data.warehouse_id}
-                                    onValueChange={(v) =>
-                                        setData('warehouse_id', v)
-                                    }
-                                >
-                                    <SelectTrigger id="warehouse_id">
-                                        <SelectValue placeholder="Selecciona bodega" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {warehouses.map((w) => (
-                                            <SelectItem
-                                                key={w.id}
-                                                value={String(w.id)}
-                                            >
-                                                {w.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <InputError message={errors.warehouse_id} />
-                            </div>
+                            <FormField
+                                id="warehouse_id"
+                                label="Bodega"
+                                required
+                                error={errors.warehouse_id}
+                            >
+                                {(control) => (
+                                    <Select
+                                        value={data.warehouse_id}
+                                        onValueChange={(v) =>
+                                            setData('warehouse_id', v)
+                                        }
+                                    >
+                                        <SelectTrigger {...control}>
+                                            <SelectValue placeholder="Selecciona bodega" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {warehouses.map((w) => (
+                                                <SelectItem
+                                                    key={w.id}
+                                                    value={String(w.id)}
+                                                >
+                                                    {w.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </FormField>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="planned_date">
-                                    Fecha Planificada *
-                                </Label>
+                            <FormField
+                                id="planned_date"
+                                label="Fecha Planificada"
+                                required
+                                error={errors.planned_date}
+                            >
                                 <PlantDateInput
-                                    id="planned_date"
                                     notPast
                                     value={data.planned_date}
                                     onChange={(value) =>
                                         setData('planned_date', value)
                                     }
                                 />
-                                <InputError message={errors.planned_date} />
-                            </div>
+                            </FormField>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="color">Color (opcional)</Label>
+                        <FormField
+                            id="color"
+                            label="Color (opcional)"
+                            error={errors.color}
+                            help="El que pidió el cliente. Se añade al nombre del producto en la orden, el certificado y el QR."
+                        >
                             <Input
-                                id="color"
                                 value={data.color}
                                 maxLength={100}
                                 onChange={(e) =>
@@ -332,17 +337,14 @@ export default function ProductionOrdersCreate({
                                 }
                                 placeholder="Ej.: RAL 3020"
                             />
-                            <p className="text-xs text-muted-foreground">
-                                El que pidió el cliente. Se añade al nombre del
-                                producto en la orden, el certificado y el QR.
-                            </p>
-                            <InputError message={errors.color} />
-                        </div>
+                        </FormField>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="notes">Notas / Observaciones</Label>
+                        <FormField
+                            id="notes"
+                            label="Notas / Observaciones"
+                            error={errors.notes}
+                        >
                             <Textarea
-                                id="notes"
                                 maxLength={2000}
                                 value={data.notes}
                                 onChange={(e) =>
@@ -351,13 +353,12 @@ export default function ProductionOrdersCreate({
                                 placeholder="Instrucciones especiales para esta producción..."
                                 className="min-h-[80px]"
                             />
-                            <InputError message={errors.notes} />
-                        </div>
+                        </FormField>
                     </div>
 
                     {/* Plan de Envasado */}
-                    <div className="rounded-lg border border-border bg-card">
-                        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+                    <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <h2 className="text-lg font-semibold text-foreground">
                                     Plan de envasado
@@ -395,33 +396,42 @@ export default function ProductionOrdersCreate({
                                     data.packaging.length >=
                                         availableVariants.length
                                 }
+                                className="self-start sm:self-auto"
                             >
                                 <Plus className="mr-1 h-4 w-4" />
                                 Agregar Presentación
                             </Button>
                         </div>
 
-                        <div className="divide-y divide-border">
-                            {data.packaging.length === 0 ? (
-                                <div className="p-8 text-center text-sm text-muted-foreground">
-                                    {!data.product_id
-                                        ? 'Selecciona un producto para ver las presentaciones disponibles'
-                                        : availableVariants.length === 0
-                                          ? 'Este producto no tiene variantes definidas'
-                                          : "Haz clic en 'Agregar Presentación' para definir el plan de envasado"}
-                                </div>
-                            ) : (
-                                data.packaging.map((pack, index) => (
-                                    <div
+                        {data.packaging.length === 0 ? (
+                            <div className="rounded border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                                {!data.product_id
+                                    ? 'Selecciona un producto para ver las presentaciones disponibles'
+                                    : availableVariants.length === 0
+                                      ? 'Este producto no tiene variantes definidas'
+                                      : "Haz clic en 'Agregar Presentación' para definir el plan de envasado"}
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {data.packaging.map((pack, index) => (
+                                    <FormLineItem
                                         key={index}
-                                        className="grid grid-cols-12 items-end gap-3 p-4"
+                                        index={index}
+                                        labelsOnFirstRowOnly
+                                        // El plan de envasado es opcional: toda fila se puede quitar, también la última.
+                                        onRemove={() => removePackaging(index)}
+                                        className="md:grid-cols-12"
                                     >
-                                        <div className="col-span-6 space-y-1">
-                                            {index === 0 && (
-                                                <Label className="text-xs text-muted-foreground">
-                                                    Presentación
-                                                </Label>
+                                        <FormField
+                                            id={`packaging.${index}.product_variant_id`}
+                                            label="Presentación"
+                                            required
+                                            error={packagingRowError(
+                                                index,
+                                                'product_variant_id',
                                             )}
+                                            className="md:col-span-8"
+                                        >
                                             <Combobox
                                                 options={variantOptionsForRow(
                                                     index,
@@ -437,20 +447,18 @@ export default function ProductionOrdersCreate({
                                                 placeholder="Presentación..."
                                                 disabled={!data.product_id}
                                             />
-                                            <InputError
-                                                message={packagingRowError(
-                                                    index,
-                                                    'product_variant_id',
-                                                )}
-                                            />
-                                        </div>
+                                        </FormField>
 
-                                        <div className="col-span-4 space-y-1">
-                                            {index === 0 && (
-                                                <Label className="text-xs text-muted-foreground">
-                                                    Unidades a Producir
-                                                </Label>
+                                        <FormField
+                                            id={`packaging.${index}.planned_units`}
+                                            label="Unidades a Producir"
+                                            required
+                                            error={packagingRowError(
+                                                index,
+                                                'planned_units',
                                             )}
+                                            className="md:col-span-4"
+                                        >
                                             <IntegerInput
                                                 value={pack.planned_units}
                                                 onValueChange={(value) =>
@@ -462,56 +470,34 @@ export default function ProductionOrdersCreate({
                                                 }
                                                 placeholder="Ej: 10"
                                             />
-                                            <InputError
-                                                message={packagingRowError(
-                                                    index,
-                                                    'planned_units',
-                                                )}
-                                            />
-                                        </div>
-
-                                        <div className="col-span-2 flex items-center justify-end">
-                                            {data.packaging.length > 1 && (
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        removePackaging(index)
-                                                    }
-                                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                                        </FormField>
+                                    </FormLineItem>
+                                ))}
+                            </div>
+                        )}
 
                         <InputError
-                            className="px-6 pb-4"
                             message={
                                 (errors as Record<string, string>).packaging
                             }
                         />
                     </div>
 
-                    <div className="flex gap-3">
-                        <Button type="submit" disabled={processing}>
-                            {processing
-                                ? 'Creando…'
-                                : 'Crear Orden de Producción'}
-                        </Button>
-                        <Button type="button" variant="outline" asChild>
-                            <Link href={productionOrderIndex().url}>
-                                Cancelar
-                            </Link>
-                        </Button>
-                    </div>
+                    <FormActions
+                        submitLabel="Crear Orden de Producción"
+                        processing={processing}
+                        cancelHref={productionOrderIndex().url}
+                    />
                 </form>
-            </div>
+            </FormPage>
         </>
     );
 }
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10).
+ProductionOrdersCreate.layout = {
+    breadcrumbs: [
+        { title: 'Órdenes de producción', href: productionOrderIndex() },
+        { title: 'Nueva', href: productionOrderCreate() },
+    ],
+};

@@ -1,13 +1,13 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 
 import { DetailPageHeader } from '@/components/detail-page-header';
+import { FormActions } from '@/components/form-actions';
+import { FormField } from '@/components/form-field';
+import { FormPage } from '@/components/form-page';
 import { FormattedNumber } from '@/components/formatted-number';
-import InputError from '@/components/input-error';
 import { IntegerInput } from '@/components/integer-input';
 import { PlantDateInput } from '@/components/plant-date-input';
-import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -77,7 +77,7 @@ export default function ShrinkWrapsCreate({
         <>
             <Head title="Registrar termoencogido" />
 
-            <div className="space-y-6 p-6">
+            <FormPage width="narrow">
                 <DetailPageHeader
                     breadcrumbs={[
                         {
@@ -98,10 +98,21 @@ export default function ShrinkWrapsCreate({
                         event.preventDefault();
                         form.post(shrinkWrapsStore().url);
                     }}
-                    className="grid max-w-2xl gap-6"
+                    className="grid gap-6"
                 >
-                    <div className="grid gap-2">
-                        <Label>Orden de producción</Label>
+                    <FormField
+                        id="production_order_id"
+                        label="Orden de producción"
+                        error={form.errors.production_order_id}
+                        help={
+                            <>
+                                Solo órdenes completadas: antes no hay lotes que
+                                termoencoger.
+                                {selectedOrder?.warehouse_name &&
+                                    ` Se descuenta de ${selectedOrder.warehouse_name}.`}
+                            </>
+                        }
+                    >
                         <Combobox
                             options={orderComboboxOptions}
                             value={form.data.production_order_id}
@@ -114,65 +125,64 @@ export default function ShrinkWrapsCreate({
                             placeholder="Buscar por número, lote o producto..."
                             emptyText="No hay órdenes completadas con ese dato."
                         />
-                        <p className="text-xs text-muted-foreground">
-                            Solo órdenes completadas: antes no hay lotes que
-                            termoencoger.
-                            {selectedOrder?.warehouse_name &&
-                                ` Se descuenta de ${selectedOrder.warehouse_name}.`}
-                        </p>
-                        <InputError message={form.errors.production_order_id} />
-                    </div>
+                    </FormField>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="shrink_wrap_type_id">Tipo</Label>
-                        <Select
-                            value={form.data.shrink_wrap_type_id}
-                            onValueChange={(value) =>
-                                form.setData('shrink_wrap_type_id', value)
-                            }
-                        >
-                            <SelectTrigger id="shrink_wrap_type_id">
-                                <SelectValue placeholder="Elige el tipo..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {typeOptions.map((type) => (
-                                    <SelectItem
-                                        key={type.value}
-                                        value={String(type.value)}
-                                    >
-                                        {type.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {typeOptions.length === 0 && (
-                            <p className="text-xs text-muted-foreground">
-                                No hay tipos activos. El Admin los crea en
-                                Configuración → Catálogos.
-                            </p>
+                    <FormField
+                        id="shrink_wrap_type_id"
+                        label="Tipo"
+                        error={form.errors.shrink_wrap_type_id}
+                        help={
+                            typeOptions.length === 0
+                                ? 'No hay tipos activos. El Admin los crea en Configuración → Catálogos.'
+                                : undefined
+                        }
+                    >
+                        {(control) => (
+                            <Select
+                                value={form.data.shrink_wrap_type_id}
+                                onValueChange={(value) =>
+                                    form.setData('shrink_wrap_type_id', value)
+                                }
+                            >
+                                <SelectTrigger {...control}>
+                                    <SelectValue placeholder="Elige el tipo..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {typeOptions.map((type) => (
+                                        <SelectItem
+                                            key={type.value}
+                                            value={String(type.value)}
+                                        >
+                                            {type.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         )}
-                        <InputError message={form.errors.shrink_wrap_type_id} />
-                    </div>
+                    </FormField>
 
                     <div className="grid gap-5 sm:grid-cols-2">
-                        <div className="grid gap-2">
-                            <Label htmlFor="applications">Aplicaciones</Label>
-                            {/* Cuántas veces se termoencogió: solo enteros. */}
+                        {/* Cuántas veces se termoencogió: solo enteros. */}
+                        <FormField
+                            id="applications"
+                            label="Aplicaciones"
+                            error={form.errors.applications}
+                        >
                             <IntegerInput
-                                id="applications"
                                 value={form.data.applications}
                                 onValueChange={(value) =>
                                     form.setData('applications', value)
                                 }
                                 placeholder="Ej: 20"
                             />
-                            <InputError message={form.errors.applications} />
-                        </div>
+                        </FormField>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="wrapped_at">Fecha</Label>
+                        <FormField
+                            id="wrapped_at"
+                            label="Fecha"
+                            error={form.errors.wrapped_at}
+                        >
                             <PlantDateInput
-                                id="wrapped_at"
                                 notFuture
                                 min={wrappedAtMin}
                                 value={form.data.wrapped_at}
@@ -180,8 +190,7 @@ export default function ShrinkWrapsCreate({
                                     form.setData('wrapped_at', value)
                                 }
                             />
-                            <InputError message={form.errors.wrapped_at} />
-                        </div>
+                        </FormField>
                     </div>
 
                     {selectedType && (
@@ -213,10 +222,12 @@ export default function ShrinkWrapsCreate({
                         </div>
                     )}
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="notes">Notas</Label>
+                    <FormField
+                        id="notes"
+                        label="Notas"
+                        error={form.errors.notes}
+                    >
                         <Textarea
-                            id="notes"
                             value={form.data.notes}
                             onChange={(event) =>
                                 form.setData('notes', event.target.value)
@@ -224,19 +235,15 @@ export default function ShrinkWrapsCreate({
                             maxLength={1000}
                             rows={2}
                         />
-                        <InputError message={form.errors.notes} />
-                    </div>
+                    </FormField>
 
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                        <Button type="submit" disabled={form.processing}>
-                            {form.processing ? 'Registrando...' : 'Registrar'}
-                        </Button>
-                        <Button type="button" variant="outline" asChild>
-                            <Link href={shrinkWrapsIndex().url}>Cancelar</Link>
-                        </Button>
-                    </div>
+                    <FormActions
+                        submitLabel="Registrar"
+                        processing={form.processing}
+                        cancelHref={shrinkWrapsIndex().url}
+                    />
                 </form>
-            </div>
+            </FormPage>
         </>
     );
 }

@@ -1,8 +1,12 @@
-import { Link, useForm } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { useForm } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 import { useEffect } from 'react';
 
 import { DecimalInput } from '@/components/decimal-input';
+import { FormActions } from '@/components/form-actions';
+import { FormField } from '@/components/form-field';
+import { FormLineItem } from '@/components/form-line-item';
+import { FormPage } from '@/components/form-page';
 import { FormattedNumber } from '@/components/formatted-number';
 import InputError from '@/components/input-error';
 import { IntegerInput } from '@/components/integer-input';
@@ -11,7 +15,6 @@ import { PlantDateInput } from '@/components/plant-date-input';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -293,15 +296,20 @@ export default function QuotationForm({
     };
 
     return (
-        <div className="mx-auto max-w-6xl space-y-6 p-6">
+        <FormPage width="wide">
             <PageHeader title={title} />
 
             <form noValidate onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                     <h2 className="text-lg font-semibold">Cliente</h2>
                     <div className="grid gap-4 md:grid-cols-2">
-                        <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="client_id">Cliente *</Label>
+                        <FormField
+                            id="client_id"
+                            label="Cliente"
+                            required
+                            error={errors.client_id}
+                            className="md:col-span-2"
+                        >
                             <Combobox
                                 options={clientOptions}
                                 value={data.client_id}
@@ -330,31 +338,30 @@ export default function QuotationForm({
                                 }}
                                 placeholder="Seleccionar cliente..."
                             />
-                            {errors.client_id && (
-                                <p className="text-sm text-destructive">
-                                    {errors.client_id}
-                                </p>
-                            )}
-                        </div>
+                        </FormField>
 
-                        <div className="space-y-2">
-                            <Label>Razón social</Label>
+                        <FormField
+                            id="client_business_name"
+                            label="Razón social"
+                        >
                             <Input
                                 value={data.client_business_name}
                                 readOnly
                                 className="bg-muted/50"
                             />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>NIT</Label>
+                        </FormField>
+                        <FormField id="client_nit" label="NIT">
                             <Input
                                 value={data.client_nit}
                                 readOnly
                                 className="bg-muted/50"
                             />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Contacto</Label>
+                        </FormField>
+                        <FormField
+                            id="client_contact_name"
+                            label="Contacto"
+                            error={errors.client_contact_name}
+                        >
                             <Input
                                 value={data.client_contact_name}
                                 onChange={(e) =>
@@ -364,16 +371,19 @@ export default function QuotationForm({
                                     )
                                 }
                             />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Teléfono</Label>
+                        </FormField>
+                        <FormField
+                            id="client_phone"
+                            label="Teléfono"
+                            error={errors.client_phone}
+                        >
                             <Input
                                 value={data.client_phone}
                                 onChange={(e) =>
                                     setData('client_phone', e.target.value)
                                 }
                             />
-                        </div>
+                        </FormField>
                     </div>
                 </div>
 
@@ -382,44 +392,51 @@ export default function QuotationForm({
                         Condiciones comerciales
                     </h2>
                     <div className="grid gap-4 md:grid-cols-3">
-                        <div className="space-y-2">
-                            <Label>Tecnología</Label>
+                        <FormField
+                            id="technology"
+                            label="Tecnología"
+                            error={errors.technology}
+                        >
                             <Input
                                 value={data.technology}
                                 onChange={(e) =>
                                     setData('technology', e.target.value)
                                 }
                             />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Línea</Label>
+                        </FormField>
+                        <FormField id="line" label="Línea" error={errors.line}>
                             <Input
                                 value={data.line}
                                 onChange={(e) =>
                                     setData('line', e.target.value)
                                 }
                             />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Área</Label>
+                        </FormField>
+                        <FormField id="area" label="Área" error={errors.area}>
                             <Input
                                 value={data.area}
                                 onChange={(e) =>
                                     setData('area', e.target.value)
                                 }
                             />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Espesor (mils)</Label>
+                        </FormField>
+                        <FormField
+                            id="thickness_mils"
+                            label="Espesor (mils)"
+                            error={errors.thickness_mils}
+                        >
                             <Input
                                 value={data.thickness_mils}
                                 onChange={(e) =>
                                     setData('thickness_mils', e.target.value)
                                 }
                             />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Método de aplicación</Label>
+                        </FormField>
+                        <FormField
+                            id="application_method"
+                            label="Método de aplicación"
+                            error={errors.application_method}
+                        >
                             <Input
                                 value={data.application_method}
                                 onChange={(e) =>
@@ -429,13 +446,13 @@ export default function QuotationForm({
                                     )
                                 }
                             />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="quotation_date">
-                                Fecha cotización
-                            </Label>
+                        </FormField>
+                        <FormField
+                            id="quotation_date"
+                            label="Fecha cotización"
+                            error={errors.quotation_date}
+                        >
                             <PlantDateInput
-                                id="quotation_date"
                                 notFuture
                                 saved={
                                     method === 'put'
@@ -447,84 +464,91 @@ export default function QuotationForm({
                                     setData('quotation_date', value)
                                 }
                             />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="validity_days">
-                                Validez (días)
-                            </Label>
-                            <Select
-                                value={data.validity_days}
-                                onValueChange={(v) =>
-                                    setData('validity_days', v)
-                                }
-                            >
-                                <SelectTrigger id="validity_days">
-                                    <SelectValue placeholder="Seleccionar..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {validityDaysOptions.map((option) => (
-                                        <SelectItem
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="payment_method">
-                                Forma de pago
-                            </Label>
-                            <Select
-                                value={data.payment_method}
-                                onValueChange={(v) =>
-                                    setData('payment_method', v)
-                                }
-                            >
-                                <SelectTrigger id="payment_method">
-                                    <SelectValue placeholder="Seleccionar..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {paymentMethodOptions.map((option) => (
-                                        <SelectItem
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Tiempo de entrega</Label>
+                        </FormField>
+                        <FormField
+                            id="validity_days"
+                            label="Validez (días)"
+                            error={errors.validity_days}
+                        >
+                            {(control) => (
+                                <Select
+                                    value={data.validity_days}
+                                    onValueChange={(v) =>
+                                        setData('validity_days', v)
+                                    }
+                                >
+                                    <SelectTrigger {...control}>
+                                        <SelectValue placeholder="Seleccionar..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {validityDaysOptions.map((option) => (
+                                            <SelectItem
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        </FormField>
+                        <FormField
+                            id="payment_method"
+                            label="Forma de pago"
+                            error={errors.payment_method}
+                        >
+                            {(control) => (
+                                <Select
+                                    value={data.payment_method}
+                                    onValueChange={(v) =>
+                                        setData('payment_method', v)
+                                    }
+                                >
+                                    <SelectTrigger {...control}>
+                                        <SelectValue placeholder="Seleccionar..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {paymentMethodOptions.map((option) => (
+                                            <SelectItem
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        </FormField>
+                        <FormField
+                            id="delivery_time"
+                            label="Tiempo de entrega"
+                            error={errors.delivery_time}
+                        >
                             <Input
                                 value={data.delivery_time}
                                 onChange={(e) =>
                                     setData('delivery_time', e.target.value)
                                 }
                             />
-                        </div>
+                        </FormField>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="notes">Observaciones</Label>
+                    <FormField
+                        id="notes"
+                        label="Observaciones"
+                        error={errors.notes}
+                        help="Opcional. Solo para condiciones particulares de esta cotización (transporte, pedido mínimo, anticipo…). Sale en el PDF; si no aplica, déjelo vacío."
+                    >
                         <Textarea
-                            id="notes"
                             value={data.notes}
                             onChange={(e) => setData('notes', e.target.value)}
                         />
-                        <p className="text-xs text-muted-foreground">
-                            Opcional. Solo para condiciones particulares de esta
-                            cotización (transporte, pedido mínimo, anticipo…).
-                            Sale en el PDF; si no aplica, déjelo vacío.
-                        </p>
-                    </div>
+                    </FormField>
                 </div>
 
                 <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                         <h2 className="text-lg font-semibold">Productos</h2>
                         <Button
                             type="button"
@@ -573,71 +597,91 @@ export default function QuotationForm({
                                         : undefined;
 
                                 return (
-                                    <div
+                                    <FormLineItem
                                         key={item.row_key}
-                                        className="space-y-3 rounded border border-border p-4"
-                                    >
-                                        <div className="grid gap-3 md:grid-cols-12">
-                                            <div className="md:col-span-4">
-                                                <Label className="text-xs">
-                                                    Producto *
-                                                </Label>
-                                                <Combobox
-                                                    options={productOptions}
-                                                    value={item.product_id}
-                                                    onChange={(value) =>
-                                                        updateItem(
-                                                            index,
-                                                            'product_id',
-                                                            String(value),
-                                                        )
+                                        index={index}
+                                        onRemove={() => removeItem(index)}
+                                        className="md:grid-cols-12"
+                                        footer={
+                                            <div className="text-right text-sm text-muted-foreground">
+                                                Subtotal línea:{' '}
+                                                {/* Atenuado si no corresponde a la fila tal como está: se está
+                                                    recalculando o la vista previa fue rechazada. */}
+                                                <FormattedNumber
+                                                    value={
+                                                        line?.subtotal ?? null
                                                     }
-                                                    placeholder="Seleccionar..."
+                                                    currency
+                                                    maxDecimals={0}
+                                                    className={
+                                                        isCurrent
+                                                            ? undefined
+                                                            : 'opacity-50'
+                                                    }
                                                 />
-                                                <InputError
-                                                    className="text-xs"
-                                                    message={itemError(
-                                                        item,
+                                            </div>
+                                        }
+                                    >
+                                        <FormField
+                                            id={`items.${index}.product_id`}
+                                            label="Producto"
+                                            required
+                                            error={itemError(
+                                                item,
+                                                index,
+                                                'product_id',
+                                            )}
+                                            className="md:col-span-4"
+                                        >
+                                            <Combobox
+                                                options={productOptions}
+                                                value={item.product_id}
+                                                onChange={(value) =>
+                                                    updateItem(
                                                         index,
                                                         'product_id',
-                                                    )}
-                                                />
-                                            </div>
-                                            <div className="md:col-span-3">
-                                                <Label className="text-xs">
-                                                    Presentación *
-                                                </Label>
-                                                <Combobox
-                                                    options={variantOptions}
-                                                    value={
-                                                        item.product_variant_id
-                                                    }
-                                                    onChange={(value) =>
-                                                        updateItem(
-                                                            index,
-                                                            'product_variant_id',
-                                                            String(value),
-                                                        )
-                                                    }
-                                                    placeholder="Seleccionar..."
-                                                    disabled={!selectedProduct}
-                                                />
-                                                <InputError
-                                                    className="text-xs"
-                                                    message={itemError(
-                                                        item,
+                                                        String(value),
+                                                    )
+                                                }
+                                                placeholder="Seleccionar..."
+                                            />
+                                        </FormField>
+                                        <FormField
+                                            id={`items.${index}.product_variant_id`}
+                                            label="Presentación"
+                                            required
+                                            error={itemError(
+                                                item,
+                                                index,
+                                                'product_variant_id',
+                                            )}
+                                            className="md:col-span-3"
+                                        >
+                                            <Combobox
+                                                options={variantOptions}
+                                                value={item.product_variant_id}
+                                                onChange={(value) =>
+                                                    updateItem(
                                                         index,
                                                         'product_variant_id',
-                                                    )}
-                                                />
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                <Label
-                                                    htmlFor={`items.${index}.type`}
-                                                    className="text-xs"
-                                                >
-                                                    Tipo
-                                                </Label>
+                                                        String(value),
+                                                    )
+                                                }
+                                                placeholder="Seleccionar..."
+                                                disabled={!selectedProduct}
+                                            />
+                                        </FormField>
+                                        <FormField
+                                            id={`items.${index}.type`}
+                                            label="Tipo"
+                                            error={itemError(
+                                                item,
+                                                index,
+                                                'type',
+                                            )}
+                                            className="md:col-span-2"
+                                        >
+                                            {(control) => (
                                                 <Select
                                                     value={item.type}
                                                     onValueChange={(v) =>
@@ -648,9 +692,7 @@ export default function QuotationForm({
                                                         )
                                                     }
                                                 >
-                                                    <SelectTrigger
-                                                        id={`items.${index}.type`}
-                                                    >
+                                                    <SelectTrigger {...control}>
                                                         <SelectValue placeholder="Seleccionar..." />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -672,197 +714,151 @@ export default function QuotationForm({
                                                         )}
                                                     </SelectContent>
                                                 </Select>
-                                                <InputError
-                                                    className="text-xs"
-                                                    message={itemError(
-                                                        item,
-                                                        index,
-                                                        'type',
-                                                    )}
-                                                />
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                <Label className="text-xs">
-                                                    Cantidad *
-                                                </Label>
-                                                <IntegerInput
-                                                    maxDigits={UNITS_MAX_DIGITS}
-                                                    value={item.quantity}
-                                                    onValueChange={(value) =>
-                                                        updateItem(
-                                                            index,
-                                                            'quantity',
-                                                            value,
-                                                        )
-                                                    }
-                                                />
-                                                <InputError
-                                                    className="text-xs"
-                                                    message={itemError(
-                                                        item,
+                                            )}
+                                        </FormField>
+                                        <FormField
+                                            id={`items.${index}.quantity`}
+                                            label="Cantidad"
+                                            required
+                                            error={itemError(
+                                                item,
+                                                index,
+                                                'quantity',
+                                            )}
+                                            className="md:col-span-3"
+                                        >
+                                            <IntegerInput
+                                                maxDigits={UNITS_MAX_DIGITS}
+                                                value={item.quantity}
+                                                onValueChange={(value) =>
+                                                    updateItem(
                                                         index,
                                                         'quantity',
-                                                    )}
-                                                />
-                                            </div>
-                                            <div className="flex items-end justify-end md:col-span-1">
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        removeItem(index)
-                                                    }
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid gap-3 md:grid-cols-12">
-                                            <div className="md:col-span-4">
-                                                <Label className="text-xs">
-                                                    Descripción comercial
-                                                </Label>
-                                                <Input
-                                                    value={item.description}
-                                                    onChange={(e) =>
-                                                        updateItem(
-                                                            index,
-                                                            'description',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <InputError
-                                                    className="text-xs"
-                                                    message={itemError(
-                                                        item,
-                                                        index,
-                                                        'description',
-                                                    )}
-                                                />
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                <Label className="text-xs">
-                                                    Color
-                                                </Label>
-                                                <Input
-                                                    value={item.color}
-                                                    onChange={(e) =>
-                                                        updateItem(
-                                                            index,
-                                                            'color',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <InputError
-                                                    className="text-xs"
-                                                    message={itemError(
-                                                        item,
-                                                        index,
-                                                        'color',
-                                                    )}
-                                                />
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                <Label className="text-xs">
-                                                    Precio lista
-                                                </Label>
-                                                <Input
-                                                    // Precio interno: 2 decimales, y vacío sin presentación.
-                                                    value={formatNumber(
-                                                        item.list_unit_price,
-                                                        {
-                                                            currency: '$',
-                                                            maxDecimals: 2,
-                                                            emptyValue: '',
-                                                        },
-                                                    )}
-                                                    readOnly
-                                                    className="bg-muted/50"
-                                                />
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                <Label className="text-xs">
-                                                    Ajuste %
-                                                </Label>
-                                                <DecimalInput
-                                                    {...NUMBER_TYPES.percentage}
-                                                    allowNegative
-                                                    value={
-                                                        item.price_adjustment_pct
-                                                    }
-                                                    onValueChange={(value) =>
-                                                        updateItem(
-                                                            index,
-                                                            'price_adjustment_pct',
-                                                            value,
-                                                        )
-                                                    }
-                                                    placeholder={
-                                                        item.pricing_source ===
-                                                        'adjustment'
-                                                            ? '0'
-                                                            : '-10 o 5'
-                                                    }
-                                                />
-                                                <InputError
-                                                    className="text-xs"
-                                                    message={itemError(
-                                                        item,
-                                                        index,
-                                                        'price_adjustment_pct',
-                                                    )}
-                                                />
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                <Label className="text-xs">
-                                                    Precio unitario
-                                                </Label>
-                                                <IntegerInput
-                                                    maxDigits={
-                                                        NUMBER_TYPES.money
-                                                            .maxIntegerDigits
-                                                    }
-                                                    value={item.unit_price}
-                                                    onValueChange={(value) =>
-                                                        updateItem(
-                                                            index,
-                                                            'unit_price',
-                                                            value,
-                                                        )
-                                                    }
-                                                    placeholder={appliedPrice}
-                                                />
-                                                <InputError
-                                                    className="text-xs"
-                                                    message={itemError(
-                                                        item,
-                                                        index,
-                                                        'unit_price',
-                                                    )}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="text-right text-sm text-muted-foreground">
-                                            Subtotal línea:{' '}
-                                            {/* Atenuado si no corresponde a la fila tal como está: se está
-                                                recalculando o la vista previa fue rechazada. */}
-                                            <FormattedNumber
-                                                value={line?.subtotal ?? null}
-                                                currency
-                                                maxDecimals={0}
-                                                className={
-                                                    isCurrent
-                                                        ? undefined
-                                                        : 'opacity-50'
+                                                        value,
+                                                    )
                                                 }
                                             />
-                                        </div>
-                                    </div>
+                                        </FormField>
+
+                                        <FormField
+                                            id={`items.${index}.description`}
+                                            label="Descripción comercial"
+                                            error={itemError(
+                                                item,
+                                                index,
+                                                'description',
+                                            )}
+                                            className="md:col-span-4"
+                                        >
+                                            <Input
+                                                value={item.description}
+                                                onChange={(e) =>
+                                                    updateItem(
+                                                        index,
+                                                        'description',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            />
+                                        </FormField>
+                                        <FormField
+                                            id={`items.${index}.color`}
+                                            label="Color"
+                                            error={itemError(
+                                                item,
+                                                index,
+                                                'color',
+                                            )}
+                                            className="md:col-span-2"
+                                        >
+                                            <Input
+                                                value={item.color}
+                                                onChange={(e) =>
+                                                    updateItem(
+                                                        index,
+                                                        'color',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            />
+                                        </FormField>
+                                        <FormField
+                                            id={`items.${index}.list_unit_price`}
+                                            label="Precio lista"
+                                            className="md:col-span-2"
+                                        >
+                                            <Input
+                                                // Precio interno: 2 decimales, y vacío sin presentación.
+                                                value={formatNumber(
+                                                    item.list_unit_price,
+                                                    {
+                                                        currency: '$',
+                                                        maxDecimals: 2,
+                                                        emptyValue: '',
+                                                    },
+                                                )}
+                                                readOnly
+                                                className="bg-muted/50"
+                                            />
+                                        </FormField>
+                                        <FormField
+                                            id={`items.${index}.price_adjustment_pct`}
+                                            label="Ajuste %"
+                                            error={itemError(
+                                                item,
+                                                index,
+                                                'price_adjustment_pct',
+                                            )}
+                                            className="md:col-span-2"
+                                        >
+                                            <DecimalInput
+                                                {...NUMBER_TYPES.percentage}
+                                                allowNegative
+                                                value={
+                                                    item.price_adjustment_pct
+                                                }
+                                                onValueChange={(value) =>
+                                                    updateItem(
+                                                        index,
+                                                        'price_adjustment_pct',
+                                                        value,
+                                                    )
+                                                }
+                                                placeholder={
+                                                    item.pricing_source ===
+                                                    'adjustment'
+                                                        ? '0'
+                                                        : '-10 o 5'
+                                                }
+                                            />
+                                        </FormField>
+                                        <FormField
+                                            id={`items.${index}.unit_price`}
+                                            label="Precio unitario"
+                                            error={itemError(
+                                                item,
+                                                index,
+                                                'unit_price',
+                                            )}
+                                            className="md:col-span-2"
+                                        >
+                                            <IntegerInput
+                                                maxDigits={
+                                                    NUMBER_TYPES.money
+                                                        .maxIntegerDigits
+                                                }
+                                                value={item.unit_price}
+                                                onValueChange={(value) =>
+                                                    updateItem(
+                                                        index,
+                                                        'unit_price',
+                                                        value,
+                                                    )
+                                                }
+                                                placeholder={appliedPrice}
+                                            />
+                                        </FormField>
+                                    </FormLineItem>
                                 );
                             })}
                         </div>
@@ -950,15 +946,12 @@ export default function QuotationForm({
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-3">
-                    <Button variant="outline" asChild>
-                        <Link href={backUrl}>Cancelar</Link>
-                    </Button>
-                    <Button type="submit" disabled={processing}>
-                        {submitLabel}
-                    </Button>
-                </div>
+                <FormActions
+                    submitLabel={submitLabel}
+                    processing={processing}
+                    cancelHref={backUrl}
+                />
             </form>
-        </div>
+        </FormPage>
     );
 }

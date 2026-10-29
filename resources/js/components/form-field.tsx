@@ -27,7 +27,8 @@ type FormFieldProps = {
     /**
      * El campo. Un elemento (`Input`, `Textarea`, `DecimalInput`, `Combobox`, `PlantDateInput`…) recibe solo `id` y los
      * `aria-*`. Un `Select` recibe una función, para que los reciba el `SelectTrigger` y no la raíz:
-     * `{(control) => <Select …><SelectTrigger {...control}>…</SelectTrigger></Select>}`.
+     * `{(control) => <Select …><SelectTrigger {...control}>…</SelectTrigger></Select>}`. Un grupo de opciones
+     * (radios, casillas) también recibe una función y se nombra con la etiqueta, cuyo `id` es `${control.id}-label`.
      */
     children: ReactElement | ((control: FormFieldControlProps) => ReactNode);
 };
@@ -61,7 +62,7 @@ export function FormField({
             data-slot="form-field"
             className={cn('grid min-w-0 content-start gap-2', className)}
         >
-            <Label htmlFor={id}>
+            <Label id={`${id}-label`} htmlFor={id}>
                 {label}
                 {required && (
                     <span

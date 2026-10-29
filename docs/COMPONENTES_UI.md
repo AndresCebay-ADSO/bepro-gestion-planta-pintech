@@ -254,8 +254,9 @@ lista.
 ## Piezas de formulario
 
 Las reglas (contenedor de cada formulario, columnas, pie, 422, `noValidate`) están en `DESIGN.md` §8, que es la fuente.
-Ejemplos completos: los cajones de movimientos de MP y PT (`components/inventory/`, `components/finished-inventory/`) y
-Clientes (`components/clients/ClientForm.tsx`, `pages/Clients/{Create,Edit}.tsx`).
+Ejemplos completos: los cajones de movimientos de MP y PT (`components/inventory/`, `components/finished-inventory/`),
+Clientes (`components/clients/ClientForm.tsx`, `pages/Clients/{Create,Edit}.tsx`) y, con líneas, la fórmula
+(`components/formulas/formula-form.tsx`) y la nueva OP (`pages/Production/Orders/Create.tsx`).
 
 ### FormPage
 
@@ -281,7 +282,10 @@ campo el `id` (el de la llave del error, para que `focus-first-error` lo encuent
 | `id` | `id` del campo y `htmlFor` de la etiqueta. Igual a la llave del error del servidor (`quantity`, `items.2.quantity`) |
 | `label`, `help`, `error` | Etiqueta, ayuda (`text-xs`) y mensaje del servidor (`InputError`) |
 | `required` | Asterisco rojo en la etiqueta |
-| `children` | Un elemento (`Input`, `Textarea`, `DecimalInput`, `IntegerInput`, `Combobox`, `PlantDateInput`) o, para un `Select`, una función que recibe los props para el `SelectTrigger` |
+| `children` | Un elemento (`Input`, `Textarea`, `DecimalInput`, `IntegerInput`, `Combobox`, `PlantDateInput`) o, para un `Select` o un grupo de opciones, una función que recibe los props para el `SelectTrigger` o el contenedor del grupo |
+
+Un grupo de radios o casillas recibe la función y se nombra con la etiqueta, cuyo `id` es `` `${control.id}-label` ``
+(ejemplos en `components/paint-development-requests/fields/`).
 
 ```tsx
 <FormField id="quantity" label="Cantidad" error={form.errors.quantity}>
@@ -303,6 +307,46 @@ campo el `id` (el de la llave del error, para que `focus-first-error` lo encuent
 **Ubicación:** `resources/js/components/form-actions.tsx`. «Cancelar» a la izquierda y el botón principal (`submit`,
 primario) a la derecha, deshabilitado y con rueda mientras `processing`. `cancelHref` (página: vuelve al listado) u
 `onCancel` (cajón o ventana: la cierra); sin ninguno, solo el botón principal.
+
+Un formulario por pasos pasa sus botones como `children` en lugar de `submitLabel`: quedan a la derecha, con «Cancelar»
+a la izquierda, y en el celular se apilan con el último (el principal) arriba.
+
+```tsx
+<FormActions cancelHref={cancelHref}>
+    {step > 1 && <Button type="button" variant="outline" onClick={back}>← Anterior</Button>}
+    <Button type="button" onClick={next}>Continuar →</Button>
+</FormActions>
+```
+
+### FormLineItem (editores de líneas)
+
+**Ubicación:** `resources/js/components/form-line-item.tsx`. El marco de cada línea de un editor de líneas (fórmula,
+plan de envasado de la OP, cotización, pedido). En el celular es un bloque con el encabezado «Línea N», el botón de
+quitar y los campos uno debajo del otro; desde `md`, los campos van en una fila (las columnas las da `className`) con el
+botón de quitar al final. Cada campo es un `<FormField>` con su `md:col-span-*` y el `id` de la llave del error de la
+fila (`items.2.quantity`).
+
+| Prop | Descripción |
+|------|-------------|
+| `index` | Posición de la línea (desde 0): el encabezado dice «Línea 1», «Línea 2»… |
+| `label` | Nombre de la línea en el encabezado (por defecto «Línea»; la fórmula usa «Paso») |
+| `onRemove` | Quita la línea; sin él no hay botón (la única línea obligatoria). El botón se anuncia «Quitar línea N» |
+| `labelsOnFirstRowOnly` | Desde `md`, solo la primera línea muestra las etiquetas (las demás las conservan para el lector de pantalla). Para editores de muchas líneas cortas (fórmula, envasado) |
+| `className` | Columnas de los campos desde `md` (`md:grid-cols-12`) |
+| `footer` | Lo que va bajo los campos, a todo el ancho (el subtotal de la línea en la cotización) |
+
+```tsx
+{data.items.map((item, index) => (
+    <FormLineItem key={item.row_key} index={index} onRemove={() => removeItem(index)} className="md:grid-cols-12">
+        <FormField id={`items.${index}.product_id`} label="Producto" required error={errors[`items.${index}.product_id`]} className="md:col-span-6">
+            <Combobox options={productOptions} value={item.product_id} onChange={(v) => updateItem(index, 'product_id', String(v))} />
+        </FormField>
+        <FormField id={`items.${index}.quantity`} label="Cantidad" required error={errors[`items.${index}.quantity`]} className="md:col-span-6">
+            <IntegerInput value={item.quantity} onValueChange={(v) => updateItem(index, 'quantity', v)} />
+        </FormField>
+    </FormLineItem>
+))}
+```
 
 ### Cajón y ventana (`ui/sheet.tsx`, `ui/dialog.tsx`)
 

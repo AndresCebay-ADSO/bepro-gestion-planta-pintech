@@ -1,7 +1,11 @@
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import type { FormEvent } from 'react';
 
 import { DecimalInput } from '@/components/decimal-input';
+import { FormActions } from '@/components/form-actions';
+import { FormField } from '@/components/form-field';
+import { FormLineItem } from '@/components/form-line-item';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -51,6 +55,8 @@ type FormulaFormProps = {
     rawMaterials: RawMaterial[];
     units: UnitOption[];
     submitLabel: string;
+    /** «Cancelar»: vuelve a la pantalla de donde se llegó. */
+    cancelHref: string;
     heading: string;
     description: string;
     onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -79,6 +85,7 @@ export function FormulaForm({
     rawMaterials,
     units,
     submitLabel,
+    cancelHref,
     heading,
     description,
     onSubmit,
@@ -121,76 +128,68 @@ export function FormulaForm({
 
     return (
         <form noValidate onSubmit={onSubmit} className="space-y-6">
-            <div className="max-w-2xl space-y-4 rounded-lg border border-border bg-card p-6">
+            <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                 <h2 className="font-medium text-foreground">{heading}</h2>
 
-                <div className="space-y-2">
-                    <Label htmlFor="product_id">Producto *</Label>
-                    <Combobox
-                        options={productOptions}
-                        value={data.product_id}
-                        onChange={(value) =>
-                            setData('product_id', String(value))
+                <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                        id="product_id"
+                        label="Producto"
+                        required
+                        error={errors.product_id}
+                        help={
+                            lockProduct
+                                ? 'El producto no se puede cambiar al editar una fórmula existente.'
+                                : undefined
                         }
-                        placeholder="Busca o selecciona el producto..."
-                        disabled={lockProduct}
-                    />
-                    {lockProduct && (
-                        <p className="text-xs text-muted-foreground">
-                            El producto no se puede cambiar al editar una
-                            fórmula existente.
-                        </p>
-                    )}
-                    {errors.product_id && (
-                        <p className="text-sm text-destructive">
-                            {errors.product_id}
-                        </p>
-                    )}
-                </div>
+                    >
+                        <Combobox
+                            options={productOptions}
+                            value={data.product_id}
+                            onChange={(value) =>
+                                setData('product_id', String(value))
+                            }
+                            placeholder="Busca o selecciona el producto..."
+                            disabled={lockProduct}
+                        />
+                    </FormField>
 
-                <div className="space-y-2">
-                    <Label htmlFor="name">Nombre</Label>
-                    <Input
+                    <FormField
                         id="name"
-                        value={data.name}
-                        onChange={(event) =>
-                            setData('name', event.target.value)
-                        }
-                        maxLength={60}
-                        placeholder="Ej: RAL 7035"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                        Opcional. Distingue las fórmulas activas de un mismo
-                        producto al crear una orden de producción.
-                    </p>
-                    {errors.name && (
-                        <p className="text-sm text-destructive">
-                            {errors.name}
-                        </p>
-                    )}
-                </div>
+                        label="Nombre"
+                        error={errors.name}
+                        help="Opcional. Distingue las fórmulas activas de un mismo producto al crear una orden de producción."
+                    >
+                        <Input
+                            value={data.name}
+                            onChange={(event) =>
+                                setData('name', event.target.value)
+                            }
+                            maxLength={60}
+                            placeholder="Ej: RAL 7035"
+                        />
+                    </FormField>
 
-                <div className="space-y-2">
-                    <Label htmlFor="notes">Notas / Observaciones</Label>
-                    <Textarea
+                    <FormField
                         id="notes"
-                        value={data.notes}
-                        onChange={(event) =>
-                            setData('notes', event.target.value)
-                        }
-                        placeholder="Ej: Fórmula para tono azul celeste estándar, sin modificaciones..."
-                        className="min-h-[80px]"
-                    />
-                    {errors.notes && (
-                        <p className="text-sm text-destructive">
-                            {errors.notes}
-                        </p>
-                    )}
+                        label="Notas / Observaciones"
+                        error={errors.notes}
+                        className="md:col-span-2"
+                    >
+                        <Textarea
+                            value={data.notes}
+                            onChange={(event) =>
+                                setData('notes', event.target.value)
+                            }
+                            placeholder="Ej: Fórmula para tono azul celeste estándar, sin modificaciones..."
+                            className="min-h-[80px]"
+                        />
+                    </FormField>
                 </div>
             </div>
 
-            <div className="rounded-lg border border-border bg-card">
-                <div className="flex items-center justify-between border-b border-border px-6 py-4">
+            <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="font-medium text-foreground">
                             Ingredientes por Galón
@@ -204,34 +203,44 @@ export function FormulaForm({
                         variant="outline"
                         size="sm"
                         onClick={addDetail}
+                        className="self-start sm:self-auto"
                     >
                         <Plus className="mr-1 h-4 w-4" />
                         Agregar ingrediente
                     </Button>
                 </div>
 
-                <div className="divide-y divide-border">
+                <div className="space-y-3">
                     {data.details.map((detail, index) => (
-                        <div
+                        <FormLineItem
                             key={index}
-                            className="grid grid-cols-12 items-end gap-3 p-4"
+                            index={index}
+                            label="Paso"
+                            labelsOnFirstRowOnly
+                            onRemove={
+                                data.details.length > 1
+                                    ? () => removeDetail(index)
+                                    : undefined
+                            }
+                            className="md:grid-cols-12"
                         >
-                            <div className="col-span-1 space-y-1">
-                                {index === 0 && (
-                                    <Label className="text-xs text-muted-foreground">
-                                        Paso
-                                    </Label>
-                                )}
-                                <p className="py-2 text-center text-sm font-medium text-muted-foreground tabular-nums">
+                            {/* En el celular el número va en el encabezado del bloque. */}
+                            <div className="hidden content-start gap-2 md:col-span-1 md:grid">
+                                <Label>Paso</Label>
+                                <p className="flex h-9 items-center justify-center text-sm font-medium text-muted-foreground tabular-nums">
                                     {index + 1}
                                 </p>
                             </div>
-                            <div className="col-span-4 space-y-1">
-                                {index === 0 && (
-                                    <Label className="text-xs text-muted-foreground">
-                                        Materia Prima
-                                    </Label>
-                                )}
+
+                            <FormField
+                                id={`details.${index}.raw_material_id`}
+                                label="Materia prima"
+                                required
+                                error={
+                                    errors[`details.${index}.raw_material_id`]
+                                }
+                                className="md:col-span-5"
+                            >
                                 <Combobox
                                     options={rawMaterialOptions}
                                     value={detail.raw_material_id}
@@ -244,23 +253,15 @@ export function FormulaForm({
                                     }
                                     placeholder="Materia..."
                                 />
-                                {errors[`details.${index}.raw_material_id`] && (
-                                    <p className="text-xs text-destructive">
-                                        {
-                                            errors[
-                                                `details.${index}.raw_material_id`
-                                            ]
-                                        }
-                                    </p>
-                                )}
-                            </div>
+                            </FormField>
 
-                            <div className="col-span-3 space-y-1">
-                                {index === 0 && (
-                                    <Label className="text-xs text-muted-foreground">
-                                        Cantidad (por galón)
-                                    </Label>
-                                )}
+                            <FormField
+                                id={`details.${index}.quantity`}
+                                label="Cantidad (por galón)"
+                                required
+                                error={errors[`details.${index}.quantity`]}
+                                className="md:col-span-3"
+                            >
                                 <DecimalInput
                                     value={detail.quantity}
                                     onValueChange={(value) =>
@@ -268,85 +269,58 @@ export function FormulaForm({
                                     }
                                     placeholder="Ej: 1,5"
                                 />
-                                {errors[`details.${index}.quantity`] && (
-                                    <p className="text-xs text-destructive">
-                                        {errors[`details.${index}.quantity`]}
-                                    </p>
-                                )}
-                            </div>
+                            </FormField>
 
-                            <div className="col-span-3 space-y-1">
-                                {index === 0 && (
-                                    <Label className="text-xs text-muted-foreground">
-                                        Unidad
-                                    </Label>
-                                )}
-                                <Select
-                                    value={detail.unit_of_measure_id}
-                                    onValueChange={(value) =>
-                                        updateDetail(
-                                            index,
-                                            'unit_of_measure_id',
-                                            value,
-                                        )
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Unidad..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {units.map((unit) => (
-                                            <SelectItem
-                                                key={unit.id}
-                                                value={String(unit.id)}
-                                            >
-                                                {unit.symbol}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {errors[
-                                    `details.${index}.unit_of_measure_id`
-                                ] && (
-                                    <p className="text-xs text-destructive">
-                                        {
-                                            errors[
-                                                `details.${index}.unit_of_measure_id`
-                                            ]
+                            <FormField
+                                id={`details.${index}.unit_of_measure_id`}
+                                label="Unidad"
+                                required
+                                error={
+                                    errors[
+                                        `details.${index}.unit_of_measure_id`
+                                    ]
+                                }
+                                className="md:col-span-3"
+                            >
+                                {(control) => (
+                                    <Select
+                                        value={detail.unit_of_measure_id}
+                                        onValueChange={(value) =>
+                                            updateDetail(
+                                                index,
+                                                'unit_of_measure_id',
+                                                value,
+                                            )
                                         }
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="col-span-1 flex items-center justify-end">
-                                {data.details.length > 1 && (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => removeDetail(index)}
-                                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                                     >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                        <SelectTrigger {...control}>
+                                            <SelectValue placeholder="Unidad..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {units.map((unit) => (
+                                                <SelectItem
+                                                    key={unit.id}
+                                                    value={String(unit.id)}
+                                                >
+                                                    {unit.symbol}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 )}
-                            </div>
-                        </div>
+                            </FormField>
+                        </FormLineItem>
                     ))}
                 </div>
 
-                {errors.details && (
-                    <p className="px-6 pb-4 text-sm text-destructive">
-                        {errors.details}
-                    </p>
-                )}
+                <InputError message={errors.details} />
             </div>
 
-            <div className="flex gap-3">
-                <Button type="submit" disabled={processing}>
-                    {processing ? 'Guardando…' : submitLabel}
-                </Button>
-            </div>
+            <FormActions
+                submitLabel={submitLabel}
+                processing={processing}
+                cancelHref={cancelHref}
+            />
         </form>
     );
 }

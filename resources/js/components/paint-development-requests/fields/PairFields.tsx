@@ -1,5 +1,8 @@
+import { useId } from 'react';
+
 import { DecimalInput } from '@/components/decimal-input';
-import { Label } from '@/components/ui/label';
+import { FormField } from '@/components/form-field';
+import type { FormFieldControlProps } from '@/components/form-field';
 import { TECHNICAL_NUMBER_LIMITS } from '@/lib/number-types';
 
 type FieldDef = {
@@ -13,6 +16,8 @@ type FieldDef = {
 };
 
 type Props = {
+    /** El `id` del primer campo (la etiqueta lo señala); el segundo lleva el mismo con `-b`. */
+    id?: string;
     label: string;
     a: FieldDef;
     b: FieldDef;
@@ -20,10 +25,17 @@ type Props = {
     error?: string;
 };
 
-function PairInput({ field }: { field: FieldDef }) {
+function PairInput({
+    field,
+    control,
+}: {
+    field: FieldDef;
+    control: Partial<FormFieldControlProps> & { 'aria-label'?: string };
+}) {
     return (
-        <div className="relative">
+        <div className="relative min-w-0">
             <DecimalInput
+                {...control}
                 {...TECHNICAL_NUMBER_LIMITS}
                 allowNegative={field.allowNegative}
                 value={field.value}
@@ -37,18 +49,37 @@ function PairInput({ field }: { field: FieldDef }) {
     );
 }
 
-export default function PairFields({ label, a, b, required, error }: Props) {
+/** Dos números bajo una sola etiqueta (mínimo y máximo): el lector de pantalla nombra el segundo con su ayuda. */
+export default function PairFields({
+    id,
+    label,
+    a,
+    b,
+    required,
+    error,
+}: Props) {
+    const fallbackId = useId();
+
     return (
-        <div className="space-y-1.5">
-            <Label>
-                {label}
-                {required && <span className="ml-0.5 text-destructive">*</span>}
-            </Label>
-            <div className="grid grid-cols-2 gap-3">
-                <PairInput field={a} />
-                <PairInput field={b} />
-            </div>
-            {error && <p className="text-xs text-destructive">{error}</p>}
-        </div>
+        <FormField
+            id={id ?? fallbackId}
+            label={label}
+            required={required}
+            error={error}
+        >
+            {(control) => (
+                <div className="grid grid-cols-2 gap-3">
+                    <PairInput field={a} control={control} />
+                    <PairInput
+                        field={b}
+                        control={{
+                            ...control,
+                            id: `${control.id}-b`,
+                            'aria-label': `${label}, ${b.placeholder}`,
+                        }}
+                    />
+                </div>
+            )}
+        </FormField>
     );
 }
