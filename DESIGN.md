@@ -207,8 +207,9 @@ Three containers, chosen by size:
 | `Dialog` | Short: up to ~6 fields, one section, no lines; create and edit in the same dialog (client, warehouse, catalogs) |
 | `Sheet` | Frequent entries from a listing where the list behind matters (raw material and finished goods movements) |
 
-Clients, warehouses and the catalogs are still pages (`<FormPage width="narrow">`): moving them to a `Dialog` changes
-their routes and controllers, so it happens in each module's redesign, not as a form change.
+Clients and warehouses are still pages (`<FormPage width="narrow">`), and the catalogs are pages inside Settings (the
+layout's card, no `FormPage`): moving them to a `Dialog` changes their routes and controllers, so it happens in each
+module's redesign, not as a form change.
 
 Page frame: a form page wraps its content in `<FormPage>` (`components/form-page.tsx`), centered with
 `mx-auto w-full space-y-6 p-6` and one of two widths: `width="narrow"` (`max-w-3xl`) for forms without item lines or
@@ -219,9 +220,15 @@ Same in all three:
 - One field piece, `<FormField>` (`components/form-field.tsx`): label, field, help (`text-xs text-muted-foreground`)
   and error, with `htmlFor`, `aria-describedby`, `aria-invalid` and `aria-required` wired. One column on the phone, two on desktop for
   short fields, paired by meaning (a lone field spans the row); each field fills its column (`min-w-0`) and a long
-  value is cut with «…», never overflowing it.
+  value is cut with «…», never overflowing it. A checkbox with its text beside it («Activo», a role's permissions) is
+  `<FormCheckbox>`, with help and error under the text; an error that belongs to no field (a whole list of lines, a
+  confirmation the server asks for) is `<FormError id="items">`, whose `id` is the error key so a 422 focuses it. No
+  hand-written `<Label htmlFor>` or `<InputError>` outside `form-field.tsx` (`design-contract.test.ts`, with a short
+  list of exceptions, each with its reason).
 - Footer: `<FormActions>` (`components/form-actions.tsx`), «Cancelar» on the left and the main action (primary, never
-  a direct color) on the right, disabled with a spinner while saving; stacked on the phone with the action on top. A
+  a direct color; `destructive` when it voids something, such as cancelling an order) on the right, disabled with a
+  spinner while saving; stacked on the phone with the action on top. The sign-in screens (`auth/`), whose card is
+  narrow, pass `fullWidth`: full-width buttons at every size. A
   step-by-step form (R&D) passes its own buttons as `children` instead of `submitLabel` («Anterior», «Continuar»,
   «Guardar borrador», «Enviar»): they stay on the right, the last one being the main action. In
   a `Sheet` or `Dialog` the fields go in `SheetBody`/`DialogBody` (they scroll inside) and the actions in

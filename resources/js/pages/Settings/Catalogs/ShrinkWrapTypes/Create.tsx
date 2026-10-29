@@ -1,10 +1,10 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import {
     ShrinkWrapTypeFields,
     shrinkWrapTypePayload,
 } from '@/components/catalogs/shrink-wrap-type-form';
+import { FormActions } from '@/components/form-actions';
 import Heading from '@/components/heading';
-import { Button } from '@/components/ui/button';
 import {
     create as typesCreate,
     index as typesIndex,
@@ -50,14 +50,13 @@ export default function ShrinkWrapTypesCreate({ rawMaterialOptions }: Props) {
                         rawMaterialOptions={rawMaterialOptions}
                     />
 
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                        <Button type="submit" disabled={form.processing}>
-                            {form.processing ? 'Guardando...' : 'Guardar'}
-                        </Button>
-                        <Button type="button" variant="outline" asChild>
-                            <Link href={typesIndex().url}>Cancelar</Link>
-                        </Button>
-                    </div>
+                    <FormActions
+                        submitLabel="Guardar"
+
+                        processing={form.processing}
+
+                        cancelHref={typesIndex().url}
+                    />
                 </form>
             </div>
         </>

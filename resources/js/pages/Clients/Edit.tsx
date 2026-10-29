@@ -2,10 +2,9 @@ import { Head, useForm } from '@inertiajs/react';
 
 import { update as clientUpdate } from '@/actions/App/Http/Controllers/ClientController';
 import ClientForm from '@/components/clients/ClientForm';
+import { FormCheckbox } from '@/components/form-field';
 import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { edit as clientsEdit, index as clientsIndex } from '@/routes/clients';
 
 type ClientData = {
@@ -54,25 +53,16 @@ export default function ClientsEdit({ client, can }: Props) {
                     submitLabel="Guardar cambios"
                 >
                     {can.deactivate && (
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-3">
-                                <Checkbox
-                                    id="is_active"
-                                    checked={data.is_active}
-                                    onCheckedChange={(checked) =>
-                                        setData('is_active', checked === true)
-                                    }
-                                />
-                                <Label htmlFor="is_active">
-                                    Cliente activo
-                                </Label>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Un cliente inactivo no aparece al crear
-                                cotizaciones ni pedidos; los que ya tiene siguen
-                                su curso.
-                            </p>
-                        </div>
+                        <FormCheckbox
+                            id="is_active"
+                            label="Cliente activo"
+                            help="Un cliente inactivo no aparece al crear cotizaciones ni pedidos; los que ya tiene siguen su curso."
+                            error={errors.is_active}
+                            checked={data.is_active}
+                            onCheckedChange={(checked) =>
+                                setData('is_active', checked === true)
+                            }
+                        />
                     )}
                 </ClientForm>
             </FormPage>

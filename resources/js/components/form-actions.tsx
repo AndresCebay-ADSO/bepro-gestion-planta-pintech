@@ -13,6 +13,13 @@ type FormActionsProps = {
     /** «Cancelar» en una página: vuelve al listado. */
     cancelHref?: string;
     cancelLabel?: string;
+    /** El botón principal en rojo: la acción destruye o anula algo (cancelar una orden). */
+    destructive?: boolean;
+    /**
+     * Botones a todo el ancho y uno debajo del otro también en el computador: las pantallas de acceso, cuya tarjeta
+     * es angosta.
+     */
+    fullWidth?: boolean;
     className?: string;
 } & (
     | {
@@ -41,6 +48,8 @@ export function FormActions({
     onCancel,
     cancelHref,
     cancelLabel = 'Cancelar',
+    destructive = false,
+    fullWidth = false,
     className,
     children,
 }: FormActionsProps) {
@@ -50,8 +59,10 @@ export function FormActions({
         <div
             data-slot="form-actions"
             className={cn(
-                'flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center',
-                hasCancel ? 'sm:justify-between' : 'sm:justify-end',
+                'flex w-full flex-col-reverse gap-2',
+                !fullWidth && 'sm:flex-row sm:items-center',
+                !fullWidth &&
+                    (hasCancel ? 'sm:justify-between' : 'sm:justify-end'),
                 className,
             )}
         >
@@ -69,7 +80,11 @@ export function FormActions({
                     {children}
                 </div>
             ) : (
-                <Button type="submit" disabled={processing}>
+                <Button
+                    type="submit"
+                    variant={destructive ? 'destructive' : 'default'}
+                    disabled={processing}
+                >
                     {processing && <Spinner />}
                     {submitLabel}
                 </Button>

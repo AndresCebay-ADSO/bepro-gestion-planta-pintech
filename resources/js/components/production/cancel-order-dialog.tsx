@@ -3,17 +3,18 @@ import { Ban } from 'lucide-react';
 import { useState } from 'react';
 
 import { cancel as productionOrderCancel } from '@/actions/App/Http/Controllers/ProductionOrderController';
-import InputError from '@/components/input-error';
+import { FormActions } from '@/components/form-actions';
+import { FormError, FormField } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
+    DialogBody,
     DialogContent,
     DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { formatNumber } from '@/lib/formatters';
 
@@ -69,7 +70,11 @@ export function CancelOrderDialog({
 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent>
-                    <form onSubmit={submit} className="space-y-4" noValidate>
+                    <form
+                        onSubmit={submit}
+                        className="flex min-h-0 flex-col gap-4"
+                        noValidate
+                    >
                         <DialogHeader>
                             <DialogTitle>
                                 ¿Cancelar la orden {orderNumber}?
@@ -80,61 +85,57 @@ export function CancelOrderDialog({
                             </DialogDescription>
                         </DialogHeader>
 
-                        {consumedRemnantGallons > 0 && (
-                            <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
-                                Esta orden ya consumió{' '}
-                                <strong>
-                                    {formatNumber(consumedRemnantGallons, {
-                                        maxDecimals: 4,
-                                        trimTrailingZeros: true,
-                                    })}{' '}
-                                    gal
-                                </strong>{' '}
-                                de saldos. Al cancelar no vuelven al inventario
-                                y quedan anotados en las notas de la orden.
-                            </p>
-                        )}
+                        <DialogBody className="space-y-4">
+                            {consumedRemnantGallons > 0 && (
+                                <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+                                    Esta orden ya consumió{' '}
+                                    <strong>
+                                        {formatNumber(consumedRemnantGallons, {
+                                            maxDecimals: 4,
+                                            trimTrailingZeros: true,
+                                        })}{' '}
+                                        gal
+                                    </strong>{' '}
+                                    de saldos. Al cancelar no vuelven al
+                                    inventario y quedan anotados en las notas de
+                                    la orden.
+                                </p>
+                            )}
 
-                        <div className="space-y-2">
-                            <Label htmlFor="cancel-reason">
-                                Motivo de la cancelación
-                            </Label>
-                            <Textarea
-                                id="cancel-reason"
-                                name="reason"
-                                value={data.reason}
-                                maxLength={REASON_MAX_LENGTH}
-                                placeholder={`Mínimo ${REASON_MIN_LENGTH} caracteres: por qué no se va a producir`}
-                                onChange={(e) =>
-                                    setData('reason', e.target.value)
-                                }
-                            />
-                            <InputError message={errors.reason} />
+                            <FormField
+                                id="reason"
+                                label="Motivo de la cancelación"
+                                required
+                                error={errors.reason}
+                            >
+                                <Textarea
+                                    name="reason"
+                                    value={data.reason}
+                                    maxLength={REASON_MAX_LENGTH}
+                                    placeholder={`Mínimo ${REASON_MIN_LENGTH} caracteres: por qué no se va a producir`}
+                                    onChange={(e) =>
+                                        setData('reason', e.target.value)
+                                    }
+                                />
+                            </FormField>
                             {/* La orden cambió de estado mientras se escribía (RejectsStaleOrderWrites). */}
-                            <InputError
+                            <FormError
+                                id="production_order"
                                 message={
                                     (errors as Partial<Record<string, string>>)
                                         .production_order
                                 }
                             />
-                        </div>
+                        </DialogBody>
 
                         <DialogFooter>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setOpen(false)}
-                                disabled={processing}
-                            >
-                                Volver
-                            </Button>
-                            <Button
-                                type="submit"
-                                variant="destructive"
-                                disabled={processing}
-                            >
-                                {processing ? 'Cancelando…' : 'Cancelar orden'}
-                            </Button>
+                            <FormActions
+                                submitLabel="Cancelar orden"
+                                processing={processing}
+                                onCancel={() => setOpen(false)}
+                                cancelLabel="Volver"
+                                destructive
+                            />
                         </DialogFooter>
                     </form>
                 </DialogContent>

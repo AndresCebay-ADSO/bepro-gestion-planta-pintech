@@ -3,9 +3,8 @@ import type { FormEvent } from 'react';
 
 import { DecimalInput } from '@/components/decimal-input';
 import { FormActions } from '@/components/form-actions';
-import { FormField } from '@/components/form-field';
+import { FormError, FormField } from '@/components/form-field';
 import { FormLineItem } from '@/components/form-line-item';
-import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -317,7 +316,7 @@ export function FormulaForm({
                     ))}
                 </div>
 
-                <InputError message={errors.details} />
+                <FormError id="details" message={errors.details} />
             </div>
 
             <FormActions

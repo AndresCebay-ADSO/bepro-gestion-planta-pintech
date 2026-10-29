@@ -1,9 +1,7 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
+import { FormActions } from '@/components/form-actions';
+import { FormField } from '@/components/form-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 import { login } from '@/routes';
 import { email } from '@/routes/password';
 
@@ -103,69 +101,44 @@ export default function ForgotPassword({ status }: { status?: string }) {
                         >
                             {({ processing, errors }) => (
                                 <>
-                                    <div className="grid gap-1.5">
-                                        <Label
-                                            htmlFor="email"
-                                            className="text-xs font-semibold tracking-widest text-muted-foreground uppercase"
-                                        >
-                                            Correo electrónico
-                                        </Label>
-                                        <div className="relative">
-                                            <span className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground">
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    className="h-4 w-4"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                >
-                                                    <path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
-                                                    <polyline points="22,6 12,13 2,6" />
-                                                </svg>
-                                            </span>
-                                            <Input
-                                                id="email"
-                                                type="email"
-                                                name="email"
-                                                required
-                                                autoFocus
-                                                tabIndex={1}
-                                                autoComplete="email"
-                                                placeholder="gerente.planta@pintech.com"
-                                                className="rounded-lg border-input bg-background pl-9 text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
-                                            />
-                                        </div>
-                                        <InputError message={errors.email} />
-                                    </div>
-
-                                    <Button
-                                        type="submit"
-                                        tabIndex={2}
-                                        disabled={processing}
-                                        aria-disabled={processing}
-                                        aria-busy={processing}
-                                        data-test="email-password-reset-link-button"
-                                        className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-70"
+                                    <FormField
+                                        id="email"
+                                        label="Correo electrónico"
+                                        error={errors.email}
                                     >
-                                        {processing ? (
-                                            <Spinner />
-                                        ) : (
-                                            <>
-                                                Enviar enlace
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    className="h-4 w-4"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2.5"
-                                                >
-                                                    <path d="M5 12h14M12 5l7 7-7 7" />
-                                                </svg>
-                                            </>
+                                        {(control) => (
+                                            <div className="relative">
+                                                <span className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground">
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        className="h-4 w-4"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                    >
+                                                        <path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+                                                        <polyline points="22,6 12,13 2,6" />
+                                                    </svg>
+                                                </span>
+                                                <Input
+                                                    {...control}
+                                                    type="email"
+                                                    name="email"
+                                                    autoFocus
+                                                    autoComplete="email"
+                                                    placeholder="gerente.planta@pintech.com"
+                                                    className="rounded-lg border-input bg-background pl-9 text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
+                                                />
+                                            </div>
                                         )}
-                                    </Button>
+                                    </FormField>
+
+                                    <FormActions
+                                        submitLabel="Enviar enlace"
+                                        processing={processing}
+                                        fullWidth
+                                    />
                                 </>
                             )}
                         </Form>

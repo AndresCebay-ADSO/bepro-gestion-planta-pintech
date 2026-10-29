@@ -381,6 +381,71 @@ describe('contrato de DESIGN.md', () => {
         expect(report(found)).toEqual([]);
     });
 
+    it('arma los campos con FormField, no con etiqueta y error a mano', () => {
+        // `FormField`, `FormCheckbox` y `FormError` (form-field.tsx) ponen la etiqueta, la ayuda y el error, enlazados
+        // para el lector de pantalla. Excepciones por archivo, con su motivo; al migrar una, se quita de aquí.
+        const fieldExceptions = [
+            // Tarjetas internas de la orden de producción: se rehacen en su rediseño.
+            'resources/js/components/production/control-card.tsx',
+            'resources/js/components/production/packaging-section.tsx',
+            'resources/js/components/production/results-card.tsx',
+            'resources/js/pages/Production/Orders/Show.tsx',
+            // Formularios dentro del detalle del producto: con el rediseño del producto.
+            'resources/js/pages/Products/Show.tsx',
+            // Revisión de la solicitud de I+D: con su módulo.
+            'resources/js/pages/PaintDevelopmentRequests/Show.tsx',
+            // El IVA dentro de la tarjeta de totales y el diálogo «Convertir en pedido»: con el rediseño de la
+            // cotización.
+            'resources/js/components/quotations/QuotationForm.tsx',
+            'resources/js/pages/Quotations/Show.tsx',
+        ];
+        const allowed = [
+            ...excluded,
+            'resources/js/components/form-field.tsx',
+            ...fieldExceptions,
+        ];
+
+        // La etiqueta completa (Prettier parte las largas en varias líneas): `<Label` cuenta solo si señala un campo.
+        const handMadeField = (source: string) =>
+            [...source.matchAll(/<(?:InputError|Label)\b/g)].filter(
+                (match) =>
+                    match[0] === '<InputError' ||
+                    /\bhtmlFor=/.test(openingTag(source, match.index)),
+            );
+
+        const found = ['pages', 'components']
+            .flatMap((dir) =>
+                filesUnder(join(root, 'resources/js', dir), ['.tsx']),
+            )
+            .filter(
+                (file) =>
+                    !allowed.some((prefix) =>
+                        relativePath(file).startsWith(prefix),
+                    ),
+            )
+            .flatMap((file) => {
+                const source = readFileSync(file, 'utf8');
+
+                return handMadeField(source).map((match) => ({
+                    location: `${relativePath(file)}:${source.slice(0, match.index).split('\n').length}`,
+                    match: match[0],
+                    rule: 'DESIGN.md §8: cada campo es <FormField> (o <FormCheckbox>); un error sin campo, <FormError>',
+                }));
+            });
+
+        expect(report(found)).toEqual([]);
+
+        // Una excepción que ya no existe o ya no arma campos a mano sobra: se quita para que el guardián la vigile.
+        const staleExceptions = fieldExceptions.filter(
+            (path) =>
+                !existsSync(join(root, path)) ||
+                handMadeField(readFileSync(join(root, path), 'utf8')).length ===
+                    0,
+        );
+
+        expect(staleExceptions).toEqual([]);
+    });
+
     it('no importa el componente retirado TableActions', () => {
         const files = filesUnder(join(root, 'resources/js'), ['.ts', '.tsx']);
 

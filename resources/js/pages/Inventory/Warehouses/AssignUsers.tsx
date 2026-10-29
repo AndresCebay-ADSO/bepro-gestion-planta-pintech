@@ -1,9 +1,15 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
+import { FormActions } from '@/components/form-actions';
+import { FormCheckbox, FormError } from '@/components/form-field';
+import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { assignUsers, show as warehousesShow } from '@/routes/warehouses';
+import {
+    assignUsers,
+    index as warehousesIndex,
+    show as warehousesShow,
+} from '@/routes/warehouses';
+import { form as assignUsersForm } from '@/routes/warehouses/assign-users';
 
 type UserRow = {
     id: number;
@@ -67,7 +73,7 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
         <>
             <Head title={`Asignar usuarios: ${warehouse.name}`} />
 
-            <div className="mx-auto max-w-4xl space-y-6 p-6">
+            <FormPage width="narrow">
                 <PageHeader
                     title={`Asignar usuarios: ${warehouse.name}`}
                     description={`Bodega: ${warehouse.name} (${warehouse.city})`}
@@ -79,9 +85,9 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
                         event.preventDefault();
                         submit();
                     }}
-                    className="space-y-4 rounded-lg border border-border bg-card p-6"
+                    className="space-y-6"
                 >
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto rounded-lg border border-border bg-card">
                         <table className="w-full text-sm">
                             <thead className="border-b border-border bg-muted/40">
                                 <tr>
@@ -111,6 +117,7 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
                                             <td className="p-3">
                                                 <Checkbox
                                                     checked={row.assigned}
+                                                    aria-label={`Asignar a ${user.name}`}
                                                     onCheckedChange={(
                                                         checked,
                                                     ) =>
@@ -133,24 +140,29 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
                                                 {user.email}
                                             </td>
                                             <td className="p-3">
-                                                <div className="flex items-center gap-2">
-                                                    <Checkbox
-                                                        checked={row.is_default}
-                                                        disabled={!row.assigned}
-                                                        onCheckedChange={(
-                                                            checked,
-                                                        ) =>
-                                                            updateRow(index, {
-                                                                is_default:
-                                                                    checked ===
-                                                                    true,
-                                                            })
-                                                        }
-                                                    />
-                                                    <Label className="text-xs text-muted-foreground">
-                                                        Predeterminada
-                                                    </Label>
-                                                </div>
+                                                <FormCheckbox
+                                                    id={`is_default-${user.id}`}
+                                                    label={
+                                                        <span className="text-xs font-normal text-muted-foreground">
+                                                            Predeterminada
+                                                            <span className="sr-only">
+                                                                {' '}
+                                                                para {user.name}
+                                                            </span>
+                                                        </span>
+                                                    }
+                                                    checked={row.is_default}
+                                                    disabled={!row.assigned}
+                                                    onCheckedChange={(
+                                                        checked,
+                                                    ) =>
+                                                        updateRow(index, {
+                                                            is_default:
+                                                                checked ===
+                                                                true,
+                                                        })
+                                                    }
+                                                />
                                             </td>
                                         </tr>
                                     );
@@ -159,26 +171,29 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
                         </table>
                     </div>
 
-                    {form.errors.users && (
-                        <p className="text-sm text-destructive">
-                            {form.errors.users}
-                        </p>
-                    )}
+                    <FormError id="users" message={form.errors.users} />
 
-                    <div className="flex flex-col gap-2 pt-2 sm:flex-row">
-                        <Button type="submit" disabled={form.processing}>
-                            {form.processing
-                                ? 'Guardando...'
-                                : 'Guardar asignaciones'}
-                        </Button>
-                        <Button type="button" variant="outline" asChild>
-                            <Link href={warehousesShow(warehouse.id).url}>
-                                Cancelar
-                            </Link>
-                        </Button>
-                    </div>
+                    <FormActions
+                        submitLabel="Guardar asignaciones"
+                        processing={form.processing}
+                        cancelHref={warehousesShow(warehouse.id).url}
+                    />
                 </form>
-            </div>
+            </FormPage>
         </>
     );
 }
+
+WarehouseAssignUsers.layout = (props: Props) => ({
+    breadcrumbs: [
+        { title: 'Bodegas', href: warehousesIndex() },
+        {
+            title: props.warehouse.name,
+            href: warehousesShow(props.warehouse.id),
+        },
+        {
+            title: 'Asignar usuarios',
+            href: assignUsersForm(props.warehouse.id),
+        },
+    ],
+});

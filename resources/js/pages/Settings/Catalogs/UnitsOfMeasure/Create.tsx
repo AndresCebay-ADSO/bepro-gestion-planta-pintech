@@ -1,10 +1,10 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import {
     UNIT_FACTOR_FIELDS,
     UnitOfMeasureFields,
 } from '@/components/catalogs/unit-of-measure-form';
+import { FormActions } from '@/components/form-actions';
 import Heading from '@/components/heading';
-import { Button } from '@/components/ui/button';
 import { withDecimalPayloads } from '@/lib/numeric-input';
 import {
     create as unitsCreate,
@@ -48,14 +48,13 @@ export default function UnitsOfMeasureCreate() {
                 >
                     <UnitOfMeasureFields form={form} />
 
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                        <Button type="submit" disabled={form.processing}>
-                            {form.processing ? 'Guardando...' : 'Guardar'}
-                        </Button>
-                        <Button type="button" variant="outline" asChild>
-                            <Link href={unitsIndex().url}>Cancelar</Link>
-                        </Button>
-                    </div>
+                    <FormActions
+                        submitLabel="Guardar"
+
+                        processing={form.processing}
+
+                        cancelHref={unitsIndex().url}
+                    />
                 </form>
             </div>
         </>

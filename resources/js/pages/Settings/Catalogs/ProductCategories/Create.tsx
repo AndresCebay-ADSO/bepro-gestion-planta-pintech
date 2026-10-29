@@ -1,7 +1,7 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { ProductCategoryFields } from '@/components/catalogs/product-category-form';
+import { FormActions } from '@/components/form-actions';
 import Heading from '@/components/heading';
-import { Button } from '@/components/ui/button';
 import {
     create as categoriesCreate,
     index as categoriesIndex,
@@ -36,14 +36,13 @@ export default function ProductCategoriesCreate() {
                 >
                     <ProductCategoryFields form={form} />
 
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                        <Button type="submit" disabled={form.processing}>
-                            {form.processing ? 'Guardando...' : 'Guardar'}
-                        </Button>
-                        <Button type="button" variant="outline" asChild>
-                            <Link href={categoriesIndex().url}>Cancelar</Link>
-                        </Button>
-                    </div>
+                    <FormActions
+                        submitLabel="Guardar"
+
+                        processing={form.processing}
+
+                        cancelHref={categoriesIndex().url}
+                    />
                 </form>
             </div>
         </>

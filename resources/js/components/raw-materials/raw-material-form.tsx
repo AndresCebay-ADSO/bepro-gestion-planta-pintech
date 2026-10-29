@@ -2,13 +2,11 @@ import React from 'react';
 import type { ChangeEvent } from 'react';
 
 import { DecimalInput } from '@/components/decimal-input';
+import { FormActions } from '@/components/form-actions';
+import { FormCheckbox, FormField } from '@/components/form-field';
 import { FormattedNumber } from '@/components/formatted-number';
-import InputError from '@/components/input-error';
 import { IntegerInput } from '@/components/integer-input';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -77,6 +75,8 @@ type Props = {
     units: UnitOption[];
     onSubmit: () => void;
     submitLabel: string;
+    /** «Cancelar»: vuelve al listado. */
+    cancelHref: string;
     /** Puede fijar el precio de una materia prima sin control de inventario (`costs.update`). */
     canEditPrice: boolean;
     /** Con historial o en uso (lotes, movimientos, fórmulas, envase o etiqueta) la unidad no cambia (RM-04): el servidor lo niega. */
@@ -122,6 +122,7 @@ export function RawMaterialForm({
     units,
     onSubmit,
     submitLabel,
+    cancelHref,
     canEditPrice,
     unitLocked = false,
 }: Props) {
@@ -152,209 +153,181 @@ export function RawMaterialForm({
 
     return (
         <form noValidate onSubmit={handleSubmit} className="grid min-w-0 gap-6">
-            {/* Block 1: Identification */}
             <div className="space-y-4 rounded-lg border border-border bg-card p-6 shadow-sm">
                 <h2 className="font-medium text-foreground">Identificación</h2>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    {/* Code */}
-                    <div className="grid min-w-0 gap-2">
-                        <Label htmlFor="code">
-                            Código de Referencia{' '}
-                            <span className="text-destructive">*</span>
-                        </Label>
+                    <FormField
+                        id="code"
+                        label="Código de referencia"
+                        required
+                        error={form.errors.code}
+                    >
                         <Input
-                            id="code"
                             value={form.data.code}
                             onChange={handleChange('code')}
                             maxLength={50}
-                            className="w-full min-w-0 font-mono uppercase placeholder:normal-case"
+                            className="font-mono uppercase placeholder:normal-case"
                             placeholder="Ej. R01, T05"
                         />
-                        <InputError message={form.errors.code} />
-                    </div>
+                    </FormField>
 
-                    {/* Unit */}
-                    <div className="grid min-w-0 gap-2">
-                        <Label htmlFor="unit">
-                            Unidad de Medida{' '}
-                            <span className="text-destructive">*</span>
-                        </Label>
-                        <Select
-                            value={form.data.unit_of_measure_id}
-                            onValueChange={(value) =>
-                                form.setData('unit_of_measure_id', value)
-                            }
-                            disabled={unitLocked}
-                        >
-                            <SelectTrigger id="unit">
-                                <SelectValue placeholder="Seleccionar unidad" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {units.map((unit) => (
-                                    <SelectItem
-                                        key={unit.id}
-                                        value={String(unit.id)}
-                                    >
-                                        {unit.name} ({unit.symbol})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {unitLocked && (
-                            <p className="text-xs text-muted-foreground">
-                                No se puede cambiar: la materia prima ya tiene
-                                historial o está en uso.
-                            </p>
+                    <FormField
+                        id="unit_of_measure_id"
+                        label="Unidad de medida"
+                        required
+                        help={
+                            unitLocked
+                                ? 'No se puede cambiar: la materia prima ya tiene historial o está en uso.'
+                                : undefined
+                        }
+                        error={form.errors.unit_of_measure_id}
+                    >
+                        {(control) => (
+                            <Select
+                                value={form.data.unit_of_measure_id}
+                                onValueChange={(value) =>
+                                    form.setData('unit_of_measure_id', value)
+                                }
+                                disabled={unitLocked}
+                            >
+                                <SelectTrigger {...control}>
+                                    <SelectValue placeholder="Seleccionar unidad" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {units.map((unit) => (
+                                        <SelectItem
+                                            key={unit.id}
+                                            value={String(unit.id)}
+                                        >
+                                            {unit.name} ({unit.symbol})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         )}
-                        <InputError message={form.errors.unit_of_measure_id} />
-                    </div>
-                    {/* Category */}
-                    <div className="grid min-w-0 gap-2">
-                        <Label htmlFor="category">
-                            Categoría{' '}
-                            <span className="text-destructive">*</span>
-                        </Label>
-                        <Select
-                            value={form.data.category_id}
-                            onValueChange={(value) =>
-                                form.setData('category_id', value)
-                            }
-                        >
-                            <SelectTrigger id="category">
-                                <SelectValue placeholder="Seleccionar categoría" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {categories.map((category) => (
-                                    <SelectItem
-                                        key={category.id}
-                                        value={String(category.id)}
-                                    >
-                                        {category.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <InputError message={form.errors.category_id} />
-                    </div>
+                    </FormField>
+
+                    <FormField
+                        id="category_id"
+                        label="Categoría"
+                        required
+                        error={form.errors.category_id}
+                    >
+                        {(control) => (
+                            <Select
+                                value={form.data.category_id}
+                                onValueChange={(value) =>
+                                    form.setData('category_id', value)
+                                }
+                            >
+                                <SelectTrigger {...control}>
+                                    <SelectValue placeholder="Seleccionar categoría" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {categories.map((category) => (
+                                        <SelectItem
+                                            key={category.id}
+                                            value={String(category.id)}
+                                        >
+                                            {category.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    </FormField>
 
                     {/* Tipo de insumo: lo decide la categoría, aquí solo se muestra */}
-                    <div className="grid min-w-0 gap-2">
-                        <Label htmlFor="category_type">Tipo de insumo</Label>
+                    <FormField
+                        id="category_type"
+                        label="Tipo de insumo"
+                        help={
+                            selectedCategory
+                                ? RAW_MATERIAL_TYPE_HINTS[selectedCategory.type]
+                                : 'Lo define la categoría elegida.'
+                        }
+                    >
                         <Input
-                            id="category_type"
                             value={selectedCategory?.type_label ?? ''}
                             placeholder="Elige una categoría"
                             readOnly
                             tabIndex={-1}
                             className="bg-muted/40"
                         />
-                        <p className="text-xs text-muted-foreground">
-                            {selectedCategory
-                                ? RAW_MATERIAL_TYPE_HINTS[selectedCategory.type]
-                                : 'Lo define la categoría elegida.'}
-                        </p>
-                    </div>
+                    </FormField>
                 </div>
             </div>
 
-            {/* Block 2: Inventory Control */}
             <div className="space-y-4 rounded-lg border border-border bg-card p-6 shadow-sm">
                 <h2 className="font-medium text-foreground">
-                    Control de Inventario
+                    Control de inventario
                 </h2>
                 <div className="grid min-w-0 gap-4 md:grid-cols-2">
-                    {/* Stock */}
-                    <div className="grid min-w-0 gap-2">
-                        <Label htmlFor="minimum_stock">
-                            Stock mínimo en planta{' '}
-                            <span className="text-destructive">*</span>
-                        </Label>
+                    <FormField
+                        id="minimum_stock"
+                        label="Stock mínimo en planta"
+                        required
+                        help={
+                            minimumStock !== null && (
+                                <span className="break-all">
+                                    Resguardo:{' '}
+                                    <FormattedNumber value={minimumStock} />
+                                </span>
+                            )
+                        }
+                        error={form.errors.minimum_stock}
+                    >
                         <DecimalInput
-                            id="minimum_stock"
                             value={form.data.minimum_stock}
                             onValueChange={(value) =>
                                 form.setData('minimum_stock', value)
                             }
-                            className="w-full min-w-0 font-mono"
+                            className="font-mono"
                             placeholder="0"
                         />
-                        {minimumStock !== null && (
-                            <p className="min-w-0 text-xs break-all text-muted-foreground">
-                                Resguardo:{' '}
-                                <FormattedNumber value={minimumStock} />
-                            </p>
-                        )}
-                        <InputError message={form.errors.minimum_stock} />
-                    </div>
+                    </FormField>
 
-                    <div className="grid min-w-0 gap-2">
-                        <Label htmlFor="alert_days">
-                            Días de alerta por vencimiento{' '}
-                            <span className="text-destructive">*</span>
-                        </Label>
+                    <FormField
+                        id="alert_days_before_expiry"
+                        label="Días de alerta por vencimiento"
+                        required
+                        error={form.errors.alert_days_before_expiry}
+                    >
                         <IntegerInput
-                            id="alert_days"
                             maxDigits={MAX_ALERT_DAYS_DIGITS}
                             value={form.data.alert_days_before_expiry}
                             onValueChange={(value) =>
                                 form.setData('alert_days_before_expiry', value)
                             }
-                            className="w-full min-w-0"
                             placeholder="30"
                         />
-                        <InputError
-                            message={form.errors.alert_days_before_expiry}
-                        />
-                    </div>
+                    </FormField>
 
-                    <div className="grid min-w-0 gap-2">
-                        <Label htmlFor="price_variation_threshold">
-                            Umbral de alerta por variación de precio (%)
-                        </Label>
+                    <FormField
+                        id="price_variation_threshold"
+                        label="Umbral de alerta por variación de precio (%)"
+                        help="Solo las materias primas con umbral configurado generan alertas de variación de precio."
+                        error={form.errors.price_variation_threshold}
+                    >
                         <DecimalInput
-                            id="price_variation_threshold"
                             maxDecimals={2}
                             maxIntegerDigits={3}
                             value={form.data.price_variation_threshold}
                             onValueChange={(value) =>
                                 form.setData('price_variation_threshold', value)
                             }
-                            className="w-full min-w-0"
                             placeholder="Vacío = sin alerta"
                         />
-                        <p className="text-xs text-muted-foreground">
-                            Solo las materias primas con umbral configurado
-                            generan alertas de variación de precio.
-                        </p>
-                        <InputError
-                            message={form.errors.price_variation_threshold}
-                        />
-                    </div>
+                    </FormField>
                 </div>
 
                 {/* Control de inventario y precio manual (decisión del 2026-09-30) */}
-                <div className="mt-4 space-y-4 rounded-md border border-border p-4">
-                    <div className="flex items-start gap-3">
-                        <Checkbox
-                            id="tracks_inventory"
-                            checked={form.data.tracks_inventory}
-                            // Cambiar el control (en cualquier sentido) cambia cómo se costea: solo quien maneja costos.
-                            disabled={!canEditPrice}
-                            onCheckedChange={(checked) =>
-                                form.setData(
-                                    'tracks_inventory',
-                                    checked === true,
-                                )
-                            }
-                        />
-                        <div className="grid gap-1">
-                            <Label
-                                htmlFor="tracks_inventory"
-                                className="cursor-pointer"
-                            >
-                                Controla inventario
-                            </Label>
-                            <p className="text-xs text-muted-foreground">
+                <div className="space-y-4 rounded-md border border-border p-4">
+                    <FormCheckbox
+                        id="tracks_inventory"
+                        label="Controla inventario"
+                        help={
+                            <>
                                 Con control se compra por lotes, la orden de
                                 producción descuenta el saldo y el precio sale
                                 de las compras. Sin control (agua, etiquetas),
@@ -362,40 +335,37 @@ export function RawMaterialForm({
                                 y lo costea con el precio que se escribe aquí.
                                 {!canEditPrice &&
                                     ' Solo quien puede modificar los parámetros de costo cambia el control.'}
-                            </p>
-                        </div>
-                    </div>
-                    <InputError message={form.errors.tracks_inventory} />
+                            </>
+                        }
+                        error={form.errors.tracks_inventory}
+                        checked={form.data.tracks_inventory}
+                        // Cambiar el control (en cualquier sentido) cambia cómo se costea: solo quien maneja costos.
+                        disabled={!canEditPrice}
+                        onCheckedChange={(checked) =>
+                            form.setData('tracks_inventory', checked === true)
+                        }
+                    />
 
                     {!form.data.tracks_inventory &&
                         (canEditPrice ? (
-                            <div className="grid min-w-0 gap-2 md:max-w-xs">
-                                <Label htmlFor="current_price">
-                                    Precio de referencia
-                                    {selectedUnit
-                                        ? ` por ${selectedUnit.symbol}`
-                                        : ''}{' '}
-                                    <span className="text-destructive">*</span>
-                                </Label>
+                            <FormField
+                                id="current_price"
+                                label={`Precio de referencia${selectedUnit ? ` por ${selectedUnit.symbol}` : ''}`}
+                                required
+                                help="Obligatorio, aunque sea 0. Al cambiarlo se recalcula el costo de los productos que la usan."
+                                error={form.errors.current_price}
+                                className="md:max-w-xs"
+                            >
                                 <DecimalInput
-                                    id="current_price"
                                     {...NUMBER_TYPES.money}
                                     value={form.data.current_price}
                                     onValueChange={(value) =>
                                         form.setData('current_price', value)
                                     }
-                                    className="w-full min-w-0 font-mono"
+                                    className="font-mono"
                                     placeholder="0"
                                 />
-                                <p className="text-xs text-muted-foreground">
-                                    Obligatorio, aunque sea 0. Al cambiarlo se
-                                    recalcula el costo de los productos que la
-                                    usan.
-                                </p>
-                                <InputError
-                                    message={form.errors.current_price}
-                                />
-                            </div>
+                            </FormField>
                         ) : (
                             <p className="text-xs text-muted-foreground">
                                 El precio lo fija quien puede modificar los
@@ -404,27 +374,22 @@ export function RawMaterialForm({
                         ))}
                 </div>
 
-                {/* Status */}
-                <div className="mt-4 flex items-center gap-3">
-                    <Checkbox
-                        id="is_active"
-                        checked={form.data.is_active}
-                        onCheckedChange={(checked) =>
-                            form.setData('is_active', checked === true)
-                        }
-                    />
-                    <Label htmlFor="is_active" className="cursor-pointer">
-                        Materia prima activa y disponible para compras
-                    </Label>
-                </div>
+                <FormCheckbox
+                    id="is_active"
+                    label="Materia prima activa y disponible para compras"
+                    error={form.errors.is_active}
+                    checked={form.data.is_active}
+                    onCheckedChange={(checked) =>
+                        form.setData('is_active', checked === true)
+                    }
+                />
             </div>
 
-            {/* Button */}
-            <div className="flex justify-end gap-3 pt-2">
-                <Button type="submit" disabled={form.processing}>
-                    {form.processing ? 'Procesando...' : submitLabel}
-                </Button>
-            </div>
+            <FormActions
+                submitLabel={submitLabel}
+                processing={form.processing}
+                cancelHref={cancelHref}
+            />
         </form>
     );
 }

@@ -1,15 +1,14 @@
 import type { useForm } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { DecimalInput } from '@/components/decimal-input';
-import InputError from '@/components/input-error';
+import { FormCheckbox, FormError, FormField } from '@/components/form-field';
+import { FormLineItem } from '@/components/form-line-item';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { clearListErrors } from '@/lib/form-errors';
 import { withDecimalPayloads } from '@/lib/numeric-input';
-import { cn } from '@/lib/utils';
 import type {
     ShrinkWrapRawMaterialOption,
     ShrinkWrapTypeFormData,
@@ -74,6 +73,7 @@ export function ShrinkWrapTypeFields({ form, rawMaterialOptions }: Props) {
     };
 
     const removeItem = (index: number) => {
+        clearListErrors(errors, form.clearErrors, 'items');
         setRowKeys((keys) => keys.filter((_, current) => current !== index));
         form.setData(
             'items',
@@ -83,10 +83,13 @@ export function ShrinkWrapTypeFields({ form, rawMaterialOptions }: Props) {
 
     return (
         <div className="grid gap-6">
-            <div className="grid gap-2">
-                <Label htmlFor="name">Nombre</Label>
+            <FormField
+                id="name"
+                label="Nombre"
+                help="Lo que el operario elige al registrar un termoencogido."
+                error={form.errors.name}
+            >
                 <Input
-                    id="name"
                     value={form.data.name}
                     onChange={(event) =>
                         form.setData('name', event.target.value)
@@ -94,14 +97,10 @@ export function ShrinkWrapTypeFields({ form, rawMaterialOptions }: Props) {
                     maxLength={100}
                     placeholder="Galón"
                 />
-                <p className="text-xs text-muted-foreground">
-                    Lo que el operario elige al registrar un termoencogido.
-                </p>
-                <InputError message={form.errors.name} />
-            </div>
+            </FormField>
 
-            <div className="rounded-lg border border-border">
-                <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-4 rounded-lg border border-border p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-sm font-medium text-foreground">
                             Consumo por aplicación
@@ -123,129 +122,108 @@ export function ShrinkWrapTypeFields({ form, rawMaterialOptions }: Props) {
                 </div>
 
                 {rawMaterialOptions.length === 0 && (
-                    <p className="px-4 pt-4 text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                         No hay materias primas de tipo «Empaque secundario».
                         Créalas primero en una categoría de ese tipo.
                     </p>
                 )}
 
-                <div className="divide-y divide-border">
-                    {form.data.items.map((item, index) => (
-                        <div
-                            key={rowKeys[index] ?? index}
-                            className="grid grid-cols-12 items-start gap-3 p-4"
-                        >
-                            <div className="col-span-12 space-y-1 sm:col-span-6">
-                                {index === 0 && (
-                                    <Label className="text-xs text-muted-foreground">
-                                        Materia prima
-                                    </Label>
-                                )}
-                                <Combobox
-                                    options={comboboxOptions}
-                                    value={item.raw_material_id}
-                                    onChange={(value) =>
-                                        updateItem(
-                                            index,
-                                            'raw_material_id',
-                                            String(value),
+                <div className="space-y-3">
+                    {form.data.items.map((item, index) => {
+                        const option = optionOf(item.raw_material_id);
+
+                        return (
+                            <FormLineItem
+                                key={rowKeys[index] ?? index}
+                                index={index}
+                                labelsOnFirstRowOnly
+                                onRemove={
+                                    form.data.items.length > 1
+                                        ? () => removeItem(index)
+                                        : undefined
+                                }
+                                className="md:grid-cols-12"
+                            >
+                                <FormField
+                                    id={`items.${index}.raw_material_id`}
+                                    label="Materia prima"
+                                    help={
+                                        option?.is_active === false && (
+                                            <span className="text-warning-text">
+                                                Materia prima desactivada: se
+                                                conserva en la receta, pero
+                                                conviene reemplazarla.
+                                            </span>
                                         )
                                     }
-                                    placeholder="Materia prima..."
-                                />
-                                {optionOf(item.raw_material_id)?.is_active ===
-                                    false && (
-                                    <p className="text-xs text-amber-600 dark:text-amber-400">
-                                        Materia prima desactivada: se conserva
-                                        en la receta, pero conviene
-                                        reemplazarla.
-                                    </p>
-                                )}
-                                <InputError
-                                    message={
+                                    error={
                                         errors[`items.${index}.raw_material_id`]
                                     }
-                                />
-                            </div>
-
-                            <div className="col-span-8 space-y-1 sm:col-span-4">
-                                {index === 0 && (
-                                    <Label className="text-xs text-muted-foreground">
-                                        Cantidad
-                                    </Label>
-                                )}
-                                <div className="flex items-start gap-2">
-                                    <DecimalInput
-                                        containerClassName="min-w-0 flex-1"
-                                        value={item.quantity}
-                                        onValueChange={(value) =>
-                                            updateItem(index, 'quantity', value)
+                                    className="md:col-span-8"
+                                >
+                                    <Combobox
+                                        options={comboboxOptions}
+                                        value={item.raw_material_id}
+                                        onChange={(value) =>
+                                            updateItem(
+                                                index,
+                                                'raw_material_id',
+                                                String(value),
+                                            )
                                         }
-                                        placeholder="Ej: 1"
-                                        aria-label="Cantidad por aplicación"
+                                        placeholder="Materia prima..."
                                     />
-                                    <span className="w-10 text-sm leading-9 text-muted-foreground">
-                                        {optionOf(item.raw_material_id)
-                                            ?.unit_symbol ?? ''}
-                                    </span>
-                                </div>
-                                <InputError
-                                    message={errors[`items.${index}.quantity`]}
-                                />
-                            </div>
+                                </FormField>
 
-                            <div className="col-span-4 flex justify-end sm:col-span-2">
-                                {form.data.items.length > 1 && (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => removeItem(index)}
-                                        className={cn(
-                                            'text-destructive hover:bg-destructive/10 hover:text-destructive',
-                                            // Alinea con los campos de la primera línea, que llevan etiqueta.
-                                            index === 0 && 'mt-5',
-                                        )}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                        <span className="sr-only">
-                                            Quitar materia prima
-                                        </span>
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-                    ))}
+                                <FormField
+                                    id={`items.${index}.quantity`}
+                                    label="Cantidad por aplicación"
+                                    error={errors[`items.${index}.quantity`]}
+                                    className="md:col-span-4"
+                                >
+                                    {(control) => (
+                                        <div className="flex items-start gap-2">
+                                            <DecimalInput
+                                                {...control}
+                                                containerClassName="min-w-0 flex-1"
+                                                value={item.quantity}
+                                                onValueChange={(value) =>
+                                                    updateItem(
+                                                        index,
+                                                        'quantity',
+                                                        value,
+                                                    )
+                                                }
+                                                placeholder="Ej: 1"
+                                            />
+                                            <span className="w-10 text-sm leading-9 text-muted-foreground">
+                                                {option?.unit_symbol ?? ''}
+                                            </span>
+                                        </div>
+                                    )}
+                                </FormField>
+                            </FormLineItem>
+                        );
+                    })}
                 </div>
 
-                {errors.items && (
-                    <p className="px-4 pb-4 text-sm text-destructive">
-                        {errors.items}
-                    </p>
-                )}
+                <FormError id="items" message={errors.items} />
             </div>
 
-            <div className="grid gap-2">
-                <div className="flex items-center gap-3 rounded-md border border-border px-3 py-2">
-                    <Checkbox
-                        id="is_active"
-                        checked={form.data.is_active}
-                        onCheckedChange={(checked) =>
-                            form.setData('is_active', checked === true)
-                        }
-                    />
-                    <Label htmlFor="is_active" className="cursor-pointer">
-                        Tipo activo
-                    </Label>
-                </div>
-                {!form.data.is_active && (
-                    <p className="text-xs text-muted-foreground">
-                        Inactivo, no se podrá elegir al registrar termoencogidos
-                        nuevos. Los registros que ya lo usan no cambian.
-                    </p>
-                )}
-                <InputError message={form.errors.is_active} />
-            </div>
+            <FormCheckbox
+                id="is_active"
+                label="Tipo activo"
+                help={
+                    form.data.is_active
+                        ? undefined
+                        : 'Inactivo, no se podrá elegir al registrar termoencogidos nuevos. Los registros que ya lo usan no cambian.'
+                }
+                error={form.errors.is_active}
+                checked={form.data.is_active}
+                onCheckedChange={(checked) =>
+                    form.setData('is_active', checked === true)
+                }
+            />
         </div>
     );
 }

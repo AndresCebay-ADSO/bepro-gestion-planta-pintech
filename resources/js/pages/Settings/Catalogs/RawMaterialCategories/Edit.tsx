@@ -1,7 +1,7 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { RawMaterialCategoryFields } from '@/components/catalogs/raw-material-category-form';
+import { FormActions } from '@/components/form-actions';
 import Heading from '@/components/heading';
-import { Button } from '@/components/ui/button';
 import {
     edit as categoriesEdit,
     index as categoriesIndex,
@@ -53,16 +53,13 @@ export default function RawMaterialCategoriesEdit({
                         rawMaterialsCount={category.raw_materials_count}
                     />
 
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                        <Button type="submit" disabled={form.processing}>
-                            {form.processing
-                                ? 'Guardando...'
-                                : 'Guardar cambios'}
-                        </Button>
-                        <Button type="button" variant="outline" asChild>
-                            <Link href={categoriesIndex().url}>Cancelar</Link>
-                        </Button>
-                    </div>
+                    <FormActions
+                        submitLabel="Guardar cambios"
+
+                        processing={form.processing}
+
+                        cancelHref={categoriesIndex().url}
+                    />
                 </form>
             </div>
         </>

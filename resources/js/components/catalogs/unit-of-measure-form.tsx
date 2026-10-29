@@ -1,11 +1,9 @@
 import type { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { DecimalInput } from '@/components/decimal-input';
+import { FormCheckbox, FormError, FormField } from '@/components/form-field';
 import { FormattedNumber } from '@/components/formatted-number';
-import InputError from '@/components/input-error';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -140,10 +138,13 @@ export function UnitOfMeasureFields({ form, usageSummary = null }: Props) {
     return (
         <div className="grid gap-5">
             <div className="grid gap-5 sm:grid-cols-2">
-                <div className="grid gap-2">
-                    <Label htmlFor="code">Código</Label>
+                <FormField
+                    id="code"
+                    label="Código"
+                    help="Identificador corto; se guarda en minúsculas."
+                    error={form.errors.code}
+                >
                     <Input
-                        id="code"
                         value={form.data.code}
                         onChange={(event) =>
                             form.setData('code', event.target.value)
@@ -152,16 +153,15 @@ export function UnitOfMeasureFields({ form, usageSummary = null }: Props) {
                         placeholder="kg"
                         autoComplete="off"
                     />
-                    <p className="text-xs text-muted-foreground">
-                        Identificador corto; se guarda en minúsculas.
-                    </p>
-                    <InputError message={form.errors.code} />
-                </div>
+                </FormField>
 
-                <div className="grid gap-2">
-                    <Label htmlFor="symbol">Símbolo</Label>
+                <FormField
+                    id="symbol"
+                    label="Símbolo"
+                    help="Lo que se muestra junto a las cantidades."
+                    error={form.errors.symbol}
+                >
                     <Input
-                        id="symbol"
                         value={form.data.symbol}
                         onChange={(event) =>
                             form.setData('symbol', event.target.value)
@@ -170,17 +170,11 @@ export function UnitOfMeasureFields({ form, usageSummary = null }: Props) {
                         placeholder="kg"
                         autoComplete="off"
                     />
-                    <p className="text-xs text-muted-foreground">
-                        Lo que se muestra junto a las cantidades.
-                    </p>
-                    <InputError message={form.errors.symbol} />
-                </div>
+                </FormField>
             </div>
 
-            <div className="grid gap-2">
-                <Label htmlFor="name">Nombre</Label>
+            <FormField id="name" label="Nombre" error={form.errors.name}>
                 <Input
-                    id="name"
                     value={form.data.name}
                     onChange={(event) =>
                         form.setData('name', event.target.value)
@@ -188,13 +182,14 @@ export function UnitOfMeasureFields({ form, usageSummary = null }: Props) {
                     maxLength={100}
                     placeholder="Kilogramo"
                 />
-                <InputError message={form.errors.name} />
-            </div>
+            </FormField>
 
-            <div className="grid gap-2">
-                <Label htmlFor="description">Descripción</Label>
+            <FormField
+                id="description"
+                label="Descripción"
+                error={form.errors.description}
+            >
                 <Textarea
-                    id="description"
                     value={form.data.description}
                     onChange={(event) =>
                         form.setData('description', event.target.value)
@@ -202,8 +197,7 @@ export function UnitOfMeasureFields({ form, usageSummary = null }: Props) {
                     maxLength={1000}
                     rows={2}
                 />
-                <InputError message={form.errors.description} />
-            </div>
+            </FormField>
 
             <fieldset className="grid gap-4 rounded-lg border border-border p-4">
                 <legend className="px-1 text-sm font-medium">
@@ -217,97 +211,99 @@ export function UnitOfMeasureFields({ form, usageSummary = null }: Props) {
                 </p>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                    {/* content-start: el mensaje bajo el factor no estira esta columna. */}
-                    <div className="grid content-start gap-2">
-                        <Label htmlFor="conversion_kind">
-                            Se convierte por
-                        </Label>
-                        <Select
-                            value={kind}
-                            onValueChange={(value: ConversionKind) =>
-                                changeKind(value)
-                            }
-                        >
-                            <SelectTrigger id="conversion_kind">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">
-                                    No se convierte
-                                </SelectItem>
-                                <SelectItem value="weight">
-                                    Peso (kilogramos)
-                                </SelectItem>
-                                <SelectItem value="volume">
-                                    Volumen (litros)
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    <FormField id="conversion_kind" label="Se convierte por">
+                        {(control) => (
+                            <Select
+                                value={kind}
+                                onValueChange={(value: ConversionKind) =>
+                                    changeKind(value)
+                                }
+                            >
+                                <SelectTrigger {...control}>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">
+                                        No se convierte
+                                    </SelectItem>
+                                    <SelectItem value="weight">
+                                        Peso (kilogramos)
+                                    </SelectItem>
+                                    <SelectItem value="volume">
+                                        Volumen (litros)
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        )}
+                    </FormField>
 
                     {kind !== 'none' && (
-                        <div className="grid content-start gap-2">
-                            <Label htmlFor="factor">
-                                1 {form.data.symbol.trim() || 'unidad'} equivale
-                                a
-                            </Label>
-                            <div className="flex items-start gap-2">
-                                <DecimalInput
-                                    id="factor"
-                                    containerClassName="min-w-0 flex-1"
-                                    // numeric(14,6): 6 decimales (un mililitro son 0,001 L).
-                                    {...NUMBER_TYPES.factor}
-                                    value={form.data[factorField]}
-                                    onValueChange={(value) =>
-                                        form.setData(factorField, value)
-                                    }
-                                />
-                                <span className="text-sm leading-9 text-muted-foreground">
-                                    {CONVERSION_TARGET[kind]}
-                                </span>
-                            </div>
-                        </div>
+                        // El `id` es la llave del error del factor que se escribe: un 422 lleva el foco aquí.
+                        <FormField
+                            id={factorField}
+                            label={`1 ${form.data.symbol.trim() || 'unidad'} equivale a`}
+                            error={
+                                form.errors.to_kg_conversion ??
+                                form.errors.to_liter_conversion
+                            }
+                        >
+                            {(control) => (
+                                <div className="flex items-start gap-2">
+                                    <DecimalInput
+                                        {...control}
+                                        containerClassName="min-w-0 flex-1"
+                                        // numeric(14,6): 6 decimales (un mililitro son 0,001 L).
+                                        {...NUMBER_TYPES.factor}
+                                        value={form.data[factorField]}
+                                        onValueChange={(value) =>
+                                            form.setData(factorField, value)
+                                        }
+                                    />
+                                    <span className="text-sm leading-9 text-muted-foreground">
+                                        {CONVERSION_TARGET[kind]}
+                                    </span>
+                                </div>
+                            )}
+                        </FormField>
                     )}
                 </div>
 
-                <InputError
-                    message={
-                        form.errors.to_kg_conversion ??
-                        form.errors.to_liter_conversion
-                    }
-                />
+                {/* Sin factor («No se convierte») el error del factor no tiene campo donde mostrarse. */}
+                {kind === 'none' && (
+                    <FormError
+                        message={
+                            form.errors.to_kg_conversion ??
+                            form.errors.to_liter_conversion
+                        }
+                    />
+                )}
 
                 {usageSummary && (
-                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                    <p className="text-xs text-warning-text">
                         Esta equivalencia la usan {usageSummary}. Si la cambias,
                         se te pedirá confirmarlo.
                     </p>
                 )}
-                <InputError message={form.errors.confirm_factor_change} />
+                <FormError
+                    id="confirm_factor_change"
+                    message={form.errors.confirm_factor_change}
+                />
             </fieldset>
 
-            <div className="grid gap-2">
-                <div className="flex items-center gap-3 rounded-md border border-border px-3 py-2">
-                    <Checkbox
-                        id="is_active"
-                        checked={form.data.is_active}
-                        onCheckedChange={(checked) =>
-                            form.setData('is_active', checked === true)
-                        }
-                    />
-                    <Label htmlFor="is_active" className="cursor-pointer">
-                        Unidad activa
-                    </Label>
-                </div>
-                {!form.data.is_active && (
-                    <p className="text-xs text-muted-foreground">
-                        Inactiva, no se podrá elegir en nuevas materias primas,
-                        productos, presentaciones ni fórmulas. Lo que ya la usa
-                        la conserva.
-                    </p>
-                )}
-                <InputError message={form.errors.is_active} />
-            </div>
+            <FormCheckbox
+                id="is_active"
+                label="Unidad activa"
+                help={
+                    form.data.is_active
+                        ? undefined
+                        : 'Inactiva, no se podrá elegir en nuevas materias primas, productos, presentaciones ni fórmulas. Lo que ya la usa la conserva.'
+                }
+                error={form.errors.is_active}
+                checked={form.data.is_active}
+                onCheckedChange={(checked) =>
+                    form.setData('is_active', checked === true)
+                }
+            />
         </div>
     );
 }

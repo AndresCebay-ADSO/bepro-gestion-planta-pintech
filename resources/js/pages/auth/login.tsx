@@ -1,11 +1,8 @@
 import { Form, Head, usePage } from '@inertiajs/react';
-import InputError from '@/components/input-error';
+import { FormActions } from '@/components/form-actions';
+import { FormCheckbox, FormField } from '@/components/form-field';
 import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 
@@ -128,116 +125,73 @@ export default function Login({ status, canResetPassword }: Props) {
                         >
                             {({ processing, errors }) => (
                                 <>
-                                    {/* Email */}
-                                    <div className="grid gap-1.5">
-                                        <Label
-                                            htmlFor="email"
-                                            className="text-xs font-semibold tracking-widest text-muted-foreground uppercase"
-                                        >
-                                            Correo electrónico
-                                        </Label>
-                                        <div className="relative">
-                                            <span className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground">
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    className="h-4 w-4"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                >
-                                                    <path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
-                                                    <polyline points="22,6 12,13 2,6" />
-                                                </svg>
-                                            </span>
-                                            <Input
-                                                id="email"
-                                                type="email"
-                                                name="email"
-                                                required
-                                                autoFocus
-                                                tabIndex={1}
-                                                autoComplete="email"
-                                                placeholder="gerente.planta@pintech.com"
-                                                className="rounded-lg border-input bg-background pl-9 text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
-                                            />
-                                        </div>
-                                        <InputError message={errors.email} />
-                                    </div>
-
-                                    {/* Contraseña */}
-                                    <div className="grid gap-1.5">
-                                        <div className="flex items-center justify-between">
-                                            <Label
-                                                htmlFor="password"
-                                                className="text-xs font-semibold tracking-widest text-muted-foreground uppercase"
-                                            >
-                                                Contraseña
-                                            </Label>
-                                            {canResetPassword && (
-                                                <a
-                                                    href={request.url()}
-                                                    className="text-xs text-primary hover:underline"
-                                                    tabIndex={5}
-                                                >
-                                                    ¿Olvidaste tu contraseña?
-                                                </a>
-                                            )}
-                                        </div>
-                                        <PasswordInput
-                                            id="password"
-                                            name="password"
-                                            required
-                                            tabIndex={2}
-                                            autoComplete="current-password"
-                                            placeholder="••••••••••••"
-                                            className="rounded-lg border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
-                                        />
-                                        <InputError message={errors.password} />
-                                    </div>
-
-                                    {/* Recordarme */}
-                                    <div className="flex cursor-pointer items-center gap-2">
-                                        <Checkbox
-                                            id="remember"
-                                            name="remember"
-                                            tabIndex={3}
-                                            className="cursor-pointer border-input data-[state=checked]:border-primary data-[state=checked]:bg-primary"
-                                        />
-                                        <Label
-                                            htmlFor="remember"
-                                            className="cursor-pointer text-sm text-muted-foreground"
-                                        >
-                                            Recordar sesión
-                                        </Label>
-                                    </div>
-
-                                    {/* Botón */}
-                                    <Button
-                                        type="submit"
-                                        tabIndex={4}
-                                        disabled={processing}
-                                        data-test="login-button"
-                                        className="mt-1 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary py-2.5 font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary/90"
+                                    <FormField
+                                        id="email"
+                                        label="Correo electrónico"
+                                        error={errors.email}
                                     >
-                                        {processing ? (
-                                            <Spinner />
-                                        ) : (
-                                            <>
-                                                Iniciar sesión
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    className="h-4 w-4"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2.5"
-                                                >
-                                                    <path d="M5 12h14M12 5l7 7-7 7" />
-                                                </svg>
-                                            </>
+                                        {(control) => (
+                                            <div className="relative">
+                                                <span className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground">
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        className="h-4 w-4"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                    >
+                                                        <path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+                                                        <polyline points="22,6 12,13 2,6" />
+                                                    </svg>
+                                                </span>
+                                                <Input
+                                                    {...control}
+                                                    type="email"
+                                                    name="email"
+                                                    autoFocus
+                                                    autoComplete="email"
+                                                    placeholder="gerente.planta@pintech.com"
+                                                    className="rounded-lg border-input bg-background pl-9 text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
+                                                />
+                                            </div>
                                         )}
-                                    </Button>
+                                    </FormField>
+
+                                    <div className="grid gap-2">
+                                        <FormField
+                                            id="password"
+                                            label="Contraseña"
+                                            error={errors.password}
+                                        >
+                                            <PasswordInput
+                                                name="password"
+                                                autoComplete="current-password"
+                                                placeholder="••••••••••••"
+                                                className="rounded-lg border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring/30"
+                                            />
+                                        </FormField>
+                                        {canResetPassword && (
+                                            <a
+                                                href={request.url()}
+                                                className="justify-self-end text-xs text-primary hover:underline"
+                                            >
+                                                ¿Olvidaste tu contraseña?
+                                            </a>
+                                        )}
+                                    </div>
+
+                                    <FormCheckbox
+                                        id="remember"
+                                        name="remember"
+                                        label="Recordar sesión"
+                                    />
+
+                                    <FormActions
+                                        submitLabel="Iniciar sesión"
+                                        processing={processing}
+                                        fullWidth
+                                    />
                                 </>
                             )}
                         </Form>

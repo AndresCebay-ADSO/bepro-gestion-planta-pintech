@@ -1,4 +1,5 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
+import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
 import {
     RawMaterialForm,
@@ -8,9 +9,9 @@ import type {
     CategoryOption,
     RawMaterialFormData,
 } from '@/components/raw-materials/raw-material-form';
-import { Button } from '@/components/ui/button';
 import { idPayload } from '@/lib/numeric-input';
 import {
+    create as rawMaterialsCreate,
     index as rawMaterialsIndex,
     store as rawMaterialsStore,
 } from '@/routes/raw-materials';
@@ -53,39 +54,30 @@ export default function RawMaterialsCreate({ categories, units, can }: Props) {
         <>
             <Head title="Nueva materia prima" />
 
-            <div className="mx-auto max-w-3xl space-y-6 p-6">
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Link
-                            href={rawMaterialsIndex().url}
-                            className="hover:text-foreground"
-                        >
-                            Materias primas
-                        </Link>
-                        <span>/</span>
-                        <span>Crear</span>
-                    </div>
-                    <PageHeader
-                        title="Nueva materia prima"
-                        description="Registra una nueva materia prima base para inventario."
-                    />
-                </div>
+            <FormPage width="narrow">
+                <PageHeader
+                    title="Nueva materia prima"
+                    description="Registra una nueva materia prima base para inventario."
+                />
 
                 <RawMaterialForm
                     form={form}
                     categories={categories}
                     units={units}
                     onSubmit={submit}
-                    submitLabel="Crear Materia Prima"
+                    submitLabel="Crear materia prima"
+                    cancelHref={rawMaterialsIndex().url}
                     canEditPrice={can.updateCosts}
                 />
-
-                <div className="flex justify-end gap-2 pt-2 pr-2">
-                    <Button variant="outline" asChild>
-                        <Link href={rawMaterialsIndex().url}>Cancelar</Link>
-                    </Button>
-                </div>
-            </div>
+            </FormPage>
         </>
     );
 }
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10).
+RawMaterialsCreate.layout = {
+    breadcrumbs: [
+        { title: 'Materias primas', href: rawMaterialsIndex() },
+        { title: 'Nueva', href: rawMaterialsCreate() },
+    ],
+};

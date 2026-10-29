@@ -1,8 +1,6 @@
 import type { useForm } from '@inertiajs/react';
-import InputError from '@/components/input-error';
-import { Checkbox } from '@/components/ui/checkbox';
+import { FormCheckbox, FormField } from '@/components/form-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -31,10 +29,13 @@ export function RawMaterialCategoryFields({
     return (
         <div className="grid gap-5">
             <div className="grid gap-5 sm:grid-cols-2">
-                <div className="grid gap-2">
-                    <Label htmlFor="code">Código</Label>
+                <FormField
+                    id="code"
+                    label="Código"
+                    help="Identificador corto; se guarda en mayúsculas."
+                    error={form.errors.code}
+                >
                     <Input
-                        id="code"
                         value={form.data.code}
                         onChange={(event) =>
                             form.setData('code', event.target.value)
@@ -44,16 +45,10 @@ export function RawMaterialCategoryFields({
                         placeholder="RESINAS"
                         autoComplete="off"
                     />
-                    <p className="text-xs text-muted-foreground">
-                        Identificador corto; se guarda en mayúsculas.
-                    </p>
-                    <InputError message={form.errors.code} />
-                </div>
+                </FormField>
 
-                <div className="grid gap-2">
-                    <Label htmlFor="name">Nombre</Label>
+                <FormField id="name" label="Nombre" error={form.errors.name}>
                     <Input
-                        id="name"
                         value={form.data.name}
                         onChange={(event) =>
                             form.setData('name', event.target.value)
@@ -61,44 +56,52 @@ export function RawMaterialCategoryFields({
                         maxLength={100}
                         placeholder="Resinas"
                     />
-                    <InputError message={form.errors.name} />
-                </div>
+                </FormField>
             </div>
 
-            <div className="grid gap-2">
-                <Label htmlFor="type">Tipo de insumo</Label>
-                <Select
-                    value={form.data.type}
-                    onValueChange={(value: RawMaterialType) =>
-                        form.setData('type', value)
-                    }
-                    disabled={typeLocked}
-                >
-                    <SelectTrigger id="type">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {typeOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                    {typeLocked
+            <FormField
+                id="type"
+                label="Tipo de insumo"
+                help={
+                    typeLocked
                         ? rawMaterialsCount === 1
                             ? 'No se puede cambiar: la categoría tiene 1 materia prima. Muévela a otra categoría primero.'
                             : `No se puede cambiar: la categoría tiene ${rawMaterialsCount} materias primas. Muévelas a otra categoría primero.`
-                        : RAW_MATERIAL_TYPE_HINTS[form.data.type]}
-                </p>
-                <InputError message={form.errors.type} />
-            </div>
+                        : RAW_MATERIAL_TYPE_HINTS[form.data.type]
+                }
+                error={form.errors.type}
+            >
+                {(control) => (
+                    <Select
+                        value={form.data.type}
+                        onValueChange={(value: RawMaterialType) =>
+                            form.setData('type', value)
+                        }
+                        disabled={typeLocked}
+                    >
+                        <SelectTrigger {...control}>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {typeOptions.map((option) => (
+                                <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                >
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                )}
+            </FormField>
 
-            <div className="grid gap-2">
-                <Label htmlFor="description">Descripción</Label>
+            <FormField
+                id="description"
+                label="Descripción"
+                error={form.errors.description}
+            >
                 <Textarea
-                    id="description"
                     value={form.data.description}
                     onChange={(event) =>
                         form.setData('description', event.target.value)
@@ -106,30 +109,22 @@ export function RawMaterialCategoryFields({
                     maxLength={1000}
                     rows={2}
                 />
-                <InputError message={form.errors.description} />
-            </div>
+            </FormField>
 
-            <div className="grid gap-2">
-                <div className="flex items-center gap-3 rounded-md border border-border px-3 py-2">
-                    <Checkbox
-                        id="is_active"
-                        checked={form.data.is_active}
-                        onCheckedChange={(checked) =>
-                            form.setData('is_active', checked === true)
-                        }
-                    />
-                    <Label htmlFor="is_active" className="cursor-pointer">
-                        Categoría activa
-                    </Label>
-                </div>
-                {!form.data.is_active && (
-                    <p className="text-xs text-muted-foreground">
-                        Inactiva, no se podrá elegir al registrar materias
-                        primas nuevas. Las que ya la tienen la conservan.
-                    </p>
-                )}
-                <InputError message={form.errors.is_active} />
-            </div>
+            <FormCheckbox
+                id="is_active"
+                label="Categoría activa"
+                help={
+                    form.data.is_active
+                        ? undefined
+                        : 'Inactiva, no se podrá elegir al registrar materias primas nuevas. Las que ya la tienen la conservan.'
+                }
+                error={form.errors.is_active}
+                checked={form.data.is_active}
+                onCheckedChange={(checked) =>
+                    form.setData('is_active', checked === true)
+                }
+            />
         </div>
     );
 }
