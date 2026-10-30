@@ -70,9 +70,10 @@ class RawMaterialCategoryController extends Controller
 
         RawMaterialCategory::create($request->validated());
 
+        Inertia::flash('success', __('Categoría de materia prima registrada exitosamente.'));
+
         return redirect()
-            ->route('catalogs.raw-material-categories.index')
-            ->with('success', __('Categoría de materia prima registrada exitosamente.'));
+            ->route('catalogs.raw-material-categories.index');
     }
 
     public function edit(RawMaterialCategory $rawMaterialCategory): Response
@@ -96,9 +97,10 @@ class RawMaterialCategoryController extends Controller
 
         $rawMaterialCategory->update($request->validated());
 
+        Inertia::flash('success', __('Categoría de materia prima actualizada exitosamente.'));
+
         return redirect()
-            ->route('catalogs.raw-material-categories.index')
-            ->with('success', __('Categoría de materia prima actualizada exitosamente.'));
+            ->route('catalogs.raw-material-categories.index');
     }
 
     public function destroy(RawMaterialCategory $rawMaterialCategory): RedirectResponse
@@ -107,12 +109,15 @@ class RawMaterialCategoryController extends Controller
 
         // Solo si nunca se usó (docs/POLITICA_ELIMINACION.md): la clave foránea RESTRICT decide.
         if (! $this->deleteUnused->execute($rawMaterialCategory)) {
-            return back()->with('error', __('La categoría tiene materias primas. Desactívala en su lugar.'));
+            Inertia::flash('error', __('La categoría tiene materias primas. Desactívala en su lugar.'));
+
+            return back();
         }
 
+        Inertia::flash('success', __('Categoría de materia prima eliminada exitosamente.'));
+
         return redirect()
-            ->route('catalogs.raw-material-categories.index')
-            ->with('success', __('Categoría de materia prima eliminada exitosamente.'));
+            ->route('catalogs.raw-material-categories.index');
     }
 
     /**

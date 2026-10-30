@@ -11,6 +11,7 @@ use App\Models\ProductDocument;
 use App\Services\ProductDocumentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProductDocumentController extends Controller
@@ -31,7 +32,9 @@ class ProductDocumentController extends Controller
             userId: (int) auth()->id()
         );
 
-        return back()->with('success', __('Documento del producto cargado correctamente.'));
+        Inertia::flash('success', __('Documento del producto cargado correctamente.'));
+
+        return back();
     }
 
     public function download(ProductDocument $document): StreamedResponse
@@ -58,6 +61,8 @@ class ProductDocumentController extends Controller
 
         $document->delete();
 
-        return back()->with('success', __('Documento del producto eliminado correctamente.'));
+        Inertia::flash('success', __('Documento del producto eliminado correctamente.'));
+
+        return back();
     }
 }

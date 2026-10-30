@@ -71,11 +71,9 @@ class HandleInertiaRequests extends Middleware
                     'permissions' => $user->getAllPermissions()->pluck('name')->values()->all(),
                 ] : null,
             ],
-            'flash' => [
-                'success' => $request->session()->get('success'),
-                'error' => $request->session()->get('error'),
-                'new_alerts' => $this->visibleNewAlerts($request, $user),
-            ],
+            // Función: solo se ejecuta (y saca las alertas de la sesión) cuando la respuesta incluye el prop, no en las
+            // recargas parciales que no lo piden.
+            'newAlerts' => fn (): array => $this->visibleNewAlerts($request, $user),
             // Hoy en la planta: valor por defecto y límite de los campos de fecha, el mismo «hoy» que valida PlantDate.
             // `always`: también llega en las recargas parciales (las que abren los cajones de movimientos), para que una
             // página cargada ayer no proponga la fecha de ayer.

@@ -137,10 +137,10 @@ describe('pantalla', function () {
     });
 
     it('deja de referencia y costea la primera fórmula; la segunda no cambia el costo', function () {
-        ($this->storeFormula)('2')->assertSessionHas('success', 'Fórmula v1 creada. Es la referencia de precio del producto.');
+        ($this->storeFormula)('2')->assertInertiaFlash('success', 'Fórmula v1 creada. Es la referencia de precio del producto.');
         $first = ($this->latestFormula)();
 
-        ($this->storeFormula)('5')->assertSessionHas('success', 'Fórmula v2 creada y activa. El precio del producto sigue saliendo de la v1.');
+        ($this->storeFormula)('5')->assertInertiaFlash('success', 'Fórmula v2 creada y activa. El precio del producto sigue saliendo de la v1.');
         $second = ($this->latestFormula)();
 
         expect($first->is_price_reference)->toBeTrue()
@@ -177,7 +177,7 @@ describe('pantalla', function () {
         $reference = Formula::factory()->for($this->product)->create();
         $other = Formula::factory()->for($this->product)->inactive()->create();
 
-        $this->post(route('formulas.activate', $other))->assertRedirect(route('formulas.show', $other))->assertSessionHas('success');
+        $this->post(route('formulas.activate', $other))->assertRedirect(route('formulas.show', $other))->assertInertiaFlash('success');
 
         expect($other->fresh()->is_active)->toBeTrue()
             ->and($other->fresh()->is_price_reference)->toBeFalse()
@@ -193,7 +193,7 @@ describe('pantalla', function () {
         $this->product->update(['current_cost' => null]);
 
         $this->post(route('formulas.activate', $formula))
-            ->assertSessionHas('success', 'Fórmula v1 activada. Es la referencia de precio del producto.');
+            ->assertInertiaFlash('success', 'Fórmula v1 activada. Es la referencia de precio del producto.');
 
         expect($formula->fresh()->is_price_reference)->toBeTrue()
             ->and($this->product->fresh()->current_cost)->toBe('3000.0000');
@@ -203,7 +203,7 @@ describe('pantalla', function () {
         $reference = Formula::factory()->for($this->product)->create();
 
         $this->post(route('formulas.deactivate', $reference))
-            ->assertSessionHas('error', 'Esta fórmula define el precio del producto: marca otra como referencia de precio antes de desactivarla.');
+            ->assertInertiaFlash('error', 'Esta fórmula define el precio del producto: marca otra como referencia de precio antes de desactivarla.');
 
         expect($reference->fresh()->is_active)->toBeTrue();
     });
@@ -212,7 +212,7 @@ describe('pantalla', function () {
         Formula::factory()->for($this->product)->create();
         $other = Formula::factory()->for($this->product)->create();
 
-        $this->post(route('formulas.deactivate', $other))->assertSessionHas('success', 'Fórmula v2 desactivada.');
+        $this->post(route('formulas.deactivate', $other))->assertInertiaFlash('success', 'Fórmula v2 desactivada.');
 
         expect($other->fresh()->is_active)->toBeFalse();
     });
@@ -224,7 +224,7 @@ describe('pantalla', function () {
         $second = ($this->latestFormula)();
 
         $this->post(route('formulas.price-reference', $second))
-            ->assertSessionHas('success', 'El precio del producto ahora sale de la fórmula v2.');
+            ->assertInertiaFlash('success', 'El precio del producto ahora sale de la fórmula v2.');
 
         expect($first->fresh()->is_price_reference)->toBeFalse()
             ->and($second->fresh()->is_price_reference)->toBeTrue()
@@ -237,7 +237,7 @@ describe('pantalla', function () {
         $inactive = Formula::factory()->for($this->product)->inactive()->create();
 
         $this->post(route('formulas.price-reference', $inactive))
-            ->assertSessionHas('error', 'Activa la fórmula antes de usarla para el precio.');
+            ->assertInertiaFlash('error', 'Activa la fórmula antes de usarla para el precio.');
 
         expect($reference->fresh()->is_price_reference)->toBeTrue();
     });
@@ -246,7 +246,7 @@ describe('pantalla', function () {
         $reference = Formula::factory()->for($this->product)->create();
 
         $this->post(route('formulas.price-reference', $reference))
-            ->assertSessionHas('success', 'La fórmula v1 ya era la referencia de precio.');
+            ->assertInertiaFlash('success', 'La fórmula v1 ya era la referencia de precio.');
     });
 
     it('no elimina la fórmula de referencia', function () {
@@ -254,7 +254,7 @@ describe('pantalla', function () {
         $reference = Formula::factory()->for($this->product)->create();
 
         $this->delete(route('formulas.destroy', $reference))
-            ->assertSessionHas('error', 'Esta fórmula define el precio del producto: marca otra como referencia de precio antes de eliminarla.');
+            ->assertInertiaFlash('error', 'Esta fórmula define el precio del producto: marca otra como referencia de precio antes de eliminarla.');
 
         expect($reference->fresh())->not->toBeNull();
     });
@@ -266,12 +266,12 @@ describe('pantalla', function () {
         $this->product->update(['is_active' => false]);
         $message = 'El producto está inactivo: sus fórmulas solo se pueden desactivar o eliminar. Reactiva el producto para cambiarlas.';
 
-        $this->post(route('formulas.activate', $inactive))->assertSessionHas('error', $message);
-        $this->post(route('formulas.price-reference', $inactive))->assertSessionHas('error', $message);
-        $this->get(route('formulas.edit', $reference))->assertRedirect(route('formulas.show', $reference))->assertSessionHas('error', $message);
+        $this->post(route('formulas.activate', $inactive))->assertInertiaFlash('error', $message);
+        $this->post(route('formulas.price-reference', $inactive))->assertInertiaFlash('error', $message);
+        $this->get(route('formulas.edit', $reference))->assertRedirect(route('formulas.show', $reference))->assertInertiaFlash('error', $message);
         $this->put(route('formulas.update', $reference), [
             'details' => [['raw_material_id' => $this->resin->id, 'quantity' => '9', 'unit_of_measure_id' => $this->kg->id]],
-        ])->assertSessionHas('error', $message);
+        ])->assertInertiaFlash('error', $message);
 
         expect($inactive->fresh()->is_active)->toBeFalse()
             ->and($reference->fresh()->is_price_reference)->toBeTrue()
@@ -283,7 +283,7 @@ describe('pantalla', function () {
         $other = Formula::factory()->for($this->product)->create();
         $this->product->update(['is_active' => false]);
 
-        $this->post(route('formulas.deactivate', $other))->assertSessionHas('success');
+        $this->post(route('formulas.deactivate', $other))->assertInertiaFlash('success');
 
         expect($other->fresh()->is_active)->toBeFalse();
     });
@@ -322,7 +322,7 @@ describe('pantalla', function () {
         $unused = Formula::factory()->for($this->product)->create();
 
         $this->delete(route('formulas.destroy', $withHistory))
-            ->assertSessionHas('error', 'La fórmula tiene historial (órdenes de producción o costos calculados). Desactívala en su lugar.');
+            ->assertInertiaFlash('error', 'La fórmula tiene historial (órdenes de producción o costos calculados). Desactívala en su lugar.');
         $this->delete(route('formulas.destroy', $unused))->assertRedirect(route('formulas.index'));
 
         expect($withHistory->fresh())->not->toBeNull()
@@ -339,7 +339,7 @@ describe('pantalla', function () {
         FormulaDetail::create(['formula_id' => $broken->id, 'raw_material_id' => $solvent->id, 'quantity' => 1, 'unit_of_measure_id' => $this->kg->id, 'step_order' => 1]);
 
         $this->post(route('formulas.price-reference', $broken))
-            ->assertSessionHas('success', 'El precio del producto ahora sale de la fórmula v2.');
+            ->assertInertiaFlash('success', 'El precio del producto ahora sale de la fórmula v2.');
 
         expect($broken->fresh()->is_price_reference)->toBeTrue();
         Log::shouldHaveReceived('warning')->withArgs(fn (string $message, array $context): bool => $context['formula_id'] === $broken->id)->once();

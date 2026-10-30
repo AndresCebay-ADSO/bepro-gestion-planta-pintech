@@ -95,7 +95,7 @@ it('no elimina un producto con historial y conserva presentaciones, documentos y
     $variant = ProductVariant::factory()->create(['product_id' => $product->id]);
     $document = productDocumentFor($product, $superAdmin);
 
-    $this->delete(route('products.destroy', $product))->assertSessionHas('error');
+    $this->delete(route('products.destroy', $product))->assertInertiaFlash('error');
 
     $this->assertDatabaseHas('products', ['id' => $product->id]);
     $this->assertDatabaseHas('product_variants', ['id' => $variant->id]);
@@ -117,7 +117,7 @@ it('no desactiva un producto con órdenes en curso, pero sí con órdenes termin
     $order = ProductionOrder::factory()->pending()->create();
     $product = $order->product;
 
-    $this->put(route('products.update', $product), productUpdatePayload($product, false))->assertSessionHas('error');
+    $this->put(route('products.update', $product), productUpdatePayload($product, false))->assertInertiaFlash('error');
     expect($product->fresh()->is_active)->toBeTrue();
 
     $order->update(['status' => 'completed']);
@@ -157,7 +157,7 @@ it('elimina una presentación sin historial y rechaza una ya cotizada', function
     $this->delete(route('products.variants.destroy', [$product, $unused]))->assertRedirect(route('products.show', $product));
     $this->assertDatabaseMissing('product_variants', ['id' => $unused->id]);
 
-    $this->delete(route('products.variants.destroy', [$product, $quoted]))->assertSessionHas('error');
+    $this->delete(route('products.variants.destroy', [$product, $quoted]))->assertInertiaFlash('error');
     $this->assertDatabaseHas('product_variants', ['id' => $quoted->id]);
 });
 
@@ -167,7 +167,7 @@ it('no desactiva una presentación con stock de producto terminado', function ()
     FinishedInventory::factory()->create(['product_variant_id' => $variant->id, 'quantity' => 5]);
 
     $this->patch(route('products.variants.update', [$variant->product_id, $variant]), variantUpdatePayload($variant, false))
-        ->assertSessionHas('error');
+        ->assertInertiaFlash('error');
 
     expect($variant->fresh()->is_active)->toBeTrue();
 });
@@ -177,7 +177,7 @@ it('no desactiva un producto con stock de producto terminado', function () {
     $inventory = FinishedInventory::factory()->create(['quantity' => 5]);
     $product = $inventory->product;
 
-    $this->put(route('products.update', $product), productUpdatePayload($product, false))->assertSessionHas('error');
+    $this->put(route('products.update', $product), productUpdatePayload($product, false))->assertInertiaFlash('error');
     expect($product->fresh()->is_active)->toBeTrue();
 
     $inventory->update(['quantity' => 0]);
@@ -198,13 +198,16 @@ it('no desactiva una presentación que una orden en curso va a envasar, pero sí
     ]);
 
     $this->patch(route('products.variants.update', [$variant->product_id, $variant]), variantUpdatePayload($variant, false))
-        ->assertSessionHas('error');
+        ->assertInertiaFlash('error');
     expect($variant->fresh()->is_active)->toBeTrue();
+
+    // Como el navegador: tras la redirección viene el GET que pinta la pantalla y consume el aviso de Inertia.
+    $this->get(route('products.show', $variant->product_id))->assertOk();
 
     $order->update(['status' => 'completed']);
 
     $this->patch(route('products.variants.update', [$variant->product_id, $variant]), variantUpdatePayload($variant, false))
-        ->assertSessionMissing('error');
+        ->assertInertiaFlashMissing('error');
     expect($variant->fresh()->is_active)->toBeFalse();
 });
 

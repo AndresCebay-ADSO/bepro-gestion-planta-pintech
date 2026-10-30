@@ -37,9 +37,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 $response->getStatusCode() === 429 &&
                 $request->header('X-Inertia')
             ) {
-                return back()->with([
-                    'error' => __('auth.throttle', ['seconds' => 60]),
-                ]);
+                Inertia::flash('error', __('auth.throttle', ['seconds' => 60]));
+
+                return back();
             }
 
             // Páginas de error con Inertia. 500 y 503 conservan la traza de Laravel mientras APP_DEBUG está activo.

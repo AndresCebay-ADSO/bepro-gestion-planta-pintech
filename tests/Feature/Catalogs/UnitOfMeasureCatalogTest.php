@@ -335,7 +335,7 @@ it('no elimina una unidad en uso y propone desactivarla', function () {
     $unit = unitInUse();
 
     $this->delete(route('catalogs.units-of-measure.destroy', $unit))
-        ->assertSessionHas('error', 'La unidad de medida está en uso (materias primas, productos, presentaciones o fórmulas). Desactívala en su lugar.');
+        ->assertInertiaFlash('error', 'La unidad de medida está en uso (materias primas, productos, presentaciones o fórmulas). Desactívala en su lugar.');
 
     expect(UnitOfMeasure::query()->whereKey($unit->id)->exists())->toBeTrue();
 });

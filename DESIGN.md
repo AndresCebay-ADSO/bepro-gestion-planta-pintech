@@ -133,7 +133,8 @@ How it works:
   pill and the quantity; **never on the row background**.
 - **Priority:** only `high` has color (`danger`), with a bars icon (3 bars high, 2 medium, 1 low; medium and low grey).
 - **Alerts:** app alerts use `<Alert>` (`components/ui/alert.tsx`) with the tone's variant (`success`, `warning`,
-  `info`, `destructive`, or `default` for neutral); `flash` messages are rendered only by the layout (`<FlashMessages>`).
+  `info`, `destructive`, or `default` for neutral); `flash` messages come from `page.flash` (`usePage().flash`) and are
+  rendered only by `<FlashMessages>` (app layout) and `<AuthFlashError>` (sign-in screens), never by a page.
 
 ## 5. Typography
 

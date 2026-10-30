@@ -54,8 +54,9 @@ class ClientController extends Controller
 
         Client::create($request->validated());
 
-        return redirect()->route('clients.index')
-            ->with('success', 'Cliente creado con éxito.');
+        Inertia::flash('success', 'Cliente creado con éxito.');
+
+        return redirect()->route('clients.index');
     }
 
     public function edit(Request $request, Client $client): Response
@@ -87,8 +88,9 @@ class ClientController extends Controller
 
         $client->update($validated);
 
-        return redirect()->route('clients.index')
-            ->with('success', 'Cliente actualizado con éxito.');
+        Inertia::flash('success', 'Cliente actualizado con éxito.');
+
+        return redirect()->route('clients.index');
     }
 
     public function destroy(Client $client): RedirectResponse
@@ -96,10 +98,13 @@ class ClientController extends Controller
         $this->authorize('delete', $client);
 
         if (! $this->deleteUnused->execute($client)) {
-            return back()->with('error', __('El cliente tiene cotizaciones o pedidos. Desactívalo en su lugar.'));
+            Inertia::flash('error', __('El cliente tiene cotizaciones o pedidos. Desactívalo en su lugar.'));
+
+            return back();
         }
 
-        return redirect()->route('clients.index')
-            ->with('success', 'Cliente eliminado con éxito.');
+        Inertia::flash('success', 'Cliente eliminado con éxito.');
+
+        return redirect()->route('clients.index');
     }
 }

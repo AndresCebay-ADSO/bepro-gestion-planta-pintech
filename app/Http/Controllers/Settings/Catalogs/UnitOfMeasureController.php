@@ -65,9 +65,10 @@ class UnitOfMeasureController extends Controller
 
         UnitOfMeasure::create($request->validated());
 
+        Inertia::flash('success', __('Unidad de medida registrada exitosamente.'));
+
         return redirect()
-            ->route('catalogs.units-of-measure.index')
-            ->with('success', __('Unidad de medida registrada exitosamente.'));
+            ->route('catalogs.units-of-measure.index');
     }
 
     public function edit(UnitOfMeasure $unitOfMeasure): Response
@@ -95,9 +96,10 @@ class UnitOfMeasureController extends Controller
             RecalculateUnitDependentCosts::dispatch((int) $unitOfMeasure->id);
         }
 
+        Inertia::flash('success', __('Unidad de medida actualizada exitosamente.'));
+
         return redirect()
-            ->route('catalogs.units-of-measure.index')
-            ->with('success', __('Unidad de medida actualizada exitosamente.'));
+            ->route('catalogs.units-of-measure.index');
     }
 
     public function destroy(UnitOfMeasure $unitOfMeasure): RedirectResponse
@@ -106,12 +108,15 @@ class UnitOfMeasureController extends Controller
 
         // Solo si nunca se usó (docs/POLITICA_ELIMINACION.md): las claves foráneas RESTRICT deciden.
         if (! $this->deleteUnused->execute($unitOfMeasure)) {
-            return back()->with('error', __('La unidad de medida está en uso (materias primas, productos, presentaciones o fórmulas). Desactívala en su lugar.'));
+            Inertia::flash('error', __('La unidad de medida está en uso (materias primas, productos, presentaciones o fórmulas). Desactívala en su lugar.'));
+
+            return back();
         }
 
+        Inertia::flash('success', __('Unidad de medida eliminada exitosamente.'));
+
         return redirect()
-            ->route('catalogs.units-of-measure.index')
-            ->with('success', __('Unidad de medida eliminada exitosamente.'));
+            ->route('catalogs.units-of-measure.index');
     }
 
     /**

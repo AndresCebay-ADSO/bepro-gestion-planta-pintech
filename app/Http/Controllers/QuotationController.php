@@ -107,8 +107,9 @@ class QuotationController extends Controller
             $request->user()
         );
 
-        return redirect()->route('quotations.show', $quotation)
-            ->with('success', __('Cotización creada con éxito.'));
+        Inertia::flash('success', __('Cotización creada con éxito.'));
+
+        return redirect()->route('quotations.show', $quotation);
     }
 
     public function show(Request $request, Quotation $quotation): Response
@@ -172,8 +173,9 @@ class QuotationController extends Controller
     {
         $quotation = $this->quotationService->update($quotation, $request->validated());
 
-        return redirect()->route('quotations.show', $quotation)
-            ->with('success', __('Cotización actualizada con éxito.'));
+        Inertia::flash('success', __('Cotización actualizada con éxito.'));
+
+        return redirect()->route('quotations.show', $quotation);
     }
 
     public function updateStatus(UpdateQuotationStatusRequest $request, Quotation $quotation): RedirectResponse
@@ -181,8 +183,9 @@ class QuotationController extends Controller
         $status = QuotationStatus::from($request->validated('status'));
         $this->quotationService->updateStatus($quotation, $status);
 
-        return redirect()->route('quotations.show', $quotation)
-            ->with('success', __('Estado de la cotización actualizado.'));
+        Inertia::flash('success', __('Estado de la cotización actualizado.'));
+
+        return redirect()->route('quotations.show', $quotation);
     }
 
     public function convertToOrder(ConvertQuotationToOrderRequest $request, Quotation $quotation): RedirectResponse
@@ -192,8 +195,9 @@ class QuotationController extends Controller
             $request->validated()
         );
 
-        return redirect()->route('sales-orders.show', $order)
-            ->with('success', __('Cotización convertida en pedido exitosamente.'));
+        Inertia::flash('success', __('Cotización convertida en pedido exitosamente.'));
+
+        return redirect()->route('sales-orders.show', $order);
     }
 
     public function exportPdf(Quotation $quotation): \Illuminate\Http\Response

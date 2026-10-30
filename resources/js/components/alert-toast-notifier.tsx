@@ -42,7 +42,7 @@ function writeSeenAlertIds(ids: Set<number>): void {
 }
 
 export function AlertToastNotifier() {
-    const { auth, recentAlerts, flash } = usePage().props;
+    const { auth, recentAlerts, newAlerts } = usePage().props;
 
     const [toasts, setToasts] = useState<AlertToast[]>([]);
 
@@ -55,15 +55,15 @@ export function AlertToastNotifier() {
         }
 
         const seenIds = readSeenAlertIds();
-        const flashAlerts = flash?.new_alerts ?? [];
+        const incomingNewAlerts = newAlerts ?? [];
 
         if (seenIds.size === 0 && recentAlerts.length > 0) {
             recentAlerts.forEach((alert) => seenIds.add(alert.id));
             writeSeenAlertIds(seenIds);
 
-            if (flashAlerts.length > 0) {
+            if (incomingNewAlerts.length > 0) {
                 setTimeout(() => {
-                    setToasts(flashAlerts);
+                    setToasts(incomingNewAlerts);
                 }, 0);
             }
 
@@ -71,7 +71,7 @@ export function AlertToastNotifier() {
         }
 
         const incoming = [
-            ...flashAlerts,
+            ...incomingNewAlerts,
             ...recentAlerts.filter((alert) => !seenIds.has(alert.id)),
         ];
 
@@ -97,7 +97,7 @@ export function AlertToastNotifier() {
 
         uniqueIncoming.forEach((alert) => seenIds.add(alert.id));
         writeSeenAlertIds(seenIds);
-    }, [canReceiveAlerts, flash?.new_alerts, recentAlerts]);
+    }, [canReceiveAlerts, newAlerts, recentAlerts]);
 
     useEffect(() => {
         if (toasts.length === 0) {

@@ -13,6 +13,7 @@ use App\Models\ProductionRemnant;
 use App\Services\AvailableRemnantsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
 
 class RemnantConsumptionController extends Controller
 {
@@ -55,6 +56,8 @@ class RemnantConsumptionController extends Controller
             return $this->staleOrderResponse($exception);
         }
 
-        return back()->with('success', __('Saldo de PT consumido exitosamente.'));
+        Inertia::flash('success', __('Saldo de PT consumido exitosamente.'));
+
+        return back();
     }
 }

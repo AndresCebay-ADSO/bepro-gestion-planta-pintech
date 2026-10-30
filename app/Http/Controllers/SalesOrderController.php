@@ -137,8 +137,9 @@ class SalesOrderController extends Controller
             return $order;
         });
 
-        return redirect()->route('sales-orders.show', $order)
-            ->with('success', 'Pedido creado con éxito.');
+        Inertia::flash('success', 'Pedido creado con éxito.');
+
+        return redirect()->route('sales-orders.show', $order);
     }
 
     public function show(Request $request, SalesOrder $salesOrder): Response
@@ -169,16 +170,18 @@ class SalesOrderController extends Controller
     {
         $salesOrder->update($request->validated());
 
-        return redirect()->route('sales-orders.show', $salesOrder)
-            ->with('success', 'Pedido actualizado con éxito.');
+        Inertia::flash('success', 'Pedido actualizado con éxito.');
+
+        return redirect()->route('sales-orders.show', $salesOrder);
     }
 
     public function updateStatus(UpdateSalesOrderStatusRequest $request, SalesOrder $salesOrder): RedirectResponse
     {
         $salesOrder->update(['status' => $request->validated('status')]);
 
-        return redirect()->route('sales-orders.show', $salesOrder)
-            ->with('success', 'Estado del pedido actualizado con éxito.');
+        Inertia::flash('success', 'Estado del pedido actualizado con éxito.');
+
+        return redirect()->route('sales-orders.show', $salesOrder);
     }
 
     private function buildOrderData(SalesOrder $salesOrder, bool $canViewQuotation): array

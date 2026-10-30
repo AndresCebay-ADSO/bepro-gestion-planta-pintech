@@ -620,37 +620,20 @@ describe('contrato de DESIGN.md', () => {
     });
 
     it('deja los avisos de flash al layout, sin repetirlos en pages/', () => {
-        // Excepciones por archivo, con su motivo. Al resolver una, se quita de aquí.
-        const flashExceptions = [
-            // Pantalla de inicio de sesión: no usa el layout de la app (donde vive <FlashMessages />).
-            'resources/js/pages/auth/login.tsx',
-        ];
-        const flashPattern = /\bflash\??\.(?:success|error)\b/g;
-
-        const files = screenFiles.filter(
-            (file) =>
-                relativePath(file).startsWith('resources/js/pages/') &&
-                !flashExceptions.includes(relativePath(file)),
+        // Los pintan <FlashMessages /> (layout de la app) y <AuthFlashError /> (pantallas de acceso): ninguna página
+        // lee `flash`, ni con punto (`flash.error`) ni desestructurando (`const { flash } = usePage()`).
+        const rule =
+            'DESIGN.md §4: los avisos los pintan <FlashMessages /> y <AuthFlashError />, nunca una página';
+        const files = screenFiles.filter((file) =>
+            relativePath(file).startsWith('resources/js/pages/'),
         );
 
         const found = violations(files, [
-            {
-                pattern: flashPattern,
-                rule: 'DESIGN.md §4: los mensajes de flash.success y flash.error los pinta solo <FlashMessages /> en el layout',
-            },
+            { pattern: /\bflash\??\.(?:success|error)\b/g, rule },
+            { pattern: /\busePage\(\)\.flash\b/g, rule },
+            { pattern: /\{[^}]*\bflash\b[^}]*\}\s*=\s*usePage\(\)/g, rule },
         ]);
 
         expect(report(found)).toEqual([]);
-
-        // Una excepción que ya no existe o ya no lee flash.success/error sobra: se quita para que el guardián la vigile.
-        const staleExceptions = flashExceptions.filter(
-            (path) =>
-                !existsSync(join(root, path)) ||
-                !new RegExp(flashPattern.source).test(
-                    readFileSync(join(root, path), 'utf8'),
-                ),
-        );
-
-        expect(staleExceptions).toEqual([]);
     });
 });

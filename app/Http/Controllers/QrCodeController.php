@@ -140,10 +140,14 @@ class QrCodeController extends Controller
         try {
             $qrCodeService->setActive($qrCode, (bool) $request->validated('is_active'));
         } catch (\DomainException $exception) {
-            return redirect()->back()->with('error', $exception->getMessage());
+            Inertia::flash('error', $exception->getMessage());
+
+            return redirect()->back();
         }
 
-        return redirect()->back()->with('success', 'Estado del QR actualizado.');
+        Inertia::flash('success', 'Estado del QR actualizado.');
+
+        return redirect()->back();
     }
 
     public function qrImage(QrCode $qrCode, QrImageService $service): HttpResponse

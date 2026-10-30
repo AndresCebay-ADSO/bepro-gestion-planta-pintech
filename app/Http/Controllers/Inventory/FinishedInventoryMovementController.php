@@ -153,8 +153,9 @@ class FinishedInventoryMovementController extends Controller
             );
         }
 
-        return redirect()->route('finished-inventory-movements.index')
-            ->with('success', __('Movimiento de inventario de producto terminado registrado exitosamente.'));
+        Inertia::flash('success', __('Movimiento de inventario de producto terminado registrado exitosamente.'));
+
+        return redirect()->route('finished-inventory-movements.index');
     }
 
     public function show(Request $request, FinishedInventoryMovement $finishedInventoryMovement): Response

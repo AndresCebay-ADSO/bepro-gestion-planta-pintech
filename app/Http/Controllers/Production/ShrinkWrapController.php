@@ -117,9 +117,10 @@ class ShrinkWrapController extends Controller
 
         $shrinkWrap = $this->registerShrinkWrap->execute($request->validated(), (int) $request->user()->id);
 
+        Inertia::flash('success', __('Termoencogido registrado: se descontó el empaque secundario.'));
+
         return redirect()
-            ->route('production.shrink-wraps.show', $shrinkWrap)
-            ->with('success', __('Termoencogido registrado: se descontó el empaque secundario.'));
+            ->route('production.shrink-wraps.show', $shrinkWrap);
     }
 
     public function show(Request $request, ShrinkWrap $shrinkWrap): Response

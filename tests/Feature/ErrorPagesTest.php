@@ -46,6 +46,16 @@ it('muestra la página 419 cuando la sesión o el token expiraron', function () 
             ->where('status', 419));
 });
 
+it('redirige hacia atrás con un aviso flash de Inertia cuando una petición Inertia recibe 429', function () {
+    Route::middleware('web')->post('/_error-pages-test', fn () => abort(429));
+
+    $this->from('/login')
+        ->withHeader('X-Inertia', 'true')
+        ->post('/_error-pages-test')
+        ->assertRedirect('/login')
+        ->assertInertiaFlash('error', __('auth.throttle', ['seconds' => 60]));
+});
+
 it('mantiene la respuesta JSON en peticiones que esperan JSON', function () {
     $this->getJson('/ruta-que-no-existe')
         ->assertNotFound()

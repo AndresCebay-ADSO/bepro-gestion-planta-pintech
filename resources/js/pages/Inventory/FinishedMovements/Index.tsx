@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
@@ -180,9 +180,9 @@ export default function FinishedMovementsIndex({
     const closeDrawer = () =>
         setDrawerState((state) => ({ ...state, isOpen: false }));
 
+    // La redirección del servidor ya trae el listado nuevo. Una recarga parcial aquí borraría el aviso de Inertia.
     const closeDrawerAfterSuccess = () => {
         closeDrawer();
-        router.reload({ only: ['movements'] });
     };
 
     // Sin código propio: el número del movimiento (el de su detalle) lo identifica.

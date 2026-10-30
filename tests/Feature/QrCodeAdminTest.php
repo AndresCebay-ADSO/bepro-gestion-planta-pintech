@@ -232,14 +232,14 @@ test('update toggles is_active', function () {
     $this->actingAs($user)
         ->patch(route('qr-codes.update', $qrCode), ['is_active' => false])
         ->assertRedirect()
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 
     expect($qrCode->fresh()->is_active)->toBeFalse();
 
     $this->actingAs($user)
         ->patch(route('qr-codes.update', $qrCode), ['is_active' => true])
         ->assertRedirect()
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 
     expect($qrCode->fresh()->is_active)->toBeTrue();
 });
@@ -319,7 +319,7 @@ test('the qr code of a cancelled order cannot be activated again, only deactivat
         ->from(route('qr-codes.show', $qrCode))
         ->patch(route('qr-codes.update', $qrCode), ['is_active' => true])
         ->assertRedirect(route('qr-codes.show', $qrCode))
-        ->assertSessionHas('error');
+        ->assertInertiaFlash('error');
 
     expect($qrCode->refresh()->is_active)->toBeFalse();
 
@@ -327,7 +327,7 @@ test('the qr code of a cancelled order cannot be activated again, only deactivat
 
     $this->actingAs($user)
         ->patch(route('qr-codes.update', $qrCode), ['is_active' => false])
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 
     expect($qrCode->refresh()->is_active)->toBeFalse();
 });

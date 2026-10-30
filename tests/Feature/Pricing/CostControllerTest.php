@@ -105,7 +105,7 @@ describe('update', function () {
                 'sales_margin' => 25.00,
             ])
             ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertInertiaFlash('success');
 
         $this->assertDatabaseHas('products', [
             'id' => $this->product->id,
@@ -172,7 +172,7 @@ describe('update', function () {
                 'sales_price' => 115.00,
             ])
             ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertInertiaFlash('success');
 
         $this->assertDatabaseHas('products', [
             'id' => $this->product->id,
@@ -219,7 +219,7 @@ describe('update', function () {
                 'sales_margin' => 99.99,
             ])
             ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertInertiaFlash('success');
 
         $this->assertDatabaseHas('products', [
             'id' => $this->product->id,

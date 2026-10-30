@@ -53,6 +53,8 @@ class CostController extends Controller
     {
         $product->update(['sales_margin' => $request->salesMargin()]);
 
-        return back()->with('success', 'Margen de venta actualizado correctamente.');
+        Inertia::flash('success', 'Margen de venta actualizado correctamente.');
+
+        return back();
     }
 }

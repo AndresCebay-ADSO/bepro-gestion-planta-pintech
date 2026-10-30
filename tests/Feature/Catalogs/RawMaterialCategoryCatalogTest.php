@@ -157,7 +157,7 @@ it('elimina una categoría sin materias primas y rechaza una con materias primas
     $this->delete(route('catalogs.raw-material-categories.destroy', $empty))
         ->assertRedirect(route('catalogs.raw-material-categories.index'));
     $this->delete(route('catalogs.raw-material-categories.destroy', $used))
-        ->assertSessionHas('error', 'La categoría tiene materias primas. Desactívala en su lugar.');
+        ->assertInertiaFlash('error', 'La categoría tiene materias primas. Desactívala en su lugar.');
 
     expect(RawMaterialCategory::query()->whereKey($empty->id)->exists())->toBeFalse()
         ->and(RawMaterialCategory::query()->whereKey($used->id)->exists())->toBeTrue();

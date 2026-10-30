@@ -296,8 +296,9 @@ class ProductionOrderController extends Controller
             ]);
         }
 
-        return redirect()->route('production-orders.show', $order)
-            ->with('success', 'Orden de producción creada con éxito.');
+        Inertia::flash('success', 'Orden de producción creada con éxito.');
+
+        return redirect()->route('production-orders.show', $order);
     }
 
     /**
@@ -314,11 +315,14 @@ class ProductionOrderController extends Controller
                 user: $request->user(),
             );
         } catch (\DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            Inertia::flash('error', $exception->getMessage());
+
+            return back();
         }
 
-        return redirect()->route('production-orders.show', $productionOrder)
-            ->with('success', 'Producción finalizada e inventario actualizado.');
+        Inertia::flash('success', 'Producción finalizada e inventario actualizado.');
+
+        return redirect()->route('production-orders.show', $productionOrder);
     }
 
     /**
@@ -332,11 +336,14 @@ class ProductionOrderController extends Controller
                 user: $request->user(),
             );
         } catch (\DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            Inertia::flash('error', $exception->getMessage());
+
+            return back();
         }
 
-        return redirect()->route('production-orders.show', $productionOrder)
-            ->with('success', 'Producción iniciada. Ya puedes registrar los datos de planta.');
+        Inertia::flash('success', 'Producción iniciada. Ya puedes registrar los datos de planta.');
+
+        return redirect()->route('production-orders.show', $productionOrder);
     }
 
     /**
@@ -353,11 +360,14 @@ class ProductionOrderController extends Controller
                 user: $request->user(),
             );
         } catch (\DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            Inertia::flash('error', $exception->getMessage());
+
+            return back();
         }
 
-        return redirect()->route('production-orders.show', $productionOrder)
-            ->with('success', 'Orden enviada a revisión. Producción validará el cierre definitivo.');
+        Inertia::flash('success', 'Orden enviada a revisión. Producción validará el cierre definitivo.');
+
+        return redirect()->route('production-orders.show', $productionOrder);
     }
 
     /**
@@ -376,8 +386,9 @@ class ProductionOrderController extends Controller
             return $this->staleOrderResponse($exception);
         }
 
-        return redirect()->route('production-orders.show', $productionOrder)
-            ->with('success', 'Orden devuelta a planta para correcciones.');
+        Inertia::flash('success', 'Orden devuelta a planta para correcciones.');
+
+        return redirect()->route('production-orders.show', $productionOrder);
     }
 
     /**
@@ -388,8 +399,9 @@ class ProductionOrderController extends Controller
         try {
             $this->cancelProductionOrder->execute($productionOrder, $request->user(), $request->validated('reason'));
 
-            return redirect()->route('production-orders.show', $productionOrder)
-                ->with('success', 'Orden de producción cancelada con éxito.');
+            Inertia::flash('success', 'Orden de producción cancelada con éxito.');
+
+            return redirect()->route('production-orders.show', $productionOrder);
         } catch (\DomainException $exception) {
             // Aviso y error de validación: el diálogo de cancelar no se cierra ni pierde el motivo escrito.
             return $this->staleOrderResponse($exception);
@@ -404,8 +416,9 @@ class ProductionOrderController extends Controller
         try {
             $this->updateProductionOrderColor->execute($productionOrder, $request->validated('color'), $request->user());
 
-            return redirect()->route('production-orders.show', $productionOrder)
-                ->with('success', 'Color de la orden actualizado.');
+            Inertia::flash('success', 'Color de la orden actualizado.');
+
+            return redirect()->route('production-orders.show', $productionOrder);
         } catch (\DomainException $exception) {
             // Error de validación también: el diálogo no se cierra como si se hubiera guardado.
             return $this->staleOrderResponse($exception);

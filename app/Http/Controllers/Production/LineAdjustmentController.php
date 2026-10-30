@@ -12,6 +12,7 @@ use App\Models\ProductionOrderLineAdjustment;
 use App\Services\Production\ProductionOrderLock;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class LineAdjustmentController extends Controller
 {
@@ -48,8 +49,9 @@ class LineAdjustmentController extends Controller
             return $this->staleOrderResponse($exception);
         }
 
-        return redirect()->route('production-orders.show', $productionOrder)
-            ->with('success', 'Ajuste de línea registrado.');
+        Inertia::flash('success', 'Ajuste de línea registrado.');
+
+        return redirect()->route('production-orders.show', $productionOrder);
     }
 
     /**
@@ -76,7 +78,8 @@ class LineAdjustmentController extends Controller
             return $this->staleOrderResponse($exception);
         }
 
-        return redirect()->route('production-orders.show', $productionOrder)
-            ->with('success', 'Ajuste de línea eliminado.');
+        Inertia::flash('success', 'Ajuste de línea eliminado.');
+
+        return redirect()->route('production-orders.show', $productionOrder);
     }
 }

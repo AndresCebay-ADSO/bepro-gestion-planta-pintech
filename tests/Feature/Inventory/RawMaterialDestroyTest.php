@@ -65,7 +65,7 @@ describe('Raw Material Destroy', function () {
             ->delete(route('raw-materials.destroy', $this->rawMaterial));
 
         $response->assertRedirect(route('raw-materials.index'));
-        $response->assertSessionHas('success', 'Materia prima desactivada exitosamente (conserva historial).');
+        $response->assertInertiaFlash('success', 'Materia prima desactivada exitosamente (conserva historial).');
         $this->assertDatabaseHas('raw_materials', [
             'id' => $this->rawMaterial->id,
             'is_active' => false,
@@ -79,7 +79,7 @@ describe('Raw Material Destroy', function () {
             ->delete(route('raw-materials.destroy', $this->rawMaterial));
 
         $response->assertRedirect(route('raw-materials.index'));
-        $response->assertSessionHas('success', 'Materia prima eliminada físicamente exitosamente.');
+        $response->assertInertiaFlash('success', 'Materia prima eliminada físicamente exitosamente.');
         $this->assertDatabaseMissing('raw_materials', ['id' => $this->rawMaterial->id]);
     });
 
@@ -98,7 +98,7 @@ describe('Raw Material Destroy', function () {
             ->delete(route('raw-materials.destroy', $this->rawMaterial));
 
         $response->assertRedirect();
-        $response->assertSessionHas('error');
+        $response->assertInertiaFlash('error');
 
         // Verificar que NO fue eliminado ni desactivado
         $this->assertDatabaseHas('raw_materials', [
@@ -161,7 +161,7 @@ describe('Raw Material Destroy', function () {
             ->delete(route('raw-materials.destroy', $this->rawMaterial));
 
         $response->assertRedirect();
-        $response->assertSessionHas('error');
+        $response->assertInertiaFlash('error');
 
         // Verificar que NO fue eliminado ni desactivado
         $this->assertDatabaseHas('raw_materials', [
@@ -195,7 +195,7 @@ describe('Raw Material Destroy', function () {
             ->delete(route('raw-materials.destroy', $this->rawMaterial));
 
         $response->assertRedirect(route('raw-materials.index'));
-        $response->assertSessionHas('success', 'Materia prima desactivada exitosamente (conserva historial).');
+        $response->assertInertiaFlash('success', 'Materia prima desactivada exitosamente (conserva historial).');
         $this->assertFalse((bool) $this->rawMaterial->fresh()->is_active);
     });
 
@@ -228,7 +228,7 @@ describe('Raw Material Destroy', function () {
             ->delete(route('raw-materials.destroy', $this->rawMaterial));
 
         $response->assertRedirect(route('raw-materials.index'));
-        $response->assertSessionHas('success', 'Materia prima desactivada exitosamente (conserva historial).');
+        $response->assertInertiaFlash('success', 'Materia prima desactivada exitosamente (conserva historial).');
         $this->assertFalse((bool) $this->rawMaterial->fresh()->is_active);
     });
 
@@ -274,7 +274,7 @@ describe('Raw Material Destroy', function () {
             ->delete(route('raw-materials.destroy', $this->rawMaterial));
 
         $response->assertRedirect(route('raw-materials.index'));
-        $response->assertSessionHas('success', 'Materia prima desactivada exitosamente (conserva historial).');
+        $response->assertInertiaFlash('success', 'Materia prima desactivada exitosamente (conserva historial).');
         $this->assertFalse((bool) $this->rawMaterial->fresh()->is_active);
     });
 
@@ -295,7 +295,7 @@ describe('Raw Material Destroy', function () {
             ->delete(route('raw-materials.destroy', $this->rawMaterial));
 
         $response->assertRedirect();
-        $response->assertSessionHas('error');
+        $response->assertInertiaFlash('error');
 
         $this->assertDatabaseHas('raw_materials', [
             'id' => $this->rawMaterial->id,

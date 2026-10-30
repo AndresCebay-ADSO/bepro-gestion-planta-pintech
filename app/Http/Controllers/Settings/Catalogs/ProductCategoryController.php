@@ -64,9 +64,10 @@ class ProductCategoryController extends Controller
 
         ProductCategory::create($request->validated());
 
+        Inertia::flash('success', __('Categoría de producto registrada exitosamente.'));
+
         return redirect()
-            ->route('catalogs.product-categories.index')
-            ->with('success', __('Categoría de producto registrada exitosamente.'));
+            ->route('catalogs.product-categories.index');
     }
 
     public function edit(ProductCategory $productCategory): Response
@@ -86,9 +87,10 @@ class ProductCategoryController extends Controller
 
         $productCategory->update($request->validated());
 
+        Inertia::flash('success', __('Categoría de producto actualizada exitosamente.'));
+
         return redirect()
-            ->route('catalogs.product-categories.index')
-            ->with('success', __('Categoría de producto actualizada exitosamente.'));
+            ->route('catalogs.product-categories.index');
     }
 
     public function destroy(ProductCategory $productCategory): RedirectResponse
@@ -97,12 +99,15 @@ class ProductCategoryController extends Controller
 
         // Solo si nunca se usó (docs/POLITICA_ELIMINACION.md): la clave foránea RESTRICT decide.
         if (! $this->deleteUnused->execute($productCategory)) {
-            return back()->with('error', __('La categoría tiene productos. Desactívala en su lugar.'));
+            Inertia::flash('error', __('La categoría tiene productos. Desactívala en su lugar.'));
+
+            return back();
         }
 
+        Inertia::flash('success', __('Categoría de producto eliminada exitosamente.'));
+
         return redirect()
-            ->route('catalogs.product-categories.index')
-            ->with('success', __('Categoría de producto eliminada exitosamente.'));
+            ->route('catalogs.product-categories.index');
     }
 
     /**

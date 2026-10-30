@@ -114,7 +114,9 @@ class FormulaController extends Controller
 
         // Mismas reglas y mensajes que al guardar (UpdateFormulaAction): usada en una OP, o producto inactivo (P9-13).
         if (($blocker = $this->updateFormula->blocker($formula)) !== null) {
-            return redirect()->route('formulas.show', $formula)->with('error', $blocker);
+            Inertia::flash('error', $blocker);
+
+            return redirect()->route('formulas.show', $formula);
         }
 
         $formula->load([
@@ -135,12 +137,15 @@ class FormulaController extends Controller
         try {
             $this->updateFormula->execute($formula, $request->validated());
         } catch (DomainException $exception) {
-            return redirect()->route('formulas.show', $formula)->with('error', $exception->getMessage());
+            Inertia::flash('error', $exception->getMessage());
+
+            return redirect()->route('formulas.show', $formula);
         }
 
+        Inertia::flash('success', 'Fórmula actualizada exitosamente.');
+
         return redirect()
-            ->route('formulas.show', $formula)
-            ->with('success', 'Fórmula actualizada exitosamente.');
+            ->route('formulas.show', $formula);
     }
 
     public function destroy(Formula $formula): RedirectResponse
@@ -150,15 +155,20 @@ class FormulaController extends Controller
         try {
             $deleted = $this->deleteFormula->execute($formula);
         } catch (DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            Inertia::flash('error', $exception->getMessage());
+
+            return back();
         }
 
         if (! $deleted) {
-            return back()->with('error', __('La fórmula tiene historial (órdenes de producción o costos calculados). Desactívala en su lugar.'));
+            Inertia::flash('error', __('La fórmula tiene historial (órdenes de producción o costos calculados). Desactívala en su lugar.'));
+
+            return back();
         }
 
-        return redirect()->route('formulas.index')
-            ->with('success', 'Fórmula eliminada exitosamente.');
+        Inertia::flash('success', 'Fórmula eliminada exitosamente.');
+
+        return redirect()->route('formulas.index');
     }
 
     /**
@@ -171,13 +181,16 @@ class FormulaController extends Controller
         try {
             $formula = $this->changeActive->execute($formula, true);
         } catch (DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            Inertia::flash('error', $exception->getMessage());
+
+            return back();
         }
 
-        return redirect()->route('formulas.show', $formula)
-            ->with('success', $formula->is_price_reference
-                ? __('Fórmula v:version activada. Es la referencia de precio del producto.', ['version' => $formula->version])
-                : __('Fórmula v:version activada.', ['version' => $formula->version]));
+        Inertia::flash('success', $formula->is_price_reference
+            ? __('Fórmula v:version activada. Es la referencia de precio del producto.', ['version' => $formula->version])
+            : __('Fórmula v:version activada.', ['version' => $formula->version]));
+
+        return redirect()->route('formulas.show', $formula);
     }
 
     public function deactivate(Formula $formula): RedirectResponse
@@ -187,11 +200,14 @@ class FormulaController extends Controller
         try {
             $this->changeActive->execute($formula, false);
         } catch (DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            Inertia::flash('error', $exception->getMessage());
+
+            return back();
         }
 
-        return redirect()->route('formulas.show', $formula)
-            ->with('success', __('Fórmula v:version desactivada.', ['version' => $formula->version]));
+        Inertia::flash('success', __('Fórmula v:version desactivada.', ['version' => $formula->version]));
+
+        return redirect()->route('formulas.show', $formula);
     }
 
     /**
@@ -204,13 +220,16 @@ class FormulaController extends Controller
         try {
             $changed = $this->setPriceReference->execute($formula);
         } catch (DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            Inertia::flash('error', $exception->getMessage());
+
+            return back();
         }
 
-        return redirect()->route('formulas.show', $formula)
-            ->with('success', $changed
-                ? __('El precio del producto ahora sale de la fórmula v:version.', ['version' => $formula->version])
-                : __('La fórmula v:version ya era la referencia de precio.', ['version' => $formula->version]));
+        Inertia::flash('success', $changed
+            ? __('El precio del producto ahora sale de la fórmula v:version.', ['version' => $formula->version])
+            : __('La fórmula v:version ya era la referencia de precio.', ['version' => $formula->version]));
+
+        return redirect()->route('formulas.show', $formula);
     }
 
     /**

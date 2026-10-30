@@ -31,7 +31,7 @@ test('super-admin cannot delete their own account', function () {
     $this->actingAs($admin)
         ->delete(route('users.destroy', $admin))
         ->assertRedirect()
-        ->assertSessionHas('error', 'No puedes eliminar tu propia cuenta.');
+        ->assertInertiaFlash('error', 'No puedes eliminar tu propia cuenta.');
 
     $this->assertDatabaseHas('users', ['id' => $admin->id]);
 });
@@ -50,7 +50,7 @@ test('super-admin cannot delete a user that has activity logs', function () {
     $this->actingAs($admin)
         ->delete(route('users.destroy', $target))
         ->assertRedirect()
-        ->assertSessionHas('error');
+        ->assertInertiaFlash('error');
 
     $this->assertDatabaseHas('users', ['id' => $target->id]);
 });
@@ -82,7 +82,7 @@ test('super-admin cannot delete a user that has records via created_by in system
     $this->actingAs($admin)
         ->delete(route('users.destroy', $target))
         ->assertRedirect()
-        ->assertSessionHas('error');
+        ->assertInertiaFlash('error');
 
     $this->assertDatabaseHas('users', ['id' => $target->id]);
 });
@@ -100,7 +100,7 @@ test('super-admin can delete a user with no activity', function () {
     $this->actingAs($admin)
         ->delete(route('users.destroy', $target))
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 
     $this->assertDatabaseMissing('users', ['id' => $target->id]);
 });
@@ -124,7 +124,7 @@ test('admin can create user with is_active = true', function () {
             'is_active' => true,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 
     $this->assertDatabaseHas('users', [
         'email' => 'activo@test.com',
@@ -148,7 +148,7 @@ test('admin can create user with is_active = false', function () {
             'is_active' => false,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 
     $this->assertDatabaseHas('users', [
         'email' => 'inactivo@test.com',
@@ -175,7 +175,7 @@ test('admin can update user is_active from true to false', function () {
             'is_active' => false,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 
     $this->assertDatabaseHas('users', [
         'id' => $target->id,
@@ -202,7 +202,7 @@ test('admin can update user is_active from false to true', function () {
             'is_active' => true,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 
     $this->assertDatabaseHas('users', [
         'id' => $target->id,
@@ -235,7 +235,7 @@ test('admin can create user with signature', function () {
             'signature' => $file,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 
     $user = User::where('email', 'firma@test.com')->first();
     expect($user)->not->toBeNull();
@@ -267,7 +267,7 @@ test('admin can update user signature', function () {
             'signature' => $newFile,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 
     $target->refresh();
     expect($target->signature_path)->not->toBe('signatures/old.png');
@@ -365,7 +365,7 @@ test('admin can remove user signature', function () {
             'remove_signature' => true,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 
     $target->refresh();
     expect($target->signature_path)->toBeNull();
@@ -465,7 +465,7 @@ test('signature file is preserved on disk if user deletion fails', function () {
     $this->actingAs($admin)
         ->delete(route('users.destroy', $target))
         ->assertRedirect()
-        ->assertSessionHas('error');
+        ->assertInertiaFlash('error');
 
     Storage::disk('local')->assertExists('signatures/preserve_me.png');
     $this->assertDatabaseHas('users', ['id' => $target->id]);
@@ -566,7 +566,7 @@ test('user update allows pre-existing uppercase email and normalizes it to lower
             'is_active' => true,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 
     $target->refresh();
     expect($target->name)->toBe('Updated Name')
@@ -585,7 +585,7 @@ test('admin cannot deactivate their own account in update', function () {
             'is_active' => false,
         ])
         ->assertRedirect()
-        ->assertSessionHas('error', 'No puedes desactivar tu propia cuenta de usuario.');
+        ->assertInertiaFlash('error', 'No puedes desactivar tu propia cuenta de usuario.');
 
     expect($admin->fresh()->is_active)->toBeTrue();
 });
@@ -602,7 +602,7 @@ test('users cannot change their own role in update', function () {
             'is_active' => true,
         ])
         ->assertRedirect()
-        ->assertSessionHas('error', 'No puedes cambiar tu propio rol.');
+        ->assertInertiaFlash('error', 'No puedes cambiar tu propio rol.');
 
     expect($admin->fresh()->hasRole('admin'))->toBeTrue();
 });
@@ -624,7 +624,7 @@ test('a user referenced by quotations, sales orders or as quality responsible ca
 
     $this->actingAs($superAdmin)
         ->delete(route('users.destroy', $target))
-        ->assertSessionHas('error', 'No se puede eliminar el usuario porque tiene registros asociados en el sistema. Desactiva su cuenta en su lugar.');
+        ->assertInertiaFlash('error', 'No se puede eliminar el usuario porque tiene registros asociados en el sistema. Desactiva su cuenta en su lugar.');
 
     $this->assertDatabaseHas('users', ['id' => $target->id]);
 })->with(['quotation', 'sales_order', 'quality_responsible']);
@@ -654,7 +654,7 @@ test('destroy catches QueryException with code 23503 and redirects back with err
         $this->actingAs($admin)
             ->delete(route('users.destroy', $target))
             ->assertRedirect()
-            ->assertSessionHas('error', 'No se puede eliminar el usuario porque tiene registros asociados en el sistema. Desactiva su cuenta en su lugar.');
+            ->assertInertiaFlash('error', 'No se puede eliminar el usuario porque tiene registros asociados en el sistema. Desactiva su cuenta en su lugar.');
     } finally {
         User::flushEventListeners();
         User::clearBootedModels();
@@ -680,7 +680,7 @@ test('an admin can deactivate another admin: only the last super-admin is protec
             'is_active' => false,
         ])
         ->assertRedirect(route('users.index'))
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 
     expect($admin2->fresh()->is_active)->toBeFalse();
 });
@@ -791,7 +791,7 @@ test('the last active super-admin cannot be deactivated or demoted', function ()
             'is_active' => true,
         ])
         ->assertRedirect()
-        ->assertSessionHas('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
+        ->assertInertiaFlash('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
 
     expect($activeSuperAdmin->fresh()->isSuperAdmin())->toBeTrue();
 });
@@ -821,7 +821,7 @@ test('a blocked super-admin demotion changes nothing and discards the uploaded s
             'is_active' => false,
             'signature' => UploadedFile::fake()->image('firma.png', 200, 100),
         ])
-        ->assertSessionHas('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
+        ->assertInertiaFlash('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
 
     Storage::disk('local')->assertMissing('signatures/blocked.png');
 
@@ -843,7 +843,7 @@ test('the last active super-admin cannot be deleted', function () {
     $this->actingAs($inactiveSuperAdmin)
         ->delete(route('users.destroy', $activeSuperAdmin))
         ->assertRedirect()
-        ->assertSessionHas('error', 'No se puede eliminar al único super administrador activo del sistema.');
+        ->assertInertiaFlash('error', 'No se puede eliminar al único super administrador activo del sistema.');
 
     $this->assertDatabaseHas('users', ['id' => $activeSuperAdmin->id]);
 });

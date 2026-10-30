@@ -107,7 +107,7 @@ test('it updates an unused formula and replaces its details', function () {
 
     $response
         ->assertRedirect(route('formulas.show', $this->formula))
-        ->assertSessionHas('success', 'Fórmula actualizada exitosamente.');
+        ->assertInertiaFlash('success', 'Fórmula actualizada exitosamente.');
 
     $this->formula->refresh();
 
@@ -132,7 +132,7 @@ test('it accepts comma decimal quantities when updating a formula', function () 
 
     $response
         ->assertRedirect(route('formulas.show', $this->formula))
-        ->assertSessionHas('success', 'Fórmula actualizada exitosamente.');
+        ->assertInertiaFlash('success', 'Fórmula actualizada exitosamente.');
 
     $this->formula->refresh();
 
@@ -175,7 +175,7 @@ test('it does not allow updating a formula already used in production orders', f
 
     $response
         ->assertRedirect(route('formulas.show', $this->formula))
-        ->assertSessionHas('error', 'Esta fórmula ya fue usada en órdenes de producción y no se puede editar.');
+        ->assertInertiaFlash('error', 'Esta fórmula ya fue usada en órdenes de producción y no se puede editar.');
 
     $this->formula->refresh();
 

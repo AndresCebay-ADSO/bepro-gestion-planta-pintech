@@ -354,7 +354,7 @@ it('no deja eliminar un tipo que ya tiene registros, y su receta sigue intacta',
         ->assertInertia(fn (AssertableInertia $page) => $page->where('types.data.0.in_use', true));
 
     $this->delete(route('catalogs.shrink-wrap-types.destroy', $this->type))
-        ->assertSessionHas('error', 'El tipo de termoencogido ya se usó. Desactívalo en su lugar.');
+        ->assertInertiaFlash('error', 'El tipo de termoencogido ya se usó. Desactívalo en su lugar.');
 
     expect($this->type->fresh())->not->toBeNull()
         ->and($this->type->items()->count())->toBe(2);
