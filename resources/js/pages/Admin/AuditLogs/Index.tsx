@@ -9,6 +9,11 @@ import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { PageHeader } from '@/components/page-header';
 import Pagination from '@/components/ui/pagination';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 import { useFilters } from '@/hooks/use-filters';
 import { pillClasses, toneClasses } from '@/lib/tones';
 import type { Tone } from '@/types/enums';
@@ -228,14 +233,25 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
 
         if (keys.length > 2) {
             return (
-                <div className="group relative cursor-help">
-                    <span className="inline-flex items-center rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-muted-foreground transition-colors group-hover:bg-muted">
-                        {keys.length} atributos modificados
-                    </span>
-                    <div className="absolute bottom-full left-0 z-10 mb-2 hidden w-[300px] rounded-lg border bg-popover p-3 shadow-md group-hover:block sm:w-[400px]">
+                // Se abre con un toque o un clic (también en el celular) y se monta fuera de la tabla, dentro de la pantalla.
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <button
+                            type="button"
+                            className="inline-flex items-center rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-muted-foreground transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 data-[state=open]:bg-muted"
+                        >
+                            {keys.length} atributos modificados
+                        </button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                        aria-label="Atributos modificados"
+                        align="start"
+                        collisionPadding={8}
+                        className="max-h-(--radix-popover-content-available-height) w-72 overflow-y-auto p-3 sm:w-96"
+                    >
                         {renderChangeList()}
-                    </div>
-                </div>
+                    </PopoverContent>
+                </Popover>
             );
         }
 

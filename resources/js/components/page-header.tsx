@@ -12,7 +12,10 @@ type PageHeaderProps = {
     children?: ReactNode;
 };
 
-/** Título de página (el único `h1` de cada pantalla), con la escala de DESIGN.md §5. */
+/**
+ * Título de página (el único `h1` de cada pantalla), con la escala de DESIGN.md §5. Desde `md`, las acciones van a la
+ * derecha mientras el título conserve unos 20rem; si no caben, pasan a su propia línea en vez de aplastarlo.
+ */
 export function PageHeader({
     title,
     description,
@@ -21,10 +24,10 @@ export function PageHeader({
     children,
 }: PageHeaderProps) {
     return (
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div className="min-w-0 space-y-1">
+        <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-start md:justify-between">
+            <div className="min-w-0 space-y-1 md:flex-1 md:basis-80">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <h1 className="text-2xl font-semibold tracking-tight break-words text-foreground">
+                    <h1 className="min-w-0 text-2xl font-semibold tracking-tight wrap-anywhere text-foreground">
                         {title}
                     </h1>
                     {badge}
@@ -38,7 +41,7 @@ export function PageHeader({
             </div>
 
             {actions && (
-                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     {actions}
                 </div>
             )}

@@ -482,7 +482,7 @@ export default function CostsIndex({
                 />
 
                 <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                    <div className="overflow-x-auto">
+                    <div className="relative overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="border-b border-border bg-muted/50">
                                 <tr>

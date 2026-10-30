@@ -1,6 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    ArrowLeft,
     Copy,
     Download,
     ExternalLink,
@@ -10,6 +9,7 @@ import {
 import { useState } from 'react';
 
 import { ActiveBadge } from '@/components/active-badge';
+import { DetailTable } from '@/components/detail-table';
 import { FormattedDate } from '@/components/formatted-date';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,7 @@ import {
 import { show as productionOrderShow } from '@/routes/production-orders';
 import {
     index as qrCodesIndex,
+    show as qrCodesShow,
     update as qrCodesUpdate,
 } from '@/routes/qr-codes';
 
@@ -97,15 +98,6 @@ export default function QrCodesShow({ qrCode, can }: Props) {
             <Head title={`QR — ${qrCode.token}`} />
 
             <div className="space-y-6 p-6">
-                <div className="flex items-center gap-4">
-                    <Button variant="outline" size="sm" asChild>
-                        <Link href={qrCodesIndex().url}>
-                            <ArrowLeft className="mr-1.5 h-4 w-4" />
-                            Volver al listado
-                        </Link>
-                    </Button>
-                </div>
-
                 {flash?.success && (
                     <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">
                         {flash.success}
@@ -119,7 +111,6 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                         can.update && (
                             <Button
                                 variant="outline"
-                                size="sm"
                                 onClick={handleToggleActive}
                             >
                                 {qrCode.is_active ? 'Desactivar' : 'Activar'}
@@ -128,7 +119,7 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                     }
                 />
 
-                <div className="grid gap-6 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* QR Image Card */}
                     <Card className="lg:col-span-1">
                         <CardHeader>
@@ -310,126 +301,111 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                     </Card>
                 </div>
 
-                {/* Documents */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <FileText className="h-5 w-5 text-primary" />
+                {/* Documentos */}
+                <section className="space-y-4">
+                    <div>
+                        <h2 className="text-lg font-semibold">
                             Documentos del lote
-                        </CardTitle>
-                        <CardDescription>
+                        </h2>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
                             Certificados y documentos asociados a este código
                             QR.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {qrCode.documents.length === 0 ? (
-                            <div className="rounded-xl border border-dashed border-border p-10 text-center">
-                                <FileText className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
-                                <p className="text-sm font-semibold text-foreground">
-                                    Sin documentos
-                                </p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                    Este lote aún no cuenta con documentos
-                                    registrados.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="overflow-hidden rounded-lg border border-border">
-                                <table className="min-w-full divide-y divide-border text-sm">
-                                    <thead className="bg-muted/40">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left font-medium">
-                                                Documento
-                                            </th>
-                                            <th className="px-4 py-3 text-left font-medium">
-                                                Tipo
-                                            </th>
-                                            <th className="px-4 py-3 text-left font-medium">
-                                                Versión
-                                            </th>
-                                            <th className="px-4 py-3 text-left font-medium">
-                                                Subido por
-                                            </th>
-                                            <th className="px-4 py-3 text-left font-medium">
-                                                Fecha
-                                            </th>
-                                            <th className="px-4 py-3 text-right font-medium">
-                                                Acciones
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
-                                        {qrCode.documents.map((doc) => (
-                                            <tr
-                                                key={doc.id}
-                                                className="hover:bg-muted/30"
-                                            >
-                                                <td className="px-4 py-3 align-top">
-                                                    <p className="font-medium text-foreground">
-                                                        {doc.file_name}
-                                                    </p>
-                                                    {!doc.is_current && (
-                                                        <Badge
-                                                            variant="outline"
-                                                            className="mt-1"
-                                                        >
-                                                            Anterior
-                                                        </Badge>
-                                                    )}
-                                                    {doc.is_current && (
-                                                        <Badge
-                                                            variant="default"
-                                                            className="mt-1"
-                                                        >
-                                                            Actual
-                                                        </Badge>
-                                                    )}
-                                                </td>
-                                                <td className="px-4 py-3 align-top text-muted-foreground">
-                                                    {doc.document_type}
-                                                </td>
-                                                <td className="px-4 py-3 align-top font-mono text-xs text-muted-foreground">
-                                                    v{doc.version}
-                                                </td>
-                                                <td className="px-4 py-3 align-top text-muted-foreground">
-                                                    {doc.uploaded_by?.name ??
-                                                        '—'}
-                                                </td>
-                                                <td className="px-4 py-3 align-top text-muted-foreground">
-                                                    <FormattedDate
-                                                        value={doc.created_at}
-                                                        format="short"
-                                                        emptyValue="—"
-                                                    />
-                                                </td>
-                                                <td className="px-4 py-3 text-right align-top">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        asChild
-                                                    >
-                                                        <a
-                                                            href={
-                                                                doc.download_url
-                                                            }
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                        >
-                                                            <FileText className="size-4" />
-                                                            Ver PDF
-                                                        </a>
-                                                    </Button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                        </p>
+                    </div>
+
+                    <DetailTable
+                        rows={qrCode.documents}
+                        rowKey={(doc) => doc.id}
+                        caption="Documentos del lote"
+                        columns={[
+                            {
+                                key: 'file',
+                                header: 'Documento',
+                                cell: (doc) => (
+                                    <>
+                                        <p>{doc.file_name}</p>
+                                        <Badge
+                                            variant={
+                                                doc.is_current
+                                                    ? 'default'
+                                                    : 'outline'
+                                            }
+                                            className="mt-1"
+                                        >
+                                            {doc.is_current
+                                                ? 'Actual'
+                                                : 'Anterior'}
+                                        </Badge>
+                                    </>
+                                ),
+                                className: 'align-top',
+                            },
+                            {
+                                key: 'type',
+                                header: 'Tipo',
+                                cell: (doc) => doc.document_type,
+                                className: 'align-top text-muted-foreground',
+                            },
+                            {
+                                key: 'version',
+                                header: 'Versión',
+                                cell: (doc) => `v${doc.version}`,
+                                className:
+                                    'align-top font-mono text-muted-foreground',
+                            },
+                            {
+                                key: 'uploaded_by',
+                                header: 'Subido por',
+                                cell: (doc) => doc.uploaded_by?.name ?? null,
+                                className: 'align-top text-muted-foreground',
+                            },
+                            {
+                                key: 'date',
+                                header: 'Fecha',
+                                cell: (doc) =>
+                                    doc.created_at ? (
+                                        <FormattedDate
+                                            value={doc.created_at}
+                                            format="short"
+                                        />
+                                    ) : null,
+                                className:
+                                    'align-top whitespace-nowrap text-muted-foreground',
+                            },
+                            {
+                                key: 'actions',
+                                header: 'Acciones',
+                                cell: (doc) => (
+                                    <Button variant="outline" size="sm" asChild>
+                                        <a
+                                            href={doc.download_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            <FileText className="size-4" />
+                                            Ver PDF
+                                        </a>
+                                    </Button>
+                                ),
+                                align: 'right',
+                                className: 'align-top',
+                            },
+                        ]}
+                        empty="Este lote aún no cuenta con documentos registrados."
+                    />
+                </section>
             </div>
         </>
     );
 }
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10).
+QrCodesShow.layout = (props: Props) => ({
+    breadcrumbs: [
+        { title: 'Códigos QR', href: qrCodesIndex() },
+        {
+            title: `QR — ${props.qrCode.token}`,
+            href: qrCodesShow(props.qrCode.id),
+        },
+    ],
+});

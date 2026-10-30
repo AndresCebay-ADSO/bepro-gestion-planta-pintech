@@ -61,6 +61,6 @@ export default function RawMaterialCategoriesCreate({ typeOptions }: Props) {
 RawMaterialCategoriesCreate.layout = {
     breadcrumbs: [
         { title: 'Categorías de materia prima', href: categoriesIndex() },
-        { title: 'Nueva', href: categoriesCreate() },
+        { title: 'Nueva categoría de materia prima', href: categoriesCreate() },
     ],
 };

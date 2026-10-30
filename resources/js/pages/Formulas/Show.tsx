@@ -8,16 +8,19 @@ import {
     edit as formulasEdit,
     priceReference as formulasPriceReference,
 } from '@/actions/App/Http/Controllers/FormulaController';
-import { DetailPageHeader } from '@/components/detail-page-header';
 import { DetailTable } from '@/components/detail-table';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
+import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/hooks/use-confirm';
-import { resolveModuleListHref } from '@/lib/navigation';
-import { index as formulasIndex } from '@/routes/formulas';
-import { show as productsShow } from '@/routes/products';
+import { formulaCrumb } from '@/lib/formula-name';
+import { breadcrumbHref } from '@/lib/navigation';
+import {
+    index as formulasIndex,
+    show as formulasShow,
+} from '@/routes/formulas';
 
 type DetailItem = {
     id: number;
@@ -49,13 +52,8 @@ type Props = {
     can: { update: boolean; activate: boolean; delete: boolean };
 };
 
-export default function FormulasShow({ returnTo, formula, can }: Props) {
+export default function FormulasShow({ formula, can }: Props) {
     const confirm = useConfirm();
-    const formulasListHref = resolveModuleListHref(
-        returnTo,
-        '/formulas',
-        formulasIndex().url,
-    );
 
     const handleDelete = async () => {
         if (
@@ -91,26 +89,9 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
         <>
             <Head title={`${title} — ${formula.product?.name}`} />
             <div className="space-y-6 p-6">
-                <DetailPageHeader
-                    breadcrumbs={[
-                        {
-                            title: 'Fórmulas',
-                            href: formulasListHref,
-                        },
-                        ...(formula.product
-                            ? [
-                                  {
-                                      title: formula.product.name,
-                                      href: productsShow({
-                                          product: formula.product.id,
-                                      }).url,
-                                  },
-                              ]
-                            : []),
-                        { title: `v${formula.version}`, href: '#' },
-                    ]}
+                <PageHeader
                     title={title}
-                    subtitle={
+                    description={
                         <>
                             Producto:{' '}
                             <span className="font-medium text-foreground">
@@ -135,9 +116,6 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
                             )}
                         </div>
                     }
-                    returnTo={returnTo}
-                    defaultReturnHref={formulasListHref}
-                    defaultReturnLabel="Fórmulas"
                     actions={
                         <>
                             {can.update && !formula.has_production_orders && (
@@ -298,3 +276,17 @@ export default function FormulasShow({ returnTo, formula, can }: Props) {
         </>
     );
 }
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10); el listado conserva sus filtros con `returnTo`.
+FormulasShow.layout = (props: Props) => ({
+    breadcrumbs: [
+        {
+            title: 'Fórmulas',
+            href: breadcrumbHref(props.returnTo, formulasIndex().url),
+        },
+        {
+            title: formulaCrumb(props.formula),
+            href: formulasShow({ formula: props.formula.id }),
+        },
+    ],
+});

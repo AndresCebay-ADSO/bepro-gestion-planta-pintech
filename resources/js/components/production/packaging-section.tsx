@@ -79,7 +79,7 @@ export function PackagingSection({
                 )}
             </div>
             <div className="overflow-hidden rounded-md border">
-                <div className="overflow-x-auto">
+                <div className="relative overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead className="border-b bg-muted/50">
                             <tr>

@@ -1,15 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
 
-import { DetailPageHeader } from '@/components/detail-page-header';
+import { DetailTable } from '@/components/detail-table';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { PageHeader } from '@/components/page-header';
+import { Card, CardContent } from '@/components/ui/card';
 import {
     index as shrinkWrapsIndex,
     show as shrinkWrapsShow,
@@ -39,21 +34,9 @@ export default function ShrinkWrapsShow({ shrinkWrap, can }: Props) {
             <Head title={`Termoencogido #${shrinkWrap.id}`} />
 
             <div className="space-y-6 p-6">
-                <DetailPageHeader
-                    breadcrumbs={[
-                        {
-                            title: 'Termoencogido',
-                            href: shrinkWrapsIndex().url,
-                        },
-                        {
-                            title: `#${shrinkWrap.id}`,
-                            href: shrinkWrapsShow(shrinkWrap.id).url,
-                        },
-                    ]}
+                <PageHeader
                     title={`Termoencogido #${shrinkWrap.id}`}
-                    subtitle="Registro cerrado: su consumo ya se descontó del inventario. Un error se corrige con un movimiento opuesto y una nota."
-                    defaultReturnHref={shrinkWrapsIndex().url}
-                    defaultReturnLabel="Termoencogido"
+                    description="Registro cerrado: su consumo ya se descontó del inventario. Un error se corrige con un movimiento opuesto y una nota."
                 />
 
                 <Card>
@@ -159,77 +142,93 @@ export default function ShrinkWrapsShow({ shrinkWrap, can }: Props) {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Empaque secundario descontado</CardTitle>
-                        <CardDescription>
+                <section className="space-y-4">
+                    <div>
+                        <h2 className="text-lg font-semibold">
+                            Empaque secundario descontado
+                        </h2>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
                             La receta con que se registró: editar el tipo
                             después no la cambia.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="overflow-x-auto rounded-lg border border-border">
-                            <table className="w-full text-sm">
-                                <thead className="border-b border-border bg-muted/40">
-                                    <tr>
-                                        <th className="p-3 text-left font-medium">
-                                            Materia prima
-                                        </th>
-                                        <th className="p-3 text-right font-medium">
-                                            Por aplicación
-                                        </th>
-                                        <th className="p-3 text-right font-medium">
-                                            Total
-                                        </th>
-                                        {can.viewCosts && (
-                                            <th className="p-3 text-right font-medium">
-                                                Costo
-                                            </th>
-                                        )}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {shrinkWrap.items.map((item) => (
-                                        <tr
-                                            key={item.id}
-                                            className="border-b border-border/60 last:border-0"
-                                        >
-                                            <td className="p-3 font-mono">
-                                                {item.code}
-                                            </td>
-                                            <td className="p-3 text-right">
-                                                <FormattedNumber
-                                                    value={
-                                                        item.quantity_per_application
-                                                    }
-                                                    maxDecimals={4}
-                                                />{' '}
-                                                {item.unit_symbol}
-                                            </td>
-                                            <td className="p-3 text-right font-medium">
-                                                <FormattedNumber
-                                                    value={item.quantity}
-                                                    maxDecimals={4}
-                                                />{' '}
-                                                {item.unit_symbol}
-                                            </td>
-                                            {can.viewCosts && (
-                                                <td className="p-3 text-right">
-                                                    <FormattedNumber
-                                                        value={item.total_cost}
-                                                        currency
-                                                        maxDecimals={2}
-                                                    />
-                                                </td>
-                                            )}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </p>
+                    </div>
+
+                    <DetailTable
+                        rows={shrinkWrap.items}
+                        rowKey={(item) => item.id}
+                        caption="Empaque secundario descontado"
+                        columns={[
+                            {
+                                key: 'code',
+                                header: 'Materia prima',
+                                cell: (item) => item.code,
+                                className: 'font-mono',
+                            },
+                            {
+                                key: 'per_application',
+                                header: 'Por aplicación',
+                                cell: (item) => (
+                                    <>
+                                        <FormattedNumber
+                                            value={
+                                                item.quantity_per_application
+                                            }
+                                            maxDecimals={4}
+                                        />
+                                        {item.unit_symbol &&
+                                            ` ${item.unit_symbol}`}
+                                    </>
+                                ),
+                                align: 'right',
+                            },
+                            {
+                                key: 'quantity',
+                                header: 'Total',
+                                cell: (item) => (
+                                    <>
+                                        <FormattedNumber
+                                            value={item.quantity}
+                                            maxDecimals={4}
+                                        />
+                                        {item.unit_symbol &&
+                                            ` ${item.unit_symbol}`}
+                                    </>
+                                ),
+                                align: 'right',
+                                className: 'font-medium',
+                            },
+                            ...(can.viewCosts
+                                ? [
+                                      {
+                                          key: 'cost',
+                                          header: 'Costo',
+                                          cell: (item: ShrinkWrapItemRow) => (
+                                              <FormattedNumber
+                                                  value={item.total_cost}
+                                                  currency
+                                                  maxDecimals={2}
+                                              />
+                                          ),
+                                          align: 'right' as const,
+                                      },
+                                  ]
+                                : []),
+                        ]}
+                        empty="Este registro no descontó empaque secundario."
+                    />
+                </section>
             </div>
         </>
     );
 }
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10).
+ShrinkWrapsShow.layout = (props: Props) => ({
+    breadcrumbs: [
+        { title: 'Termoencogido', href: shrinkWrapsIndex() },
+        {
+            title: `Termoencogido #${props.shrinkWrap.id}`,
+            href: shrinkWrapsShow(props.shrinkWrap.id),
+        },
+    ],
+});

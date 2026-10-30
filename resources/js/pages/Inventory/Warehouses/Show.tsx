@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { ActiveBadge } from '@/components/active-badge';
+import { DetailTable } from '@/components/detail-table';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
@@ -9,6 +10,7 @@ import {
     destroy as warehousesDestroy,
     edit as warehousesEdit,
     index as warehousesIndex,
+    show as warehousesShow,
 } from '@/routes/warehouses';
 import { form as assignUsersForm } from '@/routes/warehouses/assign-users';
 
@@ -82,9 +84,6 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                     description="Detalle de bodega, usuarios e inventario terminado."
                     actions={
                         <>
-                            <Button variant="outline" asChild>
-                                <Link href={warehousesIndex().url}>Volver</Link>
-                            </Button>
                             {can.assignUsers && (
                                 <Button variant="outline" asChild>
                                     <Link
@@ -157,134 +156,104 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-2">
-                    <div className="overflow-x-auto rounded-lg border border-border bg-card">
-                        <div className="border-b border-border px-4 py-3">
-                            <h2 className="text-lg font-semibold text-foreground">
-                                Usuarios asignados
-                            </h2>
-                        </div>
-                        <table className="w-full text-sm">
-                            <thead className="border-b border-border bg-muted/40">
-                                <tr>
-                                    <th className="p-3 text-left font-medium text-foreground">
-                                        Nombre
-                                    </th>
-                                    <th className="p-3 text-left font-medium text-foreground">
-                                        Correo
-                                    </th>
-                                    <th className="p-3 text-left font-medium text-foreground">
-                                        Predeterminada
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {warehouse.users.map((user) => (
-                                    <tr
-                                        key={user.id}
-                                        className="border-b border-border/60 last:border-0"
-                                    >
-                                        <td className="p-3 text-foreground">
-                                            {user.name}
-                                        </td>
-                                        <td className="p-3 text-muted-foreground">
-                                            {user.email}
-                                        </td>
-                                        <td className="p-3 text-muted-foreground">
-                                            {user.pivot?.is_default
-                                                ? 'Sí'
-                                                : 'No'}
-                                        </td>
-                                    </tr>
-                                ))}
-                                {warehouse.users.length === 0 && (
-                                    <tr>
-                                        <td
-                                            colSpan={3}
-                                            className="p-8 text-center text-sm text-muted-foreground"
-                                        >
-                                            No hay usuarios asignados.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                    {/* min-w-0: sin él, la columna de la grilla crece con la tabla y la tabla no se desplaza. */}
+                    <section className="min-w-0 space-y-4">
+                        <h2 className="text-lg font-semibold">
+                            Usuarios asignados
+                        </h2>
+                        <DetailTable
+                            rows={warehouse.users}
+                            rowKey={(user) => user.id}
+                            caption="Usuarios asignados"
+                            columns={[
+                                {
+                                    key: 'name',
+                                    header: 'Nombre',
+                                    cell: (user) => user.name,
+                                },
+                                {
+                                    key: 'email',
+                                    header: 'Correo',
+                                    cell: (user) => user.email,
+                                    className: 'text-muted-foreground',
+                                },
+                                {
+                                    key: 'default',
+                                    header: 'Predeterminada',
+                                    cell: (user) =>
+                                        user.pivot?.is_default ? 'Sí' : 'No',
+                                    align: 'center',
+                                    className: 'text-muted-foreground',
+                                },
+                            ]}
+                            empty="No hay usuarios asignados."
+                        />
+                    </section>
 
-                    <div className="overflow-x-auto rounded-lg border border-border bg-card">
-                        <div className="border-b border-border px-4 py-3">
-                            <h2 className="text-lg font-semibold text-foreground">
-                                Stock de producto terminado
-                            </h2>
-                        </div>
-                        <table className="w-full text-sm">
-                            <thead className="border-b border-border bg-muted/40">
-                                <tr>
-                                    <th className="p-3 text-left font-medium text-foreground">
-                                        Producto
-                                    </th>
-                                    <th className="p-3 text-left font-medium text-foreground">
-                                        Variante
-                                    </th>
-                                    <th className="p-3 text-left font-medium text-foreground">
-                                        Cantidad
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {warehouse.finished_inventories.map((item) => (
-                                    <tr
-                                        key={item.id}
-                                        className="border-b border-border/60 last:border-0"
-                                    >
-                                        <td className="p-3 text-foreground">
-                                            {item.product?.name ?? '-'}
-                                        </td>
-                                        <td className="p-3 text-muted-foreground">
-                                            {item.product_variant ? (
-                                                <>
-                                                    {item.product_variant.name}
-                                                    {item.product_variant
-                                                        .presentation_label && (
-                                                        <span className="ml-1 text-xs">
-                                                            (
-                                                            {
-                                                                item
-                                                                    .product_variant
-                                                                    .presentation_label
-                                                            }
-                                                            )
-                                                        </span>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                '-'
-                                            )}
-                                        </td>
-                                        <td className="p-3 text-right text-muted-foreground">
-                                            <FormattedNumber
-                                                value={item.quantity}
-                                                maxDecimals={2}
-                                            />
-                                        </td>
-                                    </tr>
-                                ))}
-                                {warehouse.finished_inventories.length ===
-                                    0 && (
-                                    <tr>
-                                        <td
-                                            colSpan={4}
-                                            className="p-8 text-center text-sm text-muted-foreground"
-                                        >
-                                            No hay inventario terminado en esta
-                                            bodega.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                    <section className="min-w-0 space-y-4">
+                        <h2 className="text-lg font-semibold">
+                            Stock de producto terminado
+                        </h2>
+                        <DetailTable
+                            rows={warehouse.finished_inventories}
+                            rowKey={(item) => item.id}
+                            caption="Stock de producto terminado"
+                            columns={[
+                                {
+                                    key: 'product',
+                                    header: 'Producto',
+                                    cell: (item) => item.product?.name ?? null,
+                                },
+                                {
+                                    key: 'variant',
+                                    header: 'Variante',
+                                    cell: (item) =>
+                                        item.product_variant ? (
+                                            <>
+                                                {item.product_variant.name}
+                                                {item.product_variant
+                                                    .presentation_label && (
+                                                    <span className="ml-1 text-xs">
+                                                        (
+                                                        {
+                                                            item.product_variant
+                                                                .presentation_label
+                                                        }
+                                                        )
+                                                    </span>
+                                                )}
+                                            </>
+                                        ) : null,
+                                    className: 'text-muted-foreground',
+                                },
+                                {
+                                    key: 'quantity',
+                                    header: 'Cantidad',
+                                    cell: (item) => (
+                                        <FormattedNumber
+                                            value={item.quantity}
+                                            maxDecimals={2}
+                                        />
+                                    ),
+                                    align: 'right',
+                                },
+                            ]}
+                            empty="No hay inventario terminado en esta bodega."
+                        />
+                    </section>
                 </div>
             </div>
         </>
     );
 }
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10).
+WarehousesShow.layout = (props: Props) => ({
+    breadcrumbs: [
+        { title: 'Bodegas', href: warehousesIndex() },
+        {
+            title: props.warehouse.name,
+            href: warehousesShow(props.warehouse.id),
+        },
+    ],
+});

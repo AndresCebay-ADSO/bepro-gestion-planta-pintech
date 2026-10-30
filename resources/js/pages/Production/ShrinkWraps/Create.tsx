@@ -1,11 +1,11 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 
-import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormActions } from '@/components/form-actions';
 import { FormField } from '@/components/form-field';
 import { FormPage } from '@/components/form-page';
 import { FormattedNumber } from '@/components/formatted-number';
 import { IntegerInput } from '@/components/integer-input';
+import { PageHeader } from '@/components/page-header';
 import { PlantDateInput } from '@/components/plant-date-input';
 import { Combobox } from '@/components/ui/combobox';
 import {
@@ -78,18 +78,9 @@ export default function ShrinkWrapsCreate({
             <Head title="Registrar termoencogido" />
 
             <FormPage width="narrow">
-                <DetailPageHeader
-                    breadcrumbs={[
-                        {
-                            title: 'Termoencogido',
-                            href: shrinkWrapsIndex().url,
-                        },
-                        { title: 'Registrar', href: shrinkWrapsCreate().url },
-                    ]}
+                <PageHeader
                     title="Registrar termoencogido"
-                    subtitle="Al guardar se descuenta de la bodega de la orden el empaque secundario que gastó. El registro no se edita: un error se corrige con un movimiento opuesto."
-                    defaultReturnHref={shrinkWrapsIndex().url}
-                    defaultReturnLabel="Termoencogido"
+                    description="Al guardar se descuenta de la bodega de la orden el empaque secundario que gastó. El registro no se edita: un error se corrige con un movimiento opuesto."
                 />
 
                 <form
@@ -247,3 +238,11 @@ export default function ShrinkWrapsCreate({
         </>
     );
 }
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10).
+ShrinkWrapsCreate.layout = {
+    breadcrumbs: [
+        { title: 'Termoencogido', href: shrinkWrapsIndex() },
+        { title: 'Registrar termoencogido', href: shrinkWrapsCreate() },
+    ],
+};

@@ -1,4 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
+import { DetailTable } from '@/components/detail-table';
 import { FormActions } from '@/components/form-actions';
 import { FormCheckbox, FormError } from '@/components/form-field';
 import { FormPage } from '@/components/form-page';
@@ -87,89 +88,81 @@ export default function WarehouseAssignUsers({ warehouse, users }: Props) {
                     }}
                     className="space-y-6"
                 >
-                    <div className="overflow-x-auto rounded-lg border border-border bg-card">
-                        <table className="w-full text-sm">
-                            <thead className="border-b border-border bg-muted/40">
-                                <tr>
-                                    <th className="p-3 text-left font-medium text-foreground">
-                                        Asignar
-                                    </th>
-                                    <th className="p-3 text-left font-medium text-foreground">
-                                        Usuario
-                                    </th>
-                                    <th className="p-3 text-left font-medium text-foreground">
-                                        Correo
-                                    </th>
-                                    <th className="p-3 text-left font-medium text-foreground">
-                                        Bodega por defecto
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {users.map((user, index) => {
+                    {/* El usuario va primero: es la columna fija al desplazar en el celular. El correo, al final. */}
+                    <DetailTable
+                        rows={users.map((user, index) => ({ user, index }))}
+                        rowKey={({ user }) => user.id}
+                        caption="Usuarios de la bodega"
+                        columns={[
+                            {
+                                key: 'name',
+                                header: 'Usuario',
+                                cell: ({ user }) => user.name,
+                            },
+                            {
+                                key: 'assigned',
+                                header: 'Asignar',
+                                cell: ({ user, index }) => {
                                     const row = form.data.users[index];
 
                                     return (
-                                        <tr
-                                            key={user.id}
-                                            className="border-b border-border/60 last:border-0"
-                                        >
-                                            <td className="p-3">
-                                                <Checkbox
-                                                    checked={row.assigned}
-                                                    aria-label={`Asignar a ${user.name}`}
-                                                    onCheckedChange={(
-                                                        checked,
-                                                    ) =>
-                                                        updateRow(index, {
-                                                            assigned:
-                                                                checked ===
-                                                                true,
-                                                            is_default:
-                                                                checked === true
-                                                                    ? row.is_default
-                                                                    : false,
-                                                        })
-                                                    }
-                                                />
-                                            </td>
-                                            <td className="p-3 text-foreground">
-                                                {user.name}
-                                            </td>
-                                            <td className="p-3 text-muted-foreground">
-                                                {user.email}
-                                            </td>
-                                            <td className="p-3">
-                                                <FormCheckbox
-                                                    id={`is_default-${user.id}`}
-                                                    label={
-                                                        <span className="text-xs font-normal text-muted-foreground">
-                                                            Predeterminada
-                                                            <span className="sr-only">
-                                                                {' '}
-                                                                para {user.name}
-                                                            </span>
-                                                        </span>
-                                                    }
-                                                    checked={row.is_default}
-                                                    disabled={!row.assigned}
-                                                    onCheckedChange={(
-                                                        checked,
-                                                    ) =>
-                                                        updateRow(index, {
-                                                            is_default:
-                                                                checked ===
-                                                                true,
-                                                        })
-                                                    }
-                                                />
-                                            </td>
-                                        </tr>
+                                        <Checkbox
+                                            checked={row.assigned}
+                                            aria-label={`Asignar a ${user.name}`}
+                                            onCheckedChange={(checked) =>
+                                                updateRow(index, {
+                                                    assigned: checked === true,
+                                                    is_default:
+                                                        checked === true
+                                                            ? row.is_default
+                                                            : false,
+                                                })
+                                            }
+                                        />
                                     );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                                },
+                                align: 'center',
+                            },
+                            {
+                                key: 'default',
+                                header: 'Bodega por defecto',
+                                cell: ({ user, index }) => {
+                                    const row = form.data.users[index];
+
+                                    return (
+                                        <FormCheckbox
+                                            id={`is_default-${user.id}`}
+                                            label={
+                                                <span className="text-xs font-normal text-muted-foreground">
+                                                    Predeterminada
+                                                    <span className="sr-only">
+                                                        {' '}
+                                                        para {user.name}
+                                                    </span>
+                                                </span>
+                                            }
+                                            checked={row.is_default}
+                                            disabled={!row.assigned}
+                                            onCheckedChange={(checked) =>
+                                                updateRow(index, {
+                                                    is_default:
+                                                        checked === true,
+                                                })
+                                            }
+                                        />
+                                    );
+                                },
+                                className: 'whitespace-nowrap',
+                            },
+                            {
+                                key: 'email',
+                                header: 'Correo',
+                                cell: ({ user }) => user.email,
+                                className: 'text-muted-foreground',
+                            },
+                        ]}
+                        empty="No hay usuarios para asignar."
+                    />
 
                     <FormError id="users" message={form.errors.users} />
 

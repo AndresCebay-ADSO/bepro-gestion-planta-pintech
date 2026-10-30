@@ -171,7 +171,8 @@ phone, and `children` are extra lines under the description.
 </PageHeader>
 ```
 
-- Details use `<DetailPageHeader>`, which renders the breadcrumbs bar and a `<PageHeader>`.
+- Details use the same `<PageHeader>`: the record as `title`, its status as `badge`, and its actions (Editar,
+  Desactivar, Ver PDF…) in `actions`. The breadcrumbs are the layout's (§10), never part of the header.
 - `components/heading.tsx` is a **section** title, always `h2` (`variant="small"` only makes it smaller), never the page
   title. Headings never skip a level (`h1` → `h3`).
 - **Settings screens:** the layout's `<PageHeader>` is the `h1` («Configuración», as in the sidebar); each screen's own
@@ -274,6 +275,10 @@ Same in all three:
 - Page frame: a listing uses the full width of the content area with `space-y-6 p-6` as its wrapper; no `max-w-*`,
   no `mx-auto`, no own background. Settings screens (catalogs) already sit inside the card of the Settings layout,
   which sets the padding: their wrapper is `space-y-6` with no padding.
+- A detail (`Show`) uses the same frame as a listing: full width, `space-y-6 p-6`, no `max-w-*`, no `mx-auto`. Its
+  first child is the `<PageHeader>` (§5); each section below is a card (the record's data) or a `<section>` with its
+  title and a `<DetailTable>`. Only forms are centered and narrowed, with `<FormPage>` (§8). The production order keeps
+  its own frame until its redesign.
 - Every listing is a `<DataListing>` (`components/data-listing.tsx`). Each screen describes its columns **once**; the
   component renders the `<Table>` (`components/ui/table.tsx`) from `md` up and one card per row below `md`. A table
   wider than its box scrolls inside the box, never the page. No sorting by column (the server orders).
@@ -400,8 +405,15 @@ they open nothing.
 
 - Breadcrumbs appear only below the first level (detail, create, edit), starting at the listing. A first-level
   screen (a listing or a Settings screen) has none: one crumb would repeat the sidebar.
-- **Breadcrumbs are the only way back.** No loose «← Volver» button in the content; on the phone the breadcrumb
-  collapses to the previous level, e.g. «← Productos». _(pending)_
+- **One place for them:** the page's `layout` (`Page.layout = { breadcrumbs }`, or a function of the props when a
+  crumb names the record). Never inside the content, so the bar stays put when moving between a detail and its edit.
+  When the listing passed `returnTo`, the first crumb goes back to it with its filters.
+- **The last crumb says what the title says** (§1): «Materias primas › Nueva materia prima»; a detail «Materias
+  primas › MP-001»; its edit «Materias primas › MP-001 › Editar», with the middle crumb linking to the detail. An edit
+  with no detail (clients, users, catalogs) stays «Clientes › {nombre}»: that screen is the record's only one. When
+  the record's own name does not say what it is, the crumb adds it: a formula is «{Producto} v2», not «v2».
+- **Breadcrumbs are the only way back.** No loose «← Volver» button in the content (`design-contract.test.ts` checks
+  it); on the phone the breadcrumb collapses to the previous level, e.g. «← Productos». _(pending)_
 - The sidebar toggle uses the panel icon (`PanelLeftClose`/`PanelLeftOpen`), never arrows; on the phone, `Menu` (☰).
 - Navigation links use Wayfinder (`@/routes`, `@/actions`), never hardcoded URLs.
 

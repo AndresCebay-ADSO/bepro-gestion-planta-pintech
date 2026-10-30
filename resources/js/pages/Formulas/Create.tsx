@@ -1,7 +1,6 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
-import { DetailPageHeader } from '@/components/detail-page-header';
 import { FormPage } from '@/components/form-page';
 import {
     createEmptyFormulaDetail,
@@ -9,10 +8,17 @@ import {
     formulaPayload,
 } from '@/components/formulas/formula-form';
 import type { FormulaFormData } from '@/components/formulas/formula-form';
+import { PageHeader } from '@/components/page-header';
+import { breadcrumbHref } from '@/lib/navigation';
 import {
+    create as formulasCreate,
     index as formulasIndex,
     store as formulasStore,
 } from '@/routes/formulas';
+import {
+    index as productsIndex,
+    show as productsShow,
+} from '@/routes/products';
 
 type RawMaterial = { id: number; code: string };
 type ProductOption = { id: number; name: string };
@@ -52,30 +58,13 @@ export default function FormulasCreate({
         router.post(formulasStore().url, formulaPayload(data));
     };
 
-    const breadcrumbs = returnTo
-        ? [
-              {
-                  title: 'Productos',
-                  href: returnTo,
-              },
-              { title: 'Nueva fórmula', href: '#' },
-          ]
-        : [
-              { title: 'Fórmulas', href: formulasIndex().url },
-              { title: 'Nueva', href: '#' },
-          ];
-
     return (
         <>
-            <Head title="Nueva Fórmula" />
+            <Head title="Nueva fórmula" />
             <FormPage width="wide">
-                <DetailPageHeader
-                    breadcrumbs={breadcrumbs}
-                    title="Nueva Fórmula"
-                    subtitle="Define los ingredientes en el orden de proceso (paso 1, 2, 3…). La misma materia prima puede repetirse en pasos distintos. Las cantidades son por galón. Esta fórmula alimenta consumos y órdenes de producción."
-                    returnTo={returnTo}
-                    defaultReturnHref={formulasIndex().url}
-                    defaultReturnLabel="Fórmulas"
+                <PageHeader
+                    title="Nueva fórmula"
+                    description="Define los ingredientes en el orden de proceso (paso 1, 2, 3…). La misma materia prima puede repetirse en pasos distintos. Las cantidades son por galón. Esta fórmula alimenta consumos y órdenes de producción."
                 />
 
                 <FormulaForm
@@ -98,3 +87,39 @@ export default function FormulasCreate({
         </>
     );
 }
+
+// Las migas son la única forma de volver (DESIGN.md §10). Desde un producto (`product_id`) vuelven a ese producto, que
+// llega en `returnTo`; desde el listado de fórmulas, al listado con sus filtros.
+FormulasCreate.layout = (props: Props) => {
+    const product = props.selectedProductId
+        ? props.products.find(
+              (option) => String(option.id) === String(props.selectedProductId),
+          )
+        : undefined;
+
+    if (product) {
+        return {
+            breadcrumbs: [
+                { title: 'Productos', href: productsIndex() },
+                {
+                    title: product.name,
+                    href: breadcrumbHref(
+                        props.returnTo,
+                        productsShow(product.id).url,
+                    ),
+                },
+                { title: 'Nueva fórmula', href: formulasCreate() },
+            ],
+        };
+    }
+
+    return {
+        breadcrumbs: [
+            {
+                title: 'Fórmulas',
+                href: breadcrumbHref(props.returnTo, formulasIndex().url),
+            },
+            { title: 'Nueva fórmula', href: formulasCreate() },
+        ],
+    };
+};
