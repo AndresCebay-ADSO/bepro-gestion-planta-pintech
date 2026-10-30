@@ -6,6 +6,7 @@ namespace App\Actions\Quotations;
 
 use App\Models\Quotation;
 use App\Models\User;
+use App\Support\NumberFormat;
 use Illuminate\Support\Facades\Storage;
 
 class BuildQuotationPdfDataAction
@@ -37,10 +38,11 @@ class BuildQuotationPdfDataAction
             'delivery_time' => $quotation->delivery_time,
             'area' => $this->formatArea($quotation->area),
             'notes' => $quotation->notes,
-            'subtotal' => (float) $quotation->subtotal,
-            'iva_percentage' => (float) $quotation->iva_percentage,
-            'iva_amount' => (float) $quotation->iva_amount,
-            'total' => (float) $quotation->total,
+            // Montos y cantidades como el texto del decimal: la vista los formatea con NumberFormat, sin pasar por float.
+            'subtotal' => (string) $quotation->subtotal,
+            'iva_percentage' => (string) $quotation->iva_percentage,
+            'iva_amount' => (string) $quotation->iva_amount,
+            'total' => (string) $quotation->total,
             // El asesor de la cotización es quien la crea; firma con la suya.
             'advisor' => [
                 'name' => $quotation->creator?->name,
@@ -56,9 +58,9 @@ class BuildQuotationPdfDataAction
                 'description' => $item->description,
                 'color' => $item->color,
                 'presentation_label' => $item->productVariant?->presentation_label,
-                'quantity' => $this->formatQuantity((string) $item->quantity),
-                'unit_price' => (float) $item->unit_price,
-                'subtotal' => (float) $item->subtotal,
+                'quantity' => (string) $item->quantity,
+                'unit_price' => (string) $item->unit_price,
+                'subtotal' => (string) $item->subtotal,
             ])->values()->all(),
         ];
     }
@@ -75,7 +77,7 @@ class BuildQuotationPdfDataAction
             return self::NOT_APPLICABLE;
         }
 
-        return ctype_digit($area) ? $this->groupThousands($area) : $area;
+        return ctype_digit($area) ? NumberFormat::units($area) : $area;
     }
 
     /**
@@ -91,17 +93,6 @@ class BuildQuotationPdfDataAction
         }
 
         return preg_match('/^\d+([.,]\d+)?$/', $thickness) === 1 ? $thickness.' Mils' : $thickness;
-    }
-
-    /** Las cantidades de la cotización son unidades enteras (NumberType::Units): solo llevan separador de miles. */
-    private function formatQuantity(string $quantity): string
-    {
-        return $this->groupThousands($quantity);
-    }
-
-    private function groupThousands(string $digits): string
-    {
-        return strrev(implode('.', str_split(strrev($digits), 3)));
     }
 
     private function signatureBase64(?User $user): ?string

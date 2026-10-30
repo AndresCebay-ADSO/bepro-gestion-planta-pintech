@@ -304,7 +304,7 @@ it('renders quotation pdf template with bepro layout sections', function () {
     ])->render();
 
     expect($html)
-        ->toContain('Cotización No.4415')
+        ->toContain('Cotización No. 4415')
         ->toContain('www.beprocoatings.com')
         ->toContain('Sistema ofertado')
         ->toContain('Condiciones comerciales')
@@ -318,6 +318,25 @@ it('renders quotation pdf template with bepro layout sections', function () {
         // Se busca el atributo y no el nombre suelto: las clases también aparecen en el CSS de la plantilla.
         ->toContain('class="closing closing-stacked"')
         ->not->toContain('class="closing closing-side"');
+});
+
+it('prints quotation pdf with decimal iva percentage formatted as percentage points (B46)', function () {
+    $quotation = Quotation::factory()->create([
+        'client_id' => $this->client->id,
+        'created_by' => $this->comercialUser->id,
+        'iva_percentage' => '19.50',
+    ]);
+
+    $quotationData = app(BuildQuotationPdfDataAction::class)->execute($quotation);
+
+    $html = view('pdf.quotation', [
+        'quotation' => $quotationData,
+        'beproLogoBase64' => null,
+        'pintechLogoBase64' => null,
+        'generatedAt' => now()->format('d/m/Y H:i'),
+    ])->render();
+
+    expect($html)->toContain('IVA 19,5%');
 });
 
 it('prints the commercial observations apart from the legal fine print, only when there are any', function (?string $notes, bool $printed) {
@@ -491,7 +510,8 @@ it('formats the free-text area and thickness for the quotation pdf', function (?
     'texto libre' => ['600 m2 aprox', '4 Mils', '600 m2 aprox', '4 Mils'],
 ]);
 
-// Las cantidades de la cotización son unidades enteras (PR 4 de 3.6); el PDF las imprime con separador de miles.
+// Las cantidades de la cotización son unidades enteras (PR 4 de 3.6); el PDF las imprime con separador de miles. La
+// acción entrega el número sin formato y lo formatea solo la vista: formatearlo dos veces leía «1.250» como 1,25.
 it('prints item quantities with the thousands separator', function (string $quantity, string $expected) {
     $quotation = Quotation::factory()->create([
         'client_id' => $this->client->id,
@@ -510,12 +530,18 @@ it('prints item quantities with the thousands separator', function (string $quan
         'sort_order' => 1,
     ]);
 
-    $data = app(BuildQuotationPdfDataAction::class)->execute($quotation);
+    $html = view('pdf.quotation', [
+        'quotation' => app(BuildQuotationPdfDataAction::class)->execute($quotation),
+        'beproLogoBase64' => null,
+        'pintechLogoBase64' => null,
+        'generatedAt' => now()->format('d/m/Y H:i'),
+    ])->render();
 
-    expect($data['items'][0]['quantity'])->toBe($expected);
+    expect($html)->toContain("<td>{$expected}</td>");
 })->with([
     'entero' => ['55', '55'],
-    'miles' => ['1200', '1.200'],
+    'miles' => ['1250', '1.250'],
+    'decenas de miles' => ['12000', '12.000'],
 ]);
 
 it('uses shared sales price service for list prices', function () {

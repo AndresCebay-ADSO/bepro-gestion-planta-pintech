@@ -138,8 +138,7 @@ export default function RemnantsIndex({
                       cell: (remnant: RemnantItem) => (
                           <FormattedNumber
                               value={remnant.cost_per_gallon}
-                              currency
-                              maxDecimals={2}
+                              kind="cost"
                               emptyValue="Sin costo"
                           />
                       ),
@@ -154,7 +153,7 @@ export default function RemnantsIndex({
             cell: (remnant) => (
                 <FormattedNumber
                     value={remnant.available_quantity_gallons}
-                    maxDecimals={4}
+                    kind="quantity"
                 />
             ),
             mobile: 'primary',
@@ -167,7 +166,7 @@ export default function RemnantsIndex({
             cell: (remnant) => (
                 <FormattedNumber
                     value={remnant.available_quantity_kg}
-                    maxDecimals={4}
+                    kind="quantity"
                 />
             ),
             mobile: 'meta',
