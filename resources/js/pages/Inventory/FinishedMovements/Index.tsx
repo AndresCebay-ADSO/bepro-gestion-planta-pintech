@@ -13,9 +13,9 @@ import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { MovementDirectionBadge } from '@/components/movement-direction-badge';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import {
     Sheet,
     SheetBody,
@@ -368,9 +368,7 @@ export default function FinishedMovementsIndex({
                     empty="No hay movimientos PT registrados con los criterios seleccionados."
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={movements.links} />
-                </div>
+                <Pagination paginator={movements} />
             </div>
 
             <Sheet

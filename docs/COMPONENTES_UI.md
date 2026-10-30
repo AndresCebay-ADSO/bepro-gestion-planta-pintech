@@ -146,11 +146,15 @@ Todo listado es un `<DataListing>` con sus acciones de fila en `<RowActions>`. L
 tarjeta del celular, enlace del identificador, acciones bloqueadas, marco de página) están en `DESIGN.md` §9, que es
 la fuente; aquí solo la ubicación.
 
-**Ubicación:** `resources/js/components/data-listing.tsx`, `resources/js/components/row-actions.tsx` y la lógica pura
-en `resources/js/lib/data-listing.ts` (con sus pruebas de Vitest).
+**Ubicación:** `resources/js/components/data-listing.tsx`, `resources/js/components/row-actions.tsx`,
+`resources/js/components/pagination.tsx` y la lógica pura en `resources/js/lib/data-listing.ts` y
+`resources/js/lib/pagination.ts` (con sus pruebas de Vitest).
 
 - Las columnas se describen una sola vez: la tabla se pinta desde `md` y una tarjeta por fila debajo.
 - El identificador abre el detalle (o la edición si no hay detalle) con `rowHref`; el menú «⋯» no repite esa acción.
+- `<Pagination paginator={items} />` muestra el resumen de registros (`paginationSummary`: «Mostrando 16–30 de 230» con
+  varias páginas, «12 registros» / «1 registro» en una sola página y nada si está vacío) y los enlaces `<Link>` de
+  Inertia con `buttonVariants`.
 - `resources/js/design-contract.test.ts` falla si aparece un `<table>` en `pages/` fuera de las excepciones que lista
   (solo `Costs/Index`, que no es un listado ni un detalle y se rediseña aparte).
 

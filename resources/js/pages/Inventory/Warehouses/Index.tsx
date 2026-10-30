@@ -7,9 +7,9 @@ import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import {
@@ -20,7 +20,7 @@ import {
     destroy as warehousesDestroy,
 } from '@/routes/warehouses';
 import { form as warehousesAssignUsersForm } from '@/routes/warehouses/assign-users';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type WarehouseRow = {
     id: number;
@@ -38,10 +38,7 @@ type WarehouseRow = {
 };
 
 type Props = {
-    warehouses: {
-        data: WarehouseRow[];
-        links: PaginationLink[];
-    };
+    warehouses: Paginated<WarehouseRow>;
     filters: Record<string, string | null | undefined>;
     can: {
         create: boolean;
@@ -213,9 +210,7 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                     empty="No se encontraron bodegas."
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={warehouses.links} />
-                </div>
+                <Pagination paginator={warehouses} />
             </div>
         </>
     );

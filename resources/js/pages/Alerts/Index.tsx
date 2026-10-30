@@ -14,13 +14,13 @@ import { DataListing } from '@/components/data-listing';
 import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { StatusBadge } from '@/components/status-badge';
-import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { pillClasses, toneClasses } from '@/lib/tones';
 import { index as alertsIndex, resolve as alertResolve } from '@/routes/alerts';
 import { show as rawMaterialShow } from '@/routes/raw-materials';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type AlertRow = {
     id: number;
@@ -50,10 +50,7 @@ type Option = {
 };
 
 type Props = {
-    alerts: {
-        data: AlertRow[];
-        links: PaginationLink[];
-    };
+    alerts: Paginated<AlertRow>;
     filters: {
         status?: string;
         type?: string;
@@ -246,9 +243,7 @@ export default function AlertsIndex({
                     empty="No hay alertas para los filtros seleccionados."
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={alerts.links} />
-                </div>
+                <Pagination paginator={alerts} />
             </div>
         </>
     );

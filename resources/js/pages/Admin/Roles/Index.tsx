@@ -7,9 +7,9 @@ import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import {
@@ -20,7 +20,7 @@ import {
     show as rolesShow,
 } from '@/routes/roles';
 import type { RoleFilters } from '@/types/roles';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 interface RoleRow {
     id: number;
@@ -35,11 +35,7 @@ interface RoleRow {
 }
 
 interface Props {
-    roles: {
-        data: RoleRow[];
-        total: number;
-        links: PaginationLink[];
-    };
+    roles: Paginated<RoleRow>;
     filters: RoleFilters;
     can: {
         create: boolean;
@@ -161,9 +157,7 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
                     empty="No se encontraron roles."
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={roles.links} />
-                </div>
+                <Pagination paginator={roles} />
             </div>
         </>
     );

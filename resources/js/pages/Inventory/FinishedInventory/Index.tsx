@@ -7,13 +7,13 @@ import { DataTableFilters } from '@/components/data-table-filters';
 import { EnumLabel } from '@/components/enum-label';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { withReturnTo } from '@/lib/navigation';
 import { index as finishedInventoryIndex } from '@/routes/finished-inventory';
 import { show as productsShow } from '@/routes/products';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type InventoryRow = {
     id: number;
@@ -39,10 +39,7 @@ type InventoryRow = {
 };
 
 type Props = {
-    inventory: {
-        data: InventoryRow[];
-        links: PaginationLink[];
-    };
+    inventory: Paginated<InventoryRow>;
     warehouseOptions: { value: string; label: string }[];
     filters: {
         search?: string;
@@ -210,9 +207,7 @@ export default function FinishedInventoryIndex({
                     empty="No hay stock de producto terminado con los criterios seleccionados."
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={inventory.links} />
-                </div>
+                <Pagination paginator={inventory} />
             </div>
         </>
     );

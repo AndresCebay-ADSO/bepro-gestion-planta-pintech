@@ -7,8 +7,8 @@ import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import {
     create as shrinkWrapsCreate,
@@ -16,16 +16,12 @@ import {
     show as shrinkWrapsShow,
 } from '@/routes/production/shrink-wraps';
 import type { ShrinkWrapRow } from '@/types';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type Row = ShrinkWrapRow & { can: { view: boolean } };
 
 type Props = {
-    shrinkWraps: {
-        data: Row[];
-        links: PaginationLink[];
-        total: number;
-    };
+    shrinkWraps: Paginated<Row>;
     filters: Record<string, string | null | undefined>;
     typeOptions: { value: string; label: string }[];
     can: {
@@ -188,9 +184,7 @@ export default function ShrinkWrapsIndex({
                     empty="No hay termoencogidos registrados."
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={shrinkWraps.links} />
-                </div>
+                <Pagination paginator={shrinkWraps} />
             </div>
         </>
     );

@@ -6,10 +6,10 @@ import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
-import Pagination from '@/components/ui/pagination';
+import Pagination from '@/components/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { index as pricesIndex } from '@/routes/prices';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type VariantRow = {
     id: number;
@@ -34,10 +34,7 @@ type ProductRow = {
 };
 
 type Props = {
-    products: {
-        data: ProductRow[];
-        links: PaginationLink[];
-    };
+    products: Paginated<ProductRow>;
     can: {
         view_costs: boolean;
         view_prices: boolean;
@@ -207,9 +204,7 @@ export default function PricesIndex({
                     ))
                 )}
 
-                <div className="flex justify-center">
-                    <Pagination links={productsData.links} />
-                </div>
+                <Pagination paginator={productsData} />
             </div>
         </>
     );

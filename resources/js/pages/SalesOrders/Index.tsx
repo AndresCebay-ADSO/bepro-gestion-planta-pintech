@@ -7,17 +7,17 @@ import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { PriorityBadge } from '@/components/priority-badge';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import {
     create as salesOrdersCreate,
     index as salesOrdersIndex,
     show as salesOrdersShow,
 } from '@/routes/sales-orders';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 interface SalesOrderRow {
     id: number;
@@ -34,10 +34,7 @@ interface SalesOrderRow {
 }
 
 type Props = {
-    orders: {
-        data: SalesOrderRow[];
-        links: PaginationLink[];
-    };
+    orders: Paginated<SalesOrderRow>;
     filters: Record<string, string | null | undefined>;
     can: {
         create: boolean;
@@ -218,9 +215,7 @@ export default function SalesOrdersIndex({
                     }
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={orders.links} />
-                </div>
+                <Pagination paginator={orders} />
             </div>
         </>
     );

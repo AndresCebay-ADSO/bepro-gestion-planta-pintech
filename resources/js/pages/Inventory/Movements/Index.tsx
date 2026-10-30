@@ -12,8 +12,8 @@ import { EntryMovementForm } from '@/components/inventory/entry-movement-form';
 import { ExitMovementForm } from '@/components/inventory/exit-movement-form';
 import { MovementDirectionBadge } from '@/components/movement-direction-badge';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import {
     Sheet,
     SheetBody,
@@ -29,7 +29,7 @@ import {
     index as inventoryMovementsIndex,
     show as inventoryMovementsShow,
 } from '@/routes/inventory-movements';
-import type { InventoryOption, PaginationLink } from '@/types';
+import type { InventoryOption, Paginated } from '@/types';
 
 const DRAWER_FORM_PROPS = [
     'rawMaterials',
@@ -48,10 +48,7 @@ type MovementRow = {
 };
 
 type Props = {
-    movements: {
-        data: MovementRow[];
-        links: PaginationLink[];
-    };
+    movements: Paginated<MovementRow>;
     rawMaterials?: InventoryOption[];
     batches?: InventoryOption[];
     warehouses?: InventoryOption[];
@@ -290,9 +287,7 @@ export default function InventoryMovementsIndex({
                     empty="No hay movimientos registrados para los filtros seleccionados."
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={movements.links} />
-                </div>
+                <Pagination paginator={movements} />
             </div>
 
             <Sheet

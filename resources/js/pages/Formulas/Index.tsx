@@ -8,9 +8,9 @@ import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import { withReturnTo } from '@/lib/navigation';
@@ -20,7 +20,7 @@ import {
     destroy as formulasDestroy,
     show as formulasShow,
 } from '@/routes/formulas';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type FormulaItem = {
     id: number;
@@ -35,10 +35,7 @@ type FormulaItem = {
 };
 
 type Props = {
-    formulas: {
-        data: FormulaItem[];
-        links: PaginationLink[];
-    };
+    formulas: Paginated<FormulaItem>;
     filters: Record<string, string | null | undefined>;
     can: { create: boolean; delete: boolean };
 };
@@ -204,9 +201,7 @@ export default function FormulasIndex({ formulas, filters, can }: Props) {
                     empty="No hay fórmulas registradas."
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={formulas.links} />
-                </div>
+                <Pagination paginator={formulas} />
             </div>
         </>
     );

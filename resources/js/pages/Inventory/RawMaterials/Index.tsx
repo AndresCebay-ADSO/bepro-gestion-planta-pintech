@@ -9,8 +9,8 @@ import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { withReturnTo } from '@/lib/navigation';
 import { DeleteRawMaterialDialog } from '@/pages/Inventory/RawMaterials/DeleteRawMaterialDialog';
@@ -23,7 +23,7 @@ import {
     reactivate as rawMaterialsReactivate,
     show as rawMaterialsShow,
 } from '@/routes/raw-materials';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type RawMaterialRow = {
     id: number;
@@ -50,10 +50,7 @@ type RawMaterialRow = {
 };
 
 type Props = {
-    rawMaterials: {
-        data: RawMaterialRow[];
-        links: PaginationLink[];
-    };
+    rawMaterials: Paginated<RawMaterialRow>;
     filters: {
         search?: string;
         status?: string;
@@ -294,10 +291,7 @@ export default function RawMaterialsIndex({
                     empty="No se encontraron materias primas."
                 />
 
-                {/* Paginación */}
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={rawMaterials.links} />
-                </div>
+                <Pagination paginator={rawMaterials} />
             </div>
 
             <DeleteRawMaterialDialog
