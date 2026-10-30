@@ -70,7 +70,7 @@ Componente para mostrar números formateados según estándar colombiano (puntos
 | `maxDecimals` | `number` | `4` | Máximo de decimales a mostrar |
 | `trimTrailingZeros` | `boolean` | `false` | Eliminar ceros al final (vistas detalle) |
 | `percent` | `boolean` | `false` | Mostrar como porcentaje |
-| `emptyValue` | `string` | `'-'` | Texto cuando el valor es null |
+| `emptyValue` | `string` | `<EmptyCell />` («—», «Sin dato» para el lector) | Texto atenuado para un dato que debería estar («Sin precio»); sin él, el vacío normal |
 | `align` | `'left' \| 'right' \| 'center'` | `'left'` | Alineación del texto |
 | `colorize` | `boolean` | `false` | Colorear según valor (positivo/negativo) |
 | `bold` | `boolean` | `false` | Texto en negrita |
@@ -114,7 +114,7 @@ Componente para mostrar fechas formateadas según estándar colombiano.
 |------|------|---------|-------------|
 | `value` | `string \| null` | - | Fecha en formato ISO o string |
 | `format` | `'short' \| 'long' \| 'datetime' \| 'date'` | `'short'` | Formato de salida |
-| `emptyValue` | `string` | `'-'` | Texto cuando no hay fecha |
+| `emptyValue` | `string` | `<EmptyCell />` («—», «Sin dato» para el lector) | Texto atenuado para una fecha que debería estar («Sin estimar»); sin él, el vacío normal |
 
 ### Formatos disponibles
 

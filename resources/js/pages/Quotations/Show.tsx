@@ -3,6 +3,7 @@ import { FileText } from 'lucide-react';
 import { useState } from 'react';
 
 import { DetailTable } from '@/components/detail-table';
+import { EmptyCell } from '@/components/empty-cell';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
@@ -478,19 +479,25 @@ export default function QuotationsShow({
                             </div>
                             <div className="flex justify-between gap-4">
                                 <dt className="text-muted-foreground">NIT</dt>
-                                <dd>{quotation.client.nit ?? '—'}</dd>
+                                <dd>{quotation.client.nit ?? <EmptyCell />}</dd>
                             </div>
                             <div className="flex justify-between gap-4">
                                 <dt className="text-muted-foreground">
                                     Contacto
                                 </dt>
-                                <dd>{quotation.client.contact_name ?? '—'}</dd>
+                                <dd>
+                                    {quotation.client.contact_name ?? (
+                                        <EmptyCell />
+                                    )}
+                                </dd>
                             </div>
                             <div className="flex justify-between gap-4">
                                 <dt className="text-muted-foreground">
                                     Teléfono
                                 </dt>
-                                <dd>{quotation.client.phone ?? '—'}</dd>
+                                <dd>
+                                    {quotation.client.phone ?? <EmptyCell />}
+                                </dd>
                             </div>
                         </dl>
                     </div>

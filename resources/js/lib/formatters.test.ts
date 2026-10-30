@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
+import { formatSafeDate } from '@/components/formatted-date';
 import {
     formatCurrency,
     formatForInput,
+    formatNumber,
     formatPercent,
+    formatQuantity,
+    isEmptyNumber,
 } from '@/lib/formatters';
 import { NUMBER_TYPES } from '@/lib/number-types';
 import { checkDecimalText } from '@/lib/numeric-input';
@@ -62,8 +66,8 @@ describe('formatForInput: un valor guardado listo para un campo', () => {
 });
 
 describe('formatCurrency: un vacío nunca lleva símbolo de moneda', () => {
-    it('sin valor devuelve solo el texto de vacío', () => {
-        expect(formatCurrency(null)).toBe('-');
+    it('sin valor devuelve solo el texto de vacío, «—» por defecto', () => {
+        expect(formatCurrency(null)).toBe('—');
         expect(formatCurrency('', '$', { emptyValue: 'Sin precio' })).toBe(
             'Sin precio',
         );
@@ -78,8 +82,39 @@ describe('formatCurrency: un vacío nunca lleva símbolo de moneda', () => {
 });
 
 describe('formatPercent: el vacío se puede nombrar', () => {
-    it('sin valor devuelve el texto de vacío, «-» por defecto', () => {
-        expect(formatPercent(null)).toBe('-');
+    it('sin valor devuelve el texto de vacío, «—» por defecto', () => {
+        expect(formatPercent(null)).toBe('—');
         expect(formatPercent(null, 2, 'Sin dato')).toBe('Sin dato');
+    });
+});
+
+describe('formatNumber, formatQuantity y formatSafeDate: «—» por defecto', () => {
+    it('devuelven «—» cuando falta el valor y respetan emptyValue cuando se pasa', () => {
+        expect(formatNumber(null)).toBe('—');
+        expect(formatNumber(undefined, { emptyValue: 'N/A' })).toBe('N/A');
+        expect(formatQuantity('')).toBe('—');
+        expect(formatSafeDate(null)).toBe('—');
+        expect(formatSafeDate('', 'short', 'Sin estimar')).toBe('Sin estimar');
+    });
+});
+
+describe('isEmptyNumber: mismo análisis de vacío que formatNumber', () => {
+    it('marca como vacío null, undefined, cadena vacía y textos o números no finitos', () => {
+        expect(isEmptyNumber(null)).toBe(true);
+        expect(isEmptyNumber(undefined)).toBe(true);
+        expect(isEmptyNumber('')).toBe(true);
+        expect(isEmptyNumber('   ')).toBe(true);
+        expect(isEmptyNumber('123abc')).toBe(true);
+        expect(isEmptyNumber('1,5')).toBe(true);
+        expect(isEmptyNumber(Number.NaN)).toBe(true);
+        expect(isEmptyNumber(Number.POSITIVE_INFINITY)).toBe(true);
+    });
+
+    it('acepta el 0, negativos y decimales válidos en número o texto', () => {
+        expect(isEmptyNumber(0)).toBe(false);
+        expect(isEmptyNumber('0')).toBe(false);
+        expect(isEmptyNumber('0.0000')).toBe(false);
+        expect(isEmptyNumber(-12.5)).toBe(false);
+        expect(isEmptyNumber(' 1500.25 ')).toBe(false);
     });
 });

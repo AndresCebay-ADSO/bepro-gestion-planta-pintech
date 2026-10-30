@@ -56,6 +56,21 @@ function violations(files: string[], rules: Rule[]): Violation[] {
     );
 }
 
+/** Como `violations`, pero sobre el archivo entero: atrapa lo que Prettier parte en varias líneas. */
+function violationsAcrossLines(files: string[], rules: Rule[]): Violation[] {
+    return files.flatMap((file) => {
+        const source = readFileSync(file, 'utf8');
+
+        return rules.flatMap(({ pattern, rule }) =>
+            [...source.matchAll(pattern)].map((match) => ({
+                location: `${relativePath(file)}:${source.slice(0, match.index).split('\n').length}`,
+                match: match[0].replace(/\s+/g, ' '),
+                rule,
+            })),
+        );
+    });
+}
+
 function report(found: Violation[]): string[] {
     return found.map(
         ({ location, match, rule }) => `${location} «${match}» → ${rule}`,
@@ -635,5 +650,58 @@ describe('contrato de DESIGN.md', () => {
         ]);
 
         expect(report(found)).toEqual([]);
+    });
+
+    it('pinta los valores vacíos con <EmptyCell />, FormattedNumber o FormattedDate, sin guiones a mano', () => {
+        // Excepciones con su motivo (`components/ui/` ya queda fuera en `screenFiles`). Al resolver una, se quita.
+        // Un ternario de signo (`'+' : '-'`) iría aquí como excepción con su motivo.
+        const emptyDashExceptions = [
+            // Página pública de marca del QR: diseño propio fuera del layout de la app.
+            'resources/js/pages/Public/QrLanding/',
+            // Orden de producción: se rediseña aparte (hoy ingredients-table.tsx:55).
+            'resources/js/components/production/',
+            // La fuente del vacío: el único «—» escrito a mano.
+            'resources/js/components/empty-cell.tsx',
+        ];
+        const rule =
+            'DESIGN.md §9: un dato vacío es <EmptyCell /> (o FormattedNumber/FormattedDate sin emptyValue), nunca un guion a mano';
+        const rules = [
+            /(?:\?\?|\|\||:)\s*\(?\s*['"][-—]['"]/g,
+            /\b\w+=(?:\{\s*)?['"][-—]['"]/g,
+            /\breturn\s+\(?\s*['"][-—]['"]/g,
+            /\{\s*['"][-—]['"]\s*\}/g,
+            // Un guion como texto de JSX: `<p>—</p>`.
+            />\s*[-—]\s*</g,
+        ].map((pattern) => ({ pattern, rule }));
+        const matchesIn = (file: string) =>
+            violationsAcrossLines([file], rules);
+
+        const files = screenFiles.filter(
+            (file) =>
+                !emptyDashExceptions.some((prefix) =>
+                    relativePath(file).startsWith(prefix),
+                ),
+        );
+
+        const found = files.flatMap(matchesIn);
+
+        expect(report(found)).toEqual([]);
+
+        // Una excepción que ya no existe o ya no tiene guiones a mano sobra: se quita para que el guardián la vigile.
+        const staleExceptions = emptyDashExceptions.filter((prefix) => {
+            const fullPath = join(root, prefix);
+
+            if (!existsSync(fullPath)) {
+                return true;
+            }
+
+            const targetFiles = prefix.endsWith('/')
+                ? filesUnder(fullPath, ['.tsx'])
+                : [fullPath];
+
+            return targetFiles.flatMap(matchesIn).length === 0;
+        });
+
+        expect(staleExceptions).toEqual([]);
     });
 });

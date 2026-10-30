@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
 
+import { EmptyCell } from '@/components/empty-cell';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -108,9 +109,11 @@ export function RecentOrdersCompact({
                                 <p className="text-sm text-muted-foreground">
                                     {order.product_name ?? 'Sin producto'} •
                                     Plan:{' '}
-                                    {order.planned_date
-                                        ? formatBackendDate(order.planned_date)
-                                        : '—'}
+                                    {order.planned_date ? (
+                                        formatBackendDate(order.planned_date)
+                                    ) : (
+                                        <EmptyCell />
+                                    )}
                                 </p>
                             </div>
                             <StatusBadge

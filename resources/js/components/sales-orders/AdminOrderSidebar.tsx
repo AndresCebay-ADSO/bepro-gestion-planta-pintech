@@ -1,6 +1,7 @@
 import { useForm } from '@inertiajs/react';
 import { RefreshCw, Save } from 'lucide-react';
 
+import { EmptyCell } from '@/components/empty-cell';
 import { FormField } from '@/components/form-field';
 import { FormattedDate } from '@/components/formatted-date';
 import { PlantDateInput } from '@/components/plant-date-input';
@@ -246,7 +247,7 @@ export default function AdminOrderSidebar({
                 <h2 className="text-lg font-semibold">Metadatos</h2>
                 <p>
                     <span className="text-muted-foreground">Creado por:</span>{' '}
-                    {order.creator?.name ?? '-'}
+                    {order.creator?.name ?? <EmptyCell />}
                 </p>
                 <p>
                     <span className="text-muted-foreground">
@@ -256,11 +257,7 @@ export default function AdminOrderSidebar({
                 </p>
                 <p>
                     <span className="text-muted-foreground">Fecha req.:</span>{' '}
-                    <FormattedDate
-                        value={order.required_date}
-                        format="short"
-                        emptyValue="-"
-                    />
+                    <FormattedDate value={order.required_date} format="short" />
                 </p>
                 {order.shipping_address && (
                     <p>

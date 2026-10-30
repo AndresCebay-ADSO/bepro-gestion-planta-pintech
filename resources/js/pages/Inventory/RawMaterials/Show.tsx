@@ -4,10 +4,12 @@ import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawM
 
 import { ActiveBadge } from '@/components/active-badge';
 import { DetailTable } from '@/components/detail-table';
+import { EmptyCell } from '@/components/empty-cell';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
+import { isEmptyCell } from '@/lib/data-listing';
 import { breadcrumbHref } from '@/lib/navigation';
 import { DeleteRawMaterialDialog } from '@/pages/Inventory/RawMaterials/DeleteRawMaterialDialog';
 
@@ -148,12 +150,12 @@ export default function RawMaterialsShow({
 
                     <InfoItem
                         label="Categoría"
-                        value={rawMaterial.category?.name ?? '-'}
+                        value={rawMaterial.category?.name}
                     />
 
                     <InfoItem
                         label="Tipo de insumo"
-                        value={rawMaterial.category?.type_label ?? '-'}
+                        value={rawMaterial.category?.type_label}
                     />
 
                     <InfoItem
@@ -168,9 +170,8 @@ export default function RawMaterialsShow({
                     <InfoItem
                         label="Unidad"
                         value={
-                            rawMaterial.unit_of_measure
-                                ? `${rawMaterial.unit_of_measure.name} (${rawMaterial.unit_of_measure.symbol})`
-                                : '-'
+                            rawMaterial.unit_of_measure &&
+                            `${rawMaterial.unit_of_measure.name} (${rawMaterial.unit_of_measure.symbol})`
                         }
                     />
 
@@ -207,7 +208,6 @@ export default function RawMaterialsShow({
                                         currency
                                         maxDecimals={4}
                                         trimTrailingZeros
-                                        emptyValue="-"
                                     />
                                 }
                             />
@@ -367,7 +367,9 @@ function InfoItem({ label, value }: { label: string; value: React.ReactNode }) {
             <p className="text-xs tracking-wide text-muted-foreground uppercase">
                 {label}
             </p>
-            <div className="mt-1 text-sm text-foreground">{value}</div>
+            <div className="mt-1 text-sm text-foreground">
+                {isEmptyCell(value) ? <EmptyCell /> : value}
+            </div>
         </div>
     );
 }
