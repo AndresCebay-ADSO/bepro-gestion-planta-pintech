@@ -130,6 +130,12 @@ const Pagination: FC<PaginationProps> = ({ paginator, noun, className }) => {
                                         aria-disabled={
                                             !link.active ? 'true' : undefined
                                         }
+                                        // Los «…» entre páginas son decorativos: el lector de pantalla los salta.
+                                        aria-hidden={
+                                            link.label === '...'
+                                                ? true
+                                                : undefined
+                                        }
                                         className={classes}
                                     >
                                         <span
