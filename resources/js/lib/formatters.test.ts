@@ -4,10 +4,12 @@ import { formatSafeDate } from '@/components/formatted-date';
 import {
     formatCurrency,
     formatForInput,
+    formatKind,
     formatNumber,
     formatPercent,
     formatQuantity,
     isEmptyNumber,
+    NUMBER_KINDS,
 } from '@/lib/formatters';
 import { NUMBER_TYPES } from '@/lib/number-types';
 import { checkDecimalText } from '@/lib/numeric-input';
@@ -81,10 +83,74 @@ describe('formatCurrency: un vacío nunca lleva símbolo de moneda', () => {
     });
 });
 
-describe('formatPercent: el vacío se puede nombrar', () => {
+describe('formatPercent: porcentaje en puntos porcentuales', () => {
+    it('formatea números como puntos porcentuales con coma decimal y sin ceros finales', () => {
+        expect(formatPercent(19)).toBe('19%');
+        expect(formatPercent('19')).toBe('19%');
+        expect(formatPercent(19.5)).toBe('19,5%');
+        expect(formatPercent('19.50')).toBe('19,5%');
+        expect(formatPercent('19.555')).toBe('19,56%');
+        expect(formatPercent(0)).toBe('0%');
+        expect(formatPercent(-5.2)).toBe('-5,2%');
+    });
+
     it('sin valor devuelve el texto de vacío, «—» por defecto', () => {
         expect(formatPercent(null)).toBe('—');
+        expect(formatPercent(undefined)).toBe('—');
+        expect(formatPercent('')).toBe('—');
         expect(formatPercent(null, 2, 'Sin dato')).toBe('Sin dato');
+    });
+});
+
+describe('NUMBER_KINDS y formatKind: tipos aprobados para Pintech OS', () => {
+    it('exporta las reglas de los 6 tipos aprobados', () => {
+        expect(NUMBER_KINDS.quantity).toEqual({
+            maxDecimals: 4,
+            trimTrailingZeros: true,
+        });
+        expect(NUMBER_KINDS.units).toEqual({
+            maxDecimals: 0,
+            trimTrailingZeros: false,
+        });
+        expect(NUMBER_KINDS.clientPrice).toEqual({
+            currency: '$',
+            maxDecimals: 0,
+            trimTrailingZeros: false,
+        });
+        expect(NUMBER_KINDS.cost).toEqual({
+            currency: '$',
+            maxDecimals: 2,
+            trimTrailingZeros: true,
+        });
+        expect(NUMBER_KINDS.unitCost).toEqual({
+            currency: '$',
+            maxDecimals: 4,
+            trimTrailingZeros: true,
+        });
+        expect(NUMBER_KINDS.percent).toEqual({
+            maxDecimals: 2,
+            trimTrailingZeros: true,
+            isPercent: true,
+        });
+    });
+
+    it('formatea cada tipo según la tabla de especificaciones', () => {
+        expect(formatKind('12.5000', 'quantity')).toBe('12,5');
+        expect(formatKind('0.0375', 'quantity')).toBe('0,0375');
+        expect(formatKind(48, 'units')).toBe('48');
+        expect(formatKind(1250, 'units')).toBe('1.250');
+        expect(formatKind(1250000, 'clientPrice')).toBe('$1.250.000');
+        expect(formatKind('12345.50', 'cost')).toBe('$12.345,5');
+        expect(formatKind('12345.00', 'cost')).toBe('$12.345');
+        expect(formatKind('4250.1234', 'unitCost')).toBe('$4.250,1234');
+        expect(formatKind(19, 'percent')).toBe('19%');
+        expect(formatKind(19.5, 'percent')).toBe('19,5%');
+    });
+
+    it('devuelve «—» para vacíos o el emptyValue solicitado', () => {
+        expect(formatKind(null, 'quantity')).toBe('—');
+        expect(formatKind('', 'clientPrice')).toBe('—');
+        expect(formatKind(null, 'cost', 'Sin costo')).toBe('Sin costo');
     });
 });
 
@@ -116,5 +182,10 @@ describe('isEmptyNumber: mismo análisis de vacío que formatNumber', () => {
         expect(isEmptyNumber('0.0000')).toBe(false);
         expect(isEmptyNumber(-12.5)).toBe(false);
         expect(isEmptyNumber(' 1500.25 ')).toBe(false);
+    });
+
+    it('no pone signo a un negativo que redondea a cero, como NumberFormat de PHP', () => {
+        expect(formatKind('-0.00004', 'quantity')).toBe('0');
+        expect(formatKind('-1250000', 'clientPrice')).toBe('-$1.250.000');
     });
 });

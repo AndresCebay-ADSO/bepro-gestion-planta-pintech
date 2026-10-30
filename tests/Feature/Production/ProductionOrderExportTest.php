@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Actions\Production\BuildProductionOrderExportDataAction;
 use App\Actions\Production\BuildProductionOrderPdfMaterialsAction;
 use App\Actions\Production\BuildProductionOrderShowDataAction;
+use App\Enums\ProductionOrderStatus;
 use App\Enums\SystemRole;
 use App\Exports\ProductionOrderExport;
 use App\Models\Formula;
@@ -251,4 +252,34 @@ test('the order pdf and excel show the product name with the color', function ()
     expect($payload['product_display_name'])->toBe('PINTURA EXPORT TEST RAL 3020')
         ->and($pdfHtml)->toContain('PINTURA EXPORT TEST RAL 3020')
         ->and($excelHtml)->toContain('PINTURA EXPORT TEST RAL 3020');
+});
+
+test('the order pdf renders formatted numbers for costs, quantities and yield percentage', function () {
+    [$order, $user] = createExportTestDependencies();
+    $order->update([
+        'status' => ProductionOrderStatus::Completed,
+        'quantity' => '1250.5000',
+        'actual_quantity' => '1248.0000',
+        'yield_real_quantity' => '1248.0000',
+        'yield_theoretical_quantity' => '1250.5000',
+        'yield_variance_quantity' => '-2.5000',
+        'yield_percentage' => '99.80',
+    ]);
+
+    $this->actingAs($user);
+    $payload = app(BuildProductionOrderExportDataAction::class)->execute($order->fresh());
+    $payload['total_bulk_cost'] = '12345.50';
+    $payload['total_finished_cost'] = '15678.90';
+
+    $pdfHtml = view('pdf.production-order', [
+        'order' => $payload,
+        'logoBase64' => null,
+        'generatedAt' => '2026-10-30 16:00',
+    ])->render();
+
+    expect($pdfHtml)
+        ->toContain('1.250,5')
+        ->toContain('$12.345,5')
+        ->toContain('$15.678,9')
+        ->toContain('99,8%');
 });

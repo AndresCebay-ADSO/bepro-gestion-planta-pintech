@@ -14,26 +14,23 @@
  */
 
 import { EmptyCell } from '@/components/empty-cell';
+import type { NumberKind } from '@/lib/formatters';
 import {
     formatNumber,
     formatCurrency,
     formatQuantity,
     formatPercent,
+    formatKind,
     isEmptyNumber,
+    NUMBER_KINDS,
 } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
-interface FormattedNumberProps {
+interface FormattedNumberBaseProps {
     /** Valor a formatear */
     value: number | string | null | undefined;
     /** Clases CSS adicionales */
     className?: string;
-    /** Mostrar como moneda (agrega símbolo $ por defecto) */
-    currency?: boolean | string;
-    /** Mostrar como porcentaje (multiplica por 100) */
-    percent?: boolean;
-    /** Máximo de decimales a mostrar (default: 4) */
-    maxDecimals?: number;
     /** Valor a mostrar cuando el número es null/undefined, atenuado (por defecto pinta <EmptyCell />). Ej.: «Sin precio» */
     emptyValue?: string;
     /** Alineación del texto */
@@ -44,12 +41,37 @@ interface FormattedNumberProps {
     size?: 'sm' | 'base' | 'lg';
     /** Mostrar el valor en negrita */
     bold?: boolean;
+}
+
+/** Con `kind`, el tipo decide moneda, decimales y ceros finales (DESIGN.md §7): no se mezcla con las opciones sueltas. */
+interface FormattedNumberKindProps {
+    /** Tipo predefinido según estándar de diseño (quantity, units, clientPrice, cost, unitCost, percent) */
+    kind: NumberKind;
+    currency?: never;
+    percent?: never;
+    maxDecimals?: never;
+    trimTrailingZeros?: never;
+}
+
+/** Sin `kind`: lo que no tiene tipo, como las mediciones con los decimales de su columna. */
+interface FormattedNumberManualProps {
+    kind?: undefined;
+    /** Mostrar como moneda (agrega símbolo $ por defecto) */
+    currency?: boolean | string;
+    /** Mostrar como porcentaje (puntos porcentuales: 19 → «19%») */
+    percent?: boolean;
+    /** Máximo de decimales a mostrar (default: 4) */
+    maxDecimals?: number;
     /** Eliminar ceros al final de decimales (útil para vistas de detalle) */
     trimTrailingZeros?: boolean;
 }
 
+type FormattedNumberProps = FormattedNumberBaseProps &
+    (FormattedNumberKindProps | FormattedNumberManualProps);
+
 export function FormattedNumber({
     value,
+    kind,
     className,
     currency,
     percent,
@@ -66,8 +88,15 @@ export function FormattedNumber({
     let formatted = '';
 
     if (!isEmpty) {
-        if (percent) {
-            formatted = formatPercent(value, maxDecimals, emptyValue);
+        if (kind) {
+            formatted = formatKind(value, kind, emptyValue);
+        } else if (percent) {
+            formatted = formatPercent(
+                value,
+                maxDecimals,
+                emptyValue,
+                trimTrailingZeros,
+            );
         } else if (currency) {
             const currencySymbol =
                 typeof currency === 'string' ? currency : '$';
@@ -108,9 +137,9 @@ export function FormattedNumber({
         numericValue !== undefined &&
         !Number.isNaN(numericValue)
             ? numericValue < 0
-                ? 'text-red-600 dark:text-red-400'
+                ? 'text-destructive-text'
                 : numericValue > 0
-                  ? 'text-emerald-600 dark:text-emerald-400'
+                  ? 'text-success-text'
                   : ''
             : '';
 
@@ -131,10 +160,13 @@ export function FormattedNumber({
     );
 }
 
+export type { NumberKind };
 export {
     formatNumber,
     formatCurrency,
     formatQuantity,
     formatPercent,
+    formatKind,
     isEmptyNumber,
+    NUMBER_KINDS,
 };

@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Orden {{ $order['order_number'] }}</title>
+    @php
+        use App\Support\NumberFormat;
+    @endphp
     <style>
         * {
             margin: 0;
@@ -168,12 +171,12 @@
         </tr>
         <tr>
             <td colspan="2" class="label">CANTIDAD PROYECTADA A FABRICAR</td>
-            <td class="value text-center">{{ number_format($order['quantity'], 2) }}</td>
+            <td class="value text-center">{{ NumberFormat::quantity($order['quantity']) }}</td>
             <td class="label">ENVASES A USAR</td>
             <td colspan="5" class="value">
                 @if(count($order['packaging_plans']) > 0)
                     @foreach($order['packaging_plans'] as $plan)
-                        {{ number_format($plan['planned_units'], 0) }}
+                        {{ NumberFormat::units($plan['planned_units']) }}
                         {{ $plan['product_variant']['presentation_label'] ?? 'uds' }}{{ $plan['packaging_materials'] !== null ? ' ('.$plan['packaging_materials'].')' : '' }}@if(!$loop->last), @endif
                     @endforeach
                 @else
@@ -184,13 +187,13 @@
         <tr>
             <td colspan="2" class="label">CANTIDAD RESULTADO</td>
             <td class="value text-center">
-                {{ $order['actual_quantity'] !== null ? number_format($order['actual_quantity'], 2) : '' }}</td>
+                {{ $order['actual_quantity'] !== null ? NumberFormat::quantity($order['actual_quantity']) : '' }}</td>
             <td class="label">ENVASES A USAR</td>
             <td colspan="5" class="value">
                 @if(count($order['packaging_plans']) > 0)
                     @foreach($order['packaging_plans'] as $plan)
                         @if($plan['actual_units'] !== null)
-                            {{ number_format($plan['actual_units'], 0) }}
+                            {{ NumberFormat::units($plan['actual_units']) }}
                             {{ $plan['product_variant']['presentation_label'] ?? 'uds' }}{{ $plan['packaging_materials'] !== null ? ' ('.$plan['packaging_materials'].')' : '' }}@if(!$loop->last), @endif
                         @endif
                     @endforeach
@@ -228,7 +231,7 @@
             <td class="label">DERRAMES EN EL ENVASADO</td>
             <td class="value">
                 @if($order['spillage_quantity'] > 0)
-                    SI — {{ number_format($order['spillage_quantity'], 2) }} kg
+                    SI — {{ NumberFormat::quantity($order['spillage_quantity']) }} kg
                 @else
                     NO
                 @endif
@@ -284,18 +287,18 @@
                 @endphp
                 <tr>
                     <td class="text-center">{{ $row['raw_material_code'] }}</td>
-                    <td class="text-center">{{ $kg > 0 ? number_format($kg, 2) : '' }}</td>
-                    <td class="text-center">{{ $grams > 0 ? number_format($grams, 0) : '' }}</td>
+                    <td class="text-center">{{ $kg > 0 ? NumberFormat::quantity($kg) : '' }}</td>
+                    <td class="text-center">{{ $grams > 0 ? NumberFormat::units($grams) : '' }}</td>
                     <td></td>
                     <td class="text-center">
-                        {{ isset($row['actual_quantity']) ? number_format($row['actual_quantity'], 2) : '' }}
+                        {{ isset($row['actual_quantity']) ? NumberFormat::quantity($row['actual_quantity']) : '' }}
                     </td>
                 </tr>
             @endforeach
             <tr class="text-bold">
                 <td class="text-center label">TOTAL</td>
-                <td class="text-center">{{ number_format((float) ($pdfTotals['kg'] ?? 0), 2) }}</td>
-                <td class="text-center">{{ (float) ($pdfTotals['grams'] ?? 0) > 0 ? number_format((float) $pdfTotals['grams'], 0) : '0' }}</td>
+                <td class="text-center">{{ NumberFormat::quantity($pdfTotals['kg'] ?? 0) }}</td>
+                <td class="text-center">{{ (float) ($pdfTotals['grams'] ?? 0) > 0 ? NumberFormat::units($pdfTotals['grams']) : '0' }}</td>
                 <td></td>
                 <td></td>
             </tr>
@@ -316,18 +319,18 @@
                 <tr>
                     <td class="text-center">{{ $row['step_order'] }}</td>
                     <td class="text-center">{{ $row['raw_material_code'] }}</td>
-                    <td class="text-center">{{ $kg > 0 ? number_format($kg, 2) : '' }}</td>
-                    <td class="text-center">{{ $grams > 0 ? number_format($grams, 0) : '' }}</td>
+                    <td class="text-center">{{ $kg > 0 ? NumberFormat::quantity($kg) : '' }}</td>
+                    <td class="text-center">{{ $grams > 0 ? NumberFormat::units($grams) : '' }}</td>
                     <td></td>
                     <td class="text-center">
-                        {{ isset($row['actual_quantity']) ? number_format($row['actual_quantity'], 2) : '' }}
+                        {{ isset($row['actual_quantity']) ? NumberFormat::quantity($row['actual_quantity']) : '' }}
                     </td>
                 </tr>
             @endforeach
             <tr class="text-bold">
                 <td class="text-center label" colspan="2">TOTAL</td>
-                <td class="text-center">{{ number_format((float) ($pdfTotals['kg'] ?? 0), 2) }}</td>
-                <td class="text-center">{{ (float) ($pdfTotals['grams'] ?? 0) > 0 ? number_format((float) $pdfTotals['grams'], 0) : '0' }}</td>
+                <td class="text-center">{{ NumberFormat::quantity($pdfTotals['kg'] ?? 0) }}</td>
+                <td class="text-center">{{ (float) ($pdfTotals['grams'] ?? 0) > 0 ? NumberFormat::units($pdfTotals['grams']) : '0' }}</td>
                 <td colspan="2"></td>
             </tr>
         @endif
@@ -348,7 +351,7 @@
             @foreach($order['line_adjustments'] as $adj)
                 <tr>
                     <td class="text-center">{{ $adj['raw_material']['code'] ?? 'N/A' }}</td>
-                    <td class="text-center">{{ number_format($adj['quantity'], 4) }}</td>
+                    <td class="text-center">{{ NumberFormat::quantity($adj['quantity']) }}</td>
                     <td>{{ $adj['reason'] }}</td>
                     <td>{{ $adj['notes'] ?? '' }}</td>
                 </tr>
@@ -375,7 +378,7 @@
             <td class="label" style="width: 22%;">REQUIERE MOLIENDA<br><span class="small-text">(En la Escala de la
                     piedra HG)</span></td>
             <td class="value text-center" style="width: 10%;">
-                {{ $order['grinding_hg'] !== null ? number_format($order['grinding_hg'], 1) : '' }}
+                {{ $order['grinding_hg'] !== null ? NumberFormat::measurement($order['grinding_hg'], 1) : '' }}
             </td>
             <td class="label" style="width: 18%;">TIEMPO TOTAL PARA MOLIENDA</td>
             <td class="value text-center" style="width: 10%;"></td>
@@ -385,7 +388,7 @@
         <tr>
             <td class="label">RESULTADO DE VISCOSIDAD<br><span class="small-text">a 25°C (KU)</span></td>
             <td class="value text-center">
-                {{ $order['viscosity_ku'] !== null ? number_format($order['viscosity_ku'], 1) : '' }}
+                {{ $order['viscosity_ku'] !== null ? NumberFormat::measurement($order['viscosity_ku'], 1) : '' }}
             </td>
             <td class="label">AJUSTES PARA LA VISCOSIDAD</td>
             <td class="value text-center" colspan="3">
@@ -430,28 +433,28 @@
             </tr>
             <tr>
                 <td class="label" style="width: 25%;">COSTO TOTAL GRANEL</td>
-                <td class="value" style="width: 25%;">${{ number_format($order['total_bulk_cost'], 2) }}</td>
+                <td class="value" style="width: 25%;">{{ NumberFormat::cost($order['total_bulk_cost']) }}</td>
                 <td class="label" style="width: 25%;">COSTO TOTAL TERMINADO</td>
-                <td class="value" style="width: 25%;">${{ number_format($order['total_finished_cost'], 2) }}</td>
+                <td class="value" style="width: 25%;">{{ NumberFormat::cost($order['total_finished_cost']) }}</td>
             </tr>
             @if($order['yield_percentage'] !== null)
                 <tr>
                     <td class="label">RENDIMIENTO REAL</td>
                     <td class="value">
-                        {{ $order['yield_real_quantity'] !== null ? number_format($order['yield_real_quantity'], 2) . ' kg' : 'N/A' }}
+                        {{ $order['yield_real_quantity'] !== null ? NumberFormat::quantity($order['yield_real_quantity']) . ' kg' : 'N/A' }}
                     </td>
                     <td class="label">RENDIMIENTO TEÓRICO</td>
                     <td class="value">
-                        {{ $order['yield_theoretical_quantity'] !== null ? number_format($order['yield_theoretical_quantity'], 2) . ' kg' : 'N/A' }}
+                        {{ $order['yield_theoretical_quantity'] !== null ? NumberFormat::quantity($order['yield_theoretical_quantity']) . ' kg' : 'N/A' }}
                     </td>
                 </tr>
                 <tr>
                     <td class="label">VARIANZA</td>
                     <td class="value">
-                        {{ $order['yield_variance_quantity'] !== null ? number_format($order['yield_variance_quantity'], 2) . ' kg' : 'N/A' }}
+                        {{ $order['yield_variance_quantity'] !== null ? NumberFormat::quantity($order['yield_variance_quantity']) . ' kg' : 'N/A' }}
                     </td>
                     <td class="label">% RENDIMIENTO</td>
-                    <td class="value">{{ number_format($order['yield_percentage'], 1) }}%</td>
+                    <td class="value">{{ NumberFormat::percent($order['yield_percentage']) }}</td>
                 </tr>
             @endif
         </table>
