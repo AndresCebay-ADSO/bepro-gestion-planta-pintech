@@ -66,6 +66,6 @@ export default function ShrinkWrapTypesCreate({ rawMaterialOptions }: Props) {
 ShrinkWrapTypesCreate.layout = {
     breadcrumbs: [
         { title: 'Tipos de termoencogido', href: typesIndex() },
-        { title: 'Nuevo', href: typesCreate() },
+        { title: 'Nuevo tipo de termoencogido', href: typesCreate() },
     ],
 };

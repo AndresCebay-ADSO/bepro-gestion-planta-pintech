@@ -64,6 +64,6 @@ export default function UnitsOfMeasureCreate() {
 UnitsOfMeasureCreate.layout = {
     breadcrumbs: [
         { title: 'Unidades de medida', href: unitsIndex() },
-        { title: 'Nueva', href: unitsCreate() },
+        { title: 'Nueva unidad de medida', href: unitsCreate() },
     ],
 };

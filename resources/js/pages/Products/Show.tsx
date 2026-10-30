@@ -23,10 +23,11 @@ import {
 } from '@/actions/App/Http/Controllers/ProductVariantController';
 import { ActiveBadge } from '@/components/active-badge';
 import { DecimalInput } from '@/components/decimal-input';
-import { DetailPageHeader } from '@/components/detail-page-header';
+import { DetailTable } from '@/components/detail-table';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import InputError from '@/components/input-error';
+import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -60,7 +61,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useConfirm } from '@/hooks/use-confirm';
-import { withReturnTo } from '@/lib/navigation';
+import { breadcrumbHref, withReturnTo } from '@/lib/navigation';
 import { PRESENTATION_VALUE_LIMITS } from '@/lib/number-types';
 import { toDecimalPayload } from '@/lib/numeric-input';
 import { index as finishedInventoryIndex } from '@/routes/finished-inventory';
@@ -69,6 +70,7 @@ import {
     show as formulasShow,
 } from '@/routes/formulas';
 import {
+    edit as productsEdit,
     index as productsIndex,
     show as productsShow,
 } from '@/routes/products';
@@ -102,6 +104,8 @@ type FormulaItem = {
     created_at: string;
     created_by?: { name: string } | null;
 };
+
+type VariantItem = NonNullable<Props['product']['variants']>[number];
 
 type Props = {
     returnTo?: string | null;
@@ -395,24 +399,20 @@ export default function ProductsShow({
         <>
             <Head title={`Producto ${product.name}`} />
             <div className="space-y-6 p-6">
-                <DetailPageHeader
-                    breadcrumbs={[
-                        {
-                            title: 'Productos',
-                            href: returnTo ?? productsIndex().url,
-                        },
-                        { title: product.name, href: '#' },
-                    ]}
+                <PageHeader
                     title={product.name}
                     badge={<ActiveBadge isActive={product.is_active} />}
-                    returnTo={returnTo}
-                    defaultReturnHref={productsIndex().url}
-                    defaultReturnLabel="Productos"
                     actions={
                         <>
                             {can.update && (
                                 <Button variant="outline" asChild>
-                                    <Link href={`/products/${product.id}/edit`}>
+                                    <Link
+                                        href={
+                                            productsEdit({
+                                                product: product.id,
+                                            }).url
+                                        }
+                                    >
                                         Editar
                                     </Link>
                                 </Button>
@@ -875,14 +875,16 @@ export default function ProductsShow({
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader className="flex flex-row items-start justify-between gap-4">
+                <section className="space-y-4">
+                    <div className="flex items-start justify-between gap-4">
                         <div>
-                            <CardTitle>Inventario terminado</CardTitle>
-                            <CardDescription>
+                            <h2 className="text-lg font-semibold">
+                                Inventario terminado
+                            </h2>
+                            <p className="mt-0.5 text-sm text-muted-foreground">
                                 Stock disponible por variante y bodega (según
                                 tus bodegas asignadas).
-                            </CardDescription>
+                            </p>
                         </div>
                         <Button variant="outline" size="sm" asChild>
                             <Link
@@ -891,91 +893,75 @@ export default function ProductsShow({
                                 Ver en Inventario PT
                             </Link>
                         </Button>
-                    </CardHeader>
-                    <CardContent>
-                        {finishedInventory.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                                No hay stock registrado para este producto en
-                                las bodegas consultables.
-                            </p>
-                        ) : (
-                            <div className="overflow-x-auto rounded-lg border border-border">
-                                <table className="w-full text-sm">
-                                    <thead className="border-b border-border bg-muted/40">
-                                        <tr>
-                                            <th className="p-3 text-left font-medium">
-                                                Variante
-                                            </th>
-                                            <th className="p-3 text-left font-medium">
-                                                Bodega
-                                            </th>
-                                            <th className="p-3 text-right font-medium">
-                                                Cantidad
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {finishedInventory.map((row) => (
-                                            <tr
-                                                key={row.id}
-                                                className="border-b border-border/60 last:border-0"
-                                            >
-                                                <td className="p-3">
-                                                    {row.variant?.name ?? '-'}
-                                                    {row.variant
-                                                        ?.presentation_label && (
-                                                        <span className="ml-1 text-xs text-muted-foreground">
-                                                            (
-                                                            {
-                                                                row.variant
-                                                                    .presentation_label
-                                                            }
-                                                            )
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="p-3 text-muted-foreground">
-                                                    {row.warehouse?.name ?? '-'}
-                                                    {row.warehouse?.city && (
-                                                        <span className="ml-1 text-xs">
-                                                            (
-                                                            {row.warehouse.city}
-                                                            )
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="p-3 text-right font-medium">
-                                                    <FormattedNumber
-                                                        value={row.quantity}
-                                                        maxDecimals={2}
-                                                    />
-                                                    {row.variant
-                                                        ?.unit_symbol && (
-                                                        <span className="ml-1 text-xs font-normal text-muted-foreground">
-                                                            {
-                                                                row.variant
-                                                                    .unit_symbol
-                                                            }
-                                                        </span>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                    </div>
+
+                    <DetailTable
+                        rows={finishedInventory}
+                        rowKey={(row) => row.id}
+                        caption="Inventario terminado"
+                        columns={[
+                            {
+                                key: 'variant',
+                                header: 'Variante',
+                                cell: (row) =>
+                                    row.variant ? (
+                                        <>
+                                            {row.variant.name}
+                                            {row.variant.presentation_label && (
+                                                <span className="ml-1 text-xs font-normal text-muted-foreground">
+                                                    (
+                                                    {
+                                                        row.variant
+                                                            .presentation_label
+                                                    }
+                                                    )
+                                                </span>
+                                            )}
+                                        </>
+                                    ) : null,
+                            },
+                            {
+                                key: 'warehouse',
+                                header: 'Bodega',
+                                cell: (row) =>
+                                    row.warehouse ? (
+                                        <>
+                                            {row.warehouse.name}
+                                            {row.warehouse.city && (
+                                                <span className="ml-1 text-xs text-muted-foreground">
+                                                    ({row.warehouse.city})
+                                                </span>
+                                            )}
+                                        </>
+                                    ) : null,
+                            },
+                            {
+                                key: 'quantity',
+                                header: 'Cantidad',
+                                cell: (row) => (
+                                    <>
+                                        <FormattedNumber
+                                            value={row.quantity}
+                                            maxDecimals={2}
+                                        />
+                                        {row.variant?.unit_symbol &&
+                                            ` ${row.variant.unit_symbol}`}
+                                    </>
+                                ),
+                                align: 'right',
+                                className: 'font-medium',
+                            },
+                        ]}
+                        empty="No hay stock registrado para este producto en las bodegas consultables."
+                    />
+                </section>
 
                 {/* Variantes */}
-                <div className="rounded-lg border border-border bg-card">
-                    <div className="flex items-center justify-between border-b border-border px-6 py-4">
+                <section className="space-y-4">
+                    <div className="flex items-start justify-between gap-4">
                         <div>
-                            <h2 className="font-medium text-foreground">
-                                Variantes
-                            </h2>
-                            <p className="mt-0.5 text-xs text-muted-foreground">
+                            <h2 className="text-lg font-semibold">Variantes</h2>
+                            <p className="mt-0.5 text-sm text-muted-foreground">
                                 Presentaciones de venta: galón, bidón, Cuñete,
                                 etc. El valor se define en galones.
                             </p>
@@ -1371,128 +1357,115 @@ export default function ProductsShow({
                         )}
                     </div>
 
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/40">
-                            <tr>
-                                <th className="p-4 text-left font-medium">
-                                    Nombre
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Código
-                                </th>
-                                <th className="p-4 text-left font-medium">
-                                    Presentación
-                                </th>
-                                {can.viewCosts && (
-                                    <th className="p-4 text-left font-medium">
-                                        Precio Interno
-                                    </th>
-                                )}
-                                <th className="p-4 text-left font-medium">
-                                    Estado
-                                </th>
-                                {can.manageVariants && (
-                                    <th className="p-4 text-right font-medium">
-                                        Acciones
-                                    </th>
-                                )}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {(product.variants ?? []).map((variant) => (
-                                <tr
-                                    key={variant.id}
-                                    className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30"
-                                >
-                                    <td className="p-4 font-medium">
-                                        {variant.name ?? '-'}
-                                    </td>
-                                    <td className="p-4 font-mono text-muted-foreground">
-                                        {variant.code}
-                                    </td>
-                                    <td className="p-4 text-muted-foreground">
-                                        {variant.presentation_label ?? '-'}
-                                        {variant.unit_of_measure
-                                            ? ` (${variant.unit_of_measure.symbol})`
-                                            : ''}
-                                    </td>
-                                    {can.viewCosts && (
-                                        <td className="p-4 text-muted-foreground">
-                                            {variant.current_price ? (
-                                                <FormattedNumber
-                                                    value={
-                                                        variant.current_price
-                                                    }
-                                                    currency
-                                                    maxDecimals={2}
-                                                />
-                                            ) : (
-                                                '-'
-                                            )}
-                                        </td>
-                                    )}
-                                    <td className="p-4">
-                                        <ActiveBadge
-                                            isActive={variant.is_active}
-                                            feminine
-                                        />
-                                    </td>
-                                    {can.manageVariants && (
-                                        <td className="p-4 text-right">
-                                            <div className="flex items-center justify-end gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() =>
-                                                        openEdit(variant)
-                                                    }
-                                                    title="Editar variante"
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() =>
-                                                        handleDeleteVariant(
-                                                            variant,
-                                                        )
-                                                    }
-                                                    title="Eliminar variante"
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    )}
-                                </tr>
-                            ))}
-                            {(product.variants ?? []).length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={
-                                            (can.manageVariants ? 6 : 5) -
-                                            (can.viewCosts ? 0 : 1)
-                                        }
-                                        className="p-8 text-center text-sm text-muted-foreground"
-                                    >
-                                        Este producto aún no tiene variantes
-                                        registradas.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                    <DetailTable
+                        rows={product.variants ?? []}
+                        rowKey={(variant) => variant.id}
+                        caption="Variantes"
+                        columns={[
+                            {
+                                key: 'name',
+                                header: 'Nombre',
+                                cell: (variant) => variant.name,
+                            },
+                            {
+                                key: 'code',
+                                header: 'Código',
+                                cell: (variant) => variant.code,
+                                className:
+                                    'font-mono whitespace-nowrap text-muted-foreground',
+                            },
+                            {
+                                key: 'presentation',
+                                header: 'Presentación',
+                                cell: (variant) =>
+                                    variant.presentation_label ||
+                                    variant.unit_of_measure ? (
+                                        <>
+                                            {variant.presentation_label}
+                                            {variant.unit_of_measure &&
+                                                ` (${variant.unit_of_measure.symbol})`}
+                                        </>
+                                    ) : null,
+                                className: 'text-muted-foreground',
+                            },
+                            ...(can.viewCosts
+                                ? [
+                                      {
+                                          key: 'price',
+                                          header: 'Precio interno',
+                                          cell: (variant: VariantItem) =>
+                                              variant.current_price ? (
+                                                  <FormattedNumber
+                                                      value={
+                                                          variant.current_price
+                                                      }
+                                                      currency
+                                                      maxDecimals={2}
+                                                  />
+                                              ) : null,
+                                          align: 'right' as const,
+                                      },
+                                  ]
+                                : []),
+                            {
+                                key: 'status',
+                                header: 'Estado',
+                                cell: (variant) => (
+                                    <ActiveBadge
+                                        isActive={variant.is_active}
+                                        feminine
+                                    />
+                                ),
+                                align: 'center',
+                            },
+                            ...(can.manageVariants
+                                ? [
+                                      {
+                                          key: 'actions',
+                                          header: 'Acciones',
+                                          cell: (variant: VariantItem) => (
+                                              <div className="flex items-center justify-end gap-1">
+                                                  <Button
+                                                      variant="ghost"
+                                                      size="icon"
+                                                      onClick={() =>
+                                                          openEdit(variant)
+                                                      }
+                                                      title="Editar variante"
+                                                  >
+                                                      <Pencil className="h-4 w-4" />
+                                                  </Button>
+                                                  <Button
+                                                      variant="ghost"
+                                                      size="icon"
+                                                      onClick={() =>
+                                                          handleDeleteVariant(
+                                                              variant,
+                                                          )
+                                                      }
+                                                      title="Eliminar variante"
+                                                  >
+                                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                                  </Button>
+                                              </div>
+                                          ),
+                                          align: 'right' as const,
+                                      },
+                                  ]
+                                : []),
+                        ]}
+                        empty="Este producto aún no tiene variantes registradas."
+                    />
+                </section>
 
                 {can.viewFormulas && (
-                    <div className="rounded-lg border border-border bg-card">
-                        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+                    <section className="space-y-4">
+                        <div className="flex items-start justify-between gap-4">
                             <div>
-                                <h2 className="font-medium text-foreground">
+                                <h2 className="text-lg font-semibold">
                                     Fórmulas
                                 </h2>
-                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                <p className="mt-0.5 text-sm text-muted-foreground">
                                     {priceReferenceFormula
                                         ? `Referencia de precio: v${priceReferenceFormula.version}${priceReferenceFormula.name ? ` · ${priceReferenceFormula.name}` : ''}`
                                         : 'Sin fórmula de referencia de precio'}
@@ -1519,110 +1492,115 @@ export default function ProductsShow({
                             </Button>
                         </div>
 
-                        <table className="w-full text-sm">
-                            <thead className="border-b border-border bg-muted/40">
-                                <tr>
-                                    <th className="p-4 text-left font-medium">
-                                        Versión
-                                    </th>
-                                    <th className="p-4 text-left font-medium">
-                                        Estado
-                                    </th>
-                                    <th className="p-4 text-left font-medium">
-                                        Notas
-                                    </th>
-                                    <th className="p-4 text-left font-medium">
-                                        Creada por
-                                    </th>
-                                    <th className="p-4 text-left font-medium">
-                                        Fecha
-                                    </th>
-                                    <th className="p-4 text-right font-medium">
-                                        Acciones
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {(product.formulas ?? []).map((formula) => (
-                                    <tr
-                                        key={formula.id}
-                                        className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/30"
-                                    >
-                                        <td className="p-4">
-                                            <div className="font-mono font-medium">
+                        <DetailTable
+                            rows={product.formulas ?? []}
+                            rowKey={(formula) => formula.id}
+                            caption="Fórmulas"
+                            columns={[
+                                {
+                                    key: 'version',
+                                    header: 'Versión',
+                                    cell: (formula) => (
+                                        <>
+                                            <div className="font-mono">
                                                 v{formula.version}
                                             </div>
                                             {formula.name && (
-                                                <div className="text-xs text-muted-foreground">
+                                                <div className="text-xs font-normal text-muted-foreground">
                                                     {formula.name}
                                                 </div>
                                             )}
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="flex flex-wrap gap-1.5">
-                                                <ActiveBadge
-                                                    isActive={formula.is_active}
-                                                    feminine
-                                                />
-                                                {formula.is_price_reference && (
-                                                    <Badge variant="outline">
-                                                        <BadgeDollarSign aria-hidden="true" />
-                                                        Referencia de precio
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="p-4 text-muted-foreground">
-                                            {formula.notes ?? '-'}
-                                        </td>
-                                        <td className="p-4 text-muted-foreground">
-                                            {formula.created_by?.name ?? '-'}
-                                        </td>
-                                        <td className="p-4 text-xs text-muted-foreground">
-                                            <FormattedDate
-                                                value={formula.created_at}
-                                                format="datetime"
+                                        </>
+                                    ),
+                                },
+                                {
+                                    key: 'status',
+                                    header: 'Estado',
+                                    cell: (formula) => (
+                                        <div className="flex flex-wrap gap-1.5">
+                                            <ActiveBadge
+                                                isActive={formula.is_active}
+                                                feminine
                                             />
-                                        </td>
-                                        <td className="p-4 text-right">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                asChild
-                                            >
-                                                <Link
-                                                    href={
-                                                        formulasShow({
-                                                            formula: formula.id,
-                                                        }).url
-                                                    }
-                                                >
-                                                    Ver
-                                                </Link>
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {(product.formulas ?? []).length === 0 && (
-                                    <tr>
-                                        <td
-                                            colSpan={6}
-                                            className="p-8 text-center text-sm text-muted-foreground"
+                                            {formula.is_price_reference && (
+                                                <Badge variant="outline">
+                                                    <BadgeDollarSign aria-hidden="true" />
+                                                    Referencia de precio
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    ),
+                                },
+                                {
+                                    key: 'notes',
+                                    header: 'Notas',
+                                    cell: (formula) => formula.notes,
+                                    className: 'text-muted-foreground',
+                                },
+                                {
+                                    key: 'creator',
+                                    header: 'Creada por',
+                                    cell: (formula) =>
+                                        formula.created_by?.name ?? null,
+                                    className: 'text-muted-foreground',
+                                },
+                                {
+                                    key: 'date',
+                                    header: 'Fecha',
+                                    cell: (formula) => (
+                                        <FormattedDate
+                                            value={formula.created_at}
+                                            format="datetime"
+                                        />
+                                    ),
+                                    className:
+                                        'whitespace-nowrap text-muted-foreground',
+                                },
+                                {
+                                    key: 'actions',
+                                    header: 'Acciones',
+                                    cell: (formula) => (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            asChild
                                         >
-                                            No hay fórmulas registradas. Crea la
-                                            primera usando el botón "Nueva
-                                            Fórmula".
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                            <Link
+                                                href={
+                                                    formulasShow({
+                                                        formula: formula.id,
+                                                    }).url
+                                                }
+                                            >
+                                                Ver
+                                            </Link>
+                                        </Button>
+                                    ),
+                                    align: 'right',
+                                },
+                            ]}
+                            empty="No hay fórmulas registradas. Crea la primera con «Nueva Fórmula»."
+                        />
+                    </section>
                 )}
             </div>
         </>
     );
 }
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10); el listado conserva sus filtros con `returnTo`.
+ProductsShow.layout = (props: Props) => ({
+    breadcrumbs: [
+        {
+            title: 'Productos',
+            href: breadcrumbHref(props.returnTo, productsIndex().url),
+        },
+        {
+            title: props.product.name,
+            href: productsShow({ product: props.product.id }),
+        },
+    ],
+});
 
 function formatBytes(bytes: number) {
     if (bytes < 1024) {

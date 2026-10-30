@@ -137,7 +137,7 @@ export function ConsumeRemnantsCard({
                             Saldos Consumidos en esta Orden
                         </Label>
                         <div className="overflow-hidden rounded-md border">
-                            <div className="overflow-x-auto">
+                            <div className="relative overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead className="border-b bg-emerald-50 dark:bg-emerald-950/20">
                                         <tr>

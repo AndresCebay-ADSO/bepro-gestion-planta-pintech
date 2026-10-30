@@ -492,6 +492,6 @@ export default function ProductionOrdersCreate({
 ProductionOrdersCreate.layout = {
     breadcrumbs: [
         { title: 'Órdenes de producción', href: productionOrderIndex() },
-        { title: 'Nueva', href: productionOrderCreate() },
+        { title: 'Nueva orden de producción', href: productionOrderCreate() },
     ],
 };

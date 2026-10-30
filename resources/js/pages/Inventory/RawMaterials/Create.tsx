@@ -78,6 +78,6 @@ export default function RawMaterialsCreate({ categories, units, can }: Props) {
 RawMaterialsCreate.layout = {
     breadcrumbs: [
         { title: 'Materias primas', href: rawMaterialsIndex() },
-        { title: 'Nueva', href: rawMaterialsCreate() },
+        { title: 'Nueva materia prima', href: rawMaterialsCreate() },
     ],
 };

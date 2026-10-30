@@ -1,13 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    CheckCircle2,
-    Clock,
-    FileText,
-    Pencil,
-    Send,
-    XCircle,
-} from 'lucide-react';
+import { CheckCircle2, Clock, FileText, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 import { FormattedDate } from '@/components/formatted-date';
@@ -28,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
     edit as requestsEdit,
     index as requestsIndex,
+    show as requestsShow,
     submit as requestsSubmit,
     updateStatus as requestsUpdateStatus,
     exportPdf as requestsExportPdf,
@@ -158,92 +151,65 @@ export default function PaintDevelopmentRequestShow({
         <>
             <Head title={`Solicitud ${request.request_number}`} />
 
-            <div className="space-y-4 p-6">
-                <div className="flex items-start gap-3">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        asChild
-                        className="mt-0.5 shrink-0"
-                    >
-                        <Link href={requestsIndex().url}>
-                            <ArrowLeft className="h-4 w-4" />
-                        </Link>
-                    </Button>
-                    <div className="min-w-0 flex-1">
-                        <PageHeader
-                            title={`Solicitud ${request.request_number}`}
-                            badge={
-                                <div className="flex items-center gap-2">
-                                    {statusIcon}
-                                    <StatusBadge
-                                        enum="PaintDevelopmentRequestStatus"
-                                        value={request.status}
-                                    />
-                                </div>
-                            }
-                            actions={
-                                <>
-                                    {can.submit && (
-                                        <Button
-                                            variant="default"
-                                            onClick={() =>
-                                                setSubmitDialogOpen(true)
-                                            }
-                                        >
-                                            <Send className="mr-2 h-4 w-4" />
-                                            Enviar
-                                        </Button>
-                                    )}
-                                    {can.update && (
-                                        <Button variant="outline" asChild>
-                                            <Link
-                                                href={
-                                                    requestsEdit(request.id).url
-                                                }
-                                            >
-                                                <Pencil className="mr-2 h-4 w-4" />
-                                                Editar
-                                            </Link>
-                                        </Button>
-                                    )}
-                                    {can.exportPdf && (
-                                        <Button variant="outline" asChild>
-                                            <a
-                                                href={
-                                                    requestsExportPdf(
-                                                        request.id,
-                                                    ).url
-                                                }
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                <FileText className="size-4" />
-                                                Ver PDF
-                                            </a>
-                                        </Button>
-                                    )}
-                                    {can.updateStatus &&
-                                        nextStatusOptions.length > 0 && (
-                                            <Button
-                                                variant="secondary"
-                                                onClick={() => {
-                                                    setSelectedStatus('');
-                                                    setReviewNotes(
-                                                        request.review_notes ??
-                                                            '',
-                                                    );
-                                                    setStatusDialogOpen(true);
-                                                }}
-                                            >
-                                                Cambiar estado
-                                            </Button>
-                                        )}
-                                </>
-                            }
-                        />
-                    </div>
-                </div>
+            <div className="space-y-6 p-6">
+                <PageHeader
+                    title={`Solicitud ${request.request_number}`}
+                    badge={
+                        <div className="flex items-center gap-2">
+                            {statusIcon}
+                            <StatusBadge
+                                enum="PaintDevelopmentRequestStatus"
+                                value={request.status}
+                            />
+                        </div>
+                    }
+                    actions={
+                        <>
+                            {can.submit && (
+                                <Button
+                                    variant="default"
+                                    onClick={() => setSubmitDialogOpen(true)}
+                                >
+                                    Enviar
+                                </Button>
+                            )}
+                            {can.update && (
+                                <Button variant="outline" asChild>
+                                    <Link href={requestsEdit(request.id).url}>
+                                        Editar
+                                    </Link>
+                                </Button>
+                            )}
+                            {can.exportPdf && (
+                                <Button variant="outline" asChild>
+                                    <a
+                                        href={requestsExportPdf(request.id).url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <FileText className="size-4" />
+                                        Ver PDF
+                                    </a>
+                                </Button>
+                            )}
+                            {can.updateStatus &&
+                                nextStatusOptions.length > 0 && (
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => {
+                                            setSelectedStatus('');
+                                            setReviewNotes(
+                                                request.review_notes ?? '',
+                                            );
+                                            setStatusDialogOpen(true);
+                                        }}
+                                    >
+                                        Cambiar estado
+                                    </Button>
+                                )}
+                        </>
+                    }
+                />
 
                 <div className="grid gap-4 md:grid-cols-2">
                     <SectionCard title="Identificación">
@@ -437,3 +403,14 @@ export default function PaintDevelopmentRequestShow({
         </>
     );
 }
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10).
+PaintDevelopmentRequestShow.layout = (props: Props) => ({
+    breadcrumbs: [
+        { title: 'Desarrollo de pinturas', href: requestsIndex() },
+        {
+            title: `Solicitud ${props.request.request_number}`,
+            href: requestsShow(props.request.id),
+        },
+    ],
+});

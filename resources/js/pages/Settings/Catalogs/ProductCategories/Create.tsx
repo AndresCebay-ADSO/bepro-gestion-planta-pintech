@@ -52,6 +52,6 @@ export default function ProductCategoriesCreate() {
 ProductCategoriesCreate.layout = {
     breadcrumbs: [
         { title: 'Categorías de producto', href: categoriesIndex() },
-        { title: 'Nueva', href: categoriesCreate() },
+        { title: 'Nueva categoría de producto', href: categoriesCreate() },
     ],
 };

@@ -9,7 +9,6 @@ import {
     startProduction as productionOrderStartProduction,
     submitForReview as productionOrderSubmitForReview,
 } from '@/actions/App/Http/Controllers/ProductionOrderController';
-import { DetailPageNav } from '@/components/detail-page-nav';
 import { ConsumeRemnantsCard } from '@/components/production/consume-remnants-card';
 import { ControlCard } from '@/components/production/control-card';
 import { OrderHeader } from '@/components/production/order-header';
@@ -35,12 +34,16 @@ import {
 } from '@/hooks/use-packaging-sync';
 import { useProductionCostPreview } from '@/hooks/use-production-cost-preview';
 import { formatForInput } from '@/lib/formatters';
+import { breadcrumbHref } from '@/lib/navigation';
 import { toDecimalPayload } from '@/lib/numeric-input';
 import {
     ingredientQuantityForInput,
     ingredientQuantityForServer,
 } from '@/lib/production-ingredient-quantity';
-import { index as productionOrdersIndex } from '@/routes/production-orders';
+import {
+    index as productionOrdersIndex,
+    show as productionOrdersShow,
+} from '@/routes/production-orders';
 import type {
     PreviewCostData,
     ProductionOrderDetail,
@@ -54,7 +57,6 @@ export default function ProductionOrderShow({
     labelMaterials,
     availableVariants,
     qualitySigners,
-    returnTo,
     can,
 }: ProductionOrderShowProps) {
     const orderDetails = useMemo(() => order.details ?? [], [order.details]);
@@ -347,18 +349,6 @@ export default function ProductionOrderShow({
         <>
             <Head title={`Orden ${order.order_number}`} />
             <div className="mx-auto max-w-7xl space-y-6 p-6">
-                <DetailPageNav
-                    breadcrumbs={[
-                        {
-                            title: 'Órdenes de producción',
-                            href: returnTo ?? productionOrdersIndex().url,
-                        },
-                        { title: order.order_number, href: '#' },
-                    ]}
-                    returnTo={returnTo}
-                    defaultReturnHref={productionOrdersIndex().url}
-                    defaultReturnLabel="Órdenes de producción"
-                />
                 <OrderHeader
                     order={order}
                     canUpdateColor={can.updateColor}
@@ -652,3 +642,17 @@ function normalizeProductionOrderFormData(data: ProductionOrderFormData) {
         })),
     };
 }
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10); el listado conserva sus filtros con `returnTo`.
+ProductionOrderShow.layout = (props: ProductionOrderShowProps) => ({
+    breadcrumbs: [
+        {
+            title: 'Órdenes de producción',
+            href: breadcrumbHref(props.returnTo, productionOrdersIndex().url),
+        },
+        {
+            title: props.order.order_number,
+            href: productionOrdersShow({ production_order: props.order.id }),
+        },
+    ],
+});

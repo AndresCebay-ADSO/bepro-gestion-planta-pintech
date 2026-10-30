@@ -266,17 +266,8 @@ describe('contrato de DESIGN.md', () => {
     });
 
     it('pinta los listados con DataListing y las líneas con DetailTable, sin tablas a mano en pages/', () => {
-        // Excepciones por archivo: Costos no es un listado (se rediseña aparte) y estas tablas de detalle aún no usan
-        // <DetailTable>. Al migrar una, se quita de aquí.
-        const tableExceptions = [
-            'resources/js/pages/Costs/Index.tsx',
-            'resources/js/pages/Inventory/RawMaterials/Show.tsx',
-            'resources/js/pages/Inventory/Warehouses/Show.tsx',
-            'resources/js/pages/Inventory/Warehouses/AssignUsers.tsx',
-            'resources/js/pages/Production/ShrinkWraps/Show.tsx',
-            'resources/js/pages/Products/Show.tsx',
-            'resources/js/pages/QrCodes/Show.tsx',
-        ];
+        // Excepciones por archivo: Costos no es un listado ni un detalle (se rediseña aparte). Al migrarla, se quita.
+        const tableExceptions = ['resources/js/pages/Costs/Index.tsx'];
 
         const files = screenFiles.filter(
             (file) =>
@@ -303,6 +294,90 @@ describe('contrato de DESIGN.md', () => {
         );
 
         expect(staleExceptions).toEqual([]);
+    });
+
+    describe('navegación: las migas del layout son la única forma de volver', () => {
+        const pageFiles = screenFiles.filter((file) =>
+            relativePath(file).startsWith('resources/js/pages/'),
+        );
+
+        it('no usa DetailPageHeader, DetailPageNav ni un enlace de vuelta con ArrowLeft', () => {
+            // Excepciones por archivo, con su motivo. Al resolver una, se quita de aquí.
+            const backLinkExceptions = [
+                // Pantalla de error, sin el layout de la app ni migas: «Volver» lleva a la página anterior.
+                'resources/js/pages/ErrorPage.tsx',
+            ];
+            // `\b` tras ArrowLeft deja fuera ArrowLeftRight (el icono de traslado).
+            const backLink = /\bArrowLeft\b/g;
+
+            const found = violations(
+                pageFiles.filter(
+                    (file) => !backLinkExceptions.includes(relativePath(file)),
+                ),
+                [
+                    {
+                        pattern: /\bDetailPage(?:Header|Nav)\b/g,
+                        rule: 'DESIGN.md §10: las migas van en el layout de la página y el título es <PageHeader>',
+                    },
+                    {
+                        pattern: backLink,
+                        rule: 'DESIGN.md §10: sin «← Volver»; las migas del layout son la única forma de volver',
+                    },
+                ],
+            );
+
+            expect(report(found)).toEqual([]);
+
+            // Una excepción que ya no existe o ya no tiene la flecha sobra: se quita para que el guardián la vigile.
+            const staleExceptions = backLinkExceptions.filter(
+                (path) =>
+                    !existsSync(join(root, path)) ||
+                    !new RegExp(backLink.source).test(
+                        readFileSync(join(root, path), 'utf8'),
+                    ),
+            );
+
+            expect(staleExceptions).toEqual([]);
+        });
+
+        it('declara las migas en el layout de toda página de detalle, crear y editar', () => {
+            // Excepciones por archivo, con su motivo. Al resolver una, se quita de aquí.
+            const breadcrumbExceptions = [
+                // Landing pública del QR: la abre el cliente final, sin sesión ni el layout de la app.
+                'resources/js/pages/Public/QrLanding/Show.tsx',
+            ];
+            const declaresBreadcrumbs = (source: string) =>
+                // `breadcrumbs: […]` o la forma corta `{ breadcrumbs }` / `breadcrumbs,` (DESIGN.md §10).
+                /\.layout\s*=[\s\S]*?\bbreadcrumbs\s*[:,}]/.test(source);
+
+            const screens = pageFiles.filter((file) =>
+                /\/(?:Show|Create|Edit)\.tsx$/.test(relativePath(file)),
+            );
+
+            expect(screens.length).toBeGreaterThan(30);
+
+            const found = screens
+                .filter(
+                    (file) =>
+                        !breadcrumbExceptions.includes(relativePath(file)) &&
+                        !declaresBreadcrumbs(readFileSync(file, 'utf8')),
+                )
+                .map(
+                    (file) =>
+                        `${relativePath(file)} → DESIGN.md §10: \`Página.layout = { breadcrumbs }\``,
+                );
+
+            expect(found).toEqual([]);
+
+            // Una excepción que ya no existe o ya declara sus migas sobra: se quita para que el guardián la vigile.
+            const staleExceptions = breadcrumbExceptions.filter(
+                (path) =>
+                    !existsSync(join(root, path)) ||
+                    declaresBreadcrumbs(readFileSync(join(root, path), 'utf8')),
+            );
+
+            expect(staleExceptions).toEqual([]);
+        });
     });
 
     describe('formularios: confirmación y fechas de la app, no las del navegador', () => {
@@ -444,6 +519,21 @@ describe('contrato de DESIGN.md', () => {
         );
 
         expect(staleExceptions).toEqual([]);
+    });
+
+    it('pone relative en toda caja con desplazamiento lateral', () => {
+        // Sin `relative`, lo que va en posición absoluta dentro de la caja (un texto `sr-only` de un botón de fila) no
+        // queda recortado por ella y ensancha la página en el celular, aunque la tabla se vea bien. Revisa todo texto
+        // entre comillas simples, dobles o acentos graves (`className`, `cn(…)`, una constante), no solo `className="…"`.
+        const found = violations(screenFiles, [
+            {
+                pattern:
+                    /(["'`])(?!(?:(?!\1).)*\brelative\b)(?:(?!\1).)*\boverflow-x-auto\b(?:(?!\1).)*\1/g,
+                rule: 'DESIGN.md §9: una caja con overflow-x-auto lleva relative',
+            },
+        ]);
+
+        expect(report(found)).toEqual([]);
     });
 
     it('no importa el componente retirado TableActions', () => {

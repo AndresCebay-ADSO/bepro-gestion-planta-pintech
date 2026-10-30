@@ -53,7 +53,7 @@ export function LineAdjustmentsPanel({
 
             {adjustments.length > 0 && (
                 <div className="overflow-hidden rounded-md border">
-                    <div className="overflow-x-auto">
+                    <div className="relative overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="border-b bg-orange-50 dark:bg-orange-950/20">
                                 <tr>

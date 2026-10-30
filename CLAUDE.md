@@ -88,7 +88,7 @@ Route (routes/web.php, role: middleware)
   3. Controller: `(new XFilter($request))->apply(Model::query())->with(...)->paginate(15)->withQueryString()`. Pass `filters => $request->validated()` to Inertia.
   4. Frontend: `useFilters({ routeUrl, initialFilters })` + `<DataTableFilters />`.
 - **Listings (MANDATORY)**: listings use `<DataListing>` with `<RowActions>` (`DESIGN.md` §9). No hand-written
-  `<table>` in `pages/` (enforced by `design-contract.test.ts`, except the detail tables it lists).
+  `<table>` in `pages/` (enforced by `design-contract.test.ts`; the only exception is `Costs/Index`).
 - **UI**: follow `DESIGN.md` (UX contract): tokens, tones, typography, icons, forms and listings.
 
 ## Critical Business Invariants (DO NOT VIOLATE)

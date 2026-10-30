@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import {
     edit as rolesEdit,
     index as rolesIndex,
+    show as rolesShow,
     update as rolesUpdate,
 } from '@/routes/roles';
 import type { Permission } from '@/types/permissions';
@@ -117,10 +118,12 @@ const RolesEdit = ({ role, modules }: Props) => {
     );
 };
 
+// Las migas son la única forma de volver (DESIGN.md §10).
 RolesEdit.layout = (props: Props) => ({
     breadcrumbs: [
         { title: 'Roles', href: rolesIndex() },
-        { title: props.role.name, href: rolesEdit(props.role.id) },
+        { title: props.role.name, href: rolesShow(props.role.id) },
+        { title: 'Editar', href: rolesEdit(props.role.id) },
     ],
 });
 

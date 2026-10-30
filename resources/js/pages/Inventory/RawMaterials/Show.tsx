@@ -3,10 +3,12 @@ import { useState } from 'react';
 import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
 
 import { ActiveBadge } from '@/components/active-badge';
-import { DetailPageHeader } from '@/components/detail-page-header';
+import { DetailTable } from '@/components/detail-table';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
+import { breadcrumbHref } from '@/lib/navigation';
 import { DeleteRawMaterialDialog } from '@/pages/Inventory/RawMaterials/DeleteRawMaterialDialog';
 
 /**
@@ -58,7 +60,6 @@ type Props = {
  * Raw materials show page displaying detail, batch inventory, and deletion/reactivation controls.
  */
 export default function RawMaterialsShow({
-    returnTo,
     rawMaterial,
     can,
     hasAvailableStock,
@@ -96,19 +97,9 @@ export default function RawMaterialsShow({
             <Head title={rawMaterial.code} />
 
             <div className="space-y-6 p-6">
-                <DetailPageHeader
-                    breadcrumbs={[
-                        {
-                            title: 'Materias primas',
-                            href: returnTo ?? RawMaterialController.index.url(),
-                        },
-                        { title: rawMaterial.code, href: '#' },
-                    ]}
+                <PageHeader
                     title={rawMaterial.code}
-                    subtitle="Detalle de materia prima y lotes asociados."
-                    returnTo={returnTo}
-                    defaultReturnHref={RawMaterialController.index.url()}
-                    defaultReturnLabel="Materias Primas"
+                    description="Detalle de materia prima y lotes asociados."
                     actions={
                         <>
                             {can.update && (
@@ -264,123 +255,90 @@ export default function RawMaterialsShow({
                     />
                 </div>
 
-                {/* Lotes */}
-                <div className="overflow-x-auto rounded-lg border border-border bg-card">
-                    <div className="border-b border-border px-4 py-3">
-                        <h2 className="text-lg font-semibold text-foreground">
-                            Lotes asociados
-                        </h2>
-                    </div>
+                {/* Lotes: el total disponible ya está en la ficha de arriba. */}
+                <section className="space-y-4">
+                    <h2 className="text-lg font-semibold">Lotes asociados</h2>
 
-                    <table className="w-full text-sm">
-                        <thead className="border-b border-border bg-muted/40">
-                            <tr>
-                                <th className="p-3 text-left">Lote</th>
-                                <th className="p-3 text-left">Proveedor</th>
-                                <th className="p-3 text-left">Entrada</th>
-                                <th className="p-3 text-left">Vence</th>
-                                {can.viewCosts && (
-                                    <th className="p-3 text-right">
-                                        Precio unitario
-                                    </th>
-                                )}
-                                <th className="p-3 text-right">
-                                    Cantidad inicial
-                                </th>
-                                <th className="p-3 text-right">Disponible</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {rawMaterial.inventory_batches.map((batch) => (
-                                <tr
-                                    key={batch.id}
-                                    className="border-b border-border/60 transition last:border-0 hover:bg-muted/30"
-                                >
-                                    <td className="p-3 text-foreground">
-                                        {batch.lot_number ?? '-'}
-                                    </td>
-
-                                    <td className="p-3 text-muted-foreground">
-                                        {batch.supplier ?? '-'}
-                                    </td>
-
-                                    <td className="p-3 text-muted-foreground">
-                                        <FormattedDate
-                                            value={batch.entry_date}
-                                        />
-                                    </td>
-
-                                    <td className="p-3 text-muted-foreground">
+                    <DetailTable
+                        rows={rawMaterial.inventory_batches}
+                        rowKey={(batch) => batch.id}
+                        caption="Lotes asociados"
+                        columns={[
+                            {
+                                key: 'lot',
+                                header: 'Lote',
+                                cell: (batch) => batch.lot_number,
+                                className: 'font-mono',
+                            },
+                            {
+                                key: 'supplier',
+                                header: 'Proveedor',
+                                cell: (batch) => batch.supplier,
+                            },
+                            {
+                                key: 'entry',
+                                header: 'Entrada',
+                                cell: (batch) => (
+                                    <FormattedDate value={batch.entry_date} />
+                                ),
+                                className: 'whitespace-nowrap',
+                            },
+                            {
+                                key: 'expiry',
+                                header: 'Vence',
+                                cell: (batch) =>
+                                    batch.expiry_date ? (
                                         <FormattedDate
                                             value={batch.expiry_date}
                                         />
-                                    </td>
-
-                                    {can.viewCosts && (
-                                        <td className="p-3 text-right">
-                                            <FormattedNumber
-                                                value={batch.unit_price}
-                                                currency
-                                                maxDecimals={4}
-                                                trimTrailingZeros
-                                            />
-                                        </td>
-                                    )}
-
-                                    <td className="p-3 text-right">
-                                        <FormattedNumber
-                                            value={batch.initial_quantity}
-                                            maxDecimals={2}
-                                        />
-                                    </td>
-
-                                    <td className="p-3 text-right">
-                                        <FormattedNumber
-                                            value={batch.remaining_quantity}
-                                            maxDecimals={2}
-                                            bold
-                                            colorize
-                                        />
-                                    </td>
-                                </tr>
-                            ))}
-
-                            {rawMaterial.inventory_batches.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={can.viewCosts ? 7 : 6}
-                                        className="p-10 text-center text-sm text-muted-foreground"
-                                    >
-                                        No hay lotes registrados para esta
-                                        materia prima.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-
-                        {rawMaterial.inventory_batches.length > 0 && (
-                            <tfoot>
-                                <tr className="border-t border-border bg-muted/30">
-                                    <td
-                                        colSpan={can.viewCosts ? 6 : 5}
-                                        className="p-3 text-right font-medium text-foreground"
-                                    >
-                                        Total Disponible
-                                    </td>
-                                    <td className="p-3 text-right font-medium text-foreground">
-                                        <FormattedNumber
-                                            value={totalAvailableQuantity}
-                                            maxDecimals={4}
-                                            trimTrailingZeros
-                                            bold
-                                        />
-                                    </td>
-                                </tr>
-                            </tfoot>
-                        )}
-                    </table>
-                </div>
+                                    ) : null,
+                                className: 'whitespace-nowrap',
+                            },
+                            ...(can.viewCosts
+                                ? [
+                                      {
+                                          key: 'price',
+                                          header: 'Precio unitario',
+                                          cell: (batch: InventoryBatch) => (
+                                              <FormattedNumber
+                                                  value={batch.unit_price}
+                                                  currency
+                                                  maxDecimals={4}
+                                                  trimTrailingZeros
+                                              />
+                                          ),
+                                          align: 'right' as const,
+                                      },
+                                  ]
+                                : []),
+                            {
+                                key: 'initial',
+                                header: 'Cantidad inicial',
+                                cell: (batch) => (
+                                    <FormattedNumber
+                                        value={batch.initial_quantity}
+                                        maxDecimals={2}
+                                    />
+                                ),
+                                align: 'right',
+                            },
+                            {
+                                key: 'remaining',
+                                header: 'Disponible',
+                                cell: (batch) => (
+                                    <FormattedNumber
+                                        value={batch.remaining_quantity}
+                                        maxDecimals={2}
+                                        bold
+                                        colorize
+                                    />
+                                ),
+                                align: 'right',
+                            },
+                        ]}
+                        empty="No hay lotes registrados para esta materia prima."
+                    />
+                </section>
             </div>
 
             <DeleteRawMaterialDialog
@@ -395,6 +353,23 @@ export default function RawMaterialsShow({
         </>
     );
 }
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10); el listado conserva sus filtros con `returnTo`.
+RawMaterialsShow.layout = (props: Props) => ({
+    breadcrumbs: [
+        {
+            title: 'Materias primas',
+            href: breadcrumbHref(
+                props.returnTo,
+                RawMaterialController.index.url(),
+            ),
+        },
+        {
+            title: props.rawMaterial.code,
+            href: RawMaterialController.show.url(props.rawMaterial.id),
+        },
+    ],
+});
 
 /**
  * Subcomponente reutilizable (🔥 clave nivel pro)

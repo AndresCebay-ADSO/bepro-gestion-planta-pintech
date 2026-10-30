@@ -58,14 +58,20 @@ export function withReturnTo(href: string, returnTo?: string | null): string {
     return `${baseHref}${separator}return_to=${encodeURIComponent(resolved)}`;
 }
 
-export function resolveModuleListHref(
+/**
+ * Destino de una miga que lleva a `href`. Usa `returnTo` (la pantalla de origen, con sus filtros) solo si es la misma
+ * pantalla que `href`; si no, `href`. Así la miga «Productos» nunca lleva a Inventario PT aunque se haya llegado desde ahí.
+ * El servidor ya deja `returnTo` en una ruta interna (`RedirectsWithContext`).
+ */
+export function breadcrumbHref(
     returnTo: string | null | undefined,
-    modulePathPrefix: string,
-    defaultIndexHref: string,
+    href: string,
 ): string {
-    if (returnTo?.startsWith(modulePathPrefix)) {
-        return returnTo;
+    if (!returnTo) {
+        return href;
     }
 
-    return defaultIndexHref;
+    const pathname = (url: string) => new URL(url, 'http://localhost').pathname;
+
+    return pathname(returnTo) === pathname(href) ? returnTo : href;
 }

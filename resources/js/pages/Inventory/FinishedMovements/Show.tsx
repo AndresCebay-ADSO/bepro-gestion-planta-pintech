@@ -1,14 +1,15 @@
-import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { Head } from '@inertiajs/react';
 
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { MovementDirectionBadge } from '@/components/movement-direction-badge';
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
-import { Button } from '@/components/ui/button';
 import { finishedLotLabel } from '@/lib/finished-lot';
-import { index as finishedMovementsIndex } from '@/routes/finished-inventory-movements';
+import {
+    index as finishedMovementsIndex,
+    show as finishedMovementsShow,
+} from '@/routes/finished-inventory-movements';
 import type { FinishedInventoryMovement } from '@/types/finished-inventory';
 
 type Props = {
@@ -37,31 +38,19 @@ export default function FinishedMovementsShow({ movement }: Props) {
         <>
             <Head title={`Movimiento PT #${movement.id}`} />
 
-            <div className="space-y-5 p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div className="space-y-4">
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link href={finishedMovementsIndex.url()}>
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Movimientos PT
-                            </Link>
-                        </Button>
-                        <PageHeader
-                            title={`Movimiento PT #${movement.id}`}
-                            badge={
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <MovementDirectionBadge
-                                        type={movement.type}
-                                    />
-                                    <StatusBadge
-                                        enum="FinishedInventoryMovementReason"
-                                        value={movement.reason}
-                                    />
-                                </div>
-                            }
-                        />
-                    </div>
-                </div>
+            <div className="space-y-6 p-6">
+                <PageHeader
+                    title={`Movimiento PT #${movement.id}`}
+                    badge={
+                        <div className="flex flex-wrap items-center gap-2">
+                            <MovementDirectionBadge type={movement.type} />
+                            <StatusBadge
+                                enum="FinishedInventoryMovementReason"
+                                value={movement.reason}
+                            />
+                        </div>
+                    }
+                />
 
                 <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
                     <dl className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -159,3 +148,14 @@ export default function FinishedMovementsShow({ movement }: Props) {
         </>
     );
 }
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10).
+FinishedMovementsShow.layout = (props: Props) => ({
+    breadcrumbs: [
+        { title: 'Movimientos de PT', href: finishedMovementsIndex() },
+        {
+            title: `Movimiento PT #${props.movement.id}`,
+            href: finishedMovementsShow(props.movement.id),
+        },
+    ],
+});

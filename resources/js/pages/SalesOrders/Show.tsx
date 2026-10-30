@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, FileText, ShoppingCart } from 'lucide-react';
+import { FileText, ShoppingCart } from 'lucide-react';
 
 import { DetailTable } from '@/components/detail-table';
 import { FormattedNumber } from '@/components/formatted-number';
@@ -10,7 +10,10 @@ import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { quotationName } from '@/lib/quotation-name';
 import { show as quotationsShow } from '@/routes/quotations';
-import { index as salesOrdersIndex } from '@/routes/sales-orders';
+import {
+    index as salesOrdersIndex,
+    show as salesOrdersShow,
+} from '@/routes/sales-orders';
 
 type ProductItem = {
     id: number;
@@ -72,27 +75,19 @@ export default function SalesOrdersShow({
         <>
             <Head title={`Pedido #${order.id}`} />
 
-            <div className="mx-auto max-w-5xl space-y-6 p-6">
-                <div className="space-y-4">
-                    <Button variant="ghost" size="sm" asChild>
-                        <Link href={salesOrdersIndex().url}>
-                            <ArrowLeft className="mr-1 h-4 w-4" />
-                            Volver
-                        </Link>
-                    </Button>
-                    <PageHeader
-                        title={`Pedido #${order.id}`}
-                        badge={
-                            <div className="flex flex-wrap items-center gap-2">
-                                <PriorityBadge value={order.priority} />
-                                <StatusBadge
-                                    enum="SalesOrderStatus"
-                                    value={order.status}
-                                />
-                            </div>
-                        }
-                    />
-                </div>
+            <div className="space-y-6 p-6">
+                <PageHeader
+                    title={`Pedido #${order.id}`}
+                    badge={
+                        <div className="flex flex-wrap items-center gap-2">
+                            <PriorityBadge value={order.priority} />
+                            <StatusBadge
+                                enum="SalesOrderStatus"
+                                value={order.status}
+                            />
+                        </div>
+                    }
+                />
 
                 <div className="grid gap-6 lg:grid-cols-3">
                     {/* min-w-0: sin él, la columna de la grilla se ensancha con la tabla y esta no se desplaza. */}
@@ -240,3 +235,14 @@ export default function SalesOrdersShow({
         </>
     );
 }
+
+// Las migas son la única forma de volver al listado (DESIGN.md §10).
+SalesOrdersShow.layout = (props: Props) => ({
+    breadcrumbs: [
+        { title: 'Pedidos', href: salesOrdersIndex() },
+        {
+            title: `Pedido #${props.order.id}`,
+            href: salesOrdersShow(props.order.id),
+        },
+    ],
+});

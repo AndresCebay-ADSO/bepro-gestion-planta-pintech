@@ -152,7 +152,7 @@ en `resources/js/lib/data-listing.ts` (con sus pruebas de Vitest).
 - Las columnas se describen una sola vez: la tabla se pinta desde `md` y una tarjeta por fila debajo.
 - El identificador abre el detalle (o la edición si no hay detalle) con `rowHref`; el menú «⋯» no repite esa acción.
 - `resources/js/design-contract.test.ts` falla si aparece un `<table>` en `pages/` fuera de las excepciones que lista
-  (las tablas de detalle que aún no usan `<DetailTable>`).
+  (solo `Costs/Index`, que no es un listado ni un detalle y se rediseña aparte).
 
 ---
 
@@ -170,6 +170,8 @@ Reglas y ejemplo en `DESIGN.md` §9.
   justo encima, fuera de cualquier tarjeta.
 - Los totales no van dentro de la tabla (en el celular quedarían fuera de la vista al desplazar): van en una tarjeta
   debajo, a la derecha, como en `Quotations/Show`.
+- Dentro de una grilla (`lg:grid-cols-2`, por ejemplo), la columna que la contiene lleva `min-w-0`: sin él, la columna
+  crece con la tabla y la tabla no se desplaza (`Inventory/Warehouses/Show`).
 
 ---
 

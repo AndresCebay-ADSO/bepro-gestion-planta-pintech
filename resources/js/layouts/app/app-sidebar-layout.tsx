@@ -13,7 +13,7 @@ export default function AppSidebarLayout({
     return (
         <AppShell>
             <AppSidebar />
-            <AppContent className="overflow-x-hidden">
+            <AppContent>
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 <div className="px-4 py-2">
                     <FlashMessages />

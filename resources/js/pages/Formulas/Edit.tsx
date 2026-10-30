@@ -9,6 +9,7 @@ import {
 import type { FormulaFormData } from '@/components/formulas/formula-form';
 import { PageHeader } from '@/components/page-header';
 import { formatForInput } from '@/lib/formatters';
+import { formulaCrumb } from '@/lib/formula-name';
 import {
     edit as formulasEdit,
     index as formulasIndex,
@@ -106,7 +107,7 @@ FormulasEdit.layout = (props: Props) => ({
     breadcrumbs: [
         { title: 'Fórmulas', href: formulasIndex() },
         {
-            title: `v${props.formula.version}`,
+            title: formulaCrumb(props.formula),
             href: formulasShow({ formula: props.formula.id }),
         },
         { title: 'Editar', href: formulasEdit({ formula: props.formula.id }) },
