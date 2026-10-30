@@ -6,6 +6,7 @@ namespace App\Concerns;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 trait RedirectsWithContext
 {
@@ -23,7 +24,7 @@ trait RedirectsWithContext
             : redirect()->route($defaultRoute, $defaultParameters);
 
         if ($flashKey !== null && $flashMessage !== null) {
-            $redirect->with($flashKey, $flashMessage);
+            Inertia::flash($flashKey, $flashMessage);
         }
 
         return $redirect;

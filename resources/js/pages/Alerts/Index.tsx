@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -135,8 +135,6 @@ export default function AlertsIndex({
         },
     ];
 
-    const flash = usePage().props.flash;
-
     const handleResolve = (alertId: number) => {
         router.patch(alertResolve({ alert: alertId }).url, undefined, {
             preserveScroll: true,
@@ -215,12 +213,6 @@ export default function AlertsIndex({
                         </div>
                     }
                 />
-
-                {flash?.success && (
-                    <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">
-                        {flash.success}
-                    </div>
-                )}
 
                 <DataTableFilters
                     fields={filterFields}

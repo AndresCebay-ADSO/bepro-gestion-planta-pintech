@@ -131,9 +131,10 @@ class RawMaterialController extends Controller
 
         RawMaterial::create($request->validated());
 
+        Inertia::flash('success', __('Materia prima registrada exitosamente.'));
+
         return redirect()
-            ->route('raw-materials.index')
-            ->with('success', __('Materia prima registrada exitosamente.'));
+            ->route('raw-materials.index');
     }
 
     /**
@@ -262,9 +263,10 @@ class RawMaterialController extends Controller
 
         $this->updateRawMaterial->execute($rawMaterial, Arr::except($request->validated(), 'confirm_tracking_change'));
 
+        Inertia::flash('success', __('Materia prima actualizada exitosamente.'));
+
         return redirect()
-            ->route('raw-materials.index')
-            ->with('success', __('Materia prima actualizada exitosamente.'));
+            ->route('raw-materials.index');
     }
 
     /**
@@ -287,15 +289,18 @@ class RawMaterialController extends Controller
             // Misma decisión que muestran el listado y el detalle. Las claves foráneas siguen de red (docs/POLITICA_ELIMINACION.md
             // §4): si aun así tiene historial, el borrado no ocurre y se desactiva.
             if ($this->deletesPermanently($user, $lockedRawMaterial, $hasActivity) && $this->deleteUnused->execute($lockedRawMaterial)) {
+                Inertia::flash('success', __('Materia prima eliminada físicamente exitosamente.'));
+
                 return redirect()
-                    ->route('raw-materials.index')
-                    ->with('success', __('Materia prima eliminada físicamente exitosamente.'));
+                    ->route('raw-materials.index');
             }
 
             if (! $lockedRawMaterial->is_active) {
-                return back()->with('error', $hasActivity
+                Inertia::flash('error', $hasActivity
                     ? __('La materia prima tiene historial: no se puede eliminar y ya se encuentra inactiva.')
                     : __('La materia prima ya se encuentra inactiva.'));
+
+                return back();
             }
 
             $hasAvailableBatches = $lockedRawMaterial->inventoryBatches()
@@ -303,14 +308,17 @@ class RawMaterialController extends Controller
                 ->exists();
 
             if ($hasAvailableBatches) {
-                return back()->with('error', __('No se puede desactivar ni eliminar la materia prima porque tiene lotes activos con stock disponible.'));
+                Inertia::flash('error', __('No se puede desactivar ni eliminar la materia prima porque tiene lotes activos con stock disponible.'));
+
+                return back();
             }
 
             $lockedRawMaterial->update(['is_active' => false]);
 
+            Inertia::flash('success', __('Materia prima desactivada exitosamente (conserva historial).'));
+
             return redirect()
-                ->route('raw-materials.index')
-                ->with('success', __('Materia prima desactivada exitosamente (conserva historial).'));
+                ->route('raw-materials.index');
         }, attempts: 3);
     }
 
@@ -319,14 +327,17 @@ class RawMaterialController extends Controller
         $this->authorize('reactivate', $rawMaterial);
 
         if ($rawMaterial->is_active) {
-            return back()->with('error', __('La materia prima ya se encuentra activa.'));
+            Inertia::flash('error', __('La materia prima ya se encuentra activa.'));
+
+            return back();
         }
 
         $rawMaterial->update(['is_active' => true]);
 
+        Inertia::flash('success', __('Materia prima reactivada exitosamente.'));
+
         return redirect()
-            ->route('raw-materials.index', ['status' => 'inactive'])
-            ->with('success', __('Materia prima reactivada exitosamente.'));
+            ->route('raw-materials.index', ['status' => 'inactive']);
     }
 
     /**

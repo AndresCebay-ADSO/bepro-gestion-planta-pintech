@@ -79,7 +79,7 @@ test('it cancels a pending production order and stores the reason', function () 
         ]);
 
     $response->assertRedirect(route('production-orders.show', $order));
-    $response->assertSessionHas('success', 'Orden de producción cancelada con éxito.');
+    $response->assertInertiaFlash('success', 'Orden de producción cancelada con éxito.');
 
     $order->refresh();
     expect($order->status)->toBe(ProductionOrderStatus::Cancelled);
@@ -109,7 +109,7 @@ test('it rejects cancelling a completed production order', function () {
         ]);
 
     $response->assertRedirect(route('production-orders.show', $order));
-    $response->assertSessionHas('error', "No se puede cancelar una orden en estado 'Completada'.");
+    $response->assertInertiaFlash('error', "No se puede cancelar una orden en estado 'Completada'.");
 
     $order->refresh();
     expect($order->status)->toBe(ProductionOrderStatus::Completed);
@@ -158,7 +158,7 @@ it('answers a lost race with an error the dialog can show, not only a flash', fu
         ->post(route('production-orders.cancel', $order), ['reason' => 'La orden ya se había completado'])
         ->assertRedirect(route('production-orders.show', $order))
         ->assertSessionHasErrors(['production_order' => "No se puede cancelar una orden en estado 'Completada'."])
-        ->assertSessionHas('error');
+        ->assertInertiaFlash('error');
 });
 
 it('keeps consumed remnants consumed and writes them in the cancellation note (provisional, B66)', function () {

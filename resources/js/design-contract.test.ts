@@ -618,4 +618,22 @@ describe('contrato de DESIGN.md', () => {
 
         expect(layout).not.toMatch(/maximum-scale|user-scalable\s*=\s*["']?no/);
     });
+
+    it('deja los avisos de flash al layout, sin repetirlos en pages/', () => {
+        // Los pintan <FlashMessages /> (layout de la app) y <AuthFlashError /> (pantallas de acceso): ninguna página
+        // lee `flash`, ni con punto (`flash.error`) ni desestructurando (`const { flash } = usePage()`).
+        const rule =
+            'DESIGN.md §4: los avisos los pintan <FlashMessages /> y <AuthFlashError />, nunca una página';
+        const files = screenFiles.filter((file) =>
+            relativePath(file).startsWith('resources/js/pages/'),
+        );
+
+        const found = violations(files, [
+            { pattern: /\bflash\??\.(?:success|error)\b/g, rule },
+            { pattern: /\busePage\(\)\.flash\b/g, rule },
+            { pattern: /\{[^}]*\bflash\b[^}]*\}\s*=\s*usePage\(\)/g, rule },
+        ]);
+
+        expect(report(found)).toEqual([]);
+    });
 });

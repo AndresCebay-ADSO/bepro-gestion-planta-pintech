@@ -57,7 +57,7 @@ test('an operator can switch to a warehouse assigned to them', function () {
     $this->actingAs($operator)
         ->post(route('warehouses.set-current'), ['warehouse_id' => $second->id])
         ->assertRedirect()
-        ->assertSessionHas('success', 'Bodega activa actualizada.')
+        ->assertInertiaFlash('success', 'Bodega activa actualizada.')
         ->assertSessionHas('current_warehouse_id', $second->id);
 });
 
@@ -70,8 +70,8 @@ test('an operator cannot switch to a warehouse that is not assigned to them', fu
     $this->actingAs($operator)
         ->post(route('warehouses.set-current'), ['warehouse_id' => $other->id])
         ->assertRedirect()
-        ->assertSessionHas('error', 'No tienes acceso a la bodega seleccionada.')
-        ->assertSessionMissing('success');
+        ->assertInertiaFlash('error', 'No tienes acceso a la bodega seleccionada.')
+        ->assertInertiaFlashMissing('success');
 
     expect(session('current_warehouse_id'))->not->toBe($other->id);
 });
@@ -85,6 +85,6 @@ test('an inactive warehouse is refused instead of answering that it was updated'
     $this->actingAs($admin)
         ->post(route('warehouses.set-current'), ['warehouse_id' => $inactive->id])
         ->assertRedirect()
-        ->assertSessionHas('error', 'No tienes acceso a la bodega seleccionada.')
-        ->assertSessionMissing('success');
+        ->assertInertiaFlash('error', 'No tienes acceso a la bodega seleccionada.')
+        ->assertInertiaFlashMissing('success');
 });

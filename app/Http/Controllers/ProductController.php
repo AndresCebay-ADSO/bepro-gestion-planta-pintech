@@ -108,7 +108,9 @@ class ProductController extends Controller
 
         Product::create($validated);
 
-        return redirect()->route('products.index')->with('success', __('Producto creado exitosamente.'));
+        Inertia::flash('success', __('Producto creado exitosamente.'));
+
+        return redirect()->route('products.index');
     }
 
     public function show(Request $request, Product $product): Response
@@ -265,10 +267,14 @@ class ProductController extends Controller
         });
 
         if ($blocker !== null) {
-            return back()->with('error', $blocker);
+            Inertia::flash('error', $blocker);
+
+            return back();
         }
 
-        return redirect()->route('products.index')->with('success', __('Producto actualizado exitosamente.'));
+        Inertia::flash('success', __('Producto actualizado exitosamente.'));
+
+        return redirect()->route('products.index');
     }
 
     /**
@@ -371,9 +377,13 @@ class ProductController extends Controller
         });
 
         if (! $deleted) {
-            return back()->with('error', __('El producto tiene historial (fórmulas, costos, órdenes, cotizaciones o inventario). Desactívalo en su lugar.'));
+            Inertia::flash('error', __('El producto tiene historial (fórmulas, costos, órdenes, cotizaciones o inventario). Desactívalo en su lugar.'));
+
+            return back();
         }
 
-        return redirect()->route('products.index')->with('success', __('Producto eliminado exitosamente.'));
+        Inertia::flash('success', __('Producto eliminado exitosamente.'));
+
+        return redirect()->route('products.index');
     }
 }

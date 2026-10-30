@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Pencil, Trash2, Users } from 'lucide-react';
 
 import { ActiveBadge } from '@/components/active-badge';
@@ -60,7 +60,6 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
             status: filters.status ?? '',
         },
     });
-    const flash = usePage().props.flash;
     const confirm = useConfirm();
 
     const handleDelete = async (id: number) => {
@@ -155,18 +154,6 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
                         )
                     }
                 />
-
-                {flash?.success && (
-                    <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">
-                        {flash.success}
-                    </div>
-                )}
-
-                {flash?.error && (
-                    <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
-                        {flash.error}
-                    </div>
-                )}
 
                 <DataTableFilters
                     fields={[

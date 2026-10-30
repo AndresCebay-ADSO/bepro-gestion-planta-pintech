@@ -86,7 +86,7 @@ it('no agrega una presentación si la orden se completó mientras esperaba (OPL-
     $this->post(route('production-orders.packaging-plans.store', $this->order), [
         'product_variant_id' => $this->bucket->id,
         'planned_units' => 2,
-    ])->assertSessionHas('error', "No se puede agregar una presentación a una orden en estado 'Completada'.")
+    ])->assertInertiaFlash('error', "No se puede agregar una presentación a una orden en estado 'Completada'.")
         // Como error de validación también: Inertia llama a onError y el formulario conserva lo escrito.
         ->assertSessionHasErrors(['production_order' => "No se puede agregar una presentación a una orden en estado 'Completada'."]);
 
@@ -97,7 +97,7 @@ it('no quita una presentación si la orden se completó mientras esperaba', func
     changeOrderStatusRightAfterAuthorization($this->order, ProductionOrderStatus::Completed);
 
     $this->delete(route('production-orders.packaging-plans.destroy', [$this->order, $this->gallonPlan]))
-        ->assertSessionHas('error', "No se puede quitar una presentación de una orden en estado 'Completada'.")
+        ->assertInertiaFlash('error', "No se puede quitar una presentación de una orden en estado 'Completada'.")
         // Como error de validación también: Inertia llama a onError y el formulario conserva lo escrito.
         ->assertSessionHasErrors(['production_order' => "No se puede quitar una presentación de una orden en estado 'Completada'."]);
 
@@ -111,7 +111,7 @@ it('no agrega un ajuste de línea si la orden se completó mientras esperaba (OP
         'raw_material_id' => $this->rawMaterial->id,
         'quantity' => '1.5',
         'reason' => 'Corrección de viscosidad',
-    ])->assertSessionHas('error', "No se puede agregar un ajuste de línea a una orden en estado 'Completada'.")
+    ])->assertInertiaFlash('error', "No se puede agregar un ajuste de línea a una orden en estado 'Completada'.")
         // Como error de validación también: Inertia llama a onError y el formulario conserva lo escrito.
         ->assertSessionHasErrors(['production_order' => "No se puede agregar un ajuste de línea a una orden en estado 'Completada'."]);
 
@@ -122,7 +122,7 @@ it('no quita un ajuste de línea si la orden se completó mientras esperaba (OPX
     changeOrderStatusRightAfterAuthorization($this->order, ProductionOrderStatus::Completed);
 
     $this->delete(route('production-orders.line-adjustments.destroy', [$this->order, $this->adjustment]))
-        ->assertSessionHas('error', "No se puede quitar un ajuste de línea de una orden en estado 'Completada'.")
+        ->assertInertiaFlash('error', "No se puede quitar un ajuste de línea de una orden en estado 'Completada'.")
         // Como error de validación también: Inertia llama a onError y el formulario conserva lo escrito.
         ->assertSessionHasErrors(['production_order' => "No se puede quitar un ajuste de línea de una orden en estado 'Completada'."]);
 
@@ -138,7 +138,7 @@ it('un operario no agrega una presentación si la orden pasó a revisión mientr
     $this->post(route('production-orders.packaging-plans.store', $this->order), [
         'product_variant_id' => $this->bucket->id,
         'planned_units' => 2,
-    ])->assertSessionHas('error', "No se puede agregar una presentación a una orden en estado 'Pendiente de revisión'.")
+    ])->assertInertiaFlash('error', "No se puede agregar una presentación a una orden en estado 'Pendiente de revisión'.")
         // Como error de validación también: Inertia llama a onError y el formulario conserva lo escrito.
         ->assertSessionHasErrors(['production_order' => "No se puede agregar una presentación a una orden en estado 'Pendiente de revisión'."]);
 
@@ -151,7 +151,7 @@ it('quien puede revisar sí agrega una presentación a una orden que pasó a rev
     $this->post(route('production-orders.packaging-plans.store', $this->order), [
         'product_variant_id' => $this->bucket->id,
         'planned_units' => 2,
-    ])->assertSessionHasNoErrors()->assertSessionMissing('error');
+    ])->assertSessionHasNoErrors()->assertInertiaFlashMissing('error');
 
     expect(ProductionOrderPackagingPlan::query()->where('production_order_id', $this->order->id)->count())->toBe(2);
 });
@@ -169,7 +169,7 @@ it('no consume un saldo si la orden se completó mientras esperaba', function ()
     $this->post(route('production-orders.consume-remnant', $this->order), [
         'remnant_id' => $remnant->id,
         'quantity_gallons' => '1',
-    ])->assertSessionHas('error', "No se puede consumir un saldo en una orden en estado 'Completada'.")
+    ])->assertInertiaFlash('error', "No se puede consumir un saldo en una orden en estado 'Completada'.")
         // Como error de validación también: Inertia llama a onError y el formulario conserva lo escrito.
         ->assertSessionHasErrors(['production_order' => "No se puede consumir un saldo en una orden en estado 'Completada'."]);
 
@@ -182,7 +182,7 @@ it('no inicia, no devuelve ni cambia el color si el estado cambió mientras espe
 
     $response = $this->from(route('production-orders.show', $this->order))
         ->call($route === 'production-orders.update-color' ? 'PATCH' : 'POST', route($route, $this->order), $body)
-        ->assertSessionHas('error', $message);
+        ->assertInertiaFlash('error', $message);
 
     // Desde un diálogo, también error de validación: no se cierra como si se hubiera guardado ni borra lo escrito.
     $fromDialog

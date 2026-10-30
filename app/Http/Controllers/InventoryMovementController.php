@@ -109,7 +109,9 @@ class InventoryMovementController extends Controller
 
         $this->inventoryService->storeMovement($request->validated(), (int) $request->user()->id);
 
-        return redirect()->route('inventory-movements.index')->with('success', __('Movimiento de inventario registrado exitosamente.'));
+        Inertia::flash('success', __('Movimiento de inventario registrado exitosamente.'));
+
+        return redirect()->route('inventory-movements.index');
     }
 
     public function show(Request $request, InventoryMovement $inventoryMovement): Response

@@ -124,7 +124,9 @@ class UserController extends Controller
             throw $e;
         }
 
-        return redirect()->route('users.index')->with('success', 'Usuario creado exitosamente.');
+        Inertia::flash('success', 'Usuario creado exitosamente.');
+
+        return redirect()->route('users.index');
     }
 
     /**
@@ -158,11 +160,15 @@ class UserController extends Controller
 
         if ($user->id === $request->user()?->id) {
             if (! $validated['is_active']) {
-                return back()->with('error', 'No puedes desactivar tu propia cuenta de usuario.');
+                Inertia::flash('error', 'No puedes desactivar tu propia cuenta de usuario.');
+
+                return back();
             }
 
             if ($roleChanged) {
-                return back()->with('error', 'No puedes cambiar tu propio rol.');
+                Inertia::flash('error', 'No puedes cambiar tu propio rol.');
+
+                return back();
             }
         }
 
@@ -226,7 +232,9 @@ class UserController extends Controller
                 Storage::disk(User::SIGNATURE_DISK)->delete($newSignaturePath);
             }
 
-            return back()->with('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
+            Inertia::flash('error', 'No se puede desactivar o degradar al único super administrador activo del sistema.');
+
+            return back();
         }
 
         if ($oldSignatureToDelete) {
@@ -245,7 +253,9 @@ class UserController extends Controller
                     .SystemRole::labelFor($validated['role']));
         }
 
-        return redirect()->route('users.index')->with('success', 'Usuario actualizado exitosamente.');
+        Inertia::flash('success', 'Usuario actualizado exitosamente.');
+
+        return redirect()->route('users.index');
     }
 
     /**
@@ -261,12 +271,16 @@ class UserController extends Controller
         $this->authorize('delete', $user);
 
         if ($user->id === auth()->id()) {
-            return back()->with('error', 'No puedes eliminar tu propia cuenta.');
+            Inertia::flash('error', 'No puedes eliminar tu propia cuenta.');
+
+            return back();
         }
 
         // La autoría en la auditoría no tiene clave foránea; el resto del historial lo protegen las claves foráneas.
         if ($user->hasActivity()) {
-            return back()->with('error', 'No se puede eliminar el usuario porque tiene actividad registrada en el sistema. Desactiva su cuenta en su lugar.');
+            Inertia::flash('error', 'No se puede eliminar el usuario porque tiene actividad registrada en el sistema. Desactiva su cuenta en su lugar.');
+
+            return back();
         }
 
         $result = DB::transaction(function () use ($user): string {
@@ -284,14 +298,20 @@ class UserController extends Controller
         });
 
         if ($result === 'last_super_admin') {
-            return back()->with('error', 'No se puede eliminar al único super administrador activo del sistema.');
+            Inertia::flash('error', 'No se puede eliminar al único super administrador activo del sistema.');
+
+            return back();
         }
 
         if ($result === 'has_history') {
-            return back()->with('error', 'No se puede eliminar el usuario porque tiene registros asociados en el sistema. Desactiva su cuenta en su lugar.');
+            Inertia::flash('error', 'No se puede eliminar el usuario porque tiene registros asociados en el sistema. Desactiva su cuenta en su lugar.');
+
+            return back();
         }
 
-        return redirect()->route('users.index')->with('success', 'Usuario eliminado exitosamente.');
+        Inertia::flash('success', 'Usuario eliminado exitosamente.');
+
+        return redirect()->route('users.index');
     }
 
     /**

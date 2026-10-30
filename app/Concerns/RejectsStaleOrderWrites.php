@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Concerns;
 
 use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
 
 /**
  * Respuesta de una escritura en la OP desde un formulario pequeño o un diálogo (presentación, ajuste, saldo, color,
@@ -15,8 +16,9 @@ trait RejectsStaleOrderWrites
 {
     protected function staleOrderResponse(\DomainException $exception): RedirectResponse
     {
+        Inertia::flash('error', $exception->getMessage());
+
         return back()
-            ->withErrors(['production_order' => $exception->getMessage()])
-            ->with('error', $exception->getMessage());
+            ->withErrors(['production_order' => $exception->getMessage()]);
     }
 }

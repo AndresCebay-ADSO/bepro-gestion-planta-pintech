@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { BellRing, Pencil, Power, PowerOff, Trash2 } from 'lucide-react';
 import type { ComponentProps } from 'react';
 import { useState } from 'react';
@@ -101,8 +101,6 @@ export default function RawMaterialsIndex({
             options: statusOptions,
         },
     ];
-
-    const flash = usePage().props.flash;
 
     const [deleteTarget, setDeleteTarget] = useState<RawMaterialRow | null>(
         null,
@@ -237,19 +235,6 @@ export default function RawMaterialsIndex({
                         )
                     }
                 />
-
-                {/* Alertas */}
-                {flash?.success && (
-                    <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">
-                        {flash.success}
-                    </div>
-                )}
-
-                {flash?.error && (
-                    <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
-                        {flash.error}
-                    </div>
-                )}
 
                 {/* Search */}
                 <DataTableFilters

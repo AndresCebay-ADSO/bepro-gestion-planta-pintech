@@ -14,6 +14,7 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 
 class PackagingPlanController extends Controller
 {
@@ -50,8 +51,9 @@ class PackagingPlanController extends Controller
             return $this->staleOrderResponse($exception);
         }
 
-        return redirect()->route('production-orders.show', $productionOrder)
-            ->with('success', 'Plan de envasado agregado.');
+        Inertia::flash('success', 'Plan de envasado agregado.');
+
+        return redirect()->route('production-orders.show', $productionOrder);
     }
 
     /**
@@ -77,7 +79,8 @@ class PackagingPlanController extends Controller
             return $this->staleOrderResponse($exception);
         }
 
-        return redirect()->route('production-orders.show', $productionOrder)
-            ->with('success', 'Plan de envasado eliminado.');
+        Inertia::flash('success', 'Plan de envasado eliminado.');
+
+        return redirect()->route('production-orders.show', $productionOrder);
     }
 }

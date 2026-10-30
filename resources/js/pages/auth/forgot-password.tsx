@@ -1,4 +1,5 @@
 import { Form, Head, Link } from '@inertiajs/react';
+import { AuthFlashError } from '@/components/auth-flash-error';
 import { FormActions } from '@/components/form-actions';
 import { FormField } from '@/components/form-field';
 import { Input } from '@/components/ui/input';
@@ -92,6 +93,8 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                 {status}
                             </div>
                         )}
+
+                        <AuthFlashError className="mb-4" />
 
                         <Form
                             noValidate

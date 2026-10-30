@@ -89,6 +89,8 @@ Route (routes/web.php, role: middleware)
   4. Frontend: `useFilters({ routeUrl, initialFilters })` + `<DataTableFilters />`.
 - **Listings (MANDATORY)**: listings use `<DataListing>` with `<RowActions>` (`DESIGN.md` §9). No hand-written
   `<table>` in `pages/` (enforced by `design-contract.test.ts`; the only exception is `Costs/Index`).
+- **Flash Notifications**: use `Inertia::flash('success'|'error', …)` as a separate statement before returning the redirect (never `->with()` or `session()->flash()`); rendered only by `<FlashMessages>` (and `<AuthFlashError>` on sign-in screens) from `usePage().flash`. A partial reload (`router.reload`) clears `page.flash`, so never
+  reload after a form whose server response already redirects with a flash.
 - **UI**: follow `DESIGN.md` (UX contract): tokens, tones, typography, icons, forms and listings.
 
 ## Critical Business Invariants (DO NOT VIOLATE)

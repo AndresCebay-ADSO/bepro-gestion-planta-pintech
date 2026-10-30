@@ -9,10 +9,16 @@ const alertVariants = cva(
     variants: {
       variant: {
         default: "bg-background text-foreground",
-        // DESIGN.md §2 y §3 (tokens de color). `destructive-foreground` es el texto sobre un fondo rojo: sin ese fondo,
-        // en el tema claro quedaba blanco sobre blanco (auditoría 3.6, PR 6).
+        // DESIGN.md §3 y §4: relleno al 10 % y texto con `*-text` (contraste >= 4.5:1 sobre su tinte en claro y
+        // oscuro). `*-foreground` es el texto sobre el relleno sólido, nunca sobre el tinte.
+        success:
+          "border-success/25 bg-success/10 text-success-text *:data-[slot=alert-description]:text-success-text",
+        warning:
+          "border-warning/25 bg-warning/10 text-warning-text *:data-[slot=alert-description]:text-warning-text",
+        info:
+          "border-info/25 bg-info/10 text-info-text *:data-[slot=alert-description]:text-info-text",
         destructive:
-          "border-destructive/25 bg-destructive/10 text-destructive [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90",
+          "border-destructive/25 bg-destructive/10 text-destructive-text *:data-[slot=alert-description]:text-destructive-text",
       },
     },
     defaultVariants: {

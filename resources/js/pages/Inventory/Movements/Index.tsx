@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { ComponentProps } from 'react';
@@ -131,7 +131,6 @@ export default function InventoryMovementsIndex({
         isOpen: boolean;
         mode: 'entry' | 'exit';
     }>({ isOpen: false, mode: 'entry' });
-    const flash = usePage().props.flash;
     const {
         load: loadFormData,
         isLoading: isLoadingFormData,
@@ -168,9 +167,9 @@ export default function InventoryMovementsIndex({
     const closeDrawer = () =>
         setDrawerState((prev) => ({ ...prev, isOpen: false }));
 
+    // La redirección del servidor ya trae el listado nuevo. Una recarga parcial aquí borraría el aviso de Inertia.
     const onSuccessForm = () => {
         closeDrawer();
-        router.reload({ only: ['movements'] });
     };
 
     // Sin código propio: el número del movimiento (el de su detalle) lo identifica.
@@ -280,17 +279,6 @@ export default function InventoryMovementsIndex({
                     onFilterImmediate={setFilterImmediate}
                     onClear={clearFilters}
                 />
-
-                {flash?.success && (
-                    <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">
-                        {flash.success}
-                    </div>
-                )}
-                {flash?.error && (
-                    <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
-                        {flash.error}
-                    </div>
-                )}
 
                 <DataListing
                     rows={movements.data}

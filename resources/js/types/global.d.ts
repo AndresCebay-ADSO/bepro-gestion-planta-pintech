@@ -5,6 +5,10 @@ import type { NewAlert, RecentAlert, WarehouseContext } from '@/types/shared';
 /** Props que HandleInertiaRequests::share() envía a todas las páginas. */
 declare module '@inertiajs/core' {
     export interface InertiaConfig {
+        flashDataType: {
+            success?: string;
+            error?: string;
+        };
         sharedPageProps: {
             name: string;
             auth: Auth;
@@ -17,11 +21,7 @@ declare module '@inertiajs/core' {
             recentAlerts: RecentAlert[];
             /** Etiqueta y tono de los enums con color (`ToneEnums`). Llega una vez por sesión; sin sesión no existe. */
             enums?: SharedEnums;
-            flash: {
-                success?: string | null;
-                error?: string | null;
-                new_alerts: NewAlert[];
-            };
+            newAlerts: NewAlert[];
             [key: string]: unknown;
         };
     }

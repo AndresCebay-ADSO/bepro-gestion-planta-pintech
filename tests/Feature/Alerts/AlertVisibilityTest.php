@@ -118,7 +118,7 @@ it('entrega las alertas nuevas de la sesión solo si se ve su tipo', function (S
         ->get(route('dashboard'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('flash.new_alerts', fn ($alerts) => collect($alerts)->pluck('type')->all() === $expectedTypes));
+            ->where('newAlerts', fn ($alerts) => collect($alerts)->pluck('type')->all() === $expectedTypes));
 })->with([
     'operador (sin alerts.view)' => [SystemRole::Operator, []],
     'producción' => [SystemRole::Production, [AlertType::StockBajo->value]],

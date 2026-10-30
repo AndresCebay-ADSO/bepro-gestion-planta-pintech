@@ -91,8 +91,9 @@ class PaintDevelopmentRequestController extends Controller
             ? __('Solicitud enviada para revisión.')
             : __('Solicitud de desarrollo guardada en borrador.');
 
-        return redirect()->route('paint-development-requests.show', $paintRequest)
-            ->with('success', $message);
+        Inertia::flash('success', $message);
+
+        return redirect()->route('paint-development-requests.show', $paintRequest);
     }
 
     public function show(Request $request, PaintDevelopmentRequest $paintDevelopmentRequest): Response
@@ -138,8 +139,9 @@ class PaintDevelopmentRequestController extends Controller
             ? __('Solicitud enviada para revisión.')
             : __('Solicitud de desarrollo actualizada.');
 
-        return redirect()->route('paint-development-requests.show', $paintDevelopmentRequest)
-            ->with('success', $message);
+        Inertia::flash('success', $message);
+
+        return redirect()->route('paint-development-requests.show', $paintDevelopmentRequest);
     }
 
     public function submit(PaintDevelopmentRequest $paintDevelopmentRequest): RedirectResponse
@@ -148,8 +150,9 @@ class PaintDevelopmentRequestController extends Controller
 
         $this->service->submit($paintDevelopmentRequest);
 
-        return redirect()->route('paint-development-requests.show', $paintDevelopmentRequest)
-            ->with('success', __('Solicitud enviada para revisión.'));
+        Inertia::flash('success', __('Solicitud enviada para revisión.'));
+
+        return redirect()->route('paint-development-requests.show', $paintDevelopmentRequest);
     }
 
     public function updateStatus(
@@ -158,8 +161,9 @@ class PaintDevelopmentRequestController extends Controller
     ): RedirectResponse {
         $this->service->updateStatus($paintDevelopmentRequest, $request->validated());
 
-        return redirect()->route('paint-development-requests.show', $paintDevelopmentRequest)
-            ->with('success', __('Estado de la solicitud actualizado.'));
+        Inertia::flash('success', __('Estado de la solicitud actualizado.'));
+
+        return redirect()->route('paint-development-requests.show', $paintDevelopmentRequest);
     }
 
     public function exportPdf(PaintDevelopmentRequest $paintDevelopmentRequest): \Illuminate\Http\Response

@@ -78,7 +78,9 @@ class RoleController extends Controller
 
         $this->createRole->execute($validated['name'], $validated['permissions']);
 
-        return redirect()->route('roles.index')->with('success', 'Rol creado exitosamente.');
+        Inertia::flash('success', 'Rol creado exitosamente.');
+
+        return redirect()->route('roles.index');
     }
 
     public function show(Request $request, Role $role): Response
@@ -123,7 +125,9 @@ class RoleController extends Controller
 
         $this->updateRole->execute($role, $validated['name'], $validated['permissions']);
 
-        return redirect()->route('roles.index')->with('success', 'Rol actualizado exitosamente.');
+        Inertia::flash('success', 'Rol actualizado exitosamente.');
+
+        return redirect()->route('roles.index');
     }
 
     public function destroy(Role $role): RedirectResponse
@@ -133,10 +137,14 @@ class RoleController extends Controller
         try {
             $this->deleteRole->execute($role);
         } catch (\DomainException $exception) {
-            return back()->with('error', $exception->getMessage());
+            Inertia::flash('error', $exception->getMessage());
+
+            return back();
         }
 
-        return redirect()->route('roles.index')->with('success', 'Rol eliminado exitosamente.');
+        Inertia::flash('success', 'Rol eliminado exitosamente.');
+
+        return redirect()->route('roles.index');
     }
 
     /**

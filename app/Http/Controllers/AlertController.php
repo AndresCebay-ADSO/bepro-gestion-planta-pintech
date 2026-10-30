@@ -93,6 +93,8 @@ class AlertController extends Controller
 
         $this->alertService->resolve($alert, (int) $request->user()->id);
 
-        return back()->with('success', __('Alerta marcada como resuelta.'));
+        Inertia::flash('success', __('Alerta marcada como resuelta.'));
+
+        return back();
     }
 }

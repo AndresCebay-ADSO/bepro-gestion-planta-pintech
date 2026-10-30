@@ -40,7 +40,7 @@ it('elimina una bodega sin historial y rechaza una con lotes', function () {
     $this->delete(route('warehouses.destroy', $unused))->assertRedirect(route('warehouses.index'));
     $this->assertDatabaseMissing('warehouses', ['id' => $unused->id]);
 
-    $this->delete(route('warehouses.destroy', $withBatches))->assertSessionHas('error');
+    $this->delete(route('warehouses.destroy', $withBatches))->assertInertiaFlash('error');
     $this->assertDatabaseHas('warehouses', ['id' => $withBatches->id]);
 });
 
@@ -49,7 +49,7 @@ it('no desactiva una bodega con stock de materia prima', function () {
     $warehouse = Warehouse::factory()->create();
     InventoryBatch::factory()->create(['warehouse_id' => $warehouse->id, 'remaining_quantity' => 10, 'initial_quantity' => 10]);
 
-    $this->put(route('warehouses.update', $warehouse), warehouseUpdatePayload($warehouse, false))->assertSessionHas('error');
+    $this->put(route('warehouses.update', $warehouse), warehouseUpdatePayload($warehouse, false))->assertInertiaFlash('error');
 
     expect($warehouse->fresh()->is_active)->toBeTrue();
 });
@@ -60,7 +60,7 @@ it('no desactiva una bodega con órdenes en curso y sí una sin stock ni órdene
     $busy = $order->warehouse;
     $idle = Warehouse::factory()->create();
 
-    $this->put(route('warehouses.update', $busy), warehouseUpdatePayload($busy, false))->assertSessionHas('error');
+    $this->put(route('warehouses.update', $busy), warehouseUpdatePayload($busy, false))->assertInertiaFlash('error');
     expect($busy->fresh()->is_active)->toBeTrue();
 
     $this->put(route('warehouses.update', $idle), warehouseUpdatePayload($idle, false))->assertRedirect(route('warehouses.index'));
@@ -78,7 +78,7 @@ it('no desactiva una bodega con saldos de producción disponibles, pero sí con 
         'created_by' => $admin->id,
     ]);
 
-    $this->put(route('warehouses.update', $warehouse), warehouseUpdatePayload($warehouse, false))->assertSessionHas('error');
+    $this->put(route('warehouses.update', $warehouse), warehouseUpdatePayload($warehouse, false))->assertInertiaFlash('error');
     expect($warehouse->fresh()->is_active)->toBeTrue();
 
     $remnant->update([
@@ -102,7 +102,7 @@ it('elimina una fórmula sin historial con sus ingredientes y rechaza una usada 
     $this->delete(route('formulas.destroy', $unused))->assertRedirect(route('formulas.index'));
     $this->assertDatabaseMissing('formulas', ['id' => $unused->id]);
 
-    $this->delete(route('formulas.destroy', $used))->assertSessionHas('error');
+    $this->delete(route('formulas.destroy', $used))->assertInertiaFlash('error');
     $this->assertDatabaseHas('formulas', ['id' => $used->id]);
 });
 

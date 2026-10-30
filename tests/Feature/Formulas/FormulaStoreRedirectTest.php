@@ -85,7 +85,7 @@ test('stores formula and redirects to formulas index by default', function () {
 
     $response
         ->assertRedirect(route('formulas.index'))
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 });
 
 test('stores formula and redirects to return_to when provided', function () {
@@ -100,7 +100,7 @@ test('stores formula and redirects to return_to when provided', function () {
 
     $response
         ->assertRedirect('/products/'.$this->product->id)
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 });
 
 test('stores formula and redirects to filtered formulas list via return_to', function () {
@@ -115,7 +115,7 @@ test('stores formula and redirects to filtered formulas list via return_to', fun
 
     $response
         ->assertRedirect('/formulas?search=pintura')
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 });
 
 test('rejects unsafe return_to and falls back to formulas index', function () {

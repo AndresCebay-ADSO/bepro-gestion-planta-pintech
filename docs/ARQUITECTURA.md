@@ -455,9 +455,10 @@ class InventoryMovementController extends Controller
             $request->validated(), 
             $request->user()->id
         );
-        
-        return redirect()->route('inventory.index')
-            ->with('success', 'Movimiento registrado');
+
+        Inertia::flash('success', 'Movimiento registrado');
+
+        return redirect()->route('inventory.index');
     }
 }
 

@@ -1,4 +1,5 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
+import { AuthFlashError } from '@/components/auth-flash-error';
 import { FormActions } from '@/components/form-actions';
 import { FormCheckbox, FormField } from '@/components/form-field';
 import PasswordInput from '@/components/password-input';
@@ -13,8 +14,6 @@ type Props = {
 };
 
 export default function Login({ status, canResetPassword }: Props) {
-    const { flash } = usePage().props;
-
     return (
         <>
             <Head title="Iniciar sesión — Pintech" />
@@ -108,12 +107,7 @@ export default function Login({ status, canResetPassword }: Props) {
                             </div>
                         )}
 
-                        {/* Flash error — throttle, cuenta inactiva desde back()->with() */}
-                        {flash?.error && (
-                            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-center text-sm font-medium text-red-600 dark:text-red-400">
-                                {flash.error}
-                            </div>
-                        )}
+                        <AuthFlashError className="mb-4" />
 
                         {/* Formulario */}
                         <Form

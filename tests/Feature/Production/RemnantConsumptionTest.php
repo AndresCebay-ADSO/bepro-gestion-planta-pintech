@@ -193,7 +193,7 @@ it('consumes a remnant partially', function () {
         'remnant_id' => $this->remnant->id,
         'quantity_gallons' => 4,
         'notes' => 'Consumo parcial',
-    ])->assertRedirect()->assertSessionHas('success');
+    ])->assertRedirect()->assertInertiaFlash('success');
 
     $this->remnant->refresh();
 
@@ -207,7 +207,7 @@ it('consumes a remnant fully', function () {
         'remnant_id' => $this->remnant->id,
         'quantity_gallons' => 10,
         'notes' => 'Consumo total',
-    ])->assertRedirect()->assertSessionHas('success');
+    ])->assertRedirect()->assertInertiaFlash('success');
 
     $this->remnant->refresh();
 
@@ -240,7 +240,7 @@ it('allows consuming from a different product remnant', function () {
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
         'quantity_gallons' => 3,
-    ])->assertRedirect()->assertSessionHas('success');
+    ])->assertRedirect()->assertInertiaFlash('success');
 
     expect($this->remnant->fresh()->status)->not->toBe(RemnantStatus::Available);
 });

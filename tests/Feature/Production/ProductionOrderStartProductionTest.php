@@ -122,7 +122,7 @@ test('operator can start a pending production order', function () {
     $this->actingAs($operator)
         ->post(route('production-orders.start', $order))
         ->assertRedirect(route('production-orders.show', $order))
-        ->assertSessionHas('success');
+        ->assertInertiaFlash('success');
 
     $order->refresh();
 

@@ -91,7 +91,7 @@ it('elimina una categoría de producto sin productos y rechaza una con productos
     $this->delete(route('catalogs.product-categories.destroy', $empty))
         ->assertRedirect(route('catalogs.product-categories.index'));
     $this->delete(route('catalogs.product-categories.destroy', $used))
-        ->assertSessionHas('error', 'La categoría tiene productos. Desactívala en su lugar.');
+        ->assertInertiaFlash('error', 'La categoría tiene productos. Desactívala en su lugar.');
 
     expect(ProductCategory::query()->whereKey($empty->id)->exists())->toBeFalse()
         ->and(ProductCategory::query()->whereKey($used->id)->exists())->toBeTrue();

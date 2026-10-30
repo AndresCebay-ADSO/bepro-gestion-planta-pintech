@@ -13,6 +13,7 @@ use App\Services\DeactivationGuardService;
 use App\Services\ProductionCostRecalculationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class ProductVariantController extends Controller
 {
@@ -36,9 +37,10 @@ class ProductVariantController extends Controller
             $this->productionCostRecalculationService->repriceVariantsOfProduct($product);
         });
 
+        Inertia::flash('success', __('Variante creada exitosamente.'));
+
         return redirect()
-            ->route('products.show', $product)
-            ->with('success', __('Variante creada exitosamente.'));
+            ->route('products.show', $product);
     }
 
     public function update(UpdateProductVariantRequest $request, Product $product, ProductVariant $variant): RedirectResponse
@@ -65,12 +67,15 @@ class ProductVariantController extends Controller
         });
 
         if ($blocker !== null) {
-            return back()->with('error', $blocker);
+            Inertia::flash('error', $blocker);
+
+            return back();
         }
 
+        Inertia::flash('success', __('Variante actualizada exitosamente.'));
+
         return redirect()
-            ->route('products.show', $product)
-            ->with('success', __('Variante actualizada exitosamente.'));
+            ->route('products.show', $product);
     }
 
     public function destroy(Product $product, ProductVariant $variant): RedirectResponse
@@ -80,11 +85,14 @@ class ProductVariantController extends Controller
         // Solo si nunca se usó (cotizaciones, pedidos, inventario, lotes, precios): si no, se desactiva
         // (docs/POLITICA_ELIMINACION.md §3.1).
         if (! $this->deleteUnused->execute($variant)) {
-            return back()->with('error', __('La presentación tiene historial (cotizaciones, pedidos, inventario o precios). Desactívala en su lugar.'));
+            Inertia::flash('error', __('La presentación tiene historial (cotizaciones, pedidos, inventario o precios). Desactívala en su lugar.'));
+
+            return back();
         }
 
+        Inertia::flash('success', __('Variante eliminada exitosamente.'));
+
         return redirect()
-            ->route('products.show', $product)
-            ->with('success', __('Variante eliminada exitosamente.'));
+            ->route('products.show', $product);
     }
 }

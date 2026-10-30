@@ -87,9 +87,10 @@ class WarehouseController extends Controller
 
         Warehouse::create($request->validated());
 
+        Inertia::flash('success', __('Bodega registrada exitosamente.'));
+
         return redirect()
-            ->route('warehouses.index')
-            ->with('success', __('Bodega registrada exitosamente.'));
+            ->route('warehouses.index');
     }
 
     public function show(Warehouse $warehouse): Response
@@ -150,12 +151,15 @@ class WarehouseController extends Controller
         });
 
         if ($blocker !== null) {
-            return back()->with('error', $blocker);
+            Inertia::flash('error', $blocker);
+
+            return back();
         }
 
+        Inertia::flash('success', __('Bodega actualizada exitosamente.'));
+
         return redirect()
-            ->route('warehouses.index')
-            ->with('success', __('Bodega actualizada exitosamente.'));
+            ->route('warehouses.index');
     }
 
     public function destroy(Warehouse $warehouse): RedirectResponse
@@ -164,12 +168,15 @@ class WarehouseController extends Controller
 
         // Solo si nunca se usó; sus asignaciones de usuarios se van con ella (docs/POLITICA_ELIMINACION.md §3.1).
         if (! $this->deleteUnused->execute($warehouse)) {
-            return back()->with('error', __('La bodega tiene historial (lotes, movimientos, órdenes o inventario). Desactívala en su lugar.'));
+            Inertia::flash('error', __('La bodega tiene historial (lotes, movimientos, órdenes o inventario). Desactívala en su lugar.'));
+
+            return back();
         }
 
+        Inertia::flash('success', __('Bodega eliminada exitosamente.'));
+
         return redirect()
-            ->route('warehouses.index')
-            ->with('success', __('Bodega eliminada exitosamente.'));
+            ->route('warehouses.index');
     }
 
     public function assignUsersPage(Warehouse $warehouse): Response
@@ -256,9 +263,10 @@ class WarehouseController extends Controller
             }
         });
 
+        Inertia::flash('success', __('Usuarios asignados correctamente.'));
+
         return redirect()
-            ->route('warehouses.show', $warehouse)
-            ->with('success', __('Usuarios asignados correctamente.'));
+            ->route('warehouses.show', $warehouse);
     }
 
     public function setCurrentWarehouse(SetCurrentWarehouseRequest $request): RedirectResponse
@@ -274,11 +282,15 @@ class WarehouseController extends Controller
         $isAvailable = $this->warehouseContextService->availableWarehouses($user)->contains('id', $warehouseId);
 
         if (! $isAvailable) {
-            return back()->with('error', __('No tienes acceso a la bodega seleccionada.'));
+            Inertia::flash('error', __('No tienes acceso a la bodega seleccionada.'));
+
+            return back();
         }
 
         $request->session()->put('current_warehouse_id', $warehouseId);
 
-        return back()->with('success', __('Bodega activa actualizada.'));
+        Inertia::flash('success', __('Bodega activa actualizada.'));
+
+        return back();
     }
 }

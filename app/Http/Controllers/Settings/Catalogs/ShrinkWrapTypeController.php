@@ -74,9 +74,10 @@ class ShrinkWrapTypeController extends Controller
 
         $this->saveType->execute($request->validated());
 
+        Inertia::flash('success', __('Tipo de termoencogido registrado exitosamente.'));
+
         return redirect()
-            ->route('catalogs.shrink-wrap-types.index')
-            ->with('success', __('Tipo de termoencogido registrado exitosamente.'));
+            ->route('catalogs.shrink-wrap-types.index');
     }
 
     public function edit(ShrinkWrapType $shrinkWrapType): Response
@@ -99,9 +100,10 @@ class ShrinkWrapTypeController extends Controller
 
         $this->saveType->execute($request->validated(), $shrinkWrapType);
 
+        Inertia::flash('success', __('Tipo de termoencogido actualizado exitosamente.'));
+
         return redirect()
-            ->route('catalogs.shrink-wrap-types.index')
-            ->with('success', __('Tipo de termoencogido actualizado exitosamente.'));
+            ->route('catalogs.shrink-wrap-types.index');
     }
 
     public function destroy(ShrinkWrapType $shrinkWrapType): RedirectResponse
@@ -117,12 +119,15 @@ class ShrinkWrapTypeController extends Controller
         );
 
         if (! $deleted) {
-            return back()->with('error', __('El tipo de termoencogido ya se usó. Desactívalo en su lugar.'));
+            Inertia::flash('error', __('El tipo de termoencogido ya se usó. Desactívalo en su lugar.'));
+
+            return back();
         }
 
+        Inertia::flash('success', __('Tipo de termoencogido eliminado exitosamente.'));
+
         return redirect()
-            ->route('catalogs.shrink-wrap-types.index')
-            ->with('success', __('Tipo de termoencogido eliminado exitosamente.'));
+            ->route('catalogs.shrink-wrap-types.index');
     }
 
     /**

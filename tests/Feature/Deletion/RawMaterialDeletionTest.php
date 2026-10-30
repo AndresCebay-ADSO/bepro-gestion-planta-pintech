@@ -45,7 +45,7 @@ it('elimina una materia prima inactiva que nunca se usó y rechaza una inactiva 
     $this->delete(route('raw-materials.destroy', $unused))->assertRedirect(route('raw-materials.index'));
     $this->assertDatabaseMissing('raw_materials', ['id' => $unused->id]);
 
-    $this->delete(route('raw-materials.destroy', $used))->assertSessionHas('error');
+    $this->delete(route('raw-materials.destroy', $used))->assertInertiaFlash('error');
     $this->assertDatabaseHas('raw_materials', ['id' => $used->id, 'is_active' => false]);
 });
 
@@ -55,6 +55,6 @@ it('no ofrece eliminar una materia prima inactiva a quien solo puede desactivar'
 
     $this->get(route('raw-materials.show', $rawMaterial))->assertInertia(fn (Assert $page) => $page->where('can.delete', false));
 
-    $this->delete(route('raw-materials.destroy', $rawMaterial))->assertSessionHas('error');
+    $this->delete(route('raw-materials.destroy', $rawMaterial))->assertInertiaFlash('error');
     $this->assertDatabaseHas('raw_materials', ['id' => $rawMaterial->id]);
 });

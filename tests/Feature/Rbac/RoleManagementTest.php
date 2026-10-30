@@ -280,7 +280,7 @@ it('no elimina un rol con usuarios asignados', function () {
     $this->from(route('roles.index'))
         ->delete(route('roles.destroy', $role))
         ->assertRedirect(route('roles.index'))
-        ->assertSessionHas('error');
+        ->assertInertiaFlash('error');
 
     expect(Role::whereKey($role->id)->exists())->toBeTrue()
         ->and($member->fresh()->hasRole($role->name))->toBeTrue();

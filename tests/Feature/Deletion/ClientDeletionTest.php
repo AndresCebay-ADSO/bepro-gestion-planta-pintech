@@ -35,7 +35,7 @@ it('elimina un cliente sin cotizaciones ni pedidos y rechaza uno que ya cotizó'
     $this->delete(route('clients.destroy', $unused))->assertRedirect(route('clients.index'));
     $this->assertDatabaseMissing('clients', ['id' => $unused->id]);
 
-    $this->delete(route('clients.destroy', $quoted))->assertSessionHas('error');
+    $this->delete(route('clients.destroy', $quoted))->assertInertiaFlash('error');
     $this->assertDatabaseHas('clients', ['id' => $quoted->id]);
 });
 
