@@ -152,9 +152,10 @@ la fuente; aquí solo la ubicación.
 
 - Las columnas se describen una sola vez: la tabla se pinta desde `md` y una tarjeta por fila debajo.
 - El identificador abre el detalle (o la edición si no hay detalle) con `rowHref`; el menú «⋯» no repite esa acción.
-- `<Pagination paginator={items} />` muestra el resumen de registros (`paginationSummary`: «Mostrando 16–30 de 230» con
-  varias páginas, «12 registros» / «1 registro» en una sola página y nada si está vacío) y los enlaces `<Link>` de
-  Inertia con `buttonVariants`.
+- `<Pagination paginator={items} />` muestra el resumen de registros (`paginationSummary`: «Mostrando 16–30 de 230
+  registros» con varias páginas, «12 registros» / «1 registro» en una sola página o fuera de rango y nada si está vacío;
+  acepta `noun={{ one, other }}` opcional cuando pagina otra unidad, como productos en Precios) y los enlaces `<Link>`
+  de Inertia con `buttonVariants`.
 - `resources/js/design-contract.test.ts` falla si aparece un `<table>` en `pages/` fuera de las excepciones que lista
   (solo `Costs/Index`, que no es un listado ni un detalle y se rediseña aparte).
 

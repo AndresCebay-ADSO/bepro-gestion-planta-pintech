@@ -204,7 +204,10 @@ export default function PricesIndex({
                     ))
                 )}
 
-                <Pagination paginator={productsData} />
+                <Pagination
+                    paginator={productsData}
+                    noun={{ one: 'producto', other: 'productos' }}
+                />
             </div>
         </>
     );

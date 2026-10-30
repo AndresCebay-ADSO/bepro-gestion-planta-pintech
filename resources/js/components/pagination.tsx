@@ -4,22 +4,67 @@ import type { FC } from 'react';
 
 import { buttonVariants } from '@/components/ui/button';
 import { paginationSummary } from '@/lib/pagination';
+import type { PaginationNoun } from '@/lib/pagination';
 import { cn } from '@/lib/utils';
 import type { PaginatorMeta } from '@/types/ui';
 
-export type PaginatorSummaryData = Pick<
+type PaginatorSummaryData = Pick<
     PaginatorMeta,
-    'links' | 'from' | 'to' | 'total'
+    'links' | 'from' | 'to' | 'total' | 'current_page' | 'last_page'
 >;
 
 interface PaginationProps {
     paginator: PaginatorSummaryData;
+    noun?: PaginationNoun;
     className?: string;
 }
 
-const Pagination: FC<PaginationProps> = ({ paginator, className }) => {
-    const { links, from, to, total } = paginator;
-    const summary = paginationSummary(from, to, total);
+interface PageArrowProps {
+    url: string | null | undefined;
+    label: string;
+    icon: typeof ChevronLeft;
+}
+
+const PageArrow: FC<PageArrowProps> = ({ url, label, icon: Icon }) => {
+    const classes = cn(
+        buttonVariants({ variant: 'outline', size: 'icon' }),
+        'h-9 w-9',
+        !url && 'pointer-events-none opacity-50',
+    );
+
+    if (!url) {
+        return (
+            <span aria-disabled="true" className={classes} title={label}>
+                <Icon className="size-4" />
+                <span className="sr-only">{label}</span>
+            </span>
+        );
+    }
+
+    return (
+        <Link
+            href={url}
+            preserveScroll
+            preserveState
+            className={classes}
+            title={label}
+        >
+            <Icon className="size-4" />
+            <span className="sr-only">{label}</span>
+        </Link>
+    );
+};
+
+const Pagination: FC<PaginationProps> = ({ paginator, noun, className }) => {
+    const {
+        links,
+        from,
+        to,
+        total,
+        current_page: currentPage,
+        last_page: lastPage,
+    } = paginator;
+    const summary = paginationSummary(from, to, total, noun);
     const hasPages = links.length > 3;
 
     if (!summary && !hasPages) {
@@ -29,12 +74,6 @@ const Pagination: FC<PaginationProps> = ({ paginator, className }) => {
     const previousLink = links[0];
     const nextLink = links[links.length - 1];
     const numericLinks = links.slice(1, -1);
-    // En el celular solo caben «Anterior», «Página X de Y» y «Siguiente»; los números, desde md.
-    const pageNumbers = numericLinks
-        .map((link) => Number(link.label))
-        .filter((page) => Number.isInteger(page));
-    const currentPage = Number(numericLinks.find((link) => link.active)?.label);
-    const lastPage = Math.max(...pageNumbers);
 
     return (
         <div
@@ -51,49 +90,19 @@ const Pagination: FC<PaginationProps> = ({ paginator, className }) => {
 
             {hasPages && (
                 <nav
-                    role="navigation"
                     aria-label="Paginación"
                     className="flex items-center justify-center space-x-1 md:ml-auto"
                 >
-                    {previousLink?.url ? (
-                        <Link
-                            href={previousLink.url}
-                            preserveScroll
-                            preserveState
-                            className={cn(
-                                buttonVariants({
-                                    variant: 'outline',
-                                    size: 'icon',
-                                }),
-                                'h-9 w-9',
-                            )}
-                            title="Anterior"
-                        >
-                            <ChevronLeft className="size-4" />
-                            <span className="sr-only">Anterior</span>
-                        </Link>
-                    ) : (
-                        <span
-                            aria-disabled="true"
-                            className={cn(
-                                buttonVariants({
-                                    variant: 'outline',
-                                    size: 'icon',
-                                }),
-                                'pointer-events-none h-9 w-9 opacity-50',
-                            )}
-                            title="Anterior"
-                        >
-                            <ChevronLeft className="size-4" />
-                            <span className="sr-only">Anterior</span>
-                        </span>
-                    )}
+                    <PageArrow
+                        url={previousLink?.url}
+                        label="Anterior"
+                        icon={ChevronLeft}
+                    />
 
-                    {Number.isInteger(currentPage) && (
-                        <span className="px-2 text-sm text-muted-foreground tabular-nums md:hidden">
-                            Página {currentPage} de {lastPage}
-                        </span>
-                    )}
+                    {/* En el celular solo caben «Anterior», «Página X de Y» y «Siguiente»; los números, desde md. */}
+                    <span className="px-2 text-sm text-muted-foreground tabular-nums md:hidden">
+                        Página {currentPage} de {lastPage}
+                    </span>
 
                     <div className="hidden items-center space-x-1 md:flex">
                         {numericLinks.map((link, index) => {
@@ -106,14 +115,21 @@ const Pagination: FC<PaginationProps> = ({ paginator, className }) => {
                                 }),
                                 'h-9 min-w-9 px-3 tabular-nums',
                                 link.active && 'pointer-events-none',
-                                isDisabled && 'pointer-events-none opacity-50',
+                                !link.active &&
+                                    isDisabled &&
+                                    'pointer-events-none opacity-50',
                             );
 
-                            if (isDisabled || !link.url) {
+                            if (link.active || isDisabled || !link.url) {
                                 return (
                                     <span
                                         key={`${link.label}-${index}`}
-                                        aria-disabled="true"
+                                        aria-current={
+                                            link.active ? 'page' : undefined
+                                        }
+                                        aria-disabled={
+                                            !link.active ? 'true' : undefined
+                                        }
                                         className={classes}
                                     >
                                         <span
@@ -131,9 +147,6 @@ const Pagination: FC<PaginationProps> = ({ paginator, className }) => {
                                     href={link.url}
                                     preserveScroll
                                     preserveState
-                                    aria-current={
-                                        link.active ? 'page' : undefined
-                                    }
                                     className={classes}
                                 >
                                     <span
@@ -146,39 +159,11 @@ const Pagination: FC<PaginationProps> = ({ paginator, className }) => {
                         })}
                     </div>
 
-                    {nextLink?.url ? (
-                        <Link
-                            href={nextLink.url}
-                            preserveScroll
-                            preserveState
-                            className={cn(
-                                buttonVariants({
-                                    variant: 'outline',
-                                    size: 'icon',
-                                }),
-                                'h-9 w-9',
-                            )}
-                            title="Siguiente"
-                        >
-                            <ChevronRight className="size-4" />
-                            <span className="sr-only">Siguiente</span>
-                        </Link>
-                    ) : (
-                        <span
-                            aria-disabled="true"
-                            className={cn(
-                                buttonVariants({
-                                    variant: 'outline',
-                                    size: 'icon',
-                                }),
-                                'pointer-events-none h-9 w-9 opacity-50',
-                            )}
-                            title="Siguiente"
-                        >
-                            <ChevronRight className="size-4" />
-                            <span className="sr-only">Siguiente</span>
-                        </span>
-                    )}
+                    <PageArrow
+                        url={nextLink?.url}
+                        label="Siguiente"
+                        icon={ChevronRight}
+                    />
                 </nav>
             )}
         </div>

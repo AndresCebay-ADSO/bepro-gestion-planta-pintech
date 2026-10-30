@@ -274,9 +274,10 @@ Same in all three:
 ## 9. Tables and listings
 
 - Listing pattern of `CLAUDE.md`: `Index{Domain}Request` + `{Domain}Filter` + `useFilters` + `<DataTableFilters />`;
-  server-side pagination (`components/pagination.tsx`: record total summary — «Mostrando 16–30 de 230» across pages,
-  «12 registros» / «1 registro» on a single page, nothing when empty — and Inertia `<Link>` buttons; on the phone only
-  previous, «Página X de Y» and next).
+  server-side pagination (`components/pagination.tsx`: record total summary — «Mostrando 16–30 de 230 registros» across
+  pages, «12 registros» / «1 registro» on a single page or out-of-range page, nothing when empty, with an optional
+  `noun={{ one, other }}` when the paginator counts something other than rows — and Inertia `<Link>` buttons; on the
+  phone only previous, «Página X de Y» and next).
 - Page frame: a listing uses the full width of the content area with `space-y-6 p-6` as its wrapper; no `max-w-*`,
   no `mx-auto`, no own background. Settings screens (catalogs) already sit inside the card of the Settings layout,
   which sets the padding: their wrapper is `space-y-6` with no padding.
