@@ -126,7 +126,7 @@ function batchDescription(
                     .join(' / ')
               : formatNumber(batch.initial_quantity, { maxDecimals: 2 });
 
-    const entryDate = formatSafeDate(batch.entry_date, 'short', '-');
+    const entryDate = formatSafeDate(batch.entry_date, 'short');
 
     return `Ingreso ${entryDate} · Disp. ${stockText}`;
 }

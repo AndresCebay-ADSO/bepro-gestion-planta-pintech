@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { FileText, ShoppingCart } from 'lucide-react';
 
 import { DetailTable } from '@/components/detail-table';
+import { EmptyCell } from '@/components/empty-cell';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
 import { PriorityBadge } from '@/components/priority-badge';
@@ -117,13 +118,13 @@ export default function SalesOrdersShow({
                                     <span className="text-muted-foreground">
                                         Contacto:
                                     </span>{' '}
-                                    {order.client.contact_name ?? '-'}
+                                    {order.client.contact_name ?? <EmptyCell />}
                                 </p>
                                 <p>
                                     <span className="text-muted-foreground">
                                         Teléfono:
                                     </span>{' '}
-                                    {order.client.phone ?? '-'}
+                                    {order.client.phone ?? <EmptyCell />}
                                 </p>
                                 {order.estimated_delivery_date && (
                                     <p>

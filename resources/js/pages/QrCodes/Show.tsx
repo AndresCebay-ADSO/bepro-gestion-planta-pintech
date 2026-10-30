@@ -10,6 +10,7 @@ import { useState } from 'react';
 
 import { ActiveBadge } from '@/components/active-badge';
 import { DetailTable } from '@/components/detail-table';
+import { EmptyCell } from '@/components/empty-cell';
 import { FormattedDate } from '@/components/formatted-date';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
@@ -208,8 +209,8 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                             )}
                                         </div>
                                     ) : (
-                                        <p className="text-muted-foreground">
-                                            —
+                                        <p>
+                                            <EmptyCell />
                                         </p>
                                     )}
                                 </div>
@@ -263,8 +264,8 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                             )}
                                         </div>
                                     ) : (
-                                        <p className="text-muted-foreground">
-                                            —
+                                        <p>
+                                            <EmptyCell />
                                         </p>
                                     )}
                                 </div>
@@ -273,7 +274,9 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                         Creado por
                                     </p>
                                     <p className="mt-1 text-sm text-foreground">
-                                        {qrCode.created_by?.name ?? '—'}
+                                        {qrCode.created_by?.name ?? (
+                                            <EmptyCell />
+                                        )}
                                     </p>
                                 </div>
                                 <div>
@@ -284,7 +287,6 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                         <FormattedDate
                                             value={qrCode.created_at}
                                             format="long"
-                                            emptyValue="—"
                                         />
                                     </p>
                                 </div>

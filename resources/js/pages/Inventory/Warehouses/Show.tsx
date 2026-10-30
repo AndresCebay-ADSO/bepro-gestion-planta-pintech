@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { ActiveBadge } from '@/components/active-badge';
 import { DetailTable } from '@/components/detail-table';
+import { EmptyCell } from '@/components/empty-cell';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
@@ -150,7 +151,7 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                             Dirección
                         </p>
                         <p className="text-sm text-foreground">
-                            {warehouse.address ?? '-'}
+                            {warehouse.address ?? <EmptyCell />}
                         </p>
                     </div>
                 </div>

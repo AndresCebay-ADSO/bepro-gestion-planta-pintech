@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { CheckCircle2, Clock, FileText, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
+import { EmptyCell } from '@/components/empty-cell';
 import { FormattedDate } from '@/components/formatted-date';
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
@@ -17,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { isEmptyCell } from '@/lib/data-listing';
 import {
     edit as requestsEdit,
     index as requestsIndex,
@@ -82,7 +84,7 @@ function FieldRow({ label, value }: { label: string; value: React.ReactNode }) {
         <div className="grid grid-cols-1 gap-1 py-2 sm:grid-cols-[200px_1fr]">
             <span className="text-sm text-muted-foreground">{label}</span>
             <span className="text-sm font-medium text-foreground">
-                {value ?? '—'}
+                {isEmptyCell(value) ? <EmptyCell /> : value}
             </span>
         </div>
     );
@@ -217,10 +219,7 @@ export default function PaintDevelopmentRequestShow({
                             label="Proyecto"
                             value={request.project_name}
                         />
-                        <FieldRow
-                            label="Cliente"
-                            value={request.client_name ?? '—'}
-                        />
+                        <FieldRow label="Cliente" value={request.client_name} />
                         <FieldRow
                             label="Responsable"
                             value={request.responsible}
@@ -232,7 +231,6 @@ export default function PaintDevelopmentRequestShow({
                                 <FormattedDate
                                     value={request.sample_due_date}
                                     format="short"
-                                    emptyValue="—"
                                 />
                             }
                         />
@@ -245,7 +243,7 @@ export default function PaintDevelopmentRequestShow({
                     <SectionCard title="Auditoría">
                         <FieldRow
                             label="Creado por"
-                            value={request.creator?.name ?? '—'}
+                            value={request.creator?.name}
                         />
                         <FieldRow
                             label="Fecha creación"
@@ -268,7 +266,6 @@ export default function PaintDevelopmentRequestShow({
                                         <FormattedDate
                                             value={request.reviewed_at}
                                             format="datetime"
-                                            emptyValue="—"
                                         />
                                     }
                                 />

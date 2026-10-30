@@ -1,12 +1,15 @@
-import { formatDistanceToNow } from 'date-fns';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+
+import { EmptyCell } from '@/components/empty-cell';
+import { cn } from '@/lib/utils';
 
 export interface FormattedDateProps {
     value: string | null | undefined;
     format?: 'short' | 'long' | 'datetime' | 'date';
-    /** Texto sin fecha, atenuado (default: '-'). Ej.: «Sin estimar» */
+    /** Texto sin fecha, atenuado (por defecto pinta <EmptyCell />). Ej.: «Sin estimar» */
     emptyValue?: string;
+    className?: string;
 }
 
 const formatPatterns = {
@@ -66,7 +69,7 @@ export function parseSafeDate(value: string | null | undefined): Date | null {
 export function formatSafeDate(
     value: string | null | undefined,
     formatType: FormattedDateProps['format'] = 'short',
-    emptyValue = '-',
+    emptyValue = '—',
 ): string {
     if (!value) {
         return emptyValue;
@@ -79,7 +82,7 @@ export function formatSafeDate(
             return emptyValue;
         }
 
-        const pattern = formatPatterns[formatType ?? 'short'];
+        const pattern = formatPatterns[formatType];
 
         return format(date, pattern, { locale: es });
     } catch {
@@ -90,25 +93,26 @@ export function formatSafeDate(
 export function FormattedDate({
     value,
     format: formatType = 'short',
-    emptyValue = '-',
+    emptyValue,
+    className,
 }: FormattedDateProps) {
-    // Sin fecha: el emptyValue va atenuado, es un dato que falta (DESIGN.md §9)
-    if (!value) {
-        return <span className="text-muted-foreground">{emptyValue}</span>;
-    }
+    // Sin fecha: sin emptyValue pinta <EmptyCell />; con emptyValue, texto atenuado (DESIGN.md §9)
+    const isEmpty = parseSafeDate(value) === null;
 
-    const formattedValue = formatSafeDate(value, formatType, emptyValue);
-
-    // Fecha inválida: también es un dato que falta
     return (
         <span
             className={
-                formattedValue === emptyValue
-                    ? 'text-muted-foreground'
-                    : undefined
+                cn(
+                    isEmpty &&
+                        emptyValue !== undefined &&
+                        'text-muted-foreground',
+                    className,
+                ) || undefined
             }
         >
-            {formattedValue}
+            {isEmpty
+                ? (emptyValue ?? <EmptyCell />)
+                : formatSafeDate(value, formatType, emptyValue)}
         </span>
     );
 }

@@ -325,7 +325,10 @@ out, and the table shows «—» in `text-muted-foreground` (screen readers hear
 `components/empty-cell.tsx`). Screens never write `'-'` or
 `'—'` by hand.
 
-**Missing value, muted text.** Telling the two apart: what is normal not to have returns `null` (above); a value that
+**Missing value, muted text.** Telling the two apart: in `DataListing` and `DetailTable` cells, what is normal not to
+have returns `null` (above, so the phone card leaves the pair out—never return an empty `FormattedNumber` or
+`FormattedDate` from `cell`); in detail cards and inline text, `FormattedNumber` or `FormattedDate` without
+`emptyValue` render `<EmptyCell />` («—» in `text-muted-foreground`, «Sin dato» for screen readers). A value that
 should be there and is missing (a price not yet costed, an estimated date production has not set) is said in words,
 through the `emptyValue` of `FormattedNumber` or `FormattedDate`, which renders it in `text-muted-foreground`:
 `<FormattedNumber value={variant.sales_price} currency emptyValue="Sin precio" />`. No hand-written ternary with a

@@ -9,6 +9,7 @@ import {
     priceReference as formulasPriceReference,
 } from '@/actions/App/Http/Controllers/FormulaController';
 import { DetailTable } from '@/components/detail-table';
+import { EmptyCell } from '@/components/empty-cell';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
@@ -172,7 +173,7 @@ export default function FormulasShow({ formula, can }: Props) {
                             Creada por
                         </p>
                         <p className="text-sm text-foreground">
-                            {formula.created_by?.name ?? '-'}
+                            {formula.created_by?.name ?? <EmptyCell />}
                         </p>
                     </div>
                     <div>
@@ -191,7 +192,7 @@ export default function FormulasShow({ formula, can }: Props) {
                             Notas
                         </p>
                         <p className="text-sm text-foreground">
-                            {formula.notes ?? '—'}
+                            {formula.notes ?? <EmptyCell />}
                         </p>
                     </div>
                 </div>

@@ -24,6 +24,7 @@ import {
 import { ActiveBadge } from '@/components/active-badge';
 import { DecimalInput } from '@/components/decimal-input';
 import { DetailTable } from '@/components/detail-table';
+import { EmptyCell } from '@/components/empty-cell';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import InputError from '@/components/input-error';
@@ -436,7 +437,7 @@ export default function ProductsShow({
                             Categoría
                         </p>
                         <p className="text-sm text-foreground">
-                            {product.category?.name ?? '-'}
+                            {product.category?.name ?? <EmptyCell />}
                         </p>
                     </div>
                     <div>
@@ -444,9 +445,11 @@ export default function ProductsShow({
                             Unidad de Medida
                         </p>
                         <p className="text-sm text-foreground">
-                            {product.unit_of_measure
-                                ? `${product.unit_of_measure.name} (${product.unit_of_measure.symbol})`
-                                : '-'}
+                            {product.unit_of_measure ? (
+                                `${product.unit_of_measure.name} (${product.unit_of_measure.symbol})`
+                            ) : (
+                                <EmptyCell />
+                            )}
                         </p>
                     </div>
                     {can.viewCosts && (

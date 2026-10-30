@@ -83,6 +83,19 @@ function parseToNumber(value: number | string): number | null {
 }
 
 /**
+ * Indica si un valor numérico está vacío o no es un número válido (mismo análisis que `formatNumber`).
+ */
+export function isEmptyNumber(
+    value: number | string | null | undefined,
+): boolean {
+    if (value === null || value === undefined || value === '') {
+        return true;
+    }
+
+    return parseToNumber(value) === null;
+}
+
+/**
  * Formatea un número según estándar colombiano
  */
 export function formatNumber(
@@ -92,7 +105,7 @@ export function formatNumber(
     const {
         currency,
         maxDecimals = 4,
-        emptyValue = '-',
+        emptyValue = '—',
         trimTrailingZeros = false,
     } = options;
 
@@ -152,7 +165,7 @@ export function formatQuantity(
 export function formatPercent(
     value: number | string | null | undefined,
     maxDecimals: number = 2,
-    emptyValue: string = '-',
+    emptyValue: string = '—',
 ): string {
     if (value === null || value === undefined || value === '') {
         return emptyValue;
