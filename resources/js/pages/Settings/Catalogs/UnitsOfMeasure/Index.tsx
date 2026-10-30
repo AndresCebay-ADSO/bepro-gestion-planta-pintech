@@ -10,8 +10,8 @@ import { DataListing } from '@/components/data-listing';
 import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import Heading from '@/components/heading';
+import Pagination from '@/components/pagination';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import {
@@ -21,7 +21,7 @@ import {
     index as unitsIndex,
 } from '@/routes/catalogs/units-of-measure';
 import type { UnitOfMeasureRow } from '@/types';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type UnitRow = UnitOfMeasureRow & {
     can: {
@@ -31,10 +31,7 @@ type UnitRow = UnitOfMeasureRow & {
 };
 
 type Props = {
-    units: {
-        data: UnitRow[];
-        links: PaginationLink[];
-    };
+    units: Paginated<UnitRow>;
     filters: Record<string, string | null | undefined>;
     can: {
         create: boolean;
@@ -200,9 +197,7 @@ export default function UnitsOfMeasureIndex({ units, filters, can }: Props) {
                     empty="No se encontraron unidades de medida."
                 />
 
-                <div className="flex justify-center">
-                    <Pagination links={units.links} />
-                </div>
+                <Pagination paginator={units} />
             </div>
         </>
     );

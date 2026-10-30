@@ -7,8 +7,8 @@ import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import Heading from '@/components/heading';
+import Pagination from '@/components/pagination';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import {
@@ -18,7 +18,7 @@ import {
     index as typesIndex,
 } from '@/routes/catalogs/shrink-wrap-types';
 import type { ShrinkWrapTypeRow } from '@/types';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type TypeRow = ShrinkWrapTypeRow & {
     in_use: boolean;
@@ -29,10 +29,7 @@ type TypeRow = ShrinkWrapTypeRow & {
 };
 
 type Props = {
-    types: {
-        data: TypeRow[];
-        links: PaginationLink[];
-    };
+    types: Paginated<TypeRow>;
     filters: Record<string, string | null | undefined>;
     can: {
         create: boolean;
@@ -181,9 +178,7 @@ export default function ShrinkWrapTypesIndex({ types, filters, can }: Props) {
                     empty="No se encontraron tipos de termoencogido."
                 />
 
-                <div className="flex justify-center">
-                    <Pagination links={types.links} />
-                </div>
+                <Pagination paginator={types} />
             </div>
         </>
     );

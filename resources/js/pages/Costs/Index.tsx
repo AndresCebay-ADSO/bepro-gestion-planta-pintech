@@ -5,7 +5,7 @@ import { DataTableFilters } from '@/components/data-table-filters';
 import { DecimalInput } from '@/components/decimal-input';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
-import Pagination from '@/components/ui/pagination';
+import Pagination from '@/components/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { NUMBER_TYPES } from '@/lib/number-types';
 import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
@@ -13,7 +13,7 @@ import {
     index as adminCostsIndex,
     update as adminCostsUpdate,
 } from '@/routes/admin/costs';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type ProductRow = {
     id: number;
@@ -25,10 +25,7 @@ type ProductRow = {
 };
 
 type Props = {
-    products: {
-        data: ProductRow[];
-        links: PaginationLink[];
-    };
+    products: Paginated<ProductRow>;
     can: {
         update_margin: boolean;
     };
@@ -682,9 +679,7 @@ export default function CostsIndex({
                     </div>
                 </div>
 
-                <div className="flex justify-center">
-                    <Pagination links={productsData.links} />
-                </div>
+                <Pagination paginator={productsData} />
             </div>
         </>
     );

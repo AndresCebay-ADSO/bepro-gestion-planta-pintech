@@ -9,10 +9,10 @@ import { DataListing } from '@/components/data-listing';
 import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Pagination from '@/components/ui/pagination';
 import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import { index as auditLogsIndex } from '@/routes/audit-logs';
@@ -22,7 +22,7 @@ import {
     edit as usersEdit,
     index as usersIndex,
 } from '@/routes/users';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 interface User {
     id: number;
@@ -50,13 +50,7 @@ interface ActivityLog {
 }
 
 interface Props {
-    users: {
-        data: User[];
-        current_page: number;
-        last_page: number;
-        total: number;
-        links: PaginationLink[];
-    };
+    users: Paginated<User>;
     recentActivities: ActivityLog[];
     filters: Record<string, string | null | undefined>;
     can?: {
@@ -156,7 +150,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
 
                 {/* min-w-0: sin él, la columna de la grilla se ensancha con la tabla y esta no se desplaza en su caja. */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-                    <div className="min-w-0 lg:col-span-9">
+                    <div className="min-w-0 space-y-6 lg:col-span-9">
                         {/* Sin detalle: el nombre abre la edición. */}
                         <DataListing
                             rows={users.data}
@@ -193,9 +187,7 @@ const UsersIndex: FC<Props> = ({ users, recentActivities, filters, can }) => {
                             empty="No se encontraron usuarios."
                         />
 
-                        <div className="mt-4 flex justify-center">
-                            <Pagination links={users.links} />
-                        </div>
+                        <Pagination paginator={users} />
                     </div>
 
                     {/* ACTIVITY */}

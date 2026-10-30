@@ -7,9 +7,9 @@ import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import Heading from '@/components/heading';
+import Pagination from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import {
@@ -19,7 +19,7 @@ import {
     index as categoriesIndex,
 } from '@/routes/catalogs/raw-material-categories';
 import type { RawMaterialCategoryRow } from '@/types';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type CategoryRow = RawMaterialCategoryRow & {
     can: {
@@ -29,10 +29,7 @@ type CategoryRow = RawMaterialCategoryRow & {
 };
 
 type Props = {
-    categories: {
-        data: CategoryRow[];
-        links: PaginationLink[];
-    };
+    categories: Paginated<CategoryRow>;
     filters: Record<string, string | null | undefined>;
     typeOptions: { value: string; label: string }[];
     can: {
@@ -200,9 +197,7 @@ export default function RawMaterialCategoriesIndex({
                     empty="No se encontraron categorías."
                 />
 
-                <div className="flex justify-center">
-                    <Pagination links={categories.links} />
-                </div>
+                <Pagination paginator={categories} />
             </div>
         </>
     );

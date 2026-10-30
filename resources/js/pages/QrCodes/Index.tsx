@@ -8,10 +8,10 @@ import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
-import Pagination from '@/components/ui/pagination';
+import Pagination from '@/components/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { index as qrCodesIndex, show as qrCodesShow } from '@/routes/qr-codes';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type QrCodeRow = {
     id: number;
@@ -35,10 +35,7 @@ type QrCodeRow = {
 };
 
 type Props = {
-    qrCodes: {
-        data: QrCodeRow[];
-        links: PaginationLink[];
-    };
+    qrCodes: Paginated<QrCodeRow>;
     filters: Record<string, string | null | undefined>;
     can?: {
         viewAny: boolean;
@@ -161,9 +158,7 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
                     empty="No hay códigos QR registrados."
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={qrCodes.links} />
-                </div>
+                <Pagination paginator={qrCodes} />
             </div>
         </>
     );

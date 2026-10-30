@@ -8,9 +8,9 @@ import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import {
     create as quotationsCreate,
@@ -18,7 +18,7 @@ import {
     index as quotationsIndex,
     show as quotationsShow,
 } from '@/routes/quotations';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type QuotationRow = {
     id: number;
@@ -37,10 +37,7 @@ type QuotationRow = {
 };
 
 type Props = {
-    quotations: {
-        data: QuotationRow[];
-        links: PaginationLink[];
-    };
+    quotations: Paginated<QuotationRow>;
     filters: Record<string, string | null | undefined>;
     can: {
         create: boolean;
@@ -201,9 +198,7 @@ export default function QuotationsIndex({
                     empty="No hay cotizaciones registradas."
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={quotations.links} />
-                </div>
+                <Pagination paginator={quotations} />
             </div>
         </>
     );

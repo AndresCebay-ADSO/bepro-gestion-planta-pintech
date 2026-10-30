@@ -8,7 +8,7 @@ import { DataListing } from '@/components/data-listing';
 import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { PageHeader } from '@/components/page-header';
-import Pagination from '@/components/ui/pagination';
+import Pagination from '@/components/pagination';
 import {
     Popover,
     PopoverContent,
@@ -17,7 +17,7 @@ import {
 import { useFilters } from '@/hooks/use-filters';
 import { pillClasses, toneClasses } from '@/lib/tones';
 import type { Tone } from '@/types/enums';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 /**
  * Excepción documentada (DESIGN.md §4): los eventos de auditoría (`created`, `updated`, etc.)
@@ -53,10 +53,7 @@ type ActivityLog = {
 };
 
 type Props = {
-    logs: {
-        data: ActivityLog[];
-        links: PaginationLink[];
-    };
+    logs: Paginated<ActivityLog>;
     filters: {
         search?: string;
         log_name?: string;
@@ -387,10 +384,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                     empty="No hay registros que coincidan con los filtros."
                 />
 
-                {/* Paginación */}
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={logs.links} />
-                </div>
+                <Pagination paginator={logs} />
             </div>
         </>
     );

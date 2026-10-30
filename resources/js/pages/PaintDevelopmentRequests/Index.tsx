@@ -7,9 +7,9 @@ import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import {
     create as requestsCreate,
@@ -17,7 +17,7 @@ import {
     index as requestsIndex,
     show as requestsShow,
 } from '@/routes/paint-development-requests';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type RequestRow = {
     id: number;
@@ -36,10 +36,7 @@ type RequestRow = {
 };
 
 type Props = {
-    requests: {
-        data: RequestRow[];
-        links: PaginationLink[];
-    };
+    requests: Paginated<RequestRow>;
     filters: Record<string, string | null | undefined>;
     statusOptions: { value: string; label: string }[];
     can: {
@@ -180,9 +177,7 @@ export default function PaintDevelopmentRequestsIndex({
                     empty="No hay solicitudes registradas."
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={requests.links} />
-                </div>
+                <Pagination paginator={requests} />
             </div>
         </>
     );

@@ -6,8 +6,8 @@ import { DataListing } from '@/components/data-listing';
 import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useConfirm } from '@/hooks/use-confirm';
 import { useFilters } from '@/hooks/use-filters';
 import {
@@ -16,7 +16,7 @@ import {
     edit as clientsEdit,
     destroy as clientsDestroy,
 } from '@/routes/clients';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 interface ClientRow {
     id: number;
@@ -29,10 +29,7 @@ interface ClientRow {
 }
 
 type Props = {
-    clients: {
-        data: ClientRow[];
-        links: PaginationLink[];
-    };
+    clients: Paginated<ClientRow>;
     filters: Record<string, string | null | undefined>;
     can: {
         edit: boolean;
@@ -186,9 +183,7 @@ export default function ClientsIndex({ clients, filters, can }: Props) {
                     empty="No hay clientes registrados"
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={clients.links} />
-                </div>
+                <Pagination paginator={clients} />
             </div>
         </>
     );

@@ -7,9 +7,9 @@ import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { withReturnTo } from '@/lib/navigation';
 import {
@@ -17,7 +17,7 @@ import {
     create as productionOrderCreate,
     index as productionOrderIndex,
 } from '@/routes/production-orders';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type ProductionOrderItem = {
     id: number;
@@ -41,10 +41,7 @@ type ProductionOrderItem = {
 };
 
 type Props = {
-    orders: {
-        data: ProductionOrderItem[];
-        links: PaginationLink[];
-    };
+    orders: Paginated<ProductionOrderItem>;
     filters: {
         search?: string;
         status?: string;
@@ -224,9 +221,7 @@ export default function ProductionOrdersIndex({
                     empty="No hay órdenes de producción registradas."
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={orders.links} />
-                </div>
+                <Pagination paginator={orders} />
             </div>
         </>
     );

@@ -6,12 +6,12 @@ import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { StatusBadge } from '@/components/status-badge';
-import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { index as remnantsIndex } from '@/routes/production/remnants';
 import { show as productionOrderShow } from '@/routes/production-orders';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type RemnantItem = {
     id: number;
@@ -36,11 +36,7 @@ type Option = {
 };
 
 type Props = {
-    remnants: {
-        data: RemnantItem[];
-        links: PaginationLink[];
-        total: number;
-    };
+    remnants: Paginated<RemnantItem>;
     filters: Record<string, string | null | undefined>;
     statusOptions: Option[];
     warehouseOptions: Option[];
@@ -220,9 +216,7 @@ export default function RemnantsIndex({
                     empty="No hay saldos registrados."
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={remnants.links} />
-                </div>
+                <Pagination paginator={remnants} />
             </div>
         </>
     );

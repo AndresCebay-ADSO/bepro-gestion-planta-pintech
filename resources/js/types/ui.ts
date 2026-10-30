@@ -29,3 +29,7 @@ export type PaginatorMeta = {
     to: number | null;
     total: number;
 };
+
+export type Paginated<T> = PaginatorMeta & {
+    data: T[];
+};

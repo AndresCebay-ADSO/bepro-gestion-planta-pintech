@@ -5,8 +5,8 @@ import { DataListing } from '@/components/data-listing';
 import type { DataListingColumn } from '@/components/data-listing';
 import { DataTableFilters } from '@/components/data-table-filters';
 import { PageHeader } from '@/components/page-header';
+import Pagination from '@/components/pagination';
 import { Button } from '@/components/ui/button';
-import Pagination from '@/components/ui/pagination';
 import { useFilters } from '@/hooks/use-filters';
 import { withReturnTo } from '@/lib/navigation';
 import {
@@ -14,7 +14,7 @@ import {
     index as productsIndex,
     show as productsShow,
 } from '@/routes/products';
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 type ProductRow = {
     id: number;
@@ -24,10 +24,7 @@ type ProductRow = {
 };
 
 type Props = {
-    products: {
-        data: ProductRow[];
-        links: PaginationLink[];
-    };
+    products: Paginated<ProductRow>;
     can: {
         create: boolean;
     };
@@ -124,9 +121,7 @@ export default function ProductsIndex({
                     empty="No se encontraron productos."
                 />
 
-                <div className="mt-4 flex justify-center">
-                    <Pagination links={productsData.links} />
-                </div>
+                <Pagination paginator={productsData} />
             </div>
         </>
     );

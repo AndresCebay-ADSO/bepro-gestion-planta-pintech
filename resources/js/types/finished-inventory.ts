@@ -1,4 +1,4 @@
-import type { PaginationLink } from '@/types/ui';
+import type { Paginated } from '@/types/ui';
 
 export type FinishedMovementType = 'entry' | 'exit';
 
@@ -95,10 +95,7 @@ export type FinishedInventoryMovement = {
 };
 
 export type FinishedMovementsPage = {
-    movements: {
-        data: FinishedInventoryMovement[];
-        links: PaginationLink[];
-    };
+    movements: Paginated<FinishedInventoryMovement>;
     batches?: FinishedBatchOption[];
     warehouses?: FinishedWarehouseOption[];
     warehouseOptions: { value: string; label: string }[];
