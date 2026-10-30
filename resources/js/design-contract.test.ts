@@ -618,4 +618,39 @@ describe('contrato de DESIGN.md', () => {
 
         expect(layout).not.toMatch(/maximum-scale|user-scalable\s*=\s*["']?no/);
     });
+
+    it('deja los avisos de flash al layout, sin repetirlos en pages/', () => {
+        // Excepciones por archivo, con su motivo. Al resolver una, se quita de aquí.
+        const flashExceptions = [
+            // Pantalla de inicio de sesión: no usa el layout de la app (donde vive <FlashMessages />).
+            'resources/js/pages/auth/login.tsx',
+        ];
+        const flashPattern = /\bflash\??\.(?:success|error)\b/g;
+
+        const files = screenFiles.filter(
+            (file) =>
+                relativePath(file).startsWith('resources/js/pages/') &&
+                !flashExceptions.includes(relativePath(file)),
+        );
+
+        const found = violations(files, [
+            {
+                pattern: flashPattern,
+                rule: 'DESIGN.md §4: los mensajes de flash.success y flash.error los pinta solo <FlashMessages /> en el layout',
+            },
+        ]);
+
+        expect(report(found)).toEqual([]);
+
+        // Una excepción que ya no existe o ya no lee flash.success/error sobra: se quita para que el guardián la vigile.
+        const staleExceptions = flashExceptions.filter(
+            (path) =>
+                !existsSync(join(root, path)) ||
+                !new RegExp(flashPattern.source).test(
+                    readFileSync(join(root, path), 'utf8'),
+                ),
+        );
+
+        expect(staleExceptions).toEqual([]);
+    });
 });

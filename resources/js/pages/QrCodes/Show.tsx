@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     Copy,
     Download,
@@ -76,8 +76,6 @@ type Props = {
 export default function QrCodesShow({ qrCode, can }: Props) {
     const [copied, setCopied] = useState(false);
 
-    const flash = usePage().props.flash;
-
     const handleCopyUrl = () => {
         navigator.clipboard.writeText(qrCode.landing_url).then(() => {
             setCopied(true);
@@ -98,12 +96,6 @@ export default function QrCodesShow({ qrCode, can }: Props) {
             <Head title={`QR — ${qrCode.token}`} />
 
             <div className="space-y-6 p-6">
-                {flash?.success && (
-                    <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">
-                        {flash.success}
-                    </div>
-                )}
-
                 <PageHeader
                     title={`QR — ${qrCode.token}`}
                     badge={<ActiveBadge isActive={qrCode.is_active} />}

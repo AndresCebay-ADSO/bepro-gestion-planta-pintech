@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
 
@@ -65,7 +65,6 @@ export default function RawMaterialsShow({
     hasAvailableStock,
     hasActivity,
 }: Props) {
-    const flash = usePage().props.flash;
     // El servidor decide si «eliminar» borra o desactiva (permiso de borrado y sin historial).
     const deactivates = !can.deletePermanently;
 
@@ -142,18 +141,6 @@ export default function RawMaterialsShow({
                         </>
                     }
                 />
-
-                {flash?.success && (
-                    <div className="rounded-md border border-success/30 bg-success/15 px-4 py-2 text-sm text-success-text">
-                        {flash.success}
-                    </div>
-                )}
-
-                {flash?.error && (
-                    <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
-                        {flash.error}
-                    </div>
-                )}
 
                 {/* Información general */}
                 <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-2">

@@ -2,6 +2,11 @@ import { usePage } from '@inertiajs/react';
 import { AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export function FlashMessages() {
     const { flash } = usePage().props;
@@ -25,24 +30,31 @@ export function FlashMessages() {
     return (
         <div className="mb-4">
             <Alert
-                variant={message.type === 'error' ? 'destructive' : 'default'}
+                variant={message.type === 'error' ? 'destructive' : 'success'}
                 className="relative"
             >
                 {message.type === 'error' ? (
                     <AlertCircle className="h-4 w-4" />
                 ) : (
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <CheckCircle2 className="h-4 w-4" />
                 )}
                 <AlertTitle>
                     {message.type === 'error' ? 'Error' : 'Éxito'}
                 </AlertTitle>
                 <AlertDescription>{message.text}</AlertDescription>
-                <button
-                    onClick={() => setDismissedMessage(currentFlash)}
-                    className="absolute top-2 right-2 rounded-md p-1 opacity-70 transition-opacity hover:opacity-100"
-                >
-                    <X className="h-4 w-4" />
-                </button>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <button
+                            type="button"
+                            onClick={() => setDismissedMessage(currentFlash)}
+                            className="absolute top-2 right-2 rounded-md p-1 opacity-70 transition-opacity hover:opacity-100"
+                        >
+                            <X className="h-4 w-4" />
+                            <span className="sr-only">Cerrar aviso</span>
+                        </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Cerrar aviso</TooltipContent>
+                </Tooltip>
             </Alert>
         </div>
     );
