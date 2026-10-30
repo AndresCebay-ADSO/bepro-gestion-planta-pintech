@@ -244,6 +244,7 @@ export default function AuditLogsIndex({ logs, filters, options }: Props) {
                         </button>
                     </PopoverTrigger>
                     <PopoverContent
+                        aria-label="Atributos modificados"
                         align="start"
                         collisionPadding={8}
                         className="max-h-(--radix-popover-content-available-height) w-72 overflow-y-auto p-3 sm:w-96"
