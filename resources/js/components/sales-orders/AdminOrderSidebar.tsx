@@ -6,6 +6,7 @@ import { FormField } from '@/components/form-field';
 import { FormattedDate } from '@/components/formatted-date';
 import { PlantDateInput } from '@/components/plant-date-input';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -83,193 +84,229 @@ export default function AdminOrderSidebar({
     return (
         <div className="space-y-6">
             {can.updateStatus && statusTransitions.length > 0 && (
-                <form
-                    noValidate
-                    onSubmit={handleStatusUpdate}
-                    className="space-y-4 rounded-lg border border-border bg-card p-6"
-                >
-                    <h2 className="text-lg font-semibold">Estado</h2>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Estado</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <form
+                            noValidate
+                            onSubmit={handleStatusUpdate}
+                            className="space-y-4"
+                        >
+                            <FormField
+                                id="status"
+                                label="Estado del pedido"
+                                error={statusForm.errors.status}
+                            >
+                                {(control) => (
+                                    <Select
+                                        value={statusForm.data.status}
+                                        onValueChange={(value) =>
+                                            statusForm.setData('status', value)
+                                        }
+                                    >
+                                        <SelectTrigger {...control}>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value={order.status}>
+                                                {order.status_label}
+                                            </SelectItem>
+                                            {statusTransitions.map((t) => (
+                                                <SelectItem
+                                                    key={t.value}
+                                                    value={t.value}
+                                                >
+                                                    {t.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </FormField>
 
-                    <FormField
-                        id="status"
-                        label="Estado del pedido"
-                        error={statusForm.errors.status}
-                    >
-                        {(control) => (
-                            <Select
-                                value={statusForm.data.status}
-                                onValueChange={(value) =>
-                                    statusForm.setData('status', value)
+                            <Button
+                                type="submit"
+                                className="w-full"
+                                disabled={
+                                    statusForm.processing ||
+                                    statusForm.data.status === order.status
                                 }
                             >
-                                <SelectTrigger {...control}>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value={order.status}>
-                                        {order.status_label}
-                                    </SelectItem>
-                                    {statusTransitions.map((t) => (
-                                        <SelectItem
-                                            key={t.value}
-                                            value={t.value}
-                                        >
-                                            {t.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        )}
-                    </FormField>
-
-                    <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={
-                            statusForm.processing ||
-                            statusForm.data.status === order.status
-                        }
-                    >
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        Actualizar estado
-                    </Button>
-                </form>
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Actualizar estado
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
             )}
 
             {can.update && (
-                <form
-                    noValidate
-                    onSubmit={handleDataUpdate}
-                    className="space-y-4 rounded-lg border border-border bg-card p-6"
-                >
-                    <h2 className="text-lg font-semibold">Datos del pedido</h2>
-
-                    <FormField
-                        id="priority"
-                        label="Prioridad"
-                        error={dataForm.errors.priority}
-                    >
-                        {(control) => (
-                            <Select
-                                value={dataForm.data.priority}
-                                onValueChange={(value) =>
-                                    dataForm.setData('priority', value)
-                                }
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Datos del pedido</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <form
+                            noValidate
+                            onSubmit={handleDataUpdate}
+                            className="space-y-4"
+                        >
+                            <FormField
+                                id="priority"
+                                label="Prioridad"
+                                error={dataForm.errors.priority}
                             >
-                                <SelectTrigger {...control}>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="low">Baja</SelectItem>
-                                    <SelectItem value="medium">
-                                        Media
-                                    </SelectItem>
-                                    <SelectItem value="high">Alta</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        )}
-                    </FormField>
+                                {(control) => (
+                                    <Select
+                                        value={dataForm.data.priority}
+                                        onValueChange={(value) =>
+                                            dataForm.setData('priority', value)
+                                        }
+                                    >
+                                        <SelectTrigger {...control}>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="low">
+                                                Baja
+                                            </SelectItem>
+                                            <SelectItem value="medium">
+                                                Media
+                                            </SelectItem>
+                                            <SelectItem value="high">
+                                                Alta
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </FormField>
 
-                    <FormField
-                        id="estimated_delivery_date"
-                        label="Fecha estimada de entrega"
-                        error={dataForm.errors.estimated_delivery_date}
-                    >
-                        <PlantDateInput
-                            clearable
-                            min={order.created_on}
-                            saved={order.estimated_delivery_date}
-                            value={dataForm.data.estimated_delivery_date}
-                            onChange={(value) =>
-                                dataForm.setData(
-                                    'estimated_delivery_date',
-                                    value,
-                                )
-                            }
-                        />
-                    </FormField>
+                            <FormField
+                                id="estimated_delivery_date"
+                                label="Fecha estimada de entrega"
+                                error={dataForm.errors.estimated_delivery_date}
+                            >
+                                <PlantDateInput
+                                    clearable
+                                    min={order.created_on}
+                                    saved={order.estimated_delivery_date}
+                                    value={
+                                        dataForm.data.estimated_delivery_date
+                                    }
+                                    onChange={(value) =>
+                                        dataForm.setData(
+                                            'estimated_delivery_date',
+                                            value,
+                                        )
+                                    }
+                                />
+                            </FormField>
 
-                    <FormField
-                        id="client_contact_name"
-                        label="Contacto"
-                        error={dataForm.errors.client_contact_name}
-                    >
-                        <Input
-                            value={dataForm.data.client_contact_name}
-                            onChange={(e) =>
-                                dataForm.setData(
-                                    'client_contact_name',
-                                    e.target.value,
-                                )
-                            }
-                        />
-                    </FormField>
+                            <FormField
+                                id="client_contact_name"
+                                label="Contacto"
+                                error={dataForm.errors.client_contact_name}
+                            >
+                                <Input
+                                    value={dataForm.data.client_contact_name}
+                                    onChange={(e) =>
+                                        dataForm.setData(
+                                            'client_contact_name',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </FormField>
 
-                    <FormField
-                        id="client_phone"
-                        label="Teléfono"
-                        error={dataForm.errors.client_phone}
-                    >
-                        <Input
-                            value={dataForm.data.client_phone}
-                            onChange={(e) =>
-                                dataForm.setData('client_phone', e.target.value)
-                            }
-                        />
-                    </FormField>
+                            <FormField
+                                id="client_phone"
+                                label="Teléfono"
+                                error={dataForm.errors.client_phone}
+                            >
+                                <Input
+                                    value={dataForm.data.client_phone}
+                                    onChange={(e) =>
+                                        dataForm.setData(
+                                            'client_phone',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </FormField>
 
-                    <FormField
-                        id="notes"
-                        label="Notas"
-                        error={dataForm.errors.notes}
-                    >
-                        <Textarea
-                            rows={3}
-                            value={dataForm.data.notes}
-                            onChange={(e) =>
-                                dataForm.setData('notes', e.target.value)
-                            }
-                        />
-                    </FormField>
+                            <FormField
+                                id="notes"
+                                label="Notas"
+                                error={dataForm.errors.notes}
+                            >
+                                <Textarea
+                                    rows={3}
+                                    value={dataForm.data.notes}
+                                    onChange={(e) =>
+                                        dataForm.setData(
+                                            'notes',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </FormField>
 
-                    <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={dataForm.processing}
-                    >
-                        <Save className="mr-2 h-4 w-4" />
-                        Guardar cambios
-                    </Button>
-                </form>
+                            <Button
+                                type="submit"
+                                className="w-full"
+                                disabled={dataForm.processing}
+                            >
+                                <Save className="mr-2 h-4 w-4" />
+                                Guardar cambios
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
             )}
 
-            <div className="space-y-2 rounded-lg border border-border bg-card p-6 text-sm">
-                <h2 className="text-lg font-semibold">Metadatos</h2>
-                <p>
-                    <span className="text-muted-foreground">Creado por:</span>{' '}
-                    {order.creator?.name ?? <EmptyCell />}
-                </p>
-                <p>
-                    <span className="text-muted-foreground">
-                        Fecha creación:
-                    </span>{' '}
-                    <FormattedDate value={order.created_at} format="datetime" />
-                </p>
-                <p>
-                    <span className="text-muted-foreground">Fecha req.:</span>{' '}
-                    <FormattedDate value={order.required_date} format="short" />
-                </p>
-                {order.shipping_address && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Metadatos</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
                     <p>
                         <span className="text-muted-foreground">
-                            Dirección:
+                            Creado por:
                         </span>{' '}
-                        <span className="whitespace-pre-wrap">
-                            {order.shipping_address}
-                        </span>
+                        {order.creator?.name ?? <EmptyCell />}
                     </p>
-                )}
-            </div>
+                    <p>
+                        <span className="text-muted-foreground">
+                            Fecha creación:
+                        </span>{' '}
+                        <FormattedDate
+                            value={order.created_at}
+                            format="datetime"
+                        />
+                    </p>
+                    <p>
+                        <span className="text-muted-foreground">
+                            Fecha req.:
+                        </span>{' '}
+                        <FormattedDate
+                            value={order.required_date}
+                            format="short"
+                        />
+                    </p>
+                    {order.shipping_address && (
+                        <p>
+                            <span className="text-muted-foreground">
+                                Dirección:
+                            </span>{' '}
+                            <span className="whitespace-pre-wrap">
+                                {order.shipping_address}
+                            </span>
+                        </p>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }

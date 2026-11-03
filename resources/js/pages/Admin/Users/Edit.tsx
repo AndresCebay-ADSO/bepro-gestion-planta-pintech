@@ -1,4 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
+import { Info } from 'lucide-react';
 import type { FormEvent } from 'react';
 
 import UserController from '@/actions/App/Http/Controllers/UserController';
@@ -6,6 +7,8 @@ import { FormActions } from '@/components/form-actions';
 import { FormCheckbox, FormField } from '@/components/form-field';
 import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent } from '@/components/ui/card';
 import {
     Select,
     SelectContent,
@@ -62,66 +65,69 @@ const UsersEdit = ({ user, roles }: Props) => {
                 />
 
                 <form noValidate onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-6 rounded-lg border border-border bg-card p-6">
-                        <UserIdentityFields
-                            data={data}
-                            setData={setData}
-                            errors={errors}
-                            currentSignatureUrl={user.signature_url}
-                            disabled={processing}
-                        />
-
-                        <div className="space-y-6 border-t border-border pt-6">
-                            <FormField
-                                id="role"
-                                label="Rol"
-                                required
-                                error={errors.role}
-                            >
-                                {(control) => (
-                                    <Select
-                                        value={data.role}
-                                        onValueChange={(val) =>
-                                            setData('role', val)
-                                        }
-                                        disabled={processing}
-                                    >
-                                        <SelectTrigger {...control}>
-                                            <SelectValue placeholder="Seleccionar rol..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {roles.map((role) => (
-                                                <SelectItem
-                                                    key={role.id}
-                                                    value={role.name}
-                                                >
-                                                    {role.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                )}
-                            </FormField>
-
-                            <FormCheckbox
-                                id="is_active"
-                                label="Usuario activo"
-                                error={errors.is_active}
-                                checked={data.is_active}
-                                onCheckedChange={(checked) =>
-                                    setData('is_active', checked === true)
-                                }
+                    <Card>
+                        <CardContent className="space-y-6">
+                            <UserIdentityFields
+                                data={data}
+                                setData={setData}
+                                errors={errors}
+                                currentSignatureUrl={user.signature_url}
                                 disabled={processing}
                             />
-                        </div>
-                    </div>
 
-                    <div className="rounded-lg border border-primary/30 bg-primary/10 p-4">
-                        <p className="text-sm text-primary">
-                            💡 Para cambiar la contraseña, el usuario debe usar
-                            la opción "Olvidé mi contraseña" en el login.
-                        </p>
-                    </div>
+                            <div className="space-y-6 border-t border-border pt-6">
+                                <FormField
+                                    id="role"
+                                    label="Rol"
+                                    required
+                                    error={errors.role}
+                                >
+                                    {(control) => (
+                                        <Select
+                                            value={data.role}
+                                            onValueChange={(val) =>
+                                                setData('role', val)
+                                            }
+                                            disabled={processing}
+                                        >
+                                            <SelectTrigger {...control}>
+                                                <SelectValue placeholder="Seleccionar rol..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {roles.map((role) => (
+                                                    <SelectItem
+                                                        key={role.id}
+                                                        value={role.name}
+                                                    >
+                                                        {role.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                </FormField>
+
+                                <FormCheckbox
+                                    id="is_active"
+                                    label="Usuario activo"
+                                    error={errors.is_active}
+                                    checked={data.is_active}
+                                    onCheckedChange={(checked) =>
+                                        setData('is_active', checked === true)
+                                    }
+                                    disabled={processing}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Alert variant="info">
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                            Para cambiar la contraseña, el usuario debe usar la
+                            opción «¿Olvidaste tu contraseña?» en el login.
+                        </AlertDescription>
+                    </Alert>
 
                     <FormActions
                         submitLabel="Guardar cambios"

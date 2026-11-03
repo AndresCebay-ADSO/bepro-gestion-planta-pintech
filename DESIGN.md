@@ -316,6 +316,15 @@ Same in all three:
   first child is the `<PageHeader>` (§5); each section below is a card (the record's data) or a `<section>` with its
   title and a `<DetailTable>`. Only forms are centered and narrowed, with `<FormPage>` (§8). The production order keeps
   its own frame until its redesign.
+- **Sections are cards.** A section of a page (a block of a form, the totals, the data of a record) is a `<Card>`
+  (`components/ui/card.tsx`), never a `div` with its recipe (`rounded-*` with `bg-card`, or `rounded-xl`/`rounded-2xl` with `border`).
+  The title goes in `<CardHeader><CardTitle>` with no margin of its own (the card's gap separates it) and the description
+  in `CardDescription`. Title and button on one row: `<CardHeader className="flex-row items-center justify-between gap-3">`.
+  With no title: `<Card>` + `<CardContent>`. A `<form>` that is the whole card goes inside `CardContent`, under the
+  header. Classes outside the recipe go on `Card` (`className="ml-auto max-w-sm"` on the totals). Not sections, each one
+  an exception with its reason in `design-contract.test.ts`: the frame of a table, a floating notice, the frame of an
+  image, a group inside a card, a count pill, the frame of the settings layout, and the screens that keep their own
+  frame until their redesign.
 - **Detail cards.** The record's data is a `<Card>` with a `<DetailList>` (`components/detail-list.tsx`), never a local
   label-value piece. Each `<DetailItem>` puts the label above the value, and decides the empty case once: `value` with
   nothing to show (`null`, `undefined`, `false`, `''`; `0` is a value) renders `<EmptyCell />`. The pair stays: unlike the
@@ -450,8 +459,8 @@ they open nothing.
 />
 
 {/* Totals: a card below the table, so they show without scrolling. */}
-<div className="ml-auto max-w-sm rounded-lg border border-border bg-card p-6">
-    <div className="space-y-2 text-sm">
+<Card className="ml-auto max-w-sm">
+    <CardContent className="space-y-2 text-sm">
         <div className="flex justify-between">
             <span>Subtotal</span>
             <FormattedNumber value={quotation.subtotal} currency maxDecimals={0} />
@@ -460,8 +469,8 @@ they open nothing.
             <span>Total</span>
             <FormattedNumber value={quotation.total} currency maxDecimals={0} />
         </div>
-    </div>
-</div>
+    </CardContent>
+</Card>
 ```
 
 ## 10. Navigation

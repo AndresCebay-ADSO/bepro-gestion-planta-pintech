@@ -2,6 +2,7 @@ import { Head, useForm } from '@inertiajs/react';
 import { FormActions } from '@/components/form-actions';
 import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
+import { Card, CardContent } from '@/components/ui/card';
 import { WarehouseFields } from '@/components/warehouses/warehouse-form';
 import type { WarehouseFormData } from '@/components/warehouses/warehouse-form';
 import {
@@ -53,9 +54,11 @@ export default function WarehousesEdit({ warehouse }: Props) {
                     }}
                     className="space-y-6"
                 >
-                    <div className="rounded-lg border border-border bg-card p-6">
-                        <WarehouseFields form={form} lockType />
-                    </div>
+                    <Card>
+                        <CardContent>
+                            <WarehouseFields form={form} lockType />
+                        </CardContent>
+                    </Card>
 
                     <FormActions
                         submitLabel="Guardar cambios"

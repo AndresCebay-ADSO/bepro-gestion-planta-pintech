@@ -21,6 +21,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -395,157 +396,174 @@ export default function QuotationsShow({
                 />
 
                 {can.updateStatus && (
-                    <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-4">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium">
-                                Cambiar estado
-                            </label>
-                            <select
-                                value={data.status}
-                                onChange={(e) =>
-                                    setData('status', e.target.value)
-                                }
-                                className="h-10 rounded-md border border-input bg-background px-3 text-base md:text-sm"
-                            >
-                                {statusOptions.map((option) => (
-                                    <option
-                                        key={option.value}
-                                        value={option.value}
-                                    >
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    disabled={
-                                        processing ||
-                                        data.status === quotation.status
+                    <Card>
+                        <CardContent className="flex flex-wrap items-end gap-3">
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium">
+                                    Cambiar estado
+                                </label>
+                                <select
+                                    value={data.status}
+                                    onChange={(e) =>
+                                        setData('status', e.target.value)
                                     }
+                                    className="h-10 rounded-md border border-input bg-background px-3 text-base md:text-sm"
                                 >
-                                    Actualizar estado
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                        ¿Cambiar estado de la cotización?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        El estado pasará de{' '}
-                                        <span className="font-semibold">
-                                            {quotation.status_label}
-                                        </span>{' '}
-                                        a{' '}
-                                        <span className="font-semibold">
-                                            {
-                                                statusOptions.find(
-                                                    (o) =>
-                                                        o.value === data.status,
-                                                )?.label
-                                            }
-                                        </span>
-                                        .
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>
-                                        Cancelar
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction
-                                        onClick={handleStatusUpdate}
+                                    {statusOptions.map((option) => (
+                                        <option
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        disabled={
+                                            processing ||
+                                            data.status === quotation.status
+                                        }
                                     >
-                                        Confirmar cambio
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    </div>
+                                        Actualizar estado
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                            ¿Cambiar estado de la cotización?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            El estado pasará de{' '}
+                                            <span className="font-semibold">
+                                                {quotation.status_label}
+                                            </span>{' '}
+                                            a{' '}
+                                            <span className="font-semibold">
+                                                {
+                                                    statusOptions.find(
+                                                        (o) =>
+                                                            o.value ===
+                                                            data.status,
+                                                    )?.label
+                                                }
+                                            </span>
+                                            .
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>
+                                            Cancelar
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={handleStatusUpdate}
+                                        >
+                                            Confirmar cambio
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </CardContent>
+                    </Card>
                 )}
 
                 <div className="grid gap-6 lg:grid-cols-2">
-                    <div className="rounded-lg border border-border bg-card p-6">
-                        <h2 className="mb-4 text-lg font-semibold">Cliente</h2>
-                        <dl className="space-y-2 text-sm">
-                            <div className="flex justify-between gap-4">
-                                <dt className="text-muted-foreground">
-                                    Razón social
-                                </dt>
-                                <dd>{quotation.client.business_name}</dd>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                                <dt className="text-muted-foreground">NIT</dt>
-                                <dd>{quotation.client.nit ?? <EmptyCell />}</dd>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                                <dt className="text-muted-foreground">
-                                    Contacto
-                                </dt>
-                                <dd>
-                                    {quotation.client.contact_name ?? (
-                                        <EmptyCell />
-                                    )}
-                                </dd>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                                <dt className="text-muted-foreground">
-                                    Teléfono
-                                </dt>
-                                <dd>
-                                    {quotation.client.phone ?? <EmptyCell />}
-                                </dd>
-                            </div>
-                        </dl>
-                    </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Cliente</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <dl className="space-y-2 text-sm">
+                                <div className="flex justify-between gap-4">
+                                    <dt className="text-muted-foreground">
+                                        Razón social
+                                    </dt>
+                                    <dd>{quotation.client.business_name}</dd>
+                                </div>
+                                <div className="flex justify-between gap-4">
+                                    <dt className="text-muted-foreground">
+                                        NIT
+                                    </dt>
+                                    <dd>
+                                        {quotation.client.nit ?? <EmptyCell />}
+                                    </dd>
+                                </div>
+                                <div className="flex justify-between gap-4">
+                                    <dt className="text-muted-foreground">
+                                        Contacto
+                                    </dt>
+                                    <dd>
+                                        {quotation.client.contact_name ?? (
+                                            <EmptyCell />
+                                        )}
+                                    </dd>
+                                </div>
+                                <div className="flex justify-between gap-4">
+                                    <dt className="text-muted-foreground">
+                                        Teléfono
+                                    </dt>
+                                    <dd>
+                                        {quotation.client.phone ?? (
+                                            <EmptyCell />
+                                        )}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </CardContent>
+                    </Card>
 
-                    <div className="rounded-lg border border-border bg-card p-6">
-                        <h2 className="mb-4 text-lg font-semibold">
-                            Condiciones
-                        </h2>
-                        <dl className="space-y-2 text-sm">
-                            <div className="flex justify-between gap-4">
-                                <dt className="text-muted-foreground">
-                                    Tecnología
-                                </dt>
-                                <dd>{quotation.technology ?? 'N.D.'}</dd>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                                <dt className="text-muted-foreground">Línea</dt>
-                                <dd>{quotation.line ?? 'N.D.'}</dd>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                                <dt className="text-muted-foreground">
-                                    Forma de pago
-                                </dt>
-                                <dd>
-                                    {quotation.payment_method_label ??
-                                        quotation.payment_method ??
-                                        'N.D.'}
-                                </dd>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                                <dt className="text-muted-foreground">
-                                    Entrega
-                                </dt>
-                                <dd>{quotation.delivery_time ?? 'N.D.'}</dd>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                                <dt className="text-muted-foreground">
-                                    Validez
-                                </dt>
-                                <dd>
-                                    {quotation.validity_days_label ??
-                                        (quotation.validity_days
-                                            ? `${quotation.validity_days} días`
-                                            : 'N.D.')}
-                                </dd>
-                            </div>
-                        </dl>
-                    </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Condiciones</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <dl className="space-y-2 text-sm">
+                                <div className="flex justify-between gap-4">
+                                    <dt className="text-muted-foreground">
+                                        Tecnología
+                                    </dt>
+                                    <dd>{quotation.technology ?? 'N.D.'}</dd>
+                                </div>
+                                <div className="flex justify-between gap-4">
+                                    <dt className="text-muted-foreground">
+                                        Línea
+                                    </dt>
+                                    <dd>{quotation.line ?? 'N.D.'}</dd>
+                                </div>
+                                <div className="flex justify-between gap-4">
+                                    <dt className="text-muted-foreground">
+                                        Forma de pago
+                                    </dt>
+                                    <dd>
+                                        {quotation.payment_method_label ??
+                                            quotation.payment_method ??
+                                            'N.D.'}
+                                    </dd>
+                                </div>
+                                <div className="flex justify-between gap-4">
+                                    <dt className="text-muted-foreground">
+                                        Entrega
+                                    </dt>
+                                    <dd>{quotation.delivery_time ?? 'N.D.'}</dd>
+                                </div>
+                                <div className="flex justify-between gap-4">
+                                    <dt className="text-muted-foreground">
+                                        Validez
+                                    </dt>
+                                    <dd>
+                                        {quotation.validity_days_label ??
+                                            (quotation.validity_days
+                                                ? `${quotation.validity_days} días`
+                                                : 'N.D.')}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 <DetailTable
@@ -641,8 +659,8 @@ export default function QuotationsShow({
 
                 {/* Los totales van aparte y no al pie de la tabla: en el celular la tabla se desplaza y el Total quedaría
                     fuera de la vista. */}
-                <div className="ml-auto max-w-sm rounded-lg border border-border bg-card p-6">
-                    <div className="space-y-2 text-sm">
+                <Card className="ml-auto max-w-sm">
+                    <CardContent className="space-y-2 text-sm">
                         <div className="flex justify-between">
                             <span>Subtotal</span>
                             <FormattedNumber
@@ -670,18 +688,20 @@ export default function QuotationsShow({
                                 kind="clientPrice"
                             />
                         </div>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
 
                 {quotation.notes && (
-                    <div className="rounded-lg border border-border bg-card p-6">
-                        <h2 className="mb-2 text-lg font-semibold">
-                            Observaciones
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                            {quotation.notes}
-                        </p>
-                    </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Observaciones</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm whitespace-pre-wrap text-muted-foreground">
+                                {quotation.notes}
+                            </p>
+                        </CardContent>
+                    </Card>
                 )}
 
                 <div className="text-sm text-muted-foreground">

@@ -7,6 +7,7 @@ import { FormCheckbox, FormField } from '@/components/form-field';
 import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
 import PasswordInput from '@/components/password-input';
+import { Card, CardContent } from '@/components/ui/card';
 import {
     Select,
     SelectContent,
@@ -55,97 +56,99 @@ const UsersCreate = ({ roles }: Props) => {
                 />
 
                 <form noValidate onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-6 rounded-lg border border-border bg-card p-6">
-                        <UserIdentityFields
-                            data={data}
-                            setData={setData}
-                            errors={errors}
-                            disabled={processing}
-                        />
-
-                        <div className="space-y-6 border-t border-border pt-6">
-                            <FormField
-                                id="role"
-                                label="Rol"
-                                required
-                                error={errors.role}
-                            >
-                                {(control) => (
-                                    <Select
-                                        value={data.role}
-                                        onValueChange={(val) =>
-                                            setData('role', val)
-                                        }
-                                        disabled={processing}
-                                    >
-                                        <SelectTrigger {...control}>
-                                            <SelectValue placeholder="Seleccionar rol..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {roles.map((role) => (
-                                                <SelectItem
-                                                    key={role.id}
-                                                    value={role.name}
-                                                >
-                                                    {role.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                )}
-                            </FormField>
-
-                            <FormCheckbox
-                                id="is_active"
-                                label="Usuario activo"
-                                error={errors.is_active}
-                                checked={data.is_active}
-                                onCheckedChange={(checked) =>
-                                    setData('is_active', checked === true)
-                                }
+                    <Card>
+                        <CardContent className="space-y-6">
+                            <UserIdentityFields
+                                data={data}
+                                setData={setData}
+                                errors={errors}
                                 disabled={processing}
                             />
-                        </div>
 
-                        <div className="grid gap-6 border-t border-border pt-6 md:grid-cols-2">
-                            <FormField
-                                id="password"
-                                label="Contraseña"
-                                required
-                                error={errors.password}
-                            >
-                                <PasswordInput
-                                    name="password"
-                                    value={data.password}
-                                    onChange={(e) =>
-                                        setData('password', e.target.value)
+                            <div className="space-y-6 border-t border-border pt-6">
+                                <FormField
+                                    id="role"
+                                    label="Rol"
+                                    required
+                                    error={errors.role}
+                                >
+                                    {(control) => (
+                                        <Select
+                                            value={data.role}
+                                            onValueChange={(val) =>
+                                                setData('role', val)
+                                            }
+                                            disabled={processing}
+                                        >
+                                            <SelectTrigger {...control}>
+                                                <SelectValue placeholder="Seleccionar rol..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {roles.map((role) => (
+                                                    <SelectItem
+                                                        key={role.id}
+                                                        value={role.name}
+                                                    >
+                                                        {role.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                </FormField>
+
+                                <FormCheckbox
+                                    id="is_active"
+                                    label="Usuario activo"
+                                    error={errors.is_active}
+                                    checked={data.is_active}
+                                    onCheckedChange={(checked) =>
+                                        setData('is_active', checked === true)
                                     }
-                                    placeholder="Mínimo 8 caracteres"
                                     disabled={processing}
                                 />
-                            </FormField>
+                            </div>
 
-                            <FormField
-                                id="password_confirmation"
-                                label="Confirmar contraseña"
-                                required
-                                error={errors.password_confirmation}
-                            >
-                                <PasswordInput
-                                    name="password_confirmation"
-                                    value={data.password_confirmation}
-                                    onChange={(e) =>
-                                        setData(
-                                            'password_confirmation',
-                                            e.target.value,
-                                        )
-                                    }
-                                    placeholder="Repite la contraseña"
-                                    disabled={processing}
-                                />
-                            </FormField>
-                        </div>
-                    </div>
+                            <div className="grid gap-6 border-t border-border pt-6 md:grid-cols-2">
+                                <FormField
+                                    id="password"
+                                    label="Contraseña"
+                                    required
+                                    error={errors.password}
+                                >
+                                    <PasswordInput
+                                        name="password"
+                                        value={data.password}
+                                        onChange={(e) =>
+                                            setData('password', e.target.value)
+                                        }
+                                        placeholder="Mínimo 8 caracteres"
+                                        disabled={processing}
+                                    />
+                                </FormField>
+
+                                <FormField
+                                    id="password_confirmation"
+                                    label="Confirmar contraseña"
+                                    required
+                                    error={errors.password_confirmation}
+                                >
+                                    <PasswordInput
+                                        name="password_confirmation"
+                                        value={data.password_confirmation}
+                                        onChange={(e) =>
+                                            setData(
+                                                'password_confirmation',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="Repite la contraseña"
+                                        disabled={processing}
+                                    />
+                                </FormField>
+                            </div>
+                        </CardContent>
+                    </Card>
 
                     <FormActions
                         submitLabel="Crear usuario"

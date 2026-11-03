@@ -96,7 +96,7 @@ export default function SettingsLayout({
             <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:gap-8">
                 <aside className="w-full max-w-xl lg:w-56">
                     <nav
-                        className="flex flex-col space-y-1 rounded-xl border border-border bg-card p-2 shadow-sm"
+                        className="flex flex-col space-y-1 rounded-lg border border-border bg-card p-2 shadow-xs"
                         aria-label="Configuración"
                     >
                         {groups.map((group, groupIndex) => (
@@ -158,7 +158,7 @@ export default function SettingsLayout({
                 >
                     <section
                         className={cn(
-                            'space-y-10 rounded-xl border border-border bg-card p-6 shadow-sm',
+                            'space-y-10 rounded-lg border border-border bg-card p-6 shadow-xs',
                             !wide && 'max-w-2xl',
                         )}
                     >

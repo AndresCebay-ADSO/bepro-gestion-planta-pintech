@@ -89,6 +89,22 @@ function violationsAcrossLines(files: string[], rules: Rule[]): Violation[] {
     });
 }
 
+/**
+ * Parte el archivo por comillas, con la posición de cada trozo: una clase queda entera en el suyo, aunque Prettier la
+ * parta en líneas. El código que hay entre dos cadenas también es un trozo, y una clase partida en dos cadenas no se ve.
+ */
+function quotedSegments(source: string): { text: string; start: number }[] {
+    let offset = 0;
+
+    return source.split(/(["'`])/).map((text) => {
+        const start = offset;
+
+        offset += text.length;
+
+        return { text, start };
+    });
+}
+
 function report(found: Violation[]): string[] {
     return found.map(
         ({ location, match, rule }) => `${location} «${match}» → ${rule}`,
@@ -691,17 +707,12 @@ describe('contrato de DESIGN.md', () => {
             'DESIGN.md §4: un aviso es <Alert> con la variante de su tono, nunca un recuadro a mano con border-* y bg-*';
         const matchesIn = (file: string): Violation[] => {
             const source = readFileSync(file, 'utf8');
-            let offset = 0;
 
-            return source.split(/(["'`])/).flatMap((segment) => {
-                const start = offset;
-
-                offset += segment.length;
-
-                const backgrounds = [...segment.matchAll(backgroundTone)].map(
+            return quotedSegments(source).flatMap(({ text, start }) => {
+                const backgrounds = [...text.matchAll(backgroundTone)].map(
                     (match) => match[1],
                 );
-                const border = [...segment.matchAll(borderTone)].find((match) =>
+                const border = [...text.matchAll(borderTone)].find((match) =>
                     backgrounds.includes(match[1]),
                 );
 
@@ -730,6 +741,80 @@ describe('contrato de DESIGN.md', () => {
 
         // Una excepción que ya no existe o ya no tiene recuadros a mano sobra: se quita para que el guardián la vigile.
         const staleExceptions = handMadeAlertExceptions.filter((prefix) =>
+            exceptionIsStale(prefix, matchesIn),
+        );
+
+        expect(staleExceptions).toEqual([]);
+    });
+
+    it('pinta las secciones con <Card>, sin tarjetas a mano', () => {
+        // Excepciones con su motivo (`components/ui/` ya queda fuera en `screenFiles`). Al resolver una, se quita.
+        const handMadeCardExceptions = [
+            // Marco de tabla y tarjeta del celular, que dibujan sus propias piezas: el borde va pegado a la tabla.
+            'resources/js/components/data-listing.tsx',
+            'resources/js/components/detail-table.tsx',
+            // Aviso flotante: lleva su propio borde de tono y sombra de capa superior.
+            'resources/js/components/alert-toast-notifier.tsx',
+            // Marco de una imagen (la firma), no una sección.
+            'resources/js/components/users/signature-upload-field.tsx',
+            // Grupo de permisos dentro de la tarjeta del rol (`bg-card/40`): una tarjeta no va dentro de otra.
+            'resources/js/components/roles/role-permissions-fields.tsx',
+            // Marco del layout de Configuración (menú y caja de cada pantalla), no una sección de página.
+            'resources/js/layouts/Settings/layout.tsx',
+            // Pastilla de conteo, no una sección: se retoma con el rediseño del dashboard.
+            'resources/js/pages/Alerts/Index.tsx',
+            // Tabla a mano, la única permitida: se retoma con el rediseño de costos.
+            'resources/js/pages/Costs/Index.tsx',
+            // Orden de producción: se rediseña aparte.
+            'resources/js/pages/Production/Orders/',
+            // Página pública de marca del QR: diseño propio fuera del layout de la app.
+            'resources/js/pages/Public/QrLanding/',
+            // Panel de marca de las pantallas de acceso: dos columnas con sombra propia.
+            'resources/js/pages/auth/forgot-password.tsx',
+            'resources/js/pages/auth/login.tsx',
+        ];
+        // El lookbehind ignora las variantes (`hover:*`, `sm:*`).
+        const anyRounded = /(?<![\w:/[-])rounded(?:-[\w-]+)?/g;
+        const cardBackground = /(?<![\w:/[-])bg-card(?![\w-])/;
+        const largeRounded = /(?<![\w:/[-])rounded-(?:xl|2xl)(?![\w-])/g;
+        const anyBorder = /(?<![\w:/[-])border(?![\w])/;
+        const rule =
+            'DESIGN.md §9: una sección de página es un <Card>, nunca un div con su receta (rounded-* con bg-card, o rounded-xl/2xl con border)';
+        const matchesIn = (file: string): Violation[] => {
+            const source = readFileSync(file, 'utf8');
+
+            return quotedSegments(source).flatMap(({ text, start }) => {
+                const rounded = cardBackground.test(text)
+                    ? text.matchAll(anyRounded).next().value
+                    : anyBorder.test(text)
+                      ? text.matchAll(largeRounded).next().value
+                      : undefined;
+
+                return rounded
+                    ? [
+                          {
+                              location: `${relativePath(file)}:${source.slice(0, start + rounded.index).split('\n').length}`,
+                              match: rounded[0],
+                              rule,
+                          },
+                      ]
+                    : [];
+            });
+        };
+
+        const found = screenFiles
+            .filter(
+                (file) =>
+                    !handMadeCardExceptions.some((prefix) =>
+                        relativePath(file).startsWith(prefix),
+                    ),
+            )
+            .flatMap(matchesIn);
+
+        expect(report(found)).toEqual([]);
+
+        // Una excepción que ya no existe o ya no tiene tarjetas a mano sobra: se quita para que el guardián la vigile.
+        const staleExceptions = handMadeCardExceptions.filter((prefix) =>
             exceptionIsStale(prefix, matchesIn),
         );
 

@@ -714,8 +714,9 @@ export default function PaintDevelopmentRequestForm({
                         <button
                             key={s.id}
                             type="button"
+                            title={s.title}
                             onClick={() => goStep(s.id)}
-                            className={`flex flex-1 items-center gap-2 px-2 py-2 text-sm font-medium transition-colors ${
+                            className={`flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-sm font-medium transition-colors ${
                                 step === s.id
                                     ? 'text-primary'
                                     : step > s.id
@@ -724,7 +725,7 @@ export default function PaintDevelopmentRequestForm({
                             }`}
                         >
                             <span
-                                className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs ${
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs ${
                                     step === s.id
                                         ? 'border-primary bg-primary text-primary-foreground'
                                         : step > s.id
@@ -734,9 +735,11 @@ export default function PaintDevelopmentRequestForm({
                             >
                                 {step > s.id ? '✓' : s.id}
                             </span>
-                            <span className="hidden sm:inline">{s.title}</span>
+                            <span className="hidden truncate sm:inline">
+                                {s.title}
+                            </span>
                             {idx < STEPS.length - 1 && (
-                                <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground" />
+                                <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
                             )}
                         </button>
                     ))}

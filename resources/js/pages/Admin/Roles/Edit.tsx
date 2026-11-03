@@ -6,6 +6,7 @@ import { FormError, FormField } from '@/components/form-field';
 import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
 import RolePermissionsFields from '@/components/roles/role-permissions-fields';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
     edit as rolesEdit,
@@ -61,33 +62,34 @@ const RolesEdit = ({ role, modules }: Props) => {
                 />
 
                 <form noValidate onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-6 rounded-lg border border-border bg-card p-6">
-                        <FormField
-                            id="name"
-                            label="Nombre"
-                            required
-                            error={errors.name}
-                            className="md:max-w-md"
-                        >
-                            <Input
-                                value={data.name}
-                                onChange={(e) =>
-                                    setData('name', e.target.value)
-                                }
-                                maxLength={50}
-                                disabled={processing}
-                            />
-                        </FormField>
-
-                        <div className="space-y-3 border-t border-border pt-6">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-semibold">
-                                    Permisos
-                                </h2>
-                                <span className="text-sm text-muted-foreground">
-                                    {data.permissions.length} seleccionados
-                                </span>
-                            </div>
+                    <Card>
+                        <CardContent className="space-y-6">
+                            <FormField
+                                id="name"
+                                label="Nombre"
+                                required
+                                error={errors.name}
+                                className="md:max-w-md"
+                            >
+                                <Input
+                                    value={data.name}
+                                    onChange={(e) =>
+                                        setData('name', e.target.value)
+                                    }
+                                    maxLength={50}
+                                    disabled={processing}
+                                />
+                            </FormField>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex-row items-center justify-between gap-3">
+                            <CardTitle>Permisos</CardTitle>
+                            <span className="text-sm text-muted-foreground">
+                                {data.permissions.length} seleccionados
+                            </span>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
                             {/* `permissions` o `permissions.3`: el foco del 422 llega al primero. */}
                             {permissionErrors.map((message, index) => (
                                 <FormError
@@ -104,8 +106,8 @@ const RolesEdit = ({ role, modules }: Props) => {
                                 }
                                 disabled={processing}
                             />
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
 
                     <FormActions
                         submitLabel="Guardar cambios"

@@ -3,12 +3,14 @@ import { FileText, ShoppingCart } from 'lucide-react';
 
 import { DetailTable } from '@/components/detail-table';
 import { EmptyCell } from '@/components/empty-cell';
+import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
 import { PriorityBadge } from '@/components/priority-badge';
 import AdminOrderSidebar from '@/components/sales-orders/AdminOrderSidebar';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { quotationName } from '@/lib/quotation-name';
 import { show as quotationsShow } from '@/routes/quotations';
 import {
@@ -93,11 +95,11 @@ export default function SalesOrdersShow({
                 <div className="grid gap-6 lg:grid-cols-3">
                     {/* min-w-0: sin él, la columna de la grilla se ensancha con la tabla y esta no se desplaza. */}
                     <div className="min-w-0 space-y-6 lg:col-span-2">
-                        <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                            <h2 className="text-lg font-semibold">
-                                Información del cliente
-                            </h2>
-                            <div className="space-y-2 text-sm">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Información del cliente</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2 text-sm">
                                 <p>
                                     <span className="text-muted-foreground">
                                         Razón social:
@@ -132,7 +134,12 @@ export default function SalesOrdersShow({
                                             Fecha estimada de entrega:
                                         </span>{' '}
                                         <span className="font-medium">
-                                            {order.estimated_delivery_date}
+                                            <FormattedDate
+                                                value={
+                                                    order.estimated_delivery_date
+                                                }
+                                                format="date"
+                                            />
                                         </span>
                                     </p>
                                 )}
@@ -160,8 +167,8 @@ export default function SalesOrdersShow({
                                         </Button>
                                     </p>
                                 )}
-                            </div>
-                        </div>
+                            </CardContent>
+                        </Card>
 
                         <section className="space-y-4">
                             <h2 className="flex items-center gap-2 text-lg font-semibold">
@@ -213,14 +220,16 @@ export default function SalesOrdersShow({
                         </section>
 
                         {order.notes && (
-                            <div className="rounded-lg border border-border bg-card p-6">
-                                <h2 className="mb-2 text-lg font-semibold">
-                                    Notas
-                                </h2>
-                                <p className="text-sm whitespace-pre-wrap text-muted-foreground">
-                                    {order.notes}
-                                </p>
-                            </div>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Notas</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm whitespace-pre-wrap text-muted-foreground">
+                                        {order.notes}
+                                    </p>
+                                </CardContent>
+                            </Card>
                         )}
                     </div>
 

@@ -7,6 +7,7 @@ import { FormError, FormField } from '@/components/form-field';
 import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
 import RolePermissionsFields from '@/components/roles/role-permissions-fields';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -80,66 +81,71 @@ const RolesCreate = ({ modules, templates, defaultPermissions }: Props) => {
                 />
 
                 <form noValidate onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-6 rounded-lg border border-border bg-card p-6">
-                        <div className="grid gap-6 md:grid-cols-2">
-                            <FormField
-                                id="name"
-                                label="Nombre"
-                                required
-                                error={errors.name}
-                            >
-                                <Input
-                                    value={data.name}
-                                    onChange={(e) =>
-                                        setData('name', e.target.value)
-                                    }
-                                    placeholder="Ej. Jefe de calidad"
-                                    maxLength={50}
-                                    disabled={processing}
-                                />
-                            </FormField>
-
-                            <FormField
-                                id="template"
-                                label="Partir de un rol existente"
-                                help="Copia sus permisos, salvo los reservados a SuperAdmin."
-                            >
-                                {(control) => (
-                                    <Select
-                                        value={templateId}
-                                        onValueChange={applyTemplate}
+                    <Card>
+                        <CardContent className="space-y-6">
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <FormField
+                                    id="name"
+                                    label="Nombre"
+                                    required
+                                    error={errors.name}
+                                >
+                                    <Input
+                                        value={data.name}
+                                        onChange={(e) =>
+                                            setData('name', e.target.value)
+                                        }
+                                        placeholder="Ej. Jefe de calidad"
+                                        maxLength={50}
                                         disabled={processing}
-                                    >
-                                        <SelectTrigger {...control}>
-                                            <SelectValue placeholder="Selección personalizada" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value={FROM_SCRATCH}>
-                                                Empezar desde cero
-                                            </SelectItem>
-                                            {templates.map((template) => (
-                                                <SelectItem
-                                                    key={template.id}
-                                                    value={String(template.id)}
-                                                >
-                                                    {template.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                )}
-                            </FormField>
-                        </div>
+                                    />
+                                </FormField>
 
-                        <div className="space-y-3 border-t border-border pt-6">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-semibold">
-                                    Permisos
-                                </h2>
-                                <span className="text-sm text-muted-foreground">
-                                    {data.permissions.length} seleccionados
-                                </span>
+                                <FormField
+                                    id="template"
+                                    label="Partir de un rol existente"
+                                    help="Copia sus permisos, salvo los reservados a SuperAdmin."
+                                >
+                                    {(control) => (
+                                        <Select
+                                            value={templateId}
+                                            onValueChange={applyTemplate}
+                                            disabled={processing}
+                                        >
+                                            <SelectTrigger {...control}>
+                                                <SelectValue placeholder="Selección personalizada" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem
+                                                    value={FROM_SCRATCH}
+                                                >
+                                                    Empezar desde cero
+                                                </SelectItem>
+                                                {templates.map((template) => (
+                                                    <SelectItem
+                                                        key={template.id}
+                                                        value={String(
+                                                            template.id,
+                                                        )}
+                                                    >
+                                                        {template.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                </FormField>
                             </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex-row items-center justify-between gap-3">
+                            <CardTitle>Permisos</CardTitle>
+                            <span className="text-sm text-muted-foreground">
+                                {data.permissions.length} seleccionados
+                            </span>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
                             {/* `permissions` o `permissions.3`: el foco del 422 llega al primero. */}
                             {permissionErrors.map((message, index) => (
                                 <FormError
@@ -158,8 +164,8 @@ const RolesCreate = ({ modules, templates, defaultPermissions }: Props) => {
                                 }}
                                 disabled={processing}
                             />
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
 
                     <FormActions
                         submitLabel="Crear rol"
