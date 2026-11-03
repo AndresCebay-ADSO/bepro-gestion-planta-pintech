@@ -6,6 +6,13 @@ import { FormActions } from '@/components/form-actions';
 import { FormError, FormField } from '@/components/form-field';
 import { FormLineItem } from '@/components/form-line-item';
 import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -131,10 +138,11 @@ export function FormulaForm({
 
     return (
         <form noValidate onSubmit={onSubmit} className="space-y-6">
-            <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                <h2 className="font-medium text-foreground">{heading}</h2>
-
-                <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>{heading}</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2">
                     <FormField
                         id="product_id"
                         label="Producto"
@@ -188,18 +196,14 @@ export function FormulaForm({
                             className="min-h-[80px]"
                         />
                     </FormField>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
-            <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h2 className="font-medium text-foreground">
-                            Ingredientes por Galón
-                        </h2>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                            {description}
-                        </p>
+            <Card>
+                <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="space-y-1.5">
+                        <CardTitle>Ingredientes por Galón</CardTitle>
+                        <CardDescription>{description}</CardDescription>
                     </div>
                     <Button
                         type="button"
@@ -211,113 +215,120 @@ export function FormulaForm({
                         <Plus className="mr-1 h-4 w-4" />
                         Agregar ingrediente
                     </Button>
-                </div>
-
-                <div className="space-y-3">
-                    {data.details.map((detail, index) => (
-                        <FormLineItem
-                            key={index}
-                            index={index}
-                            label="Paso"
-                            labelsOnFirstRowOnly
-                            onRemove={
-                                data.details.length > 1
-                                    ? () => removeDetail(index)
-                                    : undefined
-                            }
-                            className="md:grid-cols-12"
-                        >
-                            {/* En el celular el número va en el encabezado del bloque. */}
-                            <div className="hidden content-start gap-2 md:col-span-1 md:grid">
-                                <Label>Paso</Label>
-                                <p className="flex h-9 items-center justify-center text-sm font-medium text-muted-foreground tabular-nums">
-                                    {index + 1}
-                                </p>
-                            </div>
-
-                            <FormField
-                                id={`details.${index}.raw_material_id`}
-                                label="Materia prima"
-                                required
-                                error={
-                                    errors[`details.${index}.raw_material_id`]
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                        {data.details.map((detail, index) => (
+                            <FormLineItem
+                                key={index}
+                                index={index}
+                                label="Paso"
+                                labelsOnFirstRowOnly
+                                onRemove={
+                                    data.details.length > 1
+                                        ? () => removeDetail(index)
+                                        : undefined
                                 }
-                                className="md:col-span-5"
+                                className="md:grid-cols-12"
                             >
-                                <Combobox
-                                    options={rawMaterialOptions}
-                                    value={detail.raw_material_id}
-                                    onChange={(value) =>
-                                        updateDetail(
-                                            index,
-                                            'raw_material_id',
-                                            String(value),
-                                        )
-                                    }
-                                    placeholder="Materia..."
-                                />
-                            </FormField>
+                                {/* En el celular el número va en el encabezado del bloque. */}
+                                <div className="hidden content-start gap-2 md:col-span-1 md:grid">
+                                    <Label>Paso</Label>
+                                    <p className="flex h-9 items-center justify-center text-sm font-medium text-muted-foreground tabular-nums">
+                                        {index + 1}
+                                    </p>
+                                </div>
 
-                            <FormField
-                                id={`details.${index}.quantity`}
-                                label="Cantidad (por galón)"
-                                required
-                                error={errors[`details.${index}.quantity`]}
-                                className="md:col-span-3"
-                            >
-                                <DecimalInput
-                                    value={detail.quantity}
-                                    onValueChange={(value) =>
-                                        updateDetail(index, 'quantity', value)
+                                <FormField
+                                    id={`details.${index}.raw_material_id`}
+                                    label="Materia prima"
+                                    required
+                                    error={
+                                        errors[
+                                            `details.${index}.raw_material_id`
+                                        ]
                                     }
-                                    placeholder="Ej: 1,5"
-                                />
-                            </FormField>
+                                    className="md:col-span-5"
+                                >
+                                    <Combobox
+                                        options={rawMaterialOptions}
+                                        value={detail.raw_material_id}
+                                        onChange={(value) =>
+                                            updateDetail(
+                                                index,
+                                                'raw_material_id',
+                                                String(value),
+                                            )
+                                        }
+                                        placeholder="Materia..."
+                                    />
+                                </FormField>
 
-                            <FormField
-                                id={`details.${index}.unit_of_measure_id`}
-                                label="Unidad"
-                                required
-                                error={
-                                    errors[
-                                        `details.${index}.unit_of_measure_id`
-                                    ]
-                                }
-                                className="md:col-span-3"
-                            >
-                                {(control) => (
-                                    <Select
-                                        value={detail.unit_of_measure_id}
+                                <FormField
+                                    id={`details.${index}.quantity`}
+                                    label="Cantidad (por galón)"
+                                    required
+                                    error={errors[`details.${index}.quantity`]}
+                                    className="md:col-span-3"
+                                >
+                                    <DecimalInput
+                                        value={detail.quantity}
                                         onValueChange={(value) =>
                                             updateDetail(
                                                 index,
-                                                'unit_of_measure_id',
+                                                'quantity',
                                                 value,
                                             )
                                         }
-                                    >
-                                        <SelectTrigger {...control}>
-                                            <SelectValue placeholder="Unidad..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {units.map((unit) => (
-                                                <SelectItem
-                                                    key={unit.id}
-                                                    value={String(unit.id)}
-                                                >
-                                                    {unit.symbol}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                )}
-                            </FormField>
-                        </FormLineItem>
-                    ))}
-                </div>
+                                        placeholder="Ej: 1,5"
+                                    />
+                                </FormField>
 
-                <FormError id="details" message={errors.details} />
-            </div>
+                                <FormField
+                                    id={`details.${index}.unit_of_measure_id`}
+                                    label="Unidad"
+                                    required
+                                    error={
+                                        errors[
+                                            `details.${index}.unit_of_measure_id`
+                                        ]
+                                    }
+                                    className="md:col-span-3"
+                                >
+                                    {(control) => (
+                                        <Select
+                                            value={detail.unit_of_measure_id}
+                                            onValueChange={(value) =>
+                                                updateDetail(
+                                                    index,
+                                                    'unit_of_measure_id',
+                                                    value,
+                                                )
+                                            }
+                                        >
+                                            <SelectTrigger {...control}>
+                                                <SelectValue placeholder="Unidad..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {units.map((unit) => (
+                                                    <SelectItem
+                                                        key={unit.id}
+                                                        value={String(unit.id)}
+                                                    >
+                                                        {unit.symbol}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                </FormField>
+                            </FormLineItem>
+                        ))}
+                    </div>
+
+                    <FormError id="details" message={errors.details} />
+                </CardContent>
+            </Card>
 
             <FormActions
                 submitLabel={submitLabel}

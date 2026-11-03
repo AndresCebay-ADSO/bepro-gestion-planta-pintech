@@ -3,6 +3,13 @@ import type { FormEvent } from 'react';
 import { DecimalInput } from '@/components/decimal-input';
 import { FormActions } from '@/components/form-actions';
 import { FormCheckbox, FormField } from '@/components/form-field';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -111,130 +118,133 @@ export function ProductForm({
 
     return (
         <form noValidate onSubmit={onSubmit} className="space-y-6">
-            <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                <h2 className="text-lg font-semibold text-foreground">
-                    Identificación
-                </h2>
-
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <FormField
-                        id="name"
-                        label="Nombre"
-                        required
-                        error={errors.name}
-                        className="md:col-span-2"
-                    >
-                        <Input
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            maxLength={150}
-                            className="uppercase placeholder:normal-case"
-                            placeholder="Nombre descriptivo del producto"
-                        />
-                    </FormField>
-
-                    <FormField
-                        id="category_id"
-                        label="Categoría"
-                        required
-                        error={errors.category_id}
-                    >
-                        {(control) => (
-                            <Select
-                                value={data.category_id}
-                                onValueChange={(v) => setData('category_id', v)}
-                            >
-                                <SelectTrigger {...control}>
-                                    <SelectValue placeholder="Selecciona categoría" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {categories.map((c) => (
-                                        <SelectItem
-                                            key={c.id}
-                                            value={String(c.id)}
-                                        >
-                                            {c.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        )}
-                    </FormField>
-
-                    <FormField
-                        id="unit_of_measure_id"
-                        label="Unidad de medida"
-                        required
-                        error={errors.unit_of_measure_id}
-                    >
-                        {(control) => (
-                            <Select
-                                value={data.unit_of_measure_id}
-                                onValueChange={(v) =>
-                                    setData('unit_of_measure_id', v)
+            <Card>
+                <CardHeader>
+                    <CardTitle>Identificación</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <FormField
+                            id="name"
+                            label="Nombre"
+                            required
+                            error={errors.name}
+                            className="md:col-span-2"
+                        >
+                            <Input
+                                value={data.name}
+                                onChange={(e) =>
+                                    setData('name', e.target.value)
                                 }
-                            >
-                                <SelectTrigger {...control}>
-                                    <SelectValue placeholder="Selecciona unidad" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {units.map((u) => (
-                                        <SelectItem
-                                            key={u.id}
-                                            value={String(u.id)}
-                                        >
-                                            {u.name} ({u.symbol})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        )}
-                    </FormField>
+                                maxLength={150}
+                                className="uppercase placeholder:normal-case"
+                                placeholder="Nombre descriptivo del producto"
+                            />
+                        </FormField>
 
-                    <FormField
-                        id="description"
-                        label="Descripción"
-                        help="Puede mostrarse en la ficha pública del QR."
-                        error={errors.description}
-                        className="md:col-span-2"
-                    >
-                        <Textarea
-                            rows={4}
-                            value={data.description}
-                            onChange={(e) =>
-                                setData('description', e.target.value)
+                        <FormField
+                            id="category_id"
+                            label="Categoría"
+                            required
+                            error={errors.category_id}
+                        >
+                            {(control) => (
+                                <Select
+                                    value={data.category_id}
+                                    onValueChange={(v) =>
+                                        setData('category_id', v)
+                                    }
+                                >
+                                    <SelectTrigger {...control}>
+                                        <SelectValue placeholder="Selecciona categoría" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {categories.map((c) => (
+                                            <SelectItem
+                                                key={c.id}
+                                                value={String(c.id)}
+                                            >
+                                                {c.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        </FormField>
+
+                        <FormField
+                            id="unit_of_measure_id"
+                            label="Unidad de medida"
+                            required
+                            error={errors.unit_of_measure_id}
+                        >
+                            {(control) => (
+                                <Select
+                                    value={data.unit_of_measure_id}
+                                    onValueChange={(v) =>
+                                        setData('unit_of_measure_id', v)
+                                    }
+                                >
+                                    <SelectTrigger {...control}>
+                                        <SelectValue placeholder="Selecciona unidad" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {units.map((u) => (
+                                            <SelectItem
+                                                key={u.id}
+                                                value={String(u.id)}
+                                            >
+                                                {u.name} ({u.symbol})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        </FormField>
+
+                        <FormField
+                            id="description"
+                            label="Descripción"
+                            help="Puede mostrarse en la ficha pública del QR."
+                            error={errors.description}
+                            className="md:col-span-2"
+                        >
+                            <Textarea
+                                rows={4}
+                                value={data.description}
+                                onChange={(e) =>
+                                    setData('description', e.target.value)
+                                }
+                                placeholder="Resumen del producto, usos recomendados, notas para comercial o calidad…"
+                                className="min-h-[100px] resize-y"
+                            />
+                        </FormField>
+                    </div>
+
+                    {showActive && (
+                        <FormCheckbox
+                            id="is_active"
+                            label="Producto activo"
+                            error={errors.is_active}
+                            checked={data.is_active}
+                            onCheckedChange={(checked) =>
+                                setData('is_active', checked === true)
                             }
-                            placeholder="Resumen del producto, usos recomendados, notas para comercial o calidad…"
-                            className="min-h-[100px] resize-y"
                         />
-                    </FormField>
-                </div>
+                    )}
+                </CardContent>
+            </Card>
 
-                {showActive && (
-                    <FormCheckbox
-                        id="is_active"
-                        label="Producto activo"
-                        error={errors.is_active}
-                        checked={data.is_active}
-                        onCheckedChange={(checked) =>
-                            setData('is_active', checked === true)
-                        }
-                    />
-                )}
-            </div>
-
-            <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                <div>
-                    <h2 className="text-lg font-semibold text-foreground">
-                        Rangos para certificado de calidad
-                    </h2>
-                    <p className="mt-1 text-xs text-muted-foreground">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Rangos para certificado de calidad</CardTitle>
+                    <CardDescription>
                         Límites de referencia comparados con viscosidad (KU),
                         molienda (HG) y sólidos (%) al cerrar la orden. Dejar
                         vacío si no aplica.
-                    </p>
-                </div>
-                <div className="space-y-6">
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
                     {qualityRange(
                         'Viscosidad (KU)',
                         'quality_viscosity_lower',
@@ -251,22 +261,19 @@ export function ProductForm({
                         'quality_solids_lower',
                         'quality_solids_upper',
                     )}
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
             {showPrices && (
-                <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                    <div>
-                        <h2 className="text-lg font-semibold text-foreground">
-                            Precios y costos
-                        </h2>
-                        <p className="mt-1 text-xs text-muted-foreground">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Precios y costos</CardTitle>
+                        <CardDescription>
                             Define CIF y umbral para cálculo automático de
                             precios.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <FormField
                             id="current_cost"
                             label="Costo actual"
@@ -322,8 +329,8 @@ export function ProductForm({
                                 }
                             />
                         </FormField>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
             )}
 
             <FormActions

@@ -17,6 +17,7 @@ import {
 } from '@/components/paint-development-requests/options';
 import type { StepProps } from '@/components/paint-development-requests/types';
 import { PlantDateInput } from '@/components/plant-date-input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 function ctxValue(
     payload: Record<string, unknown>,
@@ -47,11 +48,11 @@ export default function ContextStep({
 
     return (
         <div className="space-y-6">
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-                <h2 className="mb-4 text-lg font-semibold">
-                    Identificación del requerimiento
-                </h2>
-                <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Identificación del requerimiento</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2">
                     <div className="md:col-span-2">
                         <TextField
                             id="client_name"
@@ -113,14 +114,14 @@ export default function ContextStep({
                             placeholder="Marca y referencia, si existe"
                         />
                     </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-                <h2 className="mb-4 text-lg font-semibold">
-                    Sustrato y estado de la superficie
-                </h2>
-                <div className="grid gap-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Sustrato y estado de la superficie</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4">
                     <SelectField
                         id="context_payload.sustrato"
                         label="Sustrato principal"
@@ -222,14 +223,14 @@ export default function ContextStep({
                         required
                         error={errors['context_payload.preparacion']}
                     />
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-                <h2 className="mb-4 text-lg font-semibold">
-                    Ambiente de servicio
-                </h2>
-                <div className="grid gap-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Ambiente de servicio</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4">
                     <CheckboxGroup
                         id="context_payload.exposicion"
                         label="Tipo de exposición"
@@ -307,8 +308,8 @@ export default function ContextStep({
                         }
                         placeholder="Sustancia, concentración, temperatura y frecuencia de contacto"
                     />
-                </div>
-            </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

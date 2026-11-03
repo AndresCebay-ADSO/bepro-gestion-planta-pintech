@@ -6,6 +6,7 @@ import { FormActions } from '@/components/form-actions';
 import { FormCheckbox, FormField } from '@/components/form-field';
 import { FormattedNumber } from '@/components/formatted-number';
 import { IntegerInput } from '@/components/integer-input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -153,9 +154,11 @@ export function RawMaterialForm({
 
     return (
         <form noValidate onSubmit={handleSubmit} className="grid min-w-0 gap-6">
-            <div className="space-y-4 rounded-lg border border-border bg-card p-6 shadow-sm">
-                <h2 className="font-medium text-foreground">Identificación</h2>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Identificación</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <FormField
                         id="code"
                         label="Código de referencia"
@@ -255,135 +258,147 @@ export function RawMaterialForm({
                             className="bg-muted/40"
                         />
                     </FormField>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
-            <div className="space-y-4 rounded-lg border border-border bg-card p-6 shadow-sm">
-                <h2 className="font-medium text-foreground">
-                    Control de inventario
-                </h2>
-                <div className="grid min-w-0 gap-4 md:grid-cols-2">
-                    <FormField
-                        id="minimum_stock"
-                        label="Stock mínimo en planta"
-                        required
-                        help={
-                            minimumStock !== null && (
-                                <span className="break-all">
-                                    Resguardo:{' '}
-                                    <FormattedNumber value={minimumStock} />
-                                </span>
-                            )
-                        }
-                        error={form.errors.minimum_stock}
-                    >
-                        <DecimalInput
-                            value={form.data.minimum_stock}
-                            onValueChange={(value) =>
-                                form.setData('minimum_stock', value)
+            <Card>
+                <CardHeader>
+                    <CardTitle>Control de inventario</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid min-w-0 gap-4 md:grid-cols-2">
+                        <FormField
+                            id="minimum_stock"
+                            label="Stock mínimo en planta"
+                            required
+                            help={
+                                minimumStock !== null && (
+                                    <span className="break-all">
+                                        Resguardo:{' '}
+                                        <FormattedNumber value={minimumStock} />
+                                    </span>
+                                )
                             }
-                            className="font-mono"
-                            placeholder="0"
-                        />
-                    </FormField>
+                            error={form.errors.minimum_stock}
+                        >
+                            <DecimalInput
+                                value={form.data.minimum_stock}
+                                onValueChange={(value) =>
+                                    form.setData('minimum_stock', value)
+                                }
+                                className="font-mono"
+                                placeholder="0"
+                            />
+                        </FormField>
 
-                    <FormField
-                        id="alert_days_before_expiry"
-                        label="Días de alerta por vencimiento"
-                        required
-                        error={form.errors.alert_days_before_expiry}
-                    >
-                        <IntegerInput
-                            maxDigits={MAX_ALERT_DAYS_DIGITS}
-                            value={form.data.alert_days_before_expiry}
-                            onValueChange={(value) =>
-                                form.setData('alert_days_before_expiry', value)
+                        <FormField
+                            id="alert_days_before_expiry"
+                            label="Días de alerta por vencimiento"
+                            required
+                            error={form.errors.alert_days_before_expiry}
+                        >
+                            <IntegerInput
+                                maxDigits={MAX_ALERT_DAYS_DIGITS}
+                                value={form.data.alert_days_before_expiry}
+                                onValueChange={(value) =>
+                                    form.setData(
+                                        'alert_days_before_expiry',
+                                        value,
+                                    )
+                                }
+                                placeholder="30"
+                            />
+                        </FormField>
+
+                        <FormField
+                            id="price_variation_threshold"
+                            label="Umbral de alerta por variación de precio (%)"
+                            help="Solo las materias primas con umbral configurado generan alertas de variación de precio."
+                            error={form.errors.price_variation_threshold}
+                        >
+                            <DecimalInput
+                                maxDecimals={2}
+                                maxIntegerDigits={3}
+                                value={form.data.price_variation_threshold}
+                                onValueChange={(value) =>
+                                    form.setData(
+                                        'price_variation_threshold',
+                                        value,
+                                    )
+                                }
+                                placeholder="Vacío = sin alerta"
+                            />
+                        </FormField>
+                    </div>
+
+                    {/* Control de inventario y precio manual (decisión del 2026-09-30) */}
+                    <div className="space-y-4 rounded-md border border-border p-4">
+                        <FormCheckbox
+                            id="tracks_inventory"
+                            label="Controla inventario"
+                            help={
+                                <>
+                                    Con control se compra por lotes, la orden de
+                                    producción descuenta el saldo y el precio
+                                    sale de las compras. Sin control (agua,
+                                    etiquetas), la orden registra el consumo sin
+                                    descontar saldo y lo costea con el precio
+                                    que se escribe aquí.
+                                    {!canEditPrice &&
+                                        ' Solo quien puede modificar los parámetros de costo cambia el control.'}
+                                </>
                             }
-                            placeholder="30"
-                        />
-                    </FormField>
-
-                    <FormField
-                        id="price_variation_threshold"
-                        label="Umbral de alerta por variación de precio (%)"
-                        help="Solo las materias primas con umbral configurado generan alertas de variación de precio."
-                        error={form.errors.price_variation_threshold}
-                    >
-                        <DecimalInput
-                            maxDecimals={2}
-                            maxIntegerDigits={3}
-                            value={form.data.price_variation_threshold}
-                            onValueChange={(value) =>
-                                form.setData('price_variation_threshold', value)
+                            error={form.errors.tracks_inventory}
+                            checked={form.data.tracks_inventory}
+                            // Cambiar el control (en cualquier sentido) cambia cómo se costea: solo quien maneja costos.
+                            disabled={!canEditPrice}
+                            onCheckedChange={(checked) =>
+                                form.setData(
+                                    'tracks_inventory',
+                                    checked === true,
+                                )
                             }
-                            placeholder="Vacío = sin alerta"
                         />
-                    </FormField>
-                </div>
 
-                {/* Control de inventario y precio manual (decisión del 2026-09-30) */}
-                <div className="space-y-4 rounded-md border border-border p-4">
+                        {!form.data.tracks_inventory &&
+                            (canEditPrice ? (
+                                <FormField
+                                    id="current_price"
+                                    label={`Precio de referencia${selectedUnit ? ` por ${selectedUnit.symbol}` : ''}`}
+                                    required
+                                    help="Obligatorio, aunque sea 0. Al cambiarlo se recalcula el costo de los productos que la usan."
+                                    error={form.errors.current_price}
+                                    className="md:max-w-xs"
+                                >
+                                    <DecimalInput
+                                        {...NUMBER_TYPES.money}
+                                        value={form.data.current_price}
+                                        onValueChange={(value) =>
+                                            form.setData('current_price', value)
+                                        }
+                                        className="font-mono"
+                                        placeholder="0"
+                                    />
+                                </FormField>
+                            ) : (
+                                <p className="text-xs text-muted-foreground">
+                                    El precio lo fija quien puede modificar los
+                                    parámetros de costo.
+                                </p>
+                            ))}
+                    </div>
+
                     <FormCheckbox
-                        id="tracks_inventory"
-                        label="Controla inventario"
-                        help={
-                            <>
-                                Con control se compra por lotes, la orden de
-                                producción descuenta el saldo y el precio sale
-                                de las compras. Sin control (agua, etiquetas),
-                                la orden registra el consumo sin descontar saldo
-                                y lo costea con el precio que se escribe aquí.
-                                {!canEditPrice &&
-                                    ' Solo quien puede modificar los parámetros de costo cambia el control.'}
-                            </>
-                        }
-                        error={form.errors.tracks_inventory}
-                        checked={form.data.tracks_inventory}
-                        // Cambiar el control (en cualquier sentido) cambia cómo se costea: solo quien maneja costos.
-                        disabled={!canEditPrice}
+                        id="is_active"
+                        label="Materia prima activa y disponible para compras"
+                        error={form.errors.is_active}
+                        checked={form.data.is_active}
                         onCheckedChange={(checked) =>
-                            form.setData('tracks_inventory', checked === true)
+                            form.setData('is_active', checked === true)
                         }
                     />
-
-                    {!form.data.tracks_inventory &&
-                        (canEditPrice ? (
-                            <FormField
-                                id="current_price"
-                                label={`Precio de referencia${selectedUnit ? ` por ${selectedUnit.symbol}` : ''}`}
-                                required
-                                help="Obligatorio, aunque sea 0. Al cambiarlo se recalcula el costo de los productos que la usan."
-                                error={form.errors.current_price}
-                                className="md:max-w-xs"
-                            >
-                                <DecimalInput
-                                    {...NUMBER_TYPES.money}
-                                    value={form.data.current_price}
-                                    onValueChange={(value) =>
-                                        form.setData('current_price', value)
-                                    }
-                                    className="font-mono"
-                                    placeholder="0"
-                                />
-                            </FormField>
-                        ) : (
-                            <p className="text-xs text-muted-foreground">
-                                El precio lo fija quien puede modificar los
-                                parámetros de costo.
-                            </p>
-                        ))}
-                </div>
-
-                <FormCheckbox
-                    id="is_active"
-                    label="Materia prima activa y disponible para compras"
-                    error={form.errors.is_active}
-                    checked={form.data.is_active}
-                    onCheckedChange={(checked) =>
-                        form.setData('is_active', checked === true)
-                    }
-                />
-            </div>
+                </CardContent>
+            </Card>
 
             <FormActions
                 submitLabel={submitLabel}

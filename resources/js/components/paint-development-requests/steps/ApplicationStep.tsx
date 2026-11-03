@@ -16,6 +16,7 @@ import {
     restriccionesOptions,
 } from '@/components/paint-development-requests/options';
 import type { StepProps } from '@/components/paint-development-requests/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 function appValue(
     payload: Record<string, unknown>,
@@ -44,11 +45,11 @@ export default function ApplicationStep({
 
     return (
         <div className="space-y-6">
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-                <h2 className="mb-4 text-lg font-semibold">
-                    Aplicación en campo
-                </h2>
-                <div className="grid gap-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Aplicación en campo</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4">
                     <CheckboxGroup
                         id="application_payload.metodo"
                         label="Método de aplicación"
@@ -190,14 +191,14 @@ export default function ApplicationStep({
                         }
                         placeholder="Incluye experiencia del aplicador y datos del equipo"
                     />
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-                <h2 className="mb-4 text-lg font-semibold">
-                    Tecnología y sistema de pintura
-                </h2>
-                <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Tecnología y sistema de pintura</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2">
                     <SelectField
                         id="application_payload.vehiculo"
                         label="Base requerida"
@@ -348,8 +349,8 @@ export default function ApplicationStep({
                             error={errors['application_payload.sistema_capas']}
                         />
                     </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

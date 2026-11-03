@@ -9,6 +9,7 @@ import {
     formaAprobacionOptions,
 } from '@/components/paint-development-requests/options';
 import type { StepProps } from '@/components/paint-development-requests/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 function specValue(
     payload: Record<string, unknown>,
@@ -37,11 +38,11 @@ export default function SpecificationsStep({
 
     return (
         <div className="space-y-6">
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-                <h2 className="mb-4 text-lg font-semibold">
-                    Especificaciones de control
-                </h2>
-                <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Especificaciones de control</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2">
                     <TextField
                         id="specifications_payload.viscosidad_metodo"
                         label="Viscosidad y método"
@@ -120,14 +121,14 @@ export default function SpecificationsStep({
                             error={errors['specifications_payload.estabilidad']}
                         />
                     </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-                <h2 className="mb-4 text-lg font-semibold">
-                    Suministro y logística
-                </h2>
-                <div className="grid gap-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Suministro y logística</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4">
                     <CheckboxGroup
                         id="specifications_payload.presentacion"
                         label="Presentaciones requeridas"
@@ -190,14 +191,14 @@ export default function SpecificationsStep({
                         }
                         placeholder="Tamaños y relación por volumen, si aplica"
                     />
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-                <h2 className="mb-4 text-lg font-semibold">
-                    Objetivo comercial y aprobación
-                </h2>
-                <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Objetivo comercial y aprobación</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2">
                     <TextField
                         id="specifications_payload.competidor"
                         label="Producto competidor o referencia"
@@ -319,8 +320,8 @@ export default function SpecificationsStep({
                             }
                         />
                     </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

@@ -14,6 +14,7 @@ import {
     retencionOptions,
 } from '@/components/paint-development-requests/options';
 import type { StepProps } from '@/components/paint-development-requests/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 function perfValue(
     payload: Record<string, unknown>,
@@ -42,11 +43,11 @@ export default function PerformanceStep({
 
     return (
         <div className="space-y-6">
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-                <h2 className="mb-4 text-lg font-semibold">
-                    Función y desempeño esperado
-                </h2>
-                <div className="grid gap-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Función y desempeño esperado</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4">
                     <CheckboxGroup
                         id="performance_payload.funcion"
                         label="Función principal del producto"
@@ -158,14 +159,14 @@ export default function PerformanceStep({
                         }
                         placeholder="Lo que puede ajustarse para balancear costo y desempeño"
                     />
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-                <h2 className="mb-4 text-lg font-semibold">
-                    Acabado requerido
-                </h2>
-                <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Acabado requerido</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2">
                     <TextField
                         id="performance_payload.color"
                         label="Color o referencia"
@@ -246,8 +247,8 @@ export default function PerformanceStep({
                             placeholder="Describe la apariencia o indica si habrá muestra física"
                         />
                     </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

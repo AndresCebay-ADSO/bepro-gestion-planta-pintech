@@ -13,6 +13,7 @@ import { IntegerInput } from '@/components/integer-input';
 import { PageHeader } from '@/components/page-header';
 import { PlantDateInput } from '@/components/plant-date-input';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import {
@@ -296,9 +297,11 @@ export default function QuotationForm({
             <PageHeader title={title} />
 
             <form noValidate onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                    <h2 className="text-lg font-semibold">Cliente</h2>
-                    <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Cliente</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 md:grid-cols-2">
                         <FormField
                             id="client_id"
                             label="Cliente"
@@ -380,172 +383,191 @@ export default function QuotationForm({
                                 }
                             />
                         </FormField>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
 
-                <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                    <h2 className="text-lg font-semibold">
-                        Condiciones comerciales
-                    </h2>
-                    <div className="grid gap-4 md:grid-cols-3">
-                        <FormField
-                            id="technology"
-                            label="Tecnología"
-                            error={errors.technology}
-                        >
-                            <Input
-                                value={data.technology}
-                                onChange={(e) =>
-                                    setData('technology', e.target.value)
-                                }
-                            />
-                        </FormField>
-                        <FormField id="line" label="Línea" error={errors.line}>
-                            <Input
-                                value={data.line}
-                                onChange={(e) =>
-                                    setData('line', e.target.value)
-                                }
-                            />
-                        </FormField>
-                        <FormField id="area" label="Área" error={errors.area}>
-                            <Input
-                                value={data.area}
-                                onChange={(e) =>
-                                    setData('area', e.target.value)
-                                }
-                            />
-                        </FormField>
-                        <FormField
-                            id="thickness_mils"
-                            label="Espesor (mils)"
-                            error={errors.thickness_mils}
-                        >
-                            <Input
-                                value={data.thickness_mils}
-                                onChange={(e) =>
-                                    setData('thickness_mils', e.target.value)
-                                }
-                            />
-                        </FormField>
-                        <FormField
-                            id="application_method"
-                            label="Método de aplicación"
-                            error={errors.application_method}
-                        >
-                            <Input
-                                value={data.application_method}
-                                onChange={(e) =>
-                                    setData(
-                                        'application_method',
-                                        e.target.value,
-                                    )
-                                }
-                            />
-                        </FormField>
-                        <FormField
-                            id="quotation_date"
-                            label="Fecha cotización"
-                            error={errors.quotation_date}
-                        >
-                            <PlantDateInput
-                                notFuture
-                                saved={
-                                    method === 'put'
-                                        ? initialData.quotation_date
-                                        : null
-                                }
-                                value={data.quotation_date}
-                                onChange={(value) =>
-                                    setData('quotation_date', value)
-                                }
-                            />
-                        </FormField>
-                        <FormField
-                            id="validity_days"
-                            label="Validez (días)"
-                            error={errors.validity_days}
-                        >
-                            {(control) => (
-                                <Select
-                                    value={data.validity_days}
-                                    onValueChange={(v) =>
-                                        setData('validity_days', v)
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Condiciones comerciales</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid gap-4 md:grid-cols-3">
+                            <FormField
+                                id="technology"
+                                label="Tecnología"
+                                error={errors.technology}
+                            >
+                                <Input
+                                    value={data.technology}
+                                    onChange={(e) =>
+                                        setData('technology', e.target.value)
                                     }
-                                >
-                                    <SelectTrigger {...control}>
-                                        <SelectValue placeholder="Seleccionar..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {validityDaysOptions.map((option) => (
-                                            <SelectItem
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        </FormField>
-                        <FormField
-                            id="payment_method"
-                            label="Forma de pago"
-                            error={errors.payment_method}
-                        >
-                            {(control) => (
-                                <Select
-                                    value={data.payment_method}
-                                    onValueChange={(v) =>
-                                        setData('payment_method', v)
+                                />
+                            </FormField>
+                            <FormField
+                                id="line"
+                                label="Línea"
+                                error={errors.line}
+                            >
+                                <Input
+                                    value={data.line}
+                                    onChange={(e) =>
+                                        setData('line', e.target.value)
                                     }
-                                >
-                                    <SelectTrigger {...control}>
-                                        <SelectValue placeholder="Seleccionar..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {paymentMethodOptions.map((option) => (
-                                            <SelectItem
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        </FormField>
+                                />
+                            </FormField>
+                            <FormField
+                                id="area"
+                                label="Área"
+                                error={errors.area}
+                            >
+                                <Input
+                                    value={data.area}
+                                    onChange={(e) =>
+                                        setData('area', e.target.value)
+                                    }
+                                />
+                            </FormField>
+                            <FormField
+                                id="thickness_mils"
+                                label="Espesor (mils)"
+                                error={errors.thickness_mils}
+                            >
+                                <Input
+                                    value={data.thickness_mils}
+                                    onChange={(e) =>
+                                        setData(
+                                            'thickness_mils',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </FormField>
+                            <FormField
+                                id="application_method"
+                                label="Método de aplicación"
+                                error={errors.application_method}
+                            >
+                                <Input
+                                    value={data.application_method}
+                                    onChange={(e) =>
+                                        setData(
+                                            'application_method',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </FormField>
+                            <FormField
+                                id="quotation_date"
+                                label="Fecha cotización"
+                                error={errors.quotation_date}
+                            >
+                                <PlantDateInput
+                                    notFuture
+                                    saved={
+                                        method === 'put'
+                                            ? initialData.quotation_date
+                                            : null
+                                    }
+                                    value={data.quotation_date}
+                                    onChange={(value) =>
+                                        setData('quotation_date', value)
+                                    }
+                                />
+                            </FormField>
+                            <FormField
+                                id="validity_days"
+                                label="Validez (días)"
+                                error={errors.validity_days}
+                            >
+                                {(control) => (
+                                    <Select
+                                        value={data.validity_days}
+                                        onValueChange={(v) =>
+                                            setData('validity_days', v)
+                                        }
+                                    >
+                                        <SelectTrigger {...control}>
+                                            <SelectValue placeholder="Seleccionar..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {validityDaysOptions.map(
+                                                (option) => (
+                                                    <SelectItem
+                                                        key={option.value}
+                                                        value={option.value}
+                                                    >
+                                                        {option.label}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </FormField>
+                            <FormField
+                                id="payment_method"
+                                label="Forma de pago"
+                                error={errors.payment_method}
+                            >
+                                {(control) => (
+                                    <Select
+                                        value={data.payment_method}
+                                        onValueChange={(v) =>
+                                            setData('payment_method', v)
+                                        }
+                                    >
+                                        <SelectTrigger {...control}>
+                                            <SelectValue placeholder="Seleccionar..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {paymentMethodOptions.map(
+                                                (option) => (
+                                                    <SelectItem
+                                                        key={option.value}
+                                                        value={option.value}
+                                                    >
+                                                        {option.label}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </FormField>
+                            <FormField
+                                id="delivery_time"
+                                label="Tiempo de entrega"
+                                error={errors.delivery_time}
+                            >
+                                <Input
+                                    value={data.delivery_time}
+                                    onChange={(e) =>
+                                        setData('delivery_time', e.target.value)
+                                    }
+                                />
+                            </FormField>
+                        </div>
                         <FormField
-                            id="delivery_time"
-                            label="Tiempo de entrega"
-                            error={errors.delivery_time}
+                            id="notes"
+                            label="Observaciones"
+                            error={errors.notes}
+                            help="Opcional. Solo para condiciones particulares de esta cotización (transporte, pedido mínimo, anticipo…). Sale en el PDF; si no aplica, déjelo vacío."
                         >
-                            <Input
-                                value={data.delivery_time}
+                            <Textarea
+                                value={data.notes}
                                 onChange={(e) =>
-                                    setData('delivery_time', e.target.value)
+                                    setData('notes', e.target.value)
                                 }
                             />
                         </FormField>
-                    </div>
-                    <FormField
-                        id="notes"
-                        label="Observaciones"
-                        error={errors.notes}
-                        help="Opcional. Solo para condiciones particulares de esta cotización (transporte, pedido mínimo, anticipo…). Sale en el PDF; si no aplica, déjelo vacío."
-                    >
-                        <Textarea
-                            value={data.notes}
-                            onChange={(e) => setData('notes', e.target.value)}
-                        />
-                    </FormField>
-                </div>
+                    </CardContent>
+                </Card>
 
-                <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                    <div className="flex items-center justify-between gap-3">
-                        <h2 className="text-lg font-semibold">Productos</h2>
+                <Card>
+                    <CardHeader className="flex-row items-center justify-between gap-3">
+                        <CardTitle>Productos</CardTitle>
                         <Button
                             type="button"
                             variant="outline"
@@ -555,393 +577,407 @@ export default function QuotationForm({
                             <Plus className="mr-1 h-4 w-4" />
                             Agregar producto
                         </Button>
-                    </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormError
+                            id="items"
+                            message={
+                                errors.items ?? previewErrors.general.items
+                            }
+                        />
 
-                    <FormError
-                        id="items"
-                        message={errors.items ?? previewErrors.general.items}
-                    />
+                        {data.items.length === 0 ? (
+                            <div className="rounded border border-dashed border-border py-8 text-center text-muted-foreground">
+                                Agrega al menos un producto para cotizar.
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {data.items.map((item, index) => {
+                                    const selectedProduct = products.find(
+                                        (product) =>
+                                            product.id ===
+                                            Number(item.product_id),
+                                    );
+                                    const variantOptions = selectedProduct
+                                        ? selectedProduct.variants.map(
+                                              (variant) => ({
+                                                  id: String(variant.id),
+                                                  label: `${variant.name}${variant.presentation_label ? ` (${variant.presentation_label})` : ''}`,
+                                              }),
+                                          )
+                                        : [];
+                                    const { line, isCurrent } = lineFor(
+                                        item.row_key,
+                                    );
+                                    // El campo que manda, si está vacío, muestra lo que se va a usar: sin precio se cotiza
+                                    // al 0 % y sin ajuste también. No se escribe en el campo mientras el usuario lo edita.
+                                    const appliedPrice =
+                                        item.pricing_source === 'price' &&
+                                        item.unit_price === '' &&
+                                        isCurrent
+                                            ? String(Number(line?.unit_price))
+                                            : undefined;
 
-                    {data.items.length === 0 ? (
-                        <div className="rounded border border-dashed border-border py-8 text-center text-muted-foreground">
-                            Agrega al menos un producto para cotizar.
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {data.items.map((item, index) => {
-                                const selectedProduct = products.find(
-                                    (product) =>
-                                        product.id === Number(item.product_id),
-                                );
-                                const variantOptions = selectedProduct
-                                    ? selectedProduct.variants.map(
-                                          (variant) => ({
-                                              id: String(variant.id),
-                                              label: `${variant.name}${variant.presentation_label ? ` (${variant.presentation_label})` : ''}`,
-                                          }),
-                                      )
-                                    : [];
-                                const { line, isCurrent } = lineFor(
-                                    item.row_key,
-                                );
-                                // El campo que manda, si está vacío, muestra lo que se va a usar: sin precio se cotiza
-                                // al 0 % y sin ajuste también. No se escribe en el campo mientras el usuario lo edita.
-                                const appliedPrice =
-                                    item.pricing_source === 'price' &&
-                                    item.unit_price === '' &&
-                                    isCurrent
-                                        ? String(Number(line?.unit_price))
-                                        : undefined;
-
-                                return (
-                                    <FormLineItem
-                                        key={item.row_key}
-                                        index={index}
-                                        onRemove={() => removeItem(index)}
-                                        className="md:grid-cols-12"
-                                        footer={
-                                            <div className="text-right text-sm text-muted-foreground">
-                                                Subtotal línea:{' '}
-                                                {/* Atenuado si no corresponde a la fila tal como está: se está
+                                    return (
+                                        <FormLineItem
+                                            key={item.row_key}
+                                            index={index}
+                                            onRemove={() => removeItem(index)}
+                                            className="md:grid-cols-12"
+                                            footer={
+                                                <div className="text-right text-sm text-muted-foreground">
+                                                    Subtotal línea:{' '}
+                                                    {/* Atenuado si no corresponde a la fila tal como está: se está
                                                     recalculando o la vista previa fue rechazada. */}
-                                                <FormattedNumber
-                                                    value={
-                                                        line?.subtotal ?? null
-                                                    }
-                                                    currency
-                                                    maxDecimals={0}
-                                                    className={
-                                                        isCurrent
-                                                            ? undefined
-                                                            : 'opacity-50'
-                                                    }
-                                                />
-                                            </div>
-                                        }
-                                    >
-                                        <FormField
-                                            id={`items.${index}.product_id`}
-                                            label="Producto"
-                                            required
-                                            error={itemError(
-                                                item,
-                                                index,
-                                                'product_id',
-                                            )}
-                                            className="md:col-span-4"
+                                                    <FormattedNumber
+                                                        value={
+                                                            line?.subtotal ??
+                                                            null
+                                                        }
+                                                        currency
+                                                        maxDecimals={0}
+                                                        className={
+                                                            isCurrent
+                                                                ? undefined
+                                                                : 'opacity-50'
+                                                        }
+                                                    />
+                                                </div>
+                                            }
                                         >
-                                            <Combobox
-                                                options={productOptions}
-                                                value={item.product_id}
-                                                onChange={(value) =>
-                                                    updateItem(
-                                                        index,
-                                                        'product_id',
-                                                        String(value),
-                                                    )
-                                                }
-                                                placeholder="Seleccionar..."
-                                            />
-                                        </FormField>
-                                        <FormField
-                                            id={`items.${index}.product_variant_id`}
-                                            label="Presentación"
-                                            required
-                                            error={itemError(
-                                                item,
-                                                index,
-                                                'product_variant_id',
-                                            )}
-                                            className="md:col-span-3"
-                                        >
-                                            <Combobox
-                                                options={variantOptions}
-                                                value={item.product_variant_id}
-                                                onChange={(value) =>
-                                                    updateItem(
-                                                        index,
-                                                        'product_variant_id',
-                                                        String(value),
-                                                    )
-                                                }
-                                                placeholder="Seleccionar..."
-                                                disabled={!selectedProduct}
-                                            />
-                                        </FormField>
-                                        <FormField
-                                            id={`items.${index}.type`}
-                                            label="Tipo"
-                                            error={itemError(
-                                                item,
-                                                index,
-                                                'type',
-                                            )}
-                                            className="md:col-span-2"
-                                        >
-                                            {(control) => (
-                                                <Select
-                                                    value={item.type}
-                                                    onValueChange={(v) =>
+                                            <FormField
+                                                id={`items.${index}.product_id`}
+                                                label="Producto"
+                                                required
+                                                error={itemError(
+                                                    item,
+                                                    index,
+                                                    'product_id',
+                                                )}
+                                                className="md:col-span-4"
+                                            >
+                                                <Combobox
+                                                    options={productOptions}
+                                                    value={item.product_id}
+                                                    onChange={(value) =>
                                                         updateItem(
                                                             index,
-                                                            'type',
-                                                            v,
+                                                            'product_id',
+                                                            String(value),
                                                         )
                                                     }
-                                                >
-                                                    <SelectTrigger {...control}>
-                                                        <SelectValue placeholder="Seleccionar..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {itemTypeOptions.map(
-                                                            (option) => (
-                                                                <SelectItem
-                                                                    key={
-                                                                        option.value
-                                                                    }
-                                                                    value={
-                                                                        option.value
-                                                                    }
-                                                                >
-                                                                    {
-                                                                        option.label
-                                                                    }
-                                                                </SelectItem>
-                                                            ),
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-                                            )}
-                                        </FormField>
-                                        <FormField
-                                            id={`items.${index}.quantity`}
-                                            label="Cantidad"
-                                            required
-                                            error={itemError(
-                                                item,
-                                                index,
-                                                'quantity',
-                                            )}
-                                            className="md:col-span-3"
-                                        >
-                                            <IntegerInput
-                                                maxDigits={UNITS_MAX_DIGITS}
-                                                value={item.quantity}
-                                                onValueChange={(value) =>
-                                                    updateItem(
-                                                        index,
-                                                        'quantity',
-                                                        value,
-                                                    )
-                                                }
-                                            />
-                                        </FormField>
-
-                                        <FormField
-                                            id={`items.${index}.description`}
-                                            label="Descripción comercial"
-                                            error={itemError(
-                                                item,
-                                                index,
-                                                'description',
-                                            )}
-                                            className="md:col-span-4"
-                                        >
-                                            <Input
-                                                value={item.description}
-                                                onChange={(e) =>
-                                                    updateItem(
-                                                        index,
-                                                        'description',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                        </FormField>
-                                        <FormField
-                                            id={`items.${index}.color`}
-                                            label="Color"
-                                            error={itemError(
-                                                item,
-                                                index,
-                                                'color',
-                                            )}
-                                            className="md:col-span-2"
-                                        >
-                                            <Input
-                                                value={item.color}
-                                                onChange={(e) =>
-                                                    updateItem(
-                                                        index,
-                                                        'color',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                        </FormField>
-                                        <FormField
-                                            id={`items.${index}.list_unit_price`}
-                                            label="Precio lista"
-                                            className="md:col-span-2"
-                                        >
-                                            <Input
-                                                // Precio interno: 2 decimales, y vacío sin presentación.
-                                                value={formatNumber(
-                                                    item.list_unit_price,
-                                                    {
-                                                        currency: '$',
-                                                        maxDecimals: 2,
-                                                        emptyValue: '',
-                                                    },
+                                                    placeholder="Seleccionar..."
+                                                />
+                                            </FormField>
+                                            <FormField
+                                                id={`items.${index}.product_variant_id`}
+                                                label="Presentación"
+                                                required
+                                                error={itemError(
+                                                    item,
+                                                    index,
+                                                    'product_variant_id',
                                                 )}
-                                                readOnly
-                                                className="bg-muted/50"
-                                            />
-                                        </FormField>
-                                        <FormField
-                                            id={`items.${index}.price_adjustment_pct`}
-                                            label="Ajuste %"
-                                            error={itemError(
-                                                item,
-                                                index,
-                                                'price_adjustment_pct',
-                                            )}
-                                            className="md:col-span-2"
-                                        >
-                                            <DecimalInput
-                                                {...NUMBER_TYPES.percentage}
-                                                allowNegative
-                                                value={
-                                                    item.price_adjustment_pct
-                                                }
-                                                onValueChange={(value) =>
-                                                    updateItem(
-                                                        index,
-                                                        'price_adjustment_pct',
-                                                        value,
-                                                    )
-                                                }
-                                                placeholder={
-                                                    item.pricing_source ===
-                                                    'adjustment'
-                                                        ? '0'
-                                                        : '-10 o 5'
-                                                }
-                                            />
-                                        </FormField>
-                                        <FormField
-                                            id={`items.${index}.unit_price`}
-                                            label="Precio unitario"
-                                            error={itemError(
-                                                item,
-                                                index,
-                                                'unit_price',
-                                            )}
-                                            className="md:col-span-2"
-                                        >
-                                            <IntegerInput
-                                                maxDigits={
-                                                    NUMBER_TYPES.money
-                                                        .maxIntegerDigits
-                                                }
-                                                value={item.unit_price}
-                                                onValueChange={(value) =>
-                                                    updateItem(
-                                                        index,
-                                                        'unit_price',
-                                                        value,
-                                                    )
-                                                }
-                                                placeholder={appliedPrice}
-                                            />
-                                        </FormField>
-                                    </FormLineItem>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
+                                                className="md:col-span-3"
+                                            >
+                                                <Combobox
+                                                    options={variantOptions}
+                                                    value={
+                                                        item.product_variant_id
+                                                    }
+                                                    onChange={(value) =>
+                                                        updateItem(
+                                                            index,
+                                                            'product_variant_id',
+                                                            String(value),
+                                                        )
+                                                    }
+                                                    placeholder="Seleccionar..."
+                                                    disabled={!selectedProduct}
+                                                />
+                                            </FormField>
+                                            <FormField
+                                                id={`items.${index}.type`}
+                                                label="Tipo"
+                                                error={itemError(
+                                                    item,
+                                                    index,
+                                                    'type',
+                                                )}
+                                                className="md:col-span-2"
+                                            >
+                                                {(control) => (
+                                                    <Select
+                                                        value={item.type}
+                                                        onValueChange={(v) =>
+                                                            updateItem(
+                                                                index,
+                                                                'type',
+                                                                v,
+                                                            )
+                                                        }
+                                                    >
+                                                        <SelectTrigger
+                                                            {...control}
+                                                        >
+                                                            <SelectValue placeholder="Seleccionar..." />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {itemTypeOptions.map(
+                                                                (option) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            option.value
+                                                                        }
+                                                                        value={
+                                                                            option.value
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            option.label
+                                                                        }
+                                                                    </SelectItem>
+                                                                ),
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                )}
+                                            </FormField>
+                                            <FormField
+                                                id={`items.${index}.quantity`}
+                                                label="Cantidad"
+                                                required
+                                                error={itemError(
+                                                    item,
+                                                    index,
+                                                    'quantity',
+                                                )}
+                                                className="md:col-span-3"
+                                            >
+                                                <IntegerInput
+                                                    maxDigits={UNITS_MAX_DIGITS}
+                                                    value={item.quantity}
+                                                    onValueChange={(value) =>
+                                                        updateItem(
+                                                            index,
+                                                            'quantity',
+                                                            value,
+                                                        )
+                                                    }
+                                                />
+                                            </FormField>
 
-                <div className="rounded-lg border border-border bg-card p-6">
-                    <div className="ml-auto max-w-sm space-y-4 text-sm">
-                        {/* Informativo, no un error: es lo normal mientras se llena un producto nuevo. Al guardar, el
-                            servidor marca los campos que le faltan a la fila. */}
-                        {previewIncompleteRows > 0 && (
-                            <p className="text-xs text-muted-foreground">
-                                {previewIncompleteRows === 1
-                                    ? '1 fila incompleta no suma en los totales.'
-                                    : `${previewIncompleteRows} filas incompletas no suman en los totales.`}
-                            </p>
-                        )}
-                        {(previewLoading || previewStale !== null) && (
-                            <p
-                                className={
-                                    previewStale === null
-                                        ? 'text-xs text-muted-foreground'
-                                        : 'text-xs text-destructive'
-                                }
-                            >
-                                {previewStale === null
-                                    ? 'Calculando precios…'
-                                    : previewStale === 'invalid'
-                                      ? 'Revisa los datos marcados: los totales no están al día.'
-                                      : 'No se pudieron calcular los precios. Se recalculan al guardar.'}
-                            </p>
-                        )}
-                        <div className="flex items-center justify-between">
-                            <span>Subtotal</span>
-                            <FormattedNumber
-                                value={preview?.totals.subtotal ?? 0}
-                                currency
-                                maxDecimals={0}
-                            />
-                        </div>
-                        {/* items-start: si aparece un mensaje bajo el IVA, el texto de la fila no baja con él. */}
-                        <div className="flex items-start justify-between leading-8">
-                            <div className="flex items-start gap-2">
-                                <span>IVA</span>
-                                <div>
-                                    <div className="flex items-start gap-1">
-                                        <DecimalInput
-                                            maxDecimals={2}
-                                            maxIntegerDigits={3}
-                                            value={data.iva_percentage}
-                                            onValueChange={(value) => {
-                                                setData(
-                                                    'iva_percentage',
-                                                    value,
-                                                );
-                                                clearErrors('iva_percentage');
-                                            }}
-                                            className="h-8 w-20 text-right"
-                                        />
-                                        <span>%</span>
-                                    </div>
-                                    <InputError
-                                        className="text-xs leading-4"
-                                        message={
-                                            errors.iva_percentage ??
-                                            previewErrors.general.iva_percentage
-                                        }
-                                    />
-                                </div>
+                                            <FormField
+                                                id={`items.${index}.description`}
+                                                label="Descripción comercial"
+                                                error={itemError(
+                                                    item,
+                                                    index,
+                                                    'description',
+                                                )}
+                                                className="md:col-span-4"
+                                            >
+                                                <Input
+                                                    value={item.description}
+                                                    onChange={(e) =>
+                                                        updateItem(
+                                                            index,
+                                                            'description',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                            </FormField>
+                                            <FormField
+                                                id={`items.${index}.color`}
+                                                label="Color"
+                                                error={itemError(
+                                                    item,
+                                                    index,
+                                                    'color',
+                                                )}
+                                                className="md:col-span-2"
+                                            >
+                                                <Input
+                                                    value={item.color}
+                                                    onChange={(e) =>
+                                                        updateItem(
+                                                            index,
+                                                            'color',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                            </FormField>
+                                            <FormField
+                                                id={`items.${index}.list_unit_price`}
+                                                label="Precio lista"
+                                                className="md:col-span-2"
+                                            >
+                                                <Input
+                                                    // Precio interno: 2 decimales, y vacío sin presentación.
+                                                    value={formatNumber(
+                                                        item.list_unit_price,
+                                                        {
+                                                            currency: '$',
+                                                            maxDecimals: 2,
+                                                            emptyValue: '',
+                                                        },
+                                                    )}
+                                                    readOnly
+                                                    className="bg-muted/50"
+                                                />
+                                            </FormField>
+                                            <FormField
+                                                id={`items.${index}.price_adjustment_pct`}
+                                                label="Ajuste %"
+                                                error={itemError(
+                                                    item,
+                                                    index,
+                                                    'price_adjustment_pct',
+                                                )}
+                                                className="md:col-span-2"
+                                            >
+                                                <DecimalInput
+                                                    {...NUMBER_TYPES.percentage}
+                                                    allowNegative
+                                                    value={
+                                                        item.price_adjustment_pct
+                                                    }
+                                                    onValueChange={(value) =>
+                                                        updateItem(
+                                                            index,
+                                                            'price_adjustment_pct',
+                                                            value,
+                                                        )
+                                                    }
+                                                    placeholder={
+                                                        item.pricing_source ===
+                                                        'adjustment'
+                                                            ? '0'
+                                                            : '-10 o 5'
+                                                    }
+                                                />
+                                            </FormField>
+                                            <FormField
+                                                id={`items.${index}.unit_price`}
+                                                label="Precio unitario"
+                                                error={itemError(
+                                                    item,
+                                                    index,
+                                                    'unit_price',
+                                                )}
+                                                className="md:col-span-2"
+                                            >
+                                                <IntegerInput
+                                                    maxDigits={
+                                                        NUMBER_TYPES.money
+                                                            .maxIntegerDigits
+                                                    }
+                                                    value={item.unit_price}
+                                                    onValueChange={(value) =>
+                                                        updateItem(
+                                                            index,
+                                                            'unit_price',
+                                                            value,
+                                                        )
+                                                    }
+                                                    placeholder={appliedPrice}
+                                                />
+                                            </FormField>
+                                        </FormLineItem>
+                                    );
+                                })}
                             </div>
-                            <FormattedNumber
-                                value={preview?.totals.iva_amount ?? 0}
-                                currency
-                                maxDecimals={0}
-                            />
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent>
+                        <div className="ml-auto max-w-sm space-y-4 text-sm">
+                            {/* Informativo, no un error: es lo normal mientras se llena un producto nuevo. Al guardar, el
+                            servidor marca los campos que le faltan a la fila. */}
+                            {previewIncompleteRows > 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                    {previewIncompleteRows === 1
+                                        ? '1 fila incompleta no suma en los totales.'
+                                        : `${previewIncompleteRows} filas incompletas no suman en los totales.`}
+                                </p>
+                            )}
+                            {(previewLoading || previewStale !== null) && (
+                                <p
+                                    className={
+                                        previewStale === null
+                                            ? 'text-xs text-muted-foreground'
+                                            : 'text-xs text-destructive'
+                                    }
+                                >
+                                    {previewStale === null
+                                        ? 'Calculando precios…'
+                                        : previewStale === 'invalid'
+                                          ? 'Revisa los datos marcados: los totales no están al día.'
+                                          : 'No se pudieron calcular los precios. Se recalculan al guardar.'}
+                                </p>
+                            )}
+                            <div className="flex items-center justify-between">
+                                <span>Subtotal</span>
+                                <FormattedNumber
+                                    value={preview?.totals.subtotal ?? 0}
+                                    currency
+                                    maxDecimals={0}
+                                />
+                            </div>
+                            {/* items-start: si aparece un mensaje bajo el IVA, el texto de la fila no baja con él. */}
+                            <div className="flex items-start justify-between leading-8">
+                                <div className="flex items-start gap-2">
+                                    <span>IVA</span>
+                                    <div>
+                                        <div className="flex items-start gap-1">
+                                            <DecimalInput
+                                                maxDecimals={2}
+                                                maxIntegerDigits={3}
+                                                value={data.iva_percentage}
+                                                onValueChange={(value) => {
+                                                    setData(
+                                                        'iva_percentage',
+                                                        value,
+                                                    );
+                                                    clearErrors(
+                                                        'iva_percentage',
+                                                    );
+                                                }}
+                                                className="h-8 w-20 text-right"
+                                            />
+                                            <span>%</span>
+                                        </div>
+                                        <InputError
+                                            className="text-xs leading-4"
+                                            message={
+                                                errors.iva_percentage ??
+                                                previewErrors.general
+                                                    .iva_percentage
+                                            }
+                                        />
+                                    </div>
+                                </div>
+                                <FormattedNumber
+                                    value={preview?.totals.iva_amount ?? 0}
+                                    currency
+                                    maxDecimals={0}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between border-t border-border pt-2 text-base font-semibold">
+                                <span>Total</span>
+                                <FormattedNumber
+                                    value={preview?.totals.total ?? 0}
+                                    currency
+                                    maxDecimals={0}
+                                />
+                            </div>
                         </div>
-                        <div className="flex items-center justify-between border-t border-border pt-2 text-base font-semibold">
-                            <span>Total</span>
-                            <FormattedNumber
-                                value={preview?.totals.total ?? 0}
-                                currency
-                                maxDecimals={0}
-                            />
-                        </div>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
 
                 <FormActions
                     submitLabel={submitLabel}
