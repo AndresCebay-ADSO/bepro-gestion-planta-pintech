@@ -75,6 +75,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('qr-codes/{qrCode}', [QrCodeController::class, 'update'])
         ->middleware('can:'.Permission::QrCodesUpdate->value)
         ->name('qr-codes.update');
+    Route::post('qr-codes/{qrCode}/documents', [QrCodeController::class, 'storeDocument'])
+        ->middleware('can:'.Permission::QrCodesManageDocuments->value)
+        ->name('qr-codes.documents.store');
+    Route::delete('qr-codes/{qrCode}/documents/{document}', [QrCodeController::class, 'destroyDocument'])
+        ->middleware('can:'.Permission::QrCodesManageDocuments->value)
+        ->name('qr-codes.documents.destroy');
 
     // Saldos de producción
     Route::get('production/remnants', [RemnantController::class, 'index'])

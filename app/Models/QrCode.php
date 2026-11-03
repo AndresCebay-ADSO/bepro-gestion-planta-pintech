@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ProductionOrderStatus;
 use Database\Factories\QrCodeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -60,6 +61,14 @@ class QrCode extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    /**
+     * El certificado es de un lote terminado: antes de completar la orden no hay nada que certificar.
+     */
+    public function acceptsCertificate(): bool
+    {
+        return $this->productionOrder?->status === ProductionOrderStatus::Completed;
     }
 
     public function productionOrder(): BelongsTo

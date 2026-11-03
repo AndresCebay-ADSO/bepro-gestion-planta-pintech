@@ -13,8 +13,9 @@ use App\Models\User;
 use App\Support\ImageDataUri;
 use App\Support\NumberFormat;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class QualityInspectionCertificateService
 {
@@ -24,6 +25,7 @@ class QualityInspectionCertificateService
     public function __construct(
         private readonly TimezoneService $timezoneService,
         private readonly ProductionOrderQrCodeService $qrCodeService,
+        private readonly VersionedDocumentStore $documentStore,
     ) {}
 
     public function generateForCompletedOrder(ProductionOrder $order, int $userId): QrDocument
@@ -37,29 +39,35 @@ class QualityInspectionCertificateService
         // Si ya se imprimieron estampitas, reutiliza ese QR: el que está pegado en el envase. No lo reactiva si un
         // administrador lo desactivó con la orden abierta.
         $qrCode = $this->qrCodeService->ensureForCertificate($order, $userId);
-        $version = $this->nextVersion($qrCode);
-        $payload = $this->buildPayload($order);
-        $storedPdf = $this->storePdf($order, $payload, $version);
 
-        return DB::transaction(function () use ($qrCode, $order, $storedPdf, $version, $userId): QrDocument {
-            QrDocument::query()
-                ->where('qr_code_id', $qrCode->id)
-                ->where('document_type', QrDocumentType::QualityCertificate->value)
-                ->update(['is_current' => false]);
+        return $this->storeNewVersion($order, $qrCode, $this->renderPdf($order, $this->buildPayload($order)), $userId);
+    }
 
-            /** @var QrDocument */
-            return QrDocument::create([
-                'qr_code_id' => $qrCode->id,
-                'document_type' => QrDocumentType::QualityCertificate,
-                'file_name' => $this->fileName($order),
-                'file_path' => $storedPdf['path'],
-                'file_size' => $storedPdf['size'],
-                'mime_type' => 'application/pdf',
-                'version' => $version,
-                'is_current' => true,
-                'uploaded_by' => $userId,
-            ]);
-        });
+    /**
+     * Carga a mano el certificado de una orden completada, para cuando el generado no sirve o no se pudo generar. Queda
+     * como la versión vigente, con el mismo nombre de descarga que uno generado.
+     */
+    public function storeManualUpload(QrCode $qrCode, UploadedFile $file, int $userId): QrDocument
+    {
+        if (! $qrCode->acceptsCertificate()) {
+            throw new \DomainException('Solo se puede subir el certificado de una orden completada.');
+        }
+
+        return $this->storeNewVersion($qrCode->productionOrder, $qrCode, $file->getContent(), $userId);
+    }
+
+    private function storeNewVersion(ProductionOrder $order, QrCode $qrCode, string $content, int $userId): QrDocument
+    {
+        /** @var QrDocument */
+        return $this->documentStore->store(
+            owner: $qrCode,
+            relation: 'documents',
+            type: QrDocumentType::QualityCertificate,
+            content: $content,
+            fileName: $this->fileName($order),
+            pathFor: fn (int $version): string => "quality-certificates/{$order->order_number}/certificado-calidad-v{$version}-".Str::ulid().'.pdf',
+            userId: $userId,
+        );
     }
 
     /**
@@ -80,7 +88,7 @@ class QualityInspectionCertificateService
             'verification_date' => $this->timezoneService->formatPlantDate($order->getVerificationDate()),
             'responsible_name' => $signer?->name ?? $order->responsible_name ?? 'N/A',
             'responsible_role' => $signer?->job_title ?? 'N/A',
-            'tests' => [
+            'tests' => array_values(array_filter([
                 $this->numericTest(
                     name: 'VISCOSIDAD',
                     unit: 'KU',
@@ -109,7 +117,7 @@ class QualityInspectionCertificateService
                     'lower_limit' => 'NO SEPARACIÓN',
                     'upper_limit' => 'AP. COLOR ESTABLE',
                 ],
-            ],
+            ])),
         ];
     }
 
@@ -136,9 +144,9 @@ class QualityInspectionCertificateService
     }
 
     /**
-     * @return array{path: string, size: int}
+     * @param  array<string, mixed>  $payload
      */
-    private function storePdf(ProductionOrder $order, array $payload, int $version): array
+    private function renderPdf(ProductionOrder $order, array $payload): string
     {
         $logoBase64 = ImageDataUri::fromFile(public_path('images/logo-bepro-calidad.png'));
 
@@ -157,29 +165,21 @@ class QualityInspectionCertificateService
         ]);
         $pdf->setPaper('letter');
 
-        $content = $pdf->output();
-        $path = "quality-certificates/{$order->order_number}/certificado-calidad-v{$version}.pdf";
-
-        Storage::disk('local')->put($path, $content);
-
-        return [
-            'path' => $path,
-            'size' => strlen($content),
-        ];
-    }
-
-    private function nextVersion(QrCode $qrCode): int
-    {
-        return ((int) $qrCode->documents()
-            ->where('document_type', QrDocumentType::QualityCertificate->value)
-            ->max('version')) + 1;
+        return $pdf->output();
     }
 
     /**
-     * @return array{name: string, unit: string, result: string, lower_limit: string, upper_limit: string}
+     * Sin límites ni medición, la prueba no aplica a este producto (un ajustador no lleva KU) y no sale en el certificado.
+     * Si se midió, sí sale: un certificado no calla un resultado porque al producto le falten los límites.
+     *
+     * @return array{name: string, unit: string, result: string, lower_limit: string, upper_limit: string}|null
      */
-    private function numericTest(string $name, string $unit, ?string $result, ?string $lower, ?string $upper): array
+    private function numericTest(string $name, string $unit, ?string $result, ?string $lower, ?string $upper): ?array
     {
+        if ($lower === null && $upper === null && $result === null) {
+            return null;
+        }
+
         $hasResult = $result !== null;
 
         return [

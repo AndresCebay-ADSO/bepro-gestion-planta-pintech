@@ -41,11 +41,7 @@ class StoreProductDocumentRequest extends FormRequest
                 ]),
             ],
             'document' => [
-                'required',
-                'file',
-                'mimes:pdf',
-                'extensions:pdf',
-                'max:10240',
+                ...QrDocumentType::fileRules(),
                 // `product_documents.file_name` es `varchar(255)` y guarda el nombre original (PRD-04).
                 function (string $attribute, mixed $value, Closure $fail): void {
                     if ($value instanceof UploadedFile && mb_strlen($value->getClientOriginalName()) > 255) {

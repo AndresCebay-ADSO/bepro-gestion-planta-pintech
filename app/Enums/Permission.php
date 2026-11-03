@@ -137,6 +137,7 @@ enum Permission: string
     // Códigos QR
     case QrCodesView = 'qr_codes.view';
     case QrCodesUpdate = 'qr_codes.update';
+    case QrCodesManageDocuments = 'qr_codes.manage_documents';
 
     // Bodegas
     case WarehousesView = 'warehouses.view';
@@ -232,6 +233,7 @@ enum Permission: string
             self::AlertsResolve => __('Resolver alertas'),
             self::QrCodesView => __('Ver códigos QR'),
             self::QrCodesUpdate => __('Editar códigos QR'),
+            self::QrCodesManageDocuments => __('Subir y eliminar certificados de calidad'),
             self::WarehousesView => __('Ver bodegas asignadas'),
             self::WarehousesViewAll => __('Ver todas las bodegas'),
             self::WarehousesCreate => __('Crear bodegas'),
@@ -326,7 +328,8 @@ enum Permission: string
             self::AlertsView,
             self::AlertsResolve => PermissionModule::Alerts,
             self::QrCodesView,
-            self::QrCodesUpdate => PermissionModule::QrCodes,
+            self::QrCodesUpdate,
+            self::QrCodesManageDocuments => PermissionModule::QrCodes,
             self::WarehousesView,
             self::WarehousesViewAll,
             self::WarehousesCreate,
@@ -435,7 +438,8 @@ enum Permission: string
             self::PaintDevelopmentRequestsUpdateStatus,
             self::PaintDevelopmentRequestsExportPdf => [self::PaintDevelopmentRequestsViewOwn],
             self::AlertsResolve => [self::AlertsView],
-            self::QrCodesUpdate => [self::QrCodesView],
+            self::QrCodesUpdate,
+            self::QrCodesManageDocuments => [self::QrCodesView],
             self::WarehousesViewAll,
             self::WarehousesCreate,
             self::WarehousesEdit,
@@ -556,6 +560,8 @@ enum Permission: string
             self::FinishedInventoryMovementsCreate,
             self::SalesOrdersViewAll,
             self::SalesOrdersUpdateStatus,
+            // Corregir el certificado de un lote lo resuelve la planta, sin depender del administrador.
+            self::QrCodesManageDocuments,
             self::AlertsView => [
                 SystemRole::Admin,
                 SystemRole::Production,

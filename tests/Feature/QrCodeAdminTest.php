@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Enums\ProductionOrderStatus;
+use App\Enums\QrDocumentType;
 use App\Enums\SystemRole;
+use App\Jobs\GenerateQualityInspectionCertificateJob;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -13,9 +15,13 @@ use App\Models\QrDocument;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\QualityInspectionCertificateService;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
+use Spatie\Activitylog\Models\Activity;
 
 beforeEach(function () {
     $this->seed(RolePermissionSeeder::class);
@@ -330,4 +336,215 @@ test('the qr code of a cancelled order cannot be activated again, only deactivat
         ->assertInertiaFlash('success');
 
     expect($qrCode->refresh()->is_active)->toBeFalse();
+});
+
+// Certificado a mano: lo sube quien corrige el lote y reemplaza al vigente en la página pública.
+function pdfUpload(): UploadedFile
+{
+    return UploadedFile::fake()->createWithContent('cualquier-nombre.pdf', "%PDF-1.4\ncontenido manual");
+}
+
+function currentCertificateFor(QrCode $qrCode, User $user, int $version = 1): QrDocument
+{
+    $document = QrDocument::factory()->create([
+        'qr_code_id' => $qrCode->id,
+        'document_type' => QrDocumentType::QualityCertificate,
+        'is_current' => true,
+        'version' => $version,
+        'file_path' => "quality-certificates/test/v{$version}.pdf",
+        'uploaded_by' => $user->id,
+    ]);
+    Storage::disk('local')->put($document->file_path, 'generado');
+
+    return $document;
+}
+
+test('produccion uploads a certificate that becomes the current version with the standard name', function () {
+    Storage::fake('local');
+    $user = produccionUser();
+    $qrCode = createQrFixture();
+    $generated = currentCertificateFor($qrCode, $user);
+
+    $this->actingAs($user)
+        ->post(route('qr-codes.documents.store', $qrCode), ['document' => pdfUpload()])
+        ->assertRedirect()
+        ->assertInertiaFlash('success');
+
+    $uploaded = $qrCode->documents()->currentCertificate()->sole();
+
+    expect($generated->refresh()->is_current)->toBeFalse()
+        ->and($uploaded->version)->toBe(2)
+        ->and($uploaded->uploaded_by)->toBe($user->id)
+        ->and($uploaded->file_name)->toBe(app(QualityInspectionCertificateService::class)->fileName($qrCode->productionOrder))
+        ->and($uploaded->file_name)->not->toContain('cualquier-nombre');
+
+    expect(Storage::disk('local')->get($uploaded->file_path))->toContain('contenido manual');
+});
+
+test('the public page offers the uploaded certificate and no longer serves the previous one', function () {
+    Storage::fake('local');
+    $user = adminUser();
+    $qrCode = createQrFixture();
+    $generated = currentCertificateFor($qrCode, $user);
+
+    $this->actingAs($user)->post(route('qr-codes.documents.store', $qrCode), ['document' => pdfUpload()]);
+    $uploaded = $qrCode->documents()->currentCertificate()->sole();
+
+    $this->get(route('qr.public.documents.download', ['token' => $qrCode->token, 'document' => $generated]))
+        ->assertNotFound();
+    $this->get(route('qr.public.documents.download', ['token' => $qrCode->token, 'document' => $uploaded]))
+        ->assertSuccessful();
+});
+
+test('roles without the permission cannot upload or delete certificates', function () {
+    Storage::fake('local');
+    $comercial = comercialUser();
+    $qrCode = createQrFixture();
+    $document = currentCertificateFor($qrCode, $comercial);
+
+    $this->actingAs($comercial)
+        ->post(route('qr-codes.documents.store', $qrCode), ['document' => pdfUpload()])
+        ->assertForbidden();
+    $this->actingAs($comercial)
+        ->delete(route('qr-codes.documents.destroy', ['qrCode' => $qrCode, 'document' => $document]))
+        ->assertForbidden();
+
+    expect($qrCode->documents()->count())->toBe(1);
+});
+
+test('only a pdf can be uploaded as a certificate', function () {
+    Storage::fake('local');
+    $qrCode = createQrFixture();
+
+    $this->actingAs(adminUser())
+        ->post(route('qr-codes.documents.store', $qrCode), [
+            'document' => UploadedFile::fake()->createWithContent('certificado.txt', 'no es un pdf'),
+        ])
+        ->assertSessionHasErrors('document');
+
+    expect($qrCode->documents()->count())->toBe(0);
+});
+
+test('a certificate cannot be uploaded while the order is not completed', function () {
+    Storage::fake('local');
+    $qrCode = createQrFixture();
+    $qrCode->productionOrder->update(['status' => ProductionOrderStatus::InProgress, 'completion_date' => null]);
+
+    $this->actingAs(adminUser())
+        ->post(route('qr-codes.documents.store', $qrCode), ['document' => pdfUpload()])
+        ->assertRedirect()
+        ->assertInertiaFlash('error');
+
+    expect($qrCode->documents()->count())->toBe(0);
+});
+
+test('deleting a document removes the record and its file, leaves an audit entry and does not revive the previous version', function () {
+    Storage::fake('local');
+    $user = adminUser();
+    $qrCode = createQrFixture();
+    $previous = currentCertificateFor($qrCode, $user);
+    $previous->update(['is_current' => false]);
+    $current = currentCertificateFor($qrCode, $user, version: 2);
+
+    $this->actingAs($user)
+        ->delete(route('qr-codes.documents.destroy', ['qrCode' => $qrCode, 'document' => $current]))
+        ->assertRedirect()
+        ->assertInertiaFlash('success');
+
+    expect(QrDocument::find($current->id))->toBeNull()
+        ->and($previous->refresh()->is_current)->toBeFalse();
+    Storage::disk('local')->assertMissing($current->file_path);
+
+    expect(Activity::query()
+        ->where('log_name', 'codigos_qr')
+        ->where('event', 'deleted')
+        ->where('subject_id', $current->id)
+        ->where('causer_id', $user->id)
+        ->exists())->toBeTrue();
+
+    $this->get(route('qr.public.show', $qrCode->token))
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('certificate_pending', true));
+});
+
+test('a document of another qr code cannot be deleted through this one', function () {
+    Storage::fake('local');
+    $user = adminUser();
+    $document = currentCertificateFor(createQrFixture(), $user);
+
+    $this->actingAs($user)
+        ->delete(route('qr-codes.documents.destroy', ['qrCode' => createQrFixture(), 'document' => $document]))
+        ->assertNotFound();
+
+    expect(QrDocument::find($document->id))->not->toBeNull();
+});
+
+test('the detail tells the screen what the user can do with the documents', function (Closure $makeUser, string $status, bool $manage, bool $upload) {
+    $qrCode = createQrFixture();
+    $qrCode->productionOrder->update(['status' => $status]);
+
+    $this->actingAs($makeUser())
+        ->get(route('qr-codes.show', $qrCode))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('can.manageDocuments', $manage)
+            ->where('can.uploadCertificate', $upload));
+})->with([
+    'produccion, completada' => [fn () => produccionUser(), 'completed', true, true],
+    'admin, en curso' => [fn () => adminUser(), 'in_progress', true, false],
+    'comercial, completada' => [fn () => comercialUser(), 'completed', false, false],
+]);
+
+test('the queued certificate does not replace one uploaded by hand while it was waiting', function () {
+    Storage::fake('local');
+    $user = adminUser();
+    $qrCode = createQrFixture();
+    $uploaded = currentCertificateFor($qrCode, $user);
+
+    (new GenerateQualityInspectionCertificateJob($qrCode->productionOrder, $user->id))
+        ->handle(app(QualityInspectionCertificateService::class));
+
+    expect($qrCode->documents()->sole()->id)->toBe($uploaded->id);
+});
+
+test('the queued certificate is generated when there is no current one', function () {
+    Storage::fake('local');
+    $user = adminUser();
+    $qrCode = createQrFixture();
+
+    (new GenerateQualityInspectionCertificateJob($qrCode->productionOrder, $user->id))
+        ->handle(app(QualityInspectionCertificateService::class));
+
+    expect($qrCode->documents()->currentCertificate()->sole()->version)->toBe(1);
+});
+
+test('if the file cannot be written the current certificate stays current and nothing is recorded', function () {
+    Storage::fake('local');
+    $user = adminUser();
+    $qrCode = createQrFixture();
+    $current = currentCertificateFor($qrCode, $user);
+
+    $failingDisk = Mockery::mock(Filesystem::class);
+    $failingDisk->shouldReceive('put')->once()->andReturn(false);
+    $failingDisk->shouldReceive('delete')->once();
+    Storage::shouldReceive('disk')->with('local')->andReturn($failingDisk);
+
+    expect(fn () => app(QualityInspectionCertificateService::class)->storeManualUpload($qrCode, pdfUpload(), $user->id))
+        ->toThrow(RuntimeException::class);
+
+    expect($qrCode->documents()->currentCertificate()->sole()->id)->toBe($current->id)
+        ->and($qrCode->documents()->count())->toBe(1);
+});
+
+test('uploading after deleting the highest version does not reuse its file', function () {
+    Storage::fake('local');
+    $user = adminUser();
+    $qrCode = createQrFixture();
+    $service = app(QualityInspectionCertificateService::class);
+
+    $first = $service->storeManualUpload($qrCode, pdfUpload(), $user->id);
+    $firstPath = $first->file_path;
+    $first->delete();
+    $second = $service->storeManualUpload($qrCode, pdfUpload(), $user->id);
+
+    expect($second->version)->toBe($first->version)
+        ->and($second->file_path)->not->toBe($firstPath);
 });

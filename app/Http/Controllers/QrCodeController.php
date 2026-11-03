@@ -7,12 +7,14 @@ namespace App\Http\Controllers;
 use App\Enums\Permission;
 use App\Filters\QrCodeFilter;
 use App\Http\Requests\QrCodes\IndexQrCodeRequest;
+use App\Http\Requests\QrCodes\StoreQrDocumentRequest;
 use App\Http\Requests\QrCodes\UpdateQrCodeRequest;
 use App\Models\ProductionOrder;
 use App\Models\QrCode;
 use App\Models\QrDocument;
 use App\Services\ProductionOrderQrCodeService;
 use App\Services\QrImageService;
+use App\Services\QualityInspectionCertificateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
@@ -23,6 +25,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QrCodeController extends Controller
 {
+    public function __construct(
+        private readonly ProductionOrderQrCodeService $qrCodeService,
+        private readonly QualityInspectionCertificateService $certificateService,
+        private readonly QrImageService $qrImageService,
+    ) {}
+
     public function index(IndexQrCodeRequest $request): Response
     {
         $qrCodes = (new QrCodeFilter($request))
@@ -74,7 +82,7 @@ class QrCodeController extends Controller
 
         $qrCode->load([
             'product:id,name,description',
-            'productionOrder:id,order_number,lot_number,color,completion_date,planned_date',
+            'productionOrder:id,order_number,lot_number,color,status,completion_date,planned_date',
             'createdBy:id,name',
             'documents' => fn ($query) => $query
                 ->with('uploadedBy:id,name')
@@ -84,6 +92,7 @@ class QrCodeController extends Controller
 
         $landingUrl = route('qr.public.show', ['token' => $qrCode->token]);
         $imageUrl = route('qr-codes.qr-image', ['qrCode' => $qrCode]);
+        $canManageDocuments = $request->user()?->can('manageDocuments', $qrCode) ?? false;
 
         return Inertia::render('QrCodes/Show', [
             'qrCode' => [
@@ -113,7 +122,6 @@ class QrCodeController extends Controller
                 'documents' => $qrCode->documents->map(fn ($document) => [
                     'id' => $document->id,
                     'file_name' => $document->file_name,
-                    'document_type' => $document->document_type->label(),
                     'version' => $document->version,
                     'is_current' => $document->is_current,
                     'created_at' => $document->created_at?->toDateString(),
@@ -129,16 +137,18 @@ class QrCodeController extends Controller
             ],
             'can' => [
                 'update' => $request->user()?->can('update', $qrCode) ?? false,
+                'manageDocuments' => $canManageDocuments,
+                'uploadCertificate' => $canManageDocuments && $qrCode->acceptsCertificate(),
                 // La orden enlaza a la OP, que pide otro permiso: sin él, queda como texto.
                 'viewProductionOrders' => $request->user()?->can(Permission::ProductionOrdersView->value) ?? false,
             ],
         ]);
     }
 
-    public function update(UpdateQrCodeRequest $request, QrCode $qrCode, ProductionOrderQrCodeService $qrCodeService): RedirectResponse
+    public function update(UpdateQrCodeRequest $request, QrCode $qrCode): RedirectResponse
     {
         try {
-            $qrCodeService->setActive($qrCode, (bool) $request->validated('is_active'));
+            $this->qrCodeService->setActive($qrCode, (bool) $request->validated('is_active'));
         } catch (\DomainException $exception) {
             Inertia::flash('error', $exception->getMessage());
 
@@ -150,11 +160,39 @@ class QrCodeController extends Controller
         return redirect()->back();
     }
 
-    public function qrImage(QrCode $qrCode, QrImageService $service): HttpResponse
+    public function storeDocument(StoreQrDocumentRequest $request, QrCode $qrCode): RedirectResponse
+    {
+        try {
+            $this->certificateService->storeManualUpload($qrCode, $request->file('document'), (int) $request->user()->id);
+        } catch (\DomainException $exception) {
+            Inertia::flash('error', $exception->getMessage());
+
+            return redirect()->back();
+        }
+
+        Inertia::flash('success', 'Certificado cargado: ya es el vigente.');
+
+        return redirect()->back();
+    }
+
+    public function destroyDocument(QrCode $qrCode, QrDocument $document): RedirectResponse
+    {
+        $this->authorize('manageDocuments', $qrCode);
+
+        abort_unless($document->qr_code_id === $qrCode->id, 404);
+
+        $document->delete();
+
+        Inertia::flash('success', 'Certificado eliminado.');
+
+        return redirect()->back();
+    }
+
+    public function qrImage(QrCode $qrCode): HttpResponse
     {
         $this->authorize('view', $qrCode);
 
-        $png = $service->generatePng($qrCode);
+        $png = $this->qrImageService->generatePng($qrCode);
 
         return response($png, 200, [
             'Content-Type' => 'image/png',

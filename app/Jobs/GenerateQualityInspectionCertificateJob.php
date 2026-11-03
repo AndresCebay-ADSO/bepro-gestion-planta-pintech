@@ -29,6 +29,11 @@ class GenerateQualityInspectionCertificateJob implements ShouldQueue
 
     public function handle(QualityInspectionCertificateService $service): void
     {
+        // Si alguien ya subió el certificado a mano mientras este esperaba en la cola, no se pisa.
+        if ($this->order->qrCode?->documents()->currentCertificate()->exists()) {
+            return;
+        }
+
         $service->generateForCompletedOrder($this->order, $this->userId);
     }
 

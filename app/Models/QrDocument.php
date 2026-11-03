@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\QrDocumentType;
+use App\Models\Concerns\DeletesStoredFile;
+use App\Models\Concerns\HasAuditDescription;
 use Database\Factories\QrDocumentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +14,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -42,8 +46,24 @@ use Illuminate\Support\Carbon;
 ])]
 class QrDocument extends Model
 {
+    use DeletesStoredFile, HasAuditDescription, LogsActivity;
+
     /** @use HasFactory<QrDocumentFactory> */
     use HasFactory;
+
+    protected string $auditLabel = 'Documento de QR';
+
+    protected string $auditIdentifierAttribute = 'file_name';
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('codigos_qr')
+            ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
+            ->logOnly(['qr_code_id', 'document_type', 'file_name', 'version', 'is_current', 'uploaded_by'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     protected function casts(): array
     {

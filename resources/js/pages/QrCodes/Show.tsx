@@ -3,7 +3,6 @@ import {
     Copy,
     Download,
     ExternalLink,
-    FileText,
     QrCode as QrCodeIcon,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -13,7 +12,9 @@ import { DetailItem, DetailList } from '@/components/detail-list';
 import { DetailTable } from '@/components/detail-table';
 import { FormattedDate } from '@/components/formatted-date';
 import { PageHeader } from '@/components/page-header';
-import { RecordLink } from '@/components/record-link';
+import { UploadCertificateDialog } from '@/components/qr-codes/upload-certificate-dialog';
+import { FileLink, RecordLink } from '@/components/record-link';
+import { RowActions } from '@/components/row-actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,17 +24,18 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { useConfirm } from '@/hooks/use-confirm';
 import { show as productionOrderShow } from '@/routes/production-orders';
 import {
     index as qrCodesIndex,
     show as qrCodesShow,
     update as qrCodesUpdate,
 } from '@/routes/qr-codes';
+import { destroy as qrDocumentsDestroy } from '@/routes/qr-codes/documents';
 
 type QrDocumentItem = {
     id: number;
     file_name: string;
-    document_type: string;
     version: number;
     is_current: boolean;
     created_at: string | null;
@@ -71,12 +73,15 @@ type Props = {
     qrCode: QrCodeDetail;
     can: {
         update: boolean;
+        manageDocuments: boolean;
+        uploadCertificate: boolean;
         viewProductionOrders: boolean;
     };
 };
 
 export default function QrCodesShow({ qrCode, can }: Props) {
     const [copied, setCopied] = useState(false);
+    const confirm = useConfirm();
 
     const handleCopyUrl = () => {
         navigator.clipboard.writeText(qrCode.landing_url).then(() => {
@@ -89,6 +94,26 @@ export default function QrCodesShow({ qrCode, can }: Props) {
         router.patch(
             qrCodesUpdate(qrCode.id).url,
             { is_active: !qrCode.is_active },
+            { preserveScroll: true },
+        );
+    };
+
+    const handleDeleteDocument = async (doc: QrDocumentItem) => {
+        if (
+            !(await confirm({
+                title: `¿Eliminar la versión ${doc.version} del certificado?`,
+                description: doc.is_current
+                    ? 'Es la versión vigente: la página pública del QR dirá que el certificado está pendiente hasta que se suba otro. No se puede deshacer.'
+                    : 'Se borra del historial del lote. No se puede deshacer.',
+                confirmLabel: 'Eliminar',
+                destructive: true,
+            }))
+        ) {
+            return;
+        }
+
+        router.delete(
+            qrDocumentsDestroy({ qrCode: qrCode.id, document: doc.id }).url,
             { preserveScroll: true },
         );
     };
@@ -294,27 +319,38 @@ export default function QrCodesShow({ qrCode, can }: Props) {
 
                 {/* Documentos */}
                 <section className="space-y-4">
-                    <div>
-                        <h2 className="text-lg font-semibold">
-                            Documentos del lote
-                        </h2>
-                        <p className="mt-0.5 text-sm text-muted-foreground">
-                            Certificados y documentos asociados a este código
-                            QR.
-                        </p>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                            <h2 className="text-lg font-semibold">
+                                Certificados de calidad
+                            </h2>
+                            <p className="mt-0.5 text-sm text-muted-foreground">
+                                Versiones del certificado de este lote. La ficha
+                                técnica y la hoja de seguridad se manejan en el
+                                producto.
+                            </p>
+                        </div>
+                        {can.uploadCertificate && (
+                            <UploadCertificateDialog qrCodeId={qrCode.id} />
+                        )}
                     </div>
 
                     <DetailTable
                         rows={qrCode.documents}
                         rowKey={(doc) => doc.id}
-                        caption="Documentos del lote"
+                        caption="Certificados de calidad"
                         columns={[
                             {
                                 key: 'file',
-                                header: 'Documento',
+                                header: 'Certificado',
                                 cell: (doc) => (
                                     <>
-                                        <p>{doc.file_name}</p>
+                                        <FileLink
+                                            href={doc.download_url}
+                                            className="block"
+                                        >
+                                            {doc.file_name}
+                                        </FileLink>
                                         <Badge
                                             variant={
                                                 doc.is_current
@@ -330,12 +366,6 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                     </>
                                 ),
                                 className: 'align-top',
-                            },
-                            {
-                                key: 'type',
-                                header: 'Tipo',
-                                cell: (doc) => doc.document_type,
-                                className: 'align-top text-muted-foreground',
                             },
                             {
                                 key: 'version',
@@ -363,26 +393,33 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                 className:
                                     'align-top whitespace-nowrap text-muted-foreground',
                             },
-                            {
-                                key: 'actions',
-                                header: 'Acciones',
-                                cell: (doc) => (
-                                    <Button variant="outline" size="sm" asChild>
-                                        <a
-                                            href={doc.download_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            <FileText className="size-4" />
-                                            Ver PDF
-                                        </a>
-                                    </Button>
-                                ),
-                                align: 'right',
-                                className: 'align-top',
-                            },
+                            ...(can.manageDocuments
+                                ? [
+                                      {
+                                          key: 'actions',
+                                          header: 'Acciones',
+                                          cell: (doc: QrDocumentItem) => (
+                                              <RowActions
+                                                  itemLabel={doc.file_name}
+                                                  actions={[
+                                                      {
+                                                          label: 'Eliminar',
+                                                          destructive: true,
+                                                          onSelect: () =>
+                                                              handleDeleteDocument(
+                                                                  doc,
+                                                              ),
+                                                      },
+                                                  ]}
+                                              />
+                                          ),
+                                          align: 'right' as const,
+                                          className: 'align-top',
+                                      },
+                                  ]
+                                : []),
                         ]}
-                        empty="Este lote aún no cuenta con documentos registrados."
+                        empty="Este lote aún no tiene certificado."
                     />
                 </section>
             </div>

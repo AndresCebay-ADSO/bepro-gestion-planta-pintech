@@ -131,7 +131,7 @@ test('it deletes physical file from storage if transaction fails', function () {
     [$user, $product] = createProductDocumentFixture();
 
     // Force an invalid user ID or database error to trigger transaction failure during service call
-    $service = new ProductDocumentService;
+    $service = app(ProductDocumentService::class);
 
     $file = UploadedFile::fake()->createWithContent('seguridad.pdf', "%PDF-1.4\ncontent");
 

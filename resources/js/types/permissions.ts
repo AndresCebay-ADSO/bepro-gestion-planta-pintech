@@ -109,6 +109,7 @@ export type Permission =
     // Códigos QR
     | 'qr_codes.view'
     | 'qr_codes.update'
+    | 'qr_codes.manage_documents'
     // Bodegas
     | 'warehouses.view'
     | 'warehouses.view_all'
