@@ -586,7 +586,7 @@ export default function QuotationsShow({
                             cell: (item) => (
                                 <FormattedNumber
                                     value={item.quantity}
-                                    maxDecimals={0}
+                                    kind="units"
                                 />
                             ),
                             align: 'right',
@@ -597,8 +597,7 @@ export default function QuotationsShow({
                             cell: (item) => (
                                 <FormattedNumber
                                     value={item.list_unit_price}
-                                    currency
-                                    maxDecimals={0}
+                                    kind="clientPrice"
                                 />
                             ),
                             align: 'right',
@@ -607,14 +606,10 @@ export default function QuotationsShow({
                             key: 'price_adjustment_pct',
                             header: 'Ajuste %',
                             cell: (item) => (
-                                <>
-                                    <FormattedNumber
-                                        value={item.price_adjustment_pct}
-                                        maxDecimals={2}
-                                        trimTrailingZeros
-                                    />
-                                    %
-                                </>
+                                <FormattedNumber
+                                    value={item.price_adjustment_pct}
+                                    kind="percent"
+                                />
                             ),
                             align: 'right',
                         },
@@ -624,8 +619,7 @@ export default function QuotationsShow({
                             cell: (item) => (
                                 <FormattedNumber
                                     value={item.unit_price}
-                                    currency
-                                    maxDecimals={0}
+                                    kind="clientPrice"
                                 />
                             ),
                             align: 'right',
@@ -636,8 +630,7 @@ export default function QuotationsShow({
                             cell: (item) => (
                                 <FormattedNumber
                                     value={item.subtotal}
-                                    currency
-                                    maxDecimals={0}
+                                    kind="clientPrice"
                                 />
                             ),
                             align: 'right',
@@ -654,8 +647,7 @@ export default function QuotationsShow({
                             <span>Subtotal</span>
                             <FormattedNumber
                                 value={quotation.subtotal}
-                                currency
-                                maxDecimals={0}
+                                kind="clientPrice"
                             />
                         </div>
                         <div className="flex justify-between">
@@ -663,23 +655,19 @@ export default function QuotationsShow({
                                 IVA{' '}
                                 <FormattedNumber
                                     value={quotation.iva_percentage}
-                                    maxDecimals={2}
-                                    trimTrailingZeros
+                                    kind="percent"
                                 />
-                                %
                             </span>
                             <FormattedNumber
                                 value={quotation.iva_amount}
-                                currency
-                                maxDecimals={0}
+                                kind="clientPrice"
                             />
                         </div>
                         <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
                             <span>Total</span>
                             <FormattedNumber
                                 value={quotation.total}
-                                currency
-                                maxDecimals={0}
+                                kind="clientPrice"
                             />
                         </div>
                     </div>

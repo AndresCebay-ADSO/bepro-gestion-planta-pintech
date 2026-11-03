@@ -192,9 +192,7 @@ export default function RawMaterialsShow({
                                 value={
                                     <FormattedNumber
                                         value={rawMaterial.current_price}
-                                        currency
-                                        maxDecimals={4}
-                                        trimTrailingZeros
+                                        kind="unitCost"
                                         emptyValue="Sin precio de referencia"
                                     />
                                 }
@@ -205,9 +203,7 @@ export default function RawMaterialsShow({
                                 value={
                                     <FormattedNumber
                                         value={rawMaterial.previous_price}
-                                        currency
-                                        maxDecimals={4}
-                                        trimTrailingZeros
+                                        kind="unitCost"
                                     />
                                 }
                             />
@@ -219,8 +215,7 @@ export default function RawMaterialsShow({
                         value={
                             <FormattedNumber
                                 value={rawMaterial.minimum_stock}
-                                maxDecimals={4}
-                                trimTrailingZeros
+                                kind="quantity"
                             />
                         }
                     />
@@ -235,8 +230,7 @@ export default function RawMaterialsShow({
                         value={
                             <FormattedNumber
                                 value={totalAvailableQuantity}
-                                maxDecimals={4}
-                                trimTrailingZeros
+                                kind="quantity"
                             />
                         }
                     />
@@ -289,9 +283,7 @@ export default function RawMaterialsShow({
                                           cell: (batch: InventoryBatch) => (
                                               <FormattedNumber
                                                   value={batch.unit_price}
-                                                  currency
-                                                  maxDecimals={4}
-                                                  trimTrailingZeros
+                                                  kind="unitCost"
                                               />
                                           ),
                                           align: 'right' as const,
@@ -304,7 +296,7 @@ export default function RawMaterialsShow({
                                 cell: (batch) => (
                                     <FormattedNumber
                                         value={batch.initial_quantity}
-                                        maxDecimals={2}
+                                        kind="quantity"
                                     />
                                 ),
                                 align: 'right',
@@ -315,7 +307,7 @@ export default function RawMaterialsShow({
                                 cell: (batch) => (
                                     <FormattedNumber
                                         value={batch.remaining_quantity}
-                                        maxDecimals={2}
+                                        kind="quantity"
                                         bold
                                         colorize
                                     />

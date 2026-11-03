@@ -197,9 +197,32 @@ phone, and `children` are extra lines under the description.
 
 - Decimal comma and thousands dot (`1.250,5`), trailing zeros trimmed (`250`, not `250.0000`).
 - **No number is printed raw.** Never `{order.quantity}`; always `<FormattedNumber>` or the helpers in
-  `lib/formatters.ts` (`formatNumber`, `formatQuantity`, `formatCurrency`, `formatPercent`). Use `tabular-nums` in
+  `lib/formatters.ts` (`formatKind`, `formatNumber`, `formatQuantity`, `formatCurrency`, `formatPercent`). Use `tabular-nums` in
   numeric columns.
 - Inputs: `DecimalInput` / `IntegerInput`, never `type="number"`. Thousands dot while typing; a typed dot is decimal.
+
+Approved number kinds:
+
+| Kind (`kind`) | Rule | Example |
+| :-- | :-- | :-- |
+| `quantity` | up to 4 decimal places, trimmed trailing zeros | `12,5`, `0,0375` |
+| `units` | integer | `48` |
+| `clientPrice` | `$`, integer | `$1.250.000` |
+| `cost` | `$`, up to 2 decimal places, trimmed trailing zeros | `$12.345,5` |
+| `unitCost` | `$`, up to 4 decimal places, trimmed trailing zeros (RM cost per kg or L) | `$4.250,1234` |
+| `percent` | percentage points, up to 2 decimal places, trimmed trailing zeros, attached `%` | `19%`, `19,5%` |
+
+Measurements (density, viscosity, solids) keep `maxDecimals` matching their schema column (`NUMBER_TYPES`).
+`<FormattedNumber value={x} kind="cost" />` receives `kind`; `currency`, `percent`, `maxDecimals` and
+`trimTrailingZeros` remain for ad-hoc values without a kind (measurements).
+
+Server-side exports (PDF) follow the same rules through `App\Support\NumberFormat` (`NumberFormat::quantity()`,
+`NumberFormat::units()`, `NumberFormat::clientPrice()`, `NumberFormat::cost()`, `NumberFormat::unitCost()`,
+`NumberFormat::percent()`, and `NumberFormat::measurement($value, $decimals)` for measurements), rounding via
+`DecimalCalculator::round()` and formatting over the string text without floats. The browser formats through
+`Number`/`Intl`, so the two sides follow the same rules but are not byte-identical for values beyond ~15 significant
+digits. `kind` cannot be combined with `currency`, `percent`, `maxDecimals` or `trimTrailingZeros` (a type error).
+Formatting happens once, in the view or component: actions pass the raw decimal string, never a pre-formatted number.
 
 ## 8. Forms
 

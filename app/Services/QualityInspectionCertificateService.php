@@ -11,6 +11,7 @@ use App\Models\QrCode;
 use App\Models\QrDocument;
 use App\Models\User;
 use App\Support\ImageDataUri;
+use App\Support\NumberFormat;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -83,23 +84,23 @@ class QualityInspectionCertificateService
                 $this->numericTest(
                     name: 'VISCOSIDAD',
                     unit: 'KU',
-                    result: $order->viscosity_ku !== null ? (float) $order->viscosity_ku : null,
-                    lower: $product->quality_viscosity_lower !== null ? (float) $product->quality_viscosity_lower : null,
-                    upper: $product->quality_viscosity_upper !== null ? (float) $product->quality_viscosity_upper : null
+                    result: $order->viscosity_ku,
+                    lower: $product->quality_viscosity_lower,
+                    upper: $product->quality_viscosity_upper
                 ),
                 $this->numericTest(
                     name: 'FINURA HEGMAN',
                     unit: 'HEGMAN',
-                    result: $order->grinding_hg !== null ? (float) $order->grinding_hg : null,
-                    lower: $product->quality_fineness_lower !== null ? (float) $product->quality_fineness_lower : null,
-                    upper: $product->quality_fineness_upper !== null ? (float) $product->quality_fineness_upper : null
+                    result: $order->grinding_hg,
+                    lower: $product->quality_fineness_lower,
+                    upper: $product->quality_fineness_upper
                 ),
                 $this->numericTest(
                     name: 'SÓLIDOS',
                     unit: '%',
-                    result: $order->quality_solids !== null ? (float) $order->quality_solids : null,
-                    lower: $product->quality_solids_lower !== null ? (float) $product->quality_solids_lower : null,
-                    upper: $product->quality_solids_upper !== null ? (float) $product->quality_solids_upper : null
+                    result: $order->quality_solids,
+                    lower: $product->quality_solids_lower,
+                    upper: $product->quality_solids_upper
                 ),
                 [
                     'name' => 'APARIENCIA',
@@ -177,21 +178,17 @@ class QualityInspectionCertificateService
     /**
      * @return array{name: string, unit: string, result: string, lower_limit: string, upper_limit: string}
      */
-    private function numericTest(string $name, string $unit, ?float $result, ?float $lower, ?float $upper): array
+    private function numericTest(string $name, string $unit, ?string $result, ?string $lower, ?string $upper): array
     {
         $hasResult = $result !== null;
 
         return [
             'name' => $name,
             'unit' => $unit,
-            'result' => $hasResult ? $this->formatNumber((float) $result) : 'SIN RESULTADO',
-            'lower_limit' => ($lower !== null) ? $this->formatNumber($lower) : '—',
-            'upper_limit' => ($upper !== null) ? $this->formatNumber($upper) : '—',
+            // Mediciones con el decimal de su columna (decimal:1) y coma decimal, como el PDF de la OP.
+            'result' => $hasResult ? NumberFormat::measurement($result, 1) : 'SIN RESULTADO',
+            'lower_limit' => NumberFormat::measurement($lower, 1),
+            'upper_limit' => NumberFormat::measurement($upper, 1),
         ];
-    }
-
-    private function formatNumber(float $value): string
-    {
-        return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
     }
 }

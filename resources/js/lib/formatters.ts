@@ -16,6 +16,25 @@ export interface FormatNumberOptions {
     trimTrailingZeros?: boolean;
 }
 
+export type NumberKind =
+    'quantity' | 'units' | 'clientPrice' | 'cost' | 'unitCost' | 'percent';
+
+export interface NumberKindRule {
+    currency?: string;
+    maxDecimals: number;
+    trimTrailingZeros: boolean;
+    isPercent?: boolean;
+}
+
+export const NUMBER_KINDS: Record<NumberKind, NumberKindRule> = {
+    quantity: { maxDecimals: 4, trimTrailingZeros: true },
+    units: { maxDecimals: 0, trimTrailingZeros: false },
+    clientPrice: { currency: '$', maxDecimals: 0, trimTrailingZeros: false },
+    cost: { currency: '$', maxDecimals: 2, trimTrailingZeros: true },
+    unitCost: { currency: '$', maxDecimals: 4, trimTrailingZeros: true },
+    percent: { maxDecimals: 2, trimTrailingZeros: true, isPercent: true },
+};
+
 /**
  * Cache de formatters para evitar recrearlos (performance 🚀)
  */
@@ -128,14 +147,10 @@ export function formatNumber(
         formatted = trimTrailingZerosFromFormatted(formatted);
     }
 
-    // Manejo correcto de negativos
-    if (currency) {
-        return numValue < 0
-            ? `-${currency}${formatted}`
-            : `${currency}${formatted}`;
-    }
+    // Manejo correcto de negativos: lo que redondea a cero no lleva signo («0», no «-0»), como en NumberFormat de PHP
+    const sign = numValue < 0 && /[1-9]/.test(formatted) ? '-' : '';
 
-    return numValue < 0 ? `-${formatted}` : formatted;
+    return `${sign}${currency ?? ''}${formatted}`;
 }
 
 /**
@@ -160,24 +175,48 @@ export function formatQuantity(
 }
 
 /**
- * Porcentaje (reutiliza lógica base 🚀)
+ * Porcentaje en puntos porcentuales (ej.: 19 → «19%», 19.5 → «19,5%»)
  */
 export function formatPercent(
     value: number | string | null | undefined,
     maxDecimals: number = 2,
     emptyValue: string = '—',
+    trimTrailingZeros: boolean = true,
 ): string {
-    if (value === null || value === undefined || value === '') {
+    // El vacío no lleva «%»: se decide antes de formatear.
+    if (isEmptyNumber(value)) {
         return emptyValue;
     }
 
-    const numValue = parseToNumber(value);
+    return `${formatNumber(value, { maxDecimals, trimTrailingZeros })}%`;
+}
 
-    if (numValue === null) {
-        return emptyValue;
+/**
+ * Formatea un valor según el tipo de número aprobado para Pintech OS:
+ * - quantity: hasta 4 decimales, sin ceros finales
+ * - units: entero
+ * - clientPrice: $, entero
+ * - cost: $, hasta 2 decimales, sin ceros finales
+ * - unitCost: $, hasta 4 decimales, sin ceros finales
+ * - percent: hasta 2 decimales, sin ceros finales, pegado
+ */
+export function formatKind(
+    value: number | string | null | undefined,
+    kind: NumberKind,
+    emptyValue: string = '—',
+): string {
+    const rule = NUMBER_KINDS[kind];
+
+    if (rule.isPercent) {
+        return formatPercent(value, rule.maxDecimals, emptyValue);
     }
 
-    return `${formatNumber(numValue * 100, { maxDecimals })}%`;
+    return formatNumber(value, {
+        currency: rule.currency,
+        maxDecimals: rule.maxDecimals,
+        trimTrailingZeros: rule.trimTrailingZeros,
+        emptyValue,
+    });
 }
 
 /**

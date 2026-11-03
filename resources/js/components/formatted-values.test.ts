@@ -85,4 +85,87 @@ describe('FormattedNumber y FormattedDate: una sola fuente del vacío', () => {
             '<span class="text-muted-foreground opacity-50">Sin estimar</span>',
         );
     });
+
+    it('formatea números con la prop kind según los tipos aprobados', () => {
+        expect(
+            renderToStaticMarkup(
+                createElement(FormattedNumber, {
+                    value: '12345.50',
+                    kind: 'cost',
+                }),
+            ),
+        ).toBe(
+            '<span class="inline-block tabular-nums text-left text-sm">$12.345,5</span>',
+        );
+        expect(
+            renderToStaticMarkup(
+                createElement(FormattedNumber, {
+                    value: 1250000,
+                    kind: 'clientPrice',
+                }),
+            ),
+        ).toBe(
+            '<span class="inline-block tabular-nums text-left text-sm">$1.250.000</span>',
+        );
+        expect(
+            renderToStaticMarkup(
+                createElement(FormattedNumber, {
+                    value: 19.5,
+                    kind: 'percent',
+                }),
+            ),
+        ).toBe(
+            '<span class="inline-block tabular-nums text-left text-sm">19,5%</span>',
+        );
+        expect(
+            renderToStaticMarkup(
+                createElement(FormattedNumber, {
+                    value: '12.5000',
+                    kind: 'quantity',
+                }),
+            ),
+        ).toBe(
+            '<span class="inline-block tabular-nums text-left text-sm">12,5</span>',
+        );
+        expect(
+            renderToStaticMarkup(
+                createElement(FormattedNumber, {
+                    value: 48,
+                    kind: 'units',
+                }),
+            ),
+        ).toBe(
+            '<span class="inline-block tabular-nums text-left text-sm">48</span>',
+        );
+        expect(
+            renderToStaticMarkup(
+                createElement(FormattedNumber, {
+                    value: '4250.1234',
+                    kind: 'unitCost',
+                }),
+            ),
+        ).toBe(
+            '<span class="inline-block tabular-nums text-left text-sm">$4.250,1234</span>',
+        );
+    });
+
+    it('colorize aplica tokens text-success-text y text-destructive-text', () => {
+        const positiveMarkup = renderToStaticMarkup(
+            createElement(FormattedNumber, {
+                value: 25,
+                colorize: true,
+            }),
+        );
+        const negativeMarkup = renderToStaticMarkup(
+            createElement(FormattedNumber, {
+                value: -25,
+                colorize: true,
+            }),
+        );
+
+        expect(positiveMarkup).toContain('text-success-text');
+        expect(positiveMarkup).not.toContain('emerald');
+        expect(negativeMarkup).toContain('text-destructive-text');
+        expect(negativeMarkup).not.toContain('red-600');
+    });
 });

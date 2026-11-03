@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>Cotización No. {{ $quotation['quotation_number'] }}</title>
     @php
+        use App\Support\NumberFormat;
+
         // Bandas diagonales del encabezado y del pie. DomPDF no recorta divs en diagonal, así que se dibujan en SVG.
         $brandBlue = '#2f67b1';
         $brandPink = '#e91e84';
@@ -23,7 +25,7 @@
             .'</svg>'
         );
 
-        $money = fn ($value): string => '$'.number_format((float) ($value ?? 0), 0, ',', '.');
+        $money = fn ($value): string => NumberFormat::clientPrice($value);
 
         $sideBySide = ($closingLayout ?? null) === \App\Actions\Quotations\RenderQuotationPdfAction::LAYOUT_SIDE_BY_SIDE;
     @endphp
@@ -347,7 +349,7 @@
                 @endif
             </td>
             <td style="width: 70%; vertical-align: bottom;">
-                <div class="quotation-no">Cotización No.{{ $quotation['quotation_number'] }}</div>
+                <div class="quotation-no">Cotización No. {{ $quotation['quotation_number'] }}</div>
                 <div class="band">
                     <img src="{{ $headerBand }}" alt="">
                     <div class="band-website">{{ config('quotation.brand.website') }}</div>
@@ -452,7 +454,7 @@
                     </td>
                     <td>{{ $item['color'] ?? '' }}</td>
                     <td>{{ $item['presentation_label'] ?? '' }}</td>
-                    <td>{{ $item['quantity'] }}</td>
+                    <td>{{ NumberFormat::units($item['quantity']) }}</td>
                     <td class="amount">{{ $money($item['unit_price'] ?? 0) }}</td>
                     <td class="amount">{{ $money($item['subtotal'] ?? 0) }}</td>
                 </tr>
@@ -465,7 +467,7 @@
             </tr>
             <tr>
                 <td colspan="6"></td>
-                <td class="totals">IVA {{ number_format((float) ($quotation['iva_percentage'] ?? 0), 0) }}%</td>
+                <td class="totals">IVA {{ NumberFormat::percent($quotation['iva_percentage'] ?? 0) }}</td>
                 <td class="totals">{{ $money($quotation['iva_amount']) }}</td>
             </tr>
             <tr class="grand-total">
