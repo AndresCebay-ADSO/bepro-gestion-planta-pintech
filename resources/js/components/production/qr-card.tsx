@@ -24,7 +24,7 @@ export function QrCard({
     onCopyLandingLink,
 }: QrCardProps) {
     return (
-        <Card className="border-primary/25 bg-gradient-to-b from-primary/5 to-card shadow-sm">
+        <Card className="border-primary/25 bg-gradient-to-b from-primary/5 to-card">
             <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2">
                     <QrCode className="h-5 w-5 text-primary" />

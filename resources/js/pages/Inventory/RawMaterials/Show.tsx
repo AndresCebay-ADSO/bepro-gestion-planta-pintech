@@ -3,13 +3,13 @@ import { useState } from 'react';
 import RawMaterialController from '@/actions/App/Http/Controllers/Inventory/RawMaterialController';
 
 import { ActiveBadge } from '@/components/active-badge';
+import { DetailItem, DetailList } from '@/components/detail-list';
 import { DetailTable } from '@/components/detail-table';
-import { EmptyCell } from '@/components/empty-cell';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
-import { isEmptyCell } from '@/lib/data-listing';
+import { Card, CardContent } from '@/components/ui/card';
 import { breadcrumbHref } from '@/lib/navigation';
 import { DeleteRawMaterialDialog } from '@/pages/Inventory/RawMaterials/DeleteRawMaterialDialog';
 
@@ -145,96 +145,107 @@ export default function RawMaterialsShow({
                 />
 
                 {/* Información general */}
-                <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-2">
-                    <InfoItem label="Código interno" value={rawMaterial.code} />
-
-                    <InfoItem
-                        label="Categoría"
-                        value={rawMaterial.category?.name}
-                    />
-
-                    <InfoItem
-                        label="Tipo de insumo"
-                        value={rawMaterial.category?.type_label}
-                    />
-
-                    <InfoItem
-                        label="Controla inventario"
-                        value={
-                            rawMaterial.tracks_inventory
-                                ? 'Sí'
-                                : 'No (consumo sin descontar saldo, a precio fijado a mano)'
-                        }
-                    />
-
-                    <InfoItem
-                        label="Unidad"
-                        value={
-                            rawMaterial.unit_of_measure &&
-                            `${rawMaterial.unit_of_measure.name} (${rawMaterial.unit_of_measure.symbol})`
-                        }
-                    />
-
-                    <InfoItem
-                        label="Estado"
-                        value={
-                            <ActiveBadge
-                                isActive={rawMaterial.is_active}
-                                feminine
+                <Card>
+                    <CardContent>
+                        <DetailList columns={2}>
+                            <DetailItem
+                                label="Código interno"
+                                value={rawMaterial.code}
                             />
-                        }
-                    />
 
-                    {can.viewCosts && (
-                        <>
-                            <InfoItem
-                                label="Precio actual"
+                            <DetailItem
+                                label="Categoría"
+                                value={rawMaterial.category?.name}
+                            />
+
+                            <DetailItem
+                                label="Tipo de insumo"
+                                value={rawMaterial.category?.type_label}
+                            />
+
+                            <DetailItem
+                                label="Controla inventario"
                                 value={
-                                    <FormattedNumber
-                                        value={rawMaterial.current_price}
-                                        kind="unitCost"
-                                        emptyValue="Sin precio de referencia"
+                                    rawMaterial.tracks_inventory
+                                        ? 'Sí'
+                                        : 'No (consumo sin descontar saldo, a precio fijado a mano)'
+                                }
+                            />
+
+                            <DetailItem
+                                label="Unidad"
+                                value={
+                                    rawMaterial.unit_of_measure &&
+                                    `${rawMaterial.unit_of_measure.name} (${rawMaterial.unit_of_measure.symbol})`
+                                }
+                            />
+
+                            <DetailItem
+                                label="Estado"
+                                value={
+                                    <ActiveBadge
+                                        isActive={rawMaterial.is_active}
+                                        feminine
                                     />
                                 }
                             />
 
-                            <InfoItem
-                                label="Precio anterior"
+                            {can.viewCosts && (
+                                <>
+                                    <DetailItem
+                                        label="Precio actual"
+                                        value={
+                                            <FormattedNumber
+                                                value={
+                                                    rawMaterial.current_price
+                                                }
+                                                kind="unitCost"
+                                                emptyValue="Sin precio de referencia"
+                                            />
+                                        }
+                                    />
+
+                                    <DetailItem
+                                        label="Precio anterior"
+                                        value={
+                                            <FormattedNumber
+                                                value={
+                                                    rawMaterial.previous_price
+                                                }
+                                                kind="unitCost"
+                                            />
+                                        }
+                                    />
+                                </>
+                            )}
+
+                            <DetailItem
+                                label="Stock mínimo"
                                 value={
                                     <FormattedNumber
-                                        value={rawMaterial.previous_price}
-                                        kind="unitCost"
+                                        value={rawMaterial.minimum_stock}
+                                        kind="quantity"
                                     />
                                 }
                             />
-                        </>
-                    )}
 
-                    <InfoItem
-                        label="Stock mínimo"
-                        value={
-                            <FormattedNumber
-                                value={rawMaterial.minimum_stock}
-                                kind="quantity"
+                            <DetailItem
+                                label="Alerta por vencimiento"
+                                value={`${rawMaterial.alert_days_before_expiry} días`}
                             />
-                        }
-                    />
 
-                    <InfoItem
-                        label="Alerta por vencimiento"
-                        value={`${rawMaterial.alert_days_before_expiry} días`}
-                    />
-
-                    <InfoItem
-                        label="Total disponible (lotes)"
-                        value={
-                            <FormattedNumber
-                                value={totalAvailableQuantity}
-                                kind="quantity"
+                            <DetailItem
+                                label="Total disponible (lotes)"
+                                value={
+                                    <FormattedNumber
+                                        value={totalAvailableQuantity}
+                                        kind="quantity"
+                                    />
+                                }
                             />
-                        }
-                    />
-                </div>
+                        </DetailList>
+                    </CardContent>
+                </Card>
 
                 {/* Lotes: el total disponible ya está en la ficha de arriba. */}
                 <section className="space-y-4">
@@ -349,19 +360,3 @@ RawMaterialsShow.layout = (props: Props) => ({
         },
     ],
 });
-
-/**
- * Subcomponente reutilizable (🔥 clave nivel pro)
- */
-function InfoItem({ label, value }: { label: string; value: React.ReactNode }) {
-    return (
-        <div>
-            <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                {label}
-            </p>
-            <div className="mt-1 text-sm text-foreground">
-                {isEmptyCell(value) ? <EmptyCell /> : value}
-            </div>
-        </div>
-    );
-}

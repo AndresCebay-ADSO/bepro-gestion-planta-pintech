@@ -180,9 +180,36 @@ Reglas y ejemplo en `DESIGN.md` §9.
 
 ---
 
+## DetailList y DetailItem (ficha de detalle)
+
+Los datos de **un** registro, como pares etiqueta-dato dentro de una `<Card>`. Reglas y ejemplo en `DESIGN.md` §9.
+
+**Ubicación:** `resources/js/components/detail-list.tsx`.
+
+- `<DetailList columns={2}>`: un `<dl>` en grilla, siempre una columna en el celular. `columns`: `1`, `2` (por defecto),
+  `3` o `4`. Con dos tarjetas lado a lado, `1`.
+- `<DetailItem label="Notas" value={x} />`: la etiqueta encima del dato. Con `value` vacío (`isEmptyCell`) pinta
+  `<EmptyCell />` y deja el par: si un campo solo existe a veces, lo condiciona la pantalla. `span="full"` ocupa toda la
+  fila y `valueClassName` sirve para `font-mono` o `whitespace-pre-wrap`.
+- Recibe `value`, no `children`: dos nodos en `children` llegan como arreglo y `isEmptyCell` no los vería vacíos.
+- `<DetailLabel>`: el `<dt>` de la etiqueta, única fuente de su clase (sin mayúsculas). También lo usa la tarjeta del
+  celular de `DataListing`.
+
+---
+
+## RecordLink (enlace a un registro)
+
+**Ubicación:** `resources/js/components/record-link.tsx`.
+
+El enlace a la ficha de un registro: el identificador de un listado (`DataListing`, que agrega `font-medium`) o un dato
+que lleva a otro módulo (`Formulas/Show`). Recibe las props de `<Link>`. Si el enlace depende de un permiso de otro
+módulo, lo envía el controlador en `can` y sin él se pinta el texto solo.
+
+---
+
 ## EmptyCell y EmptyState (sin dato, sin filas)
 
-Las comparten `DataListing` y `DetailTable`; una pantalla no las necesita si usa esas dos.
+Las comparten `DataListing`, `DetailTable` y `DetailItem`; una pantalla no las necesita si usa esas piezas.
 
 **Ubicación:** `resources/js/components/empty-cell.tsx` y `resources/js/components/empty-state.tsx`.
 

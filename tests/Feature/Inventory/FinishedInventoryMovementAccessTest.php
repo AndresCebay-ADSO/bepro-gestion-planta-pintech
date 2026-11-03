@@ -167,7 +167,9 @@ it('shows finished inventory movement costs only to users with costs.view', func
     actingAs($produccion)
         ->get(route('finished-inventory-movements.show', $movement))
         ->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page->missing('movement.cost_price'));
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->missing('movement.cost_price')
+            ->where('can.viewCosts', false));
 
     actingAs($produccion)
         ->get(route('finished-inventory-movements.index'))
@@ -179,5 +181,7 @@ it('shows finished inventory movement costs only to users with costs.view', func
     actingAs($admin)
         ->get(route('finished-inventory-movements.show', $movement))
         ->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page->has('movement.cost_price'));
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('movement.cost_price')
+            ->where('can.viewCosts', true));
 });

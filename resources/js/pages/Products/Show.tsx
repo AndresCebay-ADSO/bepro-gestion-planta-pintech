@@ -551,7 +551,7 @@ export default function ProductsShow({
                     </div>
                 )}
 
-                <Card className="overflow-hidden border-border/80 shadow-sm">
+                <Card className="overflow-hidden border-border/80">
                     <CardHeader className="border-b border-border bg-muted/30 px-6 py-4">
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                             <div className="space-y-1">

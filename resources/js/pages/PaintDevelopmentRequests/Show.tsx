@@ -2,12 +2,14 @@ import { Head, Link, router } from '@inertiajs/react';
 import { CheckCircle2, Clock, FileText, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
-import { EmptyCell } from '@/components/empty-cell';
+import { DetailItem, DetailList } from '@/components/detail-list';
 import { FormattedDate } from '@/components/formatted-date';
 import { PageHeader } from '@/components/page-header';
+import { payloadFieldApplies } from '@/components/paint-development-requests/conditional-fields';
 import { StatusBadge } from '@/components/status-badge';
 
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -18,7 +20,6 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { isEmptyCell } from '@/lib/data-listing';
 import {
     edit as requestsEdit,
     index as requestsIndex,
@@ -62,34 +63,6 @@ type Props = {
     nextStatusOptions: { id: string; label: string }[];
 };
 
-function SectionCard({
-    title,
-    children,
-}: {
-    title: string;
-    children: React.ReactNode;
-}) {
-    return (
-        <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-foreground">
-                {title}
-            </h2>
-            {children}
-        </div>
-    );
-}
-
-function FieldRow({ label, value }: { label: string; value: React.ReactNode }) {
-    return (
-        <div className="grid grid-cols-1 gap-1 py-2 sm:grid-cols-[200px_1fr]">
-            <span className="text-sm text-muted-foreground">{label}</span>
-            <span className="text-sm font-medium text-foreground">
-                {isEmptyCell(value) ? <EmptyCell /> : value}
-            </span>
-        </div>
-    );
-}
-
 function formatArrayValue(value: unknown): string {
     if (Array.isArray(value)) {
         return value.join(', ');
@@ -102,19 +75,36 @@ function formatArrayValue(value: unknown): string {
     return String(value);
 }
 
-function PayloadSection({ payload }: { payload: Payload }) {
+// Una sección de respuestas, a todo el ancho y en dos columnas.
+function PayloadSection({
+    title,
+    payload,
+}: {
+    title: string;
+    payload: Payload;
+}) {
     return (
-        <div className="divide-y divide-border">
-            {Object.entries(payload).map(([key, value]) => (
-                <FieldRow
-                    key={key}
-                    label={key
-                        .replace(/_/g, ' ')
-                        .replace(/^\w/, (c) => c.toUpperCase())}
-                    value={formatArrayValue(value)}
-                />
-            ))}
-        </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>{title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <DetailList columns={2}>
+                    {Object.entries(payload)
+                        .filter(([key]) => payloadFieldApplies(key, payload))
+                        .map(([key, value]) => (
+                            <DetailItem
+                                key={key}
+                                label={key
+                                    .replace(/_/g, ' ')
+                                    .replace(/^\w/, (c) => c.toUpperCase())}
+                                value={formatArrayValue(value)}
+                                valueClassName="whitespace-pre-wrap"
+                            />
+                        ))}
+                </DetailList>
+            </CardContent>
+        </Card>
     );
 }
 
@@ -213,88 +203,113 @@ export default function PaintDevelopmentRequestShow({
                     }
                 />
 
-                <div className="grid gap-4 md:grid-cols-2">
-                    <SectionCard title="Identificación">
-                        <FieldRow
-                            label="Proyecto"
-                            value={request.project_name}
-                        />
-                        <FieldRow label="Cliente" value={request.client_name} />
-                        <FieldRow
-                            label="Responsable"
-                            value={request.responsible}
-                        />
-                        <FieldRow label="Ciudad" value={request.city} />
-                        <FieldRow
-                            label="Fecha muestra"
-                            value={
-                                <FormattedDate
-                                    value={request.sample_due_date}
-                                    format="short"
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Identificación</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <DetailList columns={1}>
+                                <DetailItem
+                                    label="Proyecto"
+                                    value={request.project_name}
                                 />
-                            }
-                        />
-                        <FieldRow
-                            label="Producto actual"
-                            value={request.current_product}
-                        />
-                    </SectionCard>
-
-                    <SectionCard title="Auditoría">
-                        <FieldRow
-                            label="Creado por"
-                            value={request.creator?.name}
-                        />
-                        <FieldRow
-                            label="Fecha creación"
-                            value={
-                                <FormattedDate
-                                    value={request.created_at}
-                                    format="datetime"
+                                <DetailItem
+                                    label="Cliente"
+                                    value={request.client_name}
                                 />
-                            }
-                        />
-                        {request.reviewer && (
-                            <>
-                                <FieldRow
-                                    label="Revisado por"
-                                    value={request.reviewer.name}
+                                <DetailItem
+                                    label="Responsable"
+                                    value={request.responsible}
                                 />
-                                <FieldRow
-                                    label="Fecha revisión"
+                                <DetailItem
+                                    label="Ciudad"
+                                    value={request.city}
+                                />
+                                <DetailItem
+                                    label="Fecha muestra"
                                     value={
                                         <FormattedDate
-                                            value={request.reviewed_at}
+                                            value={request.sample_due_date}
+                                            format="short"
+                                        />
+                                    }
+                                />
+                                <DetailItem
+                                    label="Producto actual"
+                                    value={request.current_product}
+                                />
+                            </DetailList>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Auditoría</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <DetailList columns={1}>
+                                <DetailItem
+                                    label="Creado por"
+                                    value={request.creator?.name}
+                                />
+                                <DetailItem
+                                    label="Fecha creación"
+                                    value={
+                                        <FormattedDate
+                                            value={request.created_at}
                                             format="datetime"
                                         />
                                     }
                                 />
-                            </>
-                        )}
-                        {request.review_notes && (
-                            <FieldRow
-                                label="Notas de revisión"
-                                value={request.review_notes}
-                            />
-                        )}
-                    </SectionCard>
+                                {request.reviewer && (
+                                    <>
+                                        <DetailItem
+                                            label="Revisado por"
+                                            value={request.reviewer.name}
+                                        />
+                                        <DetailItem
+                                            label="Fecha revisión"
+                                            value={
+                                                <FormattedDate
+                                                    value={request.reviewed_at}
+                                                    format="datetime"
+                                                />
+                                            }
+                                        />
+                                    </>
+                                )}
+                                {request.review_notes && (
+                                    <DetailItem
+                                        label="Notas de revisión"
+                                        value={request.review_notes}
+                                        valueClassName="whitespace-pre-wrap"
+                                    />
+                                )}
+                            </DetailList>
+                        </CardContent>
+                    </Card>
                 </div>
 
-                <SectionCard title="1. Contexto — Proyecto, sustrato y exposición">
-                    <PayloadSection payload={request.context_payload} />
-                </SectionCard>
+                <PayloadSection
+                    title="1. Contexto — Proyecto, sustrato y exposición"
+                    payload={request.context_payload}
+                />
 
-                <SectionCard title="2. Desempeño — Función, resistencia y acabado">
-                    <PayloadSection payload={request.performance_payload} />
-                </SectionCard>
+                <PayloadSection
+                    title="2. Desempeño — Función, resistencia y acabado"
+                    payload={request.performance_payload}
+                />
 
-                <SectionCard title="3. Aplicación — Método, espesores y tecnología">
-                    <PayloadSection payload={request.application_payload} />
-                </SectionCard>
+                <PayloadSection
+                    title="3. Aplicación — Método, espesores y tecnología"
+                    payload={request.application_payload}
+                />
 
-                <SectionCard title="4. Especificaciones — Control, suministro y aprobación">
-                    <PayloadSection payload={request.specifications_payload} />
-                </SectionCard>
+                <PayloadSection
+                    title="4. Especificaciones — Control, suministro y aprobación"
+                    payload={request.specifications_payload}
+                />
             </div>
 
             <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>

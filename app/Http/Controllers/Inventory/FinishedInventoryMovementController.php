@@ -173,12 +173,17 @@ class FinishedInventoryMovementController extends Controller
         ]);
 
         // El costo del movimiento solo con costs.view (docs/MATRIZ_RBAC.md, principio 1).
-        if (! ($request->user()?->can(Permission::CostsView->value) ?? false)) {
+        $canViewCosts = $request->user()?->can(Permission::CostsView->value) ?? false;
+
+        if (! $canViewCosts) {
             $finishedInventoryMovement->makeHidden('cost_price');
         }
 
         return Inertia::render('Inventory/FinishedMovements/Show', [
             'movement' => $finishedInventoryMovement,
+            'can' => [
+                'viewCosts' => $canViewCosts,
+            ],
         ]);
     }
 }

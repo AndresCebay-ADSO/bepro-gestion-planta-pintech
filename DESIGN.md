@@ -30,7 +30,7 @@ to use raw Tailwind palette or arbitrary values. `resources/js/design-contract.t
   there is no flash. The background color in that inline `<style>` must match `--background`.
 - **All color comes from tokens** in `resources/css/app.css` (`:root` = light, `.dark` = dark), exposed through `@theme`
   as `--color-*`. To change a color, change the token, never each component.
-- Never use pure white/black for surfaces. Hierarchy: `bg-background` (app) → `bg-card border shadow-sm` (work
+- Never use pure white/black for surfaces. Hierarchy: `bg-background` (app) → `bg-card border shadow-xs` (work
   surface) → `bg-sidebar` (navigation). Sticky header: `bg-background/95 border-b border-border/80`.
 
 Rules:
@@ -155,8 +155,11 @@ How it works:
 | Body, table cell, button, label | `text-sm` (`font-medium` on labels and buttons) |
 | Field help, metadata | `text-xs text-muted-foreground` |
 | Page or section description | `text-sm text-muted-foreground` |
-| Label-value label, table header | `text-xs font-medium uppercase tracking-wide text-muted-foreground` |
+| Label-value label (`<DetailLabel>`: detail cards and the phone card of a listing) | `text-xs font-medium text-muted-foreground` |
+| Table header | `text-xs font-medium uppercase tracking-wide text-muted-foreground` |
 | KPI figure | `text-2xl font-semibold tabular-nums` |
+
+`CardTitle` (`components/ui/card.tsx`) is an `h2`. A hand-written `h2` inside a card becomes `CardTitle`.
 
 The page title is always `<PageHeader>` (`components/page-header.tsx`), the only `h1` of a screen. No icon next to
 it (the sidebar already shows it) and no outer margin: the page container sets the spacing. Only `title` is required:
@@ -308,6 +311,29 @@ Same in all three:
   first child is the `<PageHeader>` (§5); each section below is a card (the record's data) or a `<section>` with its
   title and a `<DetailTable>`. Only forms are centered and narrowed, with `<FormPage>` (§8). The production order keeps
   its own frame until its redesign.
+- **Detail cards.** The record's data is a `<Card>` with a `<DetailList>` (`components/detail-list.tsx`), never a local
+  label-value piece. Each `<DetailItem>` puts the label above the value, and decides the empty case once: `value` with
+  nothing to show (`null`, `undefined`, `false`, `''`; `0` is a value) renders `<EmptyCell />`. The pair stays: unlike the
+  phone card of a listing, a detail card has fixed fields and «—» says one is missing. A field that exists only
+  sometimes is conditioned by the screen. It takes `value`, not `children`: two nodes in `children` arrive as an array
+  and would not count as empty.
+
+  ```tsx
+  <Card>
+      <CardContent>
+          {/* columns: 1 · 2 (default) · 3 · 4. Always one column on the phone. */}
+          <DetailList columns={3}>
+              <DetailItem label="Creada por" value={formula.created_by?.name} />
+              {formula.name && <DetailItem label="Nombre" value={formula.name} />}
+              <DetailItem label="Notas" value={formula.notes} span="full" valueClassName="whitespace-pre-wrap" />
+          </DetailList>
+      </CardContent>
+  </Card>
+  ```
+
+  Use `columns={1}` when two cards sit side by side. `span="full"` takes the whole row; `valueClassName` is for
+  `font-mono` or `whitespace-pre-wrap`. A value that opens another record is a `<RecordLink>`
+  (`components/record-link.tsx`).
 - Every listing is a `<DataListing>` (`components/data-listing.tsx`). Each screen describes its columns **once**; the
   component renders the `<Table>` (`components/ui/table.tsx`) from `md` up and one card per row below `md`. A table
   wider than its box scrolls inside the box, never the page. No sorting by column (the server orders).
