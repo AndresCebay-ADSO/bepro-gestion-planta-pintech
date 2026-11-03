@@ -1,9 +1,10 @@
-import { Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 
+import { DetailLabel } from '@/components/detail-list';
 import { EmptyCell } from '@/components/empty-cell';
 import { EmptyState } from '@/components/empty-state';
+import { RecordLink } from '@/components/record-link';
 import { RowActions } from '@/components/row-actions';
 import type { RowAction } from '@/components/row-actions';
 import {
@@ -133,12 +134,9 @@ export function DataListing<T>({
         }
 
         return (
-            <Link
-                href={href}
-                className="rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            >
+            <RecordLink href={href} className="font-medium">
                 {content}
-            </Link>
+            </RecordLink>
         );
     };
 
@@ -267,9 +265,9 @@ export function DataListing<T>({
                                                     'col-span-2',
                                             )}
                                         >
-                                            <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                            <DetailLabel>
                                                 {column.header}
-                                            </dt>
+                                            </DetailLabel>
                                             <dd
                                                 className={cn(
                                                     'break-words',

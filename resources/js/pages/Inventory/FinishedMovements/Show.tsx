@@ -1,12 +1,12 @@
 import { Head } from '@inertiajs/react';
 
-import { EmptyCell } from '@/components/empty-cell';
+import { DetailItem, DetailList } from '@/components/detail-list';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { MovementDirectionBadge } from '@/components/movement-direction-badge';
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
-import { isEmptyCell } from '@/lib/data-listing';
+import { Card, CardContent } from '@/components/ui/card';
 import { finishedLotLabel } from '@/lib/finished-lot';
 import {
     index as finishedMovementsIndex,
@@ -16,28 +16,12 @@ import type { FinishedInventoryMovement } from '@/types/finished-inventory';
 
 type Props = {
     movement: FinishedInventoryMovement;
+    can: {
+        viewCosts: boolean;
+    };
 };
 
-function DetailItem({
-    label,
-    value,
-}: {
-    label: string;
-    value: React.ReactNode;
-}) {
-    return (
-        <div className="space-y-1">
-            <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                {label}
-            </dt>
-            <dd className="text-sm text-foreground">
-                {isEmptyCell(value) ? <EmptyCell /> : value}
-            </dd>
-        </div>
-    );
-}
-
-export default function FinishedMovementsShow({ movement }: Props) {
+export default function FinishedMovementsShow({ movement, can }: Props) {
     return (
         <>
             <Head title={`Movimiento PT #${movement.id}`} />
@@ -56,101 +40,95 @@ export default function FinishedMovementsShow({ movement }: Props) {
                     }
                 />
 
-                <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-                    <dl className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-                        <DetailItem
-                            label="Fecha"
-                            value={
-                                <FormattedDate
-                                    value={movement.movement_date}
-                                    format="date"
+                <Card>
+                    <CardContent>
+                        <DetailList columns={4}>
+                            <DetailItem
+                                label="Fecha"
+                                value={
+                                    <FormattedDate
+                                        value={movement.movement_date}
+                                        format="date"
+                                    />
+                                }
+                            />
+                            <DetailItem
+                                label="Cantidad"
+                                value={
+                                    <FormattedNumber
+                                        value={movement.quantity}
+                                        maxDecimals={2}
+                                    />
+                                }
+                            />
+                            {can.viewCosts && (
+                                <DetailItem
+                                    label="Costo"
+                                    value={
+                                        <FormattedNumber
+                                            value={movement.cost_price}
+                                            maxDecimals={2}
+                                        />
+                                    }
                                 />
-                            }
-                        />
-                        <DetailItem
-                            label="Cantidad"
-                            value={
-                                <FormattedNumber
-                                    value={movement.quantity}
-                                    maxDecimals={2}
-                                />
-                            }
-                        />
-                        <DetailItem
-                            label="Costo"
-                            value={
-                                <FormattedNumber
-                                    value={movement.cost_price}
-                                    maxDecimals={2}
-                                />
-                            }
-                        />
-                        <DetailItem
-                            label="Lote"
-                            value={
-                                movement.batch
-                                    ? finishedLotLabel(
-                                          movement.batch.production_order
-                                              .lot_number,
-                                          movement.batch.production_order.color,
-                                      )
-                                    : 'Sin lote'
-                            }
-                        />
-                        <DetailItem
-                            label="Producto"
-                            value={
-                                <>
-                                    <div>
-                                        {movement.product?.name ?? (
-                                            <EmptyCell />
-                                        )}
-                                    </div>
-                                </>
-                            }
-                        />
-                        <DetailItem
-                            label="Presentación"
-                            value={
-                                movement.product_variant?.presentation_label ??
-                                movement.product_variant?.name
-                            }
-                        />
-                        <DetailItem
-                            label="Bodega"
-                            value={
-                                <>
-                                    <div>
-                                        {movement.warehouse?.name ?? (
-                                            <EmptyCell />
-                                        )}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                        {movement.warehouse?.city ?? (
-                                            <EmptyCell />
-                                        )}
-                                    </div>
-                                </>
-                            }
-                        />
-                        <DetailItem
-                            label="Creado por"
-                            value={movement.created_by?.name}
-                        />
-                        <DetailItem
-                            label="Orden producción"
-                            value={movement.production_order?.order_number}
-                        />
-                        <div className="space-y-1 md:col-span-2 xl:col-span-3">
-                            <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                Notas
-                            </dt>
-                            <dd className="text-sm whitespace-pre-wrap text-foreground">
-                                {movement.notes ?? <EmptyCell />}
-                            </dd>
-                        </div>
-                    </dl>
-                </div>
+                            )}
+                            <DetailItem
+                                label="Lote"
+                                value={
+                                    movement.batch
+                                        ? finishedLotLabel(
+                                              movement.batch.production_order
+                                                  .lot_number,
+                                              movement.batch.production_order
+                                                  .color,
+                                          )
+                                        : 'Sin lote'
+                                }
+                            />
+                            <DetailItem
+                                label="Producto"
+                                value={movement.product?.name}
+                            />
+                            <DetailItem
+                                label="Presentación"
+                                value={
+                                    movement.product_variant
+                                        ?.presentation_label ??
+                                    movement.product_variant?.name
+                                }
+                            />
+                            <DetailItem
+                                label="Bodega"
+                                value={
+                                    movement.warehouse && (
+                                        <>
+                                            <div>{movement.warehouse.name}</div>
+                                            {movement.warehouse.city && (
+                                                <div className="text-xs text-muted-foreground">
+                                                    {movement.warehouse.city}
+                                                </div>
+                                            )}
+                                        </>
+                                    )
+                                }
+                            />
+                            <DetailItem
+                                label="Creado por"
+                                value={movement.created_by?.name}
+                            />
+                            <DetailItem
+                                label="Orden producción"
+                                value={movement.production_order?.order_number}
+                            />
+                            <DetailItem
+                                label="Notas"
+                                value={movement.notes}
+                                span="full"
+                                valueClassName="whitespace-pre-wrap"
+                            />
+                        </DetailList>
+                    </CardContent>
+                </Card>
             </div>
         </>
     );

@@ -8,13 +8,17 @@ import {
     edit as formulasEdit,
     priceReference as formulasPriceReference,
 } from '@/actions/App/Http/Controllers/FormulaController';
+import { ActiveBadge } from '@/components/active-badge';
+import { DetailItem, DetailList } from '@/components/detail-list';
 import { DetailTable } from '@/components/detail-table';
-import { EmptyCell } from '@/components/empty-cell';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
+import { RecordLink } from '@/components/record-link';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { useConfirm } from '@/hooks/use-confirm';
 import { formulaCrumb } from '@/lib/formula-name';
 import { breadcrumbHref } from '@/lib/navigation';
@@ -22,8 +26,9 @@ import {
     index as formulasIndex,
     show as formulasShow,
 } from '@/routes/formulas';
+import { show as productsShow } from '@/routes/products';
 
-type DetailItem = {
+type FormulaLine = {
     id: number;
     step_order: number;
     quantity: string;
@@ -46,11 +51,16 @@ type Props = {
             name: string;
             unit_of_measure?: { name: string; symbol: string } | null;
         } | null;
-        details: DetailItem[];
+        details: FormulaLine[];
         created_by?: { name: string } | null;
         has_production_orders: boolean;
     };
-    can: { update: boolean; activate: boolean; delete: boolean };
+    can: {
+        update: boolean;
+        activate: boolean;
+        delete: boolean;
+        viewProduct: boolean;
+    };
 };
 
 export default function FormulasShow({ formula, can }: Props) {
@@ -82,33 +92,21 @@ export default function FormulasShow({ formula, can }: Props) {
         router.post(formulasPriceReference(formula.id));
     };
 
-    const title = formula.name
-        ? `Fórmula v${formula.version} · ${formula.name}`
-        : `Fórmula v${formula.version}`;
+    // Título, pestaña y última miga dicen lo mismo (DESIGN.md §1 y §10).
+    const title = formulaCrumb(formula);
 
     return (
         <>
-            <Head title={`${title} — ${formula.product?.name}`} />
+            <Head title={title} />
             <div className="space-y-6 p-6">
                 <PageHeader
                     title={title}
-                    description={
-                        <>
-                            Producto:{' '}
-                            <span className="font-medium text-foreground">
-                                {formula.product?.name}
-                            </span>
-                        </>
-                    }
                     badge={
                         <div className="flex flex-wrap gap-2">
-                            <Badge
-                                variant={
-                                    formula.is_active ? 'default' : 'secondary'
-                                }
-                            >
-                                {formula.is_active ? 'Activa' : 'Inactiva'}
-                            </Badge>
+                            <ActiveBadge
+                                isActive={formula.is_active}
+                                feminine
+                            />
                             {formula.is_price_reference && (
                                 <Badge variant="outline">
                                     <BadgeDollarSign aria-hidden="true" />
@@ -166,51 +164,74 @@ export default function FormulasShow({ formula, can }: Props) {
                     }
                 />
 
-                {/* Metadata */}
-                <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-3">
-                    <div>
-                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                            Creada por
-                        </p>
-                        <p className="text-sm text-foreground">
-                            {formula.created_by?.name ?? <EmptyCell />}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                            Fecha
-                        </p>
-                        <p className="text-sm text-foreground">
-                            <FormattedDate
-                                value={formula.created_at}
-                                format="datetime"
+                <Card>
+                    <CardContent>
+                        <DetailList columns={3}>
+                            <DetailItem
+                                label="Producto"
+                                value={
+                                    formula.product &&
+                                    (can.viewProduct ? (
+                                        // Sin `returnTo`: «Productos» en sus migas sigue llevando a Productos.
+                                        <RecordLink
+                                            href={productsShow(
+                                                formula.product.id,
+                                            )}
+                                        >
+                                            {formula.product.name}
+                                        </RecordLink>
+                                    ) : (
+                                        formula.product.name
+                                    ))
+                                }
                             />
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                            Notas
-                        </p>
-                        <p className="text-sm text-foreground">
-                            {formula.notes ?? <EmptyCell />}
-                        </p>
-                    </div>
-                </div>
+                            {formula.name && (
+                                <DetailItem
+                                    label="Nombre"
+                                    value={formula.name}
+                                />
+                            )}
+                            <DetailItem
+                                label="Creada por"
+                                value={formula.created_by?.name}
+                            />
+                            <DetailItem
+                                label="Fecha"
+                                value={
+                                    <FormattedDate
+                                        value={formula.created_at}
+                                        format="datetime"
+                                    />
+                                }
+                            />
+                            <DetailItem
+                                label="Notas"
+                                value={formula.notes}
+                                span="full"
+                                valueClassName="whitespace-pre-wrap"
+                            />
+                        </DetailList>
+                    </CardContent>
+                </Card>
 
                 {formula.is_price_reference && (
-                    <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-                        El costo y el precio de lista del producto salen de esta
-                        fórmula. Para desactivarla o eliminarla, marca antes
-                        otra fórmula activa como referencia de precio con «Usar
-                        para el precio».
-                    </div>
+                    <Alert>
+                        <AlertDescription>
+                            El costo y el precio de lista del producto salen de
+                            esta fórmula. Para desactivarla o eliminarla, marca
+                            antes otra fórmula activa como referencia de precio
+                            con «Usar para el precio».
+                        </AlertDescription>
+                    </Alert>
                 )}
 
                 {formula.has_production_orders && (
-                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900">
-                        Esta fórmula ya fue usada en órdenes de producción. Por
-                        seguridad del histórico, ya no se puede editar.
-                    </div>
+                    <Alert variant="warning">
+                        <AlertDescription>
+                            Esta fórmula ya fue usada en órdenes de producción.
+                            Por seguridad del histórico, ya no se puede editar.
+                        </AlertDescription>
+                    </Alert>
                 )}
 
                 {/* Ingredientes */}

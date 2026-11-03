@@ -6,6 +6,7 @@ use App\Enums\PaintDevelopmentRequestStatus;
 use App\Enums\Permission;
 use App\Enums\QuotationStatus;
 use App\Enums\SystemRole;
+use App\Models\Formula;
 use App\Models\PaintDevelopmentRequest;
 use App\Models\QrCode;
 use App\Models\Quotation;
@@ -152,4 +153,19 @@ it('enlaza la OP del detalle de un QR solo con permiso de ver órdenes', functio
     // Comercial ve los QR pero no las órdenes de producción.
     'comercial' => [SystemRole::Commercial, false],
     'admin' => [SystemRole::Admin, true],
+]);
+
+it('enlaza el producto de la ficha de una fórmula solo con permiso de ver productos', function (User $user, bool $expected): void {
+    $formula = Formula::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('formulas.show', $formula))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Formulas/Show')
+            ->where('can.viewProduct', $expected)
+        );
+})->with([
+    'sin permiso de productos' => [fn () => userWithPermissions([Permission::FormulasView]), false],
+    'admin' => [fn () => test()->admin, true],
 ]);

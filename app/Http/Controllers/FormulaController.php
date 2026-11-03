@@ -104,6 +104,7 @@ class FormulaController extends Controller
                 'update' => Gate::allows('update', $formula),
                 'activate' => Gate::allows('activate', $formula),
                 'delete' => Gate::allows('delete', $formula),
+                'viewProduct' => $request->user()?->can(Permission::ProductsView->value) ?? false,
             ],
         ]);
     }
