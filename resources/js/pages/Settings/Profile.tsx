@@ -2,6 +2,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import Heading from '@/components/heading';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import UserIdentityFields from '@/components/users/user-identity-fields';
 import { send } from '@/routes/verification';
@@ -95,10 +96,16 @@ export default function Profile({
                             </p>
 
                             {status === 'verification-link-sent' && (
-                                <div className="mt-2 text-sm font-medium text-primary">
-                                    Un nuevo enlace de verificación ha sido
-                                    enviado a tu correo electrónico.
-                                </div>
+                                <Alert
+                                    variant="success"
+                                    role="alert"
+                                    className="mt-2"
+                                >
+                                    <AlertDescription>
+                                        Un nuevo enlace de verificación ha sido
+                                        enviado a tu correo electrónico.
+                                    </AlertDescription>
+                                </Alert>
                             )}
                         </div>
                     )}

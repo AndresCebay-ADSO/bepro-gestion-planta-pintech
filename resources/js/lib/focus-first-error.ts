@@ -41,10 +41,11 @@ export function errorSelectorsFor(key: string): string[] {
 
 /**
  * Dónde buscar un mensaje cuando ningún campo coincide con la llave del error, en este orden: primero el error de un
- * campo (`InputError` y los párrafos de error de los formularios), y solo después un aviso de la página (`Alert`), que
- * suele estar arriba de todo y no es el campo que hay que corregir.
+ * campo (`InputError` y los párrafos de error de los formularios), y solo después un aviso de la página que apareció de
+ * repente (`Alert` con `role="alert"`), que suele estar arriba de todo y no es el campo que hay que corregir.
  */
-export const FALLBACK_SELECTORS = ['p.text-destructive', '[role="alert"]'];
+export const FIELD_MESSAGE_SELECTOR = 'p.text-destructive';
+export const FALLBACK_SELECTORS = [FIELD_MESSAGE_SELECTOR, '[role="alert"]'];
 
 /** Un diálogo abierto (Radix): sus campos y sus errores van antes que los de la página que queda detrás. */
 const OPEN_DIALOG_SELECTOR =
@@ -83,10 +84,13 @@ export function focusFirstError(
     message.scrollIntoView({ block: 'center', behavior: 'smooth' });
 
     // El campo cuyo error es ese mensaje: el control que comparte su contenedor (la mayoría de los formularios ponen el
-    // campo y su error juntos), aunque su `id` no coincida con la llave del error.
-    const field = message.parentElement?.querySelector<HTMLElement>(
-        'input:not([type="hidden"]), textarea, select, [role="combobox"]',
-    );
+    // campo y su error juntos), aunque su `id` no coincida con la llave del error. Un aviso de la página, no: comparte
+    // contenedor con el formulario entero y el foco caería en un campo sin relación, donde se seguiría escribiendo.
+    const field = message.matches(FIELD_MESSAGE_SELECTOR)
+        ? message.parentElement?.querySelector<HTMLElement>(
+              'input:not([type="hidden"]), textarea, select, [role="combobox"]',
+          )
+        : null;
 
     if (field && !field.hasAttribute('disabled')) {
         field.focus({ preventScroll: true });

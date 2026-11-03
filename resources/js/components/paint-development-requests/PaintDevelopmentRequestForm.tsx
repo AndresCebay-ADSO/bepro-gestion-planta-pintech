@@ -2,6 +2,7 @@ import { useForm } from '@inertiajs/react';
 import { ChevronRight, Save, Send } from 'lucide-react';
 import { useState } from 'react';
 
+import AlertError from '@/components/alert-error';
 import { FormActions } from '@/components/form-actions';
 import { FormPage } from '@/components/form-page';
 import { PageHeader } from '@/components/page-header';
@@ -786,18 +787,10 @@ export default function PaintDevelopmentRequestForm({
 
                     {/* Server errors summary */}
                     {Object.keys(errors).length > 0 && (
-                        <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-                            <p className="font-medium">
-                                Hay errores en el formulario:
-                            </p>
-                            <ul className="mt-1 list-disc pl-4">
-                                {Object.entries(errors).map(
-                                    ([key, message]) => (
-                                        <li key={key}>{message}</li>
-                                    ),
-                                )}
-                            </ul>
-                        </div>
+                        <AlertError
+                            title="Hay errores en el formulario:"
+                            errors={Object.values(errors)}
+                        />
                     )}
 
                     <p className="text-xs text-muted-foreground">

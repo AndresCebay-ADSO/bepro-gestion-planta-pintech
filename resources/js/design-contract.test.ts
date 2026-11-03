@@ -40,6 +40,24 @@ function relativePath(path: string): string {
     return relative(root, path).split(sep).join('/');
 }
 
+/** Una excepción (archivo, o carpeta si termina en `/`) que ya no existe o ya no incumple la regla sobra. */
+function exceptionIsStale(
+    exception: string,
+    matchesIn: (file: string) => Violation[],
+): boolean {
+    const fullPath = join(root, exception);
+
+    if (!existsSync(fullPath)) {
+        return true;
+    }
+
+    const targetFiles = exception.endsWith('/')
+        ? filesUnder(fullPath, ['.tsx'])
+        : [fullPath];
+
+    return targetFiles.flatMap(matchesIn).length === 0;
+}
+
 function violations(files: string[], rules: Rule[]): Violation[] {
     return files.flatMap((file) =>
         readFileSync(file, 'utf8')
@@ -652,6 +670,72 @@ describe('contrato de DESIGN.md', () => {
         expect(report(found)).toEqual([]);
     });
 
+    it('pinta los avisos con <Alert>, sin recuadros a mano', () => {
+        // Excepciones con su motivo (`components/ui/` ya queda fuera en `screenFiles`). Al resolver una, se quita.
+        const handMadeAlertExceptions = [
+            // Orden de producción: sus avisos se quitan al rediseñarla.
+            'resources/js/components/production/',
+            'resources/js/pages/Production/Orders/',
+        ];
+        // La misma clase es lo que hay entre dos comillas. El lookbehind ignora las variantes (`hover:bg-*`, `dark:*`).
+        const tones = 'destructive|warning|success|info|emerald|amber|red';
+        const borderTone = new RegExp(
+            `(?<![\\w:/[-])border(?:-[xytblrse])?-(${tones})\\b`,
+            'g',
+        );
+        const backgroundTone = new RegExp(
+            `(?<![\\w:/[-])bg-(${tones})\\b`,
+            'g',
+        );
+        const rule =
+            'DESIGN.md §4: un aviso es <Alert> con la variante de su tono, nunca un recuadro a mano con border-* y bg-*';
+        const matchesIn = (file: string): Violation[] => {
+            const source = readFileSync(file, 'utf8');
+            let offset = 0;
+
+            return source.split(/(["'`])/).flatMap((segment) => {
+                const start = offset;
+
+                offset += segment.length;
+
+                const backgrounds = [...segment.matchAll(backgroundTone)].map(
+                    (match) => match[1],
+                );
+                const border = [...segment.matchAll(borderTone)].find((match) =>
+                    backgrounds.includes(match[1]),
+                );
+
+                return border
+                    ? [
+                          {
+                              location: `${relativePath(file)}:${source.slice(0, start + border.index).split('\n').length}`,
+                              match: border[0],
+                              rule,
+                          },
+                      ]
+                    : [];
+            });
+        };
+
+        const found = screenFiles
+            .filter(
+                (file) =>
+                    !handMadeAlertExceptions.some((prefix) =>
+                        relativePath(file).startsWith(prefix),
+                    ),
+            )
+            .flatMap(matchesIn);
+
+        expect(report(found)).toEqual([]);
+
+        // Una excepción que ya no existe o ya no tiene recuadros a mano sobra: se quita para que el guardián la vigile.
+        const staleExceptions = handMadeAlertExceptions.filter((prefix) =>
+            exceptionIsStale(prefix, matchesIn),
+        );
+
+        expect(staleExceptions).toEqual([]);
+    });
+
     it('pinta los valores vacíos con <EmptyCell />, FormattedNumber o FormattedDate, sin guiones a mano', () => {
         // Excepciones con su motivo (`components/ui/` ya queda fuera en `screenFiles`). Al resolver una, se quita.
         // Un ternario de signo (`'+' : '-'`) iría aquí como excepción con su motivo.
@@ -688,19 +772,9 @@ describe('contrato de DESIGN.md', () => {
         expect(report(found)).toEqual([]);
 
         // Una excepción que ya no existe o ya no tiene guiones a mano sobra: se quita para que el guardián la vigile.
-        const staleExceptions = emptyDashExceptions.filter((prefix) => {
-            const fullPath = join(root, prefix);
-
-            if (!existsSync(fullPath)) {
-                return true;
-            }
-
-            const targetFiles = prefix.endsWith('/')
-                ? filesUnder(fullPath, ['.tsx'])
-                : [fullPath];
-
-            return targetFiles.flatMap(matchesIn).length === 0;
-        });
+        const staleExceptions = emptyDashExceptions.filter((prefix) =>
+            exceptionIsStale(prefix, matchesIn),
+        );
 
         expect(staleExceptions).toEqual([]);
     });

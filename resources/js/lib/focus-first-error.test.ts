@@ -1,8 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
     errorSelectorsFor,
     FALLBACK_SELECTORS,
+    FIELD_MESSAGE_SELECTOR,
+    focusFirstError,
     orderedErrorKeys,
 } from '@/lib/focus-first-error';
 
@@ -80,5 +82,37 @@ describe('FALLBACK_SELECTORS: qué mensaje se busca cuando ningún campo coincid
             'p.text-destructive',
             '[role="alert"]',
         ]);
+    });
+});
+
+describe('focusFirstError: el respaldo cuando ningún campo coincide', () => {
+    function pageWith(selector: string) {
+        const field = { hasAttribute: () => false, focus: vi.fn() };
+        const message = {
+            matches: (candidate: string) => candidate === selector,
+            scrollIntoView: vi.fn(),
+            parentElement: { querySelector: () => field },
+        };
+        const root = {
+            querySelector: (candidate: string) =>
+                candidate === selector ? message : null,
+        } as unknown as Document;
+
+        return { field, message, root };
+    }
+
+    it('con el error de un campo, enfoca el control que comparte su contenedor', () => {
+        const { field, root } = pageWith(FIELD_MESSAGE_SELECTOR);
+
+        expect(focusFirstError({ status: 'Error' }, root)).toBe(true);
+        expect(field.focus).toHaveBeenCalled();
+    });
+
+    it('con un aviso de la página, lo lleva a la vista sin enfocar ningún campo', () => {
+        const { field, message, root } = pageWith('[role="alert"]');
+
+        expect(focusFirstError({ status: 'Error' }, root)).toBe(true);
+        expect(message.scrollIntoView).toHaveBeenCalled();
+        expect(field.focus).not.toHaveBeenCalled();
     });
 });

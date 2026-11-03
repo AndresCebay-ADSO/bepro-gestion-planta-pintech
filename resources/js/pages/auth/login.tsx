@@ -1,5 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import { AuthFlashError } from '@/components/auth-flash-error';
+import { AuthStatus } from '@/components/auth-status';
 import { FormActions } from '@/components/form-actions';
 import { FormCheckbox, FormField } from '@/components/form-field';
 import PasswordInput from '@/components/password-input';
@@ -101,11 +102,7 @@ export default function Login({ status, canResetPassword }: Props) {
                         </div>
 
                         {/* Mensaje de estado */}
-                        {status && (
-                            <div className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-center text-sm font-medium text-primary">
-                                {status}
-                            </div>
-                        )}
+                        {status && <AuthStatus>{status}</AuthStatus>}
 
                         <AuthFlashError className="mb-4" />
 

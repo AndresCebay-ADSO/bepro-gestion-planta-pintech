@@ -27,6 +27,7 @@ const alertVariants = cva(
   }
 )
 
+// Sin `role` por defecto: `role="alert"` lo pasa a mano el aviso que aparece de repente, nunca uno fijo (DESIGN.md §4).
 function Alert({
   className,
   variant,
@@ -35,7 +36,6 @@ function Alert({
   return (
     <div
       data-slot="alert"
-      role="alert"
       className={cn(alertVariants({ variant }), className)}
       {...props}
     />
