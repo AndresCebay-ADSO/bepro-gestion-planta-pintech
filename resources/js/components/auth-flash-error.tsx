@@ -14,7 +14,7 @@ export function AuthFlashError({ className }: { className?: string }) {
     }
 
     return (
-        <Alert variant="destructive" className={className}>
+        <Alert variant="destructive" role="alert" className={className}>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{flash.error}</AlertDescription>
         </Alert>

@@ -13,6 +13,7 @@ import { ExitMovementForm } from '@/components/inventory/exit-movement-form';
 import { MovementDirectionBadge } from '@/components/movement-direction-badge';
 import { PageHeader } from '@/components/page-header';
 import Pagination from '@/components/pagination';
+import { RetryableError } from '@/components/retryable-error';
 import { Button } from '@/components/ui/button';
 import {
     Sheet,
@@ -342,19 +343,10 @@ export default function InventoryMovementsIndex({
                         </SheetBody>
                     ) : fetchError ? (
                         <SheetBody>
-                            <div className="mt-6 rounded-md border border-destructive/50 bg-destructive/10 p-4 text-center">
-                                <p className="text-sm font-medium text-destructive">
-                                    {fetchError}
-                                </p>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="mt-4"
-                                    onClick={() => openDrawer(drawerState.mode)}
-                                >
-                                    Reintentar
-                                </Button>
-                            </div>
+                            <RetryableError
+                                message={fetchError}
+                                onRetry={() => openDrawer(drawerState.mode)}
+                            />
                         </SheetBody>
                     ) : rawMaterials && batches && warehouses ? (
                         drawerState.mode === 'entry' ? (

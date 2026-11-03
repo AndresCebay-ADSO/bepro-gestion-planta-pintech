@@ -134,7 +134,12 @@ How it works:
 - **Priority:** only `high` has color (`danger`), with a bars icon (3 bars high, 2 medium, 1 low; medium and low grey).
 - **Alerts:** app alerts use `<Alert>` (`components/ui/alert.tsx`) with the tone's variant (`success`, `warning`,
   `info`, `destructive`, or `default` for neutral); `flash` messages come from `page.flash` (`usePage().flash`) and are
-  rendered only by `<FlashMessages>` (app layout) and `<AuthFlashError>` (sign-in screens), never by a page.
+  rendered only by `<FlashMessages>` (app layout) and `<AuthFlashError>` (sign-in screens), never by a page. No
+  hand-made alert boxes (`border-*` and `bg-*` of an alert tone in one class).
+- **`role="alert"`:** `<Alert>` has no role by default. Pass `role="alert"` only on an alert that appears suddenly (a
+  flash message, the status after an action, a failed request, a validation summary), never on a fixed one that loads with the screen: a screen
+  reader announces it as soon as it appears. An action button goes outside the `role="alert"` element, or the reader
+  reads it along with the message.
 
 ## 5. Typography
 

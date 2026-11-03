@@ -64,7 +64,7 @@ export function FlashMessages() {
                 // El botón de cerrar va fuera del `role="alert"`: dentro, el lector de pantalla leería «Cerrar aviso»
                 // junto con el mensaje.
                 <div key={key} className="relative">
-                    <Alert variant={variant} className="pr-10">
+                    <Alert variant={variant} role="alert" className="pr-10">
                         <Icon className="h-4 w-4" />
                         <AlertTitle>{title}</AlertTitle>
                         <AlertDescription>{text}</AlertDescription>

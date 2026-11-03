@@ -207,6 +207,37 @@ módulo, lo envía el controlador en `can` y sin él se pinta el texto solo.
 
 ---
 
+## Alert (avisos)
+
+Los avisos de la aplicación, con la variante de su tono: `default` (neutro), `success`, `warning`, `info` o
+`destructive`. El texto va en `AlertDescription` (y el título, si lo hay, en `AlertTitle`): el `Alert` es una grilla y un
+hijo suelto queda en la columna del icono. Un recuadro a mano con `border-*` y `bg-*` de esos tonos lo rechaza
+`design-contract.test.ts`.
+
+**`role="alert"`** no viene por defecto. Se pasa a mano solo en lo que aparece de repente; un aviso fijo, que carga con la
+pantalla, va sin `role`, porque el lector de pantalla anuncia el `role="alert"` apenas aparece:
+
+```tsx
+// Aparece de repente: falló una petición.
+<Alert variant="destructive" role="alert">
+    <AlertDescription>{fetchError}</AlertDescription>
+</Alert>
+
+// Fijo: siempre está en la pantalla.
+<Alert variant="warning">
+    <AlertDescription>Esta fórmula ya fue usada en órdenes de producción.</AlertDescription>
+</Alert>
+```
+
+Un botón de acción (reintentar, cerrar) va fuera del elemento con `role="alert"`: dentro, el lector lo leería con el
+mensaje. `AlertError` es la lista de errores, ya con `role="alert"`; `RetryableError` (`components/retryable-error.tsx`),
+una carga que falló con su botón «Reintentar»; `AuthStatus`, la respuesta a una acción en las pantallas de acceso;
+`FlashMessages` y `AuthFlashError` pintan los mensajes `flash`.
+
+**Ubicación:** `resources/js/components/ui/alert.tsx`
+
+---
+
 ## EmptyCell y EmptyState (sin dato, sin filas)
 
 Las comparten `DataListing`, `DetailTable` y `DetailItem`; una pantalla no las necesita si usa esas piezas.

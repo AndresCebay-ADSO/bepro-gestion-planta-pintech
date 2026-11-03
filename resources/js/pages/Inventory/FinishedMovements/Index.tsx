@@ -14,6 +14,7 @@ import { FormattedNumber } from '@/components/formatted-number';
 import { MovementDirectionBadge } from '@/components/movement-direction-badge';
 import { PageHeader } from '@/components/page-header';
 import Pagination from '@/components/pagination';
+import { RetryableError } from '@/components/retryable-error';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -408,18 +409,10 @@ export default function FinishedMovementsIndex({
                         </SheetBody>
                     ) : fetchError ? (
                         <SheetBody>
-                            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-                                <p>{fetchError}</p>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="mt-4"
-                                    onClick={() => openDrawer(drawerState.mode)}
-                                >
-                                    Reintentar
-                                </Button>
-                            </div>
+                            <RetryableError
+                                message={fetchError}
+                                onRetry={() => openDrawer(drawerState.mode)}
+                            />
                         </SheetBody>
                     ) : batches && warehouses ? (
                         drawerState.mode === 'entry' ? (

@@ -1,5 +1,6 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { AuthFlashError } from '@/components/auth-flash-error';
+import { AuthStatus } from '@/components/auth-status';
 import { FormActions } from '@/components/form-actions';
 import { FormField } from '@/components/form-field';
 import { Input } from '@/components/ui/input';
@@ -88,11 +89,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             </p>
                         </div>
 
-                        {status && (
-                            <div className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-center text-sm font-medium text-primary">
-                                {status}
-                            </div>
-                        )}
+                        {status && <AuthStatus>{status}</AuthStatus>}
 
                         <AuthFlashError className="mb-4" />
 

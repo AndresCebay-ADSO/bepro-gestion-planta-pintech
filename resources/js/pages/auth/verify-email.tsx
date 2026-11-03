@@ -1,5 +1,6 @@
 // Components
 import { Form, Head } from '@inertiajs/react';
+import { AuthStatus } from '@/components/auth-status';
 import { FormActions } from '@/components/form-actions';
 import TextLink from '@/components/text-link';
 import { logout } from '@/routes';
@@ -11,10 +12,10 @@ export default function VerifyEmail({ status }: { status?: string }) {
             <Head title="Verificación de correo electrónico" />
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-primary">
+                <AuthStatus>
                     Se ha enviado un nuevo enlace de verificación al correo
                     electrónico que proporcionaste durante el registro.
-                </div>
+                </AuthStatus>
             )}
 
             <Form
