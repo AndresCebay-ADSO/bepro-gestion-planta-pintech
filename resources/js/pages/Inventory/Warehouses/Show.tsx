@@ -1,11 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { ActiveBadge } from '@/components/active-badge';
+import { DetailItem, DetailList } from '@/components/detail-list';
 import { DetailTable } from '@/components/detail-table';
-import { EmptyCell } from '@/components/empty-cell';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { useConfirm } from '@/hooks/use-confirm';
 import {
     destroy as warehousesDestroy,
@@ -82,6 +83,9 @@ export default function WarehousesShow({ warehouse, can }: Props) {
             <div className="space-y-6 p-6">
                 <PageHeader
                     title={warehouse.name}
+                    badge={
+                        <ActiveBadge isActive={warehouse.is_active} feminine />
+                    }
                     description="Detalle de bodega, usuarios e inventario terminado."
                     actions={
                         <>
@@ -115,46 +119,27 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                     }
                 />
 
-                <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-2">
-                    <div>
-                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                            Ciudad
-                        </p>
-                        <p className="text-sm text-foreground">
-                            {warehouse.city}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                            Estado
-                        </p>
-                        <div className="mt-1">
-                            <ActiveBadge
-                                isActive={warehouse.is_active}
-                                feminine
+                <Card>
+                    <CardContent>
+                        <DetailList columns={2}>
+                            <DetailItem label="Ciudad" value={warehouse.city} />
+                            <DetailItem
+                                label="Tipo"
+                                value={
+                                    <StatusBadge
+                                        enum="WarehouseType"
+                                        value={warehouse.type}
+                                    />
+                                }
                             />
-                        </div>
-                    </div>
-                    <div>
-                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                            Tipo
-                        </p>
-                        <div className="mt-1">
-                            <StatusBadge
-                                enum="WarehouseType"
-                                value={warehouse.type}
+                            <DetailItem
+                                label="Dirección"
+                                value={warehouse.address}
+                                span="full"
                             />
-                        </div>
-                    </div>
-                    <div className="md:col-span-2">
-                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                            Dirección
-                        </p>
-                        <p className="text-sm text-foreground">
-                            {warehouse.address ?? <EmptyCell />}
-                        </p>
-                    </div>
-                </div>
+                        </DetailList>
+                    </CardContent>
+                </Card>
 
                 <div className="grid gap-6 lg:grid-cols-2">
                     {/* min-w-0: sin él, la columna de la grilla crece con la tabla y la tabla no se desplaza. */}

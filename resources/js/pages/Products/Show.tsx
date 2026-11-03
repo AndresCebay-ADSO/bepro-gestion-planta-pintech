@@ -23,8 +23,8 @@ import {
 } from '@/actions/App/Http/Controllers/ProductVariantController';
 import { ActiveBadge } from '@/components/active-badge';
 import { DecimalInput } from '@/components/decimal-input';
+import { DetailItem, DetailList } from '@/components/detail-list';
 import { DetailTable } from '@/components/detail-table';
-import { EmptyCell } from '@/components/empty-cell';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import InputError from '@/components/input-error';
@@ -225,20 +225,29 @@ export default function ProductsShow({
         return `≤ ${upper}`;
     };
 
-    const hasCertificateRanges = Boolean(
-        formatQualityRange(
-            product.quality_viscosity_lower,
-            product.quality_viscosity_upper,
-        ) ||
-        formatQualityRange(
-            product.quality_fineness_lower,
-            product.quality_fineness_upper,
-        ) ||
-        formatQualityRange(
-            product.quality_solids_lower,
-            product.quality_solids_upper,
-        ),
-    );
+    const certificateRanges = [
+        {
+            label: 'Viscosidad (KU)',
+            range: formatQualityRange(
+                product.quality_viscosity_lower,
+                product.quality_viscosity_upper,
+            ),
+        },
+        {
+            label: 'Molienda (HG)',
+            range: formatQualityRange(
+                product.quality_fineness_lower,
+                product.quality_fineness_upper,
+            ),
+        },
+        {
+            label: 'Sólidos (%)',
+            range: formatQualityRange(
+                product.quality_solids_lower,
+                product.quality_solids_upper,
+            ),
+        },
+    ].filter(({ range }) => range !== null);
 
     const form = useForm({
         code: '',
@@ -431,124 +440,73 @@ export default function ProductsShow({
                 />
 
                 {/* Info del producto */}
-                <div className="grid gap-4 rounded-lg border border-border bg-card p-6 md:grid-cols-2 lg:grid-cols-4">
-                    <div>
-                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                            Categoría
-                        </p>
-                        <p className="text-sm text-foreground">
-                            {product.category?.name ?? <EmptyCell />}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                            Unidad de Medida
-                        </p>
-                        <p className="text-sm text-foreground">
-                            {product.unit_of_measure ? (
-                                `${product.unit_of_measure.name} (${product.unit_of_measure.symbol})`
-                            ) : (
-                                <EmptyCell />
-                            )}
-                        </p>
-                    </div>
-                    {can.viewCosts && (
-                        <div>
-                            <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                                Precio Interno
-                            </p>
-                            <p className="text-sm font-medium text-foreground">
-                                {product.current_price ? (
-                                    <FormattedNumber
-                                        value={product.current_price}
-                                        currency
-                                        maxDecimals={2}
-                                        trimTrailingZeros
-                                    />
-                                ) : (
-                                    'No asignado'
-                                )}
-                            </p>
-                        </div>
-                    )}
-                </div>
-
-                {(product.description || hasCertificateRanges) && (
-                    <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-                        {product.description && (
-                            <div>
-                                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                    Descripción
-                                </p>
-                                <p className="mt-2 text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-                                    {product.description}
-                                </p>
-                            </div>
-                        )}
-                        {hasCertificateRanges && (
-                            <div
-                                className={
-                                    product.description
-                                        ? 'border-t border-border pt-4'
-                                        : ''
+                <Card>
+                    <CardContent>
+                        <DetailList columns={3}>
+                            <DetailItem
+                                label="Categoría"
+                                value={product.category?.name}
+                            />
+                            <DetailItem
+                                label="Unidad de medida"
+                                value={
+                                    product.unit_of_measure &&
+                                    `${product.unit_of_measure.name} (${product.unit_of_measure.symbol})`
                                 }
-                            >
-                                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                    Rangos certificado de calidad
-                                </p>
-                                <dl className="mt-3 grid gap-4 sm:grid-cols-3">
-                                    {formatQualityRange(
-                                        product.quality_viscosity_lower,
-                                        product.quality_viscosity_upper,
-                                    ) && (
-                                        <div>
-                                            <dt className="text-xs text-muted-foreground">
-                                                Viscosidad (KU)
-                                            </dt>
-                                            <dd className="mt-0.5 font-mono text-sm font-medium">
-                                                {formatQualityRange(
-                                                    product.quality_viscosity_lower,
-                                                    product.quality_viscosity_upper,
-                                                )}
-                                            </dd>
-                                        </div>
-                                    )}
-                                    {formatQualityRange(
-                                        product.quality_fineness_lower,
-                                        product.quality_fineness_upper,
-                                    ) && (
-                                        <div>
-                                            <dt className="text-xs text-muted-foreground">
-                                                Molienda (HG)
-                                            </dt>
-                                            <dd className="mt-0.5 font-mono text-sm font-medium">
-                                                {formatQualityRange(
-                                                    product.quality_fineness_lower,
-                                                    product.quality_fineness_upper,
-                                                )}
-                                            </dd>
-                                        </div>
-                                    )}
-                                    {formatQualityRange(
-                                        product.quality_solids_lower,
-                                        product.quality_solids_upper,
-                                    ) && (
-                                        <div>
-                                            <dt className="text-xs text-muted-foreground">
-                                                Sólidos (%)
-                                            </dt>
-                                            <dd className="mt-0.5 font-mono text-sm font-medium">
-                                                {formatQualityRange(
-                                                    product.quality_solids_lower,
-                                                    product.quality_solids_upper,
-                                                )}
-                                            </dd>
-                                        </div>
-                                    )}
-                                </dl>
-                            </div>
-                        )}
-                    </div>
+                            />
+                            {can.viewCosts && (
+                                <DetailItem
+                                    label="Precio interno"
+                                    value={
+                                        product.current_price ? (
+                                            <FormattedNumber
+                                                value={product.current_price}
+                                                currency
+                                                maxDecimals={2}
+                                                trimTrailingZeros
+                                            />
+                                        ) : (
+                                            'No asignado'
+                                        )
+                                    }
+                                />
+                            )}
+                        </DetailList>
+                    </CardContent>
+                </Card>
+
+                {product.description && (
+                    <Card>
+                        <CardContent>
+                            <DetailList columns={1}>
+                                <DetailItem
+                                    label="Descripción"
+                                    value={product.description}
+                                    valueClassName="whitespace-pre-wrap"
+                                />
+                            </DetailList>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {certificateRanges.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Rangos certificado de calidad</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <DetailList columns={3}>
+                                {certificateRanges.map(({ label, range }) => (
+                                    <DetailItem
+                                        key={label}
+                                        label={label}
+                                        value={range}
+                                        valueClassName="font-mono"
+                                    />
+                                ))}
+                            </DetailList>
+                        </CardContent>
+                    </Card>
                 )}
 
                 <Card className="overflow-hidden border-border/80">

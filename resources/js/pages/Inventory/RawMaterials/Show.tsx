@@ -100,6 +100,12 @@ export default function RawMaterialsShow({
             <div className="space-y-6 p-6">
                 <PageHeader
                     title={rawMaterial.code}
+                    badge={
+                        <ActiveBadge
+                            isActive={rawMaterial.is_active}
+                            feminine
+                        />
+                    }
                     description="Detalle de materia prima y lotes asociados."
                     actions={
                         <>
@@ -151,6 +157,7 @@ export default function RawMaterialsShow({
                             <DetailItem
                                 label="Código interno"
                                 value={rawMaterial.code}
+                                valueClassName="font-mono"
                             />
 
                             <DetailItem
@@ -177,16 +184,6 @@ export default function RawMaterialsShow({
                                 value={
                                     rawMaterial.unit_of_measure &&
                                     `${rawMaterial.unit_of_measure.name} (${rawMaterial.unit_of_measure.symbol})`
-                                }
-                            />
-
-                            <DetailItem
-                                label="Estado"
-                                value={
-                                    <ActiveBadge
-                                        isActive={rawMaterial.is_active}
-                                        feminine
-                                    />
                                 }
                             />
 

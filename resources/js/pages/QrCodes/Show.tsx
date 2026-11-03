@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import {
     Copy,
     Download,
@@ -9,10 +9,11 @@ import {
 import { useState } from 'react';
 
 import { ActiveBadge } from '@/components/active-badge';
+import { DetailItem, DetailList } from '@/components/detail-list';
 import { DetailTable } from '@/components/detail-table';
-import { EmptyCell } from '@/components/empty-cell';
 import { FormattedDate } from '@/components/formatted-date';
 import { PageHeader } from '@/components/page-header';
+import { RecordLink } from '@/components/record-link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -157,140 +158,136 @@ export default function QrCodesShow({ qrCode, can }: Props) {
                                 asociados.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            {/* URL pública */}
-                            <div className="rounded-md border border-border bg-background/80 px-3 py-2">
-                                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                    URL pública
-                                </p>
-                                <div className="flex items-center gap-2">
-                                    <p
-                                        className="flex-1 truncate font-mono text-xs text-foreground"
-                                        title={qrCode.landing_url}
-                                    >
-                                        {qrCode.landing_url}
-                                    </p>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={handleCopyUrl}
-                                    >
-                                        <Copy className="mr-1.5 h-3.5 w-3.5" />
-                                        {copied ? 'Copiado' : 'Copiar'}
-                                    </Button>
-                                    <Button variant="ghost" size="sm" asChild>
-                                        <a
-                                            href={qrCode.landing_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-                                            Abrir
-                                        </a>
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div>
-                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                        Producto
-                                    </p>
-                                    {qrCode.product ? (
-                                        <div className="mt-1">
-                                            <p className="font-medium text-foreground">
-                                                {qrCode.product.display_name}
+                        <CardContent>
+                            <DetailList columns={2}>
+                                <DetailItem
+                                    label="URL pública"
+                                    span="full"
+                                    value={
+                                        <div className="flex items-center gap-2">
+                                            {/* min-w-0: sin él, la URL no se trunca y empuja los botones fuera de la tarjeta. */}
+                                            <p
+                                                className="min-w-0 flex-1 truncate font-mono text-xs text-foreground"
+                                                title={qrCode.landing_url}
+                                            >
+                                                {qrCode.landing_url}
                                             </p>
-                                            {qrCode.product.description && (
-                                                <p className="mt-1 text-xs text-muted-foreground">
-                                                    {qrCode.product.description}
-                                                </p>
-                                            )}
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={handleCopyUrl}
+                                            >
+                                                <Copy className="mr-1.5 h-3.5 w-3.5" />
+                                                {copied ? 'Copiado' : 'Copiar'}
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                asChild
+                                            >
+                                                <a
+                                                    href={qrCode.landing_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                                                    Abrir
+                                                </a>
+                                            </Button>
                                         </div>
-                                    ) : (
-                                        <p>
-                                            <EmptyCell />
-                                        </p>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                        Orden de Producción
-                                    </p>
-                                    {qrCode.production_order ? (
-                                        <div className="mt-1">
-                                            {can.viewProductionOrders ? (
-                                                <Link
-                                                    href={
-                                                        productionOrderShow({
-                                                            production_order:
+                                    }
+                                />
+                                <DetailItem
+                                    label="Producto"
+                                    value={
+                                        qrCode.product && (
+                                            <>
+                                                {qrCode.product.display_name}
+                                                {qrCode.product.description && (
+                                                    <div className="mt-1 text-xs whitespace-pre-wrap text-muted-foreground">
+                                                        {
+                                                            qrCode.product
+                                                                .description
+                                                        }
+                                                    </div>
+                                                )}
+                                            </>
+                                        )
+                                    }
+                                />
+                                <DetailItem
+                                    label="Orden de producción"
+                                    value={
+                                        qrCode.production_order && (
+                                            <>
+                                                <span className="font-mono">
+                                                    {can.viewProductionOrders ? (
+                                                        <RecordLink
+                                                            href={
+                                                                productionOrderShow(
+                                                                    {
+                                                                        production_order:
+                                                                            qrCode
+                                                                                .production_order
+                                                                                .id,
+                                                                    },
+                                                                ).url
+                                                            }
+                                                        >
+                                                            {
                                                                 qrCode
                                                                     .production_order
-                                                                    .id,
-                                                        }).url
-                                                    }
-                                                    className="font-medium text-primary hover:underline"
-                                                >
-                                                    {
+                                                                    .order_number
+                                                            }
+                                                        </RecordLink>
+                                                    ) : (
                                                         qrCode.production_order
                                                             .order_number
-                                                    }
-                                                </Link>
-                                            ) : (
-                                                <span className="font-medium">
-                                                    {
-                                                        qrCode.production_order
-                                                            .order_number
-                                                    }
+                                                    )}
                                                 </span>
-                                            )}
-                                            <p className="text-xs text-muted-foreground">
-                                                Lote:{' '}
-                                                {
-                                                    qrCode.production_order
-                                                        .lot_number
-                                                }
-                                            </p>
-                                            {qrCode.production_order
-                                                .completion_date && (
-                                                <p className="text-xs text-muted-foreground">
-                                                    Completada:{' '}
-                                                    {
-                                                        qrCode.production_order
-                                                            .completion_date
-                                                    }
-                                                </p>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <p>
-                                            <EmptyCell />
-                                        </p>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                        Creado por
-                                    </p>
-                                    <p className="mt-1 text-sm text-foreground">
-                                        {qrCode.created_by?.name ?? (
-                                            <EmptyCell />
-                                        )}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                        Fecha de creación
-                                    </p>
-                                    <p className="mt-1 text-sm text-foreground">
+                                                <div className="text-xs text-muted-foreground">
+                                                    Lote:{' '}
+                                                    <span className="font-mono">
+                                                        {
+                                                            qrCode
+                                                                .production_order
+                                                                .lot_number
+                                                        }
+                                                    </span>
+                                                </div>
+                                                {qrCode.production_order
+                                                    .completion_date && (
+                                                    <div className="text-xs text-muted-foreground">
+                                                        Completada:{' '}
+                                                        <FormattedDate
+                                                            value={
+                                                                qrCode
+                                                                    .production_order
+                                                                    .completion_date
+                                                            }
+                                                            format="date"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </>
+                                        )
+                                    }
+                                />
+                                <DetailItem
+                                    label="Creado por"
+                                    value={qrCode.created_by?.name}
+                                />
+                                <DetailItem
+                                    label="Fecha de creación"
+                                    value={
                                         <FormattedDate
                                             value={qrCode.created_at}
                                             format="long"
                                         />
-                                    </p>
-                                </div>
-                            </div>
+                                    }
+                                />
+                            </DetailList>
                         </CardContent>
                     </Card>
                 </div>
