@@ -147,6 +147,7 @@ combinación, se crea un rol nuevo.
 | | `alerts.resolve` | [x] | [x] | [ ] | [ ] | [ ] | ⚠️ hoy Producción puede resolver. |
 | **Códigos QR** | `qr_codes.view` | [x] | [x] | [x] | [ ] | [x] | ⚠️ hoy Comercial no los ve. La landing pública `/c/{token}` no requiere sesión. |
 | | `qr_codes.update` | [x] | [x] | [ ] | [ ] | [ ] | ⚠️ hoy Producción puede editar. |
+| | `qr_codes.manage_documents` | [x] | [x] | [x] | [ ] | [ ] | 🆕 Subir el certificado de calidad de una orden completada y eliminar sus versiones. |
 | **Bodegas** | `warehouses.view` | [x] | [x] | [x] | [ ] | [x] | Solo las bodegas asignadas. |
 | | `warehouses.view_all` | [x] | [x] | [ ] | [ ] | [ ] | Todas las bodegas, también en el selector de bodega de la cabecera. |
 | | `warehouses.create` | [x] | [x] | [ ] | [ ] | [ ] | |
@@ -154,7 +155,7 @@ combinación, se crea un rol nuevo.
 | | `warehouses.assign_users` | [x] | [x] | [ ] | [ ] | [ ] | |
 | | `warehouses.delete` | [x] | [ ] | [ ] | [ ] | [ ] | Solo si está intacta. ⚠️ hoy Admin puede. |
 
-**Total: 89 permisos en 22 módulos.** Por rol: SuperAdmin 89 · Admin 76 · Producción 26 · Operador 10 · Comercial 22.
+**Total: 90 permisos en 22 módulos.** Por rol: SuperAdmin 90 · Admin 77 · Producción 27 · Operador 10 · Comercial 22.
 (La v1 tenía 83. Entran 6: los 4 de catálogos, `products.download_documents` y `raw_materials.deactivate`.
 Salen 5: ver §6. `products.desactive` solo se renombra, igual que los `view` de módulos con dueño → `view_own`.)
 (3.8, termoencogido: entran `shrink_wrap_types.manage`, `shrink_wraps.view` y `shrink_wraps.create`, módulo Termoencogido.)

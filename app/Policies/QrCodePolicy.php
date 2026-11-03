@@ -24,4 +24,9 @@ class QrCodePolicy
     {
         return $user->can(Permission::QrCodesUpdate->value);
     }
+
+    public function manageDocuments(User $user, QrCode $qrCode): bool
+    {
+        return $user->can(Permission::QrCodesManageDocuments->value);
+    }
 }

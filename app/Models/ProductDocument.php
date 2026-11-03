@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\QrDocumentType;
+use App\Models\Concerns\DeletesStoredFile;
 use App\Models\Concerns\HasAuditDescription;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -45,24 +44,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
 ])]
 class ProductDocument extends Model
 {
-    use HasAuditDescription, LogsActivity;
+    use DeletesStoredFile, HasAuditDescription, LogsActivity;
 
     protected string $auditLabel = 'Documento de producto';
 
     protected string $auditIdentifierAttribute = 'file_name';
-
-    /**
-     * El archivo se borra solo si el borrado del registro se confirma: si la transacción se revierte (por ejemplo, el
-     * producto tenía historial), el documento sigue intacto (docs/POLITICA_ELIMINACION.md §3.4).
-     */
-    protected static function booted(): void
-    {
-        static::deleted(function (ProductDocument $document): void {
-            $path = $document->file_path;
-
-            DB::afterCommit(fn () => Storage::disk('local')->delete($path));
-        });
-    }
 
     public function getActivitylogOptions(): LogOptions
     {

@@ -10,6 +10,16 @@ enum QrDocumentType: string
     case SafetyDataSheet = 'safety_data_sheet';
     case QualityCertificate = 'quality_certificate';
 
+    /**
+     * Reglas del PDF que se sube, sea documento de producto o certificado de un lote.
+     *
+     * @return array<int, string>
+     */
+    public static function fileRules(): array
+    {
+        return ['required', 'file', 'mimes:pdf', 'extensions:pdf', 'max:10240'];
+    }
+
     public function label(): string
     {
         return match ($this) {

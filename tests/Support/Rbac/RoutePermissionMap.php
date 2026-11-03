@@ -204,6 +204,8 @@ final class RoutePermissionMap
             'qr-codes.qr-image' => Permission::QrCodesView,
             'qr-codes.documents.download' => Permission::QrCodesView,
             'qr-codes.update' => Permission::QrCodesUpdate,
+            'qr-codes.documents.store' => Permission::QrCodesManageDocuments,
+            'qr-codes.documents.destroy' => Permission::QrCodesManageDocuments,
 
             // Catálogos (Configuración → Catálogos)
             'catalogs.units-of-measure.index' => Permission::CatalogsView,
