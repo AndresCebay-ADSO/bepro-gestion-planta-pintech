@@ -222,7 +222,9 @@ Approved number kinds:
 
 Measurements (density, viscosity, solids) keep `maxDecimals` matching their schema column (`NUMBER_TYPES`).
 `<FormattedNumber value={x} kind="cost" />` receives `kind`; `currency`, `percent`, `maxDecimals` and
-`trimTrailingZeros` remain for ad-hoc values without a kind (measurements).
+`trimTrailingZeros` remain for ad-hoc values without a kind (measurements). Every `<FormattedNumber>` carries `kind`, and
+`.toFixed(` and `Intl.NumberFormat` live only in `lib/`; `design-contract.test.ts` enforces both and lists each exception
+with its reason (measurements, and the screens waiting for their redesign or for a pricing decision).
 
 Server-side exports (PDF) follow the same rules through `App\Support\NumberFormat` (`NumberFormat::quantity()`,
 `NumberFormat::units()`, `NumberFormat::clientPrice()`, `NumberFormat::cost()`, `NumberFormat::unitCost()`,
@@ -394,7 +396,7 @@ have returns `null` (above, so the phone card leaves the pair out—never return
 `emptyValue` render `<EmptyCell />` («—» in `text-muted-foreground`, «Sin dato» for screen readers). A value that
 should be there and is missing (a price not yet costed, an estimated date production has not set) is said in words,
 through the `emptyValue` of `FormattedNumber` or `FormattedDate`, which renders it in `text-muted-foreground`:
-`<FormattedNumber value={variant.sales_price} currency emptyValue="Sin precio" />`. No hand-written ternary with a
+`<FormattedNumber value={item.current_price} kind="unitCost" emptyValue="Sin precio" />`. No hand-written ternary with a
 muted `<span>`.
 
 `align: 'right'` for figures (adds `tabular-nums`), `'center'` for pills and alerts. `className` styles the desktop
@@ -416,7 +418,7 @@ finds each value twice.
         { key: 'code', header: 'Código', cell: (item) => item.code, mobile: 'title', className: 'font-mono', cardClassName: 'font-mono' },
         { key: 'category', header: 'Categoría', cell: (item) => item.category?.name ?? null, mobile: 'subtitle' },
         // The unit symbol goes with the figure («1.000 u»), so there is no Unit column.
-        { key: 'stock', header: 'Stock disponible', cell: (item) => <><FormattedNumber value={item.available_stock} /> {item.unit_of_measure?.symbol}</>, mobile: 'primary', align: 'right' },
+        { key: 'stock', header: 'Stock disponible', cell: (item) => <><FormattedNumber value={item.available_stock} kind="quantity" /> {item.unit_of_measure?.symbol}</>, mobile: 'primary', align: 'right' },
         { key: 'alerts', header: 'Alertas', cell: (item) => (item.active_alerts_count > 0 ? <Link href={alertsIndex().url}>{item.active_alerts_count}</Link> : null), mobile: 'meta', align: 'center' },
         { key: 'status', header: 'Estado', cell: (item) => <ActiveBadge isActive={item.is_active} feminine />, mobile: 'status' },
     ]}
@@ -452,8 +454,8 @@ they open nothing.
     columns={[
         { key: 'product', header: 'Producto', cell: (item) => item.product.name },
         { key: 'color', header: 'Color', cell: (item) => item.color }, // null → «—»
-        { key: 'quantity', header: 'Cant.', cell: (item) => <FormattedNumber value={item.quantity} maxDecimals={0} />, align: 'right' },
-        { key: 'subtotal', header: 'Subtotal', cell: (item) => <FormattedNumber value={item.subtotal} currency maxDecimals={0} />, align: 'right' },
+        { key: 'quantity', header: 'Cant.', cell: (item) => <FormattedNumber value={item.quantity} kind="units" />, align: 'right' },
+        { key: 'subtotal', header: 'Subtotal', cell: (item) => <FormattedNumber value={item.subtotal} kind="clientPrice" />, align: 'right' },
     ]}
     empty="Esta cotización no tiene productos."
 />
@@ -463,11 +465,11 @@ they open nothing.
     <CardContent className="space-y-2 text-sm">
         <div className="flex justify-between">
             <span>Subtotal</span>
-            <FormattedNumber value={quotation.subtotal} currency maxDecimals={0} />
+            <FormattedNumber value={quotation.subtotal} kind="clientPrice" />
         </div>
         <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
             <span>Total</span>
-            <FormattedNumber value={quotation.total} currency maxDecimals={0} />
+            <FormattedNumber value={quotation.total} kind="clientPrice" />
         </div>
     </CardContent>
 </Card>

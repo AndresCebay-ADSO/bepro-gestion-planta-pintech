@@ -76,7 +76,9 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
         {
             key: 'permissions',
             header: 'Permisos',
-            cell: (role) => <FormattedNumber value={role.permissions_count} />,
+            cell: (role) => (
+                <FormattedNumber value={role.permissions_count} kind="units" />
+            ),
             mobile: 'meta',
             align: 'right',
             className: 'text-muted-foreground',
@@ -84,7 +86,9 @@ const RolesIndex: FC<Props> = ({ roles, filters, can }) => {
         {
             key: 'users',
             header: 'Usuarios',
-            cell: (role) => <FormattedNumber value={role.users_count} />,
+            cell: (role) => (
+                <FormattedNumber value={role.users_count} kind="units" />
+            ),
             mobile: 'meta',
             align: 'right',
             className: 'text-muted-foreground',

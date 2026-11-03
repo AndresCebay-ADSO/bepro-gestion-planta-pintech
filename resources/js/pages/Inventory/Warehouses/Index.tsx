@@ -125,7 +125,7 @@ export default function WarehousesIndex({ warehouses, filters, can }: Props) {
             key: 'users',
             header: 'Usuarios',
             cell: (warehouse) => (
-                <FormattedNumber value={warehouse.users_count} />
+                <FormattedNumber value={warehouse.users_count} kind="units" />
             ),
             mobile: 'meta',
             align: 'right',

@@ -17,7 +17,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useSelectionDateMin } from '@/hooks/use-selection-date-min';
 import { finishedLotLabel } from '@/lib/finished-lot';
-import { formatNumber } from '@/lib/formatters';
+import { formatKind } from '@/lib/formatters';
 import { UNITS_MAX_DIGITS } from '@/lib/number-types';
 import type {
     FinishedBatchOption,
@@ -117,14 +117,12 @@ function batchDescription(
         : null;
     const stockText =
         selectedWarehouseStock !== null
-            ? formatNumber(selectedWarehouseStock, { maxDecimals: 2 })
+            ? formatKind(selectedWarehouseStock, 'units')
             : batch.stocks && batch.stocks.length > 0
               ? batch.stocks
-                    .map((stock) =>
-                        formatNumber(stock.quantity, { maxDecimals: 2 }),
-                    )
+                    .map((stock) => formatKind(stock.quantity, 'units'))
                     .join(' / ')
-              : formatNumber(batch.initial_quantity, { maxDecimals: 2 });
+              : formatKind(batch.initial_quantity, 'units');
 
     const entryDate = formatSafeDate(batch.entry_date, 'short');
 

@@ -275,7 +275,10 @@ export function RawMaterialForm({
                                 minimumStock !== null && (
                                     <span className="break-all">
                                         Resguardo:{' '}
-                                        <FormattedNumber value={minimumStock} />
+                                        <FormattedNumber
+                                            value={minimumStock}
+                                            kind="quantity"
+                                        />
                                     </span>
                                 )
                             }

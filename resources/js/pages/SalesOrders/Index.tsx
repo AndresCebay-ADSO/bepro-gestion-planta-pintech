@@ -158,7 +158,9 @@ export default function SalesOrdersIndex({
         {
             key: 'items',
             header: 'Productos',
-            cell: (order) => <FormattedNumber value={order.items_count} />,
+            cell: (order) => (
+                <FormattedNumber value={order.items_count} kind="units" />
+            ),
             mobile: 'hidden',
             align: 'right',
             className: 'text-muted-foreground',

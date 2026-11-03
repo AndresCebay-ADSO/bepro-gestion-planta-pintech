@@ -115,7 +115,9 @@ export default function QrCodesIndex({ qrCodes, filters }: Props) {
         {
             key: 'documents',
             header: 'Documentos',
-            cell: (row) => <FormattedNumber value={row.documents_count} />,
+            cell: (row) => (
+                <FormattedNumber value={row.documents_count} kind="units" />
+            ),
             mobile: 'meta',
             align: 'right',
             className: 'text-muted-foreground',

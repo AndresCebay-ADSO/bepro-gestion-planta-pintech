@@ -536,8 +536,7 @@ export default function CostsIndex({
                                                         value={
                                                             product.current_cost
                                                         }
-                                                        currency
-                                                        maxDecimals={2}
+                                                        kind="cost"
                                                     />
                                                 </td>
                                                 <td className="p-4 text-right">
@@ -545,22 +544,15 @@ export default function CostsIndex({
                                                         value={
                                                             product.cif_percentage
                                                         }
-                                                        maxDecimals={2}
+                                                        kind="percent"
                                                     />
-                                                    {product.cif_percentage !==
-                                                        null && (
-                                                        <span className="ml-1 text-xs text-muted-foreground">
-                                                            %
-                                                        </span>
-                                                    )}
                                                 </td>
                                                 <td className="p-4 text-right">
                                                     <FormattedNumber
                                                         value={
                                                             product.current_price
                                                         }
-                                                        currency
-                                                        maxDecimals={2}
+                                                        kind="cost"
                                                     />
                                                 </td>
                                                 <td className="p-4 text-right">
@@ -619,7 +611,7 @@ export default function CostsIndex({
                                                             value={
                                                                 product.sales_margin
                                                             }
-                                                            maxDecimals={2}
+                                                            kind="percent"
                                                         />
                                                     )}
                                                 </td>

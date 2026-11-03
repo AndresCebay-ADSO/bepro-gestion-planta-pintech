@@ -208,7 +208,7 @@ export default function SalesOrdersShow({
                                         cell: (item) => (
                                             <FormattedNumber
                                                 value={item.quantity}
-                                                maxDecimals={0}
+                                                kind="units"
                                             />
                                         ),
                                         align: 'right',

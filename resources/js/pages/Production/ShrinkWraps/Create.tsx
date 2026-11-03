@@ -194,7 +194,7 @@ export default function ShrinkWrapsCreate({
                                     <li key={item.code}>
                                         <FormattedNumber
                                             value={item.quantity}
-                                            maxDecimals={4}
+                                            kind="quantity"
                                         />{' '}
                                         {item.unit_symbol}{' '}
                                         <span className="font-mono text-foreground">

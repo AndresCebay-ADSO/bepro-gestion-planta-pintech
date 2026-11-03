@@ -821,6 +821,100 @@ describe('contrato de DESIGN.md', () => {
         expect(staleExceptions).toEqual([]);
     });
 
+    it('todo <FormattedNumber> lleva kind', () => {
+        // Excepciones con su motivo (`components/ui/` ya queda fuera en `screenFiles`). Al resolver una, se quita.
+        const numberWithoutKindExceptions = [
+            // Orden de producción: se rediseña aparte.
+            'resources/js/components/production/',
+            'resources/js/pages/Production/Orders/',
+            // El precio de venta espera a decidir si manda el precio o el margen: con su tipo se vería redondeado.
+            'resources/js/pages/Costs/Index.tsx',
+            'resources/js/pages/Prices/Index.tsx',
+            // Medidas, con los decimales de su columna: no tienen tipo.
+            'resources/js/pages/Production/Remnants/Index.tsx',
+            'resources/js/components/catalogs/unit-of-measure-form.tsx',
+        ];
+        const rule =
+            'DESIGN.md §7: un <FormattedNumber> lleva kind; sin kind solo las medidas';
+        const matchesIn = (file: string): Violation[] => {
+            const source = readFileSync(file, 'utf8');
+
+            return [...source.matchAll(/<FormattedNumber\b/g)]
+                .filter(
+                    (match) => !/\bkind=/.test(openingTag(source, match.index)),
+                )
+                .map((match) => ({
+                    location: `${relativePath(file)}:${source.slice(0, match.index).split('\n').length}`,
+                    match: match[0],
+                    rule,
+                }));
+        };
+
+        const found = screenFiles
+            .filter(
+                (file) =>
+                    !numberWithoutKindExceptions.some((prefix) =>
+                        relativePath(file).startsWith(prefix),
+                    ),
+            )
+            .flatMap(matchesIn);
+
+        expect(report(found)).toEqual([]);
+
+        // Una excepción que ya no existe o ya lleva kind en todo sobra: se quita para que el guardián la vigile.
+        const staleExceptions = numberWithoutKindExceptions.filter((prefix) =>
+            exceptionIsStale(prefix, matchesIn),
+        );
+
+        expect(staleExceptions).toEqual([]);
+    });
+
+    it('formatea los números con lib/formatters: sin toFixed ni Intl.NumberFormat fuera de lib/', () => {
+        // Excepciones con su motivo. Al resolver una, se quita.
+        const numberFormattingExceptions = [
+            // Calcula el precio de venta con float en el navegador: espera a decidir si manda el precio o el margen.
+            'resources/js/pages/Costs/Index.tsx',
+            // Orden de producción: se rediseña aparte.
+            'resources/js/components/production/',
+            'resources/js/pages/Production/Orders/',
+            // Se retoma con el rediseño del dashboard.
+            'resources/js/pages/Dashboard/Index.tsx',
+        ];
+        const rules = [
+            {
+                pattern:
+                    /\.toFixed\(|\.toLocaleString\(|\bIntl\.NumberFormat\b/g,
+                rule: 'DESIGN.md §7: un número se formatea con FormattedNumber o lib/formatters.ts, nunca con toFixed o Intl.NumberFormat',
+            },
+        ];
+        const matchesIn = (file: string) =>
+            violationsAcrossLines([file], rules);
+
+        // También los .ts (hooks, utilidades), menos `lib/` y las pruebas.
+        const found = filesUnder(join(root, 'resources/js'), ['.ts', '.tsx'])
+            .filter((file) => {
+                const path = relativePath(file);
+
+                return (
+                    !path.startsWith('resources/js/lib/') &&
+                    !path.endsWith('.test.ts') &&
+                    !numberFormattingExceptions.some((prefix) =>
+                        path.startsWith(prefix),
+                    )
+                );
+            })
+            .flatMap(matchesIn);
+
+        expect(report(found)).toEqual([]);
+
+        // Una excepción que ya no existe o ya no formatea a mano sobra: se quita para que el guardián la vigile.
+        const staleExceptions = numberFormattingExceptions.filter((prefix) =>
+            exceptionIsStale(prefix, matchesIn),
+        );
+
+        expect(staleExceptions).toEqual([]);
+    });
+
     it('pinta los valores vacíos con <EmptyCell />, FormattedNumber o FormattedDate, sin guiones a mano', () => {
         // Excepciones con su motivo (`components/ui/` ya queda fuera en `screenFiles`). Al resolver una, se quita.
         // Un ternario de signo (`'+' : '-'`) iría aquí como excepción con su motivo.

@@ -6,11 +6,13 @@
  *
  * Uso:
  * ```tsx
- * <FormattedNumber value={1500.25} currency />           // $1.500,25
- * <FormattedNumber value={5432.0000} />                     // 5.432
- * <FormattedNumber value={12.5432} maxDecimals={2} />      // 12,54
- * <FormattedNumber value={null} emptyValue="N/A" />        // N/A
+ * <FormattedNumber value={1500.25} kind="cost" />                     // $1.500,25
+ * <FormattedNumber value={5432.0} kind="quantity" />                  // 5.432
+ * <FormattedNumber value={48} kind="units" />                         // 48
+ * <FormattedNumber value={null} kind="cost" emptyValue="Sin precio" /> // Sin precio
  * ```
+ *
+ * Sin `kind` solo van las medidas, con los decimales de su columna (DESIGN.md §7).
  */
 
 import { EmptyCell } from '@/components/empty-cell';

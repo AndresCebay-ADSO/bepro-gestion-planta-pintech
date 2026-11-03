@@ -62,6 +62,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useConfirm } from '@/hooks/use-confirm';
+import { formatNumber } from '@/lib/formatters';
 import { breadcrumbHref, withReturnTo } from '@/lib/navigation';
 import { PRESENTATION_VALUE_LIMITS } from '@/lib/number-types';
 import { toDecimalPayload } from '@/lib/numeric-input';
@@ -458,16 +459,11 @@ export default function ProductsShow({
                                 <DetailItem
                                     label="Precio interno"
                                     value={
-                                        product.current_price ? (
-                                            <FormattedNumber
-                                                value={product.current_price}
-                                                currency
-                                                maxDecimals={2}
-                                                trimTrailingZeros
-                                            />
-                                        ) : (
-                                            'No asignado'
-                                        )
+                                        <FormattedNumber
+                                            value={product.current_price}
+                                            kind="cost"
+                                            emptyValue="No asignado"
+                                        />
                                     }
                                 />
                             )}
@@ -903,7 +899,7 @@ export default function ProductsShow({
                                     <>
                                         <FormattedNumber
                                             value={row.quantity}
-                                            maxDecimals={2}
+                                            kind="units"
                                         />
                                         {row.variant?.unit_symbol &&
                                             ` ${row.variant.unit_symbol}`}
@@ -1360,8 +1356,7 @@ export default function ProductsShow({
                                                       value={
                                                           variant.current_price
                                                       }
-                                                      currency
-                                                      maxDecimals={2}
+                                                      kind="cost"
                                                   />
                                               ) : null,
                                           align: 'right' as const,
@@ -1572,5 +1567,5 @@ function formatBytes(bytes: number) {
         return `${Math.round(bytes / 1024)} KB`;
     }
 
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${formatNumber(bytes / (1024 * 1024), { maxDecimals: 1 })} MB`;
 }

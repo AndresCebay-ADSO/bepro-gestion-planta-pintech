@@ -150,7 +150,7 @@ export default function FinishedInventoryIndex({
             key: 'quantity',
             header: 'Cantidad',
             cell: (row) => (
-                <FormattedNumber value={row.quantity} maxDecimals={2} />
+                <FormattedNumber value={row.quantity} kind="units" />
             ),
             mobile: 'primary',
             align: 'right',

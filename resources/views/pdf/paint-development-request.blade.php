@@ -37,45 +37,22 @@
         <tr><th>Producto actual</th><td>{{ $request['current_product'] ?? '—' }}</td></tr>
     </table>
 
-    <h2>2. Contexto — Proyecto, sustrato y exposición</h2>
-    <table>
-        @foreach($request['context_payload'] as $key => $value)
-            <tr>
-                <th>{{ ucfirst(str_replace('_', ' ', $key)) }}</th>
-                <td>{{ is_array($value) ? implode(', ', $value) : ($value ?: '—') }}</td>
-            </tr>
-        @endforeach
-    </table>
-
-    <h2>3. Desempeño — Función, resistencia y acabado</h2>
-    <table>
-        @foreach($request['performance_payload'] as $key => $value)
-            <tr>
-                <th>{{ ucfirst(str_replace('_', ' ', $key)) }}</th>
-                <td>{{ is_array($value) ? implode(', ', $value) : ($value ?: '—') }}</td>
-            </tr>
-        @endforeach
-    </table>
-
-    <h2>4. Aplicación — Método, espesores y tecnología</h2>
-    <table>
-        @foreach($request['application_payload'] as $key => $value)
-            <tr>
-                <th>{{ ucfirst(str_replace('_', ' ', $key)) }}</th>
-                <td>{{ is_array($value) ? implode(', ', $value) : ($value ?: '—') }}</td>
-            </tr>
-        @endforeach
-    </table>
-
-    <h2>5. Especificaciones — Control, suministro y aprobación</h2>
-    <table>
-        @foreach($request['specifications_payload'] as $key => $value)
-            <tr>
-                <th>{{ ucfirst(str_replace('_', ' ', $key)) }}</th>
-                <td>{{ is_array($value) ? implode(', ', $value) : ($value ?: '—') }}</td>
-            </tr>
-        @endforeach
-    </table>
+    @foreach([
+        'context_payload' => '2. Contexto — Proyecto, sustrato y exposición',
+        'performance_payload' => '3. Desempeño — Función, resistencia y acabado',
+        'application_payload' => '4. Aplicación — Método, espesores y tecnología',
+        'specifications_payload' => '5. Especificaciones — Control, suministro y aprobación',
+    ] as $payload => $title)
+        <h2>{{ $title }}</h2>
+        <table>
+            @foreach($request[$payload] as $key => $value)
+                <tr>
+                    <th>{{ ucfirst(str_replace('_', ' ', $key)) }}</th>
+                    <td>{{ \App\Models\PaintDevelopmentRequest::displayPayloadValue($payload, $key, $value) }}</td>
+                </tr>
+            @endforeach
+        </table>
+    @endforeach
 
     @if($request['review_notes'])
         <h2>Revisión</h2>

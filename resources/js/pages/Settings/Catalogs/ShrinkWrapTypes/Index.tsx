@@ -83,7 +83,7 @@ export default function ShrinkWrapTypesIndex({ types, filters, can }: Props) {
                         <li key={item.raw_material_id}>
                             <FormattedNumber
                                 value={item.quantity}
-                                maxDecimals={4}
+                                kind="quantity"
                             />{' '}
                             {item.unit_symbol}{' '}
                             <span className="font-mono text-foreground">

@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useSelectionDateMin } from '@/hooks/use-selection-date-min';
-import { formatForInput, formatNumber } from '@/lib/formatters';
+import { formatForInput, formatKind } from '@/lib/formatters';
 import type { InventoryOption } from '@/types';
 
 type Props = {
@@ -42,10 +42,7 @@ const NEW_BATCH = '__new__';
 function batchDescription(batch: InventoryOption): string {
     return [
         // Con la misma precisión que valida el servidor: 9,9999 no se redondea a 10 (INV-05).
-        `Disponible ${formatNumber(batch.remaining_quantity, {
-            maxDecimals: 4,
-            trimTrailingZeros: true,
-        })}`,
+        `Disponible ${formatKind(batch.remaining_quantity, 'quantity')}`,
         batch.entry_date
             ? `entró ${formatSafeDate(batch.entry_date, 'date')}`
             : null,

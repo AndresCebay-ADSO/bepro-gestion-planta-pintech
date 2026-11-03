@@ -66,10 +66,11 @@ Componente para mostrar números formateados según estándar colombiano (puntos
 | Prop | Tipo | Default | Descripción |
 |------|------|---------|-------------|
 | `value` | `number \| string \| null` | - | Valor a formatear |
-| `currency` | `boolean \| string` | `false` | Mostrar como moneda (símbolo $) |
-| `maxDecimals` | `number` | `4` | Máximo de decimales a mostrar |
-| `trimTrailingZeros` | `boolean` | `false` | Eliminar ceros al final (vistas detalle) |
-| `percent` | `boolean` | `false` | Mostrar como porcentaje |
+| `kind` | `quantity`, `units`, `clientPrice`, `cost`, `unitCost` o `percent` | - | El tipo de número: decide moneda, decimales y ceros finales (`DESIGN.md` §7). No se combina con las cuatro de abajo |
+| `currency` | `boolean \| string` | `false` | Solo sin `kind`: mostrar como moneda (símbolo $) |
+| `maxDecimals` | `number` | `4` | Solo sin `kind`: máximo de decimales (medidas, los de su columna) |
+| `trimTrailingZeros` | `boolean` | `false` | Solo sin `kind`: eliminar ceros al final |
+| `percent` | `boolean` | `false` | Solo sin `kind`: mostrar como porcentaje |
 | `emptyValue` | `string` | `<EmptyCell />` («—», «Sin dato» para el lector) | Texto atenuado para un dato que debería estar («Sin precio»); sin él, el vacío normal |
 | `align` | `'left' \| 'right' \| 'center'` | `'left'` | Alineación del texto |
 | `colorize` | `boolean` | `false` | Colorear según valor (positivo/negativo) |
@@ -79,26 +80,19 @@ Componente para mostrar números formateados según estándar colombiano (puntos
 ### Uso recomendado
 
 ```tsx
-// Tablas (resumen) - máximo 2 decimales
-<FormattedNumber value={price} currency maxDecimals={2} />
+// Todo número lleva su tipo, igual en el listado y en el detalle (lo exige design-contract.test.ts)
+<FormattedNumber value={item.quantity} kind="units" />
+<FormattedNumber value={rawMaterial.available_stock} kind="quantity" />
+<FormattedNumber value={quotation.total} kind="clientPrice" />
+<FormattedNumber value={item.total_cost} kind="cost" />
+<FormattedNumber value={rawMaterial.current_price} kind="unitCost" emptyValue="Sin precio" />
+<FormattedNumber value={product.sales_margin} kind="percent" />
 
-// Vistas de detalle - máxima precisión con trim
-<FormattedNumber value={cost} currency maxDecimals={4} trimTrailingZeros />
-
-// Cantidades con color según valor
-<FormattedNumber value={stock} maxDecimals={2} colorize bold />
-
-// Porcentajes
-<FormattedNumber value={0.1543} percent maxDecimals={1} />
+// Sin tipo solo las medidas, con los decimales de su columna
+<FormattedNumber value={remnant.density_kg_per_gallon} maxDecimals={4} />
 ```
 
-### Convención: Decimales según contexto
-
-| Contexto | maxDecimals | trimTrailingZeros |
-|----------|-------------|-------------------|
-| Tablas (resumen) | `2` | No |
-| Vistas detalle individual | `4` | Sí |
-| Inputs de formulario | `4` | Sí |
+Fuera de JSX, `formatKind(value, 'quantity')` (`lib/formatters.ts`) aplica las mismas reglas.
 
 ---
 
@@ -517,7 +511,7 @@ valor por defecto lo pone el formulario (normalmente `plantToday`).
 
 ✅ **Correcto:**
 ```tsx
-<td><FormattedNumber value={product.price} currency maxDecimals={2} /></td>
+<td><FormattedNumber value={item.total_cost} kind="cost" /></td>
 <td><FormattedDate value={batch.entry_date} /></td>
 ```
 
@@ -525,8 +519,7 @@ valor por defecto lo pone el formulario (normalmente `plantToday`).
 
 | Dato | Tabla (listado) | Detalle individual |
 |------|-----------------|-------------------|
-| Precio | `maxDecimals={2}` | `maxDecimals={4} trimTrailingZeros` |
-| Cantidad | `maxDecimals={2}` | `maxDecimals={4} trimTrailingZeros` |
+| Número | Su `kind` (`DESIGN.md` §7) | El mismo `kind` |
 | Fecha | `format="short"` | `format="long"` o `"datetime"` |
 
 ### 3. Evitar formateo manual

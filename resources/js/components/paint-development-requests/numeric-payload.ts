@@ -1,3 +1,4 @@
+import { isEmptyNumber } from '@/lib/formatters';
 import { withDecimalPayloads } from '@/lib/numeric-input';
 
 /** Números técnicos de la solicitud, por bloque del JSON. */
@@ -24,6 +25,22 @@ export const NUMERIC_PAYLOAD_FIELDS = new Set(
         fields.map((field) => `${payloadKey}.${field}`),
     ),
 );
+
+/**
+ * Si la respuesta guardada se pinta como número: solo un número técnico de ese bloque que de verdad sea un número. Un
+ * texto que no lo sea sigue como texto, para no esconderlo detrás de un «—».
+ */
+export function isNumericPayloadValue(
+    payloadKey: string,
+    field: string,
+    value: unknown,
+): value is number | string {
+    return (
+        NUMERIC_PAYLOAD_FIELDS.has(`${payloadKey}.${field}`) &&
+        (typeof value === 'number' || typeof value === 'string') &&
+        !isEmptyNumber(value)
+    );
+}
 
 /** Los números técnicos se escriben con coma o punto: se envían con punto, y vacíos como null. */
 export function withNumericPayloads<

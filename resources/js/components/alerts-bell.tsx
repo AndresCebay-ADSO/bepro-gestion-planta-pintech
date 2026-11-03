@@ -11,7 +11,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { formatBadgeCount, formatNumber } from '@/lib/formatters';
+import { formatBadgeCount, formatKind } from '@/lib/formatters';
 import { index as alertsIndex } from '@/routes/alerts';
 
 /**
@@ -36,7 +36,7 @@ export function AlertsBell() {
                     className="relative size-10 text-muted-foreground hover:text-foreground"
                     aria-label={
                         hasUnresolved
-                            ? `Alertas: ${formatNumber(unresolvedAlertsCount)} sin resolver`
+                            ? `Alertas: ${formatKind(unresolvedAlertsCount, 'units')} sin resolver`
                             : 'Alertas'
                     }
                 >

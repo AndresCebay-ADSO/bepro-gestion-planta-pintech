@@ -261,7 +261,7 @@ export default function FormulasShow({ formula, can }: Props) {
                                 cell: (detail) => (
                                     <FormattedNumber
                                         value={detail.step_order}
-                                        maxDecimals={0}
+                                        kind="units"
                                     />
                                 ),
                                 align: 'center',
@@ -282,7 +282,7 @@ export default function FormulasShow({ formula, can }: Props) {
                                     <>
                                         <FormattedNumber
                                             value={detail.quantity}
-                                            maxDecimals={4}
+                                            kind="quantity"
                                         />
                                         {detail.unit_of_measure &&
                                             ` ${detail.unit_of_measure.symbol}`}
