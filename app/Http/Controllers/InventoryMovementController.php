@@ -123,6 +123,7 @@ class InventoryMovementController extends Controller
         $inventoryMovement->load([
             'rawMaterial:id,code',
             'batch:id,lot_number,remaining_quantity',
+            'warehouse:id,name,city',
             'productionOrder:id,order_number',
             'createdBy:id,name',
         ]);

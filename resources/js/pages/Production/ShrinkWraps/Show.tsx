@@ -1,9 +1,11 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 
+import { DetailItem, DetailList } from '@/components/detail-list';
 import { DetailTable } from '@/components/detail-table';
 import { FormattedDate } from '@/components/formatted-date';
 import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
+import { RecordLink } from '@/components/record-link';
 import { Card, CardContent } from '@/components/ui/card';
 import {
     index as shrinkWrapsIndex,
@@ -40,105 +42,90 @@ export default function ShrinkWrapsShow({ shrinkWrap, can }: Props) {
                 />
 
                 <Card>
-                    <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 lg:grid-cols-3">
-                        <div>
-                            <p className="text-xs text-muted-foreground">
-                                Orden de producción
-                            </p>
-                            {can.viewOrder ? (
-                                <Link
-                                    href={productionOrderShow(order.id).url}
-                                    className="font-medium text-primary hover:underline"
-                                >
-                                    {orderLabel}
-                                </Link>
-                            ) : (
-                                <p className="font-medium">{orderLabel}</p>
-                            )}
-                            {order.product_name && (
-                                <p className="text-xs text-muted-foreground">
-                                    {order.product_name}
-                                </p>
-                            )}
-                        </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground">
-                                Tipo
-                            </p>
-                            <p className="font-medium">
-                                {shrinkWrap.type_name}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground">
-                                Aplicaciones
-                            </p>
-                            <p className="font-medium">
-                                {shrinkWrap.applications}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground">
-                                Termoencogido el
-                            </p>
-                            <p className="font-medium">
-                                <FormattedDate
-                                    value={shrinkWrap.wrapped_at}
-                                    format="date"
-                                />
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground">
-                                Descontado del inventario el
-                            </p>
-                            <p className="font-medium">
-                                <FormattedDate
-                                    value={shrinkWrap.registered_on}
-                                    format="date"
-                                />
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground">
-                                Bodega
-                            </p>
-                            <p className="font-medium">
-                                {shrinkWrap.warehouse_name}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground">
-                                Registró
-                            </p>
-                            <p className="font-medium">
-                                {shrinkWrap.created_by_name}
-                            </p>
-                        </div>
-                        {can.viewCosts && (
-                            <div>
-                                <p className="text-xs text-muted-foreground">
-                                    Costo (gasto general)
-                                </p>
-                                <p className="font-medium">
-                                    <FormattedNumber
-                                        value={shrinkWrap.total_cost}
-                                        currency
-                                        maxDecimals={2}
+                    <CardContent>
+                        <DetailList columns={3}>
+                            <DetailItem
+                                label="Orden de producción"
+                                value={
+                                    <>
+                                        <span className="font-mono">
+                                            {can.viewOrder ? (
+                                                <RecordLink
+                                                    href={
+                                                        productionOrderShow(
+                                                            order.id,
+                                                        ).url
+                                                    }
+                                                >
+                                                    {orderLabel}
+                                                </RecordLink>
+                                            ) : (
+                                                orderLabel
+                                            )}
+                                        </span>
+                                        {order.product_name && (
+                                            <div className="text-xs text-muted-foreground">
+                                                {order.product_name}
+                                            </div>
+                                        )}
+                                    </>
+                                }
+                            />
+                            <DetailItem
+                                label="Tipo"
+                                value={shrinkWrap.type_name}
+                            />
+                            <DetailItem
+                                label="Aplicaciones"
+                                value={shrinkWrap.applications}
+                            />
+                            <DetailItem
+                                label="Termoencogido el"
+                                value={
+                                    <FormattedDate
+                                        value={shrinkWrap.wrapped_at}
+                                        format="date"
                                     />
-                                </p>
-                            </div>
-                        )}
-                        {shrinkWrap.notes && (
-                            <div className="sm:col-span-2 lg:col-span-3">
-                                <p className="text-xs text-muted-foreground">
-                                    Notas
-                                </p>
-                                <p className="whitespace-pre-line">
-                                    {shrinkWrap.notes}
-                                </p>
-                            </div>
-                        )}
+                                }
+                            />
+                            <DetailItem
+                                label="Descontado del inventario el"
+                                value={
+                                    <FormattedDate
+                                        value={shrinkWrap.registered_on}
+                                        format="date"
+                                    />
+                                }
+                            />
+                            <DetailItem
+                                label="Bodega"
+                                value={shrinkWrap.warehouse_name}
+                            />
+                            <DetailItem
+                                label="Registró"
+                                value={shrinkWrap.created_by_name}
+                            />
+                            {can.viewCosts && (
+                                <DetailItem
+                                    label="Costo (gasto general)"
+                                    value={
+                                        <FormattedNumber
+                                            value={shrinkWrap.total_cost}
+                                            currency
+                                            maxDecimals={2}
+                                        />
+                                    }
+                                />
+                            )}
+                            {shrinkWrap.notes && (
+                                <DetailItem
+                                    label="Notas"
+                                    value={shrinkWrap.notes}
+                                    span="full"
+                                    valueClassName="whitespace-pre-wrap"
+                                />
+                            )}
+                        </DetailList>
                     </CardContent>
                 </Card>
 

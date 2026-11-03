@@ -84,6 +84,9 @@ export default function FinishedMovementsShow({ movement, can }: Props) {
                                           )
                                         : 'Sin lote'
                                 }
+                                valueClassName={
+                                    movement.batch ? 'font-mono' : undefined
+                                }
                             />
                             <DetailItem
                                 label="Producto"
@@ -119,6 +122,7 @@ export default function FinishedMovementsShow({ movement, can }: Props) {
                             <DetailItem
                                 label="Orden producción"
                                 value={movement.production_order?.order_number}
+                                valueClassName="font-mono"
                             />
                             <DetailItem
                                 label="Notas"
