@@ -95,8 +95,7 @@ export default function PricesIndex({
                       cell: (variant: VariantRow) => (
                           <FormattedNumber
                               value={variant.current_price}
-                              currency
-                              maxDecimals={2}
+                              kind="cost"
                               emptyValue="Sin precio"
                           />
                       ),
@@ -126,10 +125,7 @@ export default function PricesIndex({
             key: 'stock',
             header: 'Stock disponible',
             cell: (variant) => (
-                <FormattedNumber
-                    value={variant.available_stock}
-                    maxDecimals={2}
-                />
+                <FormattedNumber value={variant.available_stock} kind="units" />
             ),
             mobile: 'meta',
             align: 'right',
@@ -172,8 +168,7 @@ export default function PricesIndex({
                                             Costo:{' '}
                                             <FormattedNumber
                                                 value={product.current_cost}
-                                                currency
-                                                maxDecimals={2}
+                                                kind="cost"
                                             />
                                         </span>
                                         <span
@@ -186,9 +181,9 @@ export default function PricesIndex({
                                             Margen de venta:{' '}
                                             <FormattedNumber
                                                 value={product.sales_margin}
-                                                maxDecimals={2}
-                                            />
-                                            % (s/ venta)
+                                                kind="percent"
+                                            />{' '}
+                                            (s/ venta)
                                         </span>
                                     </p>
                                 )}

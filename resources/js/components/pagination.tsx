@@ -78,7 +78,8 @@ const Pagination: FC<PaginationProps> = ({ paginator, noun, className }) => {
     return (
         <div
             className={cn(
-                'flex w-full flex-col items-center gap-3 md:flex-row md:justify-between',
+                // `flex-wrap`, no el ancho de la ventana: con el menú lateral abierto, el resumen y los números pueden no caber.
+                'flex w-full flex-wrap items-center justify-center gap-3 md:justify-between',
                 className,
             )}
         >

@@ -218,7 +218,7 @@ export default function WarehousesShow({ warehouse, can }: Props) {
                                     cell: (item) => (
                                         <FormattedNumber
                                             value={item.quantity}
-                                            maxDecimals={2}
+                                            kind="units"
                                         />
                                     ),
                                     align: 'right',

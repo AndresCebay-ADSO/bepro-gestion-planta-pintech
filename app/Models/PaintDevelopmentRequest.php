@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\PaintDevelopmentRequestStatus;
 use App\Enums\Permission;
 use App\Models\Concerns\HasAuditDescription;
+use App\Support\NumberFormat;
 use Database\Factories\PaintDevelopmentRequestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -61,6 +62,41 @@ use Spatie\Activitylog\Traits\LogsActivity;
 ])]
 class PaintDevelopmentRequest extends Model
 {
+    /**
+     * Números técnicos de la solicitud, por bloque del JSON: los mismos de `numeric-payload.ts` y de las reglas de
+     * validación (lo comprueba `PaintDevelopmentRequestPdfValuesTest`).
+     */
+    public const NUMERIC_PAYLOAD_FIELDS = [
+        'context_payload' => ['temp_min', 'temp_max'],
+        'application_payload' => [
+            'temp_aplicacion',
+            'humedad_aplicacion',
+            'dft_min',
+            'dft_max',
+            'manos',
+            'pot_life',
+            'solidos_vol',
+            'voc',
+        ],
+        'performance_payload' => ['adherencia_obj', 'camara_obj', 'delta_e'],
+    ];
+
+    /** Una respuesta como se lee en el PDF: el 0 es un dato, y un texto en un campo numérico sigue como texto. */
+    public static function displayPayloadValue(string $payload, string $field, mixed $value): string
+    {
+        if (is_array($value)) {
+            $value = implode(', ', $value);
+        }
+
+        if (blank($value)) {
+            return NumberFormat::DEFAULT_EMPTY;
+        }
+
+        return in_array($field, self::NUMERIC_PAYLOAD_FIELDS[$payload] ?? [], true) && is_numeric($value)
+            ? NumberFormat::quantity($value)
+            : (string) $value;
+    }
+
     /** @use HasFactory<PaintDevelopmentRequestFactory> */
     use HasAuditDescription, HasFactory, LogsActivity;
 

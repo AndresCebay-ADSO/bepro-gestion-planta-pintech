@@ -96,7 +96,7 @@ export default function ProductCategoriesIndex({
             key: 'products',
             header: 'Productos',
             cell: (category) => (
-                <FormattedNumber value={category.products_count} />
+                <FormattedNumber value={category.products_count} kind="units" />
             ),
             mobile: 'meta',
             align: 'right',

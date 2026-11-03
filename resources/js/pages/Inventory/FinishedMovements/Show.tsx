@@ -57,7 +57,7 @@ export default function FinishedMovementsShow({ movement, can }: Props) {
                                 value={
                                     <FormattedNumber
                                         value={movement.quantity}
-                                        maxDecimals={2}
+                                        kind="units"
                                     />
                                 }
                             />
@@ -67,7 +67,7 @@ export default function FinishedMovementsShow({ movement, can }: Props) {
                                     value={
                                         <FormattedNumber
                                             value={movement.cost_price}
-                                            maxDecimals={2}
+                                            kind="cost"
                                         />
                                     }
                                 />

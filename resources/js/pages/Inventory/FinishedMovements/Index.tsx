@@ -278,10 +278,7 @@ export default function FinishedMovementsIndex({
                     }
                 >
                     {movement.type === 'entry' ? '+' : '−'}
-                    <FormattedNumber
-                        value={movement.quantity}
-                        maxDecimals={2}
-                    />
+                    <FormattedNumber value={movement.quantity} kind="units" />
                 </span>
             ),
             mobile: 'primary',

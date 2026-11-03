@@ -4,8 +4,10 @@ import { useState } from 'react';
 
 import { DetailItem, DetailList } from '@/components/detail-list';
 import { FormattedDate } from '@/components/formatted-date';
+import { FormattedNumber } from '@/components/formatted-number';
 import { PageHeader } from '@/components/page-header';
 import { payloadFieldApplies } from '@/components/paint-development-requests/conditional-fields';
+import { isNumericPayloadValue } from '@/components/paint-development-requests/numeric-payload';
 import { StatusBadge } from '@/components/status-badge';
 
 import { Button } from '@/components/ui/button';
@@ -78,9 +80,15 @@ function formatArrayValue(value: unknown): string {
 // Una sección de respuestas, a todo el ancho y en dos columnas.
 function PayloadSection({
     title,
+    payloadKey,
     payload,
 }: {
     title: string;
+    payloadKey:
+        | 'context_payload'
+        | 'performance_payload'
+        | 'application_payload'
+        | 'specifications_payload';
     payload: Payload;
 }) {
     return (
@@ -98,7 +106,20 @@ function PayloadSection({
                                 label={key
                                     .replace(/_/g, ' ')
                                     .replace(/^\w/, (c) => c.toUpperCase())}
-                                value={formatArrayValue(value)}
+                                value={
+                                    isNumericPayloadValue(
+                                        payloadKey,
+                                        key,
+                                        value,
+                                    ) ? (
+                                        <FormattedNumber
+                                            value={value}
+                                            kind="quantity"
+                                        />
+                                    ) : (
+                                        formatArrayValue(value)
+                                    )
+                                }
                                 valueClassName="whitespace-pre-wrap"
                             />
                         ))}
@@ -293,21 +314,25 @@ export default function PaintDevelopmentRequestShow({
 
                 <PayloadSection
                     title="1. Contexto — Proyecto, sustrato y exposición"
+                    payloadKey="context_payload"
                     payload={request.context_payload}
                 />
 
                 <PayloadSection
                     title="2. Desempeño — Función, resistencia y acabado"
+                    payloadKey="performance_payload"
                     payload={request.performance_payload}
                 />
 
                 <PayloadSection
                     title="3. Aplicación — Método, espesores y tecnología"
+                    payloadKey="application_payload"
                     payload={request.application_payload}
                 />
 
                 <PayloadSection
                     title="4. Especificaciones — Control, suministro y aprobación"
+                    payloadKey="specifications_payload"
                     payload={request.specifications_payload}
                 />
             </div>

@@ -111,8 +111,7 @@ export default function ShrinkWrapsShow({ shrinkWrap, can }: Props) {
                                     value={
                                         <FormattedNumber
                                             value={shrinkWrap.total_cost}
-                                            currency
-                                            maxDecimals={2}
+                                            kind="cost"
                                         />
                                     }
                                 />
@@ -160,7 +159,7 @@ export default function ShrinkWrapsShow({ shrinkWrap, can }: Props) {
                                             value={
                                                 item.quantity_per_application
                                             }
-                                            maxDecimals={4}
+                                            kind="quantity"
                                         />
                                         {item.unit_symbol &&
                                             ` ${item.unit_symbol}`}
@@ -175,7 +174,7 @@ export default function ShrinkWrapsShow({ shrinkWrap, can }: Props) {
                                     <>
                                         <FormattedNumber
                                             value={item.quantity}
-                                            maxDecimals={4}
+                                            kind="quantity"
                                         />
                                         {item.unit_symbol &&
                                             ` ${item.unit_symbol}`}
@@ -192,8 +191,7 @@ export default function ShrinkWrapsShow({ shrinkWrap, can }: Props) {
                                           cell: (item: ShrinkWrapItemRow) => (
                                               <FormattedNumber
                                                   value={item.total_cost}
-                                                  currency
-                                                  maxDecimals={2}
+                                                  kind="cost"
                                               />
                                           ),
                                           align: 'right' as const,

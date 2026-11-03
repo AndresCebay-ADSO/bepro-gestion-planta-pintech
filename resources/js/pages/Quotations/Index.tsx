@@ -140,11 +140,7 @@ export default function QuotationsIndex({
             key: 'total',
             header: 'Total',
             cell: (quotation) => (
-                <FormattedNumber
-                    value={quotation.total}
-                    currency
-                    maxDecimals={0}
-                />
+                <FormattedNumber value={quotation.total} kind="clientPrice" />
             ),
             mobile: 'primary',
             align: 'right',

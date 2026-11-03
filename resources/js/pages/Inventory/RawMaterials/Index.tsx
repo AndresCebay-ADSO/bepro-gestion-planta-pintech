@@ -156,8 +156,7 @@ export default function RawMaterialsIndex({
                       cell: (item: RawMaterialRow) => (
                           <FormattedNumber
                               value={item.current_price}
-                              currency
-                              maxDecimals={2}
+                              kind="unitCost"
                               emptyValue="Sin precio"
                           />
                       ),
@@ -174,7 +173,7 @@ export default function RawMaterialsIndex({
                 <>
                     <FormattedNumber
                         value={item.available_stock}
-                        maxDecimals={2}
+                        kind="quantity"
                     />
                     {item.unit_of_measure && ` ${item.unit_of_measure.symbol}`}
                 </>

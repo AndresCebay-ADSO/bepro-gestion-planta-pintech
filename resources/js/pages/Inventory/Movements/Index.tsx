@@ -233,7 +233,7 @@ export default function InventoryMovementsIndex({
                     {movement.type === 'entry' ? '+' : '−'}
                     <FormattedNumber
                         value={movement.quantity}
-                        maxDecimals={2}
+                        kind="quantity"
                     />
                 </span>
             ),

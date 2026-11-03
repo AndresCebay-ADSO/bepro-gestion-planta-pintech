@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { withNumericPayloads } from '@/components/paint-development-requests/numeric-payload';
+import {
+    isNumericPayloadValue,
+    withNumericPayloads,
+} from '@/components/paint-development-requests/numeric-payload';
 
 describe('withNumericPayloads: números técnicos de la solicitud de I+D', () => {
     it('envía con punto, conserva el signo y deja el texto libre igual', () => {
@@ -39,5 +42,39 @@ describe('withNumericPayloads: números técnicos de la solicitud de I+D', () =>
         expect(
             withNumericPayloads({ application_payload: { manos: '3,5,1' } }),
         ).toEqual({ application_payload: { manos: '3,5,1' } });
+    });
+});
+
+describe('isNumericPayloadValue: qué respuesta de I+D se pinta como número', () => {
+    it('pinta como número los campos técnicos de su bloque', () => {
+        expect(
+            isNumericPayloadValue('context_payload', 'temp_min', '-5.5'),
+        ).toBe(true);
+        expect(isNumericPayloadValue('application_payload', 'manos', 2)).toBe(
+            true,
+        );
+    });
+
+    it('la llave incluye el bloque: el mismo campo en otro bloque es texto', () => {
+        expect(isNumericPayloadValue('context_payload', 'manos', '2')).toBe(
+            false,
+        );
+        expect(
+            isNumericPayloadValue('specifications_payload', 'voc', '2'),
+        ).toBe(false);
+    });
+
+    it('deja como texto los demás campos, aunque parezcan números', () => {
+        expect(isNumericPayloadValue('context_payload', 'sustrato', '12')).toBe(
+            false,
+        );
+    });
+
+    it('no pinta como número un vacío, un texto ni una lista', () => {
+        for (const value of [null, undefined, '', '3,5,1', ['1', '2']]) {
+            expect(
+                isNumericPayloadValue('application_payload', 'manos', value),
+            ).toBe(false);
+        }
     });
 });

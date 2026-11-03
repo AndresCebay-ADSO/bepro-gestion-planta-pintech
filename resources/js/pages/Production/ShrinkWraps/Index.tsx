@@ -107,7 +107,9 @@ export default function ShrinkWrapsIndex({
         {
             key: 'applications',
             header: 'Aplicaciones',
-            cell: (row) => <FormattedNumber value={row.applications} />,
+            cell: (row) => (
+                <FormattedNumber value={row.applications} kind="units" />
+            ),
             mobile: 'primary',
             align: 'right',
             className: 'font-medium',
@@ -136,8 +138,7 @@ export default function ShrinkWrapsIndex({
                       cell: (row: Row) => (
                           <FormattedNumber
                               value={row.total_cost}
-                              currency
-                              maxDecimals={2}
+                              kind="cost"
                               emptyValue="Sin costo"
                           />
                       ),

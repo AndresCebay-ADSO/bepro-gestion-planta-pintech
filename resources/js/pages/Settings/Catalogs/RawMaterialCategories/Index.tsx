@@ -101,7 +101,10 @@ export default function RawMaterialCategoriesIndex({
             key: 'raw_materials',
             header: 'Materias primas',
             cell: (category) => (
-                <FormattedNumber value={category.raw_materials_count} />
+                <FormattedNumber
+                    value={category.raw_materials_count}
+                    kind="units"
+                />
             ),
             mobile: 'meta',
             align: 'right',

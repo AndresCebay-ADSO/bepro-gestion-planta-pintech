@@ -634,8 +634,7 @@ export default function QuotationForm({
                                                             line?.subtotal ??
                                                             null
                                                         }
-                                                        currency
-                                                        maxDecimals={0}
+                                                        kind="clientPrice"
                                                         className={
                                                             isCurrent
                                                                 ? undefined
@@ -815,7 +814,7 @@ export default function QuotationForm({
                                                 className="md:col-span-2"
                                             >
                                                 <Input
-                                                    // Precio interno: 2 decimales, y vacío sin presentación.
+                                                    // Precio de venta de la lista: 2 decimales, y vacío sin presentación.
                                                     value={formatNumber(
                                                         item.list_unit_price,
                                                         {
@@ -924,8 +923,7 @@ export default function QuotationForm({
                                 <span>Subtotal</span>
                                 <FormattedNumber
                                     value={preview?.totals.subtotal ?? 0}
-                                    currency
-                                    maxDecimals={0}
+                                    kind="clientPrice"
                                 />
                             </div>
                             {/* items-start: si aparece un mensaje bajo el IVA, el texto de la fila no baja con él. */}
@@ -963,16 +961,14 @@ export default function QuotationForm({
                                 </div>
                                 <FormattedNumber
                                     value={preview?.totals.iva_amount ?? 0}
-                                    currency
-                                    maxDecimals={0}
+                                    kind="clientPrice"
                                 />
                             </div>
                             <div className="flex items-center justify-between border-t border-border pt-2 text-base font-semibold">
                                 <span>Total</span>
                                 <FormattedNumber
                                     value={preview?.totals.total ?? 0}
-                                    currency
-                                    maxDecimals={0}
+                                    kind="clientPrice"
                                 />
                             </div>
                         </div>
