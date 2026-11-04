@@ -9,6 +9,7 @@ use App\Models\FormulaDetail;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Services\DecimalCalculator;
+use App\Support\NumberFormat;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -109,5 +110,56 @@ class ProductionOrderLineUnits
 
             return $row;
         }, $ingredients);
+    }
+
+    /**
+     * Como ingredientsInMaterialUnit(), para lo que se guarda: lo digitado que al convertir queda en 0 se rechaza. Sin
+     * esto, la línea no descontaría inventario ni sumaría costo, y nadie se enteraría. La vista previa no lo usa, para no
+     * avisar a mitad de escribir. Solo pasa con un factor menor a 1: sin él, la regla de 4 decimales ya lo impide.
+     *
+     * @param  array<int|string, array<string, mixed>>  $ingredients
+     * @return array<int|string, array<string, mixed>>
+     *
+     * @throws ValidationException si una cantidad mayor a 0 queda por debajo de lo mínimo que se registra
+     */
+    public function ingredientsToRecord(ProductionOrder $order, array $ingredients): array
+    {
+        $converted = $this->ingredientsInMaterialUnit($order, $ingredients);
+        $factors = $this->conversionFactors($order);
+
+        foreach ($ingredients as $index => $row) {
+            $typed = $row['actual_quantity'] ?? '0';
+            $lineId = (int) ($row['id'] ?? 0);
+
+            if (
+                array_key_exists($lineId, $factors)
+                && $this->calculator->isPositive($typed)
+                && $this->calculator->isZero($converted[$index]['actual_quantity'])
+            ) {
+                throw ValidationException::withMessages([
+                    'ingredients' => $this->belowMinimumMessage($order, $lineId, $typed, $factors[$lineId]),
+                ]);
+            }
+        }
+
+        return $converted;
+    }
+
+    private function belowMinimumMessage(ProductionOrder $order, int $lineId, string|int|float $typed, ?string $factor): string
+    {
+        $order->loadMissing('details.rawMaterial');
+
+        /** @var ProductionOrderDetail $detail */
+        $detail = $order->details->firstWhere('id', $lineId);
+        $unit = $order->formula?->details
+            ->first(fn (FormulaDetail $line): bool => $line->step_order === $detail->step_order && $line->raw_material_id === $detail->raw_material_id)
+            ?->unitOfMeasure?->symbol;
+
+        return __(':code: :typed :unit es menos de lo mínimo que se registra (:minimum :unit). Digita :minimum :unit o, si no se usó, 0.', [
+            'code' => $detail->rawMaterial?->code,
+            'typed' => NumberFormat::quantity($typed),
+            'unit' => $unit,
+            'minimum' => NumberFormat::quantity($this->toDisplayUnit('0.0001', $factor)),
+        ]);
     }
 }

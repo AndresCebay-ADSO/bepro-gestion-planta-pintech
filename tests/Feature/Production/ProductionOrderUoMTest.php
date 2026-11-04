@@ -565,3 +565,51 @@ test('a line in kilos keeps what was typed', function () {
 
     expect($line['detail']->fresh()->actual_quantity)->toBe('0.1700');
 });
+
+// Lo digitado que queda en 0 no descontaría inventario ni sumaría costo: se rechaza para que alguien lo decida.
+test('it rejects a consumption that would round down to zero when saving', function (string $route, string $status) {
+    $line = startedOrderInMaterialKilos('0.15', $this->gram);
+
+    $this->post(route($route, $line['order']), closingPayload($line, '0.04'))
+        ->assertSessionHasErrors([
+            'ingredients' => 'RM-UOM-GRAM: 0,04 g es menos de lo mínimo que se registra (0,1 g). Digita 0,1 g o, si no se usó, 0.',
+        ]);
+
+    expect($line['order']->fresh()->status->value)->toBe($status)
+        ->and($line['detail']->fresh()->actual_quantity)->toBeNull()
+        ->and((float) $line['batch']->fresh()->remaining_quantity)->toBe(1.0)
+        ->and(InventoryMovement::query()->where('production_order_id', $line['order']->id)->exists())->toBeFalse();
+})->with([
+    'al completar' => ['production-orders.complete', 'in_progress'],
+    'al enviar a revisión' => ['production-orders.submit-for-review', 'in_progress'],
+]);
+
+test('it records zero when it is typed on purpose', function () {
+    $line = startedOrderInMaterialKilos('0.15', $this->gram);
+
+    $this->post(route('production-orders.complete', $line['order']), closingPayload($line, '0'))
+        ->assertSessionHasNoErrors();
+
+    expect($line['order']->fresh()->status->value)->toBe('completed')
+        ->and((float) $line['detail']->fresh()->actual_quantity)->toBe(0.0)
+        ->and((float) $line['batch']->fresh()->remaining_quantity)->toBe(1.0);
+});
+
+test('it records the smallest quantity that does not round down to zero', function () {
+    $line = startedOrderInMaterialKilos('0.15', $this->gram);
+
+    $this->post(route('production-orders.complete', $line['order']), closingPayload($line, '0.05'))
+        ->assertSessionHasNoErrors();
+
+    expect($line['detail']->fresh()->actual_quantity)->toBe('0.0001')
+        ->and($line['batch']->fresh()->remaining_quantity)->toBe('0.9999');
+});
+
+test('it does not reject that quantity in the cost preview, while typing', function () {
+    $line = startedOrderInMaterialKilos('0.15', $this->gram);
+
+    $this->postJson(route('production-orders.preview-costs', $line['order']), [
+        'ingredients' => [['id' => $line['detail']->id, 'actual_quantity' => '0.04']],
+        'packaging' => [],
+    ])->assertOk()->assertJsonPath('ingredients.0.total_cost', '0.0000');
+});

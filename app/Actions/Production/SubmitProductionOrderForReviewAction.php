@@ -29,7 +29,7 @@ class SubmitProductionOrderForReviewAction
         return DB::transaction(function () use ($order, $data, $user): ProductionOrder {
             $lockedOrder = $this->orderLock->lockFor($order, $user, 'submitForReview', "No se puede enviar a revisión una orden en estado ':status'.");
 
-            $data['ingredients'] = $this->lineUnits->ingredientsInMaterialUnit($lockedOrder, $data['ingredients']);
+            $data['ingredients'] = $this->lineUnits->ingredientsToRecord($lockedOrder, $data['ingredients']);
 
             // La misma lista que al completar: la lista vieja de OPL-02 se vio justamente al enviar a revisión (P6-1).
             $this->completionLines->ensureMatches($lockedOrder, $data);
