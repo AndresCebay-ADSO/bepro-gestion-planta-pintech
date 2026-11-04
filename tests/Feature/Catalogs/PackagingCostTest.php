@@ -19,6 +19,7 @@ use App\Models\ProductionOrderPackagingPlan;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
+use App\Models\Supplier;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -333,6 +334,7 @@ it('no registra compras ni salidas de una materia prima sin control de inventari
         'cost_price' => 300,
         'movement_date' => now()->toDateString(),
         'lot_number' => 'ETQ-01',
+        'supplier_id' => Supplier::factory()->create()->id,
     ])->assertSessionHasErrors(['raw_material_id' => 'Esta materia prima no controla inventario: no se registran compras ni salidas de ella.']);
 
     expect(InventoryBatch::query()->where('raw_material_id', $this->label->id)->exists())->toBeFalse();

@@ -16,6 +16,7 @@ use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\ShrinkWrapType;
+use App\Models\Supplier;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -39,6 +40,7 @@ beforeEach(function (): void {
     $this->variant = ProductVariant::factory()->create(['product_id' => $this->product->id, 'code' => 'VAR-1', 'package_raw_material_id' => null, 'label_raw_material_id' => null]);
     $this->warehouse = Warehouse::factory()->storage()->create(['name' => 'Planta Cali']);
     $this->shrinkWrapType = ShrinkWrapType::factory()->create(['name' => 'Galón x4']);
+    $this->supplier = Supplier::factory()->create(['name' => 'Resinas del Valle', 'nit' => '900111222']);
     $this->bag = RawMaterial::factory()->secondaryPackaging()->create();
     $this->client = Client::factory()->create(['nit' => '901674872']);
 });
@@ -70,6 +72,7 @@ function textNormalizationCreate(string $module, array $overrides = []): array
         'shrink-wrap-type' => [route('catalogs.shrink-wrap-types.store'), [
             'name' => 'Cuñete x2', 'items' => [['raw_material_id' => $test->bag->id, 'quantity' => '1']],
         ]],
+        'supplier' => [route('catalogs.suppliers.store'), ['name' => 'Proveedor Nuevo']],
         'client' => [route('clients.store'), ['business_name' => 'Cliente Nuevo', 'nit' => '900123456']],
         'unit-of-measure' => [route('catalogs.units-of-measure.store'), [
             'code' => 'cun', 'name' => 'Cuñete', 'symbol' => 'cun', 'to_liter_conversion' => '18.9271', 'is_active' => true,
@@ -99,6 +102,9 @@ test('rechaza el duplicado que solo cambia en mayúsculas, espacios o tildes', f
     'categoría de MP: código en minúsculas' => ['raw-material-category', 'code', 'res'],
     'categoría de MP: nombre con espacios dobles' => ['raw-material-category', 'name', 'resinas  '],
     'tipo de termoencogido con espacios dobles' => ['shrink-wrap-type', 'name', 'galón  x4'],
+    'proveedor en mayúsculas' => ['supplier', 'name', 'RESINAS DEL VALLE'],
+    'proveedor con espacios dobles' => ['supplier', 'name', 'resinas  del valle'],
+    'NIT de proveedor con espacios alrededor' => ['supplier', 'nit', ' 900111222 '],
     'NIT con espacios alrededor' => ['client', 'nit', ' 901674872 '],
 ]);
 
@@ -120,6 +126,8 @@ test('guarda el valor normalizado', function (string $module, string $field, str
     'categoría de producto' => ['product-category', 'name', 'Pinturas  de Caucho', 'Pinturas de Caucho', ProductCategory::class],
     'código de categoría de MP (P8-7)' => ['raw-material-category', 'code', 'env  metal', 'ENV METAL', RawMaterialCategory::class],
     'tipo de termoencogido' => ['shrink-wrap-type', 'name', 'Cuñete  x2', 'Cuñete x2', ShrinkWrapType::class],
+    'proveedor conserva sus mayúsculas' => ['supplier', 'name', '  Pinturas   ACME ', 'Pinturas ACME', Supplier::class],
+    'NIT de proveedor como texto' => ['supplier', 'nit', '901.674.872-1', '901.674.872-1', Supplier::class],
     'NIT como texto (P8-8)' => ['client', 'nit', '901.674.872-1', '901.674.872-1', Client::class],
     'código de unidad en minúsculas' => ['unit-of-measure', 'code', ' CUN ', 'cun', UnitOfMeasure::class],
     'nombre de unidad' => ['unit-of-measure', 'name', 'Cuñete  5 gal', 'Cuñete 5 gal', UnitOfMeasure::class],
@@ -193,11 +201,17 @@ test('la base rechaza el nombre que solo cambia en mayúsculas', function (strin
     'categoría de producto' => ['product_categories', ['name' => 'esmaltes base']],
     'categoría de MP' => ['raw_material_categories', ['code' => 'OTRA', 'name' => 'RESINAS', 'type' => 'chemical']],
     'tipo de termoencogido' => ['shrink_wrap_types', ['name' => 'galón X4']],
+    'proveedor' => ['suppliers', ['name' => 'RESINAS del valle']],
 ]);
 
 // Un caso por test: en PostgreSQL, después de la primera violación la transacción del test queda abortada.
 test('la base rechaza un nombre de producto repetido', function (): void {
     expect(fn () => Product::factory()->create(['name' => 'bp esmalte base']))
+        ->toThrow(UniqueConstraintViolationException::class);
+});
+
+test('la base rechaza un NIT de proveedor repetido', function (): void {
+    expect(fn () => Supplier::factory()->create(['nit' => '900111222']))
         ->toThrow(UniqueConstraintViolationException::class);
 });
 

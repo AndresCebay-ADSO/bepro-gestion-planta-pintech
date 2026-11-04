@@ -104,6 +104,26 @@ una receta tiene actividad (no se elimina) y no puede pasar a una categoría de 
 
 Índices: UNIQUE (`shrink_wrap_type_id`, `raw_material_id`) · `raw_material_id`.
 
+### 2.1.6 `suppliers`
+
+Proveedores de materia prima (Configuración → Catálogos), auditados (`proveedores`). Los gestionan Admin y SuperAdmin
+(`suppliers.manage`). Un proveedor con lotes se desactiva; uno sin lotes se elimina.
+
+| Columna | Tipo | Nulo | Notas |
+| --- | --- | :-: | --- |
+| `id` | BIGINT |  | PK |
+| `name` | VARCHAR(150) |  | UNIQUE sobre `LOWER(name)` (`suppliers_name_lower_unique`) |
+| `nit` | VARCHAR(20) | sí | UNIQUE; varios nulos no chocan |
+| `contact_name` | VARCHAR(255) | sí |  |
+| `phone` | VARCHAR(20) | sí |  |
+| `email` | VARCHAR(255) | sí |  |
+| `notes` | TEXT | sí | máximo 2000 caracteres en la validación |
+| `is_active` | BOOLEAN |  | default `true` |
+| `created_at` | TIMESTAMP | sí |  |
+| `updated_at` | TIMESTAMP | sí |  |
+
+Índices: `is_active`.
+
 ## 2.2 Bodegas
 
 ### 2.2.1 `warehouses`
@@ -172,10 +192,12 @@ Lotes de materia prima (base del costeo FIFO).
 | `unit_price` | DECIMAL(16,4) |  |  |
 | `entry_date` | DATE |  |  |
 | `expiry_date` | DATE | sí | vencimiento del lote; `Y-m-d`, no anterior a la fecha del movimiento que lo crea |
-| `supplier` | VARCHAR(150) | sí |  |
+| `supplier_id` | BIGINT | sí | FK → `suppliers` (RESTRICT). Obligatorio al crear un lote desde la entrada de MP; admite nulos para la carga inicial |
 | `lot_number` | VARCHAR(50) | sí |  |
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
+
+Índices: `supplier_id` (lotes de un proveedor; la búsqueda de movimientos y la comprobación de la FK).
 
 Restricciones: `((unit_price >= (0)::numeric))` · `((initial_quantity >= (0)::numeric))` · `((remaining_quantity >= (0)::numeric))` · `((remaining_quantity <= initial_quantity))`
 

@@ -97,3 +97,27 @@ export type ShrinkWrapRawMaterialOption = {
     unit_symbol: string;
     is_active: boolean;
 };
+
+export type SupplierOption = {
+    id: number;
+    name: string;
+};
+
+export type SupplierRow = {
+    id: number;
+    name: string;
+    nit: string | null;
+    contact_name: string | null;
+    phone: string | null;
+    is_active: boolean;
+};
+
+export type SupplierFormData = {
+    name: string;
+    nit: string;
+    contact_name: string;
+    phone: string;
+    email: string;
+    notes: string;
+    is_active: boolean;
+};

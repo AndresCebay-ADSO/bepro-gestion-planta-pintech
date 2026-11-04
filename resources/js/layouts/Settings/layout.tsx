@@ -10,6 +10,7 @@ import { edit as editAppearance } from '@/routes/appearance';
 import { index as productCategoriesIndex } from '@/routes/catalogs/product-categories';
 import { index as rawMaterialCategoriesIndex } from '@/routes/catalogs/raw-material-categories';
 import { index as shrinkWrapTypesIndex } from '@/routes/catalogs/shrink-wrap-types';
+import { index as suppliersIndex } from '@/routes/catalogs/suppliers';
 import { index as unitsOfMeasureIndex } from '@/routes/catalogs/units-of-measure';
 import { edit } from '@/routes/profile';
 import type { NavGroup } from '@/types';
@@ -55,6 +56,12 @@ const settingsNavGroups: NavGroup[] = [
             {
                 title: 'Tipos de termoencogido',
                 href: shrinkWrapTypesIndex().url,
+                icon: null,
+                allowedPermissions: ['catalogs.view'],
+            },
+            {
+                title: 'Proveedores',
+                href: suppliersIndex().url,
                 icon: null,
                 allowedPermissions: ['catalogs.view'],
             },

@@ -232,6 +232,12 @@ final class RoutePermissionMap
             'catalogs.shrink-wrap-types.edit' => Permission::ShrinkWrapTypesManage,
             'catalogs.shrink-wrap-types.update' => Permission::ShrinkWrapTypesManage,
             'catalogs.shrink-wrap-types.destroy' => Permission::ShrinkWrapTypesManage,
+            'catalogs.suppliers.index' => Permission::CatalogsView,
+            'catalogs.suppliers.create' => Permission::SuppliersManage,
+            'catalogs.suppliers.store' => Permission::SuppliersManage,
+            'catalogs.suppliers.edit' => Permission::SuppliersManage,
+            'catalogs.suppliers.update' => Permission::SuppliersManage,
+            'catalogs.suppliers.destroy' => Permission::SuppliersManage,
 
             // Bodegas
             'warehouses.index' => Permission::WarehousesView,

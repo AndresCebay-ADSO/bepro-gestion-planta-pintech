@@ -254,7 +254,7 @@ class InventoryService
             'unit_price' => $data['cost_price'],
             'entry_date' => $data['movement_date'],
             'expiry_date' => ($data['expiry_date'] ?? null) ?: null,
-            'supplier' => ($data['supplier'] ?? null) ?: null,
+            'supplier_id' => ($data['supplier_id'] ?? null) ?: null,
             'lot_number' => ($data['lot_number'] ?? null) ?: null,
         ]);
 

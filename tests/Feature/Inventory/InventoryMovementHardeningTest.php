@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductionOrder;
 use App\Models\RawMaterial;
+use App\Models\Supplier;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -98,6 +99,7 @@ test('it dispatches reference price recalculation after storing a movement', fun
             'quantity' => 10,
             'cost_price' => 12,
             'lot_number' => 'LOT-JOB-001',
+            'supplier_id' => Supplier::factory()->create()->id,
             'movement_date' => plantToday(),
         ]);
 
@@ -119,6 +121,7 @@ test('it requires a lot number when an entry creates a new batch', function () {
             'type' => 'entry',
             'quantity' => 10,
             'cost_price' => 12,
+            'supplier_id' => Supplier::factory()->create()->id,
             'movement_date' => plantToday(),
         ]);
 
@@ -255,6 +258,7 @@ test('it rejects manual movements linked to production orders', function () {
             'quantity' => 5,
             'cost_price' => 10,
             'lot_number' => 'LOT-MANUAL-LINK',
+            'supplier_id' => Supplier::factory()->create()->id,
             'movement_date' => plantToday(),
         ]);
 
@@ -382,6 +386,7 @@ test('it requires an entry cost greater than zero with at most two decimals', fu
         'quantity' => '5',
         'cost_price' => $cost,
         'lot_number' => 'L-COSTO',
+        'supplier_id' => Supplier::factory()->create()->id,
         'movement_date' => plantToday(),
     ]);
 

@@ -37,6 +37,7 @@ enum Permission: string
     case CatalogsCreate = 'catalogs.create';
     case CatalogsEdit = 'catalogs.edit';
     case CatalogsDelete = 'catalogs.delete';
+    case SuppliersManage = 'suppliers.manage';
 
     // Productos
     case ProductsView = 'products.view';
@@ -165,6 +166,7 @@ enum Permission: string
             self::CatalogsCreate => __('Crear valores de catálogo'),
             self::CatalogsEdit => __('Editar valores de catálogo'),
             self::CatalogsDelete => __('Eliminar valores de catálogo'),
+            self::SuppliersManage => __('Gestionar proveedores'),
             self::ProductsView => __('Ver productos'),
             self::ProductsCreate => __('Crear productos'),
             self::ProductsEdit => __('Editar productos'),
@@ -260,7 +262,8 @@ enum Permission: string
             self::CatalogsView,
             self::CatalogsCreate,
             self::CatalogsEdit,
-            self::CatalogsDelete => PermissionModule::Catalogs,
+            self::CatalogsDelete,
+            self::SuppliersManage => PermissionModule::Catalogs,
             self::ProductsView,
             self::ProductsCreate,
             self::ProductsEdit,
@@ -385,6 +388,8 @@ enum Permission: string
             self::CatalogsDelete => [self::CatalogsView],
             // Los tipos viven en Configuración → Catálogos, cuya pestaña se ve con catalogs.view.
             self::ShrinkWrapTypesManage => [self::CatalogsView],
+            // Viven en Configuración → Catálogos, cuya pestaña se ve con catalogs.view.
+            self::SuppliersManage => [self::CatalogsView],
             self::ShrinkWrapsCreate => [self::ShrinkWrapsView],
             self::ProductsCreate,
             self::ProductsEdit,
@@ -524,7 +529,8 @@ enum Permission: string
             self::WarehousesCreate,
             self::WarehousesEdit,
             self::WarehousesAssignUsers,
-            self::ShrinkWrapTypesManage => [
+            self::ShrinkWrapTypesManage,
+            self::SuppliersManage => [
                 SystemRole::Admin,
             ],
             self::UsersDelete,

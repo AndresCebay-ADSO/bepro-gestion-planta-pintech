@@ -25,6 +25,7 @@ export type Permission =
     | 'catalogs.create'
     | 'catalogs.edit'
     | 'catalogs.delete'
+    | 'suppliers.manage'
     // Productos
     | 'products.view'
     | 'products.create'

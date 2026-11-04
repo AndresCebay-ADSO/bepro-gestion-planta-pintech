@@ -45,6 +45,7 @@ final class ModelRouteParameters
         'sales_order',
         'shrink_wrap',
         'shrink_wrap_type',
+        'supplier',
         'unit_of_measure',
         'user',
         'variant',

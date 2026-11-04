@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use App\Models\InventoryBatch;
 use App\Models\RawMaterial;
+use App\Models\Supplier;
 use App\Models\Warehouse;
 use App\Services\RawMaterialReferencePriceService;
 use Illuminate\Database\Seeder;
@@ -26,6 +27,8 @@ class InventoryBatchSeeder extends Seeder
 
             return;
         }
+
+        $supplier = Supplier::firstOrCreate(['name' => 'Proveedor Pepito S.A.']);
 
         $batchesConfig = [
             'A-1' => [
@@ -760,7 +763,7 @@ class InventoryBatchSeeder extends Seeder
                     'entry_date' => $entryDate,
                     'expiry_date' => $expiryDate,
                     'lot_number' => 'LOTE-'.$entryDate->format('Y-m').'-'.str_pad((string) $material->id, 4, '0', STR_PAD_LEFT).'-'.($index + 1),
-                    'supplier' => 'Proveedor Pepito S.A.',
+                    'supplier_id' => $supplier->id,
                 ]);
             }
 

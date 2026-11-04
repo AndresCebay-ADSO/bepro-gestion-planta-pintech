@@ -22,6 +22,7 @@ class InventoryMovementFilter extends QueryFilter
             $this->applySearchNested($query, [
                 'rawMaterial.code',
                 'batch.lot_number',
+                'batch.supplier.name',
             ], $value);
         });
     }

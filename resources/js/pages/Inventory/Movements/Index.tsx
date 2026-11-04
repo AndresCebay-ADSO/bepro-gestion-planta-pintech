@@ -30,12 +30,13 @@ import {
     index as inventoryMovementsIndex,
     show as inventoryMovementsShow,
 } from '@/routes/inventory-movements';
-import type { InventoryOption, Paginated } from '@/types';
+import type { InventoryOption, Paginated, SupplierOption } from '@/types';
 
 const DRAWER_FORM_PROPS = [
     'rawMaterials',
     'batches',
     'warehouses',
+    'suppliers',
     'oldestEntryDate',
 ];
 
@@ -53,6 +54,7 @@ type Props = {
     rawMaterials?: InventoryOption[];
     batches?: InventoryOption[];
     warehouses?: InventoryOption[];
+    suppliers?: SupplierOption[];
     /** Fecha más vieja que admite una entrada (D1b). Llega con la recarga parcial del cajón. */
     oldestEntryDate?: string;
     warehouseOptions: { value: string; label: string }[];
@@ -73,6 +75,7 @@ export default function InventoryMovementsIndex({
     rawMaterials,
     batches,
     warehouses,
+    suppliers,
     oldestEntryDate,
     warehouseOptions,
     typeOptions,
@@ -103,7 +106,7 @@ export default function InventoryMovementsIndex({
             type: 'text',
             name: 'search',
             label: 'Buscar',
-            placeholder: 'Buscar por materia prima o lote...',
+            placeholder: 'Buscar por materia prima, lote o proveedor...',
         },
         {
             type: 'select',
@@ -348,13 +351,14 @@ export default function InventoryMovementsIndex({
                                 onRetry={() => openDrawer(drawerState.mode)}
                             />
                         </SheetBody>
-                    ) : rawMaterials && batches && warehouses ? (
+                    ) : rawMaterials && batches && warehouses && suppliers ? (
                         drawerState.mode === 'entry' ? (
                             <EntryMovementForm
                                 oldestEntryDate={oldestEntryDate}
                                 rawMaterials={rawMaterials}
                                 batches={batches}
                                 warehouses={warehouses}
+                                suppliers={suppliers}
                                 defaultWarehouseId={
                                     currentWarehouseId ?? undefined
                                 }

@@ -14,6 +14,7 @@ use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\SalesOrder;
 use App\Models\ShrinkWrapType;
+use App\Models\Supplier;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -81,6 +82,7 @@ final class FormRequestFixtures
             'role' => Role::create(['name' => 'Rol de prueba', 'guard_name' => 'web']),
             'sales_order' => SalesOrder::factory()->create(),
             'shrink_wrap_type' => ShrinkWrapType::factory()->create(),
+            'supplier' => Supplier::factory()->create(),
             'unit_of_measure' => UnitOfMeasure::factory()->create(),
             'variant' => ProductVariant::factory()->create(),
             'warehouse' => Warehouse::factory()->create(),

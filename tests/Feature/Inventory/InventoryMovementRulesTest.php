@@ -7,6 +7,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
 use App\Models\RawMaterial;
+use App\Models\Supplier;
 use App\Models\UnitOfMeasure;
 use App\Models\Warehouse;
 use Illuminate\Support\Facades\Queue;
@@ -101,6 +102,7 @@ it('rejects a raw material movement in a warehouse that is not a factory (D6)', 
         'warehouse_id' => $storage->id,
         'cost_price' => '10',
         'lot_number' => 'LOTE-ALMACEN',
+        'supplier_id' => Supplier::factory()->create()->id,
     ]))->assertSessionHasErrors(['warehouse_id' => 'La materia prima solo se registra en la fábrica. Los almacenes reciben producto terminado.']);
 
     expect(InventoryMovement::query()->count())->toBe(0);

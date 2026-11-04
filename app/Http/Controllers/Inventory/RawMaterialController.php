@@ -154,7 +154,7 @@ class RawMaterialController extends Controller
                     'id',
                     'raw_material_id',
                     'lot_number',
-                    'supplier',
+                    'supplier_id',
                     'initial_quantity',
                     'remaining_quantity',
                     'unit_price',
@@ -163,6 +163,7 @@ class RawMaterialController extends Controller
                 )
                 ->orderByDesc('entry_date')
                 ->orderByDesc('id'),
+            'inventoryBatches.supplier:id,name',
         ]);
 
         $hasAvailableStock = $rawMaterial->inventoryBatches
@@ -200,7 +201,7 @@ class RawMaterialController extends Controller
                 'inventory_batches' => $rawMaterial->inventoryBatches->map(fn (InventoryBatch $batch): array => [
                     'id' => $batch->id,
                     'lot_number' => $batch->lot_number,
-                    'supplier' => $batch->supplier,
+                    'supplier' => $batch->supplier?->name,
                     'initial_quantity' => $batch->initial_quantity,
                     'remaining_quantity' => $batch->remaining_quantity,
                     ...($canViewCosts ? ['unit_price' => $batch->unit_price] : []),

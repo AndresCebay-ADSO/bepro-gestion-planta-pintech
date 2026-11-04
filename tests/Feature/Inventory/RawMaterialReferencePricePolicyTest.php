@@ -51,7 +51,6 @@ test('conservative policy keeps highest available cost reference when latest lot
         'unit_price' => 5000,
         'entry_date' => now()->subDays(3)->toDateString(),
         'expiry_date' => null,
-        'supplier' => 'Proveedor A',
         'lot_number' => 'LOT-HIGH-01',
     ]);
 
@@ -63,7 +62,6 @@ test('conservative policy keeps highest available cost reference when latest lot
         'unit_price' => 2000,
         'entry_date' => now()->subDay()->toDateString(),
         'expiry_date' => null,
-        'supplier' => 'Proveedor B',
         'lot_number' => 'LOT-LOW-02',
     ]);
 
@@ -88,7 +86,6 @@ test('conservative policy drops to next highest available lot when expensive sto
         'unit_price' => 10000,
         'entry_date' => now()->subDays(2)->toDateString(),
         'expiry_date' => null,
-        'supplier' => 'Proveedor Caro',
         'lot_number' => 'LOT-EXP-01',
     ]);
 
@@ -100,7 +97,6 @@ test('conservative policy drops to next highest available lot when expensive sto
         'unit_price' => 7000,
         'entry_date' => now()->subDay()->toDateString(),
         'expiry_date' => null,
-        'supplier' => 'Proveedor Disponible',
         'lot_number' => 'LOT-AVL-02',
     ]);
 
@@ -130,7 +126,6 @@ test('weighted average policy uses weighted stock price as reference', function 
         'unit_price' => 1000,
         'entry_date' => now()->subDays(2)->toDateString(),
         'expiry_date' => null,
-        'supplier' => 'Proveedor A',
         'lot_number' => 'LOT-W-01',
     ]);
 
@@ -142,7 +137,6 @@ test('weighted average policy uses weighted stock price as reference', function 
         'unit_price' => 3000,
         'entry_date' => now()->subDay()->toDateString(),
         'expiry_date' => null,
-        'supplier' => 'Proveedor B',
         'lot_number' => 'LOT-W-02',
     ]);
 
@@ -234,7 +228,6 @@ test('reference price sync ignores differences smaller than rounded float precis
         'unit_price' => 2500.1234000001,
         'entry_date' => now()->toDateString(),
         'expiry_date' => null,
-        'supplier' => 'Proveedor Preciso',
         'lot_number' => 'LOT-PREC-01',
     ]);
 

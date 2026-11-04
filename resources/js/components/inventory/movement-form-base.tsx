@@ -139,6 +139,7 @@ export function MovementFormBase({
             <FormField
                 id="warehouse_id"
                 label="Bodega"
+                required
                 error={form.errors.warehouse_id}
             >
                 {(control) => (
@@ -173,6 +174,7 @@ export function MovementFormBase({
             <FormField
                 id="raw_material_id"
                 label="Materia prima"
+                required
                 error={form.errors.raw_material_id}
             >
                 <Combobox
@@ -203,6 +205,7 @@ export function MovementFormBase({
                 <FormField
                     id="batch_id"
                     label={type === 'entry' ? 'Lote (opcional)' : 'Lote'}
+                    required={type === 'exit'}
                     error={form.errors.batch_id}
                 >
                     <Combobox
@@ -238,6 +241,7 @@ export function MovementFormBase({
             <FormField
                 id="quantity"
                 label="Cantidad"
+                required
                 error={form.errors.quantity}
             >
                 <DecimalInput
@@ -252,6 +256,7 @@ export function MovementFormBase({
             <FormField
                 id="movement_date"
                 label="Fecha del movimiento"
+                required
                 error={form.errors.movement_date}
                 // Sin un campo al lado (salida), la fecha ocupa la fila y no queda sola a media fila.
                 className={beforeDate ? undefined : 'md:col-span-2'}

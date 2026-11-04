@@ -43,6 +43,7 @@ dataset('drawer movement forms', [
             'rawMaterials' => 'inventory-movements:raw-materials',
             'batches' => 'inventory-movements:batches',
             'warehouses' => 'inventory-movements:warehouses',
+            'suppliers' => 'inventory-movements:suppliers',
         ],
     ],
     'movimientos de PT' => [

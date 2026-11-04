@@ -231,7 +231,7 @@ return [
         'initial_quantity' => 'cantidad inicial',
         'remaining_quantity' => 'cantidad restante',
         'lot_number' => 'número de lote',
-        'supplier' => 'proveedor',
+        'supplier_id' => 'proveedor',
         'entry_date' => 'fecha de ingreso',
         'expiry_date' => 'fecha de vencimiento',
         'expiration_date' => 'fecha de vencimiento',

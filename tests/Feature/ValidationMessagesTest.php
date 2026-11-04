@@ -60,7 +60,7 @@ test('global dictionary translates synchronized erp attributes into spanish', fu
     $validator = Validator::make(
         [
             'type' => '',
-            'supplier' => '',
+            'supplier_id' => '',
             'job_title' => '',
             'expiry_date' => '',
             'movement_date' => '',
@@ -68,7 +68,7 @@ test('global dictionary translates synchronized erp attributes into spanish', fu
         ],
         [
             'type' => ['required'],
-            'supplier' => ['required'],
+            'supplier_id' => ['required'],
             'job_title' => ['required'],
             'expiry_date' => ['required'],
             'movement_date' => ['required'],
@@ -78,7 +78,7 @@ test('global dictionary translates synchronized erp attributes into spanish', fu
 
     expect($validator->fails())->toBeTrue();
     expect($validator->errors()->first('type'))->toBe('El campo tipo es obligatorio.');
-    expect($validator->errors()->first('supplier'))->toBe('El campo proveedor es obligatorio.');
+    expect($validator->errors()->first('supplier_id'))->toBe('El campo proveedor es obligatorio.');
     expect($validator->errors()->first('job_title'))->toBe('El campo cargo es obligatorio.');
     expect($validator->errors()->first('expiry_date'))->toBe('El campo fecha de vencimiento es obligatorio.');
     expect($validator->errors()->first('movement_date'))->toBe('El campo fecha de movimiento es obligatorio.');

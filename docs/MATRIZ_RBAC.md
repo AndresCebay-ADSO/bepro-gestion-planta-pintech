@@ -75,10 +75,11 @@ combinación, se crea un rol nuevo.
 | | `roles.edit` | [x] | [ ] | [ ] | [ ] | [ ] | Incluye asignar permisos al rol. |
 | | `roles.delete` | [x] | [ ] | [ ] | [ ] | [ ] | Los 5 roles del sistema no se pueden eliminar ni renombrar. No se elimina un rol con usuarios asignados. |
 | **Auditoría** | `audit_logs.view` | [x] | [ ] | [ ] | [ ] | [ ] | ⚠️ hoy lo ve Admin (vía `Gate::define('view-audit-logs')`). |
-| **Catálogos** (Configuración) | `catalogs.view` | [x] | [x] | [ ] | [ ] | [ ] | Unidades de medida, categorías de producto y de materia prima. Los `<select>` de los formularios **no** requieren este permiso. |
+| **Catálogos** (Configuración) | `catalogs.view` | [x] | [x] | [ ] | [ ] | [ ] | Unidades de medida, categorías de producto y de materia prima, tipos de termoencogido y proveedores. Los `<select>` de los formularios **no** requieren este permiso. |
 | | `catalogs.create` | [x] | [ ] | [ ] | [ ] | [ ] | CRUDs de la Fase 3 (3.1, 3.2). Viven en el menú Configuración. |
 | | `catalogs.edit` | [x] | [ ] | [ ] | [ ] | [ ] | |
 | | `catalogs.delete` | [x] | [ ] | [ ] | [ ] | [ ] | Solo si nadie usa el valor; si no, desactivar. |
+| | `suppliers.manage` | [x] | [x] | [ ] | [ ] | [ ] | 🆕 Crear, editar, desactivar y eliminar proveedores, en Configuración → Catálogos (la pestaña se ve con `catalogs.view`, del que depende). No es reservado: a diferencia de `catalogs.*`, también lo tiene Admin, que registra las entradas de materia prima. La ficha del movimiento de MP muestra el nombre del proveedor a quien ve movimientos, sin NIT ni contacto. |
 | **Productos** | `products.view` | [x] | [x] | [x] | [ ] | [x] | |
 | | `products.create` | [x] | [x] | [ ] | [ ] | [ ] | ⚠️ hoy Producción puede crear. Cambio intencional (§0). |
 | | `products.edit` | [x] | [x] | [ ] | [ ] | [ ] | ⚠️ hoy Producción puede editar; cambio intencional (§0). Cambiar CIF % o umbral de precio exige además `costs.update`. |
@@ -155,10 +156,11 @@ combinación, se crea un rol nuevo.
 | | `warehouses.assign_users` | [x] | [x] | [ ] | [ ] | [ ] | |
 | | `warehouses.delete` | [x] | [ ] | [ ] | [ ] | [ ] | Solo si está intacta. ⚠️ hoy Admin puede. |
 
-**Total: 90 permisos en 22 módulos.** Por rol: SuperAdmin 90 · Admin 77 · Producción 27 · Operador 10 · Comercial 22.
+**Total: 91 permisos en 22 módulos.** Por rol: SuperAdmin 91 · Admin 78 · Producción 27 · Operador 10 · Comercial 22.
 (La v1 tenía 83. Entran 6: los 4 de catálogos, `products.download_documents` y `raw_materials.deactivate`.
 Salen 5: ver §6. `products.desactive` solo se renombra, igual que los `view` de módulos con dueño → `view_own`.)
 (3.8, termoencogido: entran `shrink_wrap_types.manage`, `shrink_wraps.view` y `shrink_wraps.create`, módulo Termoencogido.)
+(Proveedores: entra `suppliers.manage`, módulo Catálogos.)
 
 ---
 
