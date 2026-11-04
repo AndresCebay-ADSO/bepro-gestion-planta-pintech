@@ -22,6 +22,7 @@ use App\Services\FinishedInventory\FinishedInventoryMovementService;
 use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\Pricing\ProductionCostCalculatorService;
 use App\Services\Production\ProductionOrderCompletionLines;
+use App\Services\Production\ProductionOrderLineUnits;
 use App\Services\Production\ProductionOrderLock;
 use App\Services\TimezoneService;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,7 @@ class CompleteProductionOrderAction
         private readonly TimezoneService $timezone,
         private readonly ProductionOrderLock $orderLock,
         private readonly ProductionOrderCompletionLines $completionLines,
+        private readonly ProductionOrderLineUnits $lineUnits,
     ) {}
 
     /**
@@ -49,6 +51,8 @@ class CompleteProductionOrderAction
 
         $completedOrder = DB::transaction(function () use ($order, $data, $user, $userId): ProductionOrder {
             $lockedOrder = $this->orderLock->lockFor($order, $user, 'complete', "No se puede completar una orden en estado ':status'.");
+
+            $data['ingredients'] = $this->lineUnits->ingredientsInMaterialUnit($lockedOrder, $data['ingredients']);
 
             // Con la fila bloqueada nadie agrega ni quita líneas: lo enviado debe ser exactamente lo de la orden.
             $this->completionLines->ensureMatches($lockedOrder, $data);

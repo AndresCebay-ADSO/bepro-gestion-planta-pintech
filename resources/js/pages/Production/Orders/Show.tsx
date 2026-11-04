@@ -37,10 +37,6 @@ import { formatForInput } from '@/lib/formatters';
 import { breadcrumbHref } from '@/lib/navigation';
 import { toDecimalPayload } from '@/lib/numeric-input';
 import {
-    ingredientQuantityForInput,
-    ingredientQuantityForServer,
-} from '@/lib/production-ingredient-quantity';
-import {
     index as productionOrdersIndex,
     show as productionOrdersShow,
 } from '@/routes/production-orders';
@@ -597,14 +593,12 @@ function mapDetailToIngredientFormRow(detail: ProductionOrderDetail) {
         planned_quantity: detail.planned_quantity,
         display_quantity: detail.display_quantity ?? null,
         display_unit: detail.display_unit ?? null,
-        conversion_factor: detail.conversion_factor ?? null,
-        actual_quantity:
-            detail.actual_quantity != null
-                ? ingredientQuantityForInput(
-                      detail.actual_quantity,
-                      detail.conversion_factor,
-                  )
-                : (detail.display_quantity ?? detail.planned_quantity),
+        // Lo real en la unidad en que se digita o, si aún no hay, lo planeado. Llegan como texto con 4 decimales.
+        actual_quantity: formatForInput(
+            detail.actual_display_quantity ??
+                detail.display_quantity ??
+                detail.planned_quantity,
+        ),
         unit_cost: detail.unit_cost ?? 0,
         total_cost: detail.total_cost ?? 0,
     };
@@ -624,10 +618,7 @@ function normalizeProductionOrderFormData(data: ProductionOrderFormData) {
         ),
         ingredients: data.ingredients.map((ingredient) => ({
             id: ingredient.id,
-            actual_quantity: ingredientQuantityForServer(
-                ingredient.actual_quantity,
-                ingredient.conversion_factor,
-            ),
+            actual_quantity: toDecimalPayload(ingredient.actual_quantity),
         })),
         packaging: data.packaging.map((pack) => ({
             id: pack.id,

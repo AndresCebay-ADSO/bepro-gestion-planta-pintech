@@ -12,12 +12,14 @@ use App\Models\ProductionOrderPackagingPlan;
 use App\Models\RemnantConsumption;
 use App\Services\AvailableRemnantsService;
 use App\Services\DecimalCalculator;
+use App\Services\Production\ProductionOrderLineUnits;
 
 class BuildProductionOrderShowDataAction
 {
     public function __construct(
         private readonly DecimalCalculator $calculator,
         private readonly AvailableRemnantsService $availableRemnants,
+        private readonly ProductionOrderLineUnits $lineUnits,
     ) {}
 
     /**
@@ -53,6 +55,8 @@ class BuildProductionOrderShowDataAction
             $formulaDetailsByKey = $productionOrder->formula->details
                 ->mapWithKeys(fn ($fd) => [$fd->step_order.'-'.$fd->raw_material_id => $fd]);
         }
+
+        $lineFactors = $this->lineUnits->conversionFactors($productionOrder);
 
         $finishedCostByVariant = $includeCosts
             ? $productionOrder->finishedInventoryMovements->keyBy('product_variant_id')
@@ -161,17 +165,15 @@ class BuildProductionOrderShowDataAction
                 'total_bulk_cost' => $totalBulkCostStr,
                 'total_finished_cost' => $totalFinishedCostStr,
             ] : []),
-            'details' => $productionOrder->details->map(function (ProductionOrderDetail $detail) use ($formulaDetailsByKey, $productionOrder, $includeCosts) {
+            'details' => $productionOrder->details->map(function (ProductionOrderDetail $detail) use ($formulaDetailsByKey, $lineFactors, $productionOrder, $includeCosts) {
                 $formulaDetail = $formulaDetailsByKey->get($detail->step_order.'-'.$detail->raw_material_id);
 
                 $displayQuantity = null;
                 $displayUnit = null;
-                $conversionFactor = null;
-                // Se convierte con la equivalencia guardada al crear la OP, no con la actual del catálogo: así lo que
-                // registra el operario no cambia si alguien edita la unidad. Sin ella, se muestra en la unidad de la MP.
-                if ($formulaDetail?->unitOfMeasure !== null && $detail->conversion_factor !== null) {
-                    $conversionFactor = (float) $detail->conversion_factor;
-                    $displayQuantity = (float) $this->calculator->mul(
+                $factor = $lineFactors[(int) $detail->id];
+                // Con factor, la línea se digita en la unidad de la fórmula. Sin él, en la de la materia prima.
+                if ($factor !== null) {
+                    $displayQuantity = $this->calculator->mul(
                         (string) $formulaDetail->quantity,
                         (string) $productionOrder->quantity,
                         4
@@ -183,11 +185,15 @@ class BuildProductionOrderShowDataAction
                     'id' => $detail->id,
                     'raw_material_id' => (int) $detail->raw_material_id,
                     'step_order' => (int) $detail->step_order,
-                    'planned_quantity' => (float) $detail->planned_quantity,
+                    // Como texto, sin pasar por float. `actual_quantity` va en la unidad de la materia prima (la usa la
+                    // exportación) y `actual_display_quantity` en la que se digita (la usa el formulario).
+                    'planned_quantity' => (string) $detail->planned_quantity,
                     'display_quantity' => $displayQuantity,
                     'display_unit' => $displayUnit,
-                    'conversion_factor' => $conversionFactor,
-                    'actual_quantity' => $detail->actual_quantity !== null ? (float) $detail->actual_quantity : null,
+                    'actual_quantity' => $detail->actual_quantity !== null ? (string) $detail->actual_quantity : null,
+                    'actual_display_quantity' => $detail->actual_quantity !== null
+                        ? $this->lineUnits->toDisplayUnit((string) $detail->actual_quantity, $factor)
+                        : null,
                     'raw_material' => $detail->rawMaterial ? [
                         'id' => $detail->rawMaterial->id,
                         'code' => $detail->rawMaterial->code,

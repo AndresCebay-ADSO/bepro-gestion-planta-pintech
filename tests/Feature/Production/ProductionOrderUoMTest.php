@@ -6,15 +6,18 @@ use App\Actions\Production\BuildProductionOrderShowDataAction;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
+use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
+use App\Models\ProductionOrderPackagingPlan;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\Production\ProductionOrderLineUnits;
 use Database\Seeders\RolePermissionSeeder;
 
 beforeEach(function () {
@@ -180,11 +183,11 @@ test('it keeps converting an existing order with its stored factor when the unit
 
     $detail = app(BuildProductionOrderShowDataAction::class)->execute($order->fresh(), includeCosts: false)['details']->first();
 
-    // La pantalla sigue convirtiendo lo que registra el operario con la equivalencia de la OP, no con la nueva.
-    expect($detail['conversion_factor'])->toBe(0.001)
-        ->and($detail['display_quantity'])->toBe(2500.0)
+    // Lo que registra el operario se sigue convirtiendo con la equivalencia de la OP, no con la nueva.
+    expect(app(ProductionOrderLineUnits::class)->conversionFactors($order->fresh())[$detail['id']])->toBe('0.001000')
+        ->and($detail['display_quantity'])->toBe('2500.0000')
         ->and($detail['display_unit'])->toBe('g')
-        ->and($detail['planned_quantity'])->toBe(2.5);
+        ->and($detail['planned_quantity'])->toBe('2.5000');
 });
 
 test('it validates stock using normalized quantities', function () {
@@ -281,8 +284,8 @@ test('it falls back to raw material units in show data when formula detail unit 
 
     expect($detail['display_quantity'])->toBeNull()
         ->and($detail['display_unit'])->toBeNull()
-        ->and($detail['conversion_factor'])->toBeNull()
-        ->and($detail['planned_quantity'])->toBe(10.0)
+        ->and($detail)->not->toHaveKey('conversion_factor')
+        ->and($detail['planned_quantity'])->toBe('10.0000')
         ->and($detail['raw_material']['unit_symbol'])->toBe('L');
 });
 
@@ -369,4 +372,196 @@ test('it previews and completes a production order with normalized quantities', 
     $detail->refresh();
     expect((float) $detail->actual_quantity)->toBe(3.0);
     expect((float) $detail->total_cost)->toBe(1500.0);
+});
+
+/**
+ * Crea por HTTP y deja en proceso una OP de 250 galones de una fórmula que pide `$quantityPerGallon` de una materia prima
+ * en kilos, con 1 kg en un solo lote a $200.000 el kilo.
+ *
+ * @return array{order: ProductionOrder, batch: InventoryBatch, detail: ProductionOrderDetail, plan: ProductionOrderPackagingPlan}
+ */
+function startedOrderInMaterialKilos(string $quantityPerGallon, UnitOfMeasure $formulaUnit): array
+{
+    $product = Product::create([
+        'name' => 'Pintura en gramos',
+        'category_id' => test()->category->id,
+        'unit_of_measure_id' => test()->liter->id,
+        'current_cost' => 10,
+        'cif_percentage' => 0,
+        'current_price' => 10,
+        'price_threshold' => 0,
+    ]);
+    $formula = Formula::create([
+        'product_id' => $product->id,
+        'version' => 1,
+        'is_active' => true,
+        'created_by' => test()->user->id,
+    ]);
+    $material = RawMaterial::create([
+        'code' => 'RM-UOM-GRAM',
+        'unit_of_measure_id' => test()->kilogram->id,
+        'current_price' => 200000,
+    ]);
+    FormulaDetail::create([
+        'formula_id' => $formula->id,
+        'raw_material_id' => $material->id,
+        'quantity' => $quantityPerGallon,
+        'unit_of_measure_id' => $formulaUnit->id,
+        'step_order' => 1,
+    ]);
+    $variant = ProductVariant::create([
+        'product_id' => $product->id,
+        'code' => 'VAR-UOM-GRAM',
+        'name' => 'Pintura en gramos - Galón',
+        'unit_of_measure_id' => test()->liter->id,
+        'presentation_label' => 'Galón',
+        'presentation_value' => 1,
+        'is_active' => true,
+    ]);
+    $batch = InventoryBatch::create([
+        'raw_material_id' => $material->id,
+        'warehouse_id' => test()->factory->id,
+        'initial_quantity' => 1,
+        'remaining_quantity' => 1,
+        'unit_price' => 200000,
+        'entry_date' => now(),
+    ]);
+
+    test()->post(route('production-orders.store'), [
+        'product_id' => $product->id,
+        'formula_id' => $formula->id,
+        'warehouse_id' => test()->factory->id,
+        'quantity' => 250,
+        'planned_date' => now()->addDay()->toDateString(),
+        'packaging' => [
+            ['product_variant_id' => $variant->id, 'planned_units' => 250],
+        ],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    $order = ProductionOrder::query()->sole();
+    test()->post(route('production-orders.start', $order))->assertSessionHasNoErrors();
+
+    return [
+        'order' => $order->fresh(),
+        'batch' => $batch,
+        'detail' => $order->details()->sole(),
+        'plan' => $order->packagingPlans()->sole(),
+    ];
+}
+
+/**
+ * Lo que envía la pantalla al enviar a revisión o completar, con `$typed` como consumo real de la única línea.
+ *
+ * @param  array{detail: ProductionOrderDetail, plan: ProductionOrderPackagingPlan}  $line
+ * @return array<string, mixed>
+ */
+function closingPayload(array $line, string $typed): array
+{
+    return [
+        'actual_yield_quantity' => 250,
+        'viscosity_ku' => 100,
+        'grinding_hg' => 6,
+        'responsible_name' => 'Operario UoM',
+        'density_kg_per_gallon' => 5,
+        'quality_responsible_user_id' => test()->user->id,
+        'line_adjustment_ids' => [],
+        'remnant_consumption_ids' => [],
+        'ingredients' => [['id' => $line['detail']->id, 'actual_quantity' => $typed]],
+        'packaging' => [['id' => $line['plan']->id, 'actual_units' => 250]],
+    ];
+}
+
+test('it plans an order of a formula in grams in the unit of the raw material', function () {
+    $line = startedOrderInMaterialKilos('0.15', $this->gram);
+
+    // 0,15 g por galón × 250 galones = 37,5 g.
+    expect($line['detail']->planned_quantity)->toBe('0.0375');
+});
+
+test('completing converts what was typed in grams to the unit of the raw material', function () {
+    $line = startedOrderInMaterialKilos('0.15', $this->gram);
+
+    $this->post(route('production-orders.complete', $line['order']), closingPayload($line, '37.5'))
+        ->assertRedirect()->assertSessionHasNoErrors();
+
+    $detail = $line['detail']->fresh();
+
+    expect($line['order']->fresh()->status->value)->toBe('completed')
+        ->and($line['batch']->fresh()->remaining_quantity)->toBe('0.9625')
+        ->and(InventoryMovement::query()->where('production_order_id', $line['order']->id)->sole()->quantity)->toBe('0.0375')
+        ->and($detail->actual_quantity)->toBe('0.0375')
+        ->and($detail->total_cost)->toBe('7500.0000');
+});
+
+test('submitting for review stores the converted quantity and shows back what was typed', function () {
+    $line = startedOrderInMaterialKilos('0.15', $this->gram);
+
+    $this->post(route('production-orders.submit-for-review', $line['order']), closingPayload($line, '37.5'))
+        ->assertRedirect()->assertSessionHasNoErrors();
+
+    $row = app(BuildProductionOrderShowDataAction::class)->execute($line['order']->fresh(), includeCosts: false)['details']->first();
+
+    expect($line['detail']->fresh()->actual_quantity)->toBe('0.0375')
+        ->and($row['actual_quantity'])->toBe('0.0375')
+        ->and($row['actual_display_quantity'])->toBe('37.5000')
+        ->and($row['display_unit'])->toBe('g')
+        ->and($row)->not->toHaveKey('conversion_factor');
+});
+
+test('the cost preview converts what was typed in grams without saving anything', function () {
+    $line = startedOrderInMaterialKilos('0.15', $this->gram);
+
+    $this->postJson(route('production-orders.preview-costs', $line['order']), [
+        'ingredients' => [['id' => $line['detail']->id, 'actual_quantity' => '37.5']],
+        'packaging' => [['id' => $line['plan']->id, 'actual_units' => 250]],
+    ])->assertOk()->assertJsonPath('ingredients.0.total_cost', '7500.0000');
+
+    expect($line['detail']->fresh()->actual_quantity)->toBeNull()
+        ->and($line['batch']->fresh()->remaining_quantity)->toBe('1.0000')
+        ->and(InventoryMovement::query()->where('production_order_id', $line['order']->id)->exists())->toBeFalse();
+});
+
+test('completing after review does not convert twice', function () {
+    $line = startedOrderInMaterialKilos('0.15', $this->gram);
+
+    $this->post(route('production-orders.submit-for-review', $line['order']), closingPayload($line, '37.5'))
+        ->assertSessionHasNoErrors();
+
+    // Quien aprueba abre la orden y confirma lo que la pantalla le muestra.
+    $shown = app(BuildProductionOrderShowDataAction::class)->execute($line['order']->fresh(), includeCosts: false)['details']->first();
+
+    $this->post(route('production-orders.complete', $line['order']), closingPayload($line, $shown['actual_display_quantity']))
+        ->assertRedirect()->assertSessionHasNoErrors();
+
+    expect($line['order']->fresh()->status->value)->toBe('completed')
+        ->and($line['detail']->fresh()->actual_quantity)->toBe('0.0375')
+        ->and($line['batch']->fresh()->remaining_quantity)->toBe('0.9625');
+});
+
+test('a line with a factor but no unit from the formula takes what was typed in the raw material unit, like the screen', function () {
+    $line = startedOrderInMaterialKilos('0.15', $this->gram);
+
+    // La línea guardó su factor, pero ya no hay línea de la fórmula de donde sacar la unidad.
+    $line['order']->formula->details()->delete();
+
+    $this->post(route('production-orders.submit-for-review', $line['order']), closingPayload($line, '37.5'))
+        ->assertRedirect()->assertSessionHasNoErrors();
+
+    $row = app(BuildProductionOrderShowDataAction::class)->execute($line['order']->fresh(), includeCosts: false)['details']->first();
+
+    expect($line['detail']->fresh()->conversion_factor)->toBe('0.001000')
+        ->and($line['detail']->fresh()->actual_quantity)->toBe('37.5000')
+        ->and($row['display_unit'])->toBeNull()
+        ->and($row['actual_display_quantity'])->toBe('37.5000');
+});
+
+test('a line in kilos keeps what was typed', function () {
+    $line = startedOrderInMaterialKilos('0.0007', $this->kilogram);
+
+    expect($line['detail']->conversion_factor)->toBe('1.000000');
+
+    $this->post(route('production-orders.submit-for-review', $line['order']), closingPayload($line, '0.17'))
+        ->assertRedirect()->assertSessionHasNoErrors();
+
+    expect($line['detail']->fresh()->actual_quantity)->toBe('0.1700');
 });

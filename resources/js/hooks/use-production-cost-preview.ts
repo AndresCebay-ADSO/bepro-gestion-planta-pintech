@@ -1,8 +1,7 @@
 import { previewCosts as productionOrderPreviewCosts } from '@/actions/App/Http/Controllers/ProductionOrderController';
 import { useServerPreview } from '@/hooks/use-server-preview';
 import type { ServerPreviewRequest } from '@/hooks/use-server-preview';
-import { parseDecimal } from '@/lib/numeric-input';
-import { ingredientQuantityForServer } from '@/lib/production-ingredient-quantity';
+import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
 import type {
     PreviewCostData,
     ProductionOrderIngredientFormRow,
@@ -24,7 +23,7 @@ type UseProductionCostPreviewProps = {
 };
 
 type PreviewCostPayload = {
-    ingredients: Array<{ id: number; actual_quantity: number }>;
+    ingredients: Array<{ id: number; actual_quantity: string }>;
     packaging: Array<{
         id: number;
         actual_units: number;
@@ -60,13 +59,10 @@ export function useProductionCostPreview({
                   body: {
                       ingredients: ingredients.map((ingredient) => ({
                           id: ingredient.id,
+                          // Lo digitado, como texto: el servidor lo convierte y calcula con bcmath.
                           actual_quantity:
-                              parseDecimal(
-                                  ingredientQuantityForServer(
-                                      ingredient.actual_quantity,
-                                      ingredient.conversion_factor,
-                                  ),
-                              ) ?? 0,
+                              toDecimalPayload(ingredient.actual_quantity) ||
+                              '0',
                       })),
                       packaging: packaging.map((pack) => ({
                           id: pack.id,

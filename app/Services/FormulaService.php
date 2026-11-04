@@ -20,10 +20,9 @@ class FormulaService
      * factor con que se calcula, que la OP guarda en su línea. Es la única cuenta del plan de la OP: la usan crear la OP y
      * la validación de stock.
      *
-     * La OP calcula con su factor guardado (6 decimales), no con convertQuantity(): la pantalla convierte el consumo real
-     * con ese mismo factor, y así plan y consumo cuadran, y editar una unidad no cambia las OP ya creadas. Con L↔galón la
-     * diferencia con el costo de lista (exacto) es de un 0,0002 %. Lo resuelve B51, antes de producción: el servidor
-     * convierte el consumo y la OP guarda su equivalencia con más precisión.
+     * La OP calcula con su factor guardado (6 decimales), no con convertQuantity(): el consumo real se convierte con ese
+     * mismo factor (ProductionOrderLineUnits), y así plan y consumo cuadran, y editar una unidad no cambia las OP ya
+     * creadas. Con L↔galón la diferencia con el costo de lista (exacto) es de un 0,0002 %.
      *
      * @return array{planned_quantity: string, conversion_factor: string}
      *
@@ -68,8 +67,8 @@ class FormulaService
 
     /**
      * El factor entre dos unidades, con los 6 decimales de su columna. Solo para guardarlo en la línea de la OP
-     * (`production_order_details.conversion_factor`), que la pantalla usa para pasar el consumo real a la unidad de la
-     * materia prima (B51), y con el que la OP calcula su plan (orderLineRequirement()). El costo de lista no lo usa.
+     * (`production_order_details.conversion_factor`), con el que el servidor pasa el consumo real a la unidad de la materia
+     * prima (ProductionOrderLineUnits) y la OP calcula su plan (orderLineRequirement()). El costo de lista no lo usa.
      *
      * @throws \DomainException si no hay equivalencia común.
      */
