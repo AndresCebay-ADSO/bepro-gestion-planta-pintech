@@ -4,18 +4,20 @@ import { DecimalInput } from '@/components/decimal-input';
 import { FormActions } from '@/components/form-actions';
 import { FormField } from '@/components/form-field';
 import { PlantDateInput } from '@/components/plant-date-input';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { SheetBody, SheetFooter } from '@/components/ui/sheet';
 import { NUMBER_TYPES } from '@/lib/number-types';
 import { idPayload, toDecimalPayload } from '@/lib/numeric-input';
 import { store as inventoryMovementsStore } from '@/routes/inventory-movements';
-import type { InventoryOption } from '@/types';
+import type { InventoryOption, SupplierOption } from '@/types';
 import { MovementFormBase } from './movement-form-base';
 
 type Props = {
     rawMaterials: InventoryOption[];
     batches: InventoryOption[];
     warehouses: InventoryOption[];
+    suppliers: SupplierOption[];
     defaultWarehouseId?: number;
     /** Fecha más vieja que admite una entrada (D1b); la valida el servidor. */
     oldestEntryDate?: string;
@@ -27,6 +29,7 @@ export function EntryMovementForm({
     rawMaterials,
     batches,
     warehouses,
+    suppliers,
     defaultWarehouseId,
     oldestEntryDate,
     onSuccess,
@@ -41,7 +44,7 @@ export function EntryMovementForm({
         quantity: string;
         cost_price: string;
         lot_number: string;
-        supplier: string;
+        supplier_id: string;
         expiry_date: string;
         movement_date: string;
         notes: string;
@@ -53,7 +56,7 @@ export function EntryMovementForm({
         quantity: '',
         cost_price: '',
         lot_number: '',
-        supplier: '',
+        supplier_id: '',
         expiry_date: '',
         movement_date: plantToday,
         notes: '',
@@ -73,10 +76,8 @@ export function EntryMovementForm({
                     ? null
                     : toDecimalPayload(data.cost_price),
             lot_number: data.batch_id === '' ? data.lot_number : null,
-            supplier:
-                data.batch_id === '' && data.supplier !== ''
-                    ? data.supplier
-                    : null,
+            supplier_id:
+                data.batch_id === '' ? idPayload(data.supplier_id) : null,
             expiry_date:
                 data.batch_id === '' && data.expiry_date !== ''
                     ? data.expiry_date
@@ -119,6 +120,7 @@ export function EntryMovementForm({
                         <FormField
                             id="cost_price"
                             label="Precio de costo (u)"
+                            required={!isCostReadOnly}
                             help={
                                 isCostReadOnly
                                     ? 'Costo fijado por el lote seleccionado.'
@@ -151,6 +153,7 @@ export function EntryMovementForm({
                             <FormField
                                 id="lot_number"
                                 label="Número de lote"
+                                required
                                 error={form.errors.lot_number}
                             >
                                 <Input
@@ -185,20 +188,31 @@ export function EntryMovementForm({
                             </FormField>
 
                             <FormField
-                                id="supplier"
+                                id="supplier_id"
                                 label="Proveedor"
-                                error={form.errors.supplier}
+                                required
+                                error={form.errors.supplier_id}
                                 className="md:col-span-2"
                             >
-                                <Input
-                                    maxLength={150}
-                                    value={form.data.supplier}
-                                    onChange={(
-                                        e: ChangeEvent<HTMLInputElement>,
-                                    ) =>
-                                        form.setData('supplier', e.target.value)
+                                <Combobox
+                                    options={suppliers.map((supplier) => ({
+                                        id: supplier.id,
+                                        label: supplier.name,
+                                    }))}
+                                    value={form.data.supplier_id}
+                                    onChange={(value) =>
+                                        form.setData(
+                                            'supplier_id',
+                                            String(value),
+                                        )
                                     }
-                                    placeholder="Proveedor"
+                                    placeholder="Seleccionar proveedor..."
+                                    // Con proveedores, una búsqueda sin coincidencias sigue diciendo «Sin resultados».
+                                    emptyText={
+                                        suppliers.length === 0
+                                            ? 'No hay proveedores activos. Créalos en Configuración → Catálogos.'
+                                            : undefined
+                                    }
                                 />
                             </FormField>
                         </>

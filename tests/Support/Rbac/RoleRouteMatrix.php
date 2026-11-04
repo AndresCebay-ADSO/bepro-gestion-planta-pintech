@@ -87,6 +87,9 @@ final class RoleRouteMatrix
             // Tipos de termoencogido (3.8): los gestiona también el Admin.
             'catalogs.shrink-wrap-types.index' => self::only(SystemRole::SuperAdmin, SystemRole::Admin),
             'catalogs.shrink-wrap-types.create' => self::only(SystemRole::SuperAdmin, SystemRole::Admin),
+            // Proveedores: los gestiona también el Admin, que registra las entradas de MP.
+            'catalogs.suppliers.index' => self::only(SystemRole::SuperAdmin, SystemRole::Admin),
+            'catalogs.suppliers.create' => self::only(SystemRole::SuperAdmin, SystemRole::Admin),
 
             // Bodegas y QR.
             'warehouses.index' => self::only(SystemRole::SuperAdmin, SystemRole::Admin, SystemRole::Production, SystemRole::Commercial),

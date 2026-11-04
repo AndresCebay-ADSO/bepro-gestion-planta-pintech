@@ -13,6 +13,7 @@ use App\Http\Requests\Inventory\StoreInventoryMovementRequest;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
 use App\Models\RawMaterial;
+use App\Models\Supplier;
 use App\Models\Warehouse;
 use App\Services\InventoryService;
 use App\Services\WarehouseContextService;
@@ -85,6 +86,14 @@ class InventoryMovementController extends Controller
             // `warehouseOptions` es el filtro del historial y muestra todas.
             'warehouses' => Inertia::optional(fn () => Warehouse::query()->select('id', 'name', 'city', 'type')->where('is_active', true)->where('type', WarehouseType::Factory->value)->orderBy('name')->get())
                 ->once(as: 'inventory-movements:warehouses'),
+            // Formulario de alta: solo los proveedores activos, y solo para quien puede registrar movimientos.
+            'suppliers' => Inertia::optional(fn () => Gate::denies('create', InventoryMovement::class) ? [] : Supplier::query()
+                ->active()
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->orderBy('id')
+                ->get())
+                ->once(as: 'inventory-movements:suppliers'),
             // Fecha más vieja que admite una entrada (D1b): sin `once`, para que cambie con el día.
             'oldestEntryDate' => Inertia::optional(fn (): string => InventoryMovement::oldestEntryDate()),
             'warehouseOptions' => Warehouse::query()
@@ -122,7 +131,8 @@ class InventoryMovementController extends Controller
 
         $inventoryMovement->load([
             'rawMaterial:id,code',
-            'batch:id,lot_number,remaining_quantity',
+            'batch:id,lot_number,remaining_quantity,supplier_id',
+            'batch.supplier:id,name',
             'warehouse:id,name,city',
             'productionOrder:id,order_number',
             'createdBy:id,name',

@@ -26,12 +26,13 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string $unit_price
  * @property Carbon $entry_date
  * @property Carbon|null $expiry_date
- * @property string|null $supplier
+ * @property int|null $supplier_id
  * @property string|null $lot_number
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read RawMaterial $rawMaterial
  * @property-read Warehouse $warehouse
+ * @property-read Supplier|null $supplier
  * @property-read Collection|InventoryMovement[] $inventoryMovements
  * @property-read Collection|ProductionOrderDetail[] $productionOrderDetails
  * @property-read Collection|Alert[] $alerts
@@ -44,7 +45,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'unit_price',
     'entry_date',
     'expiry_date',
-    'supplier',
+    'supplier_id',
     'lot_number',
 ])]
 class InventoryBatch extends Model
@@ -61,7 +62,7 @@ class InventoryBatch extends Model
         return LogOptions::defaults()
             ->useLogName('lotes_inventario')
             ->setDescriptionForEvent(fn (string $eventName) => $this->getAuditDescription($eventName))
-            ->logOnly(['initial_quantity', 'remaining_quantity', 'unit_price', 'expiry_date', 'lot_number'])
+            ->logOnly(['initial_quantity', 'remaining_quantity', 'unit_price', 'expiry_date', 'supplier_id', 'lot_number'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -85,6 +86,11 @@ class InventoryBatch extends Model
     public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class, 'warehouse_id');
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
     }
 
     public function inventoryMovements(): HasMany

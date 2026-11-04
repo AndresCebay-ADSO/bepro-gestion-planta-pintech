@@ -77,11 +77,14 @@ export function DataTableFilters({
     });
 
     return (
-        <div className="flex flex-col gap-3 md:flex-row md:items-end">
+        <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
             {fields.map((field) => {
                 if (field.type === 'text') {
                     return (
-                        <div key={field.name} className="relative flex-1">
+                        <div
+                            key={field.name}
+                            className="relative flex-1 md:min-w-56"
+                        >
                             <Search className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
                             <Input
                                 aria-label={field.label}

@@ -28,7 +28,7 @@ class InventoryBatchFactory extends Factory
             'unit_price' => $this->faker->randomFloat(4, 0.0001, 10000),
             'entry_date' => $this->faker->date(),
             'expiry_date' => null,
-            'supplier' => $this->faker->optional()->company(),
+            'supplier_id' => null,
             // La columna es nullable: o lote, o nulo. Antes `optional()` devolvía null la mitad de las veces y
             // `strtoupper(null)` lo convertía en cadena vacía sin avisar.
             'lot_number' => $this->faker->boolean() ? strtoupper($this->faker->bothify('LOT-###??')) : null,

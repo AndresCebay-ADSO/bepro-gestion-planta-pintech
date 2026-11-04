@@ -7,6 +7,7 @@ use App\Enums\WarehouseType;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
 use App\Models\RawMaterial;
+use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Warehouse;
 use Database\Seeders\RolePermissionSeeder;
@@ -222,4 +223,70 @@ it('forbids unauthorized users from accessing inventory movements index', functi
     $response = get(route('inventory-movements.index'));
 
     $response->assertForbidden();
+});
+
+describe('search by supplier', function (): void {
+    beforeEach(function (): void {
+        $this->supplier = Supplier::factory()->create(['name' => 'Químicos del Valle']);
+        $this->batchA->update(['supplier_id' => $this->supplier->id]);
+
+        // Una salida del mismo lote: el proveedor llega por el lote, no por el movimiento.
+        $this->exitA = InventoryMovement::create([
+            'raw_material_id' => $this->rmA->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'batch_id' => $this->batchA->id,
+            'type' => InventoryMovementType::Exit,
+            'quantity' => 5,
+            'cost_price' => 25.50,
+            'movement_date' => '2026-06-20',
+            'created_by' => $this->admin->id,
+        ]);
+
+        $otherSupplierBatch = InventoryBatch::factory()->create([
+            'raw_material_id' => $this->rmA->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'lot_number' => 'OTRO-LOTE',
+            'supplier_id' => Supplier::factory()->create(['name' => 'Resinas del Norte'])->id,
+        ]);
+
+        InventoryMovement::create([
+            'raw_material_id' => $this->rmA->id,
+            'warehouse_id' => $this->warehouseA->id,
+            'batch_id' => $otherSupplierBatch->id,
+            'type' => InventoryMovementType::Entry,
+            'quantity' => 10,
+            'cost_price' => 10,
+            'movement_date' => '2026-06-25',
+            'created_by' => $this->admin->id,
+        ]);
+    });
+
+    it('brings the entries and exits of the lots of that supplier and nothing else', function (): void {
+        actingAs($this->admin);
+
+        get(route('inventory-movements.index', ['search' => 'del valle']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('movements.data', fn ($movements) => collect($movements)->pluck('id')->sort()->values()->all()
+                    === collect([$this->movementA->id, $this->exitA->id])->sort()->values()->all()));
+    });
+
+    it('combines with another filter', function (): void {
+        actingAs($this->admin);
+
+        get(route('inventory-movements.index', ['search' => 'Valle', 'type' => 'exit']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('movements.data', 1)
+                ->where('movements.data.0.id', $this->exitA->id));
+    });
+
+    it('still finds an inactive supplier, whose lots remain in the history', function (): void {
+        actingAs($this->admin);
+        $this->supplier->update(['is_active' => false]);
+
+        get(route('inventory-movements.index', ['search' => 'Valle']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('movements.data', 2));
+    });
 });

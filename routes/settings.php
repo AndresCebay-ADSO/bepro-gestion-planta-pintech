@@ -6,6 +6,7 @@ use App\Enums\Permission;
 use App\Http\Controllers\Settings\Catalogs\ProductCategoryController;
 use App\Http\Controllers\Settings\Catalogs\RawMaterialCategoryController;
 use App\Http\Controllers\Settings\Catalogs\ShrinkWrapTypeController;
+use App\Http\Controllers\Settings\Catalogs\SupplierController;
 use App\Http\Controllers\Settings\Catalogs\UnitOfMeasureController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -53,4 +54,10 @@ Route::middleware(['auth', 'verified'])->prefix('settings/catalogs')->name('cata
         ->parameters(['shrink-wrap-types' => 'shrink_wrap_type'])
         ->middlewareFor('index', 'can:'.Permission::CatalogsView->value)
         ->middlewareFor(['create', 'store', 'edit', 'update', 'destroy'], 'can:'.Permission::ShrinkWrapTypesManage->value);
+
+    // Proveedores: se ven como cualquier catálogo, pero los gestiona también el Admin, que registra las entradas de MP.
+    Route::resource('suppliers', SupplierController::class)
+        ->except('show')
+        ->middlewareFor('index', 'can:'.Permission::CatalogsView->value)
+        ->middlewareFor(['create', 'store', 'edit', 'update', 'destroy'], 'can:'.Permission::SuppliersManage->value);
 });

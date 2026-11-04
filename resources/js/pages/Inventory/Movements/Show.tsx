@@ -20,7 +20,10 @@ type Props = {
         movement_date: string;
         notes: string | null;
         raw_material?: { code: string } | null;
-        batch?: { lot_number: string | null } | null;
+        batch?: {
+            lot_number: string | null;
+            supplier?: { name: string } | null;
+        } | null;
         warehouse?: { name: string; city: string | null } | null;
         production_order?: { order_number: string } | null;
         created_by?: { name: string } | null;
@@ -81,6 +84,10 @@ export default function InventoryMovementsShow({ movement, can }: Props) {
                                 label="Lote"
                                 value={movement.batch?.lot_number}
                                 valueClassName="font-mono"
+                            />
+                            <DetailItem
+                                label="Proveedor"
+                                value={movement.batch?.supplier?.name}
                             />
                             <DetailItem
                                 label="Bodega"

@@ -7,6 +7,7 @@ namespace App\Http\Requests\Inventory;
 use App\Enums\InventoryMovementType;
 use App\Enums\NumberType;
 use App\Enums\WarehouseType;
+use App\Http\Requests\Concerns\CatalogSelectionRules;
 use App\Http\Requests\Concerns\ValidatesBatchEntryDate;
 use App\Models\InventoryBatch;
 use App\Models\InventoryMovement;
@@ -21,6 +22,7 @@ use Illuminate\Validation\Rules\ExcludeIf;
 
 class StoreInventoryMovementRequest extends FormRequest
 {
+    use CatalogSelectionRules;
     use ValidatesBatchEntryDate;
 
     public function authorize(): bool
@@ -71,9 +73,10 @@ class StoreInventoryMovementRequest extends FormRequest
             // `entry_date` del lote nuevo, que ordena el FIFO.
             'movement_date' => ['bail', 'required', $this->movementDateRule()],
             // Lote, proveedor y vencimiento solo se usan al crear un lote nuevo (una entrada sin lote elegido). En una salida o
-            // una entrada a un lote existente el servicio los ignora, así que tampoco se validan (INV-13).
+            // una entrada a un lote existente el servicio los ignora, así que tampoco se validan (INV-13). El proveedor lo
+            // exige esta regla, no el servicio: la carga inicial de lotes puede no traerlo.
             'lot_number' => [$this->excludeUnlessNewLot(), 'nullable', 'string', 'max:50'],
-            'supplier' => [$this->excludeUnlessNewLot(), 'nullable', 'string', 'max:150'],
+            'supplier_id' => [$this->excludeUnlessNewLot(), ...$this->activeOrCurrentRules('suppliers', 'supplier_id')],
             'expiry_date' => [$this->excludeUnlessNewLot(), 'bail', 'nullable', PlantDate::make(), 'after_or_equal:movement_date'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'created_by' => ['prohibited'],

@@ -18,6 +18,7 @@ use App\Models\RawMaterial;
 use App\Models\RawMaterialCategory;
 use App\Models\ShrinkWrap;
 use App\Models\ShrinkWrapType;
+use App\Models\Supplier;
 use App\Models\UnitOfMeasure;
 use App\Models\Warehouse;
 use App\Policies\AlertPolicy;
@@ -34,6 +35,7 @@ use App\Policies\RawMaterialPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\ShrinkWrapPolicy;
 use App\Policies\ShrinkWrapTypePolicy;
+use App\Policies\SupplierPolicy;
 use App\Policies\UnitOfMeasurePolicy;
 use App\Policies\WarehousePolicy;
 use App\Services\DecimalCalculator;
@@ -118,6 +120,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ProductCategory::class, ProductCategoryPolicy::class);
         Gate::policy(ShrinkWrap::class, ShrinkWrapPolicy::class);
         Gate::policy(ShrinkWrapType::class, ShrinkWrapTypePolicy::class);
+        Gate::policy(Supplier::class, SupplierPolicy::class);
         // El modelo Role es de Spatie: la policy no se descubre por convención.
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(UnitOfMeasure::class, UnitOfMeasurePolicy::class);
