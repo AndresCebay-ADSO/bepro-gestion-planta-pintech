@@ -20,4 +20,4 @@ it('rejects a finished inventory movement without a batch', function (): void {
         'movement_date' => '2026-06-01',
         'created_by' => User::factory()->create()->id,
     ]);
-})->throws(QueryException::class);
+})->throws(QueryException::class, 'finished_product_batch_id');

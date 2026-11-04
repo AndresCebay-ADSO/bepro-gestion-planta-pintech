@@ -13,7 +13,6 @@ use App\Models\QuotationItem;
 use App\Models\RemnantConsumption;
 use App\Models\SalesOrderItem;
 use App\Models\ShrinkWrapItem;
-use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /** Modelos que hoy no registran auditoría, con lo que guardan. Agregar uno exige justificarlo aquí. */
@@ -30,23 +29,6 @@ const AUDIT_EXEMPT_MODELS = [
     SalesOrderItem::class => 'Línea de un pedido',
     ShrinkWrapItem::class => 'Gasto de un termoencogido',
 ];
-
-/** @return list<class-string<Model>> */
-function appModelClasses(): array
-{
-    $classes = [];
-
-    foreach (glob(app_path('Models/*.php')) as $file) {
-        $class = 'App\\Models\\'.basename($file, '.php');
-        $reflection = new ReflectionClass($class);
-
-        if (! $reflection->isAbstract() && $reflection->isSubclassOf(Model::class)) {
-            $classes[] = $class;
-        }
-    }
-
-    return $classes;
-}
 
 test('todo modelo que no esté exento usa LogsActivity', function () {
     $models = appModelClasses();

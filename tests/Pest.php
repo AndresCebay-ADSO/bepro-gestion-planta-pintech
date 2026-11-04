@@ -7,6 +7,7 @@ use App\Enums\SystemRole;
 use App\Models\User;
 use App\Services\TimezoneService;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Spatie\Permission\Models\Role;
@@ -123,4 +124,25 @@ function describeResponse(TestResponse $response): string
     }
 
     return $status.($status === 302 ? ' -> '.($response->headers->get('Location') ?? 'sin destino') : '');
+}
+
+/**
+ * Los modelos de `app/Models`, sin `Concerns/`. Una sola forma de recorrerlos para las pruebas que los revisan todos.
+ *
+ * @return list<class-string<Model>>
+ */
+function appModelClasses(): array
+{
+    $classes = [];
+
+    foreach (glob(app_path('Models/*.php')) as $file) {
+        $class = 'App\\Models\\'.basename($file, '.php');
+        $reflection = new ReflectionClass($class);
+
+        if (! $reflection->isAbstract() && $reflection->isSubclassOf(Model::class)) {
+            $classes[] = $class;
+        }
+    }
+
+    return $classes;
 }

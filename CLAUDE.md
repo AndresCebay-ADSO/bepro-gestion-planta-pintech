@@ -105,7 +105,8 @@ Route (routes/web.php, role: middleware)
    - `raw_materials` table has **NO `name` column** (industrial formula privacy policy). Identification is **strictly by `code`**. Search filters must target `code`.
 3. **Inventory & FIFO Traceability**:
    - Raw material consumption is strictly FIFO via `FifoStockAllocatorService`.
-   - Every inventory movement MUST reference an `InventoryBatch`. Deactivation is logical (`is_active`); never hard-delete records referenced by costs.
+   - Every inventory movement MUST reference an `InventoryBatch`, except the consumption of a raw material with
+     `tracks_inventory = false`, which has no stock and no lots. Deactivation is logical (`is_active`); never hard-delete records referenced by costs.
    - Reference prices are recalculated asynchronously (`RecalculateRawMaterialReferencePrice`), never on hot request paths.
 4. **PostgreSQL Advisory Locks vs SQLite Tests**:
    - Numbering sequences (`OP-YYYY-XXXX`, `COT-YYYY-XXXX`) use `pg_advisory_xact_lock` for concurrency safety.
