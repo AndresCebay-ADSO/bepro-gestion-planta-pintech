@@ -105,7 +105,8 @@ Route (routes/web.php, role: middleware)
    - `raw_materials` table has **NO `name` column** (industrial formula privacy policy). Identification is **strictly by `code`**. Search filters must target `code`.
 3. **Inventory & FIFO Traceability**:
    - Raw material consumption is strictly FIFO via `FifoStockAllocatorService`.
-   - Every inventory movement MUST reference an `InventoryBatch`. Deactivation is logical (`is_active`); never hard-delete records referenced by costs.
+   - Every inventory movement MUST reference an `InventoryBatch`, except the consumption of a raw material with
+     `tracks_inventory = false`, which has no stock and no lots. Deactivation is logical (`is_active`); never hard-delete records referenced by costs.
    - Reference prices are recalculated asynchronously (`RecalculateRawMaterialReferencePrice`), never on hot request paths.
 4. **PostgreSQL Advisory Locks vs SQLite Tests**:
    - Numbering sequences (`OP-YYYY-XXXX`, `COT-YYYY-XXXX`) use `pg_advisory_xact_lock` for concurrency safety.
@@ -131,6 +132,7 @@ Route (routes/web.php, role: middleware)
 - **Authorization**: decide by permission (`$user->can(Permission::X->value)`, `can:` middleware, policies), never by
   role name. The only role checks live in `User` (`isSuperAdmin()`, `superAdmins()`), enforced by a test. Role names
   are written as `SystemRole::X->value`, never as string literals.
+- **Auditing**: every model uses `LogsActivity`, or is justified in `tests/Feature/Models/AuditedModelsTest.php`.
 - **Listings**: order by a date and always break ties with `latest('id')`. Without it, rows sharing a timestamp come
   back in arbitrary order on PostgreSQL and pagination can repeat or skip them (`StableListingOrderTest`).
 - **SQL**: Database-agnostic (`LOWER()` instead of Postgres-specific `ILIKE`).

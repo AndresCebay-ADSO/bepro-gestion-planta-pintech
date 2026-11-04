@@ -64,7 +64,7 @@ export type FinishedInventoryMovement = {
     product_variant_id: number | null;
     warehouse_id: number;
     production_order_id: number | null;
-    finished_product_batch_id: number | null;
+    finished_product_batch_id: number;
     type: FinishedMovementType;
     reason: FinishedMovementReason;
     quantity: number;

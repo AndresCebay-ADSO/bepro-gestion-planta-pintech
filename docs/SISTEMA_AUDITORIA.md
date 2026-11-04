@@ -23,6 +23,8 @@ Se ha programado una tarea en el Scheduler de Laravel (`routes/console.php`):
 Para que un modelo sea auditado, debe implementar el trait `LogsActivity` y definir el método `getActivitylogOptions`.
 
 ### 3.1 Modelos Auditados Actualmente
+La tabla muestra algunos ejemplos. Todo modelo nuevo se audita o se justifica en `AUDIT_EXEMPT_MODELS` (`tests/Feature/Models/AuditedModelsTest.php`).
+
 | Modelo | Eventos Registrados |
 | :--- | :--- |
 | `User` | Creación, Edición, Cambio de Estado, Eliminación. |

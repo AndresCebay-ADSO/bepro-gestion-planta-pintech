@@ -12,13 +12,8 @@ test('los atributos con cast decimal se documentan como string con la nulabilida
     $errors = [];
     $checked = 0;
 
-    foreach (glob(app_path('Models/*.php')) as $file) {
-        $class = 'App\\Models\\'.basename($file, '.php');
+    foreach (appModelClasses() as $class) {
         $reflection = new ReflectionClass($class);
-
-        if ($reflection->isAbstract() || ! $reflection->isSubclassOf(Model::class)) {
-            continue;
-        }
 
         preg_match_all('/@property(?:-read)?\s+(\S+)\s+\$(\w+)/', (string) $reflection->getDocComment(), $matches, PREG_SET_ORDER);
         $documented = collect($matches)->mapWithKeys(fn (array $match) => [$match[2] => $match[1]]);

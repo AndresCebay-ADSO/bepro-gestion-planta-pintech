@@ -608,7 +608,7 @@ Movimientos de producto terminado (libro contable: inmutable).
 | `created_at` | TIMESTAMP | sí |  |
 | `updated_at` | TIMESTAMP | sí |  |
 | `cost_price` | DECIMAL(16,4) | sí |  |
-| `finished_product_batch_id` | BIGINT | sí | FK → `finished_product_batches` (RESTRICT) |
+| `finished_product_batch_id` | BIGINT |  | FK → `finished_product_batches` (RESTRICT) |
 
 ## 2.7 QR
 

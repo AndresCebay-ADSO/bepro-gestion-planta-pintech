@@ -15,7 +15,6 @@ return new class extends Migration
     {
         Schema::table('finished_inventory_movements', function (Blueprint $table) {
             $table->foreignId('finished_product_batch_id')
-                ->nullable()
                 ->after('production_order_id')
                 ->constrained('finished_product_batches')
                 ->restrictOnDelete();

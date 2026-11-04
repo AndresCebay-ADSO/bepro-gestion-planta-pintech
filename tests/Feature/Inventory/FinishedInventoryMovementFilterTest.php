@@ -74,10 +74,21 @@ beforeEach(function (): void {
         'unit_of_measure_id' => $this->uom->id,
     ]);
 
+    // Entran después del lote de finishedLotFixture, que las pruebas de `batches` esperan primero en orden FIFO. El número
+    // de OP va fijo para que el de la fábrica no choque con el de ese lote.
+    $batchFor = fn (Product $product, ProductVariant $variant, string $orderNumber) => FinishedProductBatch::create([
+        'product_id' => $product->id,
+        'product_variant_id' => $variant->id,
+        'production_order_id' => ProductionOrder::factory()->create(['order_number' => $orderNumber, 'product_id' => $product->id])->id,
+        'initial_quantity' => 20,
+        'entry_date' => '2026-07-01',
+    ]);
+
     $this->movementA = FinishedInventoryMovement::create([
         'product_id' => $this->productA->id,
         'product_variant_id' => $this->variantA->id,
         'warehouse_id' => $this->warehouseA->id,
+        'finished_product_batch_id' => $batchFor($this->productA, $this->variantA, 'OP-2026-0001')->id,
         'type' => InventoryMovementType::Entry,
         'reason' => FinishedInventoryMovementReason::Production,
         'quantity' => 20,
@@ -89,6 +100,7 @@ beforeEach(function (): void {
         'product_id' => $this->productB->id,
         'product_variant_id' => $this->variantB->id,
         'warehouse_id' => $this->warehouseB->id,
+        'finished_product_batch_id' => $batchFor($this->productB, $this->variantB, 'OP-2026-0002')->id,
         'type' => InventoryMovementType::Exit,
         'reason' => FinishedInventoryMovementReason::Sale,
         'quantity' => 5,
