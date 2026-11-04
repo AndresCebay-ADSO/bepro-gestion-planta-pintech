@@ -185,12 +185,10 @@ class BuildProductionOrderShowDataAction
                     'id' => $detail->id,
                     'raw_material_id' => (int) $detail->raw_material_id,
                     'step_order' => (int) $detail->step_order,
-                    // Como texto, sin pasar por float. `actual_quantity` va en la unidad de la materia prima (la usa la
-                    // exportación) y `actual_display_quantity` en la que se digita (la usa el formulario).
+                    // Como texto, sin pasar por float. `actual_display_quantity` va en la unidad en que se digita.
                     'planned_quantity' => (string) $detail->planned_quantity,
                     'display_quantity' => $displayQuantity,
                     'display_unit' => $displayUnit,
-                    'actual_quantity' => $detail->actual_quantity !== null ? (string) $detail->actual_quantity : null,
                     'actual_display_quantity' => $detail->actual_quantity !== null
                         ? $this->lineUnits->toDisplayUnit((string) $detail->actual_quantity, $factor)
                         : null,

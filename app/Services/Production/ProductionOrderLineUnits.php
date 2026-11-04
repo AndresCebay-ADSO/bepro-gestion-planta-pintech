@@ -35,19 +35,15 @@ class ProductionOrderLineUnits
      */
     public function conversionFactors(ProductionOrder $order): array
     {
-        $order->loadMissing(['details', 'formula.details.unitOfMeasure']);
-
-        $formulaLines = $order->formula?->details
-            ->keyBy(fn (FormulaDetail $line): string => $line->step_order.'-'.$line->raw_material_id);
+        $order->loadMissing('details');
 
         $factors = [];
 
         foreach ($order->details as $detail) {
             /** @var ProductionOrderDetail $detail */
-            $formulaLine = $formulaLines?->get($detail->step_order.'-'.$detail->raw_material_id);
             $factor = $detail->conversion_factor;
 
-            $factors[(int) $detail->id] = $formulaLine?->unitOfMeasure !== null
+            $factors[(int) $detail->id] = $this->formulaLine($order, $detail)?->unitOfMeasure !== null
                 && $factor !== null
                 && ! $this->calculator->isZero($factor, NumberType::Factor->scale())
                     ? $factor
@@ -145,15 +141,24 @@ class ProductionOrderLineUnits
         return $converted;
     }
 
+    /** La línea de la fórmula de la que salió esta línea de la OP. */
+    private function formulaLine(ProductionOrder $order, ProductionOrderDetail $detail): ?FormulaDetail
+    {
+        $order->loadMissing('formula.details.unitOfMeasure');
+
+        return $order->formula?->details->first(
+            fn (FormulaDetail $line): bool => (int) $line->step_order === (int) $detail->step_order
+                && (int) $line->raw_material_id === (int) $detail->raw_material_id
+        );
+    }
+
     private function belowMinimumMessage(ProductionOrder $order, int $lineId, string|int|float $typed, ?string $factor): string
     {
         $order->loadMissing('details.rawMaterial');
 
         /** @var ProductionOrderDetail $detail */
         $detail = $order->details->firstWhere('id', $lineId);
-        $unit = $order->formula?->details
-            ->first(fn (FormulaDetail $line): bool => $line->step_order === $detail->step_order && $line->raw_material_id === $detail->raw_material_id)
-            ?->unitOfMeasure?->symbol;
+        $unit = $this->formulaLine($order, $detail)?->unitOfMeasure?->symbol;
 
         return __(':code: :typed :unit es menos de lo mínimo que se registra (:minimum :unit). Digita :minimum :unit o, si no se usó, 0.', [
             'code' => $detail->rawMaterial?->code,

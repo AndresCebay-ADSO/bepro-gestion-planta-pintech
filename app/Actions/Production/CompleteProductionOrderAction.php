@@ -52,10 +52,11 @@ class CompleteProductionOrderAction
         $completedOrder = DB::transaction(function () use ($order, $data, $user, $userId): ProductionOrder {
             $lockedOrder = $this->orderLock->lockFor($order, $user, 'complete', "No se puede completar una orden en estado ':status'.");
 
-            $data['ingredients'] = $this->lineUnits->ingredientsToRecord($lockedOrder, $data['ingredients']);
-
             // Con la fila bloqueada nadie agrega ni quita líneas: lo enviado debe ser exactamente lo de la orden.
             $this->completionLines->ensureMatches($lockedOrder, $data);
+
+            // Después de la lista: si la orden cambió, eso se avisa antes que un error de cantidad.
+            $data['ingredients'] = $this->lineUnits->ingredientsToRecord($lockedOrder, $data['ingredients']);
 
             $wasPendingReview = $lockedOrder->status === ProductionOrderStatus::PendingReview;
 

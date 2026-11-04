@@ -11,12 +11,14 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
+use App\Models\ProductionOrderLineAdjustment;
 use App\Models\ProductionOrderPackagingPlan;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\Production\ProductionOrderCompletionLines;
 use App\Services\Production\ProductionOrderLineUnits;
 use Database\Seeders\RolePermissionSeeder;
 
@@ -502,7 +504,7 @@ test('submitting for review stores the converted quantity and shows back what wa
     $row = app(BuildProductionOrderShowDataAction::class)->execute($line['order']->fresh(), includeCosts: false)['details']->first();
 
     expect($line['detail']->fresh()->actual_quantity)->toBe('0.0375')
-        ->and($row['actual_quantity'])->toBe('0.0375')
+        ->and($row)->not->toHaveKey('actual_quantity')
         ->and($row['actual_display_quantity'])->toBe('37.5000')
         ->and($row['display_unit'])->toBe('g')
         ->and($row)->not->toHaveKey('conversion_factor');
@@ -613,3 +615,38 @@ test('it does not reject that quantity in the cost preview, while typing', funct
         'packaging' => [],
     ])->assertOk()->assertJsonPath('ingredients.0.total_cost', '0.0000');
 });
+
+// Una unidad creada en el catálogo puede dar un factor de 0,00004: gramos a un saco de 25 kg.
+test('it opens an order whose stored factor is smaller than four decimals', function () {
+    $line = startedOrderInMaterialKilos('0.15', $this->gram);
+    $line['detail']->update(['conversion_factor' => '0.000040', 'actual_quantity' => '0.0200']);
+
+    $row = app(BuildProductionOrderShowDataAction::class)->execute($line['order']->fresh(), includeCosts: false)['details'][0];
+
+    expect($row['actual_display_quantity'])->toBe('500.0000');
+});
+
+test('it warns about the minimum with a factor smaller than four decimals', function () {
+    $line = startedOrderInMaterialKilos('0.15', $this->gram);
+    $line['detail']->update(['conversion_factor' => '0.000040']);
+
+    $this->post(route('production-orders.complete', $line['order']), closingPayload($line, '0.5'))
+        ->assertSessionHasErrors([
+            'ingredients' => 'RM-UOM-GRAM: 0,5 g es menos de lo mínimo que se registra (2,5 g). Digita 2,5 g o, si no se usó, 0.',
+        ]);
+});
+
+test('it warns that the order changed before any quantity error', function (string $route) {
+    $line = startedOrderInMaterialKilos('0.15', $this->gram);
+    ProductionOrderLineAdjustment::create([
+        'production_order_id' => $line['order']->id,
+        'raw_material_id' => $line['detail']->raw_material_id,
+        'quantity' => '1',
+        'reason' => 'Corrección de viscosidad',
+        'created_by' => $this->user->id,
+    ]);
+
+    $this->post(route($route, $line['order']), closingPayload($line, '0.04'))
+        ->assertSessionHasErrors(['line_adjustment_ids' => __(ProductionOrderCompletionLines::ORDER_CHANGED_MESSAGE)])
+        ->assertSessionDoesntHaveErrors('ingredients');
+})->with(['production-orders.complete', 'production-orders.submit-for-review']);

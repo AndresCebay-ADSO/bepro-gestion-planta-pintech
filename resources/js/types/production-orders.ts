@@ -37,8 +37,6 @@ export type ProductionOrderDetail = {
     planned_quantity: FormNumberValue;
     display_quantity?: FormNumberValue | null;
     display_unit?: string | null;
-    /** En la unidad de la materia prima. */
-    actual_quantity?: FormNumberValue | null;
     /** En la unidad en que la línea se digita (`display_unit`, o la de la materia prima si no tiene). */
     actual_display_quantity?: FormNumberValue | null;
     unit_cost?: FormNumberValue | null;
