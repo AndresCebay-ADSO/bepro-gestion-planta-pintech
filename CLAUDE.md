@@ -131,6 +131,7 @@ Route (routes/web.php, role: middleware)
 - **Authorization**: decide by permission (`$user->can(Permission::X->value)`, `can:` middleware, policies), never by
   role name. The only role checks live in `User` (`isSuperAdmin()`, `superAdmins()`), enforced by a test. Role names
   are written as `SystemRole::X->value`, never as string literals.
+- **Auditing**: every model uses `LogsActivity`, or is justified in `tests/Feature/Models/AuditedModelsTest.php`.
 - **Listings**: order by a date and always break ties with `latest('id')`. Without it, rows sharing a timestamp come
   back in arbitrary order on PostgreSQL and pagination can repeat or skip them (`StableListingOrderTest`).
 - **SQL**: Database-agnostic (`LOWER()` instead of Postgres-specific `ILIKE`).
