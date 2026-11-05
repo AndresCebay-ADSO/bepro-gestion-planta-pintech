@@ -6,11 +6,13 @@ namespace App\Services\Pricing;
 
 use App\Models\ProductionOrder;
 use App\Services\DecimalCalculator;
+use App\Services\Production\ProductionOrderCompletionLines;
 
 class ProductionCostCalculatorService
 {
     public function __construct(
-        private readonly DecimalCalculator $calculator
+        private readonly DecimalCalculator $calculator,
+        private readonly ProductionOrderCompletionLines $completionLines,
     ) {}
 
     public function applyCifToCost(string $cost, string $cifPercentage): string
@@ -42,31 +44,8 @@ class ProductionCostCalculatorService
         $order->loadMissing('packagingPlans.productVariant');
         $plans = $order->packagingPlans;
 
-        $totalEquivalentYield = '0';
-
-        foreach ($plans as $plan) {
-            if (! isset($packagingDataByPlanId[$plan->id])) {
-                continue;
-            }
-
-            $variant = $plan->productVariant;
-            if ($variant === null) {
-                continue;
-            }
-
-            $actualUnits = $this->calculator->normalize($packagingDataByPlanId[$plan->id]['actual_units'] ?? 0);
-            if ($this->calculator->isZero($actualUnits)) {
-                continue;
-            }
-
-            $presentationValue = (string) ($variant->presentation_value ?? 1);
-            $yieldFromVariant = $this->calculator->mul($actualUnits, $presentationValue, 4);
-            $totalEquivalentYield = $this->calculator->add($totalEquivalentYield, $yieldFromVariant, 4);
-        }
-
-        if ($remnantGallons !== null && $this->calculator->cmp($remnantGallons, '0', 4) > 0) {
-            $totalEquivalentYield = $this->calculator->add($totalEquivalentYield, $remnantGallons, 4);
-        }
+        // El costo se reparte entre lo que de verdad salió: la misma cuenta que el rendimiento real que se guarda.
+        $totalEquivalentYield = $this->completionLines->realYield($order, array_values($packagingDataByPlanId), $remnantGallons);
 
         if ($this->calculator->isZero($totalEquivalentYield)) {
             return ['distributedCosts' => [], 'bulkCostPerUnit' => null];

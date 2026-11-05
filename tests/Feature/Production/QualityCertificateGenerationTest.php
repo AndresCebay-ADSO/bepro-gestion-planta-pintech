@@ -125,7 +125,6 @@ test('completing order generates qr code and quality certificate', function () {
     $this->post(route('production-orders.start', $order));
 
     $response = $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 98,
         'remnant_quantity_kg' => 490,
         'viscosity_ku' => 105,
         'grinding_hg' => 7,
@@ -187,7 +186,6 @@ test('completing order saves quality solids alongside viscosity and grinding', f
     $this->post(route('production-orders.start', $order));
 
     $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 100,
         'remnant_quantity_kg' => 500,
         'viscosity_ku' => 110,
         'grinding_hg' => 6.5,
@@ -318,7 +316,6 @@ test('quality signer is required on complete', function () {
     $this->post(route('production-orders.start', $order));
 
     $response = $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 98,
         'remnant_quantity_kg' => 490,
         'viscosity_ku' => 105,
         'grinding_hg' => 7,
@@ -376,7 +373,6 @@ test('quality signer must have job_title and signature', function () {
     $this->post(route('production-orders.start', $order));
 
     $response = $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 98,
         'remnant_quantity_kg' => 490,
         'viscosity_ku' => 105,
         'grinding_hg' => 7,
@@ -437,7 +433,6 @@ test('quality signer must have admin or produccion role', function () {
     $this->post(route('production-orders.start', $order));
 
     $response = $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 98,
         'remnant_quantity_kg' => 490,
         'viscosity_ku' => 105,
         'grinding_hg' => 7,
@@ -499,7 +494,6 @@ test('quality signer must be active', function () {
     $this->post(route('production-orders.start', $order));
 
     $response = $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 98,
         'remnant_quantity_kg' => 490,
         'viscosity_ku' => 105,
         'grinding_hg' => 7,

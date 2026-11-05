@@ -33,9 +33,13 @@ import {
     usePackagingSync,
 } from '@/hooks/use-packaging-sync';
 import { useProductionCostPreview } from '@/hooks/use-production-cost-preview';
-import { formatForInput } from '@/lib/formatters';
+import {
+    formatForInput,
+    formatPercent,
+    formatQuantity,
+} from '@/lib/formatters';
 import { breadcrumbHref } from '@/lib/navigation';
-import { toDecimalPayload } from '@/lib/numeric-input';
+import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
 import { remnantGallonsForDisplay } from '@/lib/remnant-quantity';
 import {
     index as productionOrdersIndex,
@@ -101,7 +105,6 @@ export default function ProductionOrderShow({
 
     const { data, setData, post, processing, errors, transform } =
         useForm<ProductionOrderFormData>({
-            actual_yield_quantity: order.actual_quantity ?? order.quantity,
             viscosity_ku: order.viscosity_ku ?? '',
             grinding_hg: order.grinding_hg ?? '',
             quality_solids: order.quality_solids ?? '',
@@ -239,15 +242,35 @@ export default function ProductionOrderShow({
                   0,
           }));
 
-    const totalEquivalent = isFormReadOnly
-        ? packagingRows.reduce((sum, pack) => {
-              return (
+    // Solo para mostrar: el rendimiento real que se guarda lo calcula el servidor (lo envasado más el sobrante). Con la
+    // orden cerrada a la edición se muestra el guardado. Lo digitado se lee con parseDecimal, como en el resto de los
+    // formularios: llega como texto y con coma («2,5»). Pendiente, nada se ha producido: las filas traen lo planeado.
+    const packagedEquivalent = isPending
+        ? null
+        : packagingRows.reduce(
+              (sum, pack) =>
                   sum +
-                  (Number(pack.actual_units) || 0) *
-                      (Number(pack.presentation_value) || 0)
-              );
-          }, 0)
-        : (previewCosts?.total_equivalent ?? 0);
+                  (parseDecimal(pack.actual_units) ?? 0) *
+                      (parseDecimal(pack.presentation_value) ?? 0),
+              0,
+          );
+    const remnantGallons = isFormReadOnly
+        ? (parseDecimal(order.remnant_quantity_gallons) ?? 0)
+        : (remnantGallonsForDisplay(
+              data.remnant_quantity_kg,
+              data.density_kg_per_gallon,
+          ) ?? 0);
+    const realYield =
+        packagedEquivalent === null
+            ? null
+            : isFormReadOnly && order.actual_quantity != null
+              ? (parseDecimal(order.actual_quantity) ?? 0)
+              : packagedEquivalent + remnantGallons;
+    const plannedQuantity = parseDecimal(order.quantity) ?? 0;
+    const yieldPercentage =
+        realYield !== null && plannedQuantity > 0
+            ? (realYield / plannedQuantity) * 100
+            : null;
 
     const pendingBulkCost = previewCosts?.total_bulk_cost ?? 0;
     const pendingFinishedCost = previewCosts?.total_finished_cost ?? 0;
@@ -438,8 +461,14 @@ export default function ProductionOrderShow({
 
                         <OrderInfoCard
                             order={order}
-                            totalEquivalent={totalEquivalent}
-                            actualYieldQuantity={data.actual_yield_quantity}
+                            packagedEquivalent={packagedEquivalent}
+                            remnantKg={
+                                isFormReadOnly
+                                    ? order.remnant_quantity_kg
+                                    : parseDecimal(data.remnant_quantity_kg)
+                            }
+                            realYield={realYield}
+                            yieldPercentage={yieldPercentage}
                             bulkCost={
                                 isCompleted
                                     ? (order.total_bulk_cost ?? 0)
@@ -454,12 +483,7 @@ export default function ProductionOrderShow({
                             estimatedCifValue={estimatedCifValue}
                             estimatedTotalCost={estimatedTotalCost}
                             bulkCostPerUnit={bulkCostPerUnit}
-                            remnantQuantityGallons={
-                                remnantGallonsForDisplay(
-                                    data.remnant_quantity_kg,
-                                    data.density_kg_per_gallon,
-                                ) ?? undefined
-                            }
+                            remnantQuantityGallons={remnantGallons}
                             remnantBulkCost={remnantBulkCost}
                             consumedRemnantCost={consumedRemnantCost}
                             showCosts={can.previewCosts}
@@ -475,7 +499,15 @@ export default function ProductionOrderShow({
                         <AlertDialogHeader>
                             <AlertDialogTitle>{confirmTitle}</AlertDialogTitle>
                             <AlertDialogDescription>
-                                {confirmDescription}
+                                {confirmDescription} Rendimiento real:{' '}
+                                {formatQuantity(realYield, {
+                                    maxDecimals: 2,
+                                    trimTrailingZeros: true,
+                                })}{' '}
+                                gal
+                                {yieldPercentage !== null &&
+                                    ` (${formatPercent(yieldPercentage, 1)} de lo proyectado)`}
+                                .
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -571,8 +603,13 @@ export default function ProductionOrderShow({
                                     Cancelar
                                 </AlertDialogCancel>
                                 <AlertDialogAction
-                                    type="submit"
                                     disabled={rejectProcessing}
+                                    onClick={(event) => {
+                                        // Sin esto Radix cierra el diálogo al hacer clic, antes de que responda el
+                                        // servidor, y un error del motivo queda oculto hasta reabrirlo.
+                                        event.preventDefault();
+                                        confirmReject();
+                                    }}
                                 >
                                     {rejectProcessing
                                         ? 'Devolviendo...'
@@ -610,7 +647,6 @@ function mapDetailToIngredientFormRow(detail: ProductionOrderDetail) {
 function normalizeProductionOrderFormData(data: ProductionOrderFormData) {
     return {
         ...data,
-        actual_yield_quantity: toDecimalPayload(data.actual_yield_quantity),
         viscosity_ku: toDecimalPayload(data.viscosity_ku),
         grinding_hg: toDecimalPayload(data.grinding_hg),
         quality_solids: toDecimalPayload(data.quality_solids),

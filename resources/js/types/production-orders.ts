@@ -235,7 +235,6 @@ export type ProductionOrderPackagingFormRow = {
 };
 
 export type ProductionOrderFormData = {
-    actual_yield_quantity: FormNumberValue;
     viscosity_ku: FormNumberValue;
     grinding_hg: FormNumberValue;
     quality_solids: FormNumberValue;

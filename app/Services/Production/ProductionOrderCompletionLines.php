@@ -68,13 +68,56 @@ class ProductionOrderCompletionLines
     }
 
     /**
-     * Si quedó saldo sobrante. Una sola lectura para la regla de envasado, la de rendimiento, el registro del saldo y la
-     * vista previa de costos. `ProductionCostCalculatorService` repite la comparación como defensa: no sabe quién lo
+     * Si una cantidad del sobrante es mayor a 0. Una sola lectura para la regla de envasado, el rendimiento real, el
+     * registro del saldo y la vista previa de costos. `ProductionCostCalculatorService` repite la comparación como defensa: no sabe quién lo
      * llama.
      */
     public function hasRemnant(mixed $remnantGallons): bool
     {
         return $this->isPositiveAmount($remnantGallons);
+    }
+
+    /**
+     * El rendimiento real: lo envasado más los galones del sobrante. No se digita: es la única cuenta para lo que se
+     * guarda, el tope de 9,99 veces lo proyectado y el reparto del costo. Una OP de la que salen menos galones que los
+     * proyectados no es un error: es lo que salió.
+     *
+     * @param  array<int|string, array<string, mixed>>  $packaging  las presentaciones con sus unidades reales
+     */
+    public function realYield(ProductionOrder $order, array $packaging, ?string $remnantGallons): string
+    {
+        $packaged = $this->packagedEquivalent($order, $packaging);
+
+        return $this->hasRemnant($remnantGallons)
+            ? $this->calculator->add($packaged, (string) $remnantGallons, 4)
+            : $packaged;
+    }
+
+    /**
+     * Lo envasado, en la unidad del producto: unidades reales × contenido de cada presentación del plan. Una fila que no
+     * es del plan de la orden no suma.
+     *
+     * @param  array<int|string, array<string, mixed>>  $packaging
+     */
+    public function packagedEquivalent(ProductionOrder $order, array $packaging): string
+    {
+        $order->loadMissing('packagingPlans.productVariant');
+        $plans = $order->packagingPlans->keyBy('id');
+        $total = '0';
+
+        foreach ($packaging as $row) {
+            $plan = $plans->get((int) ($row['id'] ?? 0));
+            $units = $this->calculator->normalize($row['actual_units'] ?? '0');
+
+            if ($plan === null || $plan->productVariant === null || ! $this->calculator->isPositive($units)) {
+                continue;
+            }
+
+            $presentationValue = (string) ($plan->productVariant->presentation_value ?? '1');
+            $total = $this->calculator->add($total, $this->calculator->mul($units, $presentationValue, 4), 4);
+        }
+
+        return $total;
     }
 
     /**

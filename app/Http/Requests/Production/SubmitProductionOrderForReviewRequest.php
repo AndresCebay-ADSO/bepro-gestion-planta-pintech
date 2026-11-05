@@ -35,7 +35,6 @@ class SubmitProductionOrderForReviewRequest extends FormRequest
             $this->operationalTimesRules(),
             [
                 // Los mismos tipos que al completar (CompleteProductionOrderRequest).
-                'actual_yield_quantity' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
                 'spillage_quantity' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
                 'density_kg_per_gallon' => ['bail', 'nullable', ...NumberType::Density->rules(), 'min:0.0001'],
                 'remnant_quantity_kg' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
@@ -47,7 +46,7 @@ class SubmitProductionOrderForReviewRequest extends FormRequest
 
     /**
      * Enviar a revisión es entregar la producción para cerrarla: si no se envasó nada, que lo sepa la planta y no quien
-     * revisa (P6-1). El rendimiento se exige al completar.
+     * revisa (P6-1). El rendimiento real no se pide: lo calcula el servidor al guardar.
      *
      * @return array<callable(Validator): void>
      */
@@ -64,7 +63,6 @@ class SubmitProductionOrderForReviewRequest extends FormRequest
         return array_merge(
             $this->consumptionAttributes(),
             [
-                'actual_yield_quantity' => 'rendimiento real',
                 'viscosity_ku' => 'viscosidad (KU)',
                 'grinding_hg' => 'molienda (HG)',
                 'quality_solids' => 'sólidos de calidad',

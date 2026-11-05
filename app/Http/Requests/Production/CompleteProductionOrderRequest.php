@@ -7,7 +7,6 @@ namespace App\Http\Requests\Production;
 use App\Enums\NumberType;
 use App\Enums\Permission;
 use App\Models\ProductionOrder;
-use App\Models\ProductionOrderPackagingPlan;
 use App\Models\User;
 use App\Services\DecimalCalculator;
 use App\Services\Production\ProductionOrderCompletionLines;
@@ -41,9 +40,8 @@ class CompleteProductionOrderRequest extends FormRequest
             $this->operationalTimesRules(),
             [
                 // Cada cantidad con el tipo de su columna (Cantidad 12,4 y Densidad 10,4): sin tope, 1e65 o 1e20 pasan
-                // `numeric` y fallan en la calculadora o al guardar en PostgreSQL. Siempre obligatorio: una orden solo se
-                // completa si algo se envasó o quedó como saldo (D-OPL1), y eso es lo que rinde.
-                'actual_yield_quantity' => ['bail', 'required', ...NumberType::Quantity->rules(), 'min:0.0001'],
+                // `numeric` y fallan en la calculadora o al guardar en PostgreSQL. El rendimiento real no se pide: lo
+                // calcula el servidor (lo envasado más el sobrante).
                 'quality_responsible_user_id' => ['bail', 'required', 'integer', 'exists:users,id'],
                 'spillage_quantity' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
                 'density_kg_per_gallon' => ['bail', 'required', ...NumberType::Density->rules(), 'min:0.0001'],
@@ -62,77 +60,33 @@ class CompleteProductionOrderRequest extends FormRequest
     public function after(): array
     {
         return [
-            // El porcentaje de rendimiento se guarda en decimal(5,2): por encima de 999,99 % PostgreSQL rechaza la OP con
-            // un error del servidor. Un rendimiento así es un error de digitación, no una producción real.
-            function (Validator $validator): void {
-                $order = $this->route('production_order');
-                $actualYield = $this->input('actual_yield_quantity');
-
-                if (! $order instanceof ProductionOrder || $validator->errors()->has('actual_yield_quantity') || ! is_numeric($actualYield)) {
-                    return;
-                }
-
-                $calculator = app(DecimalCalculator::class);
-                $planned = (string) $order->quantity;
-
-                if ($calculator->isPositive($planned)
-                    && $calculator->cmp($calculator->mul($calculator->div($calculator->normalize($actualYield), $planned, 10), '100', 4), '999.99') > 0) {
-                    $validator->errors()->add('actual_yield_quantity', __('El rendimiento real no puede superar 9,99 veces la cantidad proyectada de la orden. Revisa el valor.'));
-                }
-            },
             $this->remnantWeightCheck(),
             $this->somethingPackedCheck(),
             $this->operationalTimesCheck(),
+            // El porcentaje de rendimiento se guarda en decimal(5,2): por encima de 999,99 % PostgreSQL rechaza la OP con
+            // un error del servidor. Un rendimiento así es un error en las unidades envasadas, no una producción real.
+            // Es la única comparación contra lo proyectado: salir con menos no es un error.
             function (Validator $validator): void {
-                if ($validator->errors()->isNotEmpty()) {
+                $order = $this->route('production_order');
+
+                if (! $order instanceof ProductionOrder || $validator->errors()->isNotEmpty()) {
                     return;
                 }
 
                 $calculator = app(DecimalCalculator::class);
                 $lines = app(ProductionOrderCompletionLines::class);
-
-                // Ya validados: algo se envasó o quedó como saldo (la regla anterior), y el rendimiento es obligatorio.
-                $packaging = collect($this->input('packaging') ?? []);
-                $remnantGallons = $lines->remnantGallons($this->input('remnant_quantity_kg'), $this->input('density_kg_per_gallon'));
-                $actualYield = $this->input('actual_yield_quantity');
-
-                // Sin presentaciones (todo quedó como saldo) no hay nada que consultar.
-                $plans = $packaging->isEmpty() ? collect() : ProductionOrderPackagingPlan::query()
-                    ->whereIn('id', $packaging->pluck('id')->map(fn ($id) => (int) $id)->all())
-                    ->with('productVariant:id,presentation_value')
-                    ->get()
-                    ->keyBy('id');
-
-                $expectedYield = '0';
-
-                foreach ($packaging as $packagingData) {
-                    $plan = $plans->get((int) $packagingData['id']);
-                    $actualUnits = (string) $packagingData['actual_units'];
-
-                    if ($plan === null || ! $calculator->isPositive($actualUnits)) {
-                        continue;
-                    }
-
-                    $presentationValue = (string) ($plan->productVariant?->presentation_value ?? '1');
-                    $expectedYield = $calculator->add($expectedYield, $calculator->mul($actualUnits, $presentationValue, 4), 4);
-                }
-
-                if ($lines->hasRemnant($remnantGallons)) {
-                    $expectedYield = $calculator->add($expectedYield, $remnantGallons, 4);
-                }
-
-                $actualYieldStr = (string) $actualYield;
-                $difference = $calculator->abs($calculator->sub($actualYieldStr, $expectedYield, 4), 4);
-                $yieldTolerance = (string) config('production.yield_tolerance', '0.01');
-
-                if ($calculator->cmp($difference, $yieldTolerance, 4) <= 0) {
-                    return;
-                }
-
-                $validator->errors()->add(
-                    'actual_yield_quantity',
-                    "El rendimiento real debe coincidir con el envasado equivalente más el saldo. Registrado: {$actualYield}, esperado: {$expectedYield} (tolerancia: {$yieldTolerance})."
+                $packaging = $this->input('packaging');
+                $realYield = $lines->realYield(
+                    $order,
+                    is_array($packaging) ? $packaging : [],
+                    $lines->remnantGallons($this->input('remnant_quantity_kg'), $this->input('density_kg_per_gallon')),
                 );
+                $planned = (string) $order->quantity;
+
+                if ($calculator->isPositive($planned)
+                    && $calculator->cmp($calculator->mul($calculator->div($realYield, $planned, 10), '100', 4), '999.99') > 0) {
+                    $validator->errors()->add('packaging', __('Lo envasado más el sobrante supera 9,99 veces la cantidad proyectada de la orden. Revisa las unidades envasadas.'));
+                }
             },
             function (Validator $validator): void {
                 if ($validator->errors()->isNotEmpty()) {
@@ -183,7 +137,6 @@ class CompleteProductionOrderRequest extends FormRequest
         return array_merge(
             $this->consumptionAttributes(),
             [
-                'actual_yield_quantity' => 'rendimiento real',
                 'viscosity_ku' => 'viscosidad (KU)',
                 'grinding_hg' => 'molienda (HG)',
                 'quality_solids' => 'sólidos de calidad',

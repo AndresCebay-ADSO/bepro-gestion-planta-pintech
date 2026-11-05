@@ -1,6 +1,7 @@
 import { FormattedNumber } from '@/components/formatted-number';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { formatPercent } from '@/lib/formatters';
 import type {
     FormNumberValue,
     ProductionOrder,
@@ -8,8 +9,13 @@ import type {
 
 type OrderInfoCardProps = {
     order: ProductionOrder;
-    totalEquivalent: FormNumberValue;
-    actualYieldQuantity: FormNumberValue;
+    /** Lo envasado, en galones equivalentes; null mientras la orden está pendiente. */
+    packagedEquivalent: number | null;
+    /** Kilos pesados del sobrante; vacío si no hubo. */
+    remnantKg?: FormNumberValue | null;
+    /** Lo envasado más el sobrante: no se digita. */
+    realYield: number | null;
+    yieldPercentage: number | null;
     bulkCost: FormNumberValue;
     finishedCost: FormNumberValue;
     cifPercentage: number;
@@ -24,8 +30,10 @@ type OrderInfoCardProps = {
 
 export function OrderInfoCard({
     order,
-    totalEquivalent,
-    actualYieldQuantity,
+    packagedEquivalent,
+    remnantKg,
+    realYield,
+    yieldPercentage,
     bulkCost,
     finishedCost,
     cifPercentage,
@@ -65,26 +73,63 @@ export function OrderInfoCard({
                     <span className="text-muted-foreground">Bodega:</span>
                     <span className="font-medium">{order.warehouse?.name}</span>
                 </div>
+                <Separator />
                 <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                        Rend. envasado (eq. gal):
-                    </span>
+                    <span className="text-muted-foreground">Envasado:</span>
                     <span className="font-medium">
                         <FormattedNumber
-                            value={totalEquivalent}
+                            value={packagedEquivalent}
                             maxDecimals={2}
+                            trimTrailingZeros
                         />
+                        {packagedEquivalent !== null && ' gal'}
                     </span>
                 </div>
+                {hasRemnant && (
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                            Sobrante
+                            {remnantKg !== null &&
+                                remnantKg !== undefined &&
+                                remnantKg !== '' && (
+                                    <>
+                                        {' ('}
+                                        <FormattedNumber
+                                            value={remnantKg}
+                                            kind="quantity"
+                                        />{' '}
+                                        kg)
+                                    </>
+                                )}
+                            :
+                        </span>
+                        <span className="font-medium">
+                            <FormattedNumber
+                                value={remnantQuantityGallons}
+                                maxDecimals={2}
+                                trimTrailingZeros
+                            />{' '}
+                            gal
+                        </span>
+                    </div>
+                )}
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                        Rend. real total (eq. gal):
+                        Rendimiento real:
                     </span>
-                    <span className="font-medium">
+                    <span className="font-semibold">
                         <FormattedNumber
-                            value={actualYieldQuantity}
+                            value={realYield}
                             maxDecimals={2}
+                            trimTrailingZeros
                         />
+                        {realYield !== null && ' gal'}
+                        {yieldPercentage !== null && (
+                            <span className="font-normal text-muted-foreground">
+                                {' ('}
+                                {formatPercent(yieldPercentage, 1)})
+                            </span>
+                        )}
                     </span>
                 </div>
                 {showCosts && (
@@ -182,18 +227,6 @@ export function OrderInfoCard({
                         {hasRemnant && (
                             <>
                                 <Separator />
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">
-                                        Saldo generado:
-                                    </span>
-                                    <span className="font-medium">
-                                        <FormattedNumber
-                                            value={remnantQuantityGallons}
-                                            maxDecimals={2}
-                                        />{' '}
-                                        gal
-                                    </span>
-                                </div>
                                 {remnantBulkCost !== null && (
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">

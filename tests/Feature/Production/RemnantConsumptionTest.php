@@ -470,7 +470,6 @@ it('completing order includes consumed remnant cost in production cost', functio
     $this->post(route('production-orders.start', $this->targetOrder));
 
     $response = $this->post(route('production-orders.complete', $this->targetOrder), [
-        'actual_yield_quantity' => 10, // 10 envasados, no se genera saldo
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $this->user->id,
         'line_adjustment_ids' => [],

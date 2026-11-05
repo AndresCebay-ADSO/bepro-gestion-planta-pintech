@@ -106,7 +106,6 @@ function completionLinesBody(object $test, array $override = []): array
         ],
         'line_adjustment_ids' => [],
         'remnant_consumption_ids' => [],
-        'actual_yield_quantity' => '15',
         'density_kg_per_gallon' => '5',
         'quality_responsible_user_id' => $test->admin->id,
         'responsible_name' => 'Operario',
@@ -153,7 +152,6 @@ it('un ingrediente no usado se registra con 0 y no sale del inventario', functio
 it('no completa la orden si falta una presentación (OPL-02)', function () {
     $this->post(route('production-orders.complete', $this->order), completionLinesBody($this, [
         'packaging' => [['id' => $this->gallonPlan->id, 'actual_units' => '5']],
-        'actual_yield_quantity' => '5',
     ]))->assertSessionHasErrors(['packaging' => __(ProductionOrderCompletionLines::ORDER_CHANGED_MESSAGE)]);
 
     expectOrderUntouched($this->order);
