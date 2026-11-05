@@ -118,6 +118,8 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 RUN echo "upload_max_filesize = 25M" > /usr/local/etc/php/conf.d/uploads.ini \
     && echo "post_max_size = 25M" >> /usr/local/etc/php/conf.d/uploads.ini
 
+# Endurecimiento: no anunciar la versión de PHP y apagar el progreso de subida de sesiones (ver el archivo)
+COPY ./.docker/common/php-fpm/php/zz-hardening.ini /usr/local/etc/php/conf.d/zz-hardening.ini
 
 # Keep the image-provided FPM global config intact and add pool overrides separately
 COPY ./.docker/common/php-fpm/conf.d/*.conf /usr/local/etc/php-fpm.d/
