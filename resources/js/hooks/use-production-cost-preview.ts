@@ -3,6 +3,7 @@ import { useServerPreview } from '@/hooks/use-server-preview';
 import type { ServerPreviewRequest } from '@/hooks/use-server-preview';
 import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
 import type {
+    FormNumberValue,
     PreviewCostData,
     ProductionOrderIngredientFormRow,
     ProductionOrderLineAdjustment,
@@ -17,7 +18,8 @@ type UseProductionCostPreviewProps = {
     ingredients: ProductionOrderIngredientFormRow[];
     packaging: ProductionOrderPackagingFormRow[];
     lineAdjustments: ProductionOrderLineAdjustment[];
-    remnantQuantityGallons: string | number;
+    remnantQuantityKg: FormNumberValue;
+    density: FormNumberValue;
     isCompleted: boolean;
     enabled?: boolean;
 };
@@ -31,7 +33,8 @@ type PreviewCostPayload = {
         label_raw_material_id: number | null;
         labels_used: string | null;
     }>;
-    remnant_quantity_gallons: number;
+    remnant_quantity_kg: string;
+    density_kg_per_gallon: string | null;
 };
 
 /** Los ajustes de línea no viajan (el servidor los lee de la OP), pero al cambiar piden otra vista previa. */
@@ -42,7 +45,8 @@ export function useProductionCostPreview({
     ingredients,
     packaging,
     lineAdjustments,
-    remnantQuantityGallons,
+    remnantQuantityKg,
+    density,
     isCompleted,
     enabled = true,
 }: UseProductionCostPreviewProps) {
@@ -78,8 +82,14 @@ export function useProductionCostPreview({
                                   ? null
                                   : String(pack.labels_used),
                       })),
-                      remnant_quantity_gallons:
-                          parseDecimal(remnantQuantityGallons) ?? 0,
+                      // Como texto: el servidor calcula los galones con bcmath. Sin peso por galón, calcula sin sobrante.
+                      remnant_quantity_kg:
+                          toDecimalPayload(remnantQuantityKg) || '0',
+                      // Solo con sobrante: sin él no se usa, y un valor inválido no debe invalidar toda la vista previa.
+                      density_kg_per_gallon:
+                          (parseDecimal(remnantQuantityKg) ?? 0) > 0
+                              ? toDecimalPayload(density) || null
+                              : null,
                   },
                   context: lineAdjustments.map((adjustment) => ({
                       id: adjustment.id,

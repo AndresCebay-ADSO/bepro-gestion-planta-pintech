@@ -48,6 +48,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property Carbon|null $packaging_end_time
  * @property string $spillage_quantity
  * @property string|null $remnant_quantity_gallons
+ * @property string|null $remnant_quantity_kg
  * @property string|null $remnant_notes
  * @property string|null $density_kg_per_gallon
  * @property int $lot_number
@@ -101,6 +102,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
     'packaging_end_time',
     'spillage_quantity',
     'remnant_quantity_gallons',
+    'remnant_quantity_kg',
     'remnant_notes',
     'density_kg_per_gallon',
     'created_by',
@@ -168,6 +170,7 @@ class ProductionOrder extends Model
             'packaging_end_time' => 'datetime',
             'spillage_quantity' => 'decimal:4',
             'remnant_quantity_gallons' => 'decimal:4',
+            'remnant_quantity_kg' => 'decimal:4',
             'density_kg_per_gallon' => 'decimal:4',
             'submitted_at' => 'datetime',
             'reviewed_at' => 'datetime',

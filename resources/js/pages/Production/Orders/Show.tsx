@@ -36,6 +36,7 @@ import { useProductionCostPreview } from '@/hooks/use-production-cost-preview';
 import { formatForInput } from '@/lib/formatters';
 import { breadcrumbHref } from '@/lib/navigation';
 import { toDecimalPayload } from '@/lib/numeric-input';
+import { remnantGallonsForDisplay } from '@/lib/remnant-quantity';
 import {
     index as productionOrdersIndex,
     show as productionOrdersShow,
@@ -114,9 +115,7 @@ export default function ProductionOrderShow({
             spillage_quantity: order.spillage_quantity ?? 0,
             density_kg_per_gallon: order.density_kg_per_gallon ?? '',
             // Lo que la planta informó al enviar a revisión: quien aprueba lo ve y lo confirma.
-            remnant_quantity_gallons: formatForInput(
-                order.remnant_quantity_gallons,
-            ),
+            remnant_quantity_kg: formatForInput(order.remnant_quantity_kg),
             remnant_notes: order.remnant_notes ?? '',
             notes: order.notes ?? '',
             ingredients: orderDetails.map(mapDetailToIngredientFormRow),
@@ -155,7 +154,8 @@ export default function ProductionOrderShow({
             ingredients: data.ingredients,
             packaging: data.packaging,
             lineAdjustments,
-            remnantQuantityGallons: data.remnant_quantity_gallons,
+            remnantQuantityKg: data.remnant_quantity_kg,
+            density: data.density_kg_per_gallon,
             isCompleted,
             enabled: can.previewCosts,
         });
@@ -455,7 +455,10 @@ export default function ProductionOrderShow({
                             estimatedTotalCost={estimatedTotalCost}
                             bulkCostPerUnit={bulkCostPerUnit}
                             remnantQuantityGallons={
-                                data.remnant_quantity_gallons
+                                remnantGallonsForDisplay(
+                                    data.remnant_quantity_kg,
+                                    data.density_kg_per_gallon,
+                                ) ?? undefined
                             }
                             remnantBulkCost={remnantBulkCost}
                             consumedRemnantCost={consumedRemnantCost}
@@ -613,9 +616,7 @@ function normalizeProductionOrderFormData(data: ProductionOrderFormData) {
         quality_solids: toDecimalPayload(data.quality_solids),
         spillage_quantity: toDecimalPayload(data.spillage_quantity),
         density_kg_per_gallon: toDecimalPayload(data.density_kg_per_gallon),
-        remnant_quantity_gallons: toDecimalPayload(
-            data.remnant_quantity_gallons,
-        ),
+        remnant_quantity_kg: toDecimalPayload(data.remnant_quantity_kg),
         ingredients: data.ingredients.map((ingredient) => ({
             id: ingredient.id,
             actual_quantity: toDecimalPayload(ingredient.actual_quantity),

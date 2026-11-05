@@ -27,9 +27,9 @@ export function OrderHeader({
     canUpdateColor = false,
     canCancel = false,
 }: OrderHeaderProps) {
-    // Galones de saldo ya consumidos por la orden: no vuelven al inventario si se cancela (B66).
-    const consumedRemnantGallons = (order.remnant_consumptions ?? []).reduce(
-        (total, consumption) => total + Number(consumption.quantity_gallons),
+    // Kilos de saldo ya consumidos por la orden: no vuelven al inventario si se cancela.
+    const consumedRemnantKg = (order.remnant_consumptions ?? []).reduce(
+        (total, consumption) => total + Number(consumption.quantity_kg),
         0,
     );
 
@@ -69,7 +69,7 @@ export function OrderHeader({
                         <CancelOrderDialog
                             orderId={order.id}
                             orderNumber={order.order_number}
-                            consumedRemnantGallons={consumedRemnantGallons}
+                            consumedRemnantKg={consumedRemnantKg}
                         />
                     )}
                     <Button variant="outline" asChild>

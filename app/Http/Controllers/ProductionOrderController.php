@@ -37,6 +37,7 @@ use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\Production\ProductionOrderCompletionLines;
 use App\Services\TimezoneService;
 use App\Support\EnumOptions;
 use App\Support\ImageDataUri;
@@ -56,6 +57,7 @@ class ProductionOrderController extends Controller
 
     public function __construct(
         private readonly CreateProductionOrderAction $createProductionOrder,
+        private readonly ProductionOrderCompletionLines $completionLines,
         private readonly CompleteProductionOrderAction $completeProductionOrder,
         private readonly CancelProductionOrderAction $cancelProductionOrder,
         private readonly PreviewProductionOrderCostsAction $previewProductionOrderCosts,
@@ -438,16 +440,12 @@ class ProductionOrderController extends Controller
     {
         $validated = $request->validated();
 
-        $remnantGallons = isset($validated['remnant_quantity_gallons'])
-            ? (string) $validated['remnant_quantity_gallons']
-            : null;
-
         return response()->json(
             $this->previewProductionOrderCosts->execute(
                 order: $productionOrder,
                 ingredients: $validated['ingredients'],
                 packaging: $validated['packaging'] ?? [],
-                remnantGallons: $remnantGallons
+                remnantGallons: $this->completionLines->remnantGallons($validated['remnant_quantity_kg'] ?? null, $validated['density_kg_per_gallon'] ?? null)
             )
         );
     }

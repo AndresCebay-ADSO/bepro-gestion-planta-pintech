@@ -283,3 +283,29 @@ test('the order pdf renders formatted numbers for costs, quantities and yield pe
         ->toContain('$15.678,9')
         ->toContain('99,8%');
 });
+
+test('el pdf y el excel imprimen el rendimiento y la cantidad proyectada en galones', function () {
+    [$order, $user] = createExportTestDependencies();
+    $order->update([
+        'quantity' => '333.0000',
+        'status' => ProductionOrderStatus::Completed,
+        'yield_real_quantity' => '1248.0000',
+        'yield_theoretical_quantity' => '1250.5000',
+        'yield_variance_quantity' => '-2.5000',
+        'yield_percentage' => '99.80',
+    ]);
+
+    $this->actingAs($user);
+    $payload = app(BuildProductionOrderExportDataAction::class)->execute($order->fresh());
+
+    $pdfHtml = view('pdf.production-order', ['order' => $payload, 'logoBase64' => null, 'generatedAt' => '-'])->render();
+    $excelHtml = view('excel.production-order', ['order' => $payload])->render();
+
+    expect($pdfHtml)
+        ->toContain('1.248 gal')
+        ->toContain('1.250,5 gal')
+        ->toContain('-2,5 gal')
+        ->and($excelHtml)->toContain('1,248.00 gal')
+        ->and($excelHtml)->toContain('333.00 gal')
+        ->and($excelHtml)->not->toContain('333.00 kg');
+});

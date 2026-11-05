@@ -27,8 +27,18 @@ class ConsumeRemnantRequest extends FormRequest
     {
         return [
             'remnant_id' => ['required', 'integer', 'exists:production_remnants,id'],
-            'quantity_gallons' => ['bail', 'required', ...NumberType::Quantity->rules(), 'min:0.0001'],
+            'quantity_kg' => ['bail', 'required', ...NumberType::Quantity->rules(), 'min:0.0001'],
             'notes' => ['nullable', 'string', 'max:1000'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'quantity_kg' => 'kilos a consumir',
         ];
     }
 }

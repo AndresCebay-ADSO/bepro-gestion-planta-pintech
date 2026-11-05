@@ -441,17 +441,17 @@
                 <tr>
                     <td class="label">RENDIMIENTO REAL</td>
                     <td class="value">
-                        {{ $order['yield_real_quantity'] !== null ? NumberFormat::quantity($order['yield_real_quantity']) . ' kg' : 'N/A' }}
+                        {{ $order['yield_real_quantity'] !== null ? NumberFormat::quantity($order['yield_real_quantity']) . ' gal' : 'N/A' }}
                     </td>
                     <td class="label">RENDIMIENTO TEÓRICO</td>
                     <td class="value">
-                        {{ $order['yield_theoretical_quantity'] !== null ? NumberFormat::quantity($order['yield_theoretical_quantity']) . ' kg' : 'N/A' }}
+                        {{ $order['yield_theoretical_quantity'] !== null ? NumberFormat::quantity($order['yield_theoretical_quantity']) . ' gal' : 'N/A' }}
                     </td>
                 </tr>
                 <tr>
                     <td class="label">VARIANZA</td>
                     <td class="value">
-                        {{ $order['yield_variance_quantity'] !== null ? NumberFormat::quantity($order['yield_variance_quantity']) . ' kg' : 'N/A' }}
+                        {{ $order['yield_variance_quantity'] !== null ? NumberFormat::quantity($order['yield_variance_quantity']) . ' gal' : 'N/A' }}
                     </td>
                     <td class="label">% RENDIMIENTO</td>
                     <td class="value">{{ NumberFormat::percent($order['yield_percentage']) }}</td>

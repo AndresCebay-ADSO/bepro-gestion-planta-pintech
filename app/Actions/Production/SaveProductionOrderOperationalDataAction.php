@@ -4,17 +4,35 @@ declare(strict_types=1);
 
 namespace App\Actions\Production;
 
+use App\Enums\NumberType;
 use App\Models\ProductionOrder;
+use App\Services\Production\ProductionOrderCompletionLines;
 use App\Support\OperationalTimes;
 use Illuminate\Validation\ValidationException;
 
 class SaveProductionOrderOperationalDataAction
 {
+    public function __construct(
+        private readonly ProductionOrderCompletionLines $completionLines,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $data
      */
     public function execute(ProductionOrder $order, array $data): ProductionOrder
     {
+        $density = $data['density_kg_per_gallon'] ?? $order->density_kg_per_gallon;
+        $remnantGallons = $this->completionLines->remnantGallons($data['remnant_quantity_kg'] ?? null, $density);
+
+        // Los kilos y el peso por galón caben cada uno en su columna, los galones que salen de ellos pueden no caber.
+        if ($remnantGallons !== null) {
+            NumberType::Quantity->ensureFits(
+                $remnantGallons,
+                'remnant_quantity_kg',
+                __('Los galones del sobrante no caben en el registro. Revisa los kilos y el peso por galón.'),
+            );
+        }
+
         $order->update([
             'actual_quantity' => $data['actual_yield_quantity'] ?? $order->quantity,
             'viscosity_ku' => $data['viscosity_ku'] ?? null,
@@ -27,9 +45,10 @@ class SaveProductionOrderOperationalDataAction
             'responsible_name' => $data['responsible_name'] ?? null,
             'spillage_quantity' => $data['spillage_quantity'] ?? 0,
             // Se guarda al enviar a revisión: sin esto, quien aprueba abría el saldo vacío y no podía cerrar la orden.
-            'remnant_quantity_gallons' => $data['remnant_quantity_gallons'] ?? null,
+            'remnant_quantity_kg' => $data['remnant_quantity_kg'] ?? null,
+            'remnant_quantity_gallons' => $remnantGallons,
             'remnant_notes' => $data['remnant_notes'] ?? null,
-            'density_kg_per_gallon' => $data['density_kg_per_gallon'] ?? $order->density_kg_per_gallon,
+            'density_kg_per_gallon' => $density,
             'notes' => $data['notes'] ?? $order->notes,
         ]);
 

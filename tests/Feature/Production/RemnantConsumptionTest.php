@@ -191,7 +191,7 @@ beforeEach(function () {
 it('consumes a remnant partially', function () {
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
-        'quantity_gallons' => 4,
+        'quantity_kg' => 20,
         'notes' => 'Consumo parcial',
     ])->assertRedirect()->assertInertiaFlash('success');
 
@@ -205,7 +205,7 @@ it('consumes a remnant partially', function () {
 it('consumes a remnant fully', function () {
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
-        'quantity_gallons' => 10,
+        'quantity_kg' => 50,
         'notes' => 'Consumo total',
     ])->assertRedirect()->assertInertiaFlash('success');
 
@@ -219,7 +219,7 @@ it('consumes a remnant fully', function () {
 it('creates consumption record with correct data', function () {
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
-        'quantity_gallons' => 4,
+        'quantity_kg' => 20,
         'notes' => 'Consumo de prueba',
     ])->assertRedirect();
 
@@ -239,7 +239,7 @@ it('allows consuming from a different product remnant', function () {
     // remnant product = sourceProduct, targetOrder product = targetProduct → should work
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
-        'quantity_gallons' => 3,
+        'quantity_kg' => 15,
     ])->assertRedirect()->assertInertiaFlash('success');
 
     expect($this->remnant->fresh()->status)->not->toBe(RemnantStatus::Available);
@@ -255,7 +255,7 @@ it('validates remnant must be available or partially consumed', function () {
 
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
-        'quantity_gallons' => 1,
+        'quantity_kg' => 5,
     ])->assertSessionHasErrors(['remnant_id']);
 });
 
@@ -264,7 +264,7 @@ it('validates target order must be in progress', function () {
 
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
-        'quantity_gallons' => 1,
+        'quantity_kg' => 5,
     ])->assertForbidden();
 });
 
@@ -273,7 +273,7 @@ it('no consume saldos en una orden en revisión, ni siquiera quien la revisa (D-
 
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
-        'quantity_gallons' => 1,
+        'quantity_kg' => 5,
     ])->assertForbidden();
 
     $this->getJson(route('production-orders.available-remnants', $this->targetOrder))->assertForbidden();
@@ -283,15 +283,15 @@ it('no consume saldos en una orden en revisión, ni siquiera quien la revisa (D-
 it('validates quantity must be greater than zero', function () {
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
-        'quantity_gallons' => 0,
-    ])->assertSessionHasErrors(['quantity_gallons']);
+        'quantity_kg' => 0,
+    ])->assertSessionHasErrors(['quantity_kg']);
 });
 
 it('validates cannot consume more than available', function () {
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
-        'quantity_gallons' => 20,
-    ])->assertSessionHasErrors(['quantity_gallons']);
+        'quantity_kg' => 100,
+    ])->assertSessionHasErrors(['quantity_kg']);
 });
 
 it('validates warehouse mismatch', function () {
@@ -321,7 +321,7 @@ it('validates warehouse mismatch', function () {
 
     $this->post(route('production-orders.consume-remnant', $otherWarehouseOrder), [
         'remnant_id' => $this->remnant->id,
-        'quantity_gallons' => 1,
+        'quantity_kg' => 5,
     ])->assertSessionHasErrors(['remnant_id']);
 });
 
@@ -345,8 +345,9 @@ it('returns curated fields in available remnants json', function () {
 
     expect($remnant)->toHaveKey('id')
         ->toHaveKey('source_order_number')
-        ->toHaveKey('available_quantity_gallons')
-        ->toHaveKey('density_kg_per_gallon')
+        ->toHaveKey('available_quantity_kg')
+        ->not->toHaveKey('available_quantity_gallons')
+        ->not->toHaveKey('density_kg_per_gallon')
         ->not->toHaveKey('cost_per_gallon')
         ->not->toHaveKey('product_id')
         ->not->toHaveKey('notes');
@@ -374,7 +375,7 @@ it('stores null consumed_cost when remnant has no cost_per_gallon', function () 
 
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
-        'quantity_gallons' => 4,
+        'quantity_kg' => 20,
     ])->assertRedirect();
 
     $consumption = $this->remnant->consumptions()->first();
@@ -412,7 +413,7 @@ it('preview costs include consumed remnant cost in total bulk cost', function ()
     // Consume remnant first: 4 gal at 5.5 = 22.0
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
-        'quantity_gallons' => 4,
+        'quantity_kg' => 20,
     ])->assertRedirect();
 
     $response = $this->postJson(route('production-orders.preview-costs', $this->targetOrder), [
@@ -463,7 +464,7 @@ it('completing order includes consumed remnant cost in production cost', functio
     // Consume remnant: 4 gal at 5.5 = 22.0
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
-        'quantity_gallons' => 4,
+        'quantity_kg' => 20,
     ])->assertRedirect();
 
     $this->post(route('production-orders.start', $this->targetOrder));
@@ -545,11 +546,152 @@ it('shows which product was mixed in each consumed remnant', function () {
 
     $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
         'remnant_id' => $this->remnant->id,
-        'quantity_gallons' => 1,
+        'quantity_kg' => 5,
     ])->assertSessionHasNoErrors();
 
     $this->get(route('production-orders.show', $this->targetOrder))
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('order.remnant_consumptions.0.source_product_name', 'SOURCE PRODUCT RAL 3020'));
+});
+
+/** Saldo pesado en kilos: 1,0001 kg a 4,7 kg/gal son 0,2128 gal. */
+function weighedRemnant(object $test, string $kilos = '1.0001', string $gallons = '0.2128', string $density = '4.7'): ProductionRemnant
+{
+    $test->remnant->update([
+        'original_quantity_gallons' => $gallons,
+        'available_quantity_gallons' => $gallons,
+        'original_quantity_kg' => $kilos,
+        'available_quantity_kg' => $kilos,
+        'density_kg_per_gallon' => $density,
+        'cost_per_gallon' => '100',
+    ]);
+
+    return $test->remnant;
+}
+
+it('un consumo parcial baja los kilos y recalcula los galones de los que quedan', function () {
+    $remnant = weighedRemnant($this);
+
+    $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
+        'remnant_id' => $remnant->id,
+        'quantity_kg' => '0.5',
+    ])->assertSessionHasNoErrors();
+
+    $remnant->refresh();
+    $consumption = $remnant->consumptions()->firstOrFail();
+
+    expect($remnant->available_quantity_kg)->toBe('0.5001')
+        ->and($remnant->available_quantity_gallons)->toBe('0.1064')
+        ->and($remnant->status)->toBe(RemnantStatus::PartiallyConsumed)
+        ->and($consumption->quantity_kg)->toBe('0.5000')
+        ->and($consumption->quantity_gallons)->toBe('0.1064');
+});
+
+it('dos consumos hasta agotarlo dejan el saldo en 0 exacto y suman los galones originales', function (string $total, string $gallons, string $density, array $kilosPerConsumption, array $expectedGallons) {
+    $remnant = weighedRemnant($this, $total, $gallons, $density);
+
+    foreach ($kilosPerConsumption as $kilos) {
+        $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
+            'remnant_id' => $remnant->id,
+            'quantity_kg' => $kilos,
+        ])->assertSessionHasNoErrors();
+    }
+
+    $remnant->refresh();
+    $consumptions = $remnant->consumptions()->orderBy('id')->get();
+
+    expect($remnant->available_quantity_kg)->toBe('0.0000')
+        ->and($remnant->available_quantity_gallons)->toBe('0.0000')
+        ->and($remnant->status)->toBe(RemnantStatus::Consumed)
+        ->and($consumptions->pluck('quantity_gallons')->all())->toBe($expectedGallons)
+        ->and(bcadd($consumptions[0]->quantity_gallons, $consumptions[1]->quantity_gallons, 4))->toBe($gallons)
+        ->and(bcadd($consumptions[0]->quantity_kg, $consumptions[1]->quantity_kg, 4))->toBe(bcadd($total, '0', 4));
+})->with([
+    'un saldo de 1,0001 kg' => ['1.0001', '0.2128', '4.7', ['0.5', '0.5001'], ['0.1064', '0.1064']],
+    // Dividir cada consumo por separado daría 0,1667 + 0,1667 = 0,3334: uno más de los que había.
+    'un redondeo que no cuadra por separado' => ['1', '0.3333', '3', ['0.5', '0.5'], ['0.1666', '0.1667']],
+]);
+
+it('no consume más kilos de los disponibles', function () {
+    $remnant = weighedRemnant($this);
+
+    $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
+        'remnant_id' => $remnant->id,
+        'quantity_kg' => '1.0002',
+    ])->assertSessionHasErrors(['quantity_kg' => 'No hay suficiente saldo disponible. Disponible: 1,0001 kg.']);
+
+    expect($remnant->fresh()->available_quantity_kg)->toBe('1.0001')
+        ->and($remnant->consumptions()->count())->toBe(0);
+});
+
+it('un resto de menos de 0,0001 gal deja el saldo consumido con todos los kilos que había', function () {
+    $remnant = weighedRemnant($this, '2.5', '0.5319');
+
+    $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
+        'remnant_id' => $remnant->id,
+        'quantity_kg' => '2.4999',
+    ])->assertSessionHasNoErrors();
+
+    $remnant->refresh();
+    $consumption = $remnant->consumptions()->firstOrFail();
+
+    expect($remnant->available_quantity_kg)->toBe('0.0000')
+        ->and($remnant->available_quantity_gallons)->toBe('0.0000')
+        ->and($remnant->status)->toBe(RemnantStatus::Consumed)
+        ->and($consumption->quantity_kg)->toBe('2.5000')
+        ->and($consumption->quantity_gallons)->toBe('0.5319');
+});
+
+it('rechaza una cantidad que no alcanza 0,0001 gal', function () {
+    $remnant = weighedRemnant($this, '2.5', '0.5319');
+
+    $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
+        'remnant_id' => $remnant->id,
+        'quantity_kg' => '0.0001',
+    ])->assertSessionHasErrors(['quantity_kg' => 'La cantidad es demasiado pequeña para registrarla.']);
+
+    $remnant->refresh();
+
+    expect($remnant->available_quantity_kg)->toBe('2.5000')
+        ->and($remnant->available_quantity_gallons)->toBe('0.5319')
+        ->and($remnant->status)->toBe(RemnantStatus::Available)
+        ->and($remnant->consumptions()->count())->toBe(0);
+});
+
+it('el costo consumido es galones consumidos por costo por galón', function () {
+    $remnant = weighedRemnant($this);
+
+    $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
+        'remnant_id' => $remnant->id,
+        'quantity_kg' => '0.5',
+    ])->assertSessionHasNoErrors();
+
+    // 0,1064 gal × $100
+    expect($remnant->consumptions()->firstOrFail()->consumed_cost)->toBe('10.6400');
+});
+
+it('ignora los galones que envíe el cliente al consumir', function () {
+    $remnant = weighedRemnant($this);
+
+    $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
+        'remnant_id' => $remnant->id,
+        'quantity_gallons' => '0.2',
+    ])->assertSessionHasErrors(['quantity_kg' => 'El campo kilos a consumir es obligatorio.']);
+
+    $this->post(route('production-orders.consume-remnant', $this->targetOrder), [
+        'remnant_id' => $remnant->id,
+        'quantity_kg' => '0.5',
+        'quantity_gallons' => '0.2',
+    ])->assertSessionHasNoErrors();
+
+    expect($remnant->consumptions()->firstOrFail()->quantity_gallons)->toBe('0.1064');
+});
+
+it('envía los kilos disponibles como texto', function () {
+    $remnant = $this->get(route('production-orders.available-remnants', $this->targetOrder))
+        ->assertOk()
+        ->json()[0];
+
+    expect($remnant['available_quantity_kg'])->toBe('50.0000');
 });

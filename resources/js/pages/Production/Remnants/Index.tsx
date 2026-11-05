@@ -113,7 +113,7 @@ export default function RemnantsIndex({
         },
         {
             key: 'density',
-            header: 'Densidad',
+            header: 'Peso por galón',
             cell: (remnant) => (
                 <>
                     <FormattedNumber
@@ -125,7 +125,7 @@ export default function RemnantsIndex({
                     </span>
                 </>
             ),
-            // El principal no cuenta en los 4 datos: la densidad cabe en la tarjeta, también con el costo.
+            // El principal no cuenta en los 4 datos: el peso por galón cabe en la tarjeta, también con el costo.
             mobile: 'meta',
             align: 'right',
         },
@@ -148,11 +148,11 @@ export default function RemnantsIndex({
               ]
             : []),
         {
-            key: 'available_gallons',
-            header: 'Disponible (gal)',
+            key: 'available_kg',
+            header: 'Disponible (kg)',
             cell: (remnant) => (
                 <FormattedNumber
-                    value={remnant.available_quantity_gallons}
+                    value={remnant.available_quantity_kg}
                     kind="quantity"
                 />
             ),
@@ -161,12 +161,13 @@ export default function RemnantsIndex({
             className: 'font-medium',
         },
         {
-            key: 'available_kg',
-            header: 'Disponible (kg)',
+            key: 'available_gallons',
+            header: 'Disponible (gal)',
             cell: (remnant) => (
                 <FormattedNumber
-                    value={remnant.available_quantity_kg}
-                    kind="quantity"
+                    value={remnant.available_quantity_gallons}
+                    maxDecimals={2}
+                    trimTrailingZeros
                 />
             ),
             mobile: 'meta',

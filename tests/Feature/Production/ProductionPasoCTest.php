@@ -346,7 +346,7 @@ test('it completes order for materials that do not track inventory without consu
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 100,
-        'remnant_quantity_gallons' => 100,
+        'remnant_quantity_kg' => 500,
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $this->user->id,
         'line_adjustment_ids' => [],
@@ -412,7 +412,7 @@ test('it prevents completing the same production order twice', function () {
 
     $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 100,
-        'remnant_quantity_gallons' => 100,
+        'remnant_quantity_kg' => 500,
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $this->user->id,
         'line_adjustment_ids' => [],
@@ -426,7 +426,7 @@ test('it prevents completing the same production order twice', function () {
     $secondResponse = $this->from(route('production-orders.show', $order))
         ->post(route('production-orders.complete', $order), [
             'actual_yield_quantity' => 100,
-            'remnant_quantity_gallons' => 100,
+            'remnant_quantity_kg' => 500,
             'density_kg_per_gallon' => 5,
             'quality_responsible_user_id' => $this->user->id,
             'line_adjustment_ids' => [],
@@ -476,7 +476,7 @@ test('it completes order even when there is no packaging plan', function () {
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 98,
-        'remnant_quantity_gallons' => 98,
+        'remnant_quantity_kg' => 490,
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $this->user->id,
         'line_adjustment_ids' => [],
@@ -776,7 +776,7 @@ test('it consumes raw material using fifo across multiple batches', function () 
 
     $response = $this->post(route('production-orders.complete', $order), [
         'actual_yield_quantity' => 150,
-        'remnant_quantity_gallons' => 150,
+        'remnant_quantity_kg' => 750,
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $this->user->id,
         'line_adjustment_ids' => [],
@@ -1339,7 +1339,7 @@ test('it keeps production_costs history for multiple orders with the same formul
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $this->user->id,
         'actual_yield_quantity' => 100,
-        'remnant_quantity_gallons' => 100,
+        'remnant_quantity_kg' => 500,
         'line_adjustment_ids' => [],
         'remnant_consumption_ids' => [],
         'ingredients' => [
@@ -1375,7 +1375,7 @@ test('it keeps production_costs history for multiple orders with the same formul
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $this->user->id,
         'actual_yield_quantity' => 120,
-        'remnant_quantity_gallons' => 120,
+        'remnant_quantity_kg' => 600,
         'line_adjustment_ids' => [],
         'remnant_consumption_ids' => [],
         'ingredients' => [
@@ -1434,7 +1434,7 @@ test('it sets unit_cost and total_cost to zero when actual quantity is zero', fu
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $this->user->id,
         'actual_yield_quantity' => 100,
-        'remnant_quantity_gallons' => 100,
+        'remnant_quantity_kg' => 500,
         'line_adjustment_ids' => [],
         'remnant_consumption_ids' => [],
         'ingredients' => [
@@ -1539,7 +1539,7 @@ test('it rejects completion when ingredient detail ids are duplicated', function
     $response = $this->from(route('production-orders.show', $order))
         ->post(route('production-orders.complete', $order), [
             'actual_yield_quantity' => 100,
-            'remnant_quantity_gallons' => 100,
+            'remnant_quantity_kg' => 500,
             'density_kg_per_gallon' => 5,
             'quality_responsible_user_id' => $this->user->id,
             'line_adjustment_ids' => [],

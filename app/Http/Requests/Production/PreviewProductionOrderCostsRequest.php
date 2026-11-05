@@ -30,7 +30,9 @@ class PreviewProductionOrderCostsRequest extends FormRequest
         return array_merge(
             $this->consumptionRules(),
             [
-                'remnant_quantity_gallons' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
+                'remnant_quantity_kg' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
+                // Opcional aquí: sin él, la vista previa calcula sin sobrante y no da error.
+                'density_kg_per_gallon' => ['bail', 'nullable', ...NumberType::Density->rules(), 'min:0.0001'],
             ]
         );
     }
@@ -43,7 +45,8 @@ class PreviewProductionOrderCostsRequest extends FormRequest
         return array_merge(
             $this->consumptionAttributes(),
             [
-                'remnant_quantity_gallons' => 'saldo sobrante (galones)',
+                'remnant_quantity_kg' => 'sobrante pesado (kg)',
+                'density_kg_per_gallon' => 'peso por galón (kg/gal)',
             ]
         );
     }

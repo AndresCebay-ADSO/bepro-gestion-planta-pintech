@@ -17,7 +17,9 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { toLocalDateTimeInput, toUtcIsoString } from '@/lib/date-time-helpers';
 import { formErrorMessages } from '@/lib/form-errors';
+import { formatQuantity } from '@/lib/formatters';
 import { parseDecimal } from '@/lib/numeric-input';
+import { remnantGallonsForDisplay } from '@/lib/remnant-quantity';
 import type {
     ProductionOrderErrors,
     ProductionOrderFormData,
@@ -59,11 +61,14 @@ export function ControlCard({
     const selectedSigner = qualitySigners.find(
         (s) => s.id === data.quality_responsible_user_id,
     );
-    const remnantGallons = parseDecimal(data.remnant_quantity_gallons);
+    const remnantKilos = parseDecimal(data.remnant_quantity_kg);
+    const remnantGallons = remnantGallonsForDisplay(
+        data.remnant_quantity_kg,
+        data.density_kg_per_gallon,
+    );
     // Todos los errores del servidor junto al botón, también los que no tienen un campo visible (OPL-11): la falta de
     // stock de un ajuste, una fila, o que la orden cambió mientras estaba abierta.
     const serverErrors = formErrorMessages(errors);
-    const density = parseDecimal(data.density_kg_per_gallon);
 
     return (
         <Card>
@@ -191,12 +196,12 @@ export function ControlCard({
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                        <Label htmlFor="density">
-                            Densidad (kg/gal){' '}
+                        <Label htmlFor="density_kg_per_gallon">
+                            Peso por galón (kg/gal){' '}
                             <span className="text-destructive">*</span>
                         </Label>
                         <DecimalInput
-                            id="density"
+                            id="density_kg_per_gallon"
                             maxIntegerDigits={6}
                             value={data.density_kg_per_gallon}
                             onValueChange={(value) =>
@@ -211,7 +216,7 @@ export function ControlCard({
                         )}
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="spillage">Derrame (gal)</Label>
+                        <Label htmlFor="spillage">Derrame (kg)</Label>
                         <DecimalInput
                             id="spillage"
                             value={data.spillage_quantity}
@@ -227,34 +232,55 @@ export function ControlCard({
                     <div className="space-y-1">
                         <p className="flex items-center gap-1.5 text-sm font-semibold">
                             <FlaskConical className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                            Sobrante de Producto Terminado
+                            Sobrante de producto terminado
                         </p>
                         <p className="text-xs text-muted-foreground">
-                            Si sobraron galones sin envasar, regístralos aquí
-                            para reutilizarlos en futuras órdenes.
+                            Si sobró producto sin envasar, pésalo sin el envase
+                            y regístralo aquí para reutilizarlo en futuras
+                            órdenes.
                         </p>
                     </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
-                            <Label htmlFor="remnant">Galones Sobrantes</Label>
+                            <Label htmlFor="remnant_quantity_kg">
+                                Sobrante pesado (kg)
+                            </Label>
                             <DecimalInput
-                                id="remnant"
+                                id="remnant_quantity_kg"
                                 placeholder="0"
-                                value={data.remnant_quantity_gallons}
+                                value={data.remnant_quantity_kg}
                                 onValueChange={(value) =>
-                                    setData('remnant_quantity_gallons', value)
+                                    setData('remnant_quantity_kg', value)
                                 }
                                 disabled={isReadOnly}
                             />
-                            {remnantGallons !== null && density !== null && (
-                                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                                    ≈ {(remnantGallons * density).toFixed(4)} kg
+                            {errors.remnant_quantity_kg && (
+                                <p className="text-xs text-destructive">
+                                    {errors.remnant_quantity_kg}
                                 </p>
+                            )}
+                            {remnantGallons !== null ? (
+                                <p className="text-xs text-muted-foreground">
+                                    ≈{' '}
+                                    {formatQuantity(remnantGallons, {
+                                        maxDecimals: 2,
+                                        trimTrailingZeros: true,
+                                    })}{' '}
+                                    gal
+                                </p>
+                            ) : (
+                                remnantKilos !== null &&
+                                remnantKilos > 0 && (
+                                    <p className="text-xs text-muted-foreground">
+                                        Digita el peso por galón para ver los
+                                        galones.
+                                    </p>
+                                )
                             )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="remnant_notes">
-                                Nota del Sobrante
+                                Nota del sobrante
                             </Label>
                             <Input
                                 id="remnant_notes"

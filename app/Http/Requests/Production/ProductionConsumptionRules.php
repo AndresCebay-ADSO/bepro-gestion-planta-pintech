@@ -110,6 +110,36 @@ trait ProductionConsumptionRules
     }
 
     /**
+     * Un sobrante pesado necesita su peso por galón, y sus galones tienen que dar algo. Va antes de `somethingPackedCheck`:
+     * si todo quedó como sobrante y falta el peso por galón, el aviso es ese y no «no se envasó nada».
+     *
+     * @return callable(Validator): void
+     */
+    protected function remnantWeightCheck(): callable
+    {
+        return function (Validator $validator): void {
+            if ($validator->errors()->hasAny(['remnant_quantity_kg', 'density_kg_per_gallon'])) {
+                return;
+            }
+
+            $lines = app(ProductionOrderCompletionLines::class);
+            $kilos = $this->input('remnant_quantity_kg');
+
+            if (! $lines->hasRemnant($kilos)) {
+                return;
+            }
+
+            $gallons = $lines->remnantGallons($kilos, $this->input('density_kg_per_gallon'));
+
+            if ($gallons === null) {
+                $validator->errors()->add('density_kg_per_gallon', __('Digita el peso por galón para registrar el sobrante.'));
+            } elseif (! $lines->hasRemnant($gallons)) {
+                $validator->errors()->add('remnant_quantity_kg', __('El sobrante es demasiado pequeño para registrarlo.'));
+            }
+        };
+    }
+
+    /**
      * D-OPL1: no se entrega una OP sin envasar nada ni dejar saldo. Va antes de la regla de rendimiento, que con todo en
      * 0 daría un «esperado: 0» que no explica el problema. Corre solo con los datos ya válidos.
      *
@@ -123,8 +153,10 @@ trait ProductionConsumptionRules
             }
 
             $packaging = $this->input('packaging');
+            $lines = app(ProductionOrderCompletionLines::class);
+            $remnantGallons = $lines->remnantGallons($this->input('remnant_quantity_kg'), $this->input('density_kg_per_gallon'));
 
-            if (! app(ProductionOrderCompletionLines::class)->packedSomething(is_array($packaging) ? $packaging : [], $this->input('remnant_quantity_gallons'))) {
+            if (! $lines->packedSomething(is_array($packaging) ? $packaging : [], $remnantGallons)) {
                 $validator->errors()->add('packaging', __(ProductionOrderCompletionLines::NOTHING_PACKED_MESSAGE));
             }
         };

@@ -48,7 +48,7 @@ class RemnantConsumptionController extends Controller
             $consumeRemnantAction->execute(
                 remnant: $remnant,
                 targetOrder: $productionOrder,
-                quantityGallons: (string) $request->validated('quantity_gallons'),
+                quantityKg: (string) $request->validated('quantity_kg'),
                 user: $request->user(),
                 notes: $request->validated('notes')
             );
