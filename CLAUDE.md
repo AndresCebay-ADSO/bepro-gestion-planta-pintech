@@ -36,7 +36,7 @@ php artisan test --compact
 docker compose -f compose.dev.yaml up -d postgres
 docker compose -f compose.dev.yaml exec -T postgres psql -U postgres -c "CREATE DATABASE pintech_erp_test"
 DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_DATABASE=pintech_erp_test DB_USERNAME=postgres \
-  DB_PASSWORD="$(grep '^DB_PASSWORD=' .env | cut -d= -f2-)" ./vendor/bin/pest   # env vars override phpunit.xml
+  DB_PASSWORD="$(grep '^DB_PASSWORD=' .env | cut -d= -f2-)" ./vendor/bin/pest --parallel   # env vars override phpunit.xml
 
 # Build & Routes
 npm run build                  # Production build (triggers Wayfinder vite plugin)
