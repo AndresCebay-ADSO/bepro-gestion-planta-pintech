@@ -1,7 +1,13 @@
 # Actualizaciones de dependencias automáticas: cada semana, Dependabot abre PR contra `develop` y el CI los prueba
-# en SQLite y PostgreSQL antes del merge. GitHub lee este archivo desde la rama por defecto del repositorio, y los PR de
-# seguridad (Settings → Code security) siempre van contra ella: la rama por defecto debe ser `develop`. Los parches y las versiones menores se agrupan en un solo PR por ecosistema;
-# las versiones mayores llegan por separado, porque pueden romper y hay que revisarlas una a una.
+# en SQLite y PostgreSQL, y escanea las imágenes con Trivy, antes del merge. GitHub lee este archivo desde la rama por
+# defecto del repositorio, y los PR de seguridad (Settings → Code security) siempre van contra ella: la rama por
+# defecto debe ser `develop`.
+#
+# Criterios (un solo desarrollador, lo que más cuesta es revisar):
+# - Pocos PR: menores y parches en un grupo por ecosistema; las versiones mayores, sueltas, porque pueden romper.
+# - Los de seguridad van en su propio grupo y no esperan al lunes.
+# - `cooldown`: una versión nueva se propone recién 7 días después de publicada. Las versiones rotas o maliciosas
+#   suelen detectarse en ese plazo. No aplica a las actualizaciones de seguridad, que llegan al momento.
 version: 2
 
 updates:
@@ -17,6 +23,8 @@ updates:
       day: monday
       time: '07:00'
       timezone: America/Bogota
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     commit-message:
       prefix: 'chore(deps)'
@@ -28,12 +36,14 @@ updates:
         update-types:
           - minor
           - patch
+      composer-security:
+        applies-to: security-updates
+        patterns:
+          - '*'
 
   - package-ecosystem: npm
     directory: /
     target-branch: develop
-    # También las dependencias indirectas: 5 de los 6 paquetes vulnerables de la auditoría de 2026-09 (dompdf,
-    # phpspreadsheet, guzzle, psr7, commonmark) no están en el manifiesto.
     allow:
       - dependency-type: all
     schedule:
@@ -41,6 +51,8 @@ updates:
       day: monday
       time: '07:00'
       timezone: America/Bogota
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     commit-message:
       prefix: 'chore(deps)'
@@ -52,11 +64,95 @@ updates:
       - dependency-name: '@types/node'
         update-types:
           - version-update:semver-major
+      # TypeScript 7 y ESLint 10 todavía no se pueden instalar: `typescript-eslint` admite TypeScript < 6.1 y
+      # `eslint-plugin-import` no admite ESLint 10 (`npm ci` falla con ERESOLVE). Quitar cuando lo admitan.
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
+      - dependency-name: eslint
+        update-types:
+          - version-update:semver-major
+      - dependency-name: '@eslint/js'
+        update-types:
+          - version-update:semver-major
     groups:
       npm-minor-patch:
         update-types:
           - minor
           - patch
+      npm-security:
+        applies-to: security-updates
+        patterns:
+          - '*'
+
+  # Imágenes base de los Dockerfiles (PHP, Node, Composer, Nginx). Están fijadas por versión exacta y digest:
+  # Dependabot propone la versión nueva y el CI la compila y la escanea.
+  - package-ecosystem: docker
+    directories:
+      - /.docker/common/php-fpm
+      - /.docker/production/nginx
+      - /.docker/development/workspace
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: America/Bogota
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: 'chore(docker)'
+    labels:
+      - dependencies
+      - docker
+    ignore:
+      # Cambiar de rama se decide a mano, no por Dependabot: PHP sigue en 8.3 (8.4 cuenta como «menor»), Node en 22
+      # (soporte hasta 2027-04-30) y Nginx en la rama estable 1.30 (la 1.31 es la principal).
+      - dependency-name: php
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
+      - dependency-name: nginx
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    groups:
+      docker-images:
+        patterns:
+          - '*'
+
+  # Imágenes de los compose (PostgreSQL, Nginx de desarrollo y cloudflared).
+  - package-ecosystem: docker-compose
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: America/Bogota
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: 'chore(docker)'
+    labels:
+      - dependencies
+      - docker
+    ignore:
+      # PostgreSQL cambia de versión mayor (17, 18…) solo con un plan: pide migrar los datos.
+      - dependency-name: postgres
+        update-types:
+          - version-update:semver-major
+      - dependency-name: nginx
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    groups:
+      compose-images:
+        patterns:
+          - '*'
 
   - package-ecosystem: github-actions
     directory: /
@@ -64,8 +160,14 @@ updates:
     schedule:
       interval: monthly
       timezone: America/Bogota
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: 'chore(ci)'
     labels:
       - dependencies
       - ci
+    groups:
+      github-actions:
+        patterns:
+          - '*'
