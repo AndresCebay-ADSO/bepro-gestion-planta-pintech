@@ -64,9 +64,12 @@ COPY . /var/www
 COPY --from=composer_bin --link /usr/bin/composer /usr/local/bin/composer
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
 
+# `node_modules` solo hace falta para compilar: se borra en el mismo paso para que no llegue a la etapa de producción,
+# que copia /var/www entero.
 RUN php artisan route:clear \
     && npm ci --ignore-scripts=false \
-    && npm run build
+    && npm run build \
+    && rm -rf node_modules
 
 
 # Stage 2: Production environment
