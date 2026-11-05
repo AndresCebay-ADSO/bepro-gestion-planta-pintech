@@ -37,6 +37,7 @@ class SaveProductionOrderOperationalDataAction
         $detailsById = $order->details->keyBy('id');
         $packagingPlansById = $order->packagingPlans->keyBy('id');
 
+        // No convierte: `actual_quantity` ya llega en la unidad de la materia prima (lo hacen Completar y Enviar a revisión).
         foreach ($data['ingredients'] as $ingredientData) {
             $detail = $detailsById->get((int) $ingredientData['id']);
             if ($detail === null) {

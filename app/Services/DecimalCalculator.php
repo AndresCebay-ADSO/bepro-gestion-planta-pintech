@@ -98,14 +98,15 @@ class DecimalCalculator
      */
     public function div(string|int|float $a, string|int|float $b, int $scale = self::DEFAULT_SCALE): string
     {
-        $divisor = $this->normalize($b);
-        if ($this->isZero($divisor)) {
-            throw new RuntimeException('Division by zero');
-        }
-
         // Calculate with extra precision to avoid truncation, then round half-up.
         // e.g. div('1', '6', 4) internally computes at scale 8 → '0.16666666' → rounds to '0.1667'.
         $internalScale = $scale + self::INTERNAL_EXTRA_SCALE;
+
+        // A esa misma escala: a 4 decimales, una equivalencia de 0,00004 pasaría por cero.
+        $divisor = $this->normalize($b);
+        if ($this->isZero($divisor, $internalScale)) {
+            throw new RuntimeException('Division by zero');
+        }
 
         return $this->round(bcdiv($this->normalize($a), $divisor, $internalScale), $scale);
     }

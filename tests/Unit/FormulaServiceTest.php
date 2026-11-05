@@ -45,8 +45,8 @@ test('it computes what a formula line asks of an order, in the raw material unit
         ->toBe(['planned_quantity' => '2.5000', 'conversion_factor' => '0.001000']);
 });
 
-// La OP calcula con el factor que guarda (6 decimales), el mismo con que la pantalla convierte el consumo real: así plan
-// y consumo cuadran. El costo de lista usa convertQuantity(), exacto. La diferencia la resuelve B51.
+// La OP calcula con el factor que guarda (6 decimales), el mismo con que el servidor convierte el consumo real: así plan
+// y consumo cuadran. El costo de lista usa convertQuantity(), exacto.
 test('it plans an order with the stored six-decimal factor, like the order screen', function () {
     $liter = UnitOfMeasure::factory()->create(['to_liter_conversion' => 1]);
     $gallon = UnitOfMeasure::factory()->create(['to_liter_conversion' => 3.7854]);

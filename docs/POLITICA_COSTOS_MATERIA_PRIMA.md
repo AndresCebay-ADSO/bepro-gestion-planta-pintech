@@ -78,8 +78,8 @@ llega por una carga directa) no frena los recorridos ni hace fallar un cambio de
 `Log::warning` y su costo se deja como estaba (`recalculateForProductOrLog`).
 
 El plan de la OP no usa esta cuenta: calcula con el factor de 6 decimales que guarda en cada línea
-(`FormulaService::orderLineRequirement()`), el mismo con que la pantalla convierte el consumo real. Con L↔galón difiere
-un 0,0002 % del costo de lista. Lo resuelve B51, antes de producción.
+(`FormulaService::orderLineRequirement()`), el mismo con que el servidor convierte el consumo real
+(`ProductionOrderLineUnits`). Con L↔galón difiere un 0,0002 % del costo de lista.
 
 Costo teórico de una presentación: `(granel × presentación + envase + etiqueta) × (1 + CIF)` (`VariantPricingService`).
 El precio solo cambia si el costo varía más que el umbral del producto.

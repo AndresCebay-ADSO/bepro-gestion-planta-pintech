@@ -53,8 +53,8 @@ trait ProductionConsumptionRules
                 Rule::exists('production_order_details', 'id')
                     ->where('production_order_id', $scopedOrderId),
             ],
-            // El navegador convierte la unidad con floats (B51), pero redondea a 4 decimales antes de enviar
-            // (production-ingredient-quantity.ts): `decimal` no rechaza nada legítimo y sí `1.123456` y `1e3` (OPL-08).
+            // Lo digitado, en la unidad que muestra la pantalla: lo convierte ProductionOrderLineUnits al entrar a la acción.
+            // `decimal` no rechaza nada legítimo y sí `1.123456` y `1e3`.
             'ingredients.*.actual_quantity' => ['bail', 'required', ...NumberType::Quantity->rules(), 'min:0'],
             'packaging' => ['array'],
             'packaging.*.id' => [

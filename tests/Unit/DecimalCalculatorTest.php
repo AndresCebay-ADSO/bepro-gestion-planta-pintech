@@ -96,6 +96,10 @@ test('div() handles exact divisions without rounding error', function () {
     expect($this->calc->div('10', '4'))->toBe('2.5000');
 });
 
+test('div() does not take a very small divisor for zero', function () {
+    expect($this->calc->div('0.0001', '0.00004'))->toBe('2.5000');
+});
+
 test('div() throws RuntimeException on division by zero', function () {
     expect(fn () => $this->calc->div('10', '0'))
         ->toThrow(RuntimeException::class, 'Division by zero');

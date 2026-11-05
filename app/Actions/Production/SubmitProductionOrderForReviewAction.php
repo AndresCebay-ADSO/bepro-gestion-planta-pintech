@@ -8,6 +8,7 @@ use App\Enums\ProductionOrderStatus;
 use App\Models\ProductionOrder;
 use App\Models\User;
 use App\Services\Production\ProductionOrderCompletionLines;
+use App\Services\Production\ProductionOrderLineUnits;
 use App\Services\Production\ProductionOrderLock;
 use Illuminate\Support\Facades\DB;
 
@@ -17,6 +18,7 @@ class SubmitProductionOrderForReviewAction
         private readonly SaveProductionOrderOperationalDataAction $saveOperationalData,
         private readonly ProductionOrderLock $orderLock,
         private readonly ProductionOrderCompletionLines $completionLines,
+        private readonly ProductionOrderLineUnits $lineUnits,
     ) {}
 
     /**
@@ -29,6 +31,9 @@ class SubmitProductionOrderForReviewAction
 
             // La misma lista que al completar: la lista vieja de OPL-02 se vio justamente al enviar a revisión (P6-1).
             $this->completionLines->ensureMatches($lockedOrder, $data);
+
+            // Después de la lista: si la orden cambió, eso se avisa antes que un error de cantidad.
+            $data['ingredients'] = $this->lineUnits->ingredientsToRecord($lockedOrder, $data['ingredients']);
 
             $this->saveOperationalData->execute($lockedOrder, $data);
 

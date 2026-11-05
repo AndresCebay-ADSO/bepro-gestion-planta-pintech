@@ -22,6 +22,7 @@ use App\Services\FinishedInventory\FinishedInventoryMovementService;
 use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\Pricing\ProductionCostCalculatorService;
 use App\Services\Production\ProductionOrderCompletionLines;
+use App\Services\Production\ProductionOrderLineUnits;
 use App\Services\Production\ProductionOrderLock;
 use App\Services\TimezoneService;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,7 @@ class CompleteProductionOrderAction
         private readonly TimezoneService $timezone,
         private readonly ProductionOrderLock $orderLock,
         private readonly ProductionOrderCompletionLines $completionLines,
+        private readonly ProductionOrderLineUnits $lineUnits,
     ) {}
 
     /**
@@ -52,6 +54,9 @@ class CompleteProductionOrderAction
 
             // Con la fila bloqueada nadie agrega ni quita líneas: lo enviado debe ser exactamente lo de la orden.
             $this->completionLines->ensureMatches($lockedOrder, $data);
+
+            // Después de la lista: si la orden cambió, eso se avisa antes que un error de cantidad.
+            $data['ingredients'] = $this->lineUnits->ingredientsToRecord($lockedOrder, $data['ingredients']);
 
             $wasPendingReview = $lockedOrder->status === ProductionOrderStatus::PendingReview;
 

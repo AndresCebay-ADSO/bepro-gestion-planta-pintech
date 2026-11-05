@@ -9,6 +9,7 @@ use App\Services\DecimalCalculator;
 use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\Pricing\ProductionCostCalculatorService;
 use App\Services\Production\ProductionOrderCompletionLines;
+use App\Services\Production\ProductionOrderLineUnits;
 
 class PreviewProductionOrderCostsAction
 {
@@ -17,10 +18,11 @@ class PreviewProductionOrderCostsAction
         private readonly ProductionCostCalculatorService $productionCostCalculator,
         private readonly DecimalCalculator $calculator,
         private readonly ProductionOrderCompletionLines $completionLines,
+        private readonly ProductionOrderLineUnits $lineUnits,
     ) {}
 
     /**
-     * @param  array<int, array{id:int,actual_quantity:float|int}>  $ingredients
+     * @param  array<int, array{id:int,actual_quantity:string|int|float}>  $ingredients  lo digitado, en la unidad de la línea
      * @param  array<int, array{id:int,actual_units:float|int,new_containers_used?:string|int|float|null,labels_used?:string|int|float|null,label_raw_material_id?:int|null}>  $packaging
      * @return array{
      *   ingredients: array<int, array{id:int,unit_cost:string,total_cost:string,actual_quantity:float}>,
@@ -36,6 +38,8 @@ class PreviewProductionOrderCostsAction
     public function execute(ProductionOrder $order, array $ingredients, array $packaging, ?string $remnantGallons = null): array
     {
         $order->loadMissing(['details', 'packagingPlans.productVariant', 'product', 'remnantConsumptions']);
+
+        $ingredients = $this->lineUnits->ingredientsInMaterialUnit($order, $ingredients);
 
         $detailsById = $order->details->keyBy('id');
         $ingredientRequirements = [];
