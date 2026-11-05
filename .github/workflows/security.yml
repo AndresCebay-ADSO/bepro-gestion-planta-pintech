@@ -1,0 +1,94 @@
+name: security
+
+# Escanea con Trivy lo que de verdad se despliega: las imágenes de producción compiladas (PHP, paquetes de Debian y
+# Alpine, binarios) y los lockfiles. `composer audit` y `npm audit` (workflow `quality`) solo ven paquetes: no ven el PHP
+# ni el sistema de la imagen, y por eso un aviso crítico de PHP pasó sin que el CI lo notara.
+#
+# Corre también todos los días: un aviso nuevo sobre algo que ya estaba en `develop` pone este job en rojo y GitHub
+# avisa por correo, aunque nadie haya hecho push.
+on:
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+    branches:
+      - develop
+      - main
+  schedule:
+    # 06:00 en Colombia (11:00 UTC).
+    - cron: '0 11 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Trivy fijado por versión y digest, como cualquier otra dependencia: su cadena de suministro ya fue comprometida una
+  # vez (GHSA-69fq-xp46-6x23, marzo de 2026). Se usa la imagen oficial y no la acción de terceros.
+  TRIVY_IMAGE: aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c
+  # Bloquea solo lo crítico y lo alto que ya tiene versión corregida: lo que no tiene arreglo no se puede resolver
+  # subiendo una versión y se revisa a mano en la ventana mensual.
+  TRIVY_ARGS: --quiet --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed
+
+jobs:
+  images:
+    name: trivy (imágenes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # La base de datos de avisos se baja una vez por día y se comparte entre las dos imágenes. Vive fuera del
+      # checkout: dentro, `COPY . /var/www` la metería en la imagen.
+      - name: Fecha de hoy
+        id: today
+        run: echo "date=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache de la base de datos de Trivy
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ steps.today.outputs.date }}
+          restore-keys: trivy-db-
+
+      - name: Compilar php-fpm (producción)
+        run: docker build -f .docker/common/php-fpm/Dockerfile --target production -t pintech/php-fpm:ci .
+
+      - name: Compilar nginx (producción)
+        run: docker build -f .docker/production/nginx/Dockerfile -t pintech/nginx:ci .
+
+      - name: Escanear php-fpm
+        run: >
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$HOME/.cache/trivy:/root/.cache/trivy"
+          "$TRIVY_IMAGE" image $TRIVY_ARGS --scanners vuln,secret pintech/php-fpm:ci
+
+      # `!cancelled()`: se escanea aunque php-fpm haya fallado, para ver los dos resultados en una pasada.
+      - name: Escanear nginx
+        if: ${{ !cancelled() }}
+        run: >
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$HOME/.cache/trivy:/root/.cache/trivy"
+          "$TRIVY_IMAGE" image $TRIVY_ARGS --scanners vuln,secret pintech/nginx:ci
+
+  lockfiles:
+    name: trivy (lockfiles)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Segunda fuente de avisos para Composer y npm, distinta de la de `composer audit` y `npm audit`. Sin dependencias
+      # de desarrollo: las herramientas de compilación no llegan a producción y ya las informa `npm audit` en `quality`.
+      - name: Escanear composer.lock y package-lock.json
+        run: >
+          docker run --rm -v "$PWD:/src:ro" "$TRIVY_IMAGE" fs $TRIVY_ARGS --scanners vuln --skip-dirs /src/vendor --skip-dirs /src/node_modules /src
