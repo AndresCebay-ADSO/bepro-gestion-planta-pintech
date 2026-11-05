@@ -1,8 +1,11 @@
-ARG NODE_VERSION=22.13.0
-FROM node:${NODE_VERSION}-bookworm-slim AS node_base
+# Imágenes base fijadas por versión exacta y digest: la misma compilación da siempre el mismo resultado, aunque Docker Hub
+# republique la etiqueta. Dependabot (ecosistema docker) propone las subidas: no volver a etiquetas flotantes como
+# `8.3-fpm` o `latest`. Node va sobre trixie, la misma versión de Debian que la imagen de PHP a la que se copia.
+FROM node:22.23.4-trixie-slim@sha256:be1e2a3dc2c4fd68cdfadad2a696a280e0d2749098bee509230174d72fb768c6 AS node_base
+FROM composer:2.11.1@sha256:f9d168f53e738474b41c77672c61b1d543fca096d827b80e6c7c2b7626933825 AS composer_bin
 
 # Stage 1: Build environment and Composer dependencies
-FROM php:8.3-fpm AS builder
+FROM php:8.3.36-fpm-trixie@sha256:a9b3deba63ea38ac8239e486211bfe33d2edd2cfbaf3fb2a9b7a476774f4224b AS builder
 
 # Install system dependencies and PHP extensions required for Laravel + MySQL/PostgreSQL support
 # Some dependencies are required for PHP extensions only in the build stage
@@ -58,7 +61,7 @@ WORKDIR /var/www
 COPY . /var/www
 
 # Install Composer and dependencies
-COPY --from=composer:2.9 --link /usr/bin/composer /usr/local/bin/composer
+COPY --from=composer_bin --link /usr/bin/composer /usr/local/bin/composer
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
 
 RUN php artisan route:clear \
@@ -67,7 +70,7 @@ RUN php artisan route:clear \
 
 
 # Stage 2: Production environment
-FROM php:8.3-fpm AS production
+FROM php:8.3.36-fpm-trixie@sha256:a9b3deba63ea38ac8239e486211bfe33d2edd2cfbaf3fb2a9b7a476774f4224b AS production
 
 # Install only runtime libraries needed in production
 # libfcgi-bin and procps are required for the php-fpm-healthcheck script
@@ -111,6 +114,7 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 # Configure upload limits (default PHP is 2M/8M, we increase it to 25M)
 RUN echo "upload_max_filesize = 25M" > /usr/local/etc/php/conf.d/uploads.ini \
     && echo "post_max_size = 25M" >> /usr/local/etc/php/conf.d/uploads.ini
+
 
 # Keep the image-provided FPM global config intact and add pool overrides separately
 COPY ./.docker/common/php-fpm/conf.d/*.conf /usr/local/etc/php-fpm.d/

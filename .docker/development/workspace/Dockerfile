@@ -1,6 +1,8 @@
 # docker/development/workspace/Dockerfile
 # Use the official PHP CLI image as the base
-FROM php:8.3-cli
+# Imágenes fijadas por versión exacta y digest (ver .docker/common/php-fpm/Dockerfile). Dependabot propone las subidas.
+FROM composer:2.11.1@sha256:f9d168f53e738474b41c77672c61b1d543fca096d827b80e6c7c2b7626933825 AS composer_bin
+FROM php:8.3.36-cli-trixie@sha256:7d334491cf2f46f6c93ac63f5e16664d8edb46bd016b40a67e089fe9a6c893cd
 
 # Set environment variables for user and group ID
 ARG UID=1000
@@ -34,7 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install Composer
-COPY --from=composer:2.9 --link /usr/bin/composer /usr/local/bin/composer
+COPY --from=composer_bin --link /usr/bin/composer /usr/local/bin/composer
 
 # Use ARG to define environment variables passed from the Docker build command or Docker Compose.
 ARG XDEBUG_ENABLED
