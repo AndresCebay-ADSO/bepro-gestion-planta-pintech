@@ -8,9 +8,10 @@ services:
       - ./:/var/www
       # Mount the Nginx configuration file
       - ./.docker/development/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    # Los puertos se publican solo en este equipo (127.0.0.1), no en la red de la oficina. Para probar desde otro
+    # dispositivo de la red, poner DOCKER_BIND_ADDRESS=0.0.0.0 en el .env y recrear los contenedores.
     ports:
-      # Map port 80 inside the container to the port specified by 'NGINX_PORT' on the host machine
-      - "8000:80"
+      - "${DOCKER_BIND_ADDRESS:-127.0.0.1}:8000:80"
     environment:
       - NGINX_HOST=localhost
     networks:
@@ -77,7 +78,7 @@ services:
       "
     user: root
     ports:
-      - '${VITE_PORT:-5173}:5173'
+      - '${DOCKER_BIND_ADDRESS:-127.0.0.1}:${VITE_PORT:-5173}:5173'
     tty: true
     stdin_open: true
     env_file:
@@ -93,7 +94,7 @@ services:
     # Pasar de 16.14 a 16.15 no toca los datos del volumen: entre versiones menores basta con reiniciar.
     image: postgres:16.15-trixie@sha256:933463a6c8eba2b9f5cd414138738cd8d5519cd2c471214c222652f547a66a32
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${DOCKER_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432"
     environment:
       - POSTGRES_DB=${DB_DATABASE:-pintech_erp}
       - POSTGRES_USER=${DB_USERNAME:-postgres}
