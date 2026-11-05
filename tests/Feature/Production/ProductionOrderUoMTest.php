@@ -192,7 +192,7 @@ test('it keeps converting an existing order with its stored factor when the unit
         ->and($detail['planned_quantity'])->toBe('2.5000');
 });
 
-test('it validates stock using normalized quantities', function () {
+test('it creates the order with normalized planned quantities when stock falls short', function () {
     // Solo 1 kg de stock
     InventoryBatch::create([
         'raw_material_id' => $this->material->id,
@@ -210,11 +210,19 @@ test('it validates stock using normalized quantities', function () {
         'warehouse_id' => $this->factory->id,
         'quantity' => 10,
         'planned_date' => now()->addDay()->toDateString(),
+        'confirm_stock_shortage' => true,
     ]);
 
-    // Debe fallar porque 1 kg < 2.5 kg
-    $response->assertSessionHasErrors(['product_id']);
-    $this->assertDatabaseCount('production_orders', 0);
+    // 1 kg < 2.5 kg ya no impide crearla: lo planeado queda en kg, la unidad de la materia prima.
+    $response->assertSessionHasNoErrors();
+    $order = ProductionOrder::query()->sole();
+
+    expect($order->status->value)->toBe('pending');
+    $this->assertDatabaseHas('production_order_details', [
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'planned_quantity' => 2.5,
+    ]);
 });
 
 test('it returns a validation error when formula detail unit cannot be converted to raw material unit', function () {

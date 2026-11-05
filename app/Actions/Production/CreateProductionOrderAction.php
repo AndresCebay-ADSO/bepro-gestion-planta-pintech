@@ -6,6 +6,7 @@ namespace App\Actions\Production;
 
 use App\Enums\NumberType;
 use App\Enums\ProductionOrderStatus;
+use App\Exceptions\StockShortageException;
 use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductionOrder;
@@ -37,8 +38,11 @@ class CreateProductionOrderAction
      *   planned_date:mixed,
      *   notes?:string|null,
      *   color?:string|null,
-     *   packaging?:array<int, array{product_variant_id:int, planned_units:float|int}>
+     *   packaging?:array<int, array{product_variant_id:int, planned_units:float|int}>,
+     *   confirm_stock_shortage?:bool|int|string
      * }  $data
+     *
+     * @throws StockShortageException si falta materia prima y no se aceptó: no queda nada guardado
      */
     public function execute(array $data, int $userId): ProductionOrder
     {
@@ -53,8 +57,6 @@ class CreateProductionOrderAction
             // La fórmula y sus líneas se leen después del bloqueo del producto: desactivarla o editar sus líneas también
             // lo bloquean (acciones de fórmulas), así que la orden ve lo ya guardado y no una versión vieja.
             $formula = $this->stillActiveFormula((int) $data['formula_id'], (int) $data['product_id']);
-
-            $this->fifoStockAllocator->validateStockForOrder($formula, $quantity, $warehouseId);
 
             $order = ProductionOrder::create([
                 'product_id' => $data['product_id'],
@@ -78,7 +80,7 @@ class CreateProductionOrderAction
                 ['planned_quantity' => $detailTotal, 'conversion_factor' => $factor] = $this->formulaService->orderLineRequirement($detail, $quantity);
 
                 // La fórmula por galón × los galones de la OP: cada uno cabe en su regla, el producto puede no caber.
-                // Una MP sin control de inventario (agua) no tiene stock que lo frene antes.
+                // Crear la orden no exige stock, así que nada más lo frena antes.
                 NumberType::Quantity->ensureFits(
                     $detailTotal,
                     'quantity',
@@ -132,6 +134,16 @@ class CreateProductionOrderAction
 
             foreach (($data['packaging'] ?? []) as $packData) {
                 ProductionOrderPackagingPlan::createForVariant((int) $order->id, (int) $packData['product_variant_id'], $packData['planned_units']);
+            }
+
+            // Al final: lo que impide crear la orden se avisa antes de preguntar si se acepta lo que falta. Crearla no exige
+            // stock, porque puede usar saldo y gastar menos que la fórmula: lo que no deja completarla es el consumo real.
+            if (! (bool) ($data['confirm_stock_shortage'] ?? false)) {
+                $shortages = $this->fifoStockAllocator->stockShortages($requirementsByMaterialId, $warehouseId);
+
+                if ($shortages !== []) {
+                    throw new StockShortageException($shortages);
+                }
             }
 
             return $order;

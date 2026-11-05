@@ -6,6 +6,16 @@ export type ProductionOrderStatus =
 
 export type FormNumberValue = string | number;
 
+/** Una materia prima que no alcanza para la orden. Las cantidades llegan como texto, en la unidad de la materia prima. */
+export type StockShortage = {
+    code: string;
+    unit: string;
+    required: string;
+    available: string;
+    missing: string;
+    has_reference_price: boolean;
+};
+
 export type VariantOption = {
     id: number;
     name: string;

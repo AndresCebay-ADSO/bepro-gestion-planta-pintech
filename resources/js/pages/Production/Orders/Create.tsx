@@ -1,5 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
+import { useState } from 'react';
 
 import { store as productionOrderStore } from '@/actions/App/Http/Controllers/ProductionOrderController';
 import { DecimalInput } from '@/components/decimal-input';
@@ -10,6 +11,7 @@ import { FormPage } from '@/components/form-page';
 import { IntegerInput } from '@/components/integer-input';
 import { PageHeader } from '@/components/page-header';
 import { PlantDateInput } from '@/components/plant-date-input';
+import { StockShortageDialog } from '@/components/production/stock-shortage-dialog';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -28,7 +30,7 @@ import {
     create as productionOrderCreate,
     index as productionOrderIndex,
 } from '@/routes/production-orders';
-import type { VariantOption } from '@/types/production-orders';
+import type { StockShortage, VariantOption } from '@/types/production-orders';
 
 type FormulaOption = {
     id: number;
@@ -70,6 +72,9 @@ export default function ProductionOrdersCreate({
             packaging: [] as PackagingRow[],
         });
 
+    const [shortages, setShortages] = useState<StockShortage[]>([]);
+    const [shortagesOpen, setShortagesOpen] = useState(false);
+
     // Cuando cambia el producto, actualizamos las fórmulas disponibles
     const selectedProduct = products.find(
         (p) => p.id === Number(data.product_id),
@@ -108,13 +113,32 @@ export default function ProductionOrdersCreate({
     const clearPackagingErrors = () =>
         clearListErrors(errors, clearErrors, 'packaging');
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    // El servidor revisa el stock al crear: si falta algo y no se ha aceptado, no guarda nada y responde con la lista.
+    const createOrder = (confirmStockShortage: boolean) => {
         transform((formData) => ({
             ...formData,
             quantity: toDecimalPayload(formData.quantity),
+            confirm_stock_shortage: confirmStockShortage,
         }));
-        post(productionOrderStore().url);
+        post(productionOrderStore().url, {
+            onFlash: ({ stockShortages }) => {
+                if (stockShortages?.length) {
+                    setShortages(stockShortages);
+                    setShortagesOpen(true);
+                }
+            },
+            // Un error del servidor al confirmar se muestra bajo su campo: el diálogo no debe quedar encima.
+            onFinish: () => {
+                if (confirmStockShortage) {
+                    setShortagesOpen(false);
+                }
+            },
+        });
+    };
+
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        createOrder(false);
     };
 
     const addPackaging = () => {
@@ -483,6 +507,14 @@ export default function ProductionOrdersCreate({
                         cancelHref={productionOrderIndex().url}
                     />
                 </form>
+
+                <StockShortageDialog
+                    open={shortagesOpen}
+                    shortages={shortages}
+                    processing={processing}
+                    onCancel={() => setShortagesOpen(false)}
+                    onConfirm={() => createOrder(true)}
+                />
             </FormPage>
         </>
     );

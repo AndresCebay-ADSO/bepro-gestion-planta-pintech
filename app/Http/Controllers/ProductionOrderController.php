@@ -19,6 +19,7 @@ use App\Enums\Permission;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\RawMaterialType;
 use App\Enums\WarehouseType;
+use App\Exceptions\StockShortageException;
 use App\Exports\ProductionOrderExport;
 use App\Filters\ProductionOrderFilter;
 use App\Http\Requests\Production\CancelProductionOrderRequest;
@@ -294,6 +295,11 @@ class ProductionOrderController extends Controller
             throw ValidationException::withMessages([
                 'formula_id' => $exception->getMessage(),
             ]);
+        } catch (StockShortageException $exception) {
+            // No se guardó nada: el formulario muestra lo que falta y, si lo aceptan, se reenvía con la confirmación.
+            Inertia::flash('stockShortages', $exception->shortages);
+
+            return back();
         }
 
         Inertia::flash('success', 'Orden de producción creada con éxito.');

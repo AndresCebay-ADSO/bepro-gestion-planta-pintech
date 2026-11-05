@@ -116,7 +116,7 @@ it('no guarda nada si falta stock de alguna materia prima de la receta', functio
     actingAsRole(SystemRole::Operator);
 
     $this->post(route('production.shrink-wraps.store'), shrinkWrapPayload(['applications' => 200]))
-        ->assertSessionHasErrors(['applications' => "Stock insuficiente de empaque secundario 'BOLSA-1' en la bodega de la orden. Requerido: 200.0000, faltante: 95.0000."]);
+        ->assertSessionHasErrors(['applications' => "Stock insuficiente de empaque secundario 'BOLSA-1' en la bodega de la orden. Requerido: 200 {$this->bag->unitOfMeasure->symbol}, faltante: 95 {$this->bag->unitOfMeasure->symbol}."]);
 
     expect(ShrinkWrap::query()->exists())->toBeFalse()
         ->and(InventoryMovement::query()->exists())->toBeFalse()
