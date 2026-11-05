@@ -1,5 +1,7 @@
-ARG NODE_VERSION=22.13.0
-FROM node:${NODE_VERSION}-bookworm-slim AS node_base
+# Imágenes base fijadas por versión exacta y digest (ver .docker/common/php-fpm/Dockerfile). Dependabot propone las
+# subidas. Nginx va en la rama estable (1.30): solo recibe correcciones, no funciones nuevas.
+FROM node:22.23.4-trixie-slim@sha256:be1e2a3dc2c4fd68cdfadad2a696a280e0d2749098bee509230174d72fb768c6 AS node_base
+FROM composer:2.11.1@sha256:f9d168f53e738474b41c77672c61b1d543fca096d827b80e6c7c2b7626933825 AS composer_bin
 
 # Stage 1: Build assets
 # -----------------------------------------------------------
@@ -8,7 +10,7 @@ FROM node:${NODE_VERSION}-bookworm-slim AS node_base
 # The builder stage is discarded after the build; only the final
 # nginx stage is kept, so the extra size has no runtime impact.
 # -----------------------------------------------------------
-FROM php:8.3-cli AS builder
+FROM php:8.3.36-cli-trixie@sha256:7d334491cf2f46f6c93ac63f5e16664d8edb46bd016b40a67e089fe9a6c893cd AS builder
 
 COPY --from=node_base /usr/local/ /usr/local/
 
@@ -36,7 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install Composer
-COPY --from=composer:2.9 --link /usr/bin/composer /usr/local/bin/composer
+COPY --from=composer_bin --link /usr/bin/composer /usr/local/bin/composer
 
 # Copy Laravel application code
 COPY . /var/www
@@ -50,7 +52,7 @@ RUN php artisan route:clear \
     && npm run build
 
 # Stage 2: Nginx production image
-FROM nginx:alpine
+FROM nginx:1.30.6-alpine@sha256:4db33bbf2cfb8f93c47f2dca1e5ce856a1af6af1e0cf72fe3a76312c9a857170
 
 # Copy custom Nginx configuration
 # -----------------------------------------------------------

@@ -80,7 +80,8 @@ services:
         condition: service_healthy
 
   postgres:
-    image: postgres:16
+    # Fijada por versión exacta y digest. Cambiar de versión menor (16.x) solo pide reiniciar el servicio.
+    image: postgres:16.15-trixie@sha256:933463a6c8eba2b9f5cd414138738cd8d5519cd2c471214c222652f547a66a32
     restart: unless-stopped
     user: postgres
     # No port exposed to host — only accessible via Docker internal network
@@ -122,7 +123,7 @@ services:
   #     retries: 3
 
   tunnel:
-    image: cloudflare/cloudflared:latest
+    image: cloudflare/cloudflared:2026.10.7@sha256:4955524aeaa379e154023d5a027c250f7b35041a2e7e950cf13f144bc9b9c5ba
     restart: unless-stopped
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     networks:
