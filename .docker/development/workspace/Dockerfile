@@ -7,7 +7,7 @@ FROM php:8.3.36-cli-trixie@sha256:7d334491cf2f46f6c93ac63f5e16664d8edb46bd016b40
 # Set environment variables for user and group ID
 ARG UID=1000
 ARG GID=1000
-ARG NODE_VERSION=22.13.0
+ARG NODE_VERSION=22.23.4
 
 # Install system dependencies and build libraries
 # && pecl install redis \
