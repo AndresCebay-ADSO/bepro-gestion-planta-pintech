@@ -19,6 +19,7 @@ use App\Enums\Permission;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\RawMaterialType;
 use App\Enums\WarehouseType;
+use App\Exceptions\StockShortageException;
 use App\Exports\ProductionOrderExport;
 use App\Filters\ProductionOrderFilter;
 use App\Http\Requests\Production\CancelProductionOrderRequest;
@@ -30,14 +31,12 @@ use App\Http\Requests\Production\StartProductionOrderRequest;
 use App\Http\Requests\Production\StoreProductionOrderRequest;
 use App\Http\Requests\Production\SubmitProductionOrderForReviewRequest;
 use App\Http\Requests\Production\UpdateProductionOrderColorRequest;
-use App\Models\Formula;
 use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\User;
 use App\Models\Warehouse;
-use App\Services\Inventory\FifoStockAllocatorService;
 use App\Services\TimezoneService;
 use App\Support\EnumOptions;
 use App\Support\ImageDataUri;
@@ -67,7 +66,6 @@ class ProductionOrderController extends Controller
         private readonly RejectProductionOrderReviewAction $rejectProductionOrderReview,
         private readonly UpdateProductionOrderColorAction $updateProductionOrderColor,
         private readonly TimezoneService $timezoneService,
-        private readonly FifoStockAllocatorService $fifoStockAllocator,
     ) {}
 
     /**
@@ -288,51 +286,25 @@ class ProductionOrderController extends Controller
      */
     public function store(StoreProductionOrderRequest $request): RedirectResponse
     {
-        $order = $this->withFormulaUnitErrors(fn (): ProductionOrder => $this->createProductionOrder->execute(
-            data: $request->validated(),
-            userId: $this->authenticatedUserId()
-        ));
-
-        Inertia::flash('success', 'Orden de producción creada con éxito.');
-
-        return redirect()->route('production-orders.show', $order);
-    }
-
-    /**
-     * Revisa, antes de crear la orden, qué materias primas faltarían. No guarda nada: con las mismas reglas de `store`,
-     * lo que no pasa aquí tampoco se crearía.
-     */
-    public function checkStock(StoreProductionOrderRequest $request): JsonResponse
-    {
-        $validated = $request->validated();
-        $formula = Formula::query()->findOrFail((int) $validated['formula_id']);
-
-        return response()->json([
-            'shortages' => $this->withFormulaUnitErrors(fn (): array => $this->fifoStockAllocator->stockShortagesForOrder(
-                $formula,
-                (string) $validated['quantity'],
-                (int) $validated['warehouse_id'],
-            )),
-        ]);
-    }
-
-    /**
-     * Una línea de la fórmula cuya unidad no se convierte a la de su materia prima es un error del formulario.
-     *
-     * @template TResult
-     *
-     * @param  callable(): TResult  $work
-     * @return TResult
-     */
-    private function withFormulaUnitErrors(callable $work): mixed
-    {
         try {
-            return $work();
+            $order = $this->createProductionOrder->execute(
+                data: $request->validated(),
+                userId: $this->authenticatedUserId()
+            );
         } catch (\DomainException $exception) {
             throw ValidationException::withMessages([
                 'formula_id' => $exception->getMessage(),
             ]);
+        } catch (StockShortageException $exception) {
+            // No se guardó nada: el formulario muestra lo que falta y, si lo aceptan, se reenvía con la confirmación.
+            Inertia::flash('stockShortages', $exception->shortages);
+
+            return back();
         }
+
+        Inertia::flash('success', 'Orden de producción creada con éxito.');
+
+        return redirect()->route('production-orders.show', $order);
     }
 
     /**

@@ -210,6 +210,7 @@ test('it creates the order with normalized planned quantities when stock falls s
         'warehouse_id' => $this->factory->id,
         'quantity' => 10,
         'planned_date' => now()->addDay()->toDateString(),
+        'confirm_stock_shortage' => true,
     ]);
 
     // 1 kg < 2.5 kg ya no impide crearla: lo planeado queda en kg, la unidad de la materia prima.

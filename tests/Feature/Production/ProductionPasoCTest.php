@@ -96,6 +96,7 @@ test('it creates a pending order with its planned lines even if stock is insuffi
         'warehouse_id' => $this->factory->id,
         'quantity' => 100, // Requiere 50L de resina
         'planned_date' => now()->addDay()->toDateString(),
+        'confirm_stock_shortage' => true,
     ]);
 
     $response->assertSessionHasNoErrors();

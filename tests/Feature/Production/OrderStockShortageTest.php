@@ -15,6 +15,7 @@ use App\Models\ProductionOrderDetail;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\Warehouse;
+use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     $this->user = actingAsRole(SystemRole::Admin, [
@@ -96,7 +97,7 @@ function shortageOrderPayload(array $overrides = []): array
 /** Crea e inicia la orden por el flujo real: lo que importa es que nació sin stock. */
 function startedOrderWithoutStock(): ProductionOrder
 {
-    test()->post(route('production-orders.store'), shortageOrderPayload())->assertSessionHasNoErrors();
+    test()->post(route('production-orders.store'), shortageOrderPayload(['confirm_stock_shortage' => true]))->assertSessionHasNoErrors();
 
     $order = ProductionOrder::query()->sole();
     test()->post(route('production-orders.start', $order))->assertSessionHasNoErrors();
@@ -118,18 +119,44 @@ function shortageClosingPayload(ProductionOrderDetail $detail, string $consumed)
     ];
 }
 
-describe('revisión antes de crear', function () {
-    it('no reporta nada con todo el stock', function () {
+/** @return array<string, mixed> */
+function expectedShortage(string $code, string $required, string $available, string $missing, string $unit = 'kg', bool $hasPrice = true): array
+{
+    return [
+        'code' => $code,
+        'unit' => $unit,
+        'required' => $required,
+        'available' => $available,
+        'missing' => $missing,
+        'has_reference_price' => $hasPrice,
+    ];
+}
+
+/** Envía el formulario sin aceptar los faltantes: vuelve a la pantalla, con la lista y sin guardar nada. */
+function postOrderExpectingShortages(array $shortages): void
+{
+    test()->from(route('production-orders.create'))
+        ->post(route('production-orders.store'), shortageOrderPayload())
+        ->assertRedirect(route('production-orders.create'))
+        ->assertSessionHasNoErrors()
+        ->assertInertiaFlash('stockShortages', $shortages);
+
+    test()->assertDatabaseCount('production_orders', 0);
+    test()->assertDatabaseCount('production_order_details', 0);
+}
+
+describe('al enviar sin aceptar los faltantes', function () {
+    it('crea la orden sin preguntar si hay todo el stock', function () {
         $resin = shortageMaterial('S-1');
         shortageFormulaLine($resin, 2);
         shortageBatch($resin, 20);
 
-        $this->postJson(route('production-orders.check-stock'), shortageOrderPayload())
-            ->assertOk()
-            ->assertExactJson(['shortages' => []]);
+        $this->post(route('production-orders.store'), shortageOrderPayload())
+            ->assertRedirect(route('production-orders.show', ProductionOrder::query()->sole()))
+            ->assertInertiaFlashMissing('stockShortages');
     });
 
-    it('lista todas las materias primas que faltan, con sus números y su unidad', function () {
+    it('lista todas las materias primas que faltan, con sus números y su unidad, y no guarda nada', function () {
         $resin = shortageMaterial('S-7');
         $pigment = shortageMaterial('S-9');
         $solvent = shortageMaterial('S-3');
@@ -139,12 +166,21 @@ describe('revisión antes de crear', function () {
         shortageBatch($resin, 1);
         shortageBatch($solvent, 10);
 
-        $this->postJson(route('production-orders.check-stock'), shortageOrderPayload())
-            ->assertOk()
-            ->assertExactJson(['shortages' => [
-                ['code' => 'S-7', 'unit' => 'kg', 'required' => '20.0000', 'available' => '1.0000', 'missing' => '19.0000'],
-                ['code' => 'S-9', 'unit' => 'kg', 'required' => '5.0000', 'available' => '0.0000', 'missing' => '5.0000'],
-            ]]);
+        postOrderExpectingShortages([
+            expectedShortage('S-7', '20.0000', '1.0000', '19.0000'),
+            expectedShortage('S-9', '5.0000', '0.0000', '5.0000'),
+        ]);
+    });
+
+    it('la lista llega a la pantalla del formulario', function () {
+        shortageFormulaLine(shortageMaterial('S-7'), 1);
+
+        $this->from(route('production-orders.create'))
+            ->followingRedirects()
+            ->post(route('production-orders.store'), shortageOrderPayload())
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Production/Orders/Create')
+                ->hasFlash('stockShortages', [expectedShortage('S-7', '10.0000', '0.0000', '10.0000')]));
     });
 
     it('suma una materia prima que está en dos líneas de la fórmula', function () {
@@ -154,17 +190,16 @@ describe('revisión antes de crear', function () {
         // Cada línea sola (10 y 5) cabe en 12; juntas no.
         shortageBatch($resin, 12);
 
-        $this->postJson(route('production-orders.check-stock'), shortageOrderPayload())
-            ->assertExactJson(['shortages' => [
-                ['code' => 'S-7', 'unit' => 'kg', 'required' => '15.0000', 'available' => '12.0000', 'missing' => '3.0000'],
-            ]]);
+        postOrderExpectingShortages([expectedShortage('S-7', '15.0000', '12.0000', '3.0000')]);
     });
 
-    it('no reporta una materia prima sin control de inventario', function () {
+    it('no pregunta por una materia prima sin control de inventario', function () {
         shortageFormulaLine(shortageMaterial('AGUA', ['tracks_inventory' => false]), 5);
 
-        $this->postJson(route('production-orders.check-stock'), shortageOrderPayload())
-            ->assertExactJson(['shortages' => []]);
+        $this->post(route('production-orders.store'), shortageOrderPayload())
+            ->assertInertiaFlashMissing('stockShortages');
+
+        $this->assertDatabaseCount('production_orders', 1);
     });
 
     it('da los números en la unidad de la materia prima aunque la fórmula esté en otra', function () {
@@ -172,10 +207,7 @@ describe('revisión antes de crear', function () {
         shortageFormulaLine($resin, 250, $this->gram);
         shortageBatch($resin, 1);
 
-        $this->postJson(route('production-orders.check-stock'), shortageOrderPayload())
-            ->assertExactJson(['shortages' => [
-                ['code' => 'S-7', 'unit' => 'kg', 'required' => '2.5000', 'available' => '1.0000', 'missing' => '1.5000'],
-            ]]);
+        postOrderExpectingShortages([expectedShortage('S-7', '2.5000', '1.0000', '1.5000')]);
     });
 
     it('cuenta solo el stock de la bodega de la orden', function () {
@@ -183,46 +215,122 @@ describe('revisión antes de crear', function () {
         shortageFormulaLine($resin, 1);
         shortageBatch($resin, 100, Warehouse::create(['name' => 'Planta Bogotá', 'city' => 'Bogotá', 'type' => 'factory', 'is_active' => true]));
 
-        $this->postJson(route('production-orders.check-stock'), shortageOrderPayload())
-            ->assertExactJson(['shortages' => [
-                ['code' => 'S-7', 'unit' => 'kg', 'required' => '10.0000', 'available' => '0.0000', 'missing' => '10.0000'],
-            ]]);
+        postOrderExpectingShortages([expectedShortage('S-7', '10.0000', '0.0000', '10.0000')]);
     });
 
-    it('usa las reglas de crear la orden: con datos inválidos responde 422', function () {
-        $this->postJson(route('production-orders.check-stock'), shortageOrderPayload([
+    it('marca la materia prima que no tiene precio de referencia', function () {
+        shortageFormulaLine(shortageMaterial('S-7', ['current_price' => null]), 1);
+        shortageFormulaLine(shortageMaterial('S-9', ['current_price' => 0]), 1);
+
+        postOrderExpectingShortages([
+            expectedShortage('S-7', '10.0000', '0.0000', '10.0000', hasPrice: false),
+            expectedShortage('S-9', '10.0000', '0.0000', '10.0000', hasPrice: false),
+        ]);
+    });
+
+    it('no llega a preguntar si los datos son inválidos', function () {
+        shortageFormulaLine(shortageMaterial('S-7'), 1);
+
+        $this->post(route('production-orders.store'), shortageOrderPayload([
             'quantity' => '',
-            'planned_date' => now()->subDays(3)->toDateString(),
-            'packaging' => [['product_variant_id' => 999999, 'planned_units' => 1]],
+            'confirm_stock_shortage' => 'quizás',
         ]))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['quantity', 'planned_date', 'packaging.0.product_variant_id']);
+            ->assertSessionHasErrors(['quantity', 'confirm_stock_shortage'])
+            ->assertInertiaFlashMissing('stockShortages');
     });
 
-    it('responde 422 si una línea de la fórmula no se convierte, igual que al crear', function () {
+    it('no llega a preguntar si una línea de la fórmula no se convierte', function () {
         shortageFormulaLine(shortageMaterial('S-7'), 1, $this->gallon);
 
-        $this->postJson(route('production-orders.check-stock'), shortageOrderPayload())
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['formula_id']);
+        $this->post(route('production-orders.store'), shortageOrderPayload())
+            ->assertSessionHasErrors(['formula_id'])
+            ->assertInertiaFlashMissing('stockShortages');
     });
 
-    it('niega la revisión a quien no puede crear órdenes', function () {
+    it('no llega a preguntar si la cantidad de una línea no cabe en el registro', function () {
+        shortageFormulaLine(shortageMaterial('S-7'), '99999999');
+
+        $this->post(route('production-orders.store'), shortageOrderPayload())
+            ->assertSessionHasErrors(['quantity'])
+            ->assertInertiaFlashMissing('stockShortages');
+
+        $this->assertDatabaseCount('production_orders', 0);
+    });
+
+    it('no se la muestra a quien no puede crear órdenes', function () {
         shortageFormulaLine(shortageMaterial('S-7'), 1);
         actingAsRole(SystemRole::Operator);
 
-        $this->postJson(route('production-orders.check-stock'), shortageOrderPayload())->assertForbidden();
+        $this->post(route('production-orders.store'), shortageOrderPayload())
+            ->assertForbidden()
+            ->assertInertiaFlashMissing('stockShortages');
     });
+});
 
-    it('no crea nada', function () {
+describe('al aceptar los faltantes', function () {
+    it('crea la orden, sin saltarse el número que le tocaba', function () {
         shortageFormulaLine(shortageMaterial('S-7'), 1);
 
-        $this->postJson(route('production-orders.check-stock'), shortageOrderPayload())
-            ->assertOk()
-            ->assertJsonCount(1, 'shortages');
+        $this->from(route('production-orders.create'))->post(route('production-orders.store'), shortageOrderPayload());
 
-        $this->assertDatabaseCount('production_orders', 0);
-        $this->assertDatabaseCount('production_order_details', 0);
+        $this->post(route('production-orders.store'), shortageOrderPayload(['confirm_stock_shortage' => true]))
+            ->assertRedirect(route('production-orders.show', ProductionOrder::query()->sole()));
+
+        $order = ProductionOrder::query()->sole();
+
+        expect($order->status)->toBe(ProductionOrderStatus::Pending)
+            ->and($order->order_number)->toEndWith('-0001')
+            ->and($order->lot_number)->toBe((int) config('production.lot_start_number', 1));
+    });
+});
+
+describe('costo estimado', function () {
+    /** Crea la orden aceptando los faltantes y devuelve su línea. */
+    function estimatedLine(): ProductionOrderDetail
+    {
+        test()->post(route('production-orders.store'), shortageOrderPayload(['confirm_stock_shortage' => true]))->assertSessionHasNoErrors();
+
+        return ProductionOrderDetail::query()->sole();
+    }
+
+    it('con varios lotes, costea cada parte al precio de su lote', function () {
+        $resin = shortageMaterial('S-7', ['current_price' => 9999]);
+        shortageFormulaLine($resin, 2);
+        shortageBatch($resin, 10, unitPrice: 5000);
+        shortageBatch($resin, 10, unitPrice: 5100);
+
+        $detail = estimatedLine();
+
+        expect($detail->unit_cost)->toBe('5050.0000')
+            ->and($detail->total_cost)->toBe('101000.0000');
+    });
+
+    it('lo que no alcanzan los lotes se costea al precio de referencia, no al del lote que quedaba', function () {
+        $resin = shortageMaterial('S-7', ['current_price' => 5000]);
+        shortageFormulaLine($resin, 2);
+        shortageBatch($resin, 1, unitPrice: 1000);
+
+        $detail = estimatedLine();
+
+        expect($detail->unit_cost)->toBe('4800.0000')
+            ->and($detail->total_cost)->toBe('96000.0000');
+    });
+
+    it('sin precio de referencia, lo que falta no suma', function () {
+        $resin = shortageMaterial('S-7', ['current_price' => null]);
+        shortageFormulaLine($resin, 2);
+        shortageBatch($resin, 1, unitPrice: 1000);
+
+        $detail = estimatedLine();
+
+        expect($detail->unit_cost)->toBe('50.0000')
+            ->and($detail->total_cost)->toBe('1000.0000');
+    });
+
+    it('sin lotes ni precio de referencia, queda en 0', function () {
+        shortageFormulaLine(shortageMaterial('S-7', ['current_price' => null]), 2);
+
+        expect(estimatedLine()->total_cost)->toBe('0.0000');
     });
 });
 
@@ -230,7 +338,7 @@ describe('orden creada sin stock', function () {
     it('estima el costo con el precio de referencia si no hay lotes', function () {
         shortageFormulaLine(shortageMaterial('S-7', ['current_price' => 1234]), 2);
 
-        $this->post(route('production-orders.store'), shortageOrderPayload())->assertSessionHasNoErrors();
+        $this->post(route('production-orders.store'), shortageOrderPayload(['confirm_stock_shortage' => true]))->assertSessionHasNoErrors();
 
         $detail = ProductionOrderDetail::query()->sole();
 

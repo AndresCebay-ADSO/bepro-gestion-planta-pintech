@@ -11,7 +11,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Spinner } from '@/components/ui/spinner';
-import type { StockShortage } from '@/lib/order-stock-check';
+import type { StockShortage } from '@/types/production-orders';
 
 type StockShortageDialogProps = {
     open: boolean;
@@ -104,6 +104,12 @@ export function StockShortageDialog({
                                     className="font-medium text-warning-text"
                                 />
                             </dl>
+                            {!shortage.has_reference_price && (
+                                <p className="text-xs text-muted-foreground">
+                                    Sin precio de referencia: lo que falta no
+                                    suma al costo estimado.
+                                </p>
+                            )}
                         </li>
                     ))}
                 </ul>

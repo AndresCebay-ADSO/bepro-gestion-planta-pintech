@@ -59,6 +59,8 @@ class StoreProductionOrderRequest extends FormRequest
             'planned_date' => ['bail', 'required', PlantDate::make()->notPast()],
             'notes' => ['nullable', 'string', 'max:2000'],
             'color' => ['nullable', 'string', 'max:100'],
+            // Aceptar crear la orden aunque falte materia prima: sin esto, la acción responde con lo que falta.
+            'confirm_stock_shortage' => ['sometimes', 'boolean'],
             'packaging' => ['nullable', 'array'],
             'packaging.*.product_variant_id' => [
                 'required_with:packaging',
@@ -92,6 +94,7 @@ class StoreProductionOrderRequest extends FormRequest
     public function attributes(): array
     {
         return [
+            'confirm_stock_shortage' => 'confirmación de faltantes de stock',
             'product_id' => 'producto',
             'formula_id' => 'fórmula',
             'warehouse_id' => 'almacén de producción',

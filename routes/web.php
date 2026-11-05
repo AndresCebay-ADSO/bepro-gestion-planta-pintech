@@ -314,9 +314,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('production-orders', [ProductionOrderController::class, 'store'])
         ->middleware('can:'.Permission::ProductionOrdersCreate->value)
         ->name('production-orders.store');
-    Route::post('production-orders/check-stock', [ProductionOrderController::class, 'checkStock'])
-        ->middleware('can:'.Permission::ProductionOrdersCreate->value)
-        ->name('production-orders.check-stock');
     Route::get('production-orders/{production_order}', [ProductionOrderController::class, 'show'])
         ->middleware('can:'.Permission::ProductionOrdersView->value)
         ->name('production-orders.show');
