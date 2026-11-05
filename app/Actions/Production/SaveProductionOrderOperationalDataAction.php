@@ -33,8 +33,17 @@ class SaveProductionOrderOperationalDataAction
             );
         }
 
+        // El rendimiento real no se digita: es lo envasado más el sobrante. Lo que mande el cliente se ignora.
+        $realYield = $this->completionLines->realYield($order, $data['packaging'] ?? [], $remnantGallons);
+
+        NumberType::Quantity->ensureFits(
+            $realYield,
+            'packaging',
+            __('Lo envasado más el sobrante no cabe en el registro. Revisa las unidades envasadas.'),
+        );
+
         $order->update([
-            'actual_quantity' => $data['actual_yield_quantity'] ?? $order->quantity,
+            'actual_quantity' => $realYield,
             'viscosity_ku' => $data['viscosity_ku'] ?? null,
             'grinding_hg' => $data['grinding_hg'] ?? null,
             'quality_solids' => $data['quality_solids'] ?? null,

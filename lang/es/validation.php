@@ -275,7 +275,6 @@ return [
         // Órdenes de Producción
         'production_order_id' => 'orden de producción',
         'planned_date' => 'fecha planificada',
-        'actual_yield_quantity' => 'rendimiento real',
         'density_kg_per_gallon' => 'peso por galón',
         'remnant_quantity_kg' => 'sobrante pesado (kg)',
         'remnant_notes' => 'observaciones del saldo',

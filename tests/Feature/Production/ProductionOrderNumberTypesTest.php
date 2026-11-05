@@ -96,7 +96,6 @@ function numberTypesCompleteBody(object $t, array $f, array $override = []): arr
         'remnant_consumption_ids' => [],
         'ingredients' => [['id' => $f['d1']->id, 'actual_quantity' => '10'], ['id' => $f['d2']->id, 'actual_quantity' => '5']],
         'packaging' => [['id' => $f['pA']->id, 'actual_units' => '5'], ['id' => $f['pB']->id, 'actual_units' => '2']],
-        'actual_yield_quantity' => '15',
         'density_kg_per_gallon' => '5',
         'quality_responsible_user_id' => $t->admin->id,
         'responsible_name' => 'Operario',
@@ -187,7 +186,6 @@ test('las unidades envasadas, envases y etiquetas son enteras', function (string
     $this->actingAs($this->admin)
         ->post(route('production-orders.complete', $f['order']), numberTypesCompleteBody($this, $f, [
             'packaging' => $packaging,
-            'actual_yield_quantity' => $field === 'actual_units' ? '17.5' : '15',
         ]))
         ->assertSessionHasErrors("packaging.1.{$field}");
 })->with(['actual_units', 'new_containers_used', 'labels_used']);

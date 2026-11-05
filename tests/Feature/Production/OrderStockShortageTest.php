@@ -109,7 +109,6 @@ function startedOrderWithoutStock(): ProductionOrder
 function shortageClosingPayload(ProductionOrderDetail $detail, string $consumed): array
 {
     return [
-        'actual_yield_quantity' => 10,
         'remnant_quantity_kg' => 50,
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => test()->user->id,

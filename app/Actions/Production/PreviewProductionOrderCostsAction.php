@@ -197,7 +197,6 @@ class PreviewProductionOrderCostsAction
 
         $packagingResults = [];
         $totalFinishedCost = '0';
-        $totalEquivalent = '0';
 
         foreach ($packagingRows as $row) {
             $variantBulkCost = (string) ($distributedBulkCosts[$row['product_variant_id']] ?? '0');
@@ -217,7 +216,6 @@ class PreviewProductionOrderCostsAction
             $equivalentStr = $this->calculator->mul((string) $row['actual_units'], (string) $row['presentation_value'], 4);
 
             $totalFinishedCost = $this->calculator->add($totalFinishedCost, $totalCostStr, 4);
-            $totalEquivalent = $this->calculator->add($totalEquivalent, $equivalentStr, 4);
 
             $packagingResults[] = [
                 'id' => $row['id'],
@@ -233,7 +231,7 @@ class PreviewProductionOrderCostsAction
             'packaging' => $packagingResults,
             'total_bulk_cost' => $totalBulkCost,
             'total_finished_cost' => $totalFinishedCost,
-            'total_equivalent' => $totalEquivalent,
+            'total_equivalent' => $this->completionLines->packagedEquivalent($order, $packaging),
             'bulk_cost_per_unit' => $globalBulkCostPerUnit,
             'cif_percentage' => $cifPercentage,
             'remnant_bulk_cost' => $remnantBulkCost,

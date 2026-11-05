@@ -95,30 +95,7 @@ export function ResultsCard({
                 )}
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                        <Label htmlFor="actual-yield">
-                            Rendimiento Real (eq. gal)
-                        </Label>
-                        <DecimalInput
-                            id="actual-yield"
-                            placeholder="Ej: 19,75"
-                            value={data.actual_yield_quantity}
-                            onValueChange={(value) =>
-                                setData('actual_yield_quantity', value)
-                            }
-                            disabled={isReadOnly}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            Debe coincidir con lo envasado más el sobrante en
-                            galones.
-                        </p>
-                        {errors.actual_yield_quantity && (
-                            <p className="text-xs text-destructive">
-                                {errors.actual_yield_quantity}
-                            </p>
-                        )}
-                    </div>
+                <div>
                     <div className="space-y-4 rounded-lg border border-dashed border-border/80 bg-muted/25 p-4">
                         <div className="space-y-1">
                             <p className="text-sm font-medium text-foreground">

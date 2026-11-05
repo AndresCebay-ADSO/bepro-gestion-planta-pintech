@@ -62,7 +62,6 @@ function numericRequestFields(): array
             'viscosity_ku' => 'production_orders.viscosity_ku',
             'grinding_hg' => 'production_orders.grinding_hg',
             'quality_solids' => 'production_orders.quality_solids',
-            'actual_yield_quantity' => 'production_orders.actual_quantity',
             'spillage_quantity' => 'production_orders.spillage_quantity',
         ],
         'StoreLineAdjustmentRequest' => [

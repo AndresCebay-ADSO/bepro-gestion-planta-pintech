@@ -118,7 +118,6 @@ function packagingPlanFor(ProductionOrder $order, ProductVariant $variant, int $
 function completePackagingPayload(ProductionOrderDetail $detail, array $packaging, User $signer): array
 {
     return [
-        'actual_yield_quantity' => $packaging['actual_units'],
         'responsible_name' => 'Operario',
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $signer->id,
@@ -523,10 +522,8 @@ it('rechaza con un mensaje los valores imposibles en las mediciones de la OP', f
     'saldo al completar' => ['production-orders.complete', 'remnant_quantity_kg', '1e65'],
     'viscosidad al completar' => ['production-orders.complete', 'viscosity_ku', '1e10'],
     'molienda al completar' => ['production-orders.complete', 'grinding_hg', '1e10'],
-    'rendimiento al completar' => ['production-orders.complete', 'actual_yield_quantity', '1e65'],
     'derrame al enviar a revisión' => ['production-orders.submit-for-review', 'spillage_quantity', '1e65'],
     'densidad al enviar a revisión' => ['production-orders.submit-for-review', 'density_kg_per_gallon', '1e20'],
-    'rendimiento al enviar a revisión' => ['production-orders.submit-for-review', 'actual_yield_quantity', '1e20'],
 ]);
 
 it('rechaza un saldo imposible en la vista previa', function () {
@@ -540,13 +537,28 @@ it('rechaza un saldo imposible en la vista previa', function () {
 });
 
 it('rechaza un rendimiento que no cabe en el porcentaje de la OP', function () {
-    // La OP proyecta 10: un rendimiento de 100.000 sería 1.000.000 %, y el porcentaje se guarda en decimal(5,2).
+    // La OP proyecta 10 gal: 100 unidades de 1 gal son 1.000 %, y el porcentaje se guarda en decimal(5,2).
     $plan = packagingPlanFor($this->order, $this->variant);
-    $payload = completePackagingPayload($this->detail, ['id' => $plan->id, 'actual_units' => 10], $this->admin);
-    $payload['actual_yield_quantity'] = 100000;
+    $payload = completePackagingPayload($this->detail, ['id' => $plan->id, 'actual_units' => 100], $this->admin);
 
     $this->post(route('production-orders.complete', $this->order), $payload)
-        ->assertSessionHasErrors(['actual_yield_quantity' => 'El rendimiento real no puede superar 9,99 veces la cantidad proyectada de la orden. Revisa el valor.']);
+        ->assertSessionHasErrors(['packaging' => 'Lo envasado más el sobrante supera 9,99 veces la cantidad proyectada de la orden. Revisa las unidades envasadas.']);
+
+    expect($this->order->fresh()->status)->not->toBe(ProductionOrderStatus::Completed);
+});
+
+it('deja completar con menos de lo proyectado: no es un error', function () {
+    // La OP proyecta 10 gal y salen 7.
+    $plan = packagingPlanFor($this->order, $this->variant);
+
+    $this->post(route('production-orders.complete', $this->order), completePackagingPayload($this->detail, ['id' => $plan->id, 'actual_units' => 7], $this->admin))
+        ->assertSessionHasNoErrors();
+
+    $order = $this->order->fresh();
+
+    expect($order->status)->toBe(ProductionOrderStatus::Completed)
+        ->and($order->yield_real_quantity)->toBe('7.0000')
+        ->and($order->yield_percentage)->toBe('70.00');
 });
 
 it('cuenta el plan de envasado de una OP como actividad: la materia prima no se ofrece para eliminar', function () {

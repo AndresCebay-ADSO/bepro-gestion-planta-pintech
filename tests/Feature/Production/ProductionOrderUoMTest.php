@@ -350,7 +350,6 @@ test('it previews and completes a production order with normalized quantities', 
     $this->post(route('production-orders.start', $order));
 
     $completeResponse = $this->post(route('production-orders.complete', $order), [
-        'actual_yield_quantity' => 10,
         'remnant_quantity_kg' => 50,
         'viscosity_ku' => 100,
         'grinding_hg' => 6,
@@ -468,7 +467,6 @@ function startedOrderInMaterialKilos(string $quantityPerGallon, UnitOfMeasure $f
 function closingPayload(array $line, string $typed): array
 {
     return [
-        'actual_yield_quantity' => 250,
         'viscosity_ku' => 100,
         'grinding_hg' => 6,
         'responsible_name' => 'Operario UoM',

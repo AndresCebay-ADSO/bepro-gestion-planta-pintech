@@ -130,7 +130,6 @@ test('completing an order stores quality solids and generates current certificat
         'responsible_name' => 'Analista Calidad',
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $user->id,
-        'actual_yield_quantity' => 10,
         'remnant_quantity_kg' => 50,
         'line_adjustment_ids' => [],
         'remnant_consumption_ids' => [],
@@ -209,7 +208,6 @@ test('completing an order at night in the plant stores the plant date, not the U
         'remnant_consumption_ids' => [],
         'ingredients' => [['id' => $detail->id, 'actual_quantity' => 10]],
         'packaging' => [['id' => $plan->id, 'actual_units' => 2]],
-        'actual_yield_quantity' => 2,
     ])->assertSessionHasNoErrors()->assertRedirect(route('production-orders.show', $order));
 
     expect($order->refresh()->completion_date->toDateString())->toBe('2026-10-04');
