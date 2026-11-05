@@ -9,9 +9,9 @@ use App\Models\InventoryBatch;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderDetail;
 use App\Models\RawMaterial;
-use App\Models\Warehouse;
 use App\Services\DecimalCalculator;
 use App\Services\FormulaService;
+use App\Support\NumberFormat;
 use Illuminate\Validation\ValidationException;
 
 class FifoStockAllocatorService
@@ -90,55 +90,60 @@ class FifoStockAllocatorService
         return $estimatedUnitCosts;
     }
 
-    public function validateStockForOrder(Formula $formula, float|string $quantity, int $warehouseId): void
+    /**
+     * Lo que falta en la bodega para producir esa cantidad con la fórmula, en la unidad de cada materia prima. Es solo un
+     * aviso al crear la orden: lo que no deja completarla es el consumo real (consumeFromWarehouse()).
+     *
+     * @return list<array{code: string, unit: string, required: string, available: string, missing: string}>
+     */
+    public function stockShortagesForOrder(Formula $formula, float|string $quantity, int $warehouseId): array
     {
-        $warehouse = Warehouse::findOrFail($warehouseId);
         $qty = (string) $quantity;
 
         $formula->loadMissing(['details.unitOfMeasure', 'details.rawMaterial.unitOfMeasure']);
 
         $requirements = [];
+        $materials = [];
         foreach ($formula->details as $detail) {
             $materialId = (int) $detail->raw_material_id;
-            // La misma cuenta que el plan de la OP: lo que se valida es lo que la OP va a pedir.
+            // La misma cuenta que el plan de la OP: lo que se revisa es lo que la OP va a pedir.
             $product = $this->formulaService->orderLineRequirement($detail, $qty)['planned_quantity'];
 
             $current = (string) ($requirements[$materialId] ?? '0');
             $requirements[$materialId] = $this->calculator->add($current, $product, 4);
+            $materials[$materialId] = $detail->rawMaterial;
         }
 
-        if ($requirements === []) {
-            return;
-        }
-
-        $tracksInventoryByMaterialId = RawMaterial::query()
-            ->whereIn('id', array_keys($requirements))
-            ->pluck('tracks_inventory', 'id');
-
-        $trackedMaterialIds = collect(array_keys($requirements))
-            ->filter(fn (int $materialId): bool => (bool) ($tracksInventoryByMaterialId->get($materialId) ?? true))
-            ->values()
-            ->all();
+        $trackedMaterialIds = array_keys(array_filter(
+            $materials,
+            fn (RawMaterial $material): bool => (bool) $material->tracks_inventory,
+        ));
 
         $availableByMaterialId = $this->inventoryBatchService->availableQuantitiesByMaterial(
             warehouseId: $warehouseId,
             rawMaterialIds: $trackedMaterialIds
         );
 
+        $shortages = [];
+
         foreach ($trackedMaterialIds as $materialId) {
             $required = $requirements[$materialId];
-            $available = (string) ($availableByMaterialId[$materialId] ?? '0');
+            $available = $this->calculator->round((string) ($availableByMaterialId[$materialId] ?? '0'), 4);
 
             if ($this->calculator->cmp($available, $required) >= 0) {
                 continue;
             }
 
-            $materialCode = RawMaterial::query()->whereKey($materialId)->value('code') ?? (string) $materialId;
-
-            throw ValidationException::withMessages([
-                'product_id' => "Stock insuficiente de '{$materialCode}' en {$warehouse->name}. Requerido: {$required}, Disponible: {$available}.",
-            ]);
+            $shortages[] = [
+                'code' => (string) $materials[$materialId]->code,
+                'unit' => (string) $materials[$materialId]->unitOfMeasure->symbol,
+                'required' => $required,
+                'available' => $available,
+                'missing' => $this->calculator->sub($required, $available, 4),
+            ];
         }
+
+        return $shortages;
     }
 
     public function consumeProductionOrderDetail(
@@ -211,7 +216,7 @@ class FifoStockAllocatorService
 
         /** @var RawMaterial|null $rawMaterial */
         $rawMaterial = RawMaterial::query()
-            ->select(['id', 'code', 'current_price', 'tracks_inventory'])
+            ->select(['id', 'code', 'current_price', 'tracks_inventory', 'unit_of_measure_id'])
             ->find($rawMaterialId);
         $materialCode = $rawMaterial?->code ?? (string) $rawMaterialId;
 
@@ -271,8 +276,12 @@ class FifoStockAllocatorService
         }
 
         if ($this->calculator->cmp($remainingToConsume, '0') > 0) {
+            $unit = $rawMaterial?->unitOfMeasure?->symbol;
+            $required = trim(NumberFormat::quantity($requiredQtyStr)." {$unit}");
+            $missing = trim(NumberFormat::quantity($remainingToConsume)." {$unit}");
+
             throw ValidationException::withMessages([
-                $errorKey => "Stock insuficiente de {$contextLabel} '{$materialCode}' {$shortageMoment}. Requerido: {$requiredQtyStr}, faltante: {$remainingToConsume}.",
+                $errorKey => "Stock insuficiente de {$contextLabel} '{$materialCode}' {$shortageMoment}. Requerido: {$required}, faltante: {$missing}.",
             ]);
         }
 

@@ -54,8 +54,6 @@ class CreateProductionOrderAction
             // lo bloquean (acciones de fórmulas), así que la orden ve lo ya guardado y no una versión vieja.
             $formula = $this->stillActiveFormula((int) $data['formula_id'], (int) $data['product_id']);
 
-            $this->fifoStockAllocator->validateStockForOrder($formula, $quantity, $warehouseId);
-
             $order = ProductionOrder::create([
                 'product_id' => $data['product_id'],
                 'formula_id' => $data['formula_id'],
@@ -78,7 +76,7 @@ class CreateProductionOrderAction
                 ['planned_quantity' => $detailTotal, 'conversion_factor' => $factor] = $this->formulaService->orderLineRequirement($detail, $quantity);
 
                 // La fórmula por galón × los galones de la OP: cada uno cabe en su regla, el producto puede no caber.
-                // Una MP sin control de inventario (agua) no tiene stock que lo frene antes.
+                // Crear la orden no exige stock, así que nada más lo frena antes.
                 NumberType::Quantity->ensureFits(
                     $detailTotal,
                     'quantity',

@@ -89,7 +89,7 @@ beforeEach(function () {
     ]);
 });
 
-test('it fails to create order if stock is insufficient', function () {
+test('it creates a pending order with its planned lines even if stock is insufficient', function () {
     $response = $this->post(route('production-orders.store'), [
         'product_id' => $this->formula->product_id,
         'formula_id' => $this->formula->id,
@@ -98,8 +98,18 @@ test('it fails to create order if stock is insufficient', function () {
         'planned_date' => now()->addDay()->toDateString(),
     ]);
 
-    $response->assertSessionHasErrors(['product_id']);
-    $this->assertDatabaseCount('production_orders', 0);
+    $response->assertSessionHasNoErrors();
+    $order = ProductionOrder::query()->sole();
+    $response->assertRedirect(route('production-orders.show', $order));
+
+    expect($order->status->value)->toBe('pending');
+    $this->assertDatabaseHas('production_order_details', [
+        'production_order_id' => $order->id,
+        'raw_material_id' => $this->material->id,
+        'planned_quantity' => 50,
+        'batch_id' => null,
+    ]);
+    $this->assertDatabaseCount('production_order_details', 1);
 });
 
 test('it allows order creation if stock is sufficient', function () {

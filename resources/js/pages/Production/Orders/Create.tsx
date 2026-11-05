@@ -1,7 +1,11 @@
 import { Head, useForm } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
-import { store as productionOrderStore } from '@/actions/App/Http/Controllers/ProductionOrderController';
+import {
+    checkStock as productionOrderCheckStock,
+    store as productionOrderStore,
+} from '@/actions/App/Http/Controllers/ProductionOrderController';
 import { DecimalInput } from '@/components/decimal-input';
 import { FormActions } from '@/components/form-actions';
 import { FormError, FormField } from '@/components/form-field';
@@ -10,6 +14,7 @@ import { FormPage } from '@/components/form-page';
 import { IntegerInput } from '@/components/integer-input';
 import { PageHeader } from '@/components/page-header';
 import { PlantDateInput } from '@/components/plant-date-input';
+import { StockShortageDialog } from '@/components/production/stock-shortage-dialog';
 import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
@@ -24,6 +29,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { clearListErrors } from '@/lib/form-errors';
 import { PRODUCTION_ORDER_QUANTITY_LIMITS } from '@/lib/number-types';
 import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
+import { readStockCheck } from '@/lib/order-stock-check';
+import type { StockShortage } from '@/lib/order-stock-check';
+import { postJson } from '@/lib/post-json';
 import {
     create as productionOrderCreate,
     index as productionOrderIndex,
@@ -70,6 +78,15 @@ export default function ProductionOrdersCreate({
             packaging: [] as PackagingRow[],
         });
 
+    const [checkingStock, setCheckingStock] = useState(false);
+    const [stockCheckFailed, setStockCheckFailed] = useState(false);
+    const [shortages, setShortages] = useState<StockShortage[]>([]);
+    const [shortagesOpen, setShortagesOpen] = useState(false);
+    const stockCheck = useRef<AbortController | null>(null);
+
+    // Si el usuario se va mientras se revisa, la respuesta no debe crear la orden desde una pantalla que ya no ve.
+    useEffect(() => () => stockCheck.current?.abort(), []);
+
     // Cuando cambia el producto, actualizamos las fórmulas disponibles
     const selectedProduct = products.find(
         (p) => p.id === Number(data.product_id),
@@ -108,13 +125,51 @@ export default function ProductionOrdersCreate({
     const clearPackagingErrors = () =>
         clearListErrors(errors, clearErrors, 'packaging');
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const createOrder = () => {
         transform((formData) => ({
             ...formData,
             quantity: toDecimalPayload(formData.quantity),
         }));
-        post(productionOrderStore().url);
+        // Un error del servidor se muestra bajo su campo: el diálogo no debe quedar encima.
+        post(productionOrderStore().url, {
+            onFinish: () => setShortagesOpen(false),
+        });
+    };
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        if (checkingStock || processing) {
+            return;
+        }
+
+        const controller = new AbortController();
+        stockCheck.current = controller;
+        setStockCheckFailed(false);
+        setCheckingStock(true);
+
+        const result = await readStockCheck(
+            postJson(
+                productionOrderCheckStock().url,
+                { ...data, quantity: toDecimalPayload(data.quantity) },
+                controller.signal,
+            ),
+        );
+
+        if (controller.signal.aborted) {
+            return;
+        }
+
+        setCheckingStock(false);
+
+        if (result.status === 'failed') {
+            setStockCheckFailed(true);
+        } else if (result.status === 'shortages') {
+            setShortages(result.shortages);
+            setShortagesOpen(true);
+        } else {
+            createOrder();
+        }
     };
 
     const addPackaging = () => {
@@ -477,12 +532,28 @@ export default function ProductionOrdersCreate({
                         />
                     </div>
 
+                    <FormError
+                        message={
+                            stockCheckFailed
+                                ? 'No se pudo revisar el stock. Intenta de nuevo.'
+                                : undefined
+                        }
+                    />
+
                     <FormActions
                         submitLabel="Crear Orden de Producción"
-                        processing={processing}
+                        processing={processing || checkingStock}
                         cancelHref={productionOrderIndex().url}
                     />
                 </form>
+
+                <StockShortageDialog
+                    open={shortagesOpen}
+                    shortages={shortages}
+                    processing={processing}
+                    onCancel={() => setShortagesOpen(false)}
+                    onConfirm={createOrder}
+                />
             </FormPage>
         </>
     );

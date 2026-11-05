@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import { postJson } from '@/lib/post-json';
+
 /** Por qué lo que se ve no corresponde a lo escrito (null si está al día). */
 export type PreviewStaleReason = 'invalid' | 'failed' | null;
 
@@ -20,13 +22,6 @@ export type ServerPreviewRequest<TBody, TContext> = {
 export type PreviewErrors = Record<string, string>;
 
 type Answered<TValue, TContext> = { value: TValue; context: TContext };
-
-/** fetch no envía el XSRF-TOKEN por su cuenta, como sí hace Axios. */
-function xsrfToken(): string {
-    const match = document.cookie.match(/(^| )XSRF-TOKEN=([^;]+)/);
-
-    return match ? decodeURIComponent(match[2]) : '';
-}
 
 /**
  * Vista previa calculada en el servidor: espera a que el usuario deje de escribir, cancela la petición anterior si
@@ -70,17 +65,7 @@ export function useServerPreview<TResult, TBody, TContext>(
             );
 
             try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Accept: 'application/json',
-                        'X-XSRF-TOKEN': xsrfToken(),
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    body: JSON.stringify(body),
-                    signal: controller.signal,
-                });
+                const response = await postJson(url, body, controller.signal);
 
                 if (response.status === 422) {
                     const payload = (await response.json()) as {

@@ -41,3 +41,8 @@ it('throws exception when decrementing stock that does not exist', function () {
     expect(fn () => $this->service->decrementStock($batch->id, $warehouse->id, '10'))
         ->toThrow(InsufficientStockException::class);
 });
+
+it('reports the shortage with clean numbers', function () {
+    expect(InsufficientStockException::insufficientQuantity('1250.5000', '2000.0000')->errors()['quantity'][0])
+        ->toBe('Stock insuficiente en bodega. Disponible: 1.250,5, Solicitado: 2.000.');
+});

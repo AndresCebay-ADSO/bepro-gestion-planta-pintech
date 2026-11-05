@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Exceptions;
 
+use App\Support\NumberFormat;
 use Illuminate\Validation\ValidationException;
 
 class InsufficientStockException extends ValidationException
@@ -14,8 +15,8 @@ class InsufficientStockException extends ValidationException
     ): self {
         return self::withMessages([
             'quantity' => __('Stock insuficiente en bodega. Disponible: :available, Solicitado: :requested.', [
-                'available' => $available,
-                'requested' => $requested,
+                'available' => NumberFormat::quantity($available),
+                'requested' => NumberFormat::quantity($requested),
             ]),
         ]);
     }
