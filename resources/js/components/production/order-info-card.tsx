@@ -189,7 +189,7 @@ export function OrderInfoCard({
                                     <span className="font-medium">
                                         <FormattedNumber
                                             value={remnantQuantityGallons}
-                                            maxDecimals={4}
+                                            maxDecimals={2}
                                         />{' '}
                                         gal
                                     </span>

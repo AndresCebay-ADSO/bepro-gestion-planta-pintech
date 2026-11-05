@@ -63,9 +63,9 @@ class CancelProductionOrderAction
         }
 
         $lines = $consumptions->map(function (RemnantConsumption $consumption): string {
-            $gallons = rtrim(rtrim((string) $consumption->quantity_gallons, '0'), '.');
+            $kilos = rtrim(rtrim((string) $consumption->quantity_kg, '0'), '.');
 
-            return "{$consumption->remnant?->sourceOrder?->order_number} {$gallons} gal";
+            return "{$consumption->remnant?->sourceOrder?->order_number} {$kilos} kg";
         });
 
         return 'Saldos consumidos que no vuelven al inventario: '.$lines->implode('; ').'.';

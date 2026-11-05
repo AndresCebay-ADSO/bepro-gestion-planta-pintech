@@ -110,7 +110,7 @@ function shortageClosingPayload(ProductionOrderDetail $detail, string $consumed)
 {
     return [
         'actual_yield_quantity' => 10,
-        'remnant_quantity_gallons' => 10,
+        'remnant_quantity_kg' => 50,
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => test()->user->id,
         'line_adjustment_ids' => [],

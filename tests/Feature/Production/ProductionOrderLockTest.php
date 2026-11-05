@@ -168,7 +168,7 @@ it('no consume un saldo si la orden se completó mientras esperaba', function ()
 
     $this->post(route('production-orders.consume-remnant', $this->order), [
         'remnant_id' => $remnant->id,
-        'quantity_gallons' => '1',
+        'quantity_kg' => '1',
     ])->assertInertiaFlash('error', "No se puede consumir un saldo en una orden en estado 'Completada'.")
         // Como error de validación también: Inertia llama a onError y el formulario conserva lo escrito.
         ->assertSessionHasErrors(['production_order' => "No se puede consumir un saldo en una orden en estado 'Completada'."]);

@@ -55,7 +55,8 @@ function numericRequestFields(): array
             'packaging.*.actual_units' => 'production_order_packaging_plan.actual_units',
             'packaging.*.new_containers_used' => 'production_order_packaging_plan.new_containers_used',
             'packaging.*.labels_used' => 'production_order_packaging_plan.labels_used',
-            'remnant_quantity_gallons' => 'production_remnants.original_quantity_gallons',
+            'remnant_quantity_kg' => 'production_orders.remnant_quantity_kg',
+            'density_kg_per_gallon' => 'production_orders.density_kg_per_gallon',
         ],
         'CompleteProductionOrderRequest|SubmitProductionOrderForReviewRequest' => [
             'viscosity_ku' => 'production_orders.viscosity_ku',
@@ -63,13 +64,12 @@ function numericRequestFields(): array
             'quality_solids' => 'production_orders.quality_solids',
             'actual_yield_quantity' => 'production_orders.actual_quantity',
             'spillage_quantity' => 'production_orders.spillage_quantity',
-            'density_kg_per_gallon' => 'production_orders.density_kg_per_gallon',
         ],
         'StoreLineAdjustmentRequest' => [
             'quantity' => 'production_order_line_adjustments.quantity',
         ],
         'ConsumeRemnantRequest' => [
-            'quantity_gallons' => 'remnant_consumptions.quantity_gallons',
+            'quantity_kg' => 'remnant_consumptions.quantity_kg',
         ],
         'StoreFormulaRequest|UpdateFormulaRequest' => [
             'details.*.quantity' => 'formula_details.quantity',

@@ -74,8 +74,26 @@ class ProductionOrderCompletionLines
      */
     public function hasRemnant(mixed $remnantGallons): bool
     {
-        return $remnantGallons !== null && $remnantGallons !== ''
-            && $this->calculator->isPositive((string) $remnantGallons);
+        return $this->isPositiveAmount($remnantGallons);
+    }
+
+    /**
+     * Los galones de un sobrante pesado: la planta digita kilos y los galones definen el reparto de costos. Solo el
+     * servidor los calcula, y solo aquí. `null` si no hay kilos mayores a 0 o no hay peso por galón.
+     */
+    public function remnantGallons(mixed $kilos, mixed $density): ?string
+    {
+        if (! $this->isPositiveAmount($kilos) || ! $this->isPositiveAmount($density)) {
+            return null;
+        }
+
+        return $this->calculator->div((string) $kilos, (string) $density, 4);
+    }
+
+    private function isPositiveAmount(mixed $amount): bool
+    {
+        return $amount !== null && $amount !== ''
+            && $this->calculator->isPositive((string) $amount);
     }
 
     /**

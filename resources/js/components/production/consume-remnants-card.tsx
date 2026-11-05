@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { parseDecimal, toDecimalPayload } from '@/lib/numeric-input';
+import { formatQuantity } from '@/lib/formatters';
+import { toDecimalPayload } from '@/lib/numeric-input';
 import type { ProductionOrder } from '@/types/production-orders';
 
 type ConsumeRemnantsCardProps = {
@@ -34,31 +35,26 @@ export function ConsumeRemnantsCard({
     const [selectedRemnantId, setSelectedRemnantId] = useState<
         string | number | null
     >(null);
-    const [quantityGallons, setQuantityGallons] = useState('');
+    const [quantityKg, setQuantityKg] = useState('');
     const [notes, setNotes] = useState('');
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     const comboboxOptions = availableRemnants.map((remnant) => ({
         id: remnant.id,
         // Qué es el saldo antes que de dónde viene: se mezcla en este lote (B57).
-        label: `${remnant.product_name} · Lote ${remnant.source_lot_number} (${remnant.source_order_number}) — ${remnant.available_quantity_gallons} gal disponibles`,
+        label: `${remnant.product_name} · Lote ${remnant.source_lot_number} (${remnant.source_order_number}) — ${formatQuantity(remnant.available_quantity_kg, { trimTrailingZeros: true })} kg disponibles`,
     }));
 
-    const activeRemnant = availableRemnants.find(
-        (r) => r.id === selectedRemnantId,
-    );
-    const gallonsToConsume = parseDecimal(quantityGallons);
-
     const handleAdd = () => {
-        if (!selectedRemnantId || !quantityGallons) {
+        if (!selectedRemnantId || !quantityKg) {
             const errors: Record<string, string> = {};
 
             if (!selectedRemnantId) {
                 errors.remnant_id = 'Seleccione un saldo.';
             }
 
-            if (!quantityGallons) {
-                errors.quantity_gallons = 'Ingrese la cantidad.';
+            if (!quantityKg) {
+                errors.quantity_kg = 'Ingrese la cantidad.';
             }
 
             setFormErrors(errors);
@@ -73,14 +69,14 @@ export function ConsumeRemnantsCard({
             consumeRemnant({ production_order: orderId }).url,
             {
                 remnant_id: selectedRemnantId,
-                quantity_gallons: toDecimalPayload(quantityGallons),
+                quantity_kg: toDecimalPayload(quantityKg),
                 notes: notes || undefined,
             },
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     setSelectedRemnantId(null);
-                    setQuantityGallons('');
+                    setQuantityKg('');
                     setNotes('');
                 },
                 onError: (errors) => {
@@ -109,24 +105,27 @@ export function ConsumeRemnantsCard({
                         <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
                             Esta orden generó un saldo de{' '}
                             <FormattedNumber
-                                value={order.remnant.original_quantity_gallons}
-                                maxDecimals={4}
-                            />{' '}
-                            gal (
-                            <FormattedNumber
                                 value={order.remnant.original_quantity_kg}
                                 maxDecimals={4}
+                                trimTrailingZeros
                             />{' '}
-                            kg)
+                            kg (≈{' '}
+                            <FormattedNumber
+                                value={order.remnant.original_quantity_gallons}
+                                maxDecimals={2}
+                                trimTrailingZeros
+                            />{' '}
+                            gal)
                         </p>
                         <p className="mt-0.5 text-xs text-emerald-600 dark:text-emerald-400">
                             Estado: {order.remnant.status_label} &middot;
                             Disponible:{' '}
                             <FormattedNumber
-                                value={order.remnant.available_quantity_gallons}
+                                value={order.remnant.available_quantity_kg}
                                 maxDecimals={4}
+                                trimTrailingZeros
                             />{' '}
-                            gal
+                            kg
                         </p>
                     </div>
                 )}
@@ -145,10 +144,10 @@ export function ConsumeRemnantsCard({
                                                 Origen
                                             </th>
                                             <th className="p-3 text-right">
-                                                Galones
+                                                Kilogramos
                                             </th>
                                             <th className="p-3 text-right">
-                                                Kilogramos
+                                                Galones
                                             </th>
                                             {showCosts && (
                                                 <th className="p-3 text-right">
@@ -180,19 +179,22 @@ export function ConsumeRemnantsCard({
                                                 <td className="p-3 text-right">
                                                     <FormattedNumber
                                                         value={
-                                                            consumption.quantity_gallons
+                                                            consumption.quantity_kg
                                                         }
                                                         maxDecimals={4}
-                                                    />
+                                                        trimTrailingZeros
+                                                    />{' '}
+                                                    kg
                                                 </td>
                                                 <td className="p-3 text-right text-muted-foreground">
                                                     <FormattedNumber
                                                         value={
-                                                            consumption.quantity_kg
+                                                            consumption.quantity_gallons
                                                         }
-                                                        maxDecimals={4}
+                                                        maxDecimals={2}
+                                                        trimTrailingZeros
                                                     />{' '}
-                                                    kg
+                                                    gal
                                                 </td>
                                                 {showCosts && (
                                                     <td className="p-3 text-right">
@@ -245,36 +247,23 @@ export function ConsumeRemnantsCard({
                             </div>
                             <div className="space-y-1">
                                 <DecimalInput
-                                    placeholder="Galones"
+                                    placeholder="Kilos"
                                     className="h-9"
-                                    value={quantityGallons}
-                                    onValueChange={setQuantityGallons}
+                                    value={quantityKg}
+                                    onValueChange={setQuantityKg}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                             e.preventDefault();
                                         }
                                     }}
                                 />
-                                {formErrors.quantity_gallons && (
+                                {formErrors.quantity_kg && (
                                     <p className="text-xs text-destructive">
-                                        {formErrors.quantity_gallons}
+                                        {formErrors.quantity_kg}
                                     </p>
                                 )}
                             </div>
                         </div>
-                        {gallonsToConsume !== null &&
-                            activeRemnant?.density_kg_per_gallon && (
-                                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                                    ≈{' '}
-                                    {(
-                                        gallonsToConsume *
-                                        Number(
-                                            activeRemnant.density_kg_per_gallon,
-                                        )
-                                    ).toFixed(4)}{' '}
-                                    kg
-                                </p>
-                            )}
                         <div className="space-y-1">
                             <Input
                                 placeholder="Observaciones (opcional)"

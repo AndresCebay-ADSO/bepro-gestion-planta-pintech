@@ -131,7 +131,7 @@ test('completing an order stores quality solids and generates current certificat
         'density_kg_per_gallon' => 5,
         'quality_responsible_user_id' => $user->id,
         'actual_yield_quantity' => 10,
-        'remnant_quantity_gallons' => 10,
+        'remnant_quantity_kg' => 50,
         'line_adjustment_ids' => [],
         'remnant_consumption_ids' => [],
         'ingredients' => [

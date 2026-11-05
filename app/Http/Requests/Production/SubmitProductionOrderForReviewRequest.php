@@ -38,7 +38,7 @@ class SubmitProductionOrderForReviewRequest extends FormRequest
                 'actual_yield_quantity' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
                 'spillage_quantity' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
                 'density_kg_per_gallon' => ['bail', 'nullable', ...NumberType::Density->rules(), 'min:0.0001'],
-                'remnant_quantity_gallons' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
+                'remnant_quantity_kg' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
                 'remnant_notes' => ['nullable', 'string', 'max:1000'],
                 'notes' => ['nullable', 'string', 'max:2000'],
             ]
@@ -53,7 +53,7 @@ class SubmitProductionOrderForReviewRequest extends FormRequest
      */
     public function after(): array
     {
-        return [$this->somethingPackedCheck(), $this->operationalTimesCheck()];
+        return [$this->remnantWeightCheck(), $this->somethingPackedCheck(), $this->operationalTimesCheck()];
     }
 
     /**
@@ -73,9 +73,9 @@ class SubmitProductionOrderForReviewRequest extends FormRequest
                 'packaging_start_time' => 'hora de inicio de envasado',
                 'packaging_end_time' => 'hora de fin de envasado',
                 'responsible_name' => 'responsable',
-                'spillage_quantity' => 'cantidad de merma o reguero',
-                'density_kg_per_gallon' => 'densidad (kg/gal)',
-                'remnant_quantity_gallons' => 'saldo sobrante (galones)',
+                'spillage_quantity' => 'derrame (kg)',
+                'density_kg_per_gallon' => 'peso por galón (kg/gal)',
+                'remnant_quantity_kg' => 'sobrante pesado (kg)',
                 'remnant_notes' => 'observaciones del saldo',
                 'notes' => 'observaciones',
             ]

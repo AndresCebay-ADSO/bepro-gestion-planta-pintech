@@ -354,12 +354,12 @@ test('el ajuste de línea tiene el tope de su columna y el material es un entero
     'material como arreglo (pasaba el exists)' => ['raw_material_id', [1]],
 ]);
 
-test('el saldo que se consume lleva 4 decimales (OPX-06)', function (string $gallons): void {
+test('el saldo que se consume lleva 4 decimales', function (string $kilos): void {
     $f = numberTypesOrder($this, ProductionOrderStatus::InProgress);
 
     $this->actingAs($this->admin)
-        ->post(route('production-orders.consume-remnant', $f['order']), ['remnant_id' => 1, 'quantity_gallons' => $gallons])
-        ->assertSessionHasErrors('quantity_gallons');
+        ->post(route('production-orders.consume-remnant', $f['order']), ['remnant_id' => 1, 'quantity_kg' => $kilos])
+        ->assertSessionHasErrors('quantity_kg');
 })->with(['6 decimales' => ['1.123456'], 'notación científica' => ['1e-3'], 'más de lo que cabe' => ['100000000']]);
 
 test('una fórmula cuya cantidad × la de la OP no cabe en la columna da un error en la cantidad, no un 500', function (string $perGallon, string $price, string $quantity): void {

@@ -211,7 +211,7 @@ it('se completa sin envasar si todo quedó como saldo', function () {
             ['id' => $this->gallonPlan->id, 'actual_units' => '0'],
             ['id' => $this->bucketPlan->id, 'actual_units' => '0'],
         ],
-        'remnant_quantity_gallons' => '15',
+        'remnant_quantity_kg' => '75',
     ]))->assertSessionHasNoErrors();
 
     expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::Completed)
@@ -331,7 +331,7 @@ it('el saldo que informa la planta al enviar a revisión llega a quien aprueba, 
             ['id' => $this->gallonPlan->id, 'actual_units' => '0'],
             ['id' => $this->bucketPlan->id, 'actual_units' => '0'],
         ],
-        'remnant_quantity_gallons' => '15',
+        'remnant_quantity_kg' => '75',
         'remnant_notes' => 'Tanque 2, tapa azul',
     ]);
 
@@ -339,12 +339,13 @@ it('el saldo que informa la planta al enviar a revisión llega a quien aprueba, 
 
     $order = $this->order->fresh();
     expect($order->status)->toBe(ProductionOrderStatus::PendingReview)
+        ->and($order->remnant_quantity_kg)->toBe('75.0000')
         ->and($order->remnant_quantity_gallons)->toBe('15.0000')
         ->and($order->remnant_notes)->toBe('Tanque 2, tapa azul');
 
     // La pantalla de quien revisa trae el saldo: antes llegaba vacío y aprobar daba «algo se tiene que envasar».
     $this->get(route('production-orders.show', $this->order))->assertInertia(fn (AssertableInertia $page) => $page
-        ->where('order.remnant_quantity_gallons', '15.0000')
+        ->where('order.remnant_quantity_kg', '75.0000')
         ->where('order.remnant_notes', 'Tanque 2, tapa azul'));
 
     $this->post(route('production-orders.complete', $this->order), $body)->assertSessionHasNoErrors();

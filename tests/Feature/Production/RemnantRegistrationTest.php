@@ -19,8 +19,10 @@ use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\Production\ProductionOrderCompletionLines;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia;
 
 uses(RefreshDatabase::class);
 
@@ -110,7 +112,7 @@ function completePayload(object $test, array $overrides = []): array
     $defaults = [
         'actual_yield_quantity' => 100,
         'density_kg_per_gallon' => 5,
-        'remnant_quantity_gallons' => null,
+        'remnant_quantity_kg' => null,
         'remnant_notes' => null,
         'quality_responsible_user_id' => $test->user->id,
         'line_adjustment_ids' => [],
@@ -126,9 +128,9 @@ function completePayload(object $test, array $overrides = []): array
     // When there is a remnant but no packaging, and actual_yield_quantity was not explicitly overridden,
     // set it to match the remnant so validation passes by default.
     $hasPackaging = is_array($payload['packaging']) && $payload['packaging'] !== [];
-    $remnantGallons = (float) ($payload['remnant_quantity_gallons'] ?? 0);
+    $remnantGallons = app(ProductionOrderCompletionLines::class)->remnantGallons($payload['remnant_quantity_kg'], $payload['density_kg_per_gallon'] ?? null);
     $explicitYieldOverridden = array_key_exists('actual_yield_quantity', $overrides);
-    if (! $hasPackaging && $remnantGallons > 0 && ! $explicitYieldOverridden) {
+    if (! $hasPackaging && $remnantGallons !== null && ! $explicitYieldOverridden) {
         $payload['actual_yield_quantity'] = $remnantGallons;
     }
 
@@ -147,7 +149,7 @@ it('saves density on the order when completing', function () {
     // Sin presentaciones, todo queda como saldo: sin envasar ni saldo la OP no se completa (D-OPL1).
     $this->post(route('production-orders.complete', $this->order), completePayload($this, [
         'density_kg_per_gallon' => 4.5,
-        'remnant_quantity_gallons' => 100,
+        'remnant_quantity_kg' => 450,
     ]))->assertSessionHasNoErrors()->assertRedirect();
 
     $this->order->refresh();
@@ -180,7 +182,7 @@ it('does not create a remnant when no surplus gallons reported', function () {
 
 it('creates a remnant when surplus gallons are reported', function () {
     $this->post(route('production-orders.complete', $this->order), completePayload($this, [
-        'remnant_quantity_gallons' => 8,
+        'remnant_quantity_kg' => 40,
         'remnant_notes' => 'Quedó en el tanque',
     ]))->assertRedirect();
 
@@ -200,10 +202,10 @@ it('creates a remnant when surplus gallons are reported', function () {
         ->and($remnant->created_by)->toBe($this->user->id);
 });
 
-it('calculates remnant kg correctly using density', function () {
+it('calculates remnant gallons from the weighed kilos and the density', function () {
     $this->post(route('production-orders.complete', $this->order), completePayload($this, [
         'density_kg_per_gallon' => 3.785,
-        'remnant_quantity_gallons' => 5.5,
+        'remnant_quantity_kg' => 20.8175,
     ]))->assertRedirect();
 
     $remnant = ProductionRemnant::first();
@@ -215,7 +217,7 @@ it('calculates remnant kg correctly using density', function () {
 
 it('assigns cost per gallon to the remnant when cost is calculated', function () {
     $this->post(route('production-orders.complete', $this->order), completePayload($this, [
-        'remnant_quantity_gallons' => 5,
+        'remnant_quantity_kg' => 25,
     ]))->assertRedirect();
 
     $remnant = ProductionRemnant::first();
@@ -226,7 +228,7 @@ it('assigns cost per gallon to the remnant when cost is calculated', function ()
 
 it('validates actual yield must include remnant when no packaging', function () {
     $this->post(route('production-orders.complete', $this->order), completePayload($this, [
-        'remnant_quantity_gallons' => 5,
+        'remnant_quantity_kg' => 25,
         'actual_yield_quantity' => 3, // Wrong: should be 5 to match remnant
     ]))->assertSessionHasErrors(['actual_yield_quantity']);
 });
@@ -253,7 +255,7 @@ it('distributes bulk cost across packaging and remnant', function () {
     $this->post(route('production-orders.complete', $this->order), [
         'actual_yield_quantity' => 25, // 20 gal envasados + 5 gal saldo
         'density_kg_per_gallon' => 5,
-        'remnant_quantity_gallons' => 5,
+        'remnant_quantity_kg' => 25,
         'quality_responsible_user_id' => $this->user->id,
         'line_adjustment_ids' => [],
         'remnant_consumption_ids' => [],
@@ -284,7 +286,7 @@ it('assigns all bulk cost to remnant when there is no packaging', function () {
     $this->post(route('production-orders.start', $this->order));
 
     $this->post(route('production-orders.complete', $this->order), completePayload($this, [
-        'remnant_quantity_gallons' => 5,
+        'remnant_quantity_kg' => 25,
     ]))->assertRedirect();
 
     $remnant = ProductionRemnant::first();
@@ -324,7 +326,8 @@ it('preview costs distributes correctly when remnant is present', function () {
         'packaging' => [
             ['id' => $packPlan->id, 'actual_units' => 20],
         ],
-        'remnant_quantity_gallons' => 5,
+        'remnant_quantity_kg' => 25,
+        'density_kg_per_gallon' => 5,
     ]);
 
     $response->assertOk();
@@ -350,7 +353,7 @@ it('preview costs distributes correctly when remnant is present', function () {
     expect(round((float) $data['remnant_bulk_cost'], 2))->toBe(75.00);
 });
 
-it('preview costs rejects invalid remnant_quantity_gallons', function () {
+it('preview costs rejects invalid remnant_quantity_kg', function () {
     $this->post(route('production-orders.start', $this->order));
 
     $response = $this->postJson(route('production-orders.preview-costs', $this->order), [
@@ -358,9 +361,214 @@ it('preview costs rejects invalid remnant_quantity_gallons', function () {
             ['id' => $this->detail->id, 'actual_quantity' => 50],
         ],
         'packaging' => [],
-        'remnant_quantity_gallons' => -1,
+        'remnant_quantity_kg' => -1,
     ]);
 
     $response->assertStatus(422);
-    $response->assertJsonValidationErrors(['remnant_quantity_gallons']);
+    $response->assertJsonValidationErrors(['remnant_quantity_kg']);
+});
+
+/** Presentación de 1 galón en la OP, para las pruebas en que algo se envasa además del sobrante. */
+function gallonPackagingPlan(object $test): ProductionOrderPackagingPlan
+{
+    $variant = ProductVariant::create([
+        'product_id' => $test->product->id,
+        'code' => 'VAR-KILOS-'.uniqid(),
+        'name' => 'Galón',
+        'unit_of_measure_id' => UnitOfMeasure::first()->id,
+        'presentation_value' => 1,
+        'presentation_label' => 'Galón',
+        'is_active' => true,
+    ]);
+
+    return ProductionOrderPackagingPlan::create([
+        'production_order_id' => $test->order->id,
+        'product_variant_id' => $variant->id,
+        'planned_units' => 20,
+    ]);
+}
+
+/** Cuerpo para enviar a revisión: los mismos datos de completar, sin quien firma el certificado. */
+function submitPayload(object $test, array $overrides = []): array
+{
+    return array_merge(
+        collect(completePayload($test))->except(['quality_responsible_user_id', 'density_kg_per_gallon'])->all(),
+        $overrides,
+    );
+}
+
+it('guarda los kilos pesados tal cual y los galones calculados, en la OP y en el saldo', function () {
+    $this->post(route('production-orders.complete', $this->order), completePayload($this, [
+        'density_kg_per_gallon' => 4.7,
+        'remnant_quantity_kg' => 2.5,
+    ]))->assertSessionHasNoErrors();
+
+    $order = $this->order->fresh();
+    $remnant = ProductionRemnant::query()->where('source_order_id', $order->id)->firstOrFail();
+
+    expect($order->remnant_quantity_kg)->toBe('2.5000')
+        ->and($order->remnant_quantity_gallons)->toBe('0.5319')
+        ->and($remnant->original_quantity_kg)->toBe('2.5000')
+        ->and($remnant->available_quantity_kg)->toBe('2.5000')
+        ->and($remnant->original_quantity_gallons)->toBe('0.5319')
+        ->and($remnant->available_quantity_gallons)->toBe('0.5319');
+});
+
+it('al enviar a revisión y reabrir la orden los kilos siguen tal como se digitaron', function () {
+    $this->post(route('production-orders.submit-for-review', $this->order), submitPayload($this, [
+        'density_kg_per_gallon' => 4.7,
+        'remnant_quantity_kg' => 2.5,
+    ]))->assertSessionHasNoErrors();
+
+    expect($this->order->fresh()->remnant_quantity_kg)->toBe('2.5000');
+
+    $this->get(route('production-orders.show', $this->order))->assertInertia(fn (AssertableInertia $page) => $page
+        ->where('order.remnant_quantity_kg', '2.5000')
+        ->where('order.remnant_quantity_gallons', '0.5319'));
+
+    // Devuelta a planta, la orden se reabre con lo pesado.
+    $this->post(route('production-orders.reject-review', $this->order), ['reason' => 'Revisar el peso del sobrante'])
+        ->assertSessionHasNoErrors();
+
+    expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::InProgress)
+        ->and($this->order->fresh()->remnant_quantity_kg)->toBe('2.5000');
+});
+
+it('si el peso por galón cambia antes de completar, los galones se recalculan con el nuevo', function () {
+    $this->post(route('production-orders.submit-for-review', $this->order), submitPayload($this, [
+        'density_kg_per_gallon' => 4.7,
+        'remnant_quantity_kg' => 2.5,
+    ]))->assertSessionHasNoErrors();
+
+    expect($this->order->fresh()->remnant_quantity_gallons)->toBe('0.5319');
+
+    $this->post(route('production-orders.complete', $this->order), completePayload($this, [
+        'density_kg_per_gallon' => 5,
+        'remnant_quantity_kg' => 2.5,
+    ]))->assertSessionHasNoErrors();
+
+    $order = $this->order->fresh();
+    $remnant = ProductionRemnant::query()->where('source_order_id', $order->id)->firstOrFail();
+
+    expect($order->remnant_quantity_kg)->toBe('2.5000')
+        ->and($order->remnant_quantity_gallons)->toBe('0.5000')
+        ->and($remnant->original_quantity_gallons)->toBe('0.5000')
+        ->and($remnant->original_quantity_kg)->toBe('2.5000')
+        ->and($remnant->density_kg_per_gallon)->toBe('5.0000');
+});
+
+it('el rendimiento es lo envasado más los galones del sobrante', function () {
+    $plan = gallonPackagingPlan($this);
+    $payload = fn (float|string $yield) => completePayload($this, [
+        'density_kg_per_gallon' => 4.7,
+        'remnant_quantity_kg' => 2.5,
+        'packaging' => [['id' => $plan->id, 'actual_units' => 20]],
+        'actual_yield_quantity' => $yield,
+    ]);
+
+    $this->post(route('production-orders.complete', $this->order), $payload('20.6'))
+        ->assertSessionHasErrors('actual_yield_quantity');
+
+    expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::InProgress);
+
+    $this->post(route('production-orders.complete', $this->order), $payload('20.5319'))
+        ->assertSessionHasNoErrors();
+
+    expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::Completed);
+});
+
+it('con sobrante exige el peso por galón al enviar a revisión', function (bool $packed) {
+    $packaging = $packed ? [['id' => gallonPackagingPlan($this)->id, 'actual_units' => 20]] : [];
+
+    $this->post(route('production-orders.submit-for-review', $this->order), submitPayload($this, [
+        'remnant_quantity_kg' => 2.5,
+        'packaging' => $packaging,
+    ]))
+        ->assertSessionHasErrors(['density_kg_per_gallon' => 'Digita el peso por galón para registrar el sobrante.'])
+        // Si todo quedó como sobrante, el aviso es el del peso por galón y no «no se envasó nada».
+        ->assertSessionDoesntHaveErrors('packaging');
+
+    expect($this->order->fresh()->status)->toBe(ProductionOrderStatus::InProgress);
+})->with(['con algo envasado' => true, 'todo como sobrante' => false]);
+
+it('sin sobrante no exige el peso por galón al enviar a revisión', function () {
+    $this->post(route('production-orders.submit-for-review', $this->order), submitPayload($this, [
+        'packaging' => [['id' => gallonPackagingPlan($this)->id, 'actual_units' => 20]],
+    ]))->assertSessionHasNoErrors();
+});
+
+it('rechaza un sobrante que no alcanza a dar galones', function (string $route) {
+    $this->post(route($route, $this->order), completePayload($this, [
+        'density_kg_per_gallon' => 9000,
+        'remnant_quantity_kg' => '0.0001',
+    ]))->assertSessionHasErrors(['remnant_quantity_kg' => 'El sobrante es demasiado pequeño para registrarlo.']);
+})->with(['production-orders.complete', 'production-orders.submit-for-review']);
+
+it('rechaza un sobrante cuyos galones no caben en la columna, sin error del servidor', function () {
+    $this->post(route('production-orders.submit-for-review', $this->order), submitPayload($this, [
+        'density_kg_per_gallon' => '0.0001',
+        'remnant_quantity_kg' => '99999999.9999',
+    ]))->assertSessionHasErrors('remnant_quantity_kg');
+
+    expect($this->order->fresh()->remnant_quantity_gallons)->toBeNull();
+});
+
+it('ignora los galones que envíe el cliente', function () {
+    $this->post(route('production-orders.submit-for-review', $this->order), submitPayload($this, [
+        'remnant_quantity_gallons' => 999,
+    ]))->assertSessionHasErrors('packaging');
+
+    $this->post(route('production-orders.complete', $this->order), completePayload($this, [
+        'density_kg_per_gallon' => 4.7,
+        'remnant_quantity_kg' => 2.5,
+        'remnant_quantity_gallons' => 999,
+    ]))->assertSessionHasNoErrors();
+
+    expect($this->order->fresh()->remnant_quantity_gallons)->toBe('0.5319')
+        ->and(ProductionRemnant::query()->where('source_order_id', $this->order->id)->value('original_quantity_gallons'))->toBe('0.5319');
+});
+
+it('la vista previa reparte el costo con los kilos y el peso por galón', function () {
+    $plan = gallonPackagingPlan($this);
+
+    $data = $this->postJson(route('production-orders.preview-costs', $this->order), [
+        'ingredients' => [['id' => $this->detail->id, 'actual_quantity' => 50]],
+        'packaging' => [['id' => $plan->id, 'actual_units' => 20]],
+        'remnant_quantity_kg' => '2.5',
+        'density_kg_per_gallon' => '4.7',
+        'remnant_quantity_gallons' => 999,
+    ])->assertOk()->json();
+
+    // 50 × 5 = 250, entre 20 envasados + 0,5319 de sobrante.
+    expect($data['bulk_cost_per_unit'])->toBe('12.1762')
+        ->and($data['remnant_bulk_cost'])->not->toBeNull();
+});
+
+it('la vista previa sin peso por galón responde bien y calcula sin sobrante', function () {
+    $plan = gallonPackagingPlan($this);
+
+    $data = $this->postJson(route('production-orders.preview-costs', $this->order), [
+        'ingredients' => [['id' => $this->detail->id, 'actual_quantity' => 50]],
+        'packaging' => [['id' => $plan->id, 'actual_units' => 20]],
+        'remnant_quantity_kg' => '2.5',
+    ])->assertOk()->json();
+
+    expect($data['bulk_cost_per_unit'])->toBe('12.5000')
+        ->and($data['remnant_bulk_cost'])->toBeNull();
+});
+
+it('los errores nombran el peso por galón, el sobrante pesado y el derrame en kilos', function () {
+    $payload = completePayload($this, [
+        'density_kg_per_gallon' => '',
+        'remnant_quantity_kg' => '-1',
+        'spillage_quantity' => '-1',
+    ]);
+
+    $this->post(route('production-orders.complete', $this->order), $payload)->assertSessionHasErrors([
+        'density_kg_per_gallon' => 'El campo peso por galón (kg/gal) es obligatorio.',
+        'remnant_quantity_kg' => 'El campo sobrante pesado (kg) debe ser al menos 0.',
+        'spillage_quantity' => 'El campo derrame (kg) debe ser al menos 0.',
+    ]);
+
+    expect(__('validation.attributes.density_kg_per_gallon'))->toBe('peso por galón');
 });

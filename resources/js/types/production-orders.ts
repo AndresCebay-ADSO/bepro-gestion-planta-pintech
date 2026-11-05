@@ -113,8 +113,7 @@ export type ProductionOrderAvailableRemnant = {
     source_lot_number: number;
     /** Producto con el color de la orden de origen: un saldo puede venir de cualquier producto de la bodega (B57). */
     product_name: string;
-    available_quantity_gallons: FormNumberValue;
-    density_kg_per_gallon: FormNumberValue;
+    available_quantity_kg: string;
 };
 
 export type ProductionOrder = {
@@ -138,6 +137,7 @@ export type ProductionOrder = {
     responsible_name?: string | null;
     spillage_quantity?: FormNumberValue | null;
     remnant_quantity_gallons?: string | null;
+    remnant_quantity_kg?: string | null;
     remnant_notes?: string | null;
     notes?: string | null;
     completion_date?: string | null;
@@ -247,7 +247,7 @@ export type ProductionOrderFormData = {
     quality_responsible_user_id: number | null;
     spillage_quantity: FormNumberValue;
     density_kg_per_gallon: FormNumberValue;
-    remnant_quantity_gallons: FormNumberValue;
+    remnant_quantity_kg: FormNumberValue;
     remnant_notes: string;
     notes: string;
     ingredients: ProductionOrderIngredientFormRow[];

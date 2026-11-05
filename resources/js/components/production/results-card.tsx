@@ -110,8 +110,8 @@ export function ResultsCard({
                             disabled={isReadOnly}
                         />
                         <p className="text-xs text-muted-foreground">
-                            Debe coincidir con el equivalente envasado dentro de
-                            la tolerancia.
+                            Debe coincidir con lo envasado más el sobrante en
+                            galones.
                         </p>
                         {errors.actual_yield_quantity && (
                             <p className="text-xs text-destructive">

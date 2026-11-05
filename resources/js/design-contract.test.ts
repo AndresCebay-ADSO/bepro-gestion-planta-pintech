@@ -875,7 +875,6 @@ describe('contrato de DESIGN.md', () => {
             // Calcula el precio de venta con float en el navegador: espera a decidir si manda el precio o el margen.
             'resources/js/pages/Costs/Index.tsx',
             // Orden de producción: se rediseña aparte.
-            'resources/js/components/production/',
             'resources/js/pages/Production/Orders/',
             // Se retoma con el rediseño del dashboard.
             'resources/js/pages/Dashboard/Index.tsx',

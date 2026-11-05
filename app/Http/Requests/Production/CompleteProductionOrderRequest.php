@@ -47,7 +47,7 @@ class CompleteProductionOrderRequest extends FormRequest
                 'quality_responsible_user_id' => ['bail', 'required', 'integer', 'exists:users,id'],
                 'spillage_quantity' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
                 'density_kg_per_gallon' => ['bail', 'required', ...NumberType::Density->rules(), 'min:0.0001'],
-                'remnant_quantity_gallons' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
+                'remnant_quantity_kg' => ['bail', 'nullable', ...NumberType::Quantity->rules(), 'min:0'],
                 'remnant_notes' => ['nullable', 'string', 'max:1000'],
                 'notes' => ['nullable', 'string', 'max:2000'],
             ]
@@ -80,6 +80,7 @@ class CompleteProductionOrderRequest extends FormRequest
                     $validator->errors()->add('actual_yield_quantity', __('El rendimiento real no puede superar 9,99 veces la cantidad proyectada de la orden. Revisa el valor.'));
                 }
             },
+            $this->remnantWeightCheck(),
             $this->somethingPackedCheck(),
             $this->operationalTimesCheck(),
             function (Validator $validator): void {
@@ -88,10 +89,11 @@ class CompleteProductionOrderRequest extends FormRequest
                 }
 
                 $calculator = app(DecimalCalculator::class);
+                $lines = app(ProductionOrderCompletionLines::class);
 
                 // Ya validados: algo se envasó o quedó como saldo (la regla anterior), y el rendimiento es obligatorio.
                 $packaging = collect($this->input('packaging') ?? []);
-                $remnantGallons = $this->input('remnant_quantity_gallons');
+                $remnantGallons = $lines->remnantGallons($this->input('remnant_quantity_kg'), $this->input('density_kg_per_gallon'));
                 $actualYield = $this->input('actual_yield_quantity');
 
                 // Sin presentaciones (todo quedó como saldo) no hay nada que consultar.
@@ -115,8 +117,8 @@ class CompleteProductionOrderRequest extends FormRequest
                     $expectedYield = $calculator->add($expectedYield, $calculator->mul($actualUnits, $presentationValue, 4), 4);
                 }
 
-                if (app(ProductionOrderCompletionLines::class)->hasRemnant($remnantGallons)) {
-                    $expectedYield = $calculator->add($expectedYield, (string) $remnantGallons, 4);
+                if ($lines->hasRemnant($remnantGallons)) {
+                    $expectedYield = $calculator->add($expectedYield, $remnantGallons, 4);
                 }
 
                 $actualYieldStr = (string) $actualYield;
@@ -191,9 +193,9 @@ class CompleteProductionOrderRequest extends FormRequest
                 'packaging_end_time' => 'hora de fin de envasado',
                 'responsible_name' => 'responsable',
                 'quality_responsible_user_id' => 'responsable de calidad',
-                'spillage_quantity' => 'cantidad de merma o reguero',
-                'density_kg_per_gallon' => 'densidad (kg/gal)',
-                'remnant_quantity_gallons' => 'saldo sobrante (galones)',
+                'spillage_quantity' => 'derrame (kg)',
+                'density_kg_per_gallon' => 'peso por galón (kg/gal)',
+                'remnant_quantity_kg' => 'sobrante pesado (kg)',
                 'remnant_notes' => 'observaciones del saldo',
                 'notes' => 'observaciones',
             ]

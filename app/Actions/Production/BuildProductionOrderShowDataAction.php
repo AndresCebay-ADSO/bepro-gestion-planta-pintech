@@ -117,6 +117,7 @@ class BuildProductionOrderShowDataAction
             'spillage_quantity' => (float) $productionOrder->spillage_quantity,
             // Texto, no float: el formulario lo vuelve a enviar y un float puede perder decimales.
             'remnant_quantity_gallons' => $productionOrder->remnant_quantity_gallons,
+            'remnant_quantity_kg' => $productionOrder->remnant_quantity_kg,
             'remnant_notes' => $productionOrder->remnant_notes,
             'density_kg_per_gallon' => $productionOrder->density_kg_per_gallon !== null ? (float) $productionOrder->density_kg_per_gallon : null,
             'notes' => $productionOrder->notes,

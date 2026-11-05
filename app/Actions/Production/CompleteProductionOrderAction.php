@@ -153,9 +153,7 @@ class CompleteProductionOrderAction
                 __('El costo total de la orden no cabe en el registro. Revisa las cantidades reales consumidas.'),
             );
 
-            $remnantGallons = $this->completionLines->hasRemnant($data['remnant_quantity_gallons'] ?? null)
-                ? (string) $data['remnant_quantity_gallons']
-                : null;
+            $remnantGallons = $this->completionLines->remnantGallons($data['remnant_quantity_kg'] ?? null, $lockedOrder->density_kg_per_gallon);
 
             $costDistribution = $this->productionCostCalculator->calculateDistributedBulkCosts(
                 order: $lockedOrder,
@@ -274,6 +272,7 @@ class CompleteProductionOrderAction
             $this->registerRemnantIfApplicable(
                 order: $lockedOrder,
                 remnantGallons: $remnantGallons,
+                remnantKg: $data['remnant_quantity_kg'] ?? null,
                 data: $data,
                 bulkCostPerUnit: $bulkCostPerUnit,
                 cifPercentage: $productCifPercentage,
@@ -330,7 +329,8 @@ class CompleteProductionOrderAction
     }
 
     /**
-     * Si se reportaron galones sobrantes, crear un registro de saldo de PT.
+     * Si quedó sobrante, crear un registro de saldo de PT. Los kilos son los pesados, tal cual: reconstruirlos desde los
+     * galones calculados perdería decimales.
      *
      * @param  ?string  $remnantGallons  null si no quedó saldo
      * @param  array<string, mixed>  $data
@@ -338,6 +338,7 @@ class CompleteProductionOrderAction
     private function registerRemnantIfApplicable(
         ProductionOrder $order,
         ?string $remnantGallons,
+        mixed $remnantKg,
         array $data,
         ?string $bulkCostPerUnit,
         ?string $cifPercentage,
@@ -346,9 +347,6 @@ class CompleteProductionOrderAction
         if ($remnantGallons === null) {
             return;
         }
-
-        $density = (string) $order->density_kg_per_gallon;
-        $remnantKg = $this->calculator->mul($remnantGallons, $density, 4);
 
         $costPerGallon = $bulkCostPerUnit ?? '0';
 
@@ -364,7 +362,7 @@ class CompleteProductionOrderAction
             'original_quantity_kg' => $remnantKg,
             'available_quantity_gallons' => $remnantGallons,
             'available_quantity_kg' => $remnantKg,
-            'density_kg_per_gallon' => $density,
+            'density_kg_per_gallon' => $order->density_kg_per_gallon,
             'cost_per_gallon' => $costPerGallon,
             'status' => RemnantStatus::Available,
             'notes' => $data['remnant_notes'] ?? null,

@@ -177,7 +177,7 @@ it('keeps consumed remnants consumed and writes them in the cancellation note (p
         'status' => RemnantStatus::Available,
         'created_by' => $this->user->id,
     ]);
-    app(ConsumeRemnantAction::class)->execute($remnant, $order, '2.5', $this->user);
+    app(ConsumeRemnantAction::class)->execute($remnant, $order, '12.5', $this->user);
 
     $this->post(route('production-orders.cancel', $order), ['reason' => 'No es urgente, se hará más adelante'])
         ->assertSessionHasNoErrors();
@@ -188,7 +188,7 @@ it('keeps consumed remnants consumed and writes them in the cancellation note (p
         ->and($order->notes)->toContain('Cancelación: No es urgente, se hará más adelante')
         ->and($order->notes)->toContain('Saldos consumidos que no vuelven al inventario')
         ->and($order->notes)->toContain($source->order_number)
-        ->and($order->notes)->toContain('2.5 gal');
+        ->and($order->notes)->toContain('12.5 kg');
 });
 
 it('has the cancellable statuses in one place', function () {
@@ -210,12 +210,12 @@ it('lists the consumed remnants in the cancellation note in the order they were 
     [$firstSource, $first] = $remnant($this);
     [$secondSource, $second] = $remnant($this);
     $consume = app(ConsumeRemnantAction::class);
-    $firstConsumption = $consume->execute($first, $order, '1', $this->user);
-    $consume->execute($second, $order, '2', $this->user);
+    $firstConsumption = $consume->execute($first, $order, '5', $this->user);
+    $consume->execute($second, $order, '10', $this->user);
     // Un UPDATE mueve la fila: sin ORDER BY, PostgreSQL la devuelve al final en un barrido secuencial.
     $firstConsumption->update(['notes' => 'reubicada']);
 
     $this->post(route('production-orders.cancel', $order), ['reason' => 'Ya no se va a producir'])->assertSessionHasNoErrors();
 
-    expect($order->fresh()->notes)->toContain("{$firstSource->order_number} 1 gal; {$secondSource->order_number} 2 gal");
+    expect($order->fresh()->notes)->toContain("{$firstSource->order_number} 5 kg; {$secondSource->order_number} 10 kg");
 });

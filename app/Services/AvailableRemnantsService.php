@@ -19,7 +19,7 @@ use App\Models\ProductionRemnant;
 class AvailableRemnantsService
 {
     /**
-     * @return list<array{id: int, source_order_number: string, source_lot_number: int, product_name: string, available_quantity_gallons: float, density_kg_per_gallon: float}>
+     * @return list<array{id: int, source_order_number: string, source_lot_number: int, product_name: string, available_quantity_kg: string}>
      */
     public function forOrder(ProductionOrder $order): array
     {
@@ -36,8 +36,7 @@ class AvailableRemnantsService
                 'source_order_number' => $remnant->sourceOrder->order_number,
                 'source_lot_number' => $remnant->sourceOrder->lot_number,
                 'product_name' => ProductionOrder::nameWithColor($remnant->product->name, $remnant->sourceOrder->color),
-                'available_quantity_gallons' => (float) $remnant->available_quantity_gallons,
-                'density_kg_per_gallon' => (float) $remnant->density_kg_per_gallon,
+                'available_quantity_kg' => (string) $remnant->available_quantity_kg,
             ])
             ->values()
             ->all();

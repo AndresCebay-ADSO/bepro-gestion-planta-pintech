@@ -55,7 +55,7 @@
                 style="font-weight: bold; border: 1px solid #000000; background-color: #ffffff; text-align: left;">
                 CANTIDAD PROYECTADA</th>
             <td colspan="4" style="border: 1px solid #000000; text-align: center;">
-                {{ number_format($order['quantity'], 2) }} kg
+                {{ number_format($order['quantity'], 2) }} gal
             </td>
             <th colspan="2" style="font-weight: bold; border: 1px solid #000000; background-color: #ffffff;">ENVASES A
                 USAR</th>
@@ -71,7 +71,7 @@
                 style="font-weight: bold; border: 1px solid #000000; background-color: #ffffff; text-align: left;">
                 CANTIDAD RESULTADO</th>
             <td colspan="4" style="border: 1px solid #000000; text-align: center;">
-                {{ !empty($order['yield_real_quantity']) ? number_format($order['yield_real_quantity'], 2) . ' kg' : '---' }}
+                {{ !empty($order['yield_real_quantity']) ? number_format($order['yield_real_quantity'], 2) . ' gal' : '---' }}
             </td>
             <th colspan="2" style="font-weight: bold; border: 1px solid #000000; background-color: #ffffff;">RESPONSABLE
             </th>

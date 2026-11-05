@@ -520,7 +520,7 @@ it('rechaza con un mensaje los valores imposibles en las mediciones de la OP', f
 })->with([
     'derrame al completar' => ['production-orders.complete', 'spillage_quantity', '1e65'],
     'densidad al completar' => ['production-orders.complete', 'density_kg_per_gallon', '1e20'],
-    'saldo al completar' => ['production-orders.complete', 'remnant_quantity_gallons', '1e65'],
+    'saldo al completar' => ['production-orders.complete', 'remnant_quantity_kg', '1e65'],
     'viscosidad al completar' => ['production-orders.complete', 'viscosity_ku', '1e10'],
     'molienda al completar' => ['production-orders.complete', 'grinding_hg', '1e10'],
     'rendimiento al completar' => ['production-orders.complete', 'actual_yield_quantity', '1e65'],
@@ -535,8 +535,8 @@ it('rechaza un saldo imposible en la vista previa', function () {
     $this->postJson(route('production-orders.preview-costs', $this->order), [
         'ingredients' => [['id' => $this->detail->id, 'actual_quantity' => 52]],
         'packaging' => [['id' => $plan->id, 'actual_units' => 10]],
-        'remnant_quantity_gallons' => '1e65',
-    ])->assertUnprocessable()->assertJsonValidationErrors('remnant_quantity_gallons');
+        'remnant_quantity_kg' => '1e65',
+    ])->assertUnprocessable()->assertJsonValidationErrors('remnant_quantity_kg');
 });
 
 it('rechaza un rendimiento que no cabe en el porcentaje de la OP', function () {
