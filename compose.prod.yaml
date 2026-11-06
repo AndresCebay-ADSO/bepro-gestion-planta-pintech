@@ -1,144 +1,124 @@
+# Compose de servidor: el MISMO archivo para staging y producción, cada uno como proyecto de Compose aparte
+# (`pintech-staging`, `pintech-prod`) con su carpeta en el VPS y su propio `.env` fuera del repositorio:
+#
+#   /srv/pintech/<entorno>/compose.yaml   copia de este archivo
+#   /srv/pintech/<entorno>/.env           configuración de Laravel y de este archivo (ver .docker/server/server.env.example)
+#   /srv/pintech/<entorno>/tunnel.env     solo el token del túnel de Cloudflare (TUNNEL_TOKEN)
+#
+# No se usa a mano para desplegar: lo usa `pintech-deploy` (.docker/server/), que baja la imagen por digest, migra y
+# reemplaza los contenedores. Guía de operación: .docker/server/README.md.
+#
+# Reglas:
+# - Nunca `build:` en el servidor: la imagen la compila el CI una vez y aquí se baja por digest (APP_IMAGE).
+# - Ningún puerto publicado. Docker abre los puertos que publica saltándose el firewall; el tráfico web entra por el
+#   túnel, que es una conexión de salida.
+# - Límites de CPU y memoria por servicio, desde el `.env` de cada entorno: staging no puede comerse la memoria de
+#   producción.
+
+x-app: &app
+  image: ${APP_IMAGE:?APP_IMAGE es obligatorio (lo escribe pintech-deploy)}
+  restart: unless-stopped
+  env_file: .env
+  volumes:
+    # Archivos subidos, PDFs generados, sesiones y cachés de vistas. El código de la imagen es de solo lectura.
+    - storage:/var/www/html/storage
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
 services:
   web:
-    build:
-      context: .
-      dockerfile: ./.docker/production/nginx/Dockerfile
-    restart: unless-stopped # Automatically restart unless the service is explicitly stopped
-    volumes:
-      # Mount the 'laravel-storage-production' volume to '/var/www/storage' inside the container.
-      # -----------------------------------------------------------
-      # This volume stores persistent data like uploaded files and cache.
-      # The ':ro' option mounts it as read-only in the 'web' service because Nginx only needs to read these files.
-      # The 'php-fpm' service mounts the same volume without ':ro' to allow write operations.
-      # -----------------------------------------------------------
-      - laravel-storage-production:/var/www/storage:ro
-    networks:
-      - laravel-production
-    ports:
-      # Map port 80 inside the container to the port specified by 'NGINX_PORT' on the host machine.
-      # -----------------------------------------------------------
-      # This allows external access to the Nginx web server running inside the container.
-      # For example, if 'NGINX_PORT' is set to '8080', accessing 'http://localhost:8080' will reach the application.
-      # -----------------------------------------------------------
-      - "${NGINX_PORT:-80}:80"
-    depends_on:
-      php-fpm:
-        condition: service_healthy  # Wait for php-fpm health check
-
-  php-fpm:
-    # For the php-fpm service, we will create a custom image to install the necessary PHP extensions and setup proper permissions.
-    build:
-      context: .
-      dockerfile: ./.docker/common/php-fpm/Dockerfile
-      target: production
-    image: pintech-os-php-fpm:production
-    restart: unless-stopped
-    volumes:
-      - laravel-storage-production:/var/www/storage  # Mount the storage volume
-    env_file:
-      - .env
-    networks:
-      - laravel-production
-    healthcheck:
-      test: ["CMD-SHELL", "php-fpm-healthcheck || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    # The 'depends_on' attribute with 'condition: service_healthy' ensures that
-    # this service will not start until the 'postgres' service passes its health check.
-    # This prevents the application from trying to connect to the database before it's ready.
+    <<: *app
+    environment:
+      # Automatizaciones de la imagen al arrancar, solo aquí: `optimize` (cachés de configuración, rutas, vistas y
+      # eventos). Las migraciones no: las corre pintech-deploy antes de reemplazar los contenedores.
+      AUTORUN_ENABLED: 'true'
     depends_on:
       postgres:
         condition: service_healthy
+    # La revisión de salud viene de la imagen: `/up` de Laravel por el Nginx del contenedor.
+    deploy:
+      resources:
+        limits:
+          cpus: ${WEB_CPUS:?}
+          memory: ${WEB_MEMORY:?}
 
   queue:
-    image: pintech-os-php-fpm:production
-    restart: unless-stopped
-    command: php artisan queue:work --sleep=3 --tries=3 --timeout=60
-    volumes:
-      - laravel-storage-production:/var/www/storage
-    env_file:
-      - .env
-    networks:
-      - laravel-production
+    <<: *app
+    command: ['php', 'artisan', 'queue:work', '--sleep=3', '--tries=3', '--timeout=60']
+    stop_signal: SIGTERM
+    # Deja terminar el trabajo en curso antes de reemplazar el contenedor.
+    stop_grace_period: 30s
+    healthcheck:
+      test: ['CMD', 'healthcheck-queue']
+      start_period: 10s
+    # Espera a que web esté sano: con una base recién creada, la cola arrancaba antes que la app y moría sin la tabla
+    # `cache`.
     depends_on:
-      postgres:
+      web:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: ${QUEUE_CPUS:?}
+          memory: ${QUEUE_MEMORY:?}
 
   scheduler:
-    image: pintech-os-php-fpm:production
-    restart: unless-stopped
-    command: php artisan schedule:work
-    volumes:
-      - laravel-storage-production:/var/www/storage
-    env_file:
-      - .env
-    networks:
-      - laravel-production
+    <<: *app
+    command: ['php', 'artisan', 'schedule:work']
+    stop_signal: SIGTERM
+    healthcheck:
+      test: ['CMD', 'healthcheck-schedule']
+      start_period: 10s
     depends_on:
-      postgres:
+      web:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
 
   postgres:
     # Fijada por versión exacta y digest. Cambiar de versión menor (16.x) solo pide reiniciar el servicio.
     image: postgres:16.15-trixie@sha256:933463a6c8eba2b9f5cd414138738cd8d5519cd2c471214c222652f547a66a32
     restart: unless-stopped
     user: postgres
-    # No port exposed to host — only accessible via Docker internal network
-    # php-fpm, queue and scheduler connect using service name "postgres"
     environment:
-      - POSTGRES_DB=${DB_DATABASE:-pintech_erp}
-      - POSTGRES_USER=${DB_USERNAME:-postgres}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      POSTGRES_DB: ${DB_DATABASE:?}
+      POSTGRES_USER: ${DB_USERNAME:?}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?}
     volumes:
-      - postgres-data-production:/var/lib/postgresql/data
-    networks:
-      - laravel-production
-    # Health check for PostgreSQL
-    # -----------------------------------------------------------
-    # Health checks allow Docker to determine if a service is operational.
-    # The 'pg_isready' command checks if PostgreSQL is ready to accept connections.
-    # This prevents dependent services from starting before the database is ready.
-    # -----------------------------------------------------------
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD", "pg_isready" ]
-      interval: 10s
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
       timeout: 5s
-      retries: 5
-
-  # redis:
-  #   image: redis:alpine
-  #   restart: unless-stopped  # Automatically restart unless the service is explicitly stopped
-  #   networks:
-  #     - laravel-production
-  #   # Health check for Redis
-  #   # -----------------------------------------------------------
-  #   # Checks if Redis is responding to the 'PING' command.
-  #   # This ensures that the service is not only running but also operational.
-  #   # -----------------------------------------------------------
-  #   healthcheck:
-  #     test: ["CMD", "redis-cli", "ping"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 3
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: ${POSTGRES_CPUS:?}
+          memory: ${POSTGRES_MEMORY:?}
 
   tunnel:
     image: cloudflare/cloudflared:2026.10.7@sha256:4955524aeaa379e154023d5a027c250f7b35041a2e7e950cf13f144bc9b9c5ba
     restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
-    networks:
-      - laravel-production
-    depends_on:
-      - web
-
-networks:
-  # Attach the service to the 'laravel' network.
-  # -----------------------------------------------------------
-  # This custom network allows all services within it to communicate using their service names as hostnames.
-  # For example, 'php-fpm' can connect to 'postgres' by using 'postgres' as the hostname.
-  # -----------------------------------------------------------
-  laravel-production:
+    # El token llega por la variable TUNNEL_TOKEN de su propio archivo, no por la línea de comando (que se ve con
+    # `ps` y `docker inspect`) ni por el `.env` de la app (que lo pasaría a los contenedores de Laravel).
+    command: ['tunnel', '--no-autoupdate', 'run']
+    env_file: tunnel.env
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
 
 volumes:
-  postgres-data-production:
-  laravel-storage-production:
+  storage:
+  pgdata:
