@@ -97,7 +97,7 @@ MAIL_FROM_NAME="Pintech OS"
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/AndresCebay-ADSO/bepro-gestion-planta-pintech.git
+git clone https://github.com/Pintech-Colombia/bepro-gestion-planta-pintech.git
 cd bepro-gestion-planta-pintech
 
 # 2. Configurar variables de entorno
@@ -160,7 +160,7 @@ Con `profile`, cada petición pedida deja un archivo `cachegrind.out.*` en `/tmp
 
 1. **Clonar el repositorio e instalar dependencias:**
    ```bash
-   git clone https://github.com/AndresCebay-ADSO/bepro-gestion-planta-pintech.git
+   git clone https://github.com/Pintech-Colombia/bepro-gestion-planta-pintech.git
    cd bepro-gestion-planta-pintech
    composer install
    npm install
