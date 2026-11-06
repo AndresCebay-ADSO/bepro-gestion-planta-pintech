@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+# pintech-backup <staging|prod> [daily|predeploy]
+#
+# Copia de un entorno en /srv/pintech/<entorno>/backups/, dentro del VPS. Corre como root: a diario por cron
+# (pintech-backup.cron) y, en producción, desde pintech-deploy antes de migrar. Restaurar: .docker/server/README.md.
+#
+#   daily      base de datos (pg_dump, formato personalizado) y archivos de `storage` (sin cachés ni sesiones).
+#              Retención: staging 3 copias; producción 14 diarias y 8 semanales (la del domingo, en UTC).
+#   predeploy  solo la base. Se guardan las últimas 5.
+#
+# Cada copia de la base se comprueba con `pg_restore --list` antes de darla por buena. La copia fuera del VPS (cifrada)
+# va antes de producción: no la hace este script.
+set -Eeuo pipefail
+umask 077
+
+readonly ROOT="${PINTECH_ROOT:-/srv/pintech}"
+
+usage() {
+    echo "Uso: pintech-backup <staging|prod> [daily|predeploy]" >&2
+    exit 2
+}
+
+[[ $# -ge 1 && $# -le 2 ]] || usage
+readonly ENVIRONMENT="$1" KIND="${2:-daily}"
+case "$ENVIRONMENT" in
+    staging) KEEP_DAILY=3 KEEP_WEEKLY=0 ;;
+    prod) KEEP_DAILY=14 KEEP_WEEKLY=8 ;;
+    *) usage ;;
+esac
+case "$KIND" in
+    daily | predeploy) ;;
+    *) usage ;;
+esac
+readonly KEEP_PREDEPLOY=5
+
+readonly DIR="$ROOT/$ENVIRONMENT"
+readonly BACKUPS="$DIR/backups"
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+readonly STAMP
+
+log() { printf '%s [%s] %s\n' "$(date -u +%FT%TZ)" "$ENVIRONMENT" "$*"; }
+die() {
+    log "ERROR: $*" >&2
+    exit 1
+}
+
+[[ -f "$DIR/compose.yaml" && -f "$DIR/.env" ]] || die "falta $DIR/compose.yaml o $DIR/.env"
+
+compose() {
+    docker compose --project-directory "$DIR" -f "$DIR/compose.yaml" -p "pintech-$ENVIRONMENT" "$@"
+}
+
+# Deja solo las `keep` copias más recientes de un tipo (los nombres llevan la fecha, así que el orden es el de fecha).
+prune() {
+    local dir="$1" prefix="$2" keep="$3"
+    find "$dir" -maxdepth 1 -type f -name "$prefix-*" -printf '%f\n' | sort -r | tail -n +"$((keep + 1))" \
+        | while read -r name; do rm -f -- "$dir/$name"; done
+}
+
+# Se escribe primero a un archivo temporal: una copia a medias nunca queda con nombre de copia buena.
+dump_database() {
+    local target="$1" tmp="$1.partial"
+    # shellcheck disable=SC2016 # las variables se expanden dentro del contenedor de PostgreSQL
+    compose exec -T postgres sh -c 'pg_dump --format=custom -U "$POSTGRES_USER" -d "$POSTGRES_DB"' >"$tmp" \
+        || { rm -f "$tmp"; die "pg_dump falló"; }
+    compose exec -T postgres pg_restore --list <"$tmp" >/dev/null \
+        || { rm -f "$tmp"; die "la copia de la base no se puede leer (pg_restore --list)"; }
+    mv "$tmp" "$target"
+    log "base: $target ($(du -h "$target" | cut -f1))"
+}
+
+# Con la imagen de la app, sin su arranque (que escribe en la salida): solo `tar` sobre el volumen de storage.
+archive_storage() {
+    local target="$1" tmp="$1.partial"
+    compose run --rm --no-deps -T --entrypoint tar web \
+        -C /var/www/html -czf - --exclude=storage/framework storage >"$tmp" \
+        || { rm -f "$tmp"; die "la copia de storage falló"; }
+    mv "$tmp" "$target"
+    log "storage: $target ($(du -h "$target" | cut -f1))"
+}
+
+if [[ "$KIND" == predeploy ]]; then
+    mkdir -p "$BACKUPS/predeploy"
+    dump_database "$BACKUPS/predeploy/db-$STAMP.dump"
+    prune "$BACKUPS/predeploy" db "$KEEP_PREDEPLOY"
+    exit 0
+fi
+
+mkdir -p "$BACKUPS/daily"
+dump_database "$BACKUPS/daily/db-$STAMP.dump"
+archive_storage "$BACKUPS/daily/storage-$STAMP.tar.gz"
+prune "$BACKUPS/daily" db "$KEEP_DAILY"
+prune "$BACKUPS/daily" storage "$KEEP_DAILY"
+
+if [[ "$KEEP_WEEKLY" -gt 0 && "$(date -u +%u)" -eq 7 ]]; then
+    mkdir -p "$BACKUPS/weekly"
+    ln -f "$BACKUPS/daily/db-$STAMP.dump" "$BACKUPS/weekly/db-$STAMP.dump"
+    ln -f "$BACKUPS/daily/storage-$STAMP.tar.gz" "$BACKUPS/weekly/storage-$STAMP.tar.gz"
+    prune "$BACKUPS/weekly" db "$KEEP_WEEKLY"
+    prune "$BACKUPS/weekly" storage "$KEEP_WEEKLY"
+    log "copia semanal guardada"
+fi
