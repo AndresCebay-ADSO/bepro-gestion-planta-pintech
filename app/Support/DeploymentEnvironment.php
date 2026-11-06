@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use Illuminate\Support\Env;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
 
@@ -39,8 +40,12 @@ final class DeploymentEnvironment
 
     /**
      * `migrate:fresh`, `migrate:refresh`, `migrate:reset`, `migrate:rollback` y `db:wipe`. En un entorno protegido solo se
-     * permiten en staging, y solo mientras `ALLOW_DESTRUCTIVE_COMMANDS=true` esté puesta para resetear la base a mano.
-     * Producción nunca los permite, tenga o no la variable.
+     * permiten en staging, y solo en el contenedor suelto que resetea la base a mano:
+     * `docker compose run --rm -e ALLOW_DESTRUCTIVE_COMMANDS=true … php artisan migrate:fresh --force`. Nunca va en el
+     * `.env`. Producción nunca los permite, tenga o no la variable.
+     *
+     * Se lee del entorno del proceso y no de `config()`: con la configuración en caché, `config()` devuelve lo que había
+     * al cachear y no vería una variable pasada con `-e` a un solo comando.
      */
     public static function allowsDestructiveCommands(): bool
     {
@@ -48,7 +53,7 @@ final class DeploymentEnvironment
             return true;
         }
 
-        return app()->environment('staging') && config('app.allow_destructive_commands') === true;
+        return app()->environment('staging') && Env::get('ALLOW_DESTRUCTIVE_COMMANDS') === true;
     }
 
     /**

@@ -328,12 +328,16 @@ Todo entorno que no sea `local` ni `testing` (también un `APP_ENV` mal escrito)
 ficticias, lotes y pedidos de prueba, sin usuarios. Es idempotente: correrlo otra vez no duplica nada.
 
 **Resetear la base de staging** es una excepción: a mano, por una persona, nunca el despliegue automático ni un agente.
-Producción no se puede resetear: ignora la variable.
+La variable `ALLOW_DESTRUCTIVE_COMMANDS=true` se pasa **solo al contenedor suelto** que corre el comando, y nunca se
+escribe en el `.env`: así no hay que acordarse de quitarla, y los contenedores que siguen corriendo nunca la ven.
 
-1. En el `.env` de staging, agregar `ALLOW_DESTRUCTIVE_COMMANDS=true`.
-2. En un contenedor nuevo (lee el `.env` al arrancar), correr `php artisan migrate:fresh --force`, y después
-   `users:create-admin` y `db:seed --force` como arriba.
-3. **Quitar la variable del `.env`** y recrear los contenedores para que ninguno la conserve.
+```bash
+docker compose run --rm -e ALLOW_DESTRUCTIVE_COMMANDS=true <servicio> php artisan migrate:fresh --force
+```
+
+Después, `users:create-admin` y `db:seed --force` como arriba, ya sin la variable. Funciona aunque el contenedor web
+tenga la configuración en caché: la aplicación lee esta variable del entorno del proceso, no de `config()`. Producción
+no se puede resetear: ignora la variable.
 
 ## Base de datos
 

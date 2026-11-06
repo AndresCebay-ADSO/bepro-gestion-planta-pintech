@@ -16,16 +16,33 @@ function commandIsProhibited(string $command): bool
     return (new ReflectionProperty($command, 'prohibitedFromRunning'))->getValue();
 }
 
-/** Simula el arranque de la aplicación en otro entorno. */
+/**
+ * Simula el arranque de la aplicación en otro entorno. La variable se pone en el entorno del proceso, como la deja
+ * `docker compose run -e`: la aplicación la lee de ahí y no de `config()`.
+ */
 function bootIn(string $environment, bool $allowDestructive = false): void
 {
     app()->detectEnvironment(fn () => $environment);
-    config(['app.allow_destructive_commands' => $allowDestructive]);
+    setProcessVariable('ALLOW_DESTRUCTIVE_COMMANDS', $allowDestructive ? 'true' : null);
     DeploymentEnvironment::applyProtections();
+}
+
+function setProcessVariable(string $name, ?string $value): void
+{
+    if ($value === null) {
+        unset($_SERVER[$name], $_ENV[$name]);
+        putenv($name);
+
+        return;
+    }
+
+    $_SERVER[$name] = $_ENV[$name] = $value;
+    putenv("{$name}={$value}");
 }
 
 afterEach(function (): void {
     // El bloqueo es estático y sobrevive a la aplicación de cada prueba: se deja como en `testing`.
+    setProcessVariable('ALLOW_DESTRUCTIVE_COMMANDS', null);
     DB::prohibitDestructiveCommands(false);
 });
 
@@ -54,7 +71,7 @@ it('los deja en local y testing', function (string $environment) {
     expect(commandIsProhibited(FreshCommand::class))->toBeFalse();
 })->with(['local', 'testing']);
 
-it('la variable temporal permite resetear staging, pero nunca producción', function () {
+it('la variable de un solo comando permite resetear staging, pero nunca producción', function () {
     bootIn('staging', allowDestructive: true);
     expect(commandIsProhibited(FreshCommand::class))->toBeFalse();
 
@@ -87,3 +104,28 @@ it('los datos de demostración se siembran en local, testing y staging, nunca en
     'production' => ['production', false],
     'mal escrito' => ['prod', false],
 ]);
+
+it('un valor de configuración no abre los comandos destructivos: solo la variable del proceso', function () {
+    // Con la configuración en caché, `config()` no vería un `-e` nuevo; y la variable nunca va en el `.env`.
+    config(['app.allow_destructive_commands' => true]);
+    bootIn('staging');
+
+    expect(commandIsProhibited(FreshCommand::class))->toBeTrue();
+});
+
+// El servidor no depende de `APP_LOCALE` en su `.env`: sin ella, la aplicación habla español.
+it('el idioma por defecto es el español', function () {
+    $saved = [getenv('APP_LOCALE'), getenv('APP_FALLBACK_LOCALE')];
+    setProcessVariable('APP_LOCALE', null);
+    setProcessVariable('APP_FALLBACK_LOCALE', null);
+
+    try {
+        $config = require config_path('app.php');
+    } finally {
+        setProcessVariable('APP_LOCALE', $saved[0] === false ? null : $saved[0]);
+        setProcessVariable('APP_FALLBACK_LOCALE', $saved[1] === false ? null : $saved[1]);
+    }
+
+    expect($config['locale'])->toBe('es')
+        ->and($config['fallback_locale'])->toBe('es');
+});
