@@ -1,0 +1,5 @@
+# /etc/sudoers.d/pintech-deploy (dueño root, permisos 440). Instalar con `sudo visudo -cf` antes de copiarlo.
+#
+# El usuario `deploy` (el del CI) solo puede correr pintech-deploy como root, sin contraseña. No está en el grupo
+# `docker`, que equivale a ser root. pintech-deploy valida sus propios argumentos con una lista cerrada.
+deploy ALL=(root) NOPASSWD: /usr/local/bin/pintech-deploy
