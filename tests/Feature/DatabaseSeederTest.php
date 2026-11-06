@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\RawMaterialType;
+use App\Enums\SystemRole;
 use App\Models\Formula;
 use App\Models\FormulaDetail;
 use App\Models\InventoryBatch;
@@ -19,12 +20,16 @@ use App\Models\Warehouse;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\FormulaSeeder;
 use Database\Seeders\InventoryBatchSeeder;
+use Database\Seeders\ProductCategorySeeder;
+use Database\Seeders\ProductSeeder;
 use Database\Seeders\RawMaterialCategorySeeder;
 use Database\Seeders\RawMaterialSeeder;
+use Database\Seeders\SalesOrderSeeder;
 use Database\Seeders\UnitsOfMeasureSeeder;
 use Database\Seeders\WarehouseSeeder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Symfony\Component\Finder\Finder;
 
 uses(RefreshDatabase::class);
 
@@ -181,4 +186,52 @@ test('los lotes de prueba no se siembran fuera de desarrollo y pruebas', functio
     $this->artisan('db:seed', ['--class' => InventoryBatchSeeder::class, '--force' => true])->assertSuccessful();
 
     expect(InventoryBatch::query()->exists())->toBeFalse();
+});
+
+// Staging (2026-11): los datos de demostración se siembran una vez, a mano, pero los usuarios no. El primero lo crea
+// `users:create-admin` antes de sembrar, y figura como creador de pedidos y fórmulas.
+test('en staging siembra los datos de demostración sin sembrar usuarios', function () {
+    $admin = userWithRole(SystemRole::SuperAdmin);
+    app()->detectEnvironment(fn () => 'staging');
+
+    $this->artisan('db:seed', ['--force' => true])->assertSuccessful();
+
+    expect(User::query()->count())->toBe(1)
+        ->and(User::query()->where('email', 'soporte@pintech.test')->exists())->toBeFalse()
+        ->and(InventoryBatch::query()->exists())->toBeTrue()
+        ->and(ProductVariant::query()->exists())->toBeTrue()
+        ->and(FormulaDetail::query()->exists())->toBeTrue()
+        ->and(SalesOrder::query()->exists())->toBeTrue()
+        ->and(SalesOrder::query()->where('created_by', '!=', $admin->id)->exists())->toBeFalse();
+});
+
+test('los pedidos de demostración no se siembran en producción', function () {
+    userWithRole(SystemRole::SuperAdmin);
+    app()->detectEnvironment(fn () => 'production');
+
+    $this->artisan('db:seed', ['--class' => SalesOrderSeeder::class, '--force' => true])->assertSuccessful();
+
+    expect(SalesOrder::query()->exists())->toBeFalse();
+});
+
+// La imagen del servidor se compila sin dependencias de desarrollo: Faker no está, y las factories lo usan. Un seeder
+// que los use funciona aquí y falla en staging («Class "Faker\Factory" not found»).
+test('ningún seeder usa Faker ni factories', function () {
+    $offenders = collect(Finder::create()->files()->in(database_path('seeders'))->name('*.php'))
+        ->filter(fn (SplFileInfo $file): bool => preg_match('/^use Faker\\\\|\bfake\(|::factory\(/m', (string) file_get_contents($file->getPathname())) === 1)
+        ->map(fn (SplFileInfo $file): string => $file->getFilename())
+        ->values()
+        ->all();
+
+    expect($offenders)->toBe([]);
+});
+
+test('cada línea de las fórmulas de demostración encuentra su materia prima', function () {
+    $this->seed([UnitsOfMeasureSeeder::class, RawMaterialCategorySeeder::class, RawMaterialSeeder::class]);
+    $this->seed([ProductCategorySeeder::class, ProductSeeder::class]);
+    User::factory()->create();
+
+    $this->artisan('db:seed', ['--class' => FormulaSeeder::class])
+        ->doesntExpectOutputToContain('no encontrad')
+        ->assertSuccessful();
 });

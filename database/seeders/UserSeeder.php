@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use App\Enums\SystemRole;
 use App\Models\User;
+use App\Support\DeploymentEnvironment;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -13,8 +14,10 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        if (! app()->environment('local', 'testing')) {
-            $this->command?->warn('UserSeeder omitido en entornos de producción o compartidos.');
+        // Solo en local y testing: la contraseña de respaldo está en el repositorio, que es público. En staging y producción
+        // el primer usuario se crea con `php artisan users:create-admin` y el resto desde la pantalla de usuarios.
+        if (DeploymentEnvironment::isProtected()) {
+            $this->command?->warn('UserSeeder omitido en entornos de producción o compartidos. Crea el primer usuario con: php artisan users:create-admin');
 
             return;
         }

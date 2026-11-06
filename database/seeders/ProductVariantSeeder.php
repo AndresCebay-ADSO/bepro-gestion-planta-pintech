@@ -9,7 +9,6 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\RawMaterial;
 use App\Models\UnitOfMeasure;
-use Faker\Factory;
 use Illuminate\Database\Seeder;
 
 class ProductVariantSeeder extends Seeder
@@ -33,7 +32,6 @@ class ProductVariantSeeder extends Seeder
         }
 
         $count = 0;
-        $faker = Factory::create();
 
         foreach ($products as $product) {
             $presentations = [
@@ -50,7 +48,10 @@ class ProductVariantSeeder extends Seeder
                         'presentation_label' => $presentation['label'],
                     ],
                     [
-                        'code' => $faker->unique()->numerify('################'),
+                        // Código fijo de 16 dígitos, único por producto y presentación. Sin Faker: es una dependencia de
+                        // desarrollo y la imagen del servidor no la trae, y estos datos de demostración también se siembran
+                        // en staging.
+                        'code' => sprintf('99%08d%06d', $product->id, $presentation['value']),
                         'name' => "{$product->name} - {$presentation['label']}",
                         'unit_of_measure_id' => $unitGl?->id ?? 1,
                         'presentation_value' => $presentation['value'],

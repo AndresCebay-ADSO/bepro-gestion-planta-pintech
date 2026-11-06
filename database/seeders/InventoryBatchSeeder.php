@@ -9,14 +9,15 @@ use App\Models\RawMaterial;
 use App\Models\Supplier;
 use App\Models\Warehouse;
 use App\Services\RawMaterialReferencePriceService;
+use App\Support\DeploymentEnvironment;
 use Illuminate\Database\Seeder;
 
 class InventoryBatchSeeder extends Seeder
 {
     public function run(): void
     {
-        // Lotes de prueba (proveedor ficticio): nunca fuera de desarrollo y pruebas.
-        if (! app()->environment('local', 'testing')) {
+        // Lotes de prueba (proveedor ficticio): en desarrollo, pruebas y staging. Nunca en producción.
+        if (! DeploymentEnvironment::allowsDemoData()) {
             return;
         }
 
