@@ -1,0 +1,91 @@
+name: image
+
+# Compila UNA vez la imagen de servidor (linux/amd64, la del VPS) en cada push a `develop` y la sube a GHCR, privada.
+# Staging y producción bajan esta misma imagen por digest con pintech-deploy (.docker/server/): el servidor nunca
+# compila.
+#
+# Dos etiquetas por imagen:
+# - `sha-<commit>`: el commit exacto que se compiló.
+# - `tree-<árbol>`: el hash del árbol de archivos (`git rev-parse HEAD^{tree}`). El merge de `develop` a `main` crea
+#   otro commit, pero si `main` no trae cambios propios el árbol es idéntico: así se puede promover a producción el
+#   mismo digest que se probó en staging, sin recompilar.
+#
+# El escaneo de Trivy de esta imagen está en el workflow `security`. Desplegar no es parte de este workflow.
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Nunca se cancela una subida a medias: cada push a develop deja su imagen.
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: imagen de servidor
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/pintech-colombia/pintech-os
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Etiquetas
+        id: tags
+        run: |
+          echo "sha=sha-$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          echo "tree=tree-$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+
+      - name: Compilar
+        env:
+          SHA_TAG: ${{ steps.tags.outputs.sha }}
+          TREE_TAG: ${{ steps.tags.outputs.tree }}
+        run: >
+          docker build --platform linux/amd64 -f .docker/production/app/Dockerfile
+          --label "org.opencontainers.image.revision=$GITHUB_SHA"
+          -t "$IMAGE:$SHA_TAG" -t "$IMAGE:$TREE_TAG" .
+
+      - name: Iniciar sesión en GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+      - name: Subir
+        id: push
+        env:
+          SHA_TAG: ${{ steps.tags.outputs.sha }}
+        run: |
+          docker push --all-tags "$IMAGE"
+          digest="$(docker image inspect "$IMAGE:$SHA_TAG" --format '{{range .RepoDigests}}{{println .}}{{end}}' \
+            | grep "^$IMAGE@" | head -n 1 | cut -d@ -f2)"
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "No se obtuvo el digest de la imagen subida"; exit 1; }
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Resumen
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+          SHA_TAG: ${{ steps.tags.outputs.sha }}
+          TREE_TAG: ${{ steps.tags.outputs.tree }}
+        run: |
+          {
+            echo "### Imagen de servidor"
+            echo
+            echo "- Digest: \`$DIGEST\`"
+            echo "- Etiquetas: \`$SHA_TAG\`, \`$TREE_TAG\`"
+            echo "- Desplegar a mano en el VPS: \`sudo pintech-deploy staging $DIGEST\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Cerrar sesión en GHCR
+        if: always()
+        run: docker logout ghcr.io
