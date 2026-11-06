@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+# pintech-deploy <staging|prod> <sha256:digest>
+#
+# Despliega en un entorno la imagen de servidor ya compilada y subida a GHCR por el CI, identificada por su digest.
+# Corre como root (el usuario `deploy` solo puede llamarlo con sudo, ver sudoers.example) y es lo único que el CI
+# puede hacer en el servidor. Guía: .docker/server/README.md.
+#
+# Pasos:
+#   1. Valida los argumentos con una lista cerrada. Cualquier otra cosa se rechaza.
+#   2. Un despliegue a la vez por entorno (candado).
+#   3. Baja la imagen por digest.
+#   4. Solo en producción: copia de la base (pintech-backup) antes de migrar.
+#   5. Migra y sincroniza roles y permisos en un contenedor de un solo uso con la imagen NUEVA. Si algo falla, se
+#      detiene: los contenedores viejos siguen atendiendo. PostgreSQL deshace la migración fallida.
+#      Después audita los roles creados desde la pantalla (`roles:audit`). Un rol mal armado NO frena el despliegue (si
+#      no, bloquearía hasta un parche de seguridad): queda como ADVERTENCIA en la salida y como «ok-con-avisos» en
+#      deploys.log, y se corrige desde la pantalla de roles.
+#   6. Reemplaza web, queue y scheduler y espera su revisión de salud (web: `/up`). Si no quedan sanos, vuelve solo a la
+#      imagen anterior y termina con error.
+#   7. Anota la imagen en el `.env` del entorno (APP_IMAGE) y el resultado en deploys.log.
+#
+# Volver atrás a mano: `pintech-deploy <entorno> <digest anterior>` (está en deploys.log). Solo vuelve el código: la
+# base no se deshace. Por eso las migraciones son siempre compatibles hacia atrás.
+set -Eeuo pipefail
+umask 077
+
+# Valores fijos en producción. Solo las pruebas los cambian (sudo limpia el entorno: quien llama no puede).
+readonly ROOT="${PINTECH_ROOT:-/srv/pintech}"
+readonly IMAGE_REPO="${PINTECH_IMAGE_REPO:-ghcr.io/pintech-colombia/pintech-os}"
+readonly HEALTH_TIMEOUT="${PINTECH_HEALTH_TIMEOUT:-90}"
+readonly APP_SERVICES=(web queue scheduler)
+
+usage() {
+    echo "Uso: pintech-deploy <staging|prod> <sha256:digest de 64 caracteres hexadecimales>" >&2
+    exit 2
+}
+
+[[ $# -eq 2 ]] || usage
+readonly ENVIRONMENT="$1" DIGEST="$2"
+case "$ENVIRONMENT" in
+    staging | prod) ;;
+    *) usage ;;
+esac
+[[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || usage
+
+readonly DIR="$ROOT/$ENVIRONMENT"
+readonly NEW_IMAGE="$IMAGE_REPO@$DIGEST"
+readonly DEPLOYS_LOG="$DIR/deploys.log"
+
+log() { printf '%s [%s] %s\n' "$(date -u +%FT%TZ)" "$ENVIRONMENT" "$*"; }
+die() {
+    log "ERROR: $*" >&2
+    exit 1
+}
+
+for file in compose.yaml .env tunnel.env; do
+    [[ -f "$DIR/$file" ]] || die "falta $DIR/$file"
+done
+
+# Docker Compose del entorno, con la imagen indicada (la variable del proceso manda sobre el `.env`).
+compose_with() {
+    local image="$1"
+    shift
+    APP_IMAGE="$image" docker compose --project-directory "$DIR" -f "$DIR/compose.yaml" -p "pintech-$ENVIRONMENT" "$@"
+}
+
+record() {
+    local status="$1" revision
+    revision="$(docker image inspect "$NEW_IMAGE" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' 2>/dev/null || true)"
+    printf '%s\t%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$DIGEST" "${revision:-?}" "$status" >>"$DEPLOYS_LOG"
+}
+
+# Reemplaza la línea APP_IMAGE del `.env` sin tocar el resto, conservando dueño y permisos.
+save_current_image() {
+    local tmp
+    tmp="$(mktemp "$DIR/.env.XXXXXX")"
+    grep -v '^APP_IMAGE=' "$DIR/.env" >"$tmp" || true
+    printf 'APP_IMAGE=%s\n' "$NEW_IMAGE" >>"$tmp"
+    chown --reference="$DIR/.env" "$tmp"
+    chmod --reference="$DIR/.env" "$tmp"
+    mv "$tmp" "$DIR/.env"
+}
+
+exec 9>"$DIR/.deploy.lock"
+flock -n 9 || die "ya hay un despliegue en curso en $ENVIRONMENT"
+
+PREVIOUS_IMAGE="$(grep -E '^APP_IMAGE=' "$DIR/.env" | tail -n 1 | cut -d= -f2- || true)"
+readonly PREVIOUS_IMAGE
+log "imagen anterior: ${PREVIOUS_IMAGE:-ninguna (primer despliegue)}"
+log "imagen nueva:    $NEW_IMAGE"
+
+log "bajando la imagen"
+docker pull --quiet "$NEW_IMAGE" >/dev/null || die "no se pudo bajar $NEW_IMAGE"
+
+log "levantando PostgreSQL (no cambia si ya corre)"
+compose_with "$NEW_IMAGE" up -d --wait --wait-timeout "$HEALTH_TIMEOUT" postgres || die "PostgreSQL no quedó sano"
+
+if [[ "$ENVIRONMENT" == prod ]]; then
+    log "copia de la base antes de migrar"
+    "$(dirname "$(readlink -f "$0")")/pintech-backup" prod predeploy || die "falló la copia previa: no se migró nada"
+fi
+
+log "migraciones, roles y permisos con la imagen nueva (los contenedores actuales siguen atendiendo)"
+if ! compose_with "$NEW_IMAGE" run --rm --no-deps -T -e AUTORUN_ENABLED=false web sh -c '
+    php artisan migrate --force \
+    && php artisan db:seed --class=RolePermissionSeeder --force \
+    && php artisan permission:cache-reset'; then
+    record "fallo-migracion"
+    die "falló la migración o la sincronización de permisos: no se reemplazó ningún contenedor"
+fi
+
+log "auditoría de los roles personalizados (avisa, no frena)"
+AUDIT_WARNING=""
+if ! compose_with "$NEW_IMAGE" run --rm --no-deps -T -e AUTORUN_ENABLED=false web php artisan roles:audit; then
+    AUDIT_WARNING="roles:audit encontró roles personalizados que incumplen las reglas (tabla de arriba): corregirlos desde la pantalla de roles"
+    log "ADVERTENCIA: $AUDIT_WARNING. El despliegue sigue."
+fi
+
+log "reemplazando ${APP_SERVICES[*]} y esperando su revisión de salud (hasta ${HEALTH_TIMEOUT} s)"
+if ! compose_with "$NEW_IMAGE" up -d --wait --wait-timeout "$HEALTH_TIMEOUT" "${APP_SERVICES[@]}"; then
+    if [[ -z "$PREVIOUS_IMAGE" ]]; then
+        record "fallo-salud"
+        die "la imagen nueva no quedó sana y no hay imagen anterior a la cual volver"
+    fi
+    log "la imagen nueva no quedó sana: volviendo a la anterior"
+    if compose_with "$PREVIOUS_IMAGE" up -d --wait --wait-timeout "$HEALTH_TIMEOUT" "${APP_SERVICES[@]}"; then
+        record "revertido"
+        die "despliegue revertido: sigue corriendo $PREVIOUS_IMAGE"
+    fi
+    record "revertido-sin-salud"
+    die "despliegue revertido, pero la imagen anterior tampoco quedó sana: revisar a mano"
+fi
+
+# El resto del proyecto (el túnel) se levanta si no corría; lo que ya está al día no se toca.
+compose_with "$NEW_IMAGE" up -d --remove-orphans
+
+save_current_image
+if [[ -n "$AUDIT_WARNING" ]]; then
+    record "ok-con-avisos"
+    log "desplegado $NEW_IMAGE"
+    log "ADVERTENCIA: $AUDIT_WARNING"
+else
+    record "ok"
+    log "desplegado $NEW_IMAGE"
+fi

@@ -20,7 +20,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->trustProxies(at: '*');
+        // En el servidor solo llega tráfico por el túnel de Cloudflare: no hay puertos publicados, así que quien le habla
+        // a la app siempre es otro contenedor. El Nginx de la imagen ya reemplaza la IP de origen por la real
+        // (CF-Connecting-IP): por eso se confía en cualquier origen ('*') y no solo en las redes de Docker, que dejarían
+        // de reconocer X-Forwarded-Proto y la app creería que la visita llegó por HTTP.
+        // De las cabeceras X-Forwarded-* solo se aceptan For (IP) y Proto (HTTPS). Host, Port y Prefix las puede mandar
+        // cualquier visitante: con ellas, por ejemplo, un enlace para restablecer la contraseña apuntaría a otro dominio.
+        $middleware->trustProxies(
+            at: '*',
+            headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO,
+        );
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 

@@ -56,6 +56,13 @@ docker compose -f compose.dev.yaml up -d
 docker compose -f compose.dev.yaml exec -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: php-fpm ./vendor/bin/pest --parallel
 docker compose -f compose.dev.yaml down
 
+# Server (staging and production, same VPS): one image, `.docker/production/app/Dockerfile` (serversideup/php
+# fpm-nginx: Nginx + PHP-FPM in one container), and `compose.prod.yaml`, one Compose project per environment. CI builds
+# it once per push to develop (`image` workflow -> GHCR); the server pulls it by digest through
+# `.docker/server/pintech-deploy`, which migrates before swapping containers and rolls back on a failed health check.
+# Never `build:` or `docker build` on the server. Operations, backups and restore: `.docker/server/README.md`.
+# Development keeps its own images (`compose.dev.yaml`, `--target development` of .docker/common/php-fpm).
+
 # `vendor/` and `node_modules/` are named volumes (compose.dev.yaml), NOT the host folders: installing on the host
 # leaves the containers behind and boot fails ("Class ... ServiceProvider not found"). Each lock file has its own
 # workflow, and neither install runs by itself: `workspace` only runs `npm ci` on boot while
@@ -144,8 +151,10 @@ Route (routes/web.php, role: middleware)
   testing only). Seeders never use Faker or factories: the server image has no dev dependencies (`DatabaseSeederTest`).
 - **Environments**: everything that is not `local` or `testing` (staging, production, or a mistyped `APP_ENV`) is
   protected by `App\Support\DeploymentEnvironment`: destructive DB commands are blocked and passwords follow the strict
-  rules. Schema changes always go in a new migration; never reach for `migrate:fresh` once staging exists. Resetting
-  staging is a manual, one-person exception (`ALLOW_DESTRUCTIVE_COMMANDS`, see README), never CD and never an agent.
+  rules. Schema changes always go in a new migration; never reach for `migrate:fresh` once staging exists. Migrations
+  must be backward compatible (add columns or tables; to drop or rename, stop using it in one deploy and drop it in a
+  later one): rolling back a deploy restores the previous image, never the database. Resetting staging is a manual,
+  one-person exception (`ALLOW_DESTRUCTIVE_COMMANDS`, see README), never CD and never an agent.
 - **Git**: Conventional Commits (`feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`). Main branch: `main`; development: `develop`.
 
 ## Demo Credentials (local / testing seeds only)

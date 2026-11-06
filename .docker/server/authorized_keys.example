@@ -1,0 +1,6 @@
+# /home/deploy/.ssh/authorized_keys (dueño deploy, permisos 600). Una sola línea por llave.
+#
+# La llave del CI solo puede correr pintech-deploy: lo que el CI mande (por ejemplo `staging sha256:…`) llega como
+# argumentos y pintech-deploy los valida. `restrict` apaga terminal, reenvíos de puertos, de agente y de X11.
+# Reemplazar la llave pública de ejemplo por la generada para el entorno de GitHub.
+restrict,command="sudo -n /usr/local/bin/pintech-deploy $SSH_ORIGINAL_COMMAND" ssh-ed25519 AAAA...reemplazar... pintech-deploy-ci

@@ -1,17 +1,22 @@
 .git
 node_modules
-.env
+# Ningún .env entra en la imagen (.env.production, .env.backup…), salvo el ejemplo.
+.env*
+!.env.example
 .vite
 vendor
 public/hot
-storage/framework/cache/data/*
-storage/framework/sessions/*
-storage/framework/views/*
-storage/logs/*
+# El enlace de storage del equipo local: la imagen crea el suyo.
+public/storage
+**/.DS_Store
+# Cachés de Laravel del equipo local (config, rutas, paquetes de desarrollo): la imagen genera las suyas.
+bootstrap/cache/*.php
+# De storage solo entran las carpetas (sus .gitignore): nada de lo que dejó el equipo local (sesiones, logs, cachés,
+# temporales de Excel, registros de Inertia DevTools, archivos subidos).
+storage/**
+!storage/**/.gitignore
 *.md
 
-# User uploaded files - sensitive data, not for Docker images
-storage/app/**
 
 # Test and CI files - not needed in production images
 tests/
@@ -37,6 +42,9 @@ imagenes/
 .prettierignore
 .prettierrc
 eslint.config.js
+
+# Scripts y plantillas del servidor (no van dentro de la imagen)
+.docker/server/
 
 # Docker compose orchestration files
 compose.dev.yaml

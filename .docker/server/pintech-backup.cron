@@ -1,0 +1,8 @@
+# /etc/cron.d/pintech-backup (dueño root, permisos 644). Copia diaria de cada entorno, a las 02:00 de Colombia
+# (07:00 UTC; el servidor está en UTC), antes de la ventana de reinicio por parches (08:00 UTC).
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+0 7 * * * root /usr/local/bin/pintech-backup staging daily >>/var/log/pintech-backup.log 2>&1
+# Descomentar al crear producción:
+# 15 7 * * * root /usr/local/bin/pintech-backup prod daily >>/var/log/pintech-backup.log 2>&1
