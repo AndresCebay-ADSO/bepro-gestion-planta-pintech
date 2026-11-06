@@ -289,18 +289,17 @@ Composer y npm, incluidas las dependencias indirectas (parches y menores agrupad
 Actions. Pasan por el mismo CI: si está en verde, se revisa el changelog y se fusiona. Una versión mayor de un paquete
 que genera documentos (`dompdf`, `maatwebsite/excel`) exige además revisar a mano un PDF y un Excel.
 
-## Despliegue a producción
+## Despliegue (staging y producción)
 
-El entrypoint de producción **no** ejecuta migraciones ni seeders. En cada despliegue, después de levantar la nueva
-imagen, ejecutar en este orden:
+Staging y producción corren en el mismo VPS, aislados, con la **misma imagen de servidor**
+(`.docker/production/app/Dockerfile`: Nginx y PHP-FPM en un contenedor, sobre serversideup/php) y el mismo
+`compose.prod.yaml`, cada uno como proyecto de Compose aparte. El CI compila la imagen una vez en cada push a `develop`
+(workflow `image`) y la sube a GHCR; el servidor la baja por digest. Nunca se compila en el servidor.
 
-```bash
-php artisan migrate --force
-php artisan db:seed --class=RolePermissionSeeder --force   # sincroniza permisos y roles del sistema con el código
-php artisan permission:cache-reset
-```
-
-(El entrypoint ya ejecuta `config:cache`, `route:cache`, `view:cache` y `event:cache` al arrancar.)
+Cada despliegue lo hace `pintech-deploy <entorno> <digest>`: migra con la imagen nueva antes de reemplazar los
+contenedores, ejecuta `RolePermissionSeeder`, `permission:cache-reset` y `roles:audit`, y vuelve sola a la imagen
+anterior si la nueva no queda sana. Instalación, operación, copias de seguridad y restauración:
+[`.docker/server/README.md`](.docker/server/README.md).
 
 - **`RolePermissionSeeder` es obligatorio en cada despliegue**, no solo el primero: crea los permisos nuevos del enum,
   elimina los retirados y reasigna a cada rol del sistema sus permisos por defecto. Si se omite, las pantallas nuevas
@@ -332,7 +331,8 @@ La variable `ALLOW_DESTRUCTIVE_COMMANDS=true` se pasa **solo al contenedor suelt
 escribe en el `.env`: así no hay que acordarse de quitarla, y los contenedores que siguen corriendo nunca la ven.
 
 ```bash
-docker compose run --rm -e ALLOW_DESTRUCTIVE_COMMANDS=true <servicio> php artisan migrate:fresh --force
+cd /srv/pintech/staging
+sudo docker compose run --rm -e ALLOW_DESTRUCTIVE_COMMANDS=true web php artisan migrate:fresh --force
 ```
 
 Después, `users:create-admin` y `db:seed --force` como arriba, ya sin la variable. Funciona aunque el contenedor web
