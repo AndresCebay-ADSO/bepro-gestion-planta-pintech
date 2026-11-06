@@ -1,0 +1,68 @@
+# Prueba D15, opción C: serversideup/php frankenphp, modo clásico (un contenedor web), más queue y scheduler con la misma imagen.
+# Uso: SPIKE_ENV=<archivo> docker compose -p spike-c -f .docker/spike/compose.c.yaml up -d
+# Red y volúmenes propios del proyecto spike-c: `down -v` solo borra los de esta prueba.
+x-app: &app
+  image: spike-d15/c:test
+  env_file: ${SPIKE_ENV:?SPIKE_ENV}
+  volumes:
+    - storage:/var/www/html/storage
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  web:
+    <<: *app
+    ports:
+      - "127.0.0.1:18083:8080"
+    environment:
+      APP_URL: http://127.0.0.1:18083
+      # migrate, storage:link y optimize al arrancar, y después 55-sync-permissions.sh. Solo en este servicio.
+      AUTORUN_ENABLED: "true"
+
+  queue:
+    <<: *app
+    # Espera a que web migre: en una base vacía, queue arrancaba antes y moría sin la tabla `cache`.
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      APP_URL: http://127.0.0.1:18083
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=60"]
+    stop_signal: SIGTERM
+    healthcheck:
+      test: ["CMD", "healthcheck-queue"]
+      start_period: 10s
+
+  scheduler:
+    <<: *app
+    # Espera a que web migre: en una base vacía, queue arrancaba antes y moría sin la tabla `cache`.
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      APP_URL: http://127.0.0.1:18083
+    command: ["php", "artisan", "schedule:work"]
+    stop_signal: SIGTERM
+    healthcheck:
+      test: ["CMD", "healthcheck-schedule"]
+      start_period: 10s
+
+  postgres:
+    image: postgres:16.15-trixie@sha256:933463a6c8eba2b9f5cd414138738cd8d5519cd2c471214c222652f547a66a32
+    user: postgres
+    environment:
+      POSTGRES_DB: pintech_spike
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: spike-only-password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  storage:
+  pgdata:
