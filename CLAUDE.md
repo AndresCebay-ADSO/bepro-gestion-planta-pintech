@@ -139,7 +139,13 @@ Route (routes/web.php, role: middleware)
 - **Seeders**: Must be idempotent and use `firstOrCreate`, never `updateOrCreate`: catalogs are edited from the UI,
   and re-seeding must not undo those edits (`DatabaseSeederTest`). Once in production, base data changes go through the
   UI (audited) or a data migration, never through a seeder. The only exception is `RolePermissionSeeder`, which syncs
-  the system roles with the code on every deploy. Gate test/mock data with `app()->environment('local', 'testing')`.
+  the system roles with the code on every deploy. Gate demo data with `DeploymentEnvironment::allowsDemoData()` (local,
+  testing and staging, never production) and seeded users with `DeploymentEnvironment::isProtected()` (local and
+  testing only). Seeders never use Faker or factories: the server image has no dev dependencies (`DatabaseSeederTest`).
+- **Environments**: everything that is not `local` or `testing` (staging, production, or a mistyped `APP_ENV`) is
+  protected by `App\Support\DeploymentEnvironment`: destructive DB commands are blocked and passwords follow the strict
+  rules. Schema changes always go in a new migration; never reach for `migrate:fresh` once staging exists. Resetting
+  staging is a manual, one-person exception (`ALLOW_DESTRUCTIVE_COMMANDS`, see README), never CD and never an agent.
 - **Git**: Conventional Commits (`feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`). Main branch: `main`; development: `develop`.
 
 ## Demo Credentials (local / testing seeds only)

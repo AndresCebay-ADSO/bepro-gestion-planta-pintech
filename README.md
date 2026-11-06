@@ -309,7 +309,31 @@ php artisan permission:cache-reset
   reservados, obligatorios o dependencias), lo avisa en la salida; el detalle se ve con `php artisan roles:audit`, que
   termina con error mientras quede alguno. Se corrigen a mano desde la pantalla de roles.
 - **Nunca** ejecutar `php artisan db:seed` sin `--class` en producción: `DatabaseSeeder` también carga datos de negocio.
+- **Primer usuario** de un entorno nuevo: `php artisan users:create-admin`. Pide nombre, correo y contraseña (la
+  contraseña no queda en el historial de la consola), la valida con las reglas exigentes y crea un SuperAdmin. Los
+  demás usuarios se crean desde la pantalla de usuarios. En staging y producción los usuarios **no** se siembran.
 - Usuario de soporte: `php artisan users:grant-super-admin {email}` sobre un usuario existente y activo.
+
+### Entornos protegidos (staging y producción)
+
+Todo entorno que no sea `local` ni `testing` (también un `APP_ENV` mal escrito) queda protegido
+(`App\Support\DeploymentEnvironment`):
+
+- Bloqueados `migrate:fresh`, `migrate:refresh`, `migrate:reset`, `migrate:rollback` y `db:wipe`. Un cambio de esquema
+  va siempre en una migración nueva.
+- Contraseñas exigentes: 12 caracteres, mayúsculas y minúsculas, números, símbolos y no filtradas.
+
+**Datos de demostración en staging**, una sola vez y a mano (nunca en el despliegue automático): primero
+`php artisan users:create-admin`, después `php artisan db:seed --force`. Siembra catálogos, productos, fórmulas
+ficticias, lotes y pedidos de prueba, sin usuarios. Es idempotente: correrlo otra vez no duplica nada.
+
+**Resetear la base de staging** es una excepción: a mano, por una persona, nunca el despliegue automático ni un agente.
+Producción no se puede resetear: ignora la variable.
+
+1. En el `.env` de staging, agregar `ALLOW_DESTRUCTIVE_COMMANDS=true`.
+2. En un contenedor nuevo (lee el `.env` al arrancar), correr `php artisan migrate:fresh --force`, y después
+   `users:create-admin` y `db:seed --force` como arriba.
+3. **Quitar la variable del `.env`** y recrear los contenedores para que ninguno la conserve.
 
 ## Base de datos
 

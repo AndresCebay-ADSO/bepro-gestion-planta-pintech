@@ -181,10 +181,16 @@ Los seeders deben ser seguros para ejecución repetida y protegidos contra entor
     Con producción, un dato base se cambia desde la pantalla (queda auditado) o con una migración de datos, nunca
     volviendo a correr un seeder. La única excepción es `RolePermissionSeeder`, que en cada despliegue sincroniza los
     roles del sistema con el código.
-*   **Seguridad**: Si un seeder genera grandes volúmenes de datos (ej. 100 usuarios de prueba), debe estar envuelto en un chequeo de entorno:
+*   **Seguridad**: los datos de demostración (lotes, pedidos) se siembran solo donde `DeploymentEnvironment` lo
+    permite: `allowsDemoData()` vale en `local`, `testing` y `staging`, nunca en producción. Los usuarios de prueba,
+    solo donde el entorno no está protegido (`local` y `testing`): su contraseña de respaldo está en el repositorio.
 ```php
-if (app()->environment('local', 'testing')) {
-    User::factory(100)->create();
+if (! DeploymentEnvironment::allowsDemoData()) {
+    return;
 }
 ```
+*   **Sin Faker ni factories**: la imagen del servidor se compila sin dependencias de desarrollo, y los datos de
+    demostración también se siembran en staging. Los seeders usan datos fijos (lo comprueba `DatabaseSeederTest`).
+*   **Sin datos reales**: el repositorio es público. Fórmulas, clientes y precios de la planta nunca van en un seeder,
+    una prueba ni `docs/`: entran por la aplicación.
 *   **Limpieza**: No usar `truncate()` a menos que sea estrictamente necesario para la lógica del seeder base.
