@@ -41,6 +41,7 @@ use App\Policies\WarehousePolicy;
 use App\Services\DecimalCalculator;
 use App\Services\FormulaService;
 use App\Services\TimezoneService;
+use App\Support\DeploymentEnvironment;
 use App\Support\ModelRouteParameters;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Failed;
@@ -48,12 +49,10 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Validation\Rules\Password;
 use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
@@ -126,19 +125,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(UnitOfMeasure::class, UnitOfMeasurePolicy::class);
         Gate::policy(Warehouse::class, WarehousePolicy::class);
 
-        DB::prohibitDestructiveCommands(
-            app()->isProduction(),
-        );
-
-        Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
-            : null,
-        );
+        // Comandos destructivos bloqueados y contraseñas exigentes en todo entorno que no sea `local` ni `testing`.
+        DeploymentEnvironment::applyProtections();
     }
 
     private function configureRateLimiting(): void

@@ -30,6 +30,10 @@ return [
 
     'env' => env('APP_ENV', 'production'),
 
+    // Permiso temporal para resetear la base de staging a mano (`migrate:fresh` y demás comandos destructivos). Solo vale
+    // con APP_ENV=staging; producción lo ignora. Se pone, se corre el comando y se quita (ver App\Support\DeploymentEnvironment).
+    'allow_destructive_commands' => (bool) env('ALLOW_DESTRUCTIVE_COMMANDS', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Debug Mode
