@@ -1,7 +1,7 @@
 name: security
 
-# Escanea con Trivy lo que de verdad se despliega: las imágenes de producción compiladas (PHP, paquetes de Debian y
-# Alpine, binarios) y los lockfiles. `composer audit` y `npm audit` (workflow `quality`) solo ven paquetes: no ven el PHP
+# Escanea con Trivy lo que de verdad se despliega: la imagen de servidor compilada (PHP, Nginx, paquetes de Debian y
+# binarios) y los lockfiles. `composer audit` y `npm audit` (workflow `quality`) solo ven paquetes: no ven el PHP
 # ni el sistema de la imagen, y por eso un aviso crítico de PHP pasó sin que el CI lo notara.
 #
 # Corre también todos los días: un aviso nuevo sobre algo que ya estaba en `develop` pone este job en rojo y GitHub
@@ -46,8 +46,8 @@ jobs:
         with:
           persist-credentials: false
 
-      # La base de datos de avisos se baja una vez por día y se comparte entre las dos imágenes. Vive fuera del
-      # checkout: dentro, `COPY . /var/www` la metería en la imagen.
+      # La base de datos de avisos se baja una vez por día. Vive fuera del checkout: dentro, `COPY .` la metería en la
+      # imagen.
       - name: Fecha de hoy
         id: today
         run: echo "date=$(date -u +%F)" >> "$GITHUB_OUTPUT"
@@ -59,23 +59,13 @@ jobs:
           key: trivy-db-${{ steps.today.outputs.date }}
           restore-keys: trivy-db-
 
-      - name: Compilar php-fpm (producción)
-        run: docker build -f .docker/common/php-fpm/Dockerfile --target production -t pintech/php-fpm:ci .
+      - name: Compilar la imagen de servidor
+        run: docker build -f .docker/production/app/Dockerfile -t pintech/server:ci .
 
-      - name: Compilar nginx (producción)
-        run: docker build -f .docker/production/nginx/Dockerfile -t pintech/nginx:ci .
-
-      - name: Escanear php-fpm
+      - name: Escanear la imagen de servidor
         run: >
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$HOME/.cache/trivy:/root/.cache/trivy"
-          "$TRIVY_IMAGE" image $TRIVY_ARGS --scanners vuln,secret pintech/php-fpm:ci
-
-      # `!cancelled()`: se escanea aunque php-fpm haya fallado, para ver los dos resultados en una pasada.
-      - name: Escanear nginx
-        if: ${{ !cancelled() }}
-        run: >
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$HOME/.cache/trivy:/root/.cache/trivy"
-          "$TRIVY_IMAGE" image $TRIVY_ARGS --scanners vuln,secret pintech/nginx:ci
+          "$TRIVY_IMAGE" image $TRIVY_ARGS --scanners vuln,secret pintech/server:ci
 
   lockfiles:
     name: trivy (lockfiles)

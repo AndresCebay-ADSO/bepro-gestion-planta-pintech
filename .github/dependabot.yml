@@ -85,12 +85,13 @@ updates:
         patterns:
           - '*'
 
-  # Imágenes base de los Dockerfiles (PHP, Node, Composer, Nginx). Están fijadas por versión exacta y digest:
-  # Dependabot propone la versión nueva y el CI la compila y la escanea.
+  # Imágenes base de los Dockerfiles: la de servidor (serversideup/php y Node) y las de desarrollo (PHP, Node y
+  # Composer). Están fijadas por versión exacta y digest: Dependabot propone la versión nueva y el CI la compila y la
+  # escanea. La recompilación semanal de serversideup (misma etiqueta, otro digest) no la propone: la avisa Trivy.
   - package-ecosystem: docker
     directories:
       - /.docker/common/php-fpm
-      - /.docker/production/nginx
+      - /.docker/production/app
       - /.docker/development/workspace
     target-branch: develop
     schedule:
@@ -106,25 +107,26 @@ updates:
       - dependencies
       - docker
     ignore:
-      # Cambiar de rama se decide a mano, no por Dependabot: PHP sigue en 8.3 (8.4 cuenta como «menor»), Node en 22
-      # (soporte hasta 2027-04-30) y Nginx en la rama estable 1.30 (la 1.31 es la principal).
+      # Cambiar de rama se decide a mano, no por Dependabot: PHP sigue en 8.3 (8.4 cuenta como «menor»), también en la
+      # imagen de servidor, y Node en 22 (soporte hasta 2027-04-30).
       - dependency-name: php
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+      - dependency-name: serversideup/php
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
       - dependency-name: node
         update-types:
           - version-update:semver-major
-      - dependency-name: nginx
-        update-types:
-          - version-update:semver-major
-          - version-update:semver-minor
     groups:
       docker-images:
         patterns:
           - '*'
 
-  # Imágenes de los compose (PostgreSQL, Nginx de desarrollo y cloudflared).
+  # Imágenes de los compose (PostgreSQL, Nginx de desarrollo y cloudflared). La imagen de la app en compose.prod.yaml
+  # viene de una variable (APP_IMAGE): la pone pintech-deploy, no Dependabot.
   - package-ecosystem: docker-compose
     directory: /
     target-branch: develop
