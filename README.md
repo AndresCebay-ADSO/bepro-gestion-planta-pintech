@@ -297,8 +297,9 @@ Staging y producción corren en el mismo VPS, aislados, con la **misma imagen de
 (workflow `image`) y la sube a GHCR; el servidor la baja por digest. Nunca se compila en el servidor.
 
 Cada despliegue lo hace `pintech-deploy <entorno> <digest>`: migra con la imagen nueva antes de reemplazar los
-contenedores, ejecuta `RolePermissionSeeder`, `permission:cache-reset` y `roles:audit`, y vuelve sola a la imagen
-anterior si la nueva no queda sana. Instalación, operación, copias de seguridad y restauración:
+contenedores, ejecuta `RolePermissionSeeder` y `permission:cache-reset`, y vuelve sola a la imagen anterior si la nueva
+no queda sana. Al final corre `roles:audit`: un rol personalizado mal armado no frena el despliegue, queda como
+advertencia en su salida y como `ok-con-avisos` en `deploys.log`. Instalación, operación, copias de seguridad y restauración:
 [`.docker/server/README.md`](.docker/server/README.md).
 
 - **`RolePermissionSeeder` es obligatorio en cada despliegue**, no solo el primero: crea los permisos nuevos del enum,

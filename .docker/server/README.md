@@ -34,7 +34,9 @@ sudo pintech-deploy staging sha256:<digest>
 
 El digest sale del resumen del workflow `image` en GitHub Actions. El script baja la imagen, migra con la imagen nueva
 en un contenedor de un solo uso (los contenedores actuales siguen atendiendo), sincroniza roles y permisos, reemplaza
-web, queue y scheduler, y espera su revisión de salud. Si la migración falla, no reemplaza nada. Si la imagen nueva no
+web, queue y scheduler, y espera su revisión de salud. Si `roles:audit` encuentra un rol personalizado mal armado, el
+despliegue sigue y lo deja como ADVERTENCIA en la salida y como `ok-con-avisos` en `deploys.log`: se corrige desde la
+pantalla de roles. Si la migración falla, no reemplaza nada. Si la imagen nueva no
 queda sana en 90 segundos, vuelve sola a la anterior. En producción hace además una copia de la base antes de migrar.
 
 **Volver atrás:** el mismo comando con el digest anterior (está en `deploys.log`). Solo vuelve el código: la base no se

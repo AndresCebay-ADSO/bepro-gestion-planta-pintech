@@ -10,8 +10,11 @@
 #   2. Un despliegue a la vez por entorno (candado).
 #   3. Baja la imagen por digest.
 #   4. Solo en producción: copia de la base (pintech-backup) antes de migrar.
-#   5. Migra, sincroniza roles y permisos y audita los roles, en un contenedor de un solo uso con la imagen NUEVA. Si
-#      algo falla, se detiene: los contenedores viejos siguen atendiendo. PostgreSQL deshace la migración fallida.
+#   5. Migra y sincroniza roles y permisos en un contenedor de un solo uso con la imagen NUEVA. Si algo falla, se
+#      detiene: los contenedores viejos siguen atendiendo. PostgreSQL deshace la migración fallida.
+#      Después audita los roles creados desde la pantalla (`roles:audit`). Un rol mal armado NO frena el despliegue (si
+#      no, bloquearía hasta un parche de seguridad): queda como ADVERTENCIA en la salida y como «ok-con-avisos» en
+#      deploys.log, y se corrige desde la pantalla de roles.
 #   6. Reemplaza web, queue y scheduler y espera su revisión de salud (web: `/up`). Si no quedan sanos, vuelve solo a la
 #      imagen anterior y termina con error.
 #   7. Anota la imagen en el `.env` del entorno (APP_IMAGE) y el resultado en deploys.log.
@@ -101,10 +104,16 @@ log "migraciones, roles y permisos con la imagen nueva (los contenedores actuale
 if ! compose_with "$NEW_IMAGE" run --rm --no-deps -T -e AUTORUN_ENABLED=false web sh -c '
     php artisan migrate --force \
     && php artisan db:seed --class=RolePermissionSeeder --force \
-    && php artisan permission:cache-reset \
-    && php artisan roles:audit'; then
+    && php artisan permission:cache-reset'; then
     record "fallo-migracion"
-    die "falló la migración o la auditoría de roles: no se reemplazó ningún contenedor"
+    die "falló la migración o la sincronización de permisos: no se reemplazó ningún contenedor"
+fi
+
+log "auditoría de los roles personalizados (avisa, no frena)"
+AUDIT_WARNING=""
+if ! compose_with "$NEW_IMAGE" run --rm --no-deps -T -e AUTORUN_ENABLED=false web php artisan roles:audit; then
+    AUDIT_WARNING="roles:audit encontró roles personalizados que incumplen las reglas (tabla de arriba): corregirlos desde la pantalla de roles"
+    log "ADVERTENCIA: $AUDIT_WARNING. El despliegue sigue."
 fi
 
 log "reemplazando ${APP_SERVICES[*]} y esperando su revisión de salud (hasta ${HEALTH_TIMEOUT} s)"
@@ -126,5 +135,11 @@ fi
 compose_with "$NEW_IMAGE" up -d --remove-orphans
 
 save_current_image
-record "ok"
-log "desplegado $NEW_IMAGE"
+if [[ -n "$AUDIT_WARNING" ]]; then
+    record "ok-con-avisos"
+    log "desplegado $NEW_IMAGE"
+    log "ADVERTENCIA: $AUDIT_WARNING"
+else
+    record "ok"
+    log "desplegado $NEW_IMAGE"
+fi
